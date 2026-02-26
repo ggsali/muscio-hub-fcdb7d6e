@@ -280,10 +280,16 @@ export default function AuftragDetailPage() {
         </button>
         <h1 className="text-2xl font-bold flex-1">{isNew ? "Neuer Auftrag" : `Auftrag bearbeiten`}</h1>
         {!isNew && (
-          <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border">
-            <FileDown className="w-4 h-4" />
-            PDF exportieren
-          </Button>
+          <>
+            <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border">
+              <FileDown className="w-4 h-4" />
+              Rechnung
+            </Button>
+            <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border">
+              <FileDown className="w-4 h-4" />
+              Offerte
+            </Button>
+          </>
         )}
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
           <Save className="w-4 h-4" />
