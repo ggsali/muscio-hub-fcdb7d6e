@@ -76,6 +76,16 @@ export default function AuftragDetailPage() {
     supabase.from("customers").select("id, name").then(({ data }) => {
       if (data) setCustomers(data);
     });
+    supabase.from("price_presets").select("*").order("created_at").then(({ data }) => {
+      if (data) {
+        setPresets(data as Preset[]);
+        const def = data.find((p: any) => p.is_default);
+        if (def && isNew) {
+          setSelectedPresetId(def.id);
+          setActiveSettings({ ...settings, ...def });
+        }
+      }
+    });
 
     if (!isNew) {
       async function load() {
