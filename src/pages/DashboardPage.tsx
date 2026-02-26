@@ -6,6 +6,10 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { useNavigate } from "react-router-dom";
 import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Cell
+} from "recharts";
 
 interface KPIs {
   umsatz: number;
@@ -24,11 +28,27 @@ interface RecentOrder {
   customer_name: string;
 }
 
+interface MonthlyData {
+  monat: string;
+  umsatz: number;
+  gewinn: number;
+}
+
+interface TopKunde {
+  name: string;
+  umsatz: number;
+}
+
+const ACCENT = "hsl(var(--primary))";
+const SUCCESS = "hsl(var(--success))";
+
 export default function DashboardPage() {
   const { settings } = useSettings();
   const navigate = useNavigate();
   const [kpis, setKpis] = useState<KPIs>({ umsatz: 0, gewinn: 0, offeneAuftraege: 0, avgMarge: 0, investFonds: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [topKunden, setTopKunden] = useState<TopKunde[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,13 +56,13 @@ export default function DashboardPage() {
       const { data: orders } = await supabase
         .from("orders")
         .select("*, customers(name)")
-        .order("created_at", { ascending: false });
+        .order("datum", { ascending: false });
 
       if (orders) {
         const abgeschlossen = orders.filter(o => o.status === "Abgeschlossen");
         const umsatz = abgeschlossen.reduce((s, o) => s + (o.umsatz_total || 0), 0);
         const gewinn = abgeschlossen.reduce((s, o) => s + (o.gewinn_total || 0), 0);
-        const offeneAuftraege = orders.filter(o => o.status === "In Bearbeitung").length;
+        const offeneAuftraege = orders.filter(o => ["Offen", "In Bearbeitung"].includes(o.status)).length;
         const marges = abgeschlossen.filter(o => o.marge > 0).map(o => o.marge);
         const avgMarge = marges.length ? marges.reduce((a, b) => a + b, 0) / marges.length : 0;
         const investFonds = gewinn * (settings.investitions_fonds_prozent / 100);
@@ -58,6 +78,35 @@ export default function DashboardPage() {
           customer_name: (o.customers as any)?.name || "Kein Kunde",
         }));
         setRecentOrders(recent);
+
+        // Monatliche Daten (letzte 6 Monate)
+        const monthMap: Record<string, { umsatz: number; gewinn: number }> = {};
+        abgeschlossen.forEach(o => {
+          if (!o.datum) return;
+          const key = o.datum.substring(0, 7); // YYYY-MM
+          if (!monthMap[key]) monthMap[key] = { umsatz: 0, gewinn: 0 };
+          monthMap[key].umsatz += o.umsatz_total || 0;
+          monthMap[key].gewinn += o.gewinn_total || 0;
+        });
+        const months = Object.keys(monthMap).sort().slice(-6).map(k => ({
+          monat: new Date(k + "-01").toLocaleDateString("de-CH", { month: "short", year: "2-digit" }),
+          umsatz: Math.round(monthMap[k].umsatz * 100) / 100,
+          gewinn: Math.round(monthMap[k].gewinn * 100) / 100,
+        }));
+        setMonthlyData(months);
+
+        // Top-Kunden
+        const kundeMap: Record<string, number> = {};
+        orders.forEach(o => {
+          const name = (o.customers as any)?.name || "Unbekannt";
+          if (!kundeMap[name]) kundeMap[name] = 0;
+          kundeMap[name] += o.umsatz_total || 0;
+        });
+        const top = Object.entries(kundeMap)
+          .map(([name, umsatz]) => ({ name, umsatz }))
+          .sort((a, b) => b.umsatz - a.umsatz)
+          .slice(0, 5);
+        setTopKunden(top);
       }
       setLoading(false);
     }
@@ -81,12 +130,8 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-0.5">Übersicht deines Business</p>
         </div>
-        <Button
-          onClick={() => navigate("/auftraege/neu")}
-          className="bg-primary hover:bg-primary/90 gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Neuer Auftrag
+        <Button onClick={() => navigate("/auftraege/neu")} className="bg-primary hover:bg-primary/90 gap-2">
+          <Plus className="w-4 h-4" />Neuer Auftrag
         </Button>
       </div>
 
@@ -111,21 +156,79 @@ export default function DashboardPage() {
           </span>
         </div>
         <div className="w-full bg-muted rounded-full h-2.5">
-          <div
-            className="bg-success h-2.5 rounded-full transition-all duration-500"
-            style={{ width: `${skalierungsProgress}%` }}
-          />
+          <div className="bg-success h-2.5 rounded-full transition-all duration-500" style={{ width: `${skalierungsProgress}%` }} />
         </div>
         <div className="text-xs text-muted-foreground mt-1">{skalierungsProgress.toFixed(1)}% erreicht</div>
       </div>
+
+      {/* Charts */}
+      {!loading && (monthlyData.length > 0 || topKunden.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Monatlicher Umsatz */}
+          {monthlyData.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-5">
+              <h2 className="font-semibold text-sm mb-4">Umsatz & Gewinn (letzte 6 Monate)</h2>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradUmsatz" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={ACCENT} stopOpacity={0.25} />
+                      <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gradGewinn" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={SUCCESS} stopOpacity={0.25} />
+                      <stop offset="95%" stopColor={SUCCESS} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="monat" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={v => `${v}`} />
+                  <Tooltip
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
+                    labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
+                    formatter={(val: number, name: string) => [formatCHF(val), name === "umsatz" ? "Umsatz" : "Gewinn"]}
+                  />
+                  <Area type="monotone" dataKey="umsatz" stroke={ACCENT} strokeWidth={2} fill="url(#gradUmsatz)" />
+                  <Area type="monotone" dataKey="gewinn" stroke={SUCCESS} strokeWidth={2} fill="url(#gradGewinn)" />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-0.5 bg-primary rounded" />Umsatz</span>
+                <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-0.5 bg-success rounded" />Gewinn</span>
+              </div>
+            </div>
+          )}
+
+          {/* Top-Kunden */}
+          {topKunden.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-5">
+              <h2 className="font-semibold text-sm mb-4">Top-Kunden nach Umsatz</h2>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={topKunden} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={v => `${v}`} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={80} />
+                  <Tooltip
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
+                    formatter={(val: number) => [formatCHF(val), "Umsatz"]}
+                  />
+                  <Bar dataKey="umsatz" radius={[0, 4, 4, 0]}>
+                    {topKunden.map((_, i) => (
+                      <Cell key={i} fill={i === 0 ? "hsl(var(--primary))" : "hsl(var(--muted))"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Recent Orders */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
           <h2 className="font-semibold text-sm">Letzte Aufträge</h2>
-          <button onClick={() => navigate("/auftraege")} className="text-xs text-primary hover:underline">
-            Alle anzeigen
-          </button>
+          <button onClick={() => navigate("/auftraege")} className="text-xs text-primary hover:underline">Alle anzeigen</button>
         </div>
         {loading ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>
@@ -144,11 +247,7 @@ export default function DashboardPage() {
             </thead>
             <tbody>
               {recentOrders.map(order => (
-                <tr
-                  key={order.id}
-                  className="table-row-alt border-b border-border/50 last:border-0"
-                  onClick={() => navigate(`/auftraege/${order.id}`)}
-                >
+                <tr key={order.id} className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer" onClick={() => navigate(`/auftraege/${order.id}`)}>
                   <td className="px-5 py-3">{order.customer_name}</td>
                   <td className="px-5 py-3 text-muted-foreground">{order.beschreibung}</td>
                   <td className="px-5 py-3 num-right">{formatCHF(order.umsatz_total)}</td>
