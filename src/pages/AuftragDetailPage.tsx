@@ -109,6 +109,7 @@ export default function AuftragDetailPage() {
           setBeschreibung(o.beschreibung || "");
           setDatum(o.datum);
           setStatus(o.status);
+          setTrackingNr((o as any).tracking_nr || "");
         }
         const { data: p } = await supabase.from("parts").select("*").eq("order_id", id!);
         if (p && p.length > 0) setParts(p as PartRow[]);
