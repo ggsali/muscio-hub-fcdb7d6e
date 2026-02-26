@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, ChevronDown } from "lucide-react";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
+import PartFileUpload from "@/components/PartFileUpload";
+import type { Filament } from "@/pages/FilamentePage";
 
 interface PartRow {
   id?: string;
