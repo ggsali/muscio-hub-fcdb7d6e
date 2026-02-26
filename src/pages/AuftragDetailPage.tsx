@@ -364,7 +364,7 @@ export default function AuftragDetailPage() {
                         </select>
                       ) : (
                         <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
-                          {["PLA", "PETG", "TPU", "Sonstige"].map(m => <option key={m} value={m}>{m}</option>)}
+                          {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                       )}
                     </td>
