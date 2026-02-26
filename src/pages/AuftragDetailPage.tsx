@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF } from "@/lib/pdfOfferExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
@@ -82,6 +83,8 @@ export default function AuftragDetailPage() {
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     supabase.from("customers").select("id, name").then(({ data }) => {
@@ -191,6 +194,24 @@ export default function AuftragDetailPage() {
   const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
   const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
+
+  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung") => {
+    setSendingEmail(type);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-order-email", {
+        body: { orderId: id, type, trackingNr },
+      });
+      if (error || data?.error) {
+        toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
+      } else {
+        const labels = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung" };
+        toast({ title: "E-Mail gesendet ✓", description: `${labels[type]} wurde erfolgreich versandt.` });
+      }
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    }
+    setSendingEmail(null);
+  };
 
   const handleExportPDF = async () => {
     let customerName = "Kein Kunde";
@@ -312,14 +333,46 @@ export default function AuftragDetailPage() {
         <h1 className="text-2xl font-bold flex-1">{isNew ? "Neuer Auftrag" : `Auftrag bearbeiten`}</h1>
         {!isNew && (
           <>
-            <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border">
+            <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border" title="Rechnung als PDF herunterladen">
               <FileDown className="w-4 h-4" />
               Rechnung
             </Button>
-            <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border">
+            <Button
+              onClick={() => handleSendEmail("rechnung")}
+              disabled={!!sendingEmail}
+              variant="outline"
+              className="gap-2 border-border"
+              title="Rechnung per E-Mail senden"
+            >
+              {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              Rechnung mailen
+            </Button>
+            <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border" title="Offerte als PDF herunterladen">
               <FileDown className="w-4 h-4" />
               Offerte
             </Button>
+            <Button
+              onClick={() => handleSendEmail("offerte")}
+              disabled={!!sendingEmail}
+              variant="outline"
+              className="gap-2 border-border"
+              title="Offerte per E-Mail senden"
+            >
+              {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              Offerte mailen
+            </Button>
+            {(status === "Geliefert" || trackingNr) && (
+              <Button
+                onClick={() => handleSendEmail("lieferung")}
+                disabled={!!sendingEmail}
+                variant="outline"
+                className="gap-2 border-border text-success border-success/40"
+                title="Lieferbenachrichtigung mit Tracking-Nr. senden"
+              >
+                {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                Lieferung mailen
+              </Button>
+            )}
           </>
         )}
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
