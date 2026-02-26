@@ -43,8 +43,7 @@ export default function AnfragenPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("inquiries" as any)
+    const { data } = await (supabase.from as any)("inquiries")
       .select("*")
       .order("created_at", { ascending: false });
     if (data) setInquiries(data as Inquiry[]);
