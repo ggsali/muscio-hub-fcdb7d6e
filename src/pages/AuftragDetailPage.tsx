@@ -361,16 +361,16 @@ export default function AuftragDetailPage() {
               {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
               Offerte mailen
             </Button>
-            {(status === "Geliefert" || trackingNr) && (
+            {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
               <Button
                 onClick={() => handleSendEmail("lieferung")}
                 disabled={!!sendingEmail}
                 variant="outline"
                 className="gap-2 border-border text-success border-success/40"
-                title="Lieferbenachrichtigung mit Tracking-Nr. senden"
+                title={trackingNr ? `Lieferbenachrichtigung senden (Tracking: ${trackingNr})` : "Lieferbenachrichtigung senden"}
               >
                 {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                Lieferung mailen
+                {trackingNr ? "Update-Mail senden" : "Lieferung mailen"}
               </Button>
             )}
           </>
