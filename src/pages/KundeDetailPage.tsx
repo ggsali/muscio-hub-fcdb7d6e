@@ -91,6 +91,9 @@ export default function KundeDetailPage() {
       const { data: p } = await supabase.from("parts").select("*").eq("customer_id", id!).order("created_at", { ascending: false });
       if (p) setParts(p);
 
+      const { data: f } = await supabase.from("part_files").select("*").eq("customer_id", id!).order("created_at", { ascending: false });
+      if (f) setFiles(f as CustomerFile[]);
+
       setLoading(false);
     }
     load();
