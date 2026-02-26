@@ -132,9 +132,14 @@ export default function KundeDetailPage() {
           {!isNew && customer.firma && <p className="text-muted-foreground text-sm">{customer.firma}</p>}
         </div>
         {!isNew && !editing && (
-          <Button variant="outline" onClick={() => setEditing(true)} className="gap-2 border-border">
-            <Edit2 className="w-4 h-4" />Bearbeiten
-          </Button>
+          <>
+            <Button onClick={() => navigate(`/auftraege/neu?customer_id=${id}`)} className="gap-2">
+              <Plus className="w-4 h-4" />Neuer Auftrag
+            </Button>
+            <Button variant="outline" onClick={() => setEditing(true)} className="gap-2 border-border">
+              <Edit2 className="w-4 h-4" />Bearbeiten
+            </Button>
+          </>
         )}
       </div>
 
