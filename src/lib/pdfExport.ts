@@ -223,16 +223,6 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.text("TOTAL UMSATZ:", boxX + 4, y + 33);
   doc.text(formatCHF(data.umsatz_total), boxX + boxW - 4, y + 33, { align: "right" });
 
-  doc.setFontSize(9);
-  doc.setTextColor(39, 174, 96);
-  doc.text("REINGEWINN:", boxX + 4, y + 40);
-  doc.text(formatCHF(data.gewinn_total), boxX + boxW - 4, y + 40, { align: "right" });
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(180, 180, 180);
-  doc.text("Marge:", boxX + 4, y + 47);
-  doc.text(formatPct(data.marge), boxX + boxW - 4, y + 47, { align: "right" });
 
   // ── Bank info (if available) ─────────────────────────────────────
   const hasBank = data.company.bank_iban || data.company.bank_name;
