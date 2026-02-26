@@ -170,7 +170,7 @@ export default function TeileBibliothekPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                {["Teilname", "Kunde", "Material", "Gewicht", "Druckzeit", "Preis", "Datum", "Auftrag"].map(h => (
+                {["Teilname", "Kunde", "Material", "Gewicht", "Druckzeit", "Preis", "Datum", "Auftrag", ""].map(h => (
                   <th key={h} className={`px-5 py-3 text-muted-foreground font-medium ${["Gewicht", "Druckzeit", "Preis"].includes(h) ? "text-right" : "text-left"}`}>{h}</th>
                 ))}
               </tr>
