@@ -19,6 +19,7 @@ import AuftragDetailPage from "@/pages/AuftragDetailPage";
 import TeileBibliothekPage from "@/pages/TeileBibliothekPage";
 import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
+import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ function AuthGate() {
             <Route path="/auftraege" element={<AuftraegePage />} />
             <Route path="/auftraege/:id" element={<AuftragDetailPage />} />
             <Route path="/teile" element={<TeileBibliothekPage />} />
+            <Route path="/filamente" element={<FilamentePage />} />
             <Route path="/kalkulator" element={<KalkulatorPage />} />
             <Route path="/einstellungen" element={<EinstellungenPage />} />
             <Route path="*" element={<NotFound />} />

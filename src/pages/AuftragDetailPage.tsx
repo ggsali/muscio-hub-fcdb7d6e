@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -8,14 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, ChevronDown } from "lucide-react";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
+import PartFileUpload from "@/components/PartFileUpload";
+import type { Filament } from "@/pages/FilamentePage";
 
 interface PartRow {
   id?: string;
   teilname: string;
-  material: "PLA" | "PETG" | "TPU" | "Sonstige";
+  material: string;
+  filament_id?: string;
   menge: number;
   gewicht_g: number;
   druckzeit_h: number;
@@ -28,7 +31,7 @@ interface PartRow {
 }
 
 const emptyPart = (): PartRow => ({
-  teilname: "", material: "PLA", menge: 1,
+  teilname: "", material: "PLA", filament_id: "", menge: 1,
   gewicht_g: 0, druckzeit_h: 0, nachbearbeitung_h: 0, konstruktion_h: 0,
   preis_pro_stueck: 0, preis_total: 0,
   status: "Ausstehend", notizen: "",
@@ -51,7 +54,7 @@ interface Preset {
 
 const STATUS_OPTIONS = ["Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"];
 const PART_STATUS_OPTIONS = ["Ausstehend", "In Druck", "Fertig", "Geliefert"];
-const MATERIAL_OPTIONS = ["PLA", "PETG", "TPU", "Sonstige"];
+const FALLBACK_MATERIALS = ["PLA", "PETG", "TPU", "Sonstige"];
 
 export default function AuftragDetailPage() {
   const { id } = useParams();
@@ -62,6 +65,8 @@ export default function AuftragDetailPage() {
 
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
+  const [filaments, setFilaments] = useState<Filament[]>([]);
+  const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
   const [activeSettings, setActiveSettings] = useState<Settings>(settings);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState("");
@@ -85,6 +90,9 @@ export default function AuftragDetailPage() {
           setActiveSettings({ ...settings, ...def });
         }
       }
+    });
+    supabase.from("filaments").select("*").eq("aktiv", true).order("material").order("name").then(({ data }) => {
+      if (data) setFilaments(data as Filament[]);
     });
 
     if (!isNew) {
@@ -299,61 +307,122 @@ export default function AuftragDetailPage() {
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
           <h2 className="font-semibold text-sm">Teile</h2>
-          <Button onClick={addPart} variant="outline" size="sm" className="gap-1.5 border-border text-xs">
-            <Plus className="w-3.5 h-3.5" />Teil hinzufügen
-          </Button>
+          <div className="flex items-center gap-2">
+            {presets.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+                <select
+                  value={selectedPresetId}
+                  onChange={e => handlePresetChange(e.target.value)}
+                  className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground"
+                >
+                  <option value="">— Standard-Sätze —</option>
+                  {presets.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}{p.rabatt_prozent > 0 ? ` (-${p.rabatt_prozent}%)` : ""}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <Button onClick={addPart} variant="outline" size="sm" className="gap-1.5 border-border text-xs">
+              <Plus className="w-3.5 h-3.5" />Teil hinzufügen
+            </Button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs min-w-[900px]">
             <thead>
               <tr className="border-b border-border">
-                {["Teilname", "Material", "Menge", "Gewicht(g)", "Druck(h)", "NB(h)", "Konstr(h)", "Preis/St.", "Total", "Status", "Notizen", ""].map(h => (
+                {["Teilname", "Filament / Material", "Menge", "Gewicht(g)", "Druck(h)", "NB(h)", "Konstr(h)", "Preis/St.", "Total", "Status", "Notizen", ""].map(h => (
                   <th key={h} className="px-3 py-2.5 text-muted-foreground font-medium text-left whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {parts.map((part, idx) => (
-                <tr key={idx} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
-                  <td className="px-2 py-2">
-                    <Input value={part.teilname} onChange={e => updatePart(idx, "teilname", e.target.value)} className="bg-input border-border h-7 text-xs w-28" placeholder="Name" />
-                  </td>
-                  <td className="px-2 py-2">
-                    <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
-                      {MATERIAL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-2 py-2">
-                    <Input type="number" value={part.menge} onChange={e => updatePart(idx, "menge", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" />
-                  </td>
-                  <td className="px-2 py-2">
-                    <Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
-                  </td>
-                  <td className="px-2 py-2">
-                    <Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
-                  </td>
-                  <td className="px-2 py-2">
-                    <Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
-                  </td>
-                  <td className="px-2 py-2">
-                    <Input type="number" value={part.konstruktion_h} onChange={e => updatePart(idx, "konstruktion_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
-                  </td>
-                  <td className="px-2 py-2 text-right font-medium text-primary whitespace-nowrap">{formatCHF(part.preis_pro_stueck)}</td>
-                  <td className="px-2 py-2 text-right font-medium whitespace-nowrap">{formatCHF(part.preis_total)}</td>
-                  <td className="px-2 py-2">
-                    <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
-                      {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-2 py-2">
-                    <Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-7 text-xs w-24" placeholder="Notiz" />
-                  </td>
-                  <td className="px-2 py-2">
-                    <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
+                <React.Fragment key={idx}>
+                  <tr className="border-b border-border/50 hover:bg-muted/20">
+                    <td className="px-2 py-2">
+                      <Input value={part.teilname} onChange={e => updatePart(idx, "teilname", e.target.value)} className="bg-input border-border h-7 text-xs w-28" placeholder="Name" />
+                    </td>
+                    <td className="px-2 py-2 min-w-[160px]">
+                      {filaments.length > 0 ? (
+                        <select
+                          value={part.filament_id || ""}
+                          onChange={e => {
+                            const fil = filaments.find(f => f.id === e.target.value);
+                            updatePart(idx, "filament_id", e.target.value);
+                            if (fil) updatePart(idx, "material", `${fil.material} – ${fil.name}`);
+                          }}
+                          className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
+                        >
+                          <option value="">Manuell eingeben…</option>
+                          {filaments.map(f => (
+                            <option key={f.id} value={f.id}>
+                              {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
+                          {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      )}
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input type="number" value={part.menge} onChange={e => updatePart(idx, "menge", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input type="number" value={part.konstruktion_h} onChange={e => updatePart(idx, "konstruktion_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
+                    </td>
+                    <td className="px-2 py-2 text-right font-medium text-primary whitespace-nowrap">{formatCHF(part.preis_pro_stueck)}</td>
+                    <td className="px-2 py-2 text-right font-medium whitespace-nowrap">{formatCHF(part.preis_total)}</td>
+                    <td className="px-2 py-2">
+                      <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
+                        {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-7 text-xs w-24" placeholder="Notiz" />
+                    </td>
+                    <td className="px-2 py-2">
+                      <div className="flex items-center gap-1">
+                        {part.id && (
+                          <button
+                            onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)}
+                            title="Dateien"
+                            className={`transition-colors p-1 ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                          >
+                            <Paperclip className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {/* File upload row – only for saved parts */}
+                  {expandedPartIdx === idx && part.id && (
+                    <tr className="bg-muted/10 border-b border-border/50">
+                      <td colSpan={12} className="px-4 py-3">
+                        <PartFileUpload
+                          partId={part.id}
+                          orderId={typeof id === "string" && id !== "neu" ? id : undefined}
+                          customerId={customerId || undefined}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
