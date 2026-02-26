@@ -169,7 +169,11 @@ export default function AuftragDetailPage() {
 
   // Totals
   const totalUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
-  const totalKosten = parts.reduce((s, p) => s + calcKosten(activeSettings, p.gewicht_g, p.druckzeit_h) * p.menge, 0);
+  const totalKosten = parts.reduce((s, p) => {
+    const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
+    const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
+    return s + calcKosten(partSettings, p.gewicht_g, p.druckzeit_h) * p.menge;
+  }, 0);
   const totalGewinn = calcGewinn(totalUmsatz, totalKosten);
   const totalMarge = calcMarge(totalGewinn, totalUmsatz);
 
