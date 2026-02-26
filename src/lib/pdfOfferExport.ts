@@ -265,5 +265,10 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.rect(0, pageH - 14, pageW, 2, "F");
 
   const filename = `Offerte_${offerNr}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
+
+  if (data.returnBase64) {
+    return { base64: doc.output("datauristring").split(",")[1], filename };
+  }
   doc.save(filename);
+  return null;
 }
