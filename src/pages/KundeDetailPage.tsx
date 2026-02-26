@@ -242,6 +242,62 @@ export default function KundeDetailPage() {
         </div>
       )}
 
+      {/* Dateien Tab */}
+      {activeTab === "dateien" && !isNew && (
+        <div className="space-y-2">
+          {files.length === 0 ? (
+            <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+              Keine Dateien für diesen Kunden vorhanden.
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Datei", "Typ", "Grösse", "Auftrag", "Datum", ""].map(h => (
+                      <th key={h} className="px-5 py-3 text-muted-foreground font-medium text-left">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {files.map(f => (
+                    <tr key={f.id} className="table-row-alt border-b border-border/50 last:border-0 group">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          {fileIcon(f.file_type)}
+                          <span className="font-medium truncate max-w-[200px]">{f.filename}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-muted-foreground">{f.file_type?.split("/")[1]?.toUpperCase() ?? "—"}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{formatBytes(f.file_size_bytes)}</td>
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {f.order_id ? (
+                          <button onClick={() => navigate(`/auftraege/${f.order_id}`)} className="text-primary hover:underline text-xs">
+                            Auftrag öffnen
+                          </button>
+                        ) : "—"}
+                      </td>
+                      <td className="px-5 py-3 text-muted-foreground">{new Date(f.created_at).toLocaleDateString("de-CH")}</td>
+                      <td className="px-5 py-3">
+                        <button
+                          onClick={async () => {
+                            const { data } = await supabase.storage.from("part-files").createSignedUrl(f.storage_path, 60);
+                            if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          }}
+                          className="text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Teile Tab */}
       {activeTab === "teile" && !isNew && (
         <div className="bg-card border border-border rounded-lg overflow-hidden">
