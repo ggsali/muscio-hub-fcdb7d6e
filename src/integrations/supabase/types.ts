@@ -152,6 +152,7 @@ export type Database = {
           id: string
           kosten_total: number | null
           marge: number | null
+          name: string | null
           status: string | null
           tracking_nr: string | null
           umsatz_total: number | null
@@ -166,6 +167,7 @@ export type Database = {
           id?: string
           kosten_total?: number | null
           marge?: number | null
+          name?: string | null
           status?: string | null
           tracking_nr?: string | null
           umsatz_total?: number | null
@@ -180,6 +182,7 @@ export type Database = {
           id?: string
           kosten_total?: number | null
           marge?: number | null
+          name?: string | null
           status?: string | null
           tracking_nr?: string | null
           umsatz_total?: number | null
