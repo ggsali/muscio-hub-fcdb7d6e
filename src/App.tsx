@@ -21,6 +21,7 @@ import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
 import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
+import AnfragenPage from "@/pages/AnfragenPage";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ function AuthGate() {
             <Route path="/filamente" element={<FilamentePage />} />
             <Route path="/kalkulator" element={<KalkulatorPage />} />
             <Route path="/einstellungen" element={<EinstellungenPage />} />
+            <Route path="/anfragen" element={<AnfragenPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

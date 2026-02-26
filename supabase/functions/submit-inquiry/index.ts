@@ -1,0 +1,72 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { name, email, telefon, betreff, nachricht } = await req.json();
+
+    if (!name || !email || !nachricht) {
+      return new Response(JSON.stringify({ error: "Name, E-Mail und Nachricht sind erforderlich." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Prüfen ob Kunde bereits existiert
+    const { data: existingCustomer } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    let customerId: string | null = existingCustomer?.id ?? null;
+
+    // Neuen Kunden anlegen falls nicht vorhanden
+    if (!customerId) {
+      const { data: newCustomer } = await supabase
+        .from("customers")
+        .insert({ name, email, telefon: telefon || null })
+        .select("id")
+        .single();
+      customerId = newCustomer?.id ?? null;
+    }
+
+    // Anfrage speichern
+    const { error } = await supabase.from("inquiries").insert({
+      name,
+      email,
+      telefon: telefon || null,
+      betreff: betreff || "Anfrage",
+      nachricht,
+      quelle: "website",
+      customer_id: customerId,
+      status: "Neu",
+    });
+
+    if (error) throw error;
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error("Error:", err);
+    return new Response(JSON.stringify({ error: "Interner Fehler." }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
