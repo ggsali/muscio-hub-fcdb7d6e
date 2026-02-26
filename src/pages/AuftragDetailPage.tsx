@@ -387,6 +387,15 @@ export default function AuftragDetailPage() {
       {/* Basic info */}
       <div className="bg-card border border-border rounded-lg p-5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="col-span-2 md:col-span-4 space-y-1.5">
+            <Label>Auftragsname <span className="text-muted-foreground font-normal text-xs">(wird als E-Mail-Betreff verwendet)</span></Label>
+            <Input
+              value={orderName}
+              onChange={e => setOrderName(e.target.value)}
+              placeholder="z.B. Halterungen für Kundenanlage, Prototyp Serie A …"
+              className="bg-input border-border"
+            />
+          </div>
           <div className="col-span-2 space-y-1.5">
             <Label>Kunde</Label>
             <select
