@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
-import { ArrowLeft, Edit2, Save, X } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Download, Trash2, FileText, Image, Box } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -41,6 +41,29 @@ interface Part {
   order_id: string;
 }
 
+interface CustomerFile {
+  id: string;
+  filename: string;
+  storage_path: string;
+  file_type: string;
+  file_size_bytes: number;
+  created_at: string;
+  part_id: string | null;
+  order_id: string | null;
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function fileIcon(type: string) {
+  if (type?.startsWith("image")) return <Image className="w-4 h-4 text-primary" />;
+  if (type?.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
+  return <Box className="w-4 h-4 text-muted-foreground" />;
+}
+
 export default function KundeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -51,8 +74,9 @@ export default function KundeDetailPage() {
   });
   const [orders, setOrders] = useState<Order[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
+  const [files, setFiles] = useState<CustomerFile[]>([]);
   const [editing, setEditing] = useState(isNew);
-  const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile">("kontakt");
+  const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien">("kontakt");
   const [loading, setLoading] = useState(!isNew);
 
   useEffect(() => {
@@ -66,6 +90,9 @@ export default function KundeDetailPage() {
 
       const { data: p } = await supabase.from("parts").select("*").eq("customer_id", id!).order("created_at", { ascending: false });
       if (p) setParts(p);
+
+      const { data: f } = await supabase.from("part_files").select("*").eq("customer_id", id!).order("created_at", { ascending: false });
+      if (f) setFiles(f as CustomerFile[]);
 
       setLoading(false);
     }
@@ -114,7 +141,7 @@ export default function KundeDetailPage() {
       {/* Tabs */}
       {!isNew && (
         <div className="flex gap-1 border-b border-border">
-          {(["kontakt", "auftraege", "teile"] as const).map(tab => (
+          {(["kontakt", "auftraege", "teile", "dateien"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -122,7 +149,7 @@ export default function KundeDetailPage() {
                 activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab === "auftraege" ? "Auftragshistorie" : tab === "teile" ? "Teile" : "Kontakt"}
+              {tab === "auftraege" ? "Auftragshistorie" : tab === "teile" ? "Teile" : tab === "dateien" ? `Dateien (${files.length})` : "Kontakt"}
             </button>
           ))}
         </div>
@@ -212,6 +239,62 @@ export default function KundeDetailPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Dateien Tab */}
+      {activeTab === "dateien" && !isNew && (
+        <div className="space-y-2">
+          {files.length === 0 ? (
+            <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+              Keine Dateien für diesen Kunden vorhanden.
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Datei", "Typ", "Grösse", "Auftrag", "Datum", ""].map(h => (
+                      <th key={h} className="px-5 py-3 text-muted-foreground font-medium text-left">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {files.map(f => (
+                    <tr key={f.id} className="table-row-alt border-b border-border/50 last:border-0 group">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          {fileIcon(f.file_type)}
+                          <span className="font-medium truncate max-w-[200px]">{f.filename}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-muted-foreground">{f.file_type?.split("/")[1]?.toUpperCase() ?? "—"}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{formatBytes(f.file_size_bytes)}</td>
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {f.order_id ? (
+                          <button onClick={() => navigate(`/auftraege/${f.order_id}`)} className="text-primary hover:underline text-xs">
+                            Auftrag öffnen
+                          </button>
+                        ) : "—"}
+                      </td>
+                      <td className="px-5 py-3 text-muted-foreground">{new Date(f.created_at).toLocaleDateString("de-CH")}</td>
+                      <td className="px-5 py-3">
+                        <button
+                          onClick={async () => {
+                            const { data } = await supabase.storage.from("part-files").createSignedUrl(f.storage_path, 60);
+                            if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          }}
+                          className="text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
