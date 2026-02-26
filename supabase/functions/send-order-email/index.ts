@@ -58,6 +58,7 @@ serve(async (req) => {
     const { data: parts } = await supabase.from("parts").select("*").eq("order_id", orderId);
 
     const orderNr = order.id.slice(0, 8).toUpperCase();
+    const orderName = (order as any).name || order.beschreibung || `Auftrag ${orderNr}`;
     const datum = order.datum ? new Date(order.datum).toLocaleDateString("de-CH") : "";
     const total = (order.umsatz_total ?? 0).toFixed(2);
 
@@ -75,7 +76,7 @@ serve(async (req) => {
     let htmlBody = "";
 
     if (type === "rechnung") {
-      subject = `Rechnung ${orderNr} – ${companyName}`;
+      subject = `Rechnung: ${orderName} – ${companyName}`;
       htmlBody = `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
           <div style="background:#18181b;padding:24px 32px;border-radius:8px 8px 0 0;">
