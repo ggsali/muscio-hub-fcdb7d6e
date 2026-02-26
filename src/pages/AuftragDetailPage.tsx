@@ -17,7 +17,8 @@ import type { Filament } from "@/pages/FilamentePage";
 interface PartRow {
   id?: string;
   teilname: string;
-  material: "PLA" | "PETG" | "TPU" | "Sonstige";
+  material: string;
+  filament_id?: string;
   menge: number;
   gewicht_g: number;
   druckzeit_h: number;
@@ -30,7 +31,7 @@ interface PartRow {
 }
 
 const emptyPart = (): PartRow => ({
-  teilname: "", material: "PLA", menge: 1,
+  teilname: "", material: "PLA", filament_id: "", menge: 1,
   gewicht_g: 0, druckzeit_h: 0, nachbearbeitung_h: 0, konstruktion_h: 0,
   preis_pro_stueck: 0, preis_total: 0,
   status: "Ausstehend", notizen: "",
