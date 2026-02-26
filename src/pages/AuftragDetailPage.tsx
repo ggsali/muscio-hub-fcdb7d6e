@@ -192,6 +192,12 @@ export default function AuftragDetailPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-2xl font-bold flex-1">{isNew ? "Neuer Auftrag" : `Auftrag bearbeiten`}</h1>
+        {!isNew && (
+          <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border">
+            <FileDown className="w-4 h-4" />
+            PDF exportieren
+          </Button>
+        )}
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
           <Save className="w-4 h-4" />
           {saving ? "Speichern..." : "Speichern"}
