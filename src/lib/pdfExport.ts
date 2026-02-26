@@ -244,6 +244,22 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.text("GESAMTBETRAG", sumX + 3, sumY + 3.5);
   doc.text(formatCHF(data.umsatz_total), pageW - margin - 3, sumY + 3.5, { align: "right" });
 
+  // Grand Total box bottom edge
+  const totalBoxBottom = sumY + 8; // sumY - 4 + 12
+
+  // ── Zahlungsbedingungen unter Gesamtbetrag ──────────────────────
+  const termsY = totalBoxBottom + 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...BLACK);
+  doc.text("ZAHLUNGSBEDINGUNGEN", sumX, termsY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...GRAY);
+  const termsText = "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.";
+  const termsLines = doc.splitTextToSize(termsText, pageW - sumX - margin);
+  doc.text(termsLines, sumX, termsY + 6);
+
   // ── Dankeszeile links ───────────────────────────────────────────
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
@@ -272,27 +288,12 @@ export async function exportOrderPDF(data: OrderExportData) {
     if (data.company.bank_name)    { doc.text(`Bank:          ${data.company.bank_name}`,    margin, bl); }
   }
 
-  // ── AGB / Bedingungen ───────────────────────────────────────────
-  const termsX = colR;
-  const termsY = bankY;
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
-  doc.setTextColor(...BLACK);
-  doc.text("ZAHLUNGSBEDINGUNGEN", termsX, termsY);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(...GRAY);
-  const termsText = "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.";
-  const termsLines = doc.splitTextToSize(termsText, pageW - termsX - margin);
-  doc.text(termsLines, termsX, termsY + 6);
-
   // UID
   if (data.company.uid_nummer) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...GRAY);
-    doc.text(`UID: ${data.company.uid_nummer}`, margin, termsY + 30);
+    doc.text(`UID: ${data.company.uid_nummer}`, margin, bankY + 30);
   }
 
   // ── Fusszeile ───────────────────────────────────────────────────
