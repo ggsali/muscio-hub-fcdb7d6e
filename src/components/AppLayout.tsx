@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, Library, Calculator, Settings, Menu, X, Box, LogOut
+  LayoutDashboard, Users, Package, Library, Calculator, Settings, Menu, X, Box, LogOut, FlaskConical
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ const navItems = [
   { to: "/kunden", icon: <Users className="w-5 h-5" />, label: "Kunden" },
   { to: "/auftraege", icon: <Package className="w-5 h-5" />, label: "Aufträge" },
   { to: "/teile", icon: <Library className="w-5 h-5" />, label: "Teile-Bibliothek" },
+  { to: "/filamente", icon: <FlaskConical className="w-5 h-5" />, label: "Filamente" },
   { to: "/kalkulator", icon: <Calculator className="w-5 h-5" />, label: "Kalkulator" },
   { to: "/einstellungen", icon: <Settings className="w-5 h-5" />, label: "Einstellungen" },
 ];

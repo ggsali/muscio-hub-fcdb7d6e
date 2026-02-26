@@ -19,6 +19,7 @@ import AuftragDetailPage from "@/pages/AuftragDetailPage";
 import TeileBibliothekPage from "@/pages/TeileBibliothekPage";
 import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
+import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
