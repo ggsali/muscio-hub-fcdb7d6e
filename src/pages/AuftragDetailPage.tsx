@@ -505,6 +505,15 @@ export default function AuftragDetailPage() {
         </div>
       </div>
 
+      {/* Status Workflow – nur für gespeicherte Aufträge */}
+      {!isNew && (
+        <OrderStatusWorkflow
+          orderId={id!}
+          currentStatus={status}
+          onStatusChange={setStatus}
+        />
+      )}
+
       {/* Summary */}
       <div className="bg-card border border-border rounded-lg p-5 max-w-xs ml-auto">
         <h3 className="font-semibold text-sm mb-3">Auftrags-Zusammenfassung</h3>
