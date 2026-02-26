@@ -70,7 +70,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   let y = margin;
 
   const ACCENT = hexToRgb(data.company.primary_color || "#FF5A00");
-  const firmenname = data.company.firmenname || "3dMuscio";
+  const firmenname = data.company.firmenname || "3DMuscio";
   const slogan = data.company.slogan || "Professioneller 3D-Druck | Schweiz";
 
   // ── Header bar ──────────────────────────────────────────────────

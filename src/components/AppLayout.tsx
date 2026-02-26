@@ -36,7 +36,7 @@ export default function AppLayout() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
             <Box className="w-4 h-4 text-primary-foreground" />
           </div>
-          {!collapsed && <span className="font-bold text-foreground text-sm">3dMuscio</span>}
+          {!collapsed && <span className="font-bold text-foreground text-sm tracking-tight">3DMuscio</span>}
         </div>
 
         {/* Toggle */}
