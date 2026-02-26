@@ -25,6 +25,7 @@ interface OfferExportData {
   settings: Settings;
   company: CompanySettings;
   gueltigBis?: string; // Gültigkeitsdatum
+  returnBase64?: boolean;
 }
 
 const BLACK   = [30, 30, 30]   as [number, number, number];
