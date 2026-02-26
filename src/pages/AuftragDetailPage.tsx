@@ -78,6 +78,7 @@ export default function AuftragDetailPage() {
   const [beschreibung, setBeschreibung] = useState("");
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
+  const [trackingNr, setTrackingNr] = useState("");
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
