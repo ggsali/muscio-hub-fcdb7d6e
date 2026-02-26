@@ -44,19 +44,20 @@ function AuthGate() {
   return (
     <SettingsProvider>
       <CompanySettingsProvider>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/kunden" element={<KundenPage />} />
-          <Route path="/kunden/:id" element={<KundeDetailPage />} />
-          <Route path="/auftraege" element={<AuftraegePage />} />
-          <Route path="/auftraege/:id" element={<AuftragDetailPage />} />
-          <Route path="/teile" element={<TeileBibliothekPage />} />
-          <Route path="/kalkulator" element={<KalkulatorPage />} />
-          <Route path="/einstellungen" element={<EinstellungenPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/kunden" element={<KundenPage />} />
+            <Route path="/kunden/:id" element={<KundeDetailPage />} />
+            <Route path="/auftraege" element={<AuftraegePage />} />
+            <Route path="/auftraege/:id" element={<AuftragDetailPage />} />
+            <Route path="/teile" element={<TeileBibliothekPage />} />
+            <Route path="/kalkulator" element={<KalkulatorPage />} />
+            <Route path="/einstellungen" element={<EinstellungenPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </CompanySettingsProvider>
     </SettingsProvider>
   );
 }
