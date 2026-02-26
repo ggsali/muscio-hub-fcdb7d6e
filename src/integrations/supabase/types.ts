@@ -14,7 +14,182 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          adresse: string | null
+          aktiv: boolean | null
+          created_at: string | null
+          email: string | null
+          firma: string | null
+          id: string
+          name: string
+          notizen: string | null
+          telefon: string | null
+        }
+        Insert: {
+          adresse?: string | null
+          aktiv?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          firma?: string | null
+          id?: string
+          name: string
+          notizen?: string | null
+          telefon?: string | null
+        }
+        Update: {
+          adresse?: string | null
+          aktiv?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          firma?: string | null
+          id?: string
+          name?: string
+          notizen?: string | null
+          telefon?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          beschreibung: string | null
+          created_at: string | null
+          customer_id: string | null
+          datum: string | null
+          gewinn_total: number | null
+          id: string
+          kosten_total: number | null
+          marge: number | null
+          status: string | null
+          umsatz_total: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          beschreibung?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          datum?: string | null
+          gewinn_total?: number | null
+          id?: string
+          kosten_total?: number | null
+          marge?: number | null
+          status?: string | null
+          umsatz_total?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          beschreibung?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          datum?: string | null
+          gewinn_total?: number | null
+          id?: string
+          kosten_total?: number | null
+          marge?: number | null
+          status?: string | null
+          umsatz_total?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parts: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          druckzeit_h: number | null
+          gewicht_g: number | null
+          id: string
+          konstruktion_h: number | null
+          material: string | null
+          menge: number | null
+          nachbearbeitung_h: number | null
+          notizen: string | null
+          order_id: string | null
+          preis_pro_stueck: number | null
+          preis_total: number | null
+          status: string | null
+          teilname: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          druckzeit_h?: number | null
+          gewicht_g?: number | null
+          id?: string
+          konstruktion_h?: number | null
+          material?: string | null
+          menge?: number | null
+          nachbearbeitung_h?: number | null
+          notizen?: string | null
+          order_id?: string | null
+          preis_pro_stueck?: number | null
+          preis_total?: number | null
+          status?: string | null
+          teilname: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          druckzeit_h?: number | null
+          gewicht_g?: number | null
+          id?: string
+          konstruktion_h?: number | null
+          material?: string | null
+          menge?: number | null
+          nachbearbeitung_h?: number | null
+          notizen?: string | null
+          order_id?: string | null
+          preis_pro_stueck?: number | null
+          preis_total?: number | null
+          status?: string | null
+          teilname?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
