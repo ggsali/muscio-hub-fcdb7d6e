@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, Library, Calculator, Settings, Menu, ChevronLeft, Box, LogOut, FlaskConical
+  LayoutDashboard, Users, Package, Library, Calculator, Settings, Menu, ChevronLeft, Box, LogOut, FlaskConical, MessageSquare
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ const navItems = [
   { to: "/", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, label: "Dashboard" },
   { to: "/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kunden" },
   { to: "/auftraege", icon: <Package className="w-[18px] h-[18px]" />, label: "Aufträge" },
+  { to: "/anfragen", icon: <MessageSquare className="w-[18px] h-[18px]" />, label: "Anfragen" },
   { to: "/teile", icon: <Library className="w-[18px] h-[18px]" />, label: "Teile-Bibliothek" },
   { to: "/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
   { to: "/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
