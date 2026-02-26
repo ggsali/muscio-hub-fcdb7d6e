@@ -280,6 +280,7 @@ export default function AuftragDetailPage() {
   const handleSave = async () => {
     setSaving(true);
     const orderData = {
+      name: orderName || null,
       customer_id: customerId || null,
       beschreibung,
       datum,
