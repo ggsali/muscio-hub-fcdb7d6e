@@ -23,8 +23,7 @@ export default function OrderStatusWorkflow({ orderId, currentStatus, onStatusCh
   const [loadingLog, setLoadingLog] = useState(true);
 
   const loadLog = async () => {
-    const { data } = await supabase
-      .from("order_status_log" as any)
+    const { data } = await (supabase.from as any)("order_status_log")
       .select("*")
       .eq("order_id", orderId)
       .order("created_at", { ascending: false });
