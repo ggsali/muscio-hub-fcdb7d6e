@@ -43,6 +43,7 @@ export default function AuftragDetailPage() {
   const navigate = useNavigate();
   const isNew = id === "neu";
   const { settings } = useSettings();
+  const { company } = useCompanySettings();
 
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
   const [customerId, setCustomerId] = useState("");
