@@ -158,7 +158,6 @@ export default function AuftragDetailPage() {
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
   const handleExportPDF = async () => {
-    // Fetch customer data
     let customerName = "Kein Kunde";
     let customerFirma, customerEmail, customerTelefon, customerAdresse;
     if (customerId) {
@@ -186,7 +185,7 @@ export default function AuftragDetailPage() {
       kosten_total: totalKosten,
       gewinn_total: totalGewinn,
       marge: totalMarge,
-      settings,
+      settings: activeSettings,
       company,
     });
   };
