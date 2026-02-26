@@ -25,6 +25,7 @@ interface OfferExportData {
   settings: Settings;
   company: CompanySettings;
   gueltigBis?: string; // Gültigkeitsdatum
+  returnBase64?: boolean;
 }
 
 const BLACK   = [30, 30, 30]   as [number, number, number];
@@ -265,5 +266,10 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.rect(0, pageH - 14, pageW, 2, "F");
 
   const filename = `Offerte_${offerNr}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
+
+  if (data.returnBase64) {
+    return { base64: doc.output("datauristring").split(",")[1], filename };
+  }
   doc.save(filename);
+  return null;
 }

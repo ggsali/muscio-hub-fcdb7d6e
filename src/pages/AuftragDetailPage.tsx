@@ -200,8 +200,49 @@ export default function AuftragDetailPage() {
   const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung") => {
     setSendingEmail(type);
     try {
+      let pdfBase64: string | null = null;
+      let pdfFilename: string | null = null;
+
+      // PDF clientseitig generieren für Rechnung und Offerte
+      if (type === "rechnung" || type === "offerte") {
+        let customerName = "Kein Kunde";
+        let customerFirma, customerEmail, customerTelefon, customerAdresse;
+        if (customerId) {
+          const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
+          if (c) {
+            customerName = [c.vorname, c.name].filter(Boolean).join(" ") || c.name;
+            customerFirma = c.firma ?? undefined;
+            customerEmail = c.email ?? undefined;
+            customerTelefon = c.telefon ?? undefined;
+            // Adresse aus neuen Feldern zusammensetzen
+            const adresseParts = [];
+            if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
+            if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
+            customerAdresse = adresseParts.join(", ") || c.adresse || undefined;
+          }
+        }
+
+        if (type === "rechnung") {
+          const result = await exportOrderPDF({
+            orderId: id || "neu", datum, beschreibung, status,
+            customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+            parts, umsatz_total: totalUmsatz, kosten_total: totalKosten,
+            gewinn_total: totalGewinn, marge: totalMarge,
+            settings: activeSettings, company, returnBase64: true,
+          });
+          if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
+        } else {
+          const result = await exportOfferPDF({
+            orderId: id || "neu", datum, beschreibung,
+            customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+            parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true,
+          });
+          if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke("send-order-email", {
-        body: { orderId: id, type, trackingNr },
+        body: { orderId: id, type, trackingNr, pdfBase64, pdfFilename },
       });
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });

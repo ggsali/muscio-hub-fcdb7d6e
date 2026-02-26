@@ -42,10 +42,16 @@ export type Database = {
           created_at: string | null
           email: string | null
           firma: string | null
+          hausnummer: string | null
           id: string
+          land: string | null
           name: string
           notizen: string | null
+          ort: string | null
+          plz: string | null
+          strasse: string | null
           telefon: string | null
+          vorname: string | null
         }
         Insert: {
           adresse?: string | null
@@ -53,10 +59,16 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           firma?: string | null
+          hausnummer?: string | null
           id?: string
+          land?: string | null
           name: string
           notizen?: string | null
+          ort?: string | null
+          plz?: string | null
+          strasse?: string | null
           telefon?: string | null
+          vorname?: string | null
         }
         Update: {
           adresse?: string | null
@@ -64,10 +76,16 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           firma?: string | null
+          hausnummer?: string | null
           id?: string
+          land?: string | null
           name?: string
           notizen?: string | null
+          ort?: string | null
+          plz?: string | null
+          strasse?: string | null
           telefon?: string | null
+          vorname?: string | null
         }
         Relationships: []
       }

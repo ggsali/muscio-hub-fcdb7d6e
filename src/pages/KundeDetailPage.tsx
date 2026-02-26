@@ -7,15 +7,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
-import { ArrowLeft, Edit2, Save, X, Download, Trash2, FileText, Image, Box, Plus } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus } from "lucide-react";
 
 interface Customer {
   id: string;
+  vorname: string;
   name: string;
   firma: string;
   email: string;
   telefon: string;
-  adresse: string;
+  strasse: string;
+  hausnummer: string;
+  plz: string;
+  ort: string;
+  land: string;
+  adresse: string; // legacy
   notizen: string;
   aktiv: boolean;
 }
@@ -24,6 +30,7 @@ interface Order {
   id: string;
   datum: string;
   beschreibung: string;
+  name: string | null;
   umsatz_total: number;
   gewinn_total: number;
   marge: number;
@@ -64,14 +71,18 @@ function fileIcon(type: string) {
   return <Box className="w-4 h-4 text-muted-foreground" />;
 }
 
+const emptyCustomer = (): Customer => ({
+  id: "", vorname: "", name: "", firma: "", email: "", telefon: "",
+  strasse: "", hausnummer: "", plz: "", ort: "", land: "Schweiz",
+  adresse: "", notizen: "", aktiv: true,
+});
+
 export default function KundeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === "neu";
 
-  const [customer, setCustomer] = useState<Customer>({
-    id: "", name: "", firma: "", email: "", telefon: "", adresse: "", notizen: "", aktiv: true,
-  });
+  const [customer, setCustomer] = useState<Customer>(emptyCustomer());
   const [orders, setOrders] = useState<Order[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
   const [files, setFiles] = useState<CustomerFile[]>([]);
@@ -83,13 +94,13 @@ export default function KundeDetailPage() {
     if (isNew) return;
     async function load() {
       const { data: c } = await supabase.from("customers").select("*").eq("id", id!).single();
-      if (c) setCustomer(c);
+      if (c) setCustomer({ ...emptyCustomer(), ...(c as any) });
 
       const { data: o } = await supabase.from("orders").select("*").eq("customer_id", id!).order("datum", { ascending: false });
-      if (o) setOrders(o);
+      if (o) setOrders(o as Order[]);
 
       const { data: p } = await supabase.from("parts").select("*").eq("customer_id", id!).order("created_at", { ascending: false });
-      if (p) setParts(p);
+      if (p) setParts(p as Part[]);
 
       const { data: f } = await supabase.from("part_files").select("*").eq("customer_id", id!).order("created_at", { ascending: false });
       if (f) setFiles(f as CustomerFile[]);
@@ -99,18 +110,36 @@ export default function KundeDetailPage() {
     load();
   }, [id]);
 
+  const getFullAdresse = () => {
+    const parts = [];
+    if (customer.strasse || customer.hausnummer) parts.push(`${customer.strasse || ""} ${customer.hausnummer || ""}`.trim());
+    if (customer.plz || customer.ort) parts.push(`${customer.plz || ""} ${customer.ort || ""}`.trim());
+    if (customer.land && customer.land !== "Schweiz") parts.push(customer.land);
+    return parts.join(", ");
+  };
+
   const handleSave = async () => {
+    const payload = {
+      vorname: customer.vorname || null,
+      name: customer.name,
+      firma: customer.firma || null,
+      email: customer.email || null,
+      telefon: customer.telefon || null,
+      strasse: customer.strasse || null,
+      hausnummer: customer.hausnummer || null,
+      plz: customer.plz || null,
+      ort: customer.ort || null,
+      land: customer.land || "Schweiz",
+      adresse: getFullAdresse() || customer.adresse || null,
+      notizen: customer.notizen || null,
+      aktiv: customer.aktiv,
+    };
+
     if (isNew) {
-      const { data } = await supabase.from("customers").insert({
-        name: customer.name, firma: customer.firma, email: customer.email,
-        telefon: customer.telefon, adresse: customer.adresse, notizen: customer.notizen, aktiv: customer.aktiv,
-      }).select().single();
+      const { data } = await supabase.from("customers").insert(payload).select().single();
       if (data) navigate(`/kunden/${data.id}`, { replace: true });
     } else {
-      await supabase.from("customers").update({
-        name: customer.name, firma: customer.firma, email: customer.email,
-        telefon: customer.telefon, adresse: customer.adresse, notizen: customer.notizen,
-      }).eq("id", id!);
+      await supabase.from("customers").update(payload).eq("id", id!);
       setEditing(false);
     }
   };
@@ -121,6 +150,19 @@ export default function KundeDetailPage() {
 
   if (loading) return <div className="p-8 text-muted-foreground">Laden...</div>;
 
+  const field = (label: string, key: keyof Customer, placeholder?: string, colSpan = 1) => (
+    <div className={`space-y-1.5 ${colSpan === 2 ? "col-span-2" : ""}`}>
+      <Label>{label}</Label>
+      <Input
+        value={(customer[key] as string) || ""}
+        onChange={e => setCustomer({ ...customer, [key]: e.target.value })}
+        disabled={!editing}
+        placeholder={placeholder}
+        className="bg-input border-border"
+      />
+    </div>
+  );
+
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex items-center gap-4">
@@ -128,7 +170,9 @@ export default function KundeDetailPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{isNew ? "Neuer Kunde" : customer.name}</h1>
+          <h1 className="text-2xl font-bold">
+            {isNew ? "Neuer Kunde" : [customer.vorname, customer.name].filter(Boolean).join(" ") || customer.name}
+          </h1>
           {!isNew && customer.firma && <p className="text-muted-foreground text-sm">{customer.firma}</p>}
         </div>
         {!isNew && !editing && (
@@ -162,33 +206,59 @@ export default function KundeDetailPage() {
 
       {/* Kontakt Tab */}
       {(isNew || activeTab === "kontakt") && (
-        <div className="bg-card border border-border rounded-lg p-5 space-y-4 max-w-xl">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Name *</Label>
-              <Input value={customer.name} onChange={e => setCustomer({ ...customer, name: e.target.value })} disabled={!editing} className="bg-input border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Firma</Label>
-              <Input value={customer.firma} onChange={e => setCustomer({ ...customer, firma: e.target.value })} disabled={!editing} className="bg-input border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>E-Mail</Label>
-              <Input value={customer.email} onChange={e => setCustomer({ ...customer, email: e.target.value })} disabled={!editing} className="bg-input border-border" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Telefon</Label>
-              <Input value={customer.telefon} onChange={e => setCustomer({ ...customer, telefon: e.target.value })} disabled={!editing} className="bg-input border-border" />
+        <div className="bg-card border border-border rounded-lg p-5 space-y-5 max-w-2xl">
+          {/* Person */}
+          <div>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Person</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {field("Vorname", "vorname", "Max")}
+              {field("Nachname *", "name", "Mustermann")}
+              {field("Firma / Organisation", "firma", "Mustermann GmbH", 2)}
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Adresse</Label>
-            <Input value={customer.adresse} onChange={e => setCustomer({ ...customer, adresse: e.target.value })} disabled={!editing} className="bg-input border-border" />
+
+          {/* Kontakt */}
+          <div>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Kontakt</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {field("E-Mail", "email", "max@beispiel.ch")}
+              {field("Telefon", "telefon", "+41 79 123 45 67")}
+            </div>
           </div>
+
+          {/* Adresse */}
+          <div>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Adresse</h3>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-3 space-y-1.5">
+                <Label>Strasse</Label>
+                <Input value={customer.strasse || ""} onChange={e => setCustomer({ ...customer, strasse: e.target.value })} disabled={!editing} placeholder="Musterstrasse" className="bg-input border-border" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Nr.</Label>
+                <Input value={customer.hausnummer || ""} onChange={e => setCustomer({ ...customer, hausnummer: e.target.value })} disabled={!editing} placeholder="12a" className="bg-input border-border" />
+              </div>
+              <div className="col-span-1 space-y-1.5">
+                <Label>PLZ</Label>
+                <Input value={customer.plz || ""} onChange={e => setCustomer({ ...customer, plz: e.target.value })} disabled={!editing} placeholder="8000" className="bg-input border-border" />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label>Ort</Label>
+                <Input value={customer.ort || ""} onChange={e => setCustomer({ ...customer, ort: e.target.value })} disabled={!editing} placeholder="Zürich" className="bg-input border-border" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Land</Label>
+                <Input value={customer.land || "Schweiz"} onChange={e => setCustomer({ ...customer, land: e.target.value })} disabled={!editing} className="bg-input border-border" />
+              </div>
+            </div>
+          </div>
+
+          {/* Notizen */}
           <div className="space-y-1.5">
             <Label>Notizen</Label>
-            <Textarea value={customer.notizen} onChange={e => setCustomer({ ...customer, notizen: e.target.value })} disabled={!editing} className="bg-input border-border" rows={3} />
+            <Textarea value={customer.notizen || ""} onChange={e => setCustomer({ ...customer, notizen: e.target.value })} disabled={!editing} className="bg-input border-border" rows={3} />
           </div>
+
           {editing && (
             <div className="flex gap-2">
               <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 gap-2">
@@ -225,16 +295,17 @@ export default function KundeDetailPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  {["Datum", "Beschreibung", "Umsatz", "Gewinn", "Marge", "Status"].map(h => (
+                  {["Datum", "Auftragsname", "Beschreibung", "Umsatz", "Gewinn", "Marge", "Status"].map(h => (
                     <th key={h} className={`px-5 py-3 text-muted-foreground font-medium ${["Umsatz", "Gewinn", "Marge"].includes(h) ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {orders.map(o => (
-                  <tr key={o.id} className="table-row-alt border-b border-border/50 last:border-0" onClick={() => navigate(`/auftraege/${o.id}`)}>
+                  <tr key={o.id} className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
                     <td className="px-5 py-3 text-muted-foreground">{o.datum}</td>
-                    <td className="px-5 py-3">{o.beschreibung || "—"}</td>
+                    <td className="px-5 py-3 font-medium">{o.name || "—"}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{o.beschreibung || "—"}</td>
                     <td className="px-5 py-3 num-right">{formatCHF(o.umsatz_total)}</td>
                     <td className="px-5 py-3 num-right text-success">{formatCHF(o.gewinn_total)}</td>
                     <td className="px-5 py-3 num-right">{formatPct(o.marge)}</td>
