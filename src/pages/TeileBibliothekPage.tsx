@@ -10,11 +10,18 @@ interface Part {
   id: string;
   teilname: string;
   material: string;
+  menge: number;
   gewicht_g: number;
   druckzeit_h: number;
+  nachbearbeitung_h: number;
+  konstruktion_h: number;
   preis_pro_stueck: number;
+  preis_total: number;
+  status: string;
+  notizen: string;
   created_at: string;
   order_id: string;
+  customer_id: string | null;
   customer_name: string;
 }
 
