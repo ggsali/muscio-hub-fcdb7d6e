@@ -184,7 +184,8 @@ serve(async (req) => {
         </div>`;
     }
 
-    const fromEmail = companyEmail ? `${companyName} <${companyEmail}>` : `${companyName} <onboarding@resend.dev>`;
+    const senderName = getSetting("display_name") || companyName;
+    const fromEmail = companyEmail ? `${senderName} <${companyEmail}>` : `${senderName} <onboarding@resend.dev>`;
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
