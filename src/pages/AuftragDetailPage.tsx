@@ -223,6 +223,35 @@ export default function AuftragDetailPage() {
     });
   };
 
+  const handleExportOffer = async () => {
+    let customerName = "Kein Kunde";
+    let customerFirma, customerEmail, customerTelefon, customerAdresse;
+    if (customerId) {
+      const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
+      if (c) {
+        customerName = c.name;
+        customerFirma = c.firma ?? undefined;
+        customerEmail = c.email ?? undefined;
+        customerTelefon = c.telefon ?? undefined;
+        customerAdresse = c.adresse ?? undefined;
+      }
+    }
+    exportOfferPDF({
+      orderId: id || "neu",
+      datum,
+      beschreibung,
+      customerName,
+      customerFirma,
+      customerEmail,
+      customerTelefon,
+      customerAdresse,
+      parts,
+      umsatz_total: totalUmsatz,
+      settings: activeSettings,
+      company,
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const orderData = {
