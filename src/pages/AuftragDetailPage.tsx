@@ -147,15 +147,15 @@ export default function AuftragDetailPage() {
 
   // Totals
   const totalUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
-  const totalKosten = parts.reduce((s, p) => s + calcKosten(settings, p.gewicht_g, p.druckzeit_h) * p.menge, 0);
+  const totalKosten = parts.reduce((s, p) => s + calcKosten(activeSettings, p.gewicht_g, p.druckzeit_h) * p.menge, 0);
   const totalGewinn = calcGewinn(totalUmsatz, totalKosten);
   const totalMarge = calcMarge(totalGewinn, totalUmsatz);
 
-  const setupKosten = settings.setup_pauschale;
-  const matKosten = parts.reduce((s, p) => s + p.gewicht_g * settings.material_verkauf_pro_g * p.menge, 0);
-  const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * settings.maschinenzeit_pro_h * p.menge, 0);
-  const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * settings.nachbearbeitung_pro_h * p.menge, 0);
-  const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * settings.konstruktion_pro_h * p.menge, 0);
+  const setupKosten = activeSettings.setup_pauschale;
+  const matKosten = parts.reduce((s, p) => s + p.gewicht_g * activeSettings.material_verkauf_pro_g * p.menge, 0);
+  const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
+  const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
+  const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
   const handleExportPDF = async () => {
     // Fetch customer data
