@@ -78,6 +78,7 @@ export default function AuftragDetailPage() {
   const [beschreibung, setBeschreibung] = useState("");
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
+  const [trackingNr, setTrackingNr] = useState("");
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -108,6 +109,7 @@ export default function AuftragDetailPage() {
           setBeschreibung(o.beschreibung || "");
           setDatum(o.datum);
           setStatus(o.status);
+          setTrackingNr((o as any).tracking_nr || "");
         }
         const { data: p } = await supabase.from("parts").select("*").eq("order_id", id!);
         if (p && p.length > 0) setParts(p as PartRow[]);
@@ -510,7 +512,10 @@ export default function AuftragDetailPage() {
         <OrderStatusWorkflow
           orderId={id!}
           currentStatus={status}
+          parts={parts.map(p => ({ status: p.status }))}
+          trackingNr={trackingNr}
           onStatusChange={setStatus}
+          onTrackingNrChange={setTrackingNr}
         />
       )}
 

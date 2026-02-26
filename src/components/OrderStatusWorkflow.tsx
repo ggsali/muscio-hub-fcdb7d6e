@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Circle, Clock } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const STATUSES = ["Offen", "In Bearbeitung", "Geliefert", "Bezahlt", "Abgeschlossen"] as const;
 type OrderStatus = typeof STATUSES[number];
@@ -12,22 +14,34 @@ interface LogEntry {
   created_at: string;
 }
 
+interface PartSummary {
+  status: string;
+}
+
 interface Props {
   orderId: string;
   currentStatus: string;
+  parts: PartSummary[];
+  trackingNr?: string;
   onStatusChange: (newStatus: string) => void;
+  onTrackingNrChange?: (nr: string) => void;
 }
 
-export default function OrderStatusWorkflow({ orderId, currentStatus, onStatusChange }: Props) {
+export default function OrderStatusWorkflow({
+  orderId, currentStatus, parts, trackingNr = "", onStatusChange, onTrackingNrChange
+}: Props) {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(true);
+  const [showTrackingInput, setShowTrackingInput] = useState(false);
+  const [trackingInput, setTrackingInput] = useState(trackingNr);
+  const [savingTracking, setSavingTracking] = useState(false);
 
   const loadLog = async () => {
     const { data } = await (supabase.from as any)("order_status_log")
       .select("*")
       .eq("order_id", orderId)
       .order("created_at", { ascending: false });
-    if (data) setLog(data as unknown as LogEntry[]);
+    if (data) setLog(data as LogEntry[]);
     setLoadingLog(false);
   };
 
@@ -35,40 +49,116 @@ export default function OrderStatusWorkflow({ orderId, currentStatus, onStatusCh
     if (orderId) loadLog();
   }, [orderId]);
 
-  const handleStatusClick = async (newStatus: string) => {
+  // Teile-Analyse
+  const totalParts = parts.length;
+  const fertigParts = parts.filter(p => p.status === "Fertig" || p.status === "Geliefert").length;
+  const allFertig = totalParts > 0 && fertigParts === totalParts;
+  const anyInDruck = parts.some(p => p.status === "In Druck");
+
+  // Automatisch abgeleiteter "vorgeschlagener" Status
+  const suggestedStatus: string | null = (() => {
+    if (totalParts === 0) return null;
+    if (allFertig && currentStatus === "In Bearbeitung") return "Geliefert";
+    if (anyInDruck && currentStatus === "Offen") return "In Bearbeitung";
+    return null;
+  })();
+
+  // Welche Steps sind erlaubt (klickbar)?
+  const isStepAllowed = (s: OrderStatus): boolean => {
+    const cur = STATUSES.indexOf(currentStatus as OrderStatus);
+    const target = STATUSES.indexOf(s);
+    if (s === "Geliefert") return allFertig || currentStatus === "Geliefert" || cur > 2;
+    if (s === "Abgeschlossen") return currentStatus === "Bezahlt" || currentStatus === "Geliefert";
+    if (target <= cur) return true; // zurück immer möglich
+    if (target === cur + 1) return true;
+    return false;
+  };
+
+  const handleStatusClick = async (newStatus: OrderStatus) => {
     if (newStatus === currentStatus) return;
-    await (supabase.from as any)("order_status_log").insert({
-      order_id: orderId,
-      status: newStatus,
-    });
+    if (!isStepAllowed(newStatus)) return;
+
+    if (newStatus === "Geliefert") {
+      setShowTrackingInput(true);
+      return;
+    }
+
+    await commitStatus(newStatus, null);
+  };
+
+  const commitStatus = async (newStatus: string, notiz: string | null) => {
+    await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: newStatus, notiz });
     onStatusChange(newStatus);
-    loadLog();
+    await loadLog();
+    setShowTrackingInput(false);
+  };
+
+  const handleConfirmDelivery = async () => {
+    setSavingTracking(true);
+    const notiz = trackingInput ? `Tracking-Nr.: ${trackingInput}` : null;
+    // Tracking-Nr. in Auftrag speichern
+    await supabase.from("orders").update({ tracking_nr: trackingInput || null } as any).eq("id", orderId);
+    onTrackingNrChange?.(trackingInput);
+    await commitStatus("Geliefert", notiz);
+    setSavingTracking(false);
   };
 
   const currentIdx = STATUSES.indexOf(currentStatus as OrderStatus);
 
   return (
-    <div className="bg-card border border-border rounded-lg p-5 space-y-4">
-      <h3 className="font-semibold text-sm">Status-Workflow</h3>
+    <div className="bg-card border border-border rounded-lg p-5 space-y-5">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-sm">Status-Workflow</h3>
+        {totalParts > 0 && (
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${allFertig ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+            {fertigParts}/{totalParts} Teile fertig
+          </span>
+        )}
+      </div>
+
+      {/* Suggestion Banner */}
+      {suggestedStatus && (
+        <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
+          <AlertTriangle className="w-4 h-4 text-primary shrink-0" />
+          <span className="text-xs text-primary flex-1">
+            {suggestedStatus === "In Bearbeitung" ? "Teile sind in Bearbeitung – Status aktualisieren?" : "Alle Teile fertig – bereit zur Lieferung!"}
+          </span>
+          <button
+            onClick={() => suggestedStatus === "Geliefert" ? setShowTrackingInput(true) : commitStatus(suggestedStatus, null)}
+            className="text-xs font-semibold text-primary hover:underline whitespace-nowrap"
+          >
+            Jetzt aktualisieren
+          </button>
+        </div>
+      )}
 
       {/* Progress Steps */}
-      <div className="flex items-center gap-0">
+      <div className="flex items-center">
         {STATUSES.map((s, i) => {
           const done = currentIdx > i;
           const active = currentIdx === i;
+          const allowed = isStepAllowed(s);
           const isLast = i === STATUSES.length - 1;
           return (
             <React.Fragment key={s}>
               <button
                 onClick={() => handleStatusClick(s)}
-                className={`flex flex-col items-center gap-1 group transition-all ${active ? "opacity-100" : done ? "opacity-80" : "opacity-40 hover:opacity-70"}`}
+                disabled={!allowed && !done}
+                title={!allowed && !done ? (s === "Geliefert" ? "Alle Teile müssen 'Fertig' sein" : s === "Abgeschlossen" ? "Auftrag muss zuerst geliefert/bezahlt sein" : "") : ""}
+                className={`flex flex-col items-center gap-1 transition-all ${
+                  done ? "opacity-90" : active ? "opacity-100" : allowed ? "opacity-50 hover:opacity-80" : "opacity-25 cursor-not-allowed"
+                }`}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${
                   active ? "bg-primary border-primary text-primary-foreground" :
-                  done ? "bg-success border-success text-success-foreground" :
-                  "bg-card border-border text-muted-foreground group-hover:border-primary/50"
+                  done ? "bg-success border-success text-white" :
+                  "bg-card border-border text-muted-foreground"
                 }`}>
-                  {done ? <CheckCircle2 className="w-4 h-4" /> : active ? <Clock className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                  {done ? <CheckCircle2 className="w-4 h-4" /> :
+                   active ? <Clock className="w-4 h-4" /> :
+                   !allowed ? <Lock className="w-3 h-3" /> :
+                   s === "Geliefert" ? <Truck className="w-4 h-4" /> :
+                   <Circle className="w-4 h-4" />}
                 </div>
                 <span className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-primary" : done ? "text-success" : "text-muted-foreground"}`}>{s}</span>
               </button>
@@ -80,13 +170,64 @@ export default function OrderStatusWorkflow({ orderId, currentStatus, onStatusCh
         })}
       </div>
 
-      {/* Log */}
+      {/* Teile-Status Übersicht */}
+      {totalParts > 0 && (
+        <div className="grid grid-cols-4 gap-2">
+          {(["Ausstehend", "In Druck", "Fertig", "Geliefert"] as const).map(s => {
+            const count = parts.filter(p => p.status === s).length;
+            const colors: Record<string, string> = {
+              "Ausstehend": "text-muted-foreground border-border",
+              "In Druck": "text-warning border-warning/30 bg-warning/5",
+              "Fertig": "text-success border-success/30 bg-success/5",
+              "Geliefert": "text-info border-info/30 bg-info/5",
+            };
+            return (
+              <div key={s} className={`border rounded-lg px-2 py-1.5 text-center ${colors[s]}`}>
+                <div className="text-lg font-bold">{count}</div>
+                <div className="text-[10px]">{s}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tracking-Nr. Eingabe (bei Lieferung) */}
+      {showTrackingInput && (
+        <div className="bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Truck className="w-4 h-4 text-primary" />
+            <p className="text-sm font-semibold">Lieferung bestätigen</p>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground">Tracking-Nummer (optional)</label>
+            <Input
+              value={trackingInput}
+              onChange={e => setTrackingInput(e.target.value)}
+              placeholder="z.B. 990123456789012345 (Post CH)"
+              className="bg-input border-border text-sm"
+              autoFocus
+            />
+            <p className="text-[11px] text-muted-foreground">Die Nummer wird im Verlauf gespeichert und kann dem Kunden mitgeteilt werden.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleConfirmDelivery} disabled={savingTracking} className="bg-primary hover:bg-primary/90 gap-2 text-sm" size="sm">
+              <Truck className="w-3.5 h-3.5" />
+              {savingTracking ? "Speichern..." : "Als geliefert markieren"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowTrackingInput(false)} className="border-border">Abbrechen</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Verlauf */}
       {!loadingLog && log.length > 0 && (
         <div className="border-t border-border pt-3 space-y-1.5">
           <p className="text-xs text-muted-foreground font-medium mb-2">Verlauf</p>
-          {log.slice(0, 5).map(entry => (
-            <div key={entry.id} className="flex items-center gap-2 text-xs">
-              <span className="text-muted-foreground tabular-nums">{new Date(entry.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+          {log.slice(0, 6).map(entry => (
+            <div key={entry.id} className="flex items-start gap-2 text-xs">
+              <span className="text-muted-foreground tabular-nums shrink-0">
+                {new Date(entry.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+              </span>
               <span className="text-foreground font-medium">{entry.status}</span>
               {entry.notiz && <span className="text-muted-foreground">· {entry.notiz}</span>}
             </div>
