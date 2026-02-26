@@ -256,7 +256,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...GRAY);
-  const termsText = "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.";
+  const termsText = data.company.zahlungsbedingungen || "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.";
   const termsLines = doc.splitTextToSize(termsText, pageW - sumX - margin);
   doc.text(termsLines, sumX, termsY + 6);
 
