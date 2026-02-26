@@ -364,8 +364,17 @@ export default function AuftragDetailPage() {
                           value={part.filament_id || ""}
                           onChange={e => {
                             const fil = filaments.find(f => f.id === e.target.value);
-                            updatePart(idx, "filament_id", e.target.value);
-                            if (fil) updatePart(idx, "material", `${fil.material} – ${fil.name}`);
+                            setParts(prev => {
+                              const updated = [...prev];
+                              const part = {
+                                ...updated[idx],
+                                filament_id: e.target.value,
+                                filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                                material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
+                              };
+                              updated[idx] = recalcPart(part);
+                              return updated;
+                            });
                           }}
                           className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
                         >
