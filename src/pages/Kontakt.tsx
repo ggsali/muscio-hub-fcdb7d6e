@@ -9,12 +9,13 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Phone, Mail, Clock, MessageCircle, ChevronRight, Loader2, Send, CheckCircle2 } from "lucide-react";
+import { MapPin, Mail, Clock, MessageCircle, ChevronRight, Loader2, Send, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 
+// Hub endpoint – Anfragen werden direkt in den Hub übertragen
 const HUB_ENDPOINT = "https://ukqtjdsjmtxgzhklvqky.supabase.co/functions/v1/submit-inquiry";
 
 const quickFaqs = [
@@ -45,7 +46,7 @@ const Kontakt = () => {
           nachricht: form.message,
         }),
       });
-      if (!res.ok) throw new Error("Fehler");
+      if (!res.ok) throw new Error("Fehler beim Senden");
       setSent(true);
       toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
       setForm({ name: "", email: "", phone: "", message: "" });
@@ -76,7 +77,7 @@ const Kontakt = () => {
               <h2 className="font-heading text-xl font-bold text-foreground mb-6">Schreib uns</h2>
               {sent ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-                  <CheckCircle2 className="w-12 h-12 text-success" />
+                  <CheckCircle2 className="w-12 h-12 text-primary" />
                   <p className="font-semibold text-foreground text-lg">Nachricht erhalten!</p>
                   <p className="text-muted-foreground text-sm">Wir melden uns innerhalb von 24 Stunden bei dir.</p>
                   <Button variant="outline" size="sm" onClick={() => setSent(false)}>Neue Anfrage senden</Button>
