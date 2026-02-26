@@ -192,6 +192,18 @@ export default function TeileBibliothekPage() {
                       Anzeigen
                     </button>
                   </td>
+                  <td className="px-5 py-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+                      disabled={reordering === p.id}
+                      onClick={() => handleReorder(p)}
+                    >
+                      <RefreshCw className={`w-3 h-3 ${reordering === p.id ? "animate-spin" : ""}`} />
+                      {reordering === p.id ? "…" : "Wiederbestellen"}
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
