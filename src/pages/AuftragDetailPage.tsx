@@ -333,14 +333,46 @@ export default function AuftragDetailPage() {
         <h1 className="text-2xl font-bold flex-1">{isNew ? "Neuer Auftrag" : `Auftrag bearbeiten`}</h1>
         {!isNew && (
           <>
-            <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border">
+            <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border" title="Rechnung als PDF herunterladen">
               <FileDown className="w-4 h-4" />
               Rechnung
             </Button>
-            <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border">
+            <Button
+              onClick={() => handleSendEmail("rechnung")}
+              disabled={!!sendingEmail}
+              variant="outline"
+              className="gap-2 border-border"
+              title="Rechnung per E-Mail senden"
+            >
+              {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              Rechnung mailen
+            </Button>
+            <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border" title="Offerte als PDF herunterladen">
               <FileDown className="w-4 h-4" />
               Offerte
             </Button>
+            <Button
+              onClick={() => handleSendEmail("offerte")}
+              disabled={!!sendingEmail}
+              variant="outline"
+              className="gap-2 border-border"
+              title="Offerte per E-Mail senden"
+            >
+              {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              Offerte mailen
+            </Button>
+            {(status === "Geliefert" || trackingNr) && (
+              <Button
+                onClick={() => handleSendEmail("lieferung")}
+                disabled={!!sendingEmail}
+                variant="outline"
+                className="gap-2 border-border text-success border-success/40"
+                title="Lieferbenachrichtigung mit Tracking-Nr. senden"
+              >
+                {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                Lieferung mailen
+              </Button>
+            )}
           </>
         )}
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
