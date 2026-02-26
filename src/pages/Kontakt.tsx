@@ -141,7 +141,7 @@ const Kontakt = () => {
                       onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                     />
                   </div>
-                  <Button variant="hero" size="lg" type="submit" className="w-full gap-2" disabled={submitting}>
+                  <Button size="lg" type="submit" className="w-full gap-2" disabled={submitting}>
                     {submitting ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</>
                     ) : (
