@@ -397,6 +397,8 @@ export default function EinstellungenPage() {
                 {localCompany.slogan || "Slogan wird hier angezeigt"}
               </div>
             </div>
+          </div>
+
           {/* Zahlungsbedingungen */}
           <div className="space-y-2">
             <Label className="text-sm">Zahlungsbedingungen</Label>
