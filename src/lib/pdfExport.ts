@@ -70,7 +70,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   let y = margin;
 
   const ACCENT = hexToRgb(data.company.primary_color || "#FF5A00");
-  const firmenname = data.company.firmenname || "3dMuscio";
+  const firmenname = data.company.firmenname || "3DMuscio";
   const slogan = data.company.slogan || "Professioneller 3D-Druck | Schweiz";
 
   // ── Header bar ──────────────────────────────────────────────────
@@ -189,39 +189,22 @@ export async function exportOrderPDF(data: OrderExportData) {
 
   y = (doc as any).lastAutoTable.finalY + 8;
 
-  // ── Summary box ──────────────────────────────────────────────────
+  // ── Summary box – nur Finalpreis ─────────────────────────────────
   const boxW = 80;
   const boxX = pageW - margin - boxW;
 
   doc.setFillColor(...DARK);
-  doc.roundedRect(boxX, y, boxW, 52, 2, 2, "F");
+  doc.roundedRect(boxX, y, boxW, 22, 2, 2, "F");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...ACCENT);
-  doc.text("ZUSAMMENFASSUNG", boxX + 4, y + 7);
-
-  const rows = [
-    ["Setup-Pauschale:", formatCHF(data.settings.setup_pauschale)],
-    ["Meine Kosten:", formatCHF(data.kosten_total)],
-  ];
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(180, 180, 180);
-  rows.forEach(([label, val], i) => {
-    const ry = y + 14 + i * 6;
-    doc.text(label, boxX + 4, ry);
-    doc.text(val, boxX + boxW - 4, ry, { align: "right" });
-  });
-
-  doc.setDrawColor(80, 80, 80);
-  doc.line(boxX + 4, y + 26, boxX + boxW - 4, y + 26);
+  doc.text("RECHNUNGSBETRAG", boxX + 4, y + 8);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(...ACCENT);
-  doc.text("TOTAL UMSATZ:", boxX + 4, y + 33);
-  doc.text(formatCHF(data.umsatz_total), boxX + boxW - 4, y + 33, { align: "right" });
+  doc.setFontSize(13);
+  doc.setTextColor(...WHITE);
+  doc.text(formatCHF(data.umsatz_total), boxX + boxW - 4, y + 17, { align: "right" });
 
 
   // ── Bank info (if available) ─────────────────────────────────────

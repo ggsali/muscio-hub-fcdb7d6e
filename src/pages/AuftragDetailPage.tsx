@@ -164,6 +164,11 @@ export default function AuftragDetailPage() {
     });
   };
 
+  // Alle Teile neu kalkulieren wenn sich activeSettings ändert (Preset-Wechsel)
+  useEffect(() => {
+    setParts(prev => prev.map(p => recalcPart(p)));
+  }, [activeSettings]);
+
   const addPart = () => setParts(prev => [...prev, emptyPart()]);
   const removePart = (idx: number) => setParts(prev => prev.filter((_, i) => i !== idx));
 
