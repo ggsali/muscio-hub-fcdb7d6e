@@ -153,6 +153,7 @@ serve(async (req) => {
         </div>`;
     } else if (type === "lieferung") {
       const trackingNrVal = trackingNr || order.tracking_nr || "";
+      subject = `Ihre Bestellung "${orderName}" wurde geliefert`;
       subject = `Ihre Bestellung wurde geliefert – ${orderNr}`;
       htmlBody = `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
