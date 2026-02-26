@@ -109,6 +109,7 @@ export default function AuftragDetailPage() {
       async function load() {
         const { data: o } = await supabase.from("orders").select("*").eq("id", id!).single();
         if (o) {
+          setOrderName((o as any).name || "");
           setCustomerId(o.customer_id || "");
           setBeschreibung(o.beschreibung || "");
           setDatum(o.datum);
