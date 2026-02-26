@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip } from "lucide-react";
 import { exportOrderPDF } from "@/lib/pdfExport";
+import { exportOfferPDF } from "@/lib/pdfOfferExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
 import type { Filament } from "@/pages/FilamentePage";
+import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 
 interface PartRow {
   id?: string;
