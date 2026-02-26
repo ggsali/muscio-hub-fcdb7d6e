@@ -512,7 +512,10 @@ export default function AuftragDetailPage() {
         <OrderStatusWorkflow
           orderId={id!}
           currentStatus={status}
+          parts={parts.map(p => ({ status: p.status }))}
+          trackingNr={trackingNr}
           onStatusChange={setStatus}
+          onTrackingNrChange={setTrackingNr}
         />
       )}
 
