@@ -110,7 +110,8 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...GRAY);
-  doc.text(`Datum:           ${data.datum}`, colR, 44);
+  const datumFormatted = data.datum ? new Date(data.datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" }) : "";
+  doc.text(`Datum:           ${datumFormatted}`, colR, 44);
   doc.text(`Offerten-Nr.:    ${offerNr}`, colR, 49);
   doc.text(`Gültig bis:      ${gueltigBis}`, colR, 54);
 
