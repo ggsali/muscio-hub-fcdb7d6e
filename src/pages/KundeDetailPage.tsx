@@ -41,6 +41,29 @@ interface Part {
   order_id: string;
 }
 
+interface CustomerFile {
+  id: string;
+  filename: string;
+  storage_path: string;
+  file_type: string;
+  file_size_bytes: number;
+  created_at: string;
+  part_id: string | null;
+  order_id: string | null;
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function fileIcon(type: string) {
+  if (type?.startsWith("image")) return <Image className="w-4 h-4 text-primary" />;
+  if (type?.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
+  return <Box className="w-4 h-4 text-muted-foreground" />;
+}
+
 export default function KundeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
