@@ -38,7 +38,7 @@ export default function OrderStatusWorkflow({ orderId, currentStatus, onStatusCh
 
   const handleStatusClick = async (newStatus: string) => {
     if (newStatus === currentStatus) return;
-    await supabase.from("order_status_log" as any).insert({
+    await (supabase.from as any)("order_status_log").insert({
       order_id: orderId,
       status: newStatus,
     });
