@@ -19,6 +19,7 @@ interface PartRow {
   teilname: string;
   material: string;
   filament_id?: string;
+  filament_einkauf_pro_kg?: number; // individueller Filamentpreis
   menge: number;
   gewicht_g: number;
   druckzeit_h: number;
