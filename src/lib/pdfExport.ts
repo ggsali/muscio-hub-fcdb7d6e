@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCHF, formatPct, Settings } from "./calc";
+import { CompanySettings } from "./companySettings";
 
 interface PartRow {
   teilname: string;
@@ -32,34 +33,73 @@ interface OrderExportData {
   gewinn_total: number;
   marge: number;
   settings: Settings;
+  company: CompanySettings;
 }
 
-const ORANGE = [255, 90, 0] as [number, number, number];
 const DARK = [30, 30, 30] as [number, number, number];
 const GRAY = [120, 120, 120] as [number, number, number];
 const LIGHT_GRAY = [240, 240, 240] as [number, number, number];
 const WHITE = [255, 255, 255] as [number, number, number];
 
-export function exportOrderPDF(data: OrderExportData) {
+function hexToRgb(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return [r, g, b];
+}
+
+async function loadImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function exportOrderPDF(data: OrderExportData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const margin = 18;
   let y = margin;
 
+  const ACCENT = hexToRgb(data.company.primary_color || "#FF5A00");
+  const firmenname = data.company.firmenname || "3dMuscio";
+  const slogan = data.company.slogan || "Professioneller 3D-Druck | Schweiz";
+
   // ── Header bar ──────────────────────────────────────────────────
-  doc.setFillColor(...ORANGE);
+  doc.setFillColor(...ACCENT);
   doc.rect(0, 0, pageW, 22, "F");
 
-  // Logo text
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(...WHITE);
-  doc.text("3dMuscio", margin, 14);
+  // Logo or text
+  if (data.company.logo_url) {
+    const b64 = await loadImageAsBase64(data.company.logo_url);
+    if (b64) {
+      doc.addImage(b64, "PNG", margin, 3, 0, 16);
+    } else {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(...WHITE);
+      doc.text(firmenname, margin, 14);
+    }
+  } else {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(...WHITE);
+    doc.text(firmenname, margin, 14);
+  }
 
-  // Subtitle
+  // Slogan below logo/name
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Professioneller 3D-Druck | Schweiz", margin, 20);
+  doc.setTextColor(...WHITE);
+  doc.text(slogan, margin, 20);
 
   // Document title right side
   doc.setFont("helvetica", "bold");
@@ -136,7 +176,7 @@ export function exportOrderPDF(data: OrderExportData) {
       p.status,
     ]),
     styles: { fontSize: 8, cellPadding: 2.5, textColor: DARK },
-    headStyles: { fillColor: ORANGE, textColor: WHITE, fontStyle: "bold", halign: "center" },
+    headStyles: { fillColor: ACCENT, textColor: WHITE, fontStyle: "bold", halign: "center" },
     columnStyles: {
       0: { cellWidth: 32 },
       7: { halign: "right" },
@@ -158,7 +198,7 @@ export function exportOrderPDF(data: OrderExportData) {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setTextColor(...ORANGE);
+  doc.setTextColor(...ACCENT);
   doc.text("ZUSAMMENFASSUNG", boxX + 4, y + 7);
 
   const rows = [
@@ -174,41 +214,62 @@ export function exportOrderPDF(data: OrderExportData) {
     doc.text(val, boxX + boxW - 4, ry, { align: "right" });
   });
 
-  // Divider
   doc.setDrawColor(80, 80, 80);
   doc.line(boxX + 4, y + 26, boxX + boxW - 4, y + 26);
 
-  // Total umsatz
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...ORANGE);
+  doc.setTextColor(...ACCENT);
   doc.text("TOTAL UMSATZ:", boxX + 4, y + 33);
   doc.text(formatCHF(data.umsatz_total), boxX + boxW - 4, y + 33, { align: "right" });
 
-  // Gewinn
   doc.setFontSize(9);
   doc.setTextColor(39, 174, 96);
   doc.text("REINGEWINN:", boxX + 4, y + 40);
   doc.text(formatCHF(data.gewinn_total), boxX + boxW - 4, y + 40, { align: "right" });
 
-  // Marge
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(180, 180, 180);
   doc.text("Marge:", boxX + 4, y + 47);
   doc.text(formatPct(data.marge), boxX + boxW - 4, y + 47, { align: "right" });
 
+  // ── Bank info (if available) ─────────────────────────────────────
+  const hasBank = data.company.bank_iban || data.company.bank_name;
+  if (hasBank) {
+    const bankY = y + 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...GRAY);
+    doc.text("BANKVERBINDUNG", margin, bankY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...DARK);
+    let bLine = bankY + 6;
+    if (data.company.bank_inhaber) { doc.text(`Inhaber: ${data.company.bank_inhaber}`, margin, bLine); bLine += 5; }
+    if (data.company.bank_iban) { doc.text(`IBAN: ${data.company.bank_iban}`, margin, bLine); bLine += 5; }
+    if (data.company.bank_name) { doc.text(`Bank: ${data.company.bank_name}`, margin, bLine); }
+  }
+
+  // ── Firma info ───────────────────────────────────────────────────
+  if (data.company.uid_nummer) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GRAY);
+    doc.text(`MwSt./UID: ${data.company.uid_nummer}`, margin, y + 42);
+  }
+
   // ── Footer ───────────────────────────────────────────────────────
   const pageH = doc.internal.pageSize.getHeight();
-  doc.setFillColor(...ORANGE);
+  doc.setFillColor(...ACCENT);
   doc.rect(0, pageH - 10, pageW, 10, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...WHITE);
-  doc.text("3dMuscio – Professioneller 3D-Druck", margin, pageH - 4);
+  const footerLeft = [firmenname, data.company.adresse, data.company.email, data.company.website].filter(Boolean).join(" | ");
+  doc.text(footerLeft || firmenname, margin, pageH - 4);
   doc.text(`Erstellt am ${new Date().toLocaleDateString("de-CH")}`, pageW - margin, pageH - 4, { align: "right" });
 
-  // Save
   const filename = `Auftrag_${data.datum}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
   doc.save(filename);
 }

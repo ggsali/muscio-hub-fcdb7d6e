@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { CompanySettingsProvider } from "@/contexts/CompanySettingsContext";
 import type { Session } from "@supabase/supabase-js";
 
 import AppLayout from "@/components/AppLayout";
