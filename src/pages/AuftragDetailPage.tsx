@@ -64,6 +64,8 @@ export default function AuftragDetailPage() {
 
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
+  const [filaments, setFilaments] = useState<Filament[]>([]);
+  const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
   const [activeSettings, setActiveSettings] = useState<Settings>(settings);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState("");
