@@ -76,6 +76,7 @@ export default function AuftragDetailPage() {
   const [activeSettings, setActiveSettings] = useState<Settings>(settings);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
+  const [orderName, setOrderName] = useState("");
   const [beschreibung, setBeschreibung] = useState("");
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
@@ -108,6 +109,7 @@ export default function AuftragDetailPage() {
       async function load() {
         const { data: o } = await supabase.from("orders").select("*").eq("id", id!).single();
         if (o) {
+          setOrderName((o as any).name || "");
           setCustomerId(o.customer_id || "");
           setBeschreibung(o.beschreibung || "");
           setDatum(o.datum);
@@ -278,6 +280,7 @@ export default function AuftragDetailPage() {
   const handleSave = async () => {
     setSaving(true);
     const orderData = {
+      name: orderName || null,
       customer_id: customerId || null,
       beschreibung,
       datum,
@@ -384,6 +387,15 @@ export default function AuftragDetailPage() {
       {/* Basic info */}
       <div className="bg-card border border-border rounded-lg p-5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="col-span-2 md:col-span-4 space-y-1.5">
+            <Label>Auftragsname <span className="text-muted-foreground font-normal text-xs">(wird als E-Mail-Betreff verwendet)</span></Label>
+            <Input
+              value={orderName}
+              onChange={e => setOrderName(e.target.value)}
+              placeholder="z.B. Halterungen für Kundenanlage, Prototyp Serie A …"
+              className="bg-input border-border"
+            />
+          </div>
           <div className="col-span-2 space-y-1.5">
             <Label>Kunde</Label>
             <select
