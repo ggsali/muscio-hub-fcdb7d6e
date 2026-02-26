@@ -112,6 +112,7 @@ serve(async (req) => {
           </div>
         </div>`;
     } else if (type === "offerte") {
+      subject = `Offerte: ${orderName} – ${companyName}`;
       const validBis = new Date(order.datum);
       validBis.setDate(validBis.getDate() + 30);
       subject = `Offerte ${orderNr} – ${companyName}`;
