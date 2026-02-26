@@ -10,13 +10,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [success, setSuccess] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError(error.message);
+    setSuccess("");
+
+    if (mode === "login") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) setError(error.message);
+    } else {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setError(error.message);
+      } else {
+        setSuccess("Registrierung erfolgreich! Du kannst dich jetzt anmelden.");
+        setMode("login");
+      }
+    }
     setLoading(false);
   };
 
@@ -32,13 +46,20 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Anmelden</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            {mode === "login" ? "Anmelden" : "Registrieren"}
+          </h2>
           {error && (
             <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-md p-3 mb-4">
               {error}
             </div>
           )}
-          <form onSubmit={handleLogin} className="space-y-4">
+          {success && (
+            <div className="bg-success/10 border border-success/30 text-success text-sm rounded-md p-3 mb-4">
+              {success}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">E-Mail</Label>
               <Input
@@ -60,14 +81,33 @@ export default function LoginPage() {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
+                minLength={6}
                 className="bg-input border-border"
               />
             </div>
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Anmelden
+              {mode === "login" ? "Anmelden" : "Konto erstellen"}
             </Button>
           </form>
+
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            {mode === "login" ? (
+              <>
+                Noch kein Konto?{" "}
+                <button onClick={() => { setMode("register"); setError(""); }} className="text-primary hover:underline">
+                  Registrieren
+                </button>
+              </>
+            ) : (
+              <>
+                Bereits registriert?{" "}
+                <button onClick={() => { setMode("login"); setError(""); }} className="text-primary hover:underline">
+                  Anmelden
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
