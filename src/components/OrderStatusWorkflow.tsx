@@ -35,6 +35,7 @@ export default function OrderStatusWorkflow({
   const [showTrackingInput, setShowTrackingInput] = useState(false);
   const [trackingInput, setTrackingInput] = useState(trackingNr);
   const [savingTracking, setSavingTracking] = useState(false);
+  const [editingTracking, setEditingTracking] = useState(false);
 
   const loadLog = async () => {
     const { data } = await (supabase.from as any)("order_status_log")
