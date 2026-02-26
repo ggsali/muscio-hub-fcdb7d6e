@@ -83,6 +83,8 @@ export default function AuftragDetailPage() {
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     supabase.from("customers").select("id, name").then(({ data }) => {
