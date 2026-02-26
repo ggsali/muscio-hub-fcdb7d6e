@@ -57,6 +57,7 @@ function AuthGate() {
             <Route path="/filamente" element={<FilamentePage />} />
             <Route path="/kalkulator" element={<KalkulatorPage />} />
             <Route path="/einstellungen" element={<EinstellungenPage />} />
+            <Route path="/anfragen" element={<AnfragenPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
