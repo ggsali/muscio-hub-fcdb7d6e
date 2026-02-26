@@ -364,31 +364,38 @@ export default function AuftragDetailPage() {
                     </td>
                     <td className="px-2 py-2 min-w-[160px]">
                       {filaments.length > 0 ? (
-                        <select
-                          value={part.filament_id || ""}
-                          onChange={e => {
-                            const fil = filaments.find(f => f.id === e.target.value);
-                            setParts(prev => {
-                              const updated = [...prev];
-                              const part = {
-                                ...updated[idx],
-                                filament_id: e.target.value,
-                                filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
-                                material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
-                              };
-                              updated[idx] = recalcPart(part);
-                              return updated;
-                            });
-                          }}
-                          className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
-                        >
-                          <option value="">Manuell eingeben…</option>
-                          {filaments.map(f => (
-                            <option key={f.id} value={f.id}>
-                              {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-0.5">
+                          <select
+                            value={part.filament_id || ""}
+                            onChange={e => {
+                              const fil = filaments.find(f => f.id === e.target.value);
+                              setParts(prev => {
+                                const updated = [...prev];
+                                const p = {
+                                  ...updated[idx],
+                                  filament_id: e.target.value,
+                                  filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                                  material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
+                                };
+                                updated[idx] = recalcPart(p);
+                                return updated;
+                              });
+                            }}
+                            className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
+                          >
+                            <option value="">Manuell eingeben…</option>
+                            {filaments.map(f => (
+                              <option key={f.id} value={f.id}>
+                                {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
+                              </option>
+                            ))}
+                          </select>
+                          {part.filament_einkauf_pro_kg != null && (
+                            <div className="text-[10px] text-muted-foreground px-0.5">
+                              Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf: CHF {((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
                           {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
