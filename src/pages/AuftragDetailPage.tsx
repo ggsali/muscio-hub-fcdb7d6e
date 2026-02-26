@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
-import { calcUmsatz, calcKosten, calcGewinn, calcMarge, formatCHF, formatPct } from "@/lib/calc";
+import { calcUmsatz, calcKosten, calcGewinn, calcMarge, formatCHF, formatPct, Settings } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag } from "lucide-react";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 
