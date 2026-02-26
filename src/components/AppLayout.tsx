@@ -1,20 +1,20 @@
 import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, Library, Calculator, Settings, Menu, ChevronLeft, Box, LogOut, FlaskConical, MessageSquare
+  LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box, LogOut, FlaskConical, MessageSquare, Globe
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
-  { to: "/", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, label: "Dashboard" },
-  { to: "/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kunden" },
-  { to: "/auftraege", icon: <Package className="w-[18px] h-[18px]" />, label: "Aufträge" },
-  { to: "/anfragen", icon: <MessageSquare className="w-[18px] h-[18px]" />, label: "Anfragen" },
-  { to: "/teile", icon: <Library className="w-[18px] h-[18px]" />, label: "Teile-Bibliothek" },
-  { to: "/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
-  { to: "/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
-  { to: "/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
+  { to: "/admin", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, label: "Dashboard" },
+  { to: "/admin/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kunden" },
+  { to: "/admin/auftraege", icon: <Package className="w-[18px] h-[18px]" />, label: "Aufträge" },
+  { to: "/admin/anfragen", icon: <MessageSquare className="w-[18px] h-[18px]" />, label: "Anfragen" },
+  { to: "/admin/teile", icon: <Library className="w-[18px] h-[18px]" />, label: "Teile-Bibliothek" },
+  { to: "/admin/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
+  { to: "/admin/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
+  { to: "/admin/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
 ];
 
 export default function AppLayout() {

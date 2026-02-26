@@ -3,12 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CompanySettingsProvider } from "@/contexts/CompanySettingsContext";
 import type { Session } from "@supabase/supabase-js";
 
+// Admin pages
 import AppLayout from "@/components/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -20,12 +21,46 @@ import TeileBibliothekPage from "@/pages/TeileBibliothekPage";
 import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
 import FilamentePage from "@/pages/FilamentePage";
-import NotFound from "@/pages/NotFound";
 import AnfragenPage from "@/pages/AnfragenPage";
+
+// Public website pages
+import { WebsiteHeader } from "@/components/website/WebsiteHeader";
+import { WebsiteFooter } from "@/components/website/WebsiteFooter";
+import WebsiteIndex from "@/pages/website/WebsiteIndex";
+import WebsiteKalkulator from "@/pages/website/WebsiteKalkulator";
+import WebsiteMaterialien from "@/pages/website/WebsiteMaterialien";
+import WebsiteUeberUns from "@/pages/website/WebsiteUeberUns";
+import WebsiteKontakt from "@/pages/website/WebsiteKontakt";
+import WebsiteAGB from "@/pages/website/WebsiteAGB";
+import WebsiteImpressum from "@/pages/website/WebsiteImpressum";
+import WebsiteDatenschutz from "@/pages/website/WebsiteDatenschutz";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function AuthGate() {
+// Public website layout (with header + footer)
+const WebsiteLayout = () => (
+  <div className="min-h-screen bg-[#0a0a0a]">
+    <WebsiteHeader />
+    <main>
+      <Routes>
+        <Route path="/" element={<WebsiteIndex />} />
+        <Route path="/kalkulator" element={<WebsiteKalkulator />} />
+        <Route path="/materialien" element={<WebsiteMaterialien />} />
+        <Route path="/ueber-uns" element={<WebsiteUeberUns />} />
+        <Route path="/kontakt" element={<WebsiteKontakt />} />
+        <Route path="/agb" element={<WebsiteAGB />} />
+        <Route path="/impressum" element={<WebsiteImpressum />} />
+        <Route path="/datenschutz" element={<WebsiteDatenschutz />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </main>
+    <WebsiteFooter />
+  </div>
+);
+
+// Admin area (requires login)
+function AdminGate() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
 
   useEffect(() => {
@@ -48,22 +83,31 @@ function AuthGate() {
       <CompanySettingsProvider>
         <Routes>
           <Route element={<AppLayout />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/kunden" element={<KundenPage />} />
-            <Route path="/kunden/:id" element={<KundeDetailPage />} />
-            <Route path="/auftraege" element={<AuftraegePage />} />
-            <Route path="/auftraege/:id" element={<AuftragDetailPage />} />
-            <Route path="/teile" element={<TeileBibliothekPage />} />
-            <Route path="/filamente" element={<FilamentePage />} />
-            <Route path="/kalkulator" element={<KalkulatorPage />} />
-            <Route path="/einstellungen" element={<EinstellungenPage />} />
-            <Route path="/anfragen" element={<AnfragenPage />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/admin" element={<DashboardPage />} />
+            <Route path="/admin/kunden" element={<KundenPage />} />
+            <Route path="/admin/kunden/:id" element={<KundeDetailPage />} />
+            <Route path="/admin/auftraege" element={<AuftraegePage />} />
+            <Route path="/admin/auftraege/:id" element={<AuftragDetailPage />} />
+            <Route path="/admin/teile" element={<TeileBibliothekPage />} />
+            <Route path="/admin/filamente" element={<FilamentePage />} />
+            <Route path="/admin/kalkulator" element={<KalkulatorPage />} />
+            <Route path="/admin/einstellungen" element={<EinstellungenPage />} />
+            <Route path="/admin/anfragen" element={<AnfragenPage />} />
+            <Route path="*" element={<Navigate to="/admin" replace />} />
           </Route>
         </Routes>
       </CompanySettingsProvider>
     </SettingsProvider>
   );
+}
+
+// Root router — splits public vs admin
+function AppRouter() {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/admin") || location.pathname === "/login";
+
+  if (isAdmin) return <AdminGate />;
+  return <WebsiteLayout />;
 }
 
 const App = () => (
@@ -72,7 +116,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthGate />
+        <AppRouter />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
