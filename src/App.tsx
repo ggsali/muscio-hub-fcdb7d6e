@@ -43,6 +43,7 @@ function AuthGate() {
 
   return (
     <SettingsProvider>
+      <CompanySettingsProvider>
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<DashboardPage />} />
