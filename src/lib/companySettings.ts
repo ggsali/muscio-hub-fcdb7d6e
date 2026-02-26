@@ -13,6 +13,7 @@ export interface CompanySettings {
   bank_inhaber: string;
   primary_color: string; // hex e.g. "#FF5A00"
   logo_url: string;
+  zahlungsbedingungen: string;
 }
 
 export const DEFAULT_COMPANY: CompanySettings = {
