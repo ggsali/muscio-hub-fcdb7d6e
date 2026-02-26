@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ArrowLeft, Plus, Trash2, Save, FileDown } from "lucide-react";
 import { exportOrderPDF } from "@/lib/pdfExport";
+import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 
 interface PartRow {
   id?: string;
