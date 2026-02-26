@@ -104,8 +104,32 @@ export default function AuftragDetailPage() {
     }
   }, [id]);
 
+  const handlePresetChange = (presetId: string) => {
+    setSelectedPresetId(presetId);
+    if (!presetId) {
+      setActiveSettings(settings);
+      return;
+    }
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      const discountFactor = 1 - (preset.rabatt_prozent || 0) / 100;
+      setActiveSettings({
+        ...settings,
+        setup_pauschale: preset.setup_pauschale * discountFactor,
+        material_verkauf_pro_g: preset.material_verkauf_pro_g * discountFactor,
+        maschinenzeit_pro_h: preset.maschinenzeit_pro_h * discountFactor,
+        nachbearbeitung_pro_h: preset.nachbearbeitung_pro_h * discountFactor,
+        konstruktion_pro_h: preset.konstruktion_pro_h * discountFactor,
+        material_einkauf_pro_kg: preset.material_einkauf_pro_kg,
+        strom_verschleiss_pro_h: preset.strom_verschleiss_pro_h,
+        skalierungsziel: settings.skalierungsziel,
+        investitions_fonds_prozent: settings.investitions_fonds_prozent,
+      });
+    }
+  };
+
   const recalcPart = (part: PartRow): PartRow => {
-    const preis_pro_stueck = calcUmsatz(settings, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
+    const preis_pro_stueck = calcUmsatz(activeSettings, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
     return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge };
   };
 
