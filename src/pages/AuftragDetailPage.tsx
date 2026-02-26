@@ -90,6 +90,9 @@ export default function AuftragDetailPage() {
         }
       }
     });
+    supabase.from("filaments").select("*").eq("aktiv", true).order("material").order("name").then(({ data }) => {
+      if (data) setFilaments(data as Filament[]);
+    });
 
     if (!isNew) {
       async function load() {
