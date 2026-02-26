@@ -21,6 +21,7 @@ import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
 import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
+import AnfragenPage from "@/pages/AnfragenPage";
 
 const queryClient = new QueryClient();
 
