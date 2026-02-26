@@ -34,6 +34,7 @@ interface OrderExportData {
   marge: number;
   settings: Settings;
   company: CompanySettings;
+  returnBase64?: boolean;
 }
 
 const BLACK   = [30, 30, 30]   as [number, number, number];
