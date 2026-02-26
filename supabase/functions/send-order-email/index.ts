@@ -51,7 +51,7 @@ serve(async (req) => {
     // Fetch company settings
     const { data: settings } = await supabase.from("company_settings").select("*");
     const getSetting = (key: string) => settings?.find((s: any) => s.key === key)?.value ?? "";
-    const companyName = getSetting("name") || "Muscio";
+    const companyName = getSetting("firmenname") || "3dMuscio";
     const companyEmail = getSetting("email") || "";
 
     // Fetch parts
