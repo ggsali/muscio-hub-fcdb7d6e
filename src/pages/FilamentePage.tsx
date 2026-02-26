@@ -48,9 +48,11 @@ export default function FilamentePage() {
     if (!editing) return;
     setSaving(true);
     if (editing.id) {
-      await supabase.from("filaments").update(editing).eq("id", editing.id);
+      const { isNew, ...data } = editing as any;
+      await supabase.from("filaments").update(data).eq("id", editing.id);
     } else {
-      await supabase.from("filaments").insert(editing);
+      const { isNew, id, ...data } = editing as any;
+      await supabase.from("filaments").insert([data]);
     }
     await load();
     setEditing(null);
