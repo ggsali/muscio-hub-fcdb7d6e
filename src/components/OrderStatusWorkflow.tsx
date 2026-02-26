@@ -28,7 +28,7 @@ export default function OrderStatusWorkflow({ orderId, currentStatus, onStatusCh
       .select("*")
       .eq("order_id", orderId)
       .order("created_at", { ascending: false });
-    if (data) setLog(data as LogEntry[]);
+    if (data) setLog(data as unknown as LogEntry[]);
     setLoadingLog(false);
   };
 
