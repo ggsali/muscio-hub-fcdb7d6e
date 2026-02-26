@@ -110,6 +110,69 @@ export type Database = {
         }
         Relationships: []
       }
+      inquiries: {
+        Row: {
+          betreff: string | null
+          created_at: string
+          customer_id: string | null
+          email: string
+          id: string
+          nachricht: string
+          name: string
+          notiz: string | null
+          order_id: string | null
+          quelle: string | null
+          status: string
+          telefon: string | null
+          updated_at: string
+        }
+        Insert: {
+          betreff?: string | null
+          created_at?: string
+          customer_id?: string | null
+          email: string
+          id?: string
+          nachricht: string
+          name: string
+          notiz?: string | null
+          order_id?: string | null
+          quelle?: string | null
+          status?: string
+          telefon?: string | null
+          updated_at?: string
+        }
+        Update: {
+          betreff?: string | null
+          created_at?: string
+          customer_id?: string | null
+          email?: string
+          id?: string
+          nachricht?: string
+          name?: string
+          notiz?: string | null
+          order_id?: string | null
+          quelle?: string | null
+          status?: string
+          telefon?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_status_log: {
         Row: {
           created_at: string
