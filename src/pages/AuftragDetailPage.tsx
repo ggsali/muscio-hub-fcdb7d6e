@@ -61,6 +61,9 @@ export default function AuftragDetailPage() {
   const { company } = useCompanySettings();
 
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [activeSettings, setActiveSettings] = useState<Settings>(settings);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState("");
   const [beschreibung, setBeschreibung] = useState("");
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
