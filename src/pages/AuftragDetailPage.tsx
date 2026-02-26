@@ -54,7 +54,7 @@ interface Preset {
 
 const STATUS_OPTIONS = ["Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"];
 const PART_STATUS_OPTIONS = ["Ausstehend", "In Druck", "Fertig", "Geliefert"];
-const MATERIAL_OPTIONS = ["PLA", "PETG", "TPU", "Sonstige"];
+const FALLBACK_MATERIALS = ["PLA", "PETG", "TPU", "Sonstige"];
 
 export default function AuftragDetailPage() {
   const { id } = useParams();
