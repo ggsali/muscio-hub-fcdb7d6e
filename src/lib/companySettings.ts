@@ -29,6 +29,7 @@ export const DEFAULT_COMPANY: CompanySettings = {
   bank_inhaber: "",
   primary_color: "#FF5A00",
   logo_url: "",
+  zahlungsbedingungen: "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.",
 };
 
 export async function loadCompanySettings(): Promise<CompanySettings> {
