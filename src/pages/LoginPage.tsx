@@ -55,7 +55,7 @@ export default function LoginPage() {
             </div>
           )}
           {success && (
-            <div className="bg-green-500/10 border border-green-500/30 text-green-400 text-sm rounded-md p-3 mb-4">
+            <div className="bg-success/10 border border-success/30 text-success text-sm rounded-md p-3 mb-4">
               {success}
             </div>
           )}
