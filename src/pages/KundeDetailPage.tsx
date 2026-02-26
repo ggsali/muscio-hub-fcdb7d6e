@@ -74,8 +74,9 @@ export default function KundeDetailPage() {
   });
   const [orders, setOrders] = useState<Order[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
+  const [files, setFiles] = useState<CustomerFile[]>([]);
   const [editing, setEditing] = useState(isNew);
-  const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile">("kontakt");
+  const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien">("kontakt");
   const [loading, setLoading] = useState(!isNew);
 
   useEffect(() => {
