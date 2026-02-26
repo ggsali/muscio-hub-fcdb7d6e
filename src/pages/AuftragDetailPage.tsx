@@ -139,8 +139,19 @@ export default function AuftragDetailPage() {
     }
   };
 
+  // Aufschlag-Faktor: Verkaufspreis = Einkaufspreis * Aufschlag (Standard 3×)
+  const MATERIAL_AUFSCHLAG = 3.0;
+
   const recalcPart = (part: PartRow): PartRow => {
-    const preis_pro_stueck = calcUmsatz(activeSettings, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
+    // Überschreibe material_verkauf_pro_g wenn individueller Filamentpreis vorhanden
+    const settingsForPart = part.filament_einkauf_pro_kg != null
+      ? {
+          ...activeSettings,
+          material_einkauf_pro_kg: part.filament_einkauf_pro_kg,
+          material_verkauf_pro_g: (part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG,
+        }
+      : activeSettings;
+    const preis_pro_stueck = calcUmsatz(settingsForPart, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
     return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge };
   };
 
