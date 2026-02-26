@@ -398,6 +398,20 @@ export default function EinstellungenPage() {
               </div>
             </div>
           </div>
+
+          {/* Zahlungsbedingungen */}
+          <div className="space-y-2">
+            <Label className="text-sm">Zahlungsbedingungen</Label>
+            <Textarea
+              value={localCompany.zahlungsbedingungen || ""}
+              onChange={e => setLocalCompany({ ...localCompany, zahlungsbedingungen: e.target.value })}
+              rows={3}
+              className="bg-input border-border text-sm resize-none"
+              placeholder="Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum..."
+            />
+            <p className="text-xs text-muted-foreground">Wird auf jeder Rechnung unterhalb des Gesamtbetrags angezeigt.</p>
+          </div>
+
           <SaveButton saved={saved} onClick={handleSaveCompany} />
         </div>
       )}

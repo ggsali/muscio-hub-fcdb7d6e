@@ -13,6 +13,7 @@ export interface CompanySettings {
   bank_inhaber: string;
   primary_color: string; // hex e.g. "#FF5A00"
   logo_url: string;
+  zahlungsbedingungen: string;
 }
 
 export const DEFAULT_COMPANY: CompanySettings = {
@@ -28,6 +29,7 @@ export const DEFAULT_COMPANY: CompanySettings = {
   bank_inhaber: "",
   primary_color: "#FF5A00",
   logo_url: "",
+  zahlungsbedingungen: "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.",
 };
 
 export async function loadCompanySettings(): Promise<CompanySettings> {
