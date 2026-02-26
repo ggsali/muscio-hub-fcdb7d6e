@@ -60,6 +60,8 @@ export default function AuftragDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === "neu";
+  const searchParams = new URLSearchParams(window.location.search);
+  const preselectedCustomerId = searchParams.get("customer_id") || "";
   const { settings } = useSettings();
   const { company } = useCompanySettings();
 
@@ -69,7 +71,7 @@ export default function AuftragDetailPage() {
   const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
   const [activeSettings, setActiveSettings] = useState<Settings>(settings);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
-  const [customerId, setCustomerId] = useState("");
+  const [customerId, setCustomerId] = useState(preselectedCustomerId);
   const [beschreibung, setBeschreibung] = useState("");
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
