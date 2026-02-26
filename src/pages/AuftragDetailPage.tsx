@@ -103,6 +103,39 @@ export default function AuftragDetailPage() {
   const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * settings.nachbearbeitung_pro_h * p.menge, 0);
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * settings.konstruktion_pro_h * p.menge, 0);
 
+  const handleExportPDF = async () => {
+    // Fetch customer data
+    let customerName = "Kein Kunde";
+    let customerFirma, customerEmail, customerTelefon, customerAdresse;
+    if (customerId) {
+      const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
+      if (c) {
+        customerName = c.name;
+        customerFirma = c.firma ?? undefined;
+        customerEmail = c.email ?? undefined;
+        customerTelefon = c.telefon ?? undefined;
+        customerAdresse = c.adresse ?? undefined;
+      }
+    }
+    exportOrderPDF({
+      orderId: id || "neu",
+      datum,
+      beschreibung,
+      status,
+      customerName,
+      customerFirma,
+      customerEmail,
+      customerTelefon,
+      customerAdresse,
+      parts,
+      umsatz_total: totalUmsatz,
+      kosten_total: totalKosten,
+      gewinn_total: totalGewinn,
+      marge: totalMarge,
+      settings,
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const orderData = {
