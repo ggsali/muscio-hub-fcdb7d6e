@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { CompanySettingsProvider } from "@/contexts/CompanySettingsContext";
 import type { Session } from "@supabase/supabase-js";
 
 import AppLayout from "@/components/AppLayout";
@@ -42,19 +43,21 @@ function AuthGate() {
 
   return (
     <SettingsProvider>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/kunden" element={<KundenPage />} />
-          <Route path="/kunden/:id" element={<KundeDetailPage />} />
-          <Route path="/auftraege" element={<AuftraegePage />} />
-          <Route path="/auftraege/:id" element={<AuftragDetailPage />} />
-          <Route path="/teile" element={<TeileBibliothekPage />} />
-          <Route path="/kalkulator" element={<KalkulatorPage />} />
-          <Route path="/einstellungen" element={<EinstellungenPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
+      <CompanySettingsProvider>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/kunden" element={<KundenPage />} />
+            <Route path="/kunden/:id" element={<KundeDetailPage />} />
+            <Route path="/auftraege" element={<AuftraegePage />} />
+            <Route path="/auftraege/:id" element={<AuftragDetailPage />} />
+            <Route path="/teile" element={<TeileBibliothekPage />} />
+            <Route path="/kalkulator" element={<KalkulatorPage />} />
+            <Route path="/einstellungen" element={<EinstellungenPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </CompanySettingsProvider>
     </SettingsProvider>
   );
 }

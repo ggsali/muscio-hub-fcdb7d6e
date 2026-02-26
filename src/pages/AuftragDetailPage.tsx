@@ -2,14 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
-import { calcUmsatz, calcKosten, calcGewinn, calcMarge, formatCHF, formatPct } from "@/lib/calc";
+import { calcUmsatz, calcKosten, calcGewinn, calcMarge, formatCHF, formatPct, Settings } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag } from "lucide-react";
 import { exportOrderPDF } from "@/lib/pdfExport";
+import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 
 interface PartRow {
   id?: string;
@@ -33,6 +34,21 @@ const emptyPart = (): PartRow => ({
   status: "Ausstehend", notizen: "",
 });
 
+interface Preset {
+  id: string;
+  name: string;
+  beschreibung: string;
+  is_default: boolean;
+  setup_pauschale: number;
+  material_verkauf_pro_g: number;
+  maschinenzeit_pro_h: number;
+  nachbearbeitung_pro_h: number;
+  konstruktion_pro_h: number;
+  material_einkauf_pro_kg: number;
+  strom_verschleiss_pro_h: number;
+  rabatt_prozent: number;
+}
+
 const STATUS_OPTIONS = ["Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"];
 const PART_STATUS_OPTIONS = ["Ausstehend", "In Druck", "Fertig", "Geliefert"];
 const MATERIAL_OPTIONS = ["PLA", "PETG", "TPU", "Sonstige"];
@@ -42,8 +58,12 @@ export default function AuftragDetailPage() {
   const navigate = useNavigate();
   const isNew = id === "neu";
   const { settings } = useSettings();
+  const { company } = useCompanySettings();
 
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [activeSettings, setActiveSettings] = useState<Settings>(settings);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState("");
   const [beschreibung, setBeschreibung] = useState("");
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
@@ -55,6 +75,16 @@ export default function AuftragDetailPage() {
   useEffect(() => {
     supabase.from("customers").select("id, name").then(({ data }) => {
       if (data) setCustomers(data);
+    });
+    supabase.from("price_presets").select("*").order("created_at").then(({ data }) => {
+      if (data) {
+        setPresets(data as Preset[]);
+        const def = data.find((p: any) => p.is_default);
+        if (def && isNew) {
+          setSelectedPresetId(def.id);
+          setActiveSettings({ ...settings, ...def });
+        }
+      }
     });
 
     if (!isNew) {
@@ -74,8 +104,32 @@ export default function AuftragDetailPage() {
     }
   }, [id]);
 
+  const handlePresetChange = (presetId: string) => {
+    setSelectedPresetId(presetId);
+    if (!presetId) {
+      setActiveSettings(settings);
+      return;
+    }
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      const discountFactor = 1 - (preset.rabatt_prozent || 0) / 100;
+      setActiveSettings({
+        ...settings,
+        setup_pauschale: preset.setup_pauschale * discountFactor,
+        material_verkauf_pro_g: preset.material_verkauf_pro_g * discountFactor,
+        maschinenzeit_pro_h: preset.maschinenzeit_pro_h * discountFactor,
+        nachbearbeitung_pro_h: preset.nachbearbeitung_pro_h * discountFactor,
+        konstruktion_pro_h: preset.konstruktion_pro_h * discountFactor,
+        material_einkauf_pro_kg: preset.material_einkauf_pro_kg,
+        strom_verschleiss_pro_h: preset.strom_verschleiss_pro_h,
+        skalierungsziel: settings.skalierungsziel,
+        investitions_fonds_prozent: settings.investitions_fonds_prozent,
+      });
+    }
+  };
+
   const recalcPart = (part: PartRow): PartRow => {
-    const preis_pro_stueck = calcUmsatz(settings, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
+    const preis_pro_stueck = calcUmsatz(activeSettings, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
     return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge };
   };
 
@@ -93,18 +147,17 @@ export default function AuftragDetailPage() {
 
   // Totals
   const totalUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
-  const totalKosten = parts.reduce((s, p) => s + calcKosten(settings, p.gewicht_g, p.druckzeit_h) * p.menge, 0);
+  const totalKosten = parts.reduce((s, p) => s + calcKosten(activeSettings, p.gewicht_g, p.druckzeit_h) * p.menge, 0);
   const totalGewinn = calcGewinn(totalUmsatz, totalKosten);
   const totalMarge = calcMarge(totalGewinn, totalUmsatz);
 
-  const setupKosten = settings.setup_pauschale;
-  const matKosten = parts.reduce((s, p) => s + p.gewicht_g * settings.material_verkauf_pro_g * p.menge, 0);
-  const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * settings.maschinenzeit_pro_h * p.menge, 0);
-  const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * settings.nachbearbeitung_pro_h * p.menge, 0);
-  const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * settings.konstruktion_pro_h * p.menge, 0);
+  const setupKosten = activeSettings.setup_pauschale;
+  const matKosten = parts.reduce((s, p) => s + p.gewicht_g * activeSettings.material_verkauf_pro_g * p.menge, 0);
+  const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
+  const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
+  const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
   const handleExportPDF = async () => {
-    // Fetch customer data
     let customerName = "Kein Kunde";
     let customerFirma, customerEmail, customerTelefon, customerAdresse;
     if (customerId) {
@@ -132,7 +185,8 @@ export default function AuftragDetailPage() {
       kosten_total: totalKosten,
       gewinn_total: totalGewinn,
       marge: totalMarge,
-      settings,
+      settings: activeSettings,
+      company,
     });
   };
 

@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           adresse: string | null
@@ -168,6 +189,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      price_presets: {
+        Row: {
+          beschreibung: string | null
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          konstruktion_pro_h: number | null
+          maschinenzeit_pro_h: number | null
+          material_einkauf_pro_kg: number | null
+          material_verkauf_pro_g: number | null
+          nachbearbeitung_pro_h: number | null
+          name: string
+          rabatt_prozent: number | null
+          setup_pauschale: number | null
+          strom_verschleiss_pro_h: number | null
+        }
+        Insert: {
+          beschreibung?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          konstruktion_pro_h?: number | null
+          maschinenzeit_pro_h?: number | null
+          material_einkauf_pro_kg?: number | null
+          material_verkauf_pro_g?: number | null
+          nachbearbeitung_pro_h?: number | null
+          name: string
+          rabatt_prozent?: number | null
+          setup_pauschale?: number | null
+          strom_verschleiss_pro_h?: number | null
+        }
+        Update: {
+          beschreibung?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          konstruktion_pro_h?: number | null
+          maschinenzeit_pro_h?: number | null
+          material_einkauf_pro_kg?: number | null
+          material_verkauf_pro_g?: number | null
+          nachbearbeitung_pro_h?: number | null
+          name?: string
+          rabatt_prozent?: number | null
+          setup_pauschale?: number | null
+          strom_verschleiss_pro_h?: number | null
+        }
+        Relationships: []
       }
       settings: {
         Row: {
