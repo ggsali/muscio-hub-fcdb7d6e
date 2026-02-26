@@ -141,7 +141,7 @@ export default function KundeDetailPage() {
       {/* Tabs */}
       {!isNew && (
         <div className="flex gap-1 border-b border-border">
-          {(["kontakt", "auftraege", "teile"] as const).map(tab => (
+          {(["kontakt", "auftraege", "teile", "dateien"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -149,7 +149,7 @@ export default function KundeDetailPage() {
                 activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab === "auftraege" ? "Auftragshistorie" : tab === "teile" ? "Teile" : "Kontakt"}
+              {tab === "auftraege" ? "Auftragshistorie" : tab === "teile" ? "Teile" : tab === "dateien" ? `Dateien (${files.length})` : "Kontakt"}
             </button>
           ))}
         </div>
