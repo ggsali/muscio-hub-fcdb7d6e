@@ -71,6 +71,45 @@ export type Database = {
         }
         Relationships: []
       }
+      filaments: {
+        Row: {
+          aktiv: boolean | null
+          created_at: string | null
+          dichte_g_cm3: number | null
+          farbe: string | null
+          hersteller: string | null
+          id: string
+          material: string
+          name: string
+          notizen: string | null
+          preis_pro_kg: number
+        }
+        Insert: {
+          aktiv?: boolean | null
+          created_at?: string | null
+          dichte_g_cm3?: number | null
+          farbe?: string | null
+          hersteller?: string | null
+          id?: string
+          material?: string
+          name: string
+          notizen?: string | null
+          preis_pro_kg?: number
+        }
+        Update: {
+          aktiv?: boolean | null
+          created_at?: string | null
+          dichte_g_cm3?: number | null
+          farbe?: string | null
+          hersteller?: string | null
+          id?: string
+          material?: string
+          name?: string
+          notizen?: string | null
+          preis_pro_kg?: number
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           beschreibung: string | null
@@ -117,6 +156,64 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      part_files: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          file_size_bytes: number | null
+          file_type: string | null
+          filename: string
+          id: string
+          order_id: string | null
+          part_id: string | null
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          file_size_bytes?: number | null
+          file_type?: string | null
+          filename: string
+          id?: string
+          order_id?: string | null
+          part_id?: string | null
+          storage_path: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          file_size_bytes?: number | null
+          file_type?: string | null
+          filename?: string
+          id?: string
+          order_id?: string | null
+          part_id?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "part_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_files_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_files_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
             referencedColumns: ["id"]
           },
         ]
