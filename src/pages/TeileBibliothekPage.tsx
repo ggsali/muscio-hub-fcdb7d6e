@@ -1,19 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { formatCHF } from "@/lib/calc";
 
 interface Part {
   id: string;
   teilname: string;
   material: string;
+  menge: number;
   gewicht_g: number;
   druckzeit_h: number;
+  nachbearbeitung_h: number;
+  konstruktion_h: number;
   preis_pro_stueck: number;
+  preis_total: number;
+  status: string;
+  notizen: string;
   created_at: string;
   order_id: string;
+  customer_id: string | null;
   customer_name: string;
 }
 
@@ -23,6 +31,7 @@ export default function TeileBibliothekPage() {
   const [search, setSearch] = useState("");
   const [materialFilter, setMaterialFilter] = useState("Alle");
   const [loading, setLoading] = useState(true);
+  const [reordering, setReordering] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -34,6 +43,13 @@ export default function TeileBibliothekPage() {
       if (data) {
         setParts(data.map(p => ({
           ...p,
+          menge: p.menge ?? 1,
+          nachbearbeitung_h: p.nachbearbeitung_h ?? 0,
+          konstruktion_h: p.konstruktion_h ?? 0,
+          preis_total: p.preis_total ?? 0,
+          status: p.status ?? "Ausstehend",
+          notizen: p.notizen ?? "",
+          customer_id: p.customer_id ?? null,
           customer_name: (p.customers as any)?.name || "—",
         })));
       }
@@ -41,6 +57,48 @@ export default function TeileBibliothekPage() {
     }
     load();
   }, []);
+
+  const handleReorder = async (part: Part) => {
+    setReordering(part.id);
+    try {
+      // Create a new order
+      const { data: order } = await supabase
+        .from("orders")
+        .insert({
+          customer_id: part.customer_id || null,
+          beschreibung: `Wiederbestellung: ${part.teilname}`,
+          datum: new Date().toISOString().split("T")[0],
+          status: "Offen",
+          umsatz_total: part.preis_total,
+          kosten_total: 0,
+          gewinn_total: 0,
+          marge: 0,
+        })
+        .select()
+        .single();
+
+      if (order) {
+        await supabase.from("parts").insert({
+          order_id: order.id,
+          customer_id: part.customer_id || null,
+          teilname: part.teilname,
+          material: part.material,
+          menge: part.menge,
+          gewicht_g: part.gewicht_g,
+          druckzeit_h: part.druckzeit_h,
+          nachbearbeitung_h: part.nachbearbeitung_h,
+          konstruktion_h: part.konstruktion_h,
+          preis_pro_stueck: part.preis_pro_stueck,
+          preis_total: part.preis_total,
+          status: "Ausstehend",
+          notizen: "",
+        });
+        navigate(`/auftraege/${order.id}`);
+      }
+    } finally {
+      setReordering(null);
+    }
+  };
 
   const materials = ["Alle", ...Array.from(new Set(parts.map(p => p.material)))];
 
@@ -112,7 +170,7 @@ export default function TeileBibliothekPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                {["Teilname", "Kunde", "Material", "Gewicht", "Druckzeit", "Preis", "Datum", "Auftrag"].map(h => (
+                {["Teilname", "Kunde", "Material", "Gewicht", "Druckzeit", "Preis", "Datum", "Auftrag", ""].map(h => (
                   <th key={h} className={`px-5 py-3 text-muted-foreground font-medium ${["Gewicht", "Druckzeit", "Preis"].includes(h) ? "text-right" : "text-left"}`}>{h}</th>
                 ))}
               </tr>
@@ -133,6 +191,18 @@ export default function TeileBibliothekPage() {
                     <button onClick={() => navigate(`/auftraege/${p.order_id}`)} className="text-xs text-primary hover:underline">
                       Anzeigen
                     </button>
+                  </td>
+                  <td className="px-5 py-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+                      disabled={reordering === p.id}
+                      onClick={() => handleReorder(p)}
+                    >
+                      <RefreshCw className={`w-3 h-3 ${reordering === p.id ? "animate-spin" : ""}`} />
+                      {reordering === p.id ? "…" : "Wiederbestellen"}
+                    </Button>
                   </td>
                 </tr>
               ))}
