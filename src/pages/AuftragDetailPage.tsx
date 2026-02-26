@@ -19,6 +19,7 @@ interface PartRow {
   teilname: string;
   material: string;
   filament_id?: string;
+  filament_einkauf_pro_kg?: number; // individueller Filamentpreis
   menge: number;
   gewicht_g: number;
   druckzeit_h: number;
@@ -138,8 +139,19 @@ export default function AuftragDetailPage() {
     }
   };
 
+  // Aufschlag-Faktor: Verkaufspreis = Einkaufspreis * Aufschlag (Standard 3×)
+  const MATERIAL_AUFSCHLAG = 3.0;
+
   const recalcPart = (part: PartRow): PartRow => {
-    const preis_pro_stueck = calcUmsatz(activeSettings, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
+    // Überschreibe material_verkauf_pro_g wenn individueller Filamentpreis vorhanden
+    const settingsForPart = part.filament_einkauf_pro_kg != null
+      ? {
+          ...activeSettings,
+          material_einkauf_pro_kg: part.filament_einkauf_pro_kg,
+          material_verkauf_pro_g: (part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG,
+        }
+      : activeSettings;
+    const preis_pro_stueck = calcUmsatz(settingsForPart, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
     return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge };
   };
 
@@ -157,7 +169,11 @@ export default function AuftragDetailPage() {
 
   // Totals
   const totalUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
-  const totalKosten = parts.reduce((s, p) => s + calcKosten(activeSettings, p.gewicht_g, p.druckzeit_h) * p.menge, 0);
+  const totalKosten = parts.reduce((s, p) => {
+    const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
+    const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
+    return s + calcKosten(partSettings, p.gewicht_g, p.druckzeit_h) * p.menge;
+  }, 0);
   const totalGewinn = calcGewinn(totalUmsatz, totalKosten);
   const totalMarge = calcMarge(totalGewinn, totalUmsatz);
 
@@ -348,22 +364,38 @@ export default function AuftragDetailPage() {
                     </td>
                     <td className="px-2 py-2 min-w-[160px]">
                       {filaments.length > 0 ? (
-                        <select
-                          value={part.filament_id || ""}
-                          onChange={e => {
-                            const fil = filaments.find(f => f.id === e.target.value);
-                            updatePart(idx, "filament_id", e.target.value);
-                            if (fil) updatePart(idx, "material", `${fil.material} – ${fil.name}`);
-                          }}
-                          className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
-                        >
-                          <option value="">Manuell eingeben…</option>
-                          {filaments.map(f => (
-                            <option key={f.id} value={f.id}>
-                              {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-0.5">
+                          <select
+                            value={part.filament_id || ""}
+                            onChange={e => {
+                              const fil = filaments.find(f => f.id === e.target.value);
+                              setParts(prev => {
+                                const updated = [...prev];
+                                const p = {
+                                  ...updated[idx],
+                                  filament_id: e.target.value,
+                                  filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                                  material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
+                                };
+                                updated[idx] = recalcPart(p);
+                                return updated;
+                              });
+                            }}
+                            className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
+                          >
+                            <option value="">Manuell eingeben…</option>
+                            {filaments.map(f => (
+                              <option key={f.id} value={f.id}>
+                                {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
+                              </option>
+                            ))}
+                          </select>
+                          {part.filament_einkauf_pro_kg != null && (
+                            <div className="text-[10px] text-muted-foreground px-0.5">
+                              Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf: CHF {((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
                           {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
