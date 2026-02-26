@@ -31,6 +31,7 @@ export default function TeileBibliothekPage() {
   const [search, setSearch] = useState("");
   const [materialFilter, setMaterialFilter] = useState("Alle");
   const [loading, setLoading] = useState(true);
+  const [reordering, setReordering] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -42,6 +43,13 @@ export default function TeileBibliothekPage() {
       if (data) {
         setParts(data.map(p => ({
           ...p,
+          menge: p.menge ?? 1,
+          nachbearbeitung_h: p.nachbearbeitung_h ?? 0,
+          konstruktion_h: p.konstruktion_h ?? 0,
+          preis_total: p.preis_total ?? 0,
+          status: p.status ?? "Ausstehend",
+          notizen: p.notizen ?? "",
+          customer_id: p.customer_id ?? null,
           customer_name: (p.customers as any)?.name || "—",
         })));
       }
@@ -49,6 +57,48 @@ export default function TeileBibliothekPage() {
     }
     load();
   }, []);
+
+  const handleReorder = async (part: Part) => {
+    setReordering(part.id);
+    try {
+      // Create a new order
+      const { data: order } = await supabase
+        .from("orders")
+        .insert({
+          customer_id: part.customer_id || null,
+          beschreibung: `Wiederbestellung: ${part.teilname}`,
+          datum: new Date().toISOString().split("T")[0],
+          status: "Offen",
+          umsatz_total: part.preis_total,
+          kosten_total: 0,
+          gewinn_total: 0,
+          marge: 0,
+        })
+        .select()
+        .single();
+
+      if (order) {
+        await supabase.from("parts").insert({
+          order_id: order.id,
+          customer_id: part.customer_id || null,
+          teilname: part.teilname,
+          material: part.material,
+          menge: part.menge,
+          gewicht_g: part.gewicht_g,
+          druckzeit_h: part.druckzeit_h,
+          nachbearbeitung_h: part.nachbearbeitung_h,
+          konstruktion_h: part.konstruktion_h,
+          preis_pro_stueck: part.preis_pro_stueck,
+          preis_total: part.preis_total,
+          status: "Ausstehend",
+          notizen: "",
+        });
+        navigate(`/auftraege/${order.id}`);
+      }
+    } finally {
+      setReordering(null);
+    }
+  };
 
   const materials = ["Alle", ...Array.from(new Set(parts.map(p => p.material)))];
 
