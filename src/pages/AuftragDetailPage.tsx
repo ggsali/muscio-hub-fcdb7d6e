@@ -34,6 +34,21 @@ const emptyPart = (): PartRow => ({
   status: "Ausstehend", notizen: "",
 });
 
+interface Preset {
+  id: string;
+  name: string;
+  beschreibung: string;
+  is_default: boolean;
+  setup_pauschale: number;
+  material_verkauf_pro_g: number;
+  maschinenzeit_pro_h: number;
+  nachbearbeitung_pro_h: number;
+  konstruktion_pro_h: number;
+  material_einkauf_pro_kg: number;
+  strom_verschleiss_pro_h: number;
+  rabatt_prozent: number;
+}
+
 const STATUS_OPTIONS = ["Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"];
 const PART_STATUS_OPTIONS = ["Ausstehend", "In Druck", "Fertig", "Geliefert"];
 const MATERIAL_OPTIONS = ["PLA", "PETG", "TPU", "Sonstige"];
