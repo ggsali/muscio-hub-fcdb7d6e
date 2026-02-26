@@ -135,6 +135,7 @@ export default function AuftragDetailPage() {
       gewinn_total: totalGewinn,
       marge: totalMarge,
       settings,
+      company,
     });
   };
 
