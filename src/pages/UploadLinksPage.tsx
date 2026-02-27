@@ -208,9 +208,13 @@ export default function UploadLinksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Projekt-Uploads</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Upload-Links für Kunden generieren – Dateien landen direkt auf deinem NAS</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Upload-Links für Kunden generieren – NAS-Sync über Browser (Tailscale)</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowNasSettings(true)} className="gap-2 border-border">
+            {nasConfigured ? <Wifi className="w-4 h-4 text-success" /> : <WifiOff className="w-4 h-4 text-muted-foreground" />}
+            NAS
+          </Button>
           <Button variant="outline" onClick={load} className="gap-2 border-border">
             <RefreshCw className="w-4 h-4" />
           </Button>
