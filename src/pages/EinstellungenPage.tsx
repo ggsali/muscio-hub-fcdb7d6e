@@ -420,6 +420,42 @@ export default function EinstellungenPage() {
             </div>
           </div>
 
+          {/* QR-Bill Upload */}
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <div>
+              <h3 className="font-semibold text-sm">Einzahlungsschein (QR-Rechnung)</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Lade dein eigenes QR-Einzahlungsschein-Bild hoch (PNG/JPG). Es wird automatisch als zweite Seite an jede Rechnung angehängt.</p>
+            </div>
+            {localCompany.qr_bill_image_url && (
+              <div className="space-y-2">
+                <img
+                  src={localCompany.qr_bill_image_url}
+                  alt="QR-Einzahlungsschein"
+                  className="w-full max-w-sm rounded border border-border object-contain bg-white p-2"
+                />
+                <button
+                  onClick={() => setLocalCompany(prev => ({ ...prev, qr_bill_image_url: "" }))}
+                  className="text-xs text-destructive hover:underline"
+                >
+                  Bild entfernen
+                </button>
+              </div>
+            )}
+            <div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 border-border"
+                onClick={() => qrInputRef.current?.click()}
+                disabled={uploadingQr}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                {uploadingQr ? "Hochladen..." : localCompany.qr_bill_image_url ? "Bild ersetzen" : "Bild hochladen"}
+              </Button>
+              <input ref={qrInputRef} type="file" accept="image/*" className="hidden" onChange={handleQrUpload} />
+            </div>
+          </div>
+
           {/* Zahlungsbedingungen */}
           <div className="space-y-2">
             <Label className="text-sm">Zahlungsbedingungen</Label>
