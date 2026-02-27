@@ -183,8 +183,45 @@ export default function AuftragDetailPage() {
     setParts(prev => prev.map(p => recalcPart(p)));
   }, [activeSettings]);
 
-  const addPart = () => setParts(prev => [...prev, emptyPart()]);
+  const addPart = async () => {
+    const newPart = emptyPart();
+    if (!isNew && id) {
+      // Insert immediately so the part gets an ID → file upload works right away
+      const { data } = await supabase.from("parts").insert({
+        order_id: id,
+        customer_id: customerId || null,
+        teilname: newPart.teilname || "Neues Teil",
+        material: newPart.material,
+        menge: newPart.menge,
+        gewicht_g: newPart.gewicht_g,
+        druckzeit_h: newPart.druckzeit_h,
+        nachbearbeitung_h: newPart.nachbearbeitung_h,
+        konstruktion_h: newPart.konstruktion_h,
+        preis_pro_stueck: newPart.preis_pro_stueck,
+        preis_total: newPart.preis_total,
+        status: newPart.status,
+        notizen: newPart.notizen,
+      }).select().single();
+      if (data) {
+        const inserted = { ...newPart, id: data.id };
+        setParts(prev => [...prev, inserted]);
+        setExpandedPartIdx(null); // close any open upload row
+        return;
+      }
+    }
+    setParts(prev => [...prev, newPart]);
+  };
   const removePart = (idx: number) => setParts(prev => prev.filter((_, i) => i !== idx));
+
+  const handleDeleteOrder = async () => {
+    if (!id || isNew) return;
+    await supabase.from("part_files").delete().eq("order_id", id);
+    await supabase.from("parts").delete().eq("order_id", id);
+    await supabase.from("order_status_log").delete().eq("order_id", id);
+    await supabase.from("orders").delete().eq("id", id);
+    toast({ title: "Auftrag gelöscht" });
+    navigate("/auftraege");
+  };
 
   // Totals
   const totalUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
