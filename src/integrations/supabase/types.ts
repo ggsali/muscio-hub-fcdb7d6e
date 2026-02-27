@@ -475,6 +475,113 @@ export type Database = {
         }
         Relationships: []
       }
+      upload_link_files: {
+        Row: {
+          created_at: string
+          file_size_bytes: number | null
+          file_type: string | null
+          filename: string
+          id: string
+          nas_path: string | null
+          nas_synced: boolean | null
+          storage_path: string
+          upload_link_id: string
+          uploader_email: string | null
+          uploader_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_size_bytes?: number | null
+          file_type?: string | null
+          filename: string
+          id?: string
+          nas_path?: string | null
+          nas_synced?: boolean | null
+          storage_path: string
+          upload_link_id: string
+          uploader_email?: string | null
+          uploader_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_size_bytes?: number | null
+          file_type?: string | null
+          filename?: string
+          id?: string
+          nas_path?: string | null
+          nas_synced?: boolean | null
+          storage_path?: string
+          upload_link_id?: string
+          uploader_email?: string | null
+          uploader_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upload_link_files_upload_link_id_fkey"
+            columns: ["upload_link_id"]
+            isOneToOne: false
+            referencedRelation: "upload_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      upload_links: {
+        Row: {
+          aktiv: boolean
+          beschreibung: string | null
+          created_at: string
+          customer_id: string | null
+          expires_at: string | null
+          id: string
+          max_files: number | null
+          order_id: string | null
+          title: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          max_files?: number | null
+          order_id?: string | null
+          title?: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          max_files?: number | null
+          order_id?: string | null
+          title?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upload_links_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upload_links_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
