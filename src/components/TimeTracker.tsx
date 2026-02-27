@@ -93,7 +93,7 @@ export default function TimeTracker({ orderId, parts }: TimeTrackerProps) {
       .eq("order_id", orderId)
       .order("started_at", { ascending: false });
     if (data) {
-      const all = data as TimeEntry[];
+      const all = (data as unknown) as TimeEntry[];
       setEntries(all.filter(e => e.stopped_at !== null));
       const running = all.find(e => e.stopped_at === null);
       setActiveEntry(running || null);
