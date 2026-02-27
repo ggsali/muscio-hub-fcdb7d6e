@@ -16,6 +16,10 @@ import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
 import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PartRow {
   id?: string;
@@ -85,6 +89,7 @@ export default function AuftragDetailPage() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -178,8 +183,45 @@ export default function AuftragDetailPage() {
     setParts(prev => prev.map(p => recalcPart(p)));
   }, [activeSettings]);
 
-  const addPart = () => setParts(prev => [...prev, emptyPart()]);
+  const addPart = async () => {
+    const newPart = emptyPart();
+    if (!isNew && id) {
+      // Insert immediately so the part gets an ID → file upload works right away
+      const { data } = await supabase.from("parts").insert({
+        order_id: id,
+        customer_id: customerId || null,
+        teilname: newPart.teilname || "Neues Teil",
+        material: newPart.material,
+        menge: newPart.menge,
+        gewicht_g: newPart.gewicht_g,
+        druckzeit_h: newPart.druckzeit_h,
+        nachbearbeitung_h: newPart.nachbearbeitung_h,
+        konstruktion_h: newPart.konstruktion_h,
+        preis_pro_stueck: newPart.preis_pro_stueck,
+        preis_total: newPart.preis_total,
+        status: newPart.status,
+        notizen: newPart.notizen,
+      }).select().single();
+      if (data) {
+        const inserted = { ...newPart, id: data.id };
+        setParts(prev => [...prev, inserted]);
+        setExpandedPartIdx(null); // close any open upload row
+        return;
+      }
+    }
+    setParts(prev => [...prev, newPart]);
+  };
   const removePart = (idx: number) => setParts(prev => prev.filter((_, i) => i !== idx));
+
+  const handleDeleteOrder = async () => {
+    if (!id || isNew) return;
+    await supabase.from("part_files").delete().eq("order_id", id);
+    await supabase.from("parts").delete().eq("order_id", id);
+    await supabase.from("order_status_log").delete().eq("order_id", id);
+    await supabase.from("orders").delete().eq("id", id);
+    toast({ title: "Auftrag gelöscht" });
+    navigate("/auftraege");
+  };
 
   // Totals
   const totalUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
@@ -418,6 +460,16 @@ export default function AuftragDetailPage() {
               </Button>
             )}
           </>
+        )}
+        {!isNew && (
+          <Button
+            onClick={() => setShowDeleteDialog(true)}
+            variant="outline"
+            className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="w-4 h-4" />
+            Löschen
+          </Button>
         )}
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
           <Save className="w-4 h-4" />
@@ -668,6 +720,26 @@ export default function AuftragDetailPage() {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Auftrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieser Auftrag und alle zugehörigen Teile und Dateien werden unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteOrder}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

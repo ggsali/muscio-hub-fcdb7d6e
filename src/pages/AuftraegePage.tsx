@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Order {
   id: string;
@@ -27,6 +32,8 @@ export default function AuftraegePage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Alle");
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function load() {
@@ -45,6 +52,16 @@ export default function AuftraegePage() {
     }
     load();
   }, []);
+
+  const handleDelete = async (orderId: string) => {
+    await supabase.from("part_files").delete().eq("order_id", orderId);
+    await supabase.from("parts").delete().eq("order_id", orderId);
+    await supabase.from("order_status_log").delete().eq("order_id", orderId);
+    await supabase.from("orders").delete().eq("id", orderId);
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    setDeleteId(null);
+    toast({ title: "Auftrag gelöscht" });
+  };
 
   const filtered = orders.filter(o => {
     const matchSearch =
@@ -101,7 +118,7 @@ export default function AuftraegePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                {["Datum", "Kunde", "Beschreibung", "Umsatz", "Kosten", "Gewinn", "Marge", "Status"].map(h => (
+                {["Datum", "Kunde", "Beschreibung", "Umsatz", "Kosten", "Gewinn", "Marge", "Status", ""].map(h => (
                   <th key={h} className={`px-4 py-3 text-muted-foreground font-medium ${["Umsatz", "Kosten", "Gewinn", "Marge"].includes(h) ? "text-right" : "text-left"}`}>
                     {h}
                   </th>
@@ -112,7 +129,7 @@ export default function AuftraegePage() {
               {filtered.map(o => (
                 <tr
                   key={o.id}
-                  className="table-row-alt border-b border-border/50 last:border-0"
+                  className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer"
                   onClick={() => navigate(`/auftraege/${o.id}`)}
                 >
                   <td className="px-4 py-3 text-muted-foreground">{o.datum}</td>
@@ -123,12 +140,41 @@ export default function AuftraegePage() {
                   <td className="px-4 py-3 num-right text-success">{formatCHF(o.gewinn_total)}</td>
                   <td className="px-4 py-3 num-right">{formatPct(o.marge)}</td>
                   <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
+                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => setDeleteId(o.id)}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                      title="Auftrag löschen"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Auftrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieser Auftrag und alle zugehörigen Teile und Dateien werden unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteId && handleDelete(deleteId)}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
