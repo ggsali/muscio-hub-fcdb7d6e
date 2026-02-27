@@ -481,6 +481,57 @@ export type Database = {
         }
         Relationships: []
       }
+      time_entries: {
+        Row: {
+          created_at: string
+          dauer_sekunden: number | null
+          id: string
+          kategorie: string
+          notiz: string | null
+          order_id: string
+          part_id: string | null
+          started_at: string
+          stopped_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          dauer_sekunden?: number | null
+          id?: string
+          kategorie: string
+          notiz?: string | null
+          order_id: string
+          part_id?: string | null
+          started_at?: string
+          stopped_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          dauer_sekunden?: number | null
+          id?: string
+          kategorie?: string
+          notiz?: string | null
+          order_id?: string
+          part_id?: string | null
+          started_at?: string
+          stopped_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       upload_link_files: {
         Row: {
           created_at: string
