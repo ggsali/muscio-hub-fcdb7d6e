@@ -405,13 +405,21 @@ export default function AuftragDetailPage() {
         preis_total: p.preis_total,
         status: p.status,
         notizen: p.notizen,
+        filament_id: p.filament_id || null,
+        filament_einkauf_pro_kg: p.filament_einkauf_pro_kg ?? null,
       }));
       await supabase.from("parts").insert(partsData);
     }
 
     setSaving(false);
-    navigate(isNew ? `/auftraege/${orderId}` : `/auftraege/${id}`, { replace: true });
-    if (!isNew) window.location.reload();
+    if (isNew) {
+      navigate(`/auftraege/${orderId}`, { replace: true });
+    } else {
+      // Reload parts from DB to sync IDs, without losing local UI state
+      const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!);
+      if (freshParts) setParts(freshParts as PartRow[]);
+      toast({ title: "Gespeichert ✓" });
+    }
   };
 
   if (loading) return <div className="p-8 text-muted-foreground">Laden...</div>;
