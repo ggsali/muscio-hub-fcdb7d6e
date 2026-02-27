@@ -15,7 +15,6 @@ const NAS_URL_KEY = "nas_webdav_url";
 const NAS_USER_KEY = "nas_webdav_user";
 const NAS_PASS_KEY = "nas_webdav_pass";
 
-const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const PREVIEW_ORIGIN = window.location.origin;
 
 interface UploadLink {
