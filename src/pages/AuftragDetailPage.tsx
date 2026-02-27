@@ -680,6 +680,11 @@ export default function AuftragDetailPage() {
         </div>
       </div>
 
+      {/* Zeit-Tracker – nur für gespeicherte Aufträge */}
+      {!isNew && (
+        <TimeTracker orderId={id!} parts={parts} />
+      )}
+
       {/* Status Workflow – nur für gespeicherte Aufträge */}
       {!isNew && (
         <OrderStatusWorkflow
