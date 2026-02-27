@@ -16,6 +16,7 @@ import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
 import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
+import TimeTracker from "@/components/TimeTracker";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -678,6 +679,11 @@ export default function AuftragDetailPage() {
           </table>
         </div>
       </div>
+
+      {/* Zeit-Tracker – nur für gespeicherte Aufträge */}
+      {!isNew && (
+        <TimeTracker orderId={id!} parts={parts} />
+      )}
 
       {/* Status Workflow – nur für gespeicherte Aufträge */}
       {!isNew && (
