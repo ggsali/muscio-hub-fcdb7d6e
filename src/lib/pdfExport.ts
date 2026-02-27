@@ -278,7 +278,7 @@ export async function exportOrderPDF(data: OrderExportData) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...GRAY);
-    doc.text(`UID: ${data.company.uid_nummer}`, margin, bankY + 30);
+    doc.text(`UID: ${data.company.uid_nummer}`, margin, afterTable + 22);
   }
 
   // ── Fusszeile ───────────────────────────────────────────────────
@@ -300,7 +300,6 @@ export async function exportOrderPDF(data: OrderExportData) {
 
   // ── Seite 2: Einzahlungsschein ──────────────────────────────────────────
   if (data.company.qr_bill_image_url) {
-    // Eigenes hochgeladenes QR-Bill Bild verwenden
     const qrImg = await loadImageAsBase64(data.company.qr_bill_image_url);
     if (qrImg) {
       doc.addPage();
@@ -308,4 +307,16 @@ export async function exportOrderPDF(data: OrderExportData) {
       const ph = doc.internal.pageSize.getHeight();
       doc.addImage(qrImg, "PNG", 0, 0, pw, ph);
     }
-  } 
+  } else {
+    await appendQrBill(doc, {
+      company: data.company,
+      customerName: data.customerName,
+      customerAdresse: data.customerAdresse,
+      amount: data.umsatz_total,
+      invoiceNr: rechnungsNr,
+    });
+  }
+
+  if (data.returnBase64) return { base64: doc.output("datauristring").split(",")[1], filename };
+  doc.save(filename);
+}
