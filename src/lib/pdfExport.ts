@@ -317,6 +317,6 @@ export async function exportOrderPDF(data: OrderExportData) {
     });
   }
 
-  if (data.returnBase64) return doc.output("datauristring");
+  if (data.returnBase64) return { base64: doc.output("datauristring").split(",")[1], filename };
   doc.save(filename);
 }

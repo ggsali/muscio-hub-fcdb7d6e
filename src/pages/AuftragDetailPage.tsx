@@ -272,14 +272,14 @@ export default function AuftragDetailPage() {
             gewinn_total: totalGewinn, marge: totalMarge,
             settings: activeSettings, company, returnBase64: true,
           });
-          if (result && typeof result === "string") { pdfBase64 = result.split(",")[1] ?? result; pdfFilename = `Rechnung_${id?.slice(0,6)}.pdf`; }
+          if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true,
           });
-          if (result && typeof result === "string") { pdfBase64 = result.split(",")[1] ?? result; pdfFilename = `Offerte_${id?.slice(0,6)}.pdf`; }
+          if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
       }
 
