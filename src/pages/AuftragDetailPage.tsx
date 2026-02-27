@@ -454,7 +454,7 @@ export default function AuftragDetailPage() {
               Offerte
             </Button>
             <Button
-              onClick={() => handleSendEmail("offerte")}
+              onClick={() => setConfirmEmailType("offerte")}
               disabled={!!sendingEmail}
               variant="outline"
               className="gap-2 border-border"
