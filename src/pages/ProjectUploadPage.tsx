@@ -86,18 +86,25 @@ export default function ProjectUploadPage() {
 
       updateFile({ progress: 10 });
 
-      // Step 2: Upload directly to storage using Supabase JS client (handles CORS correctly)
+      // Step 2: Upload directly to storage via XHR PUT to signed URL (avoids CORS issues)
       updateFile({ progress: 30 });
-      const { error: uploadError } = await supabase.storage
-        .from("project-uploads")
-        .uploadToSignedUrl(presignData.storagePath, presignData.token, file, {
-          contentType: file.type || "application/octet-stream",
-        });
-
-      if (uploadError) {
-        updateFile({ status: "error", error: "Upload fehlgeschlagen: " + uploadError.message });
-        return;
-      }
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = 30 + Math.round((e.loaded / e.total) * 50);
+            updateFile({ progress: pct });
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`HTTP ${xhr.status}: ${xhr.responseText}`));
+        };
+        xhr.onerror = () => reject(new Error("Netzwerkfehler beim Upload"));
+        xhr.open("PUT", presignData.signedUrl);
+        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+        xhr.send(file);
+      });
       updateFile({ progress: 80 });
 
       updateFile({ progress: 90 });
