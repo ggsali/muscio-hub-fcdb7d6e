@@ -127,12 +127,16 @@ Deno.serve(async (req) => {
     const webdavPass = Deno.env.get("WEBDAV_PASSWORD");
 
     if (webdavUrl && webdavUser && webdavPass) {
+      console.log("Starting NAS sync for:", storagePath, "WebDAV URL:", webdavUrl);
       try {
         // Download from storage to push to NAS
         const { data: fileData, error: downloadError } = await supabase.storage
           .from("project-uploads")
           .download(storagePath);
 
+        if (downloadError) {
+          console.error("Storage download error:", downloadError.message);
+        }
         if (!downloadError && fileData) {
           const credentials = btoa(`${webdavUser}:${webdavPass}`);
           const folderPath = `${webdavUrl.replace(/\/$/, "")}/${linkId}/`;
@@ -144,6 +148,7 @@ Deno.serve(async (req) => {
           }).catch(() => {});
 
           nasPath = `${folderPath}${filename}`;
+          console.log("Uploading to NAS path:", nasPath);
           const nasRes = await fetch(nasPath, {
             method: "PUT",
             headers: {
@@ -153,8 +158,11 @@ Deno.serve(async (req) => {
             body: fileData,
           });
           nasSynced = nasRes.ok;
+          const nasBody = await nasRes.text();
           if (!nasRes.ok) {
-            console.error("NAS upload failed:", nasRes.status, await nasRes.text());
+            console.error("NAS upload failed:", nasRes.status, nasBody);
+          } else {
+            console.log("NAS upload success:", nasRes.status);
           }
         }
       } catch (e) {
