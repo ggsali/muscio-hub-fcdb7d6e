@@ -405,6 +405,7 @@ export default function AuftragDetailPage() {
         preis_total: p.preis_total,
         status: p.status,
         notizen: p.notizen,
+        // Filament-Felder werden als notizen-Metadaten kodiert, da DB-Spalten fehlen
       }));
       await supabase.from("parts").insert(partsData);
     }
