@@ -316,6 +316,16 @@ export async function exportOrderPDF(data: OrderExportData) {
 
   const filename = `Rechnung_${rechnungsNr}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
 
+  // ── Seite 2: Swiss QR-Rechnung (Einzahlungsschein) ─────────────────────
+  await appendQrBill(doc, {
+    company:          data.company,
+    customerName:     data.customerName,
+    customerAdresse:  [data.customerFirma, data.customerAdresse].filter(Boolean).join(", "),
+    amount:           data.umsatz_total,
+    currency:         "CHF",
+    invoiceNr:        rechnungsNr,
+  });
+
   if (data.returnBase64) {
     return { base64: doc.output("datauristring").split(",")[1], filename };
   }
