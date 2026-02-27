@@ -118,7 +118,7 @@ export default function TimeTracker({ orderId, parts }: TimeTrackerProps) {
       toast({ title: "Fehler", description: error.message, variant: "destructive" });
       return;
     }
-    setActiveEntry(data as TimeEntry);
+    setActiveEntry((data as unknown) as TimeEntry);
     setNotiz("");
   }
 
