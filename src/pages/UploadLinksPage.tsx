@@ -7,11 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus, Copy, Check, ExternalLink, Trash2, Link2, FileText,
-  Image, Box, Download, RefreshCw, Calendar, User
+  Image, Box, Download, RefreshCw, Calendar, User, Wifi, WifiOff, Upload
 } from "lucide-react";
 import { toast } from "sonner";
 
-const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+const NAS_URL_KEY = "nas_webdav_url";
+const NAS_USER_KEY = "nas_webdav_user";
+const NAS_PASS_KEY = "nas_webdav_pass";
+
 const PREVIEW_ORIGIN = window.location.origin;
 
 interface UploadLink {
@@ -62,6 +65,13 @@ export default function UploadLinksPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedLink, setSelectedLink] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [syncingFile, setSyncingFile] = useState<string | null>(null);
+  const [showNasSettings, setShowNasSettings] = useState(false);
+  const [nasConfig, setNasConfig] = useState({
+    url: localStorage.getItem(NAS_URL_KEY) || "",
+    user: localStorage.getItem(NAS_USER_KEY) || "",
+    pass: localStorage.getItem(NAS_PASS_KEY) || "",
+  });
 
   const [form, setForm] = useState({
     title: "Projektdaten hochladen",
@@ -123,6 +133,73 @@ export default function UploadLinksPage() {
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   };
 
+  const saveNasConfig = () => {
+    localStorage.setItem(NAS_URL_KEY, nasConfig.url);
+    localStorage.setItem(NAS_USER_KEY, nasConfig.user);
+    localStorage.setItem(NAS_PASS_KEY, nasConfig.pass);
+    setShowNasSettings(false);
+    toast.success("NAS-Verbindung gespeichert");
+  };
+
+  const nasConfigured = !!(nasConfig.url && nasConfig.user && nasConfig.pass);
+
+  const syncToNas = async (f: UploadFile) => {
+    if (!nasConfigured) { setShowNasSettings(true); return; }
+    setSyncingFile(f.id);
+    try {
+      // 1. Get signed download URL from cloud storage
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from("project-uploads")
+        .createSignedUrl(f.storage_path, 120);
+      if (urlError || !urlData?.signedUrl) throw new Error("Download-URL Fehler");
+
+      // 2. Download file blob in browser
+      const blob = await fetch(urlData.signedUrl).then(r => {
+        if (!r.ok) throw new Error(`Download fehlgeschlagen: ${r.status}`);
+        return r.blob();
+      });
+
+      // 3. Push via WebDAV PUT directly to NAS (works when browser is on Tailscale)
+      const base = nasConfig.url.replace(/\/$/, "");
+      const credentials = btoa(`${nasConfig.user}:${nasConfig.pass}`);
+      const folder = `${base}/${f.upload_link_id}/`;
+
+      // Create folder (MKCOL), ignore errors
+      await fetch(folder, {
+        method: "MKCOL",
+        headers: { Authorization: `Basic ${credentials}` },
+      }).catch(() => {});
+
+      const nasPath = `${folder}${f.filename}`;
+      const res = await fetch(nasPath, {
+        method: "PUT",
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "Content-Type": f.file_type || "application/octet-stream",
+        },
+        body: blob,
+      });
+
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`NAS Fehler ${res.status}: ${body}`);
+      }
+
+      // 4. Update DB
+      await supabase.from("upload_link_files").update({ nas_synced: true, nas_path: nasPath }).eq("id", f.id);
+      await load();
+      toast.success(`${f.filename} auf NAS synchronisiert`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Unbekannter Fehler";
+      toast.error(`NAS-Sync fehlgeschlagen: ${msg}`);
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+        toast.error("Bist du mit Tailscale verbunden?", { duration: 6000 });
+      }
+    } finally {
+      setSyncingFile(null);
+    }
+  };
+
   const filesForLink = (linkId: string) => files.filter(f => f.upload_link_id === linkId);
   const selectedFiles = selectedLink ? filesForLink(selectedLink) : files;
 
@@ -131,9 +208,13 @@ export default function UploadLinksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Projekt-Uploads</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Upload-Links für Kunden generieren – Dateien landen direkt auf deinem NAS</p>
+          <p className="text-muted-foreground text-sm mt-0.5">Upload-Links für Kunden generieren – NAS-Sync über Browser (Tailscale)</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowNasSettings(true)} className="gap-2 border-border">
+            {nasConfigured ? <Wifi className="w-4 h-4 text-success" /> : <WifiOff className="w-4 h-4 text-muted-foreground" />}
+            NAS
+          </Button>
           <Button variant="outline" onClick={load} className="gap-2 border-border">
             <RefreshCw className="w-4 h-4" />
           </Button>
@@ -267,9 +348,23 @@ export default function UploadLinksPage() {
                       </td>
                       <td className="px-4 py-3">
                         {f.nas_synced ? (
-                          <span className="text-xs text-success font-medium">✓ Synced</span>
+                          <span className="text-xs text-success font-medium flex items-center gap-1">
+                            <Wifi className="w-3 h-3" />Synced
+                          </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <button
+                            onClick={() => syncToNas(f)}
+                            disabled={syncingFile === f.id}
+                            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                            title="Auf NAS synchronisieren (Tailscale erforderlich)"
+                          >
+                            {syncingFile === f.id ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Upload className="w-3 h-3" />
+                            )}
+                            {syncingFile === f.id ? "Sync..." : "→ NAS"}
+                          </button>
                         )}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
@@ -291,6 +386,50 @@ export default function UploadLinksPage() {
           )}
         </div>
       </div>
+
+      {/* NAS Settings Dialog */}
+      <Dialog open={showNasSettings} onOpenChange={setShowNasSettings}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wifi className="w-5 h-5" /> NAS-Verbindung (WebDAV)
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Der Browser synchronisiert Dateien direkt auf dein NAS — du musst mit <strong>Tailscale</strong> verbunden sein.
+            Die Zugangsdaten werden nur lokal im Browser gespeichert.
+          </p>
+          <div className="space-y-3 pt-1">
+            <div className="space-y-1.5">
+              <Label>WebDAV URL</Label>
+              <Input
+                value={nasConfig.url}
+                onChange={e => setNasConfig({ ...nasConfig, url: e.target.value })}
+                placeholder="https://100.95.200.66:5006"
+                className="bg-input border-border font-mono text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Benutzername</Label>
+              <Input
+                value={nasConfig.user}
+                onChange={e => setNasConfig({ ...nasConfig, user: e.target.value })}
+                className="bg-input border-border"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Passwort</Label>
+              <Input
+                type="password"
+                value={nasConfig.pass}
+                onChange={e => setNasConfig({ ...nasConfig, pass: e.target.value })}
+                className="bg-input border-border"
+              />
+            </div>
+            <Button onClick={saveNasConfig} className="w-full">Speichern</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
