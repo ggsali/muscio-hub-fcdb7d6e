@@ -53,6 +53,16 @@ export default function AuftraegePage() {
     load();
   }, []);
 
+  const handleDelete = async (orderId: string) => {
+    await supabase.from("part_files").delete().eq("order_id", orderId);
+    await supabase.from("parts").delete().eq("order_id", orderId);
+    await supabase.from("order_status_log").delete().eq("order_id", orderId);
+    await supabase.from("orders").delete().eq("id", orderId);
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    setDeleteId(null);
+    toast({ title: "Auftrag gelöscht" });
+  };
+
   const filtered = orders.filter(o => {
     const matchSearch =
       (o.beschreibung || "").toLowerCase().includes(search.toLowerCase()) ||
