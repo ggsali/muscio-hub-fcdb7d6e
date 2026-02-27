@@ -340,11 +340,14 @@ export default function AuftragDetailPage() {
     if (customerId) {
       const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
       if (c) {
-        customerName = c.name;
+        customerName = [c.vorname, c.name].filter(Boolean).join(" ") || c.name;
         customerFirma = c.firma ?? undefined;
         customerEmail = c.email ?? undefined;
         customerTelefon = c.telefon ?? undefined;
-        customerAdresse = c.adresse ?? undefined;
+        const adresseParts: string[] = [];
+        if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
+        if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
+        customerAdresse = adresseParts.join(", ") || c.adresse || undefined;
       }
     }
     exportOfferPDF({
