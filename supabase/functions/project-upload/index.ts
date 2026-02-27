@@ -118,67 +118,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Push to NAS via WebDAV (async, non-blocking for the response)
-    let nasSynced = false;
-    let nasPath = "";
-
-    const webdavUrl = Deno.env.get("WEBDAV_URL");
-    const webdavUser = Deno.env.get("WEBDAV_USERNAME");
-    const webdavPass = Deno.env.get("WEBDAV_PASSWORD");
-
-    if (webdavUrl && webdavUser && webdavPass) {
-      console.log("Starting NAS sync for:", storagePath, "WebDAV URL:", webdavUrl);
-      try {
-        // Download from storage to push to NAS
-        const { data: fileData, error: downloadError } = await supabase.storage
-          .from("project-uploads")
-          .download(storagePath);
-
-        if (downloadError) {
-          console.error("Storage download error:", downloadError.message);
-        }
-        if (!downloadError && fileData) {
-          const credentials = btoa(`${webdavUser}:${webdavPass}`);
-          const folderPath = `${webdavUrl.replace(/\/$/, "")}/${linkId}/`;
-
-          // Create folder (ignore if exists)
-          await fetch(folderPath, {
-            method: "MKCOL",
-            headers: { Authorization: `Basic ${credentials}` },
-          }).catch(() => {});
-
-          nasPath = `${folderPath}${filename}`;
-          console.log("Uploading to NAS path:", nasPath);
-          const nasRes = await fetch(nasPath, {
-            method: "PUT",
-            headers: {
-              Authorization: `Basic ${credentials}`,
-              "Content-Type": fileType || "application/octet-stream",
-            },
-            body: fileData,
-          });
-          nasSynced = nasRes.ok;
-          const nasBody = await nasRes.text();
-          if (!nasRes.ok) {
-            console.error("NAS upload failed:", nasRes.status, nasBody);
-          } else {
-            console.log("NAS upload success:", nasRes.status);
-          }
-        }
-      } catch (e) {
-        console.error("WebDAV error:", e);
-      }
-    }
-
-    // Save file record
+    // 1. Save file record FIRST (so upload is never lost even if NAS fails)
     const { data: fileRecord, error: insertError } = await supabase.from("upload_link_files").insert({
       upload_link_id: linkId,
       filename,
       storage_path: storagePath,
       file_type: fileType || null,
       file_size_bytes: fileSize || null,
-      nas_path: nasPath || null,
-      nas_synced: nasSynced,
+      nas_path: null,
+      nas_synced: false,
       uploader_name: uploaderName || null,
       uploader_email: uploaderEmail || null,
     }).select().single();
@@ -188,6 +136,72 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Fehler beim Speichern: " + insertError.message }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // 2. Push to NAS via WebDAV with 25s timeout
+    const webdavUrl = Deno.env.get("WEBDAV_URL");
+    const webdavUser = Deno.env.get("WEBDAV_USERNAME");
+    const webdavPass = Deno.env.get("WEBDAV_PASSWORD");
+
+    let nasSynced = false;
+    let nasPath = "";
+
+    if (webdavUrl && webdavUser && webdavPass) {
+      console.log("Starting NAS sync for:", storagePath, "WebDAV URL:", webdavUrl);
+      try {
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from("project-uploads")
+          .download(storagePath);
+
+        if (downloadError) {
+          console.error("Storage download error:", downloadError.message);
+        } else if (fileData) {
+          const credentials = btoa(`${webdavUser}:${webdavPass}`);
+          const folderPath = `${webdavUrl.replace(/\/$/, "")}/${linkId}/`;
+
+          // Create folder (ignore if exists), 10s timeout
+          const mkcolAbort = new AbortController();
+          const mkcolTimer = setTimeout(() => mkcolAbort.abort(), 10000);
+          await fetch(folderPath, {
+            method: "MKCOL",
+            headers: { Authorization: `Basic ${credentials}` },
+            signal: mkcolAbort.signal,
+          }).catch((e) => console.log("MKCOL (ignored):", e.message));
+          clearTimeout(mkcolTimer);
+
+          nasPath = `${folderPath}${filename}`;
+          console.log("Uploading to NAS path:", nasPath);
+
+          const putAbort = new AbortController();
+          const putTimer = setTimeout(() => putAbort.abort(), 25000);
+          const nasRes = await fetch(nasPath, {
+            method: "PUT",
+            headers: {
+              Authorization: `Basic ${credentials}`,
+              "Content-Type": fileType || "application/octet-stream",
+            },
+            body: fileData,
+            signal: putAbort.signal,
+          });
+          clearTimeout(putTimer);
+
+          nasSynced = nasRes.ok;
+          const nasBody = await nasRes.text();
+          if (!nasRes.ok) {
+            console.error("NAS upload failed:", nasRes.status, nasBody);
+          } else {
+            console.log("NAS upload success:", nasRes.status);
+          }
+
+          // Update DB record with NAS result
+          await supabase.from("upload_link_files").update({
+            nas_synced: nasSynced,
+            nas_path: nasSynced ? nasPath : null,
+          }).eq("id", fileRecord.id);
+        }
+      } catch (e) {
+        console.error("WebDAV error:", (e as Error).message);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, file: fileRecord, nas_synced: nasSynced }), {
