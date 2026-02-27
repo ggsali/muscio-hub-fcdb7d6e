@@ -61,7 +61,9 @@ export default function EinstellungenPage() {
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingQr, setUploadingQr] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const qrInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setLocalSettings(settings); }, [settings]);
   useEffect(() => { setLocalCompany(company); }, [company]);
