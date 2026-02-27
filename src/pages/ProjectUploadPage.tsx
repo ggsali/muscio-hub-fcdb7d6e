@@ -86,24 +86,19 @@ export default function ProjectUploadPage() {
 
       updateFile({ progress: 10 });
 
-      // Step 2: Upload directly to storage using XMLHttpRequest for progress tracking
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", presignData.signedUrl, true);
-        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const pct = Math.round(10 + (e.loaded / e.total) * 80);
-            updateFile({ progress: pct });
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error(`Storage upload failed: ${xhr.status}`));
-        };
-        xhr.onerror = () => reject(new Error("Netzwerkfehler beim Upload"));
-        xhr.send(file);
-      });
+      // Step 2: Upload directly to storage using Supabase JS client (handles CORS correctly)
+      updateFile({ progress: 30 });
+      const { error: uploadError } = await supabase.storage
+        .from("project-uploads")
+        .uploadToSignedUrl(presignData.storagePath, presignData.token, file, {
+          contentType: file.type || "application/octet-stream",
+        });
+
+      if (uploadError) {
+        updateFile({ status: "error", error: "Upload fehlgeschlagen: " + uploadError.message });
+        return;
+      }
+      updateFile({ progress: 80 });
 
       updateFile({ progress: 90 });
 
