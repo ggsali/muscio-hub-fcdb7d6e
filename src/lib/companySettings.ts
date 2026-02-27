@@ -14,6 +14,7 @@ export interface CompanySettings {
   primary_color: string; // hex e.g. "#FF5A00"
   logo_url: string;
   zahlungsbedingungen: string;
+  qr_bill_image_url: string;
 }
 
 export const DEFAULT_COMPANY: CompanySettings = {
