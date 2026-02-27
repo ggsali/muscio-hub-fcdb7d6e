@@ -278,7 +278,7 @@ export async function exportOrderPDF(data: OrderExportData) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...GRAY);
-    doc.text(`UID: ${data.company.uid_nummer}`, margin, bankY + 30);
+    doc.text(`UID: ${data.company.uid_nummer}`, margin, afterTable + 22);
   }
 
   // ── Fusszeile ───────────────────────────────────────────────────
