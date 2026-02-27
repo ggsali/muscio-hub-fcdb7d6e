@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Upload, CheckCircle, AlertCircle, FileText, Image, Box, X, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const EDGE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/project-upload`;
@@ -21,6 +22,7 @@ interface UploadedFile {
   status: "uploading" | "done" | "error";
   nas_synced?: boolean;
   error?: string;
+  progress?: number;
 }
 
 function formatBytes(bytes: number) {
@@ -60,28 +62,75 @@ export default function ProjectUploadPage() {
   }, [token]);
 
   const uploadFile = useCallback(async (file: File) => {
-    setFiles(prev => [...prev, { name: file.name, size: file.size, status: "uploading" }]);
+    const fileEntry: UploadedFile = { name: file.name, size: file.size, status: "uploading", progress: 0 };
+    setFiles(prev => [...prev, fileEntry]);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("token", token!);
-    formData.append("uploader_name", uploaderName);
-    formData.append("uploader_email", uploaderEmail);
+    const updateFile = (patch: Partial<UploadedFile>) =>
+      setFiles(prev => prev.map(f =>
+        f.name === file.name && f.status === "uploading" ? { ...f, ...patch } : f
+      ));
 
     try {
-      const res = await fetch(`${EDGE_URL}/upload`, { method: "POST", body: formData });
-      const data = await res.json();
-      setFiles(prev => prev.map(f =>
-        f.name === file.name && f.status === "uploading"
-          ? { ...f, status: data.success ? "done" : "error", nas_synced: data.nas_synced, error: data.error }
-          : f
-      ));
-    } catch {
-      setFiles(prev => prev.map(f =>
-        f.name === file.name && f.status === "uploading"
-          ? { ...f, status: "error", error: "Verbindungsfehler" }
-          : f
-      ));
+      // Step 1: Get presigned upload URL
+      const presignRes = await fetch(`${EDGE_URL}/presign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, filename: file.name, contentType: file.type }),
+      });
+      const presignData = await presignRes.json();
+
+      if (!presignRes.ok || !presignData.signedUrl) {
+        updateFile({ status: "error", error: presignData.error ?? "Fehler beim Vorbereiten des Uploads" });
+        return;
+      }
+
+      updateFile({ progress: 10 });
+
+      // Step 2: Upload directly to storage using XMLHttpRequest for progress tracking
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", presignData.signedUrl, true);
+        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round(10 + (e.loaded / e.total) * 80);
+            updateFile({ progress: pct });
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Storage upload failed: ${xhr.status}`));
+        };
+        xhr.onerror = () => reject(new Error("Netzwerkfehler beim Upload"));
+        xhr.send(file);
+      });
+
+      updateFile({ progress: 90 });
+
+      // Step 3: Confirm upload + trigger NAS sync
+      const confirmRes = await fetch(`${EDGE_URL}/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          storagePath: presignData.storagePath,
+          linkId: presignData.linkId,
+          filename: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          uploaderName,
+          uploaderEmail,
+        }),
+      });
+      const confirmData = await confirmRes.json();
+
+      if (confirmData.success) {
+        updateFile({ status: "done", progress: 100, nas_synced: confirmData.nas_synced });
+      } else {
+        updateFile({ status: "error", error: confirmData.error ?? "Fehler beim Bestätigen" });
+      }
+    } catch (err: any) {
+      updateFile({ status: "error", error: err?.message ?? "Verbindungsfehler" });
     }
   }, [token, uploaderName, uploaderEmail]);
 
@@ -119,7 +168,7 @@ export default function ProjectUploadPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="text-center space-y-4 max-w-md">
-          <CheckCircle className="w-16 h-16 text-success mx-auto" />
+          <CheckCircle className="w-16 h-16 text-primary mx-auto" />
           <h1 className="text-2xl font-bold">Danke!</h1>
           <p className="text-muted-foreground">{doneCount} Datei{doneCount !== 1 ? "en" : ""} erfolgreich übermittelt. Wir melden uns bei dir.</p>
         </div>
@@ -142,11 +191,11 @@ export default function ProjectUploadPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Name</Label>
-              <Input value={uploaderName} onChange={e => setUploaderName(e.target.value)} placeholder="Max Mustermann" className="bg-input border-border" />
+              <Input value={uploaderName} onChange={e => setUploaderName(e.target.value)} placeholder="Max Mustermann" />
             </div>
             <div className="space-y-1.5">
               <Label>E-Mail</Label>
-              <Input value={uploaderEmail} onChange={e => setUploaderEmail(e.target.value)} placeholder="max@beispiel.ch" type="email" className="bg-input border-border" />
+              <Input value={uploaderEmail} onChange={e => setUploaderEmail(e.target.value)} placeholder="max@beispiel.ch" type="email" />
             </div>
           </div>
         </div>
@@ -183,7 +232,7 @@ export default function ProjectUploadPage() {
                 {f.status === "uploading" ? (
                   <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
                 ) : f.status === "done" ? (
-                  <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
                 ) : (
                   <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
                 )}
@@ -194,10 +243,25 @@ export default function ProjectUploadPage() {
                   </div>
                   <div className="text-xs text-muted-foreground flex gap-2 mt-0.5">
                     <span>{formatBytes(f.size)}</span>
-                    {f.status === "uploading" && <span>Wird hochgeladen...</span>}
-                    {f.status === "done" && <span className="text-success">{f.nas_synced ? "✓ NAS gespeichert" : "✓ Gespeichert"}</span>}
+                    {f.status === "uploading" && (
+                      <span className="text-primary">
+                        {f.progress != null && f.progress > 0 ? `${f.progress}% hochgeladen...` : "Wird vorbereitet..."}
+                      </span>
+                    )}
+                    {f.status === "done" && (
+                      <span className="text-primary">{f.nas_synced ? "✓ NAS gespeichert" : "✓ Gespeichert"}</span>
+                    )}
                     {f.status === "error" && <span className="text-destructive">{f.error ?? "Fehler"}</span>}
                   </div>
+                  {/* Progress bar */}
+                  {f.status === "uploading" && f.progress != null && (
+                    <div className="mt-1.5 h-1 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${f.progress}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
                 {f.status !== "uploading" && (
                   <button onClick={() => removeFile(f.name)} className="text-muted-foreground hover:text-foreground">
