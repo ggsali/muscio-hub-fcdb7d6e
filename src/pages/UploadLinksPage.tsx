@@ -405,7 +405,7 @@ export default function UploadLinksPage() {
               <Input
                 value={nasConfig.url}
                 onChange={e => setNasConfig({ ...nasConfig, url: e.target.value })}
-                placeholder="https://100.95.200.66:5006"
+                placeholder="http://100.95.200.66:5005"
                 className="bg-input border-border font-mono text-sm"
               />
             </div>
