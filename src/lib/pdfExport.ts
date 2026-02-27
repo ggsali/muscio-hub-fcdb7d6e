@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCHF, Settings } from "./calc";
 import { CompanySettings } from "./companySettings";
+import { appendQrBill } from "./pdfQrBill";
 
 interface PartRow {
   teilname: string;
