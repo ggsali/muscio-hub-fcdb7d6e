@@ -86,6 +86,7 @@ export default function AuftragDetailPage() {
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
   const [trackingNr, setTrackingNr] = useState("");
+  const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | null>(null);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -439,7 +440,7 @@ export default function AuftragDetailPage() {
               Rechnung
             </Button>
             <Button
-              onClick={() => handleSendEmail("rechnung")}
+              onClick={() => setConfirmEmailType("rechnung")}
               disabled={!!sendingEmail}
               variant="outline"
               className="gap-2 border-border"
@@ -453,7 +454,7 @@ export default function AuftragDetailPage() {
               Offerte
             </Button>
             <Button
-              onClick={() => handleSendEmail("offerte")}
+              onClick={() => setConfirmEmailType("offerte")}
               disabled={!!sendingEmail}
               variant="outline"
               className="gap-2 border-border"
@@ -464,7 +465,7 @@ export default function AuftragDetailPage() {
             </Button>
             {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
               <Button
-                onClick={() => handleSendEmail("lieferung")}
+                onClick={() => setConfirmEmailType("lieferung")}
                 disabled={!!sendingEmail}
                 variant="outline"
                 className="gap-2 border-border text-success border-success/40"
@@ -476,6 +477,33 @@ export default function AuftragDetailPage() {
             )}
           </>
         )}
+
+        {/* E-Mail Bestätigungsdialog */}
+        <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => !open && setConfirmEmailType(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmEmailType === "rechnung" && "Die Rechnung wird als PDF per E-Mail an den Kunden gesendet."}
+                {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
+                {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (confirmEmailType) {
+                    handleSendEmail(confirmEmailType);
+                    setConfirmEmailType(null);
+                  }
+                }}
+              >
+                Ja, senden
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         {!isNew && (
           <Button
             onClick={() => setShowDeleteDialog(true)}
