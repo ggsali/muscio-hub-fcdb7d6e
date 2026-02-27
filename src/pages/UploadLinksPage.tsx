@@ -143,6 +143,12 @@ export default function UploadLinksPage() {
 
   const nasConfigured = !!(nasConfig.url && nasConfig.user && nasConfig.pass);
 
+  const markNasSynced = async (f: UploadFile) => {
+    await supabase.from("upload_link_files").update({ nas_synced: true }).eq("id", f.id);
+    await load();
+    toast.success(`${f.filename} als synced markiert`);
+  };
+
   const syncToNas = async (f: UploadFile) => {
     if (!nasConfigured) { setShowNasSettings(true); return; }
     setSyncingFile(f.id);
