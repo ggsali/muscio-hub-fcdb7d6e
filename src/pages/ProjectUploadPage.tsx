@@ -249,7 +249,7 @@ export default function ProjectUploadPage() {
                       </span>
                     )}
                     {f.status === "done" && (
-                      <span className="text-green-500">{f.nas_synced ? "✓ NAS gespeichert" : "✓ Gespeichert"}</span>
+                      <span className="text-primary">{f.nas_synced ? "✓ NAS gespeichert" : "✓ Gespeichert"}</span>
                     )}
                     {f.status === "error" && <span className="text-destructive">{f.error ?? "Fehler"}</span>}
                   </div>
