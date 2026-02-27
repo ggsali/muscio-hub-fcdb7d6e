@@ -148,6 +148,7 @@ Deno.serve(async (req) => {
           }).catch(() => {});
 
           nasPath = `${folderPath}${filename}`;
+          console.log("Uploading to NAS path:", nasPath);
           const nasRes = await fetch(nasPath, {
             method: "PUT",
             headers: {
@@ -157,8 +158,11 @@ Deno.serve(async (req) => {
             body: fileData,
           });
           nasSynced = nasRes.ok;
+          const nasBody = await nasRes.text();
           if (!nasRes.ok) {
-            console.error("NAS upload failed:", nasRes.status, await nasRes.text());
+            console.error("NAS upload failed:", nasRes.status, nasBody);
+          } else {
+            console.log("NAS upload success:", nasRes.status);
           }
         }
       } catch (e) {
