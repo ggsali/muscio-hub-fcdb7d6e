@@ -232,7 +232,7 @@ export default function ProjectUploadPage() {
                 {f.status === "uploading" ? (
                   <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
                 ) : f.status === "done" ? (
-                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
                 ) : (
                   <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
                 )}
