@@ -168,7 +168,7 @@ export default function ProjectUploadPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="text-center space-y-4 max-w-md">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+          <CheckCircle className="w-16 h-16 text-primary mx-auto" />
           <h1 className="text-2xl font-bold">Danke!</h1>
           <p className="text-muted-foreground">{doneCount} Datei{doneCount !== 1 ? "en" : ""} erfolgreich übermittelt. Wir melden uns bei dir.</p>
         </div>
