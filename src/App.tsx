@@ -60,6 +60,7 @@ function AuthGate() {
             <Route path="/kalkulator" element={<KalkulatorPage />} />
             <Route path="/einstellungen" element={<EinstellungenPage />} />
             <Route path="/anfragen" element={<AnfragenPage />} />
+            <Route path="/uploads" element={<UploadLinksPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
@@ -74,7 +75,11 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthGate />
+        <Routes>
+          {/* Public upload page – no auth required */}
+          <Route path="/upload/:token" element={<ProjectUploadPage />} />
+          <Route path="*" element={<AuthGate />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
