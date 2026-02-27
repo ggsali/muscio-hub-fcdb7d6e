@@ -461,6 +461,16 @@ export default function AuftragDetailPage() {
             )}
           </>
         )}
+        {!isNew && (
+          <Button
+            onClick={() => setShowDeleteDialog(true)}
+            variant="outline"
+            className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="w-4 h-4" />
+            Löschen
+          </Button>
+        )}
         <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
           <Save className="w-4 h-4" />
           {saving ? "Speichern..." : "Speichern"}
