@@ -353,17 +353,11 @@ export default function UploadLinksPage() {
                           </span>
                         ) : (
                           <button
-                            onClick={() => syncToNas(f)}
-                            disabled={syncingFile === f.id}
-                            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-                            title="Auf NAS synchronisieren (Tailscale erforderlich)"
+                            onClick={() => markNasSynced(f)}
+                            className="text-xs text-muted-foreground hover:text-success transition-colors"
+                            title="Als NAS-synced markieren"
                           >
-                            {syncingFile === f.id ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Upload className="w-3 h-3" />
-                            )}
-                            {syncingFile === f.id ? "Sync..." : "→ NAS"}
+                            Als synced ✓
                           </button>
                         )}
                       </td>
@@ -373,7 +367,8 @@ export default function UploadLinksPage() {
                       <td className="px-4 py-3">
                         <button
                           onClick={() => downloadFile(f)}
-                          className="text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                          title="Herunterladen"
                         >
                           <Download className="w-4 h-4" />
                         </button>
