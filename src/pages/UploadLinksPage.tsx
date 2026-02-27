@@ -7,9 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus, Copy, Check, ExternalLink, Trash2, Link2, FileText,
-  Image, Box, Download, RefreshCw, Calendar, User
+  Image, Box, Download, RefreshCw, Calendar, User, Wifi, WifiOff, Upload
 } from "lucide-react";
 import { toast } from "sonner";
+
+const NAS_URL_KEY = "nas_webdav_url";
+const NAS_USER_KEY = "nas_webdav_user";
+const NAS_PASS_KEY = "nas_webdav_pass";
 
 const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const PREVIEW_ORIGIN = window.location.origin;
