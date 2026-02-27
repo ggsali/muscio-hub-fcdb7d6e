@@ -348,9 +348,23 @@ export default function UploadLinksPage() {
                       </td>
                       <td className="px-4 py-3">
                         {f.nas_synced ? (
-                          <span className="text-xs text-success font-medium">✓ Synced</span>
+                          <span className="text-xs text-success font-medium flex items-center gap-1">
+                            <Wifi className="w-3 h-3" />Synced
+                          </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <button
+                            onClick={() => syncToNas(f)}
+                            disabled={syncingFile === f.id}
+                            className="text-xs flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                            title="Auf NAS synchronisieren (Tailscale erforderlich)"
+                          >
+                            {syncingFile === f.id ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Upload className="w-3 h-3" />
+                            )}
+                            {syncingFile === f.id ? "Sync..." : "→ NAS"}
+                          </button>
                         )}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
@@ -372,6 +386,50 @@ export default function UploadLinksPage() {
           )}
         </div>
       </div>
+
+      {/* NAS Settings Dialog */}
+      <Dialog open={showNasSettings} onOpenChange={setShowNasSettings}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wifi className="w-5 h-5" /> NAS-Verbindung (WebDAV)
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Der Browser synchronisiert Dateien direkt auf dein NAS — du musst mit <strong>Tailscale</strong> verbunden sein.
+            Die Zugangsdaten werden nur lokal im Browser gespeichert.
+          </p>
+          <div className="space-y-3 pt-1">
+            <div className="space-y-1.5">
+              <Label>WebDAV URL</Label>
+              <Input
+                value={nasConfig.url}
+                onChange={e => setNasConfig({ ...nasConfig, url: e.target.value })}
+                placeholder="https://100.95.200.66:5006"
+                className="bg-input border-border font-mono text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Benutzername</Label>
+              <Input
+                value={nasConfig.user}
+                onChange={e => setNasConfig({ ...nasConfig, user: e.target.value })}
+                className="bg-input border-border"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Passwort</Label>
+              <Input
+                type="password"
+                value={nasConfig.pass}
+                onChange={e => setNasConfig({ ...nasConfig, pass: e.target.value })}
+                className="bg-input border-border"
+              />
+            </div>
+            <Button onClick={saveNasConfig} className="w-full">Speichern</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
