@@ -465,7 +465,7 @@ export default function AuftragDetailPage() {
             </Button>
             {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
               <Button
-                onClick={() => handleSendEmail("lieferung")}
+                onClick={() => setConfirmEmailType("lieferung")}
                 disabled={!!sendingEmail}
                 variant="outline"
                 className="gap-2 border-border text-success border-success/40"
