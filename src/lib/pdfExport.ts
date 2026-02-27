@@ -290,7 +290,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setTextColor(160, 160, 160);
   const footParts = [firmenname, data.company.adresse, data.company.email, data.company.website].filter(Boolean);
   doc.text(footParts.join("  |  "), margin, pageH - 5.5);
-  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })}`, pageW - margin, pageH - 5.5, { align: "right" });
+  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}`, pageW - margin, pageH - 5.5, { align: "right" });
 
   // Akzentlinie oben auf Footer
   doc.setFillColor(...ACCENT);
