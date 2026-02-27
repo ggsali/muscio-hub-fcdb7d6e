@@ -32,6 +32,8 @@ export default function AuftraegePage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Alle");
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function load() {
