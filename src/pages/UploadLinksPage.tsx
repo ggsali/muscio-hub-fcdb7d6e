@@ -133,6 +133,73 @@ export default function UploadLinksPage() {
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   };
 
+  const saveNasConfig = () => {
+    localStorage.setItem(NAS_URL_KEY, nasConfig.url);
+    localStorage.setItem(NAS_USER_KEY, nasConfig.user);
+    localStorage.setItem(NAS_PASS_KEY, nasConfig.pass);
+    setShowNasSettings(false);
+    toast.success("NAS-Verbindung gespeichert");
+  };
+
+  const nasConfigured = !!(nasConfig.url && nasConfig.user && nasConfig.pass);
+
+  const syncToNas = async (f: UploadFile) => {
+    if (!nasConfigured) { setShowNasSettings(true); return; }
+    setSyncingFile(f.id);
+    try {
+      // 1. Get signed download URL from cloud storage
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from("project-uploads")
+        .createSignedUrl(f.storage_path, 120);
+      if (urlError || !urlData?.signedUrl) throw new Error("Download-URL Fehler");
+
+      // 2. Download file blob in browser
+      const blob = await fetch(urlData.signedUrl).then(r => {
+        if (!r.ok) throw new Error(`Download fehlgeschlagen: ${r.status}`);
+        return r.blob();
+      });
+
+      // 3. Push via WebDAV PUT directly to NAS (works when browser is on Tailscale)
+      const base = nasConfig.url.replace(/\/$/, "");
+      const credentials = btoa(`${nasConfig.user}:${nasConfig.pass}`);
+      const folder = `${base}/${f.upload_link_id}/`;
+
+      // Create folder (MKCOL), ignore errors
+      await fetch(folder, {
+        method: "MKCOL",
+        headers: { Authorization: `Basic ${credentials}` },
+      }).catch(() => {});
+
+      const nasPath = `${folder}${f.filename}`;
+      const res = await fetch(nasPath, {
+        method: "PUT",
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "Content-Type": f.file_type || "application/octet-stream",
+        },
+        body: blob,
+      });
+
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`NAS Fehler ${res.status}: ${body}`);
+      }
+
+      // 4. Update DB
+      await supabase.from("upload_link_files").update({ nas_synced: true, nas_path: nasPath }).eq("id", f.id);
+      await load();
+      toast.success(`${f.filename} auf NAS synchronisiert`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Unbekannter Fehler";
+      toast.error(`NAS-Sync fehlgeschlagen: ${msg}`);
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+        toast.error("Bist du mit Tailscale verbunden?", { duration: 6000 });
+      }
+    } finally {
+      setSyncingFile(null);
+    }
+  };
+
   const filesForLink = (linkId: string) => files.filter(f => f.upload_link_id === linkId);
   const selectedFiles = selectedLink ? filesForLink(selectedLink) : files;
 
