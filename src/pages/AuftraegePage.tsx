@@ -118,7 +118,7 @@ export default function AuftraegePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                {["Datum", "Kunde", "Beschreibung", "Umsatz", "Kosten", "Gewinn", "Marge", "Status"].map(h => (
+                {["Datum", "Kunde", "Beschreibung", "Umsatz", "Kosten", "Gewinn", "Marge", "Status", ""].map(h => (
                   <th key={h} className={`px-4 py-3 text-muted-foreground font-medium ${["Umsatz", "Kosten", "Gewinn", "Marge"].includes(h) ? "text-right" : "text-left"}`}>
                     {h}
                   </th>
@@ -129,7 +129,7 @@ export default function AuftraegePage() {
               {filtered.map(o => (
                 <tr
                   key={o.id}
-                  className="table-row-alt border-b border-border/50 last:border-0"
+                  className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer"
                   onClick={() => navigate(`/auftraege/${o.id}`)}
                 >
                   <td className="px-4 py-3 text-muted-foreground">{o.datum}</td>
@@ -140,12 +140,41 @@ export default function AuftraegePage() {
                   <td className="px-4 py-3 num-right text-success">{formatCHF(o.gewinn_total)}</td>
                   <td className="px-4 py-3 num-right">{formatPct(o.marge)}</td>
                   <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
+                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                    <button
+                      onClick={() => setDeleteId(o.id)}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                      title="Auftrag löschen"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Auftrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieser Auftrag und alle zugehörigen Teile und Dateien werden unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteId && handleDelete(deleteId)}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
