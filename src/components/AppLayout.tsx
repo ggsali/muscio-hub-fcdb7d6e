@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, Library, Calculator, Settings, Menu, ChevronLeft, Box, LogOut, FlaskConical, MessageSquare
+  LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box, LogOut, FlaskConical, MessageSquare, Upload
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
