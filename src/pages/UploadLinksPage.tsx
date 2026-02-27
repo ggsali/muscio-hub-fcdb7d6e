@@ -65,6 +65,13 @@ export default function UploadLinksPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedLink, setSelectedLink] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [syncingFile, setSyncingFile] = useState<string | null>(null);
+  const [showNasSettings, setShowNasSettings] = useState(false);
+  const [nasConfig, setNasConfig] = useState({
+    url: localStorage.getItem(NAS_URL_KEY) || "",
+    user: localStorage.getItem(NAS_USER_KEY) || "",
+    pass: localStorage.getItem(NAS_PASS_KEY) || "",
+  });
 
   const [form, setForm] = useState({
     title: "Projektdaten hochladen",
