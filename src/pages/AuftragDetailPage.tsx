@@ -440,7 +440,7 @@ export default function AuftragDetailPage() {
               Rechnung
             </Button>
             <Button
-              onClick={() => handleSendEmail("rechnung")}
+              onClick={() => setConfirmEmailType("rechnung")}
               disabled={!!sendingEmail}
               variant="outline"
               className="gap-2 border-border"
