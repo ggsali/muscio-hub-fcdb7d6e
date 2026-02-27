@@ -61,7 +61,9 @@ export default function EinstellungenPage() {
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingQr, setUploadingQr] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const qrInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setLocalSettings(settings); }, [settings]);
   useEffect(() => { setLocalCompany(company); }, [company]);
@@ -101,6 +103,25 @@ export default function EinstellungenPage() {
       setLocalCompany(prev => ({ ...prev, logo_url: url }));
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingQr(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `qr_bill.${ext}`;
+      const { error } = await supabase.storage
+        .from("company-assets")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("company-assets").getPublicUrl(path);
+      const url = data.publicUrl + `?t=${Date.now()}`;
+      setLocalCompany(prev => ({ ...prev, qr_bill_image_url: url }));
+    } finally {
+      setUploadingQr(false);
     }
   };
 
@@ -396,6 +417,42 @@ export default function EinstellungenPage() {
               <div className="bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
                 {localCompany.slogan || "Slogan wird hier angezeigt"}
               </div>
+            </div>
+          </div>
+
+          {/* QR-Bill Upload */}
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <div>
+              <h3 className="font-semibold text-sm">Einzahlungsschein (QR-Rechnung)</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Lade dein eigenes QR-Einzahlungsschein-Bild hoch (PNG/JPG). Es wird automatisch als zweite Seite an jede Rechnung angehängt.</p>
+            </div>
+            {localCompany.qr_bill_image_url && (
+              <div className="space-y-2">
+                <img
+                  src={localCompany.qr_bill_image_url}
+                  alt="QR-Einzahlungsschein"
+                  className="w-full max-w-sm rounded border border-border object-contain bg-white p-2"
+                />
+                <button
+                  onClick={() => setLocalCompany(prev => ({ ...prev, qr_bill_image_url: "" }))}
+                  className="text-xs text-destructive hover:underline"
+                >
+                  Bild entfernen
+                </button>
+              </div>
+            )}
+            <div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 border-border"
+                onClick={() => qrInputRef.current?.click()}
+                disabled={uploadingQr}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                {uploadingQr ? "Hochladen..." : localCompany.qr_bill_image_url ? "Bild ersetzen" : "Bild hochladen"}
+              </Button>
+              <input ref={qrInputRef} type="file" accept="image/*" className="hidden" onChange={handleQrUpload} />
             </div>
           </div>
 

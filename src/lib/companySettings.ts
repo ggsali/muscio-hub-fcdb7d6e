@@ -14,6 +14,7 @@ export interface CompanySettings {
   primary_color: string; // hex e.g. "#FF5A00"
   logo_url: string;
   zahlungsbedingungen: string;
+  qr_bill_image_url: string;
 }
 
 export const DEFAULT_COMPANY: CompanySettings = {
@@ -30,6 +31,7 @@ export const DEFAULT_COMPANY: CompanySettings = {
   primary_color: "#FF5A00",
   logo_url: "",
   zahlungsbedingungen: "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.",
+  qr_bill_image_url: "",
 };
 
 export async function loadCompanySettings(): Promise<CompanySettings> {

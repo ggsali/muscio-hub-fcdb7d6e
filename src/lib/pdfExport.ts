@@ -316,15 +316,27 @@ export async function exportOrderPDF(data: OrderExportData) {
 
   const filename = `Rechnung_${rechnungsNr}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
 
-  // ── Seite 2: Swiss QR-Rechnung (Einzahlungsschein) ─────────────────────
-  await appendQrBill(doc, {
-    company:          data.company,
-    customerName:     data.customerName,
-    customerAdresse:  [data.customerFirma, data.customerAdresse].filter(Boolean).join(", "),
-    amount:           data.umsatz_total,
-    currency:         "CHF",
-    invoiceNr:        rechnungsNr,
-  });
+  // ── Seite 2: Einzahlungsschein ──────────────────────────────────────────
+  if (data.company.qr_bill_image_url) {
+    // Eigenes hochgeladenes QR-Bill Bild verwenden
+    const qrImg = await loadImageAsBase64(data.company.qr_bill_image_url);
+    if (qrImg) {
+      doc.addPage();
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+      doc.addImage(qrImg, "PNG", 0, 0, pw, ph);
+    }
+  } else {
+    // Automatisch generierte Swiss QR-Rechnung
+    await appendQrBill(doc, {
+      company:         data.company,
+      customerName:    data.customerName,
+      customerAdresse: [data.customerFirma, data.customerAdresse].filter(Boolean).join(", "),
+      amount:          data.umsatz_total,
+      currency:        "CHF",
+      invoiceNr:       rechnungsNr,
+    });
+  }
 
   if (data.returnBase64) {
     return { base64: doc.output("datauristring").split(",")[1], filename };
