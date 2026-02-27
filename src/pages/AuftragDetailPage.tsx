@@ -477,6 +477,33 @@ export default function AuftragDetailPage() {
             )}
           </>
         )}
+
+        {/* E-Mail Bestätigungsdialog */}
+        <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => !open && setConfirmEmailType(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmEmailType === "rechnung" && "Die Rechnung wird als PDF per E-Mail an den Kunden gesendet."}
+                {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
+                {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (confirmEmailType) {
+                    handleSendEmail(confirmEmailType);
+                    setConfirmEmailType(null);
+                  }
+                }}
+              >
+                Ja, senden
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         {!isNew && (
           <Button
             onClick={() => setShowDeleteDialog(true)}
