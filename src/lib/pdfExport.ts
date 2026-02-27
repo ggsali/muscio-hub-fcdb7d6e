@@ -272,25 +272,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(8);
   doc.setTextColor(...GRAY);
   doc.text("Wir schätzen Ihr Vertrauen.", margin, afterTable + 16);
-
-  // ── Zahlungsinformationen ───────────────────────────────────────
-  const hasBank = data.company.bank_iban || data.company.bank_name;
-  const bankY = afterTable + 30;
-
-  if (hasBank) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...BLACK);
-    doc.text("Zahlungsinformationen", margin, bankY);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    let bl = bankY + 6;
-    if (data.company.bank_inhaber) { doc.text(`Kontoinhaber:  ${data.company.bank_inhaber}`, margin, bl); bl += 4.5; }
-    if (data.company.bank_iban)    { doc.text(`IBAN:          ${data.company.bank_iban}`,    margin, bl); bl += 4.5; }
-    if (data.company.bank_name)    { doc.text(`Bank:          ${data.company.bank_name}`,    margin, bl); }
-  }
-
+  
   // UID
   if (data.company.uid_nummer) {
     doc.setFont("helvetica", "normal");
@@ -326,21 +308,4 @@ export async function exportOrderPDF(data: OrderExportData) {
       const ph = doc.internal.pageSize.getHeight();
       doc.addImage(qrImg, "PNG", 0, 0, pw, ph);
     }
-  } else {
-    // Automatisch generierte Swiss QR-Rechnung
-    await appendQrBill(doc, {
-      company:         data.company,
-      customerName:    data.customerName,
-      customerAdresse: [data.customerFirma, data.customerAdresse].filter(Boolean).join(", "),
-      amount:          data.umsatz_total,
-      currency:        "CHF",
-      invoiceNr:       rechnungsNr,
-    });
-  }
-
-  if (data.returnBase64) {
-    return { base64: doc.output("datauristring").split(",")[1], filename };
-  }
-  doc.save(filename);
-  return null;
-}
+  } 
