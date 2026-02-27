@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCHF, Settings } from "./calc";
 import { CompanySettings } from "./companySettings";
+import { appendQrBill } from "./pdfQrBill";
 
 interface PartRow {
   teilname: string;
@@ -314,6 +315,16 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.rect(0, pageH - 14, pageW, 2, "F");
 
   const filename = `Rechnung_${rechnungsNr}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
+
+  // ── Seite 2: Swiss QR-Rechnung (Einzahlungsschein) ─────────────────────
+  await appendQrBill(doc, {
+    company:          data.company,
+    customerName:     data.customerName,
+    customerAdresse:  [data.customerFirma, data.customerAdresse].filter(Boolean).join(", "),
+    amount:           data.umsatz_total,
+    currency:         "CHF",
+    invoiceNr:        rechnungsNr,
+  });
 
   if (data.returnBase64) {
     return { base64: doc.output("datauristring").split(",")[1], filename };
