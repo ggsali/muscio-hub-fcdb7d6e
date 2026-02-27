@@ -106,6 +106,25 @@ export default function EinstellungenPage() {
     }
   };
 
+  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingQr(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `qr_bill.${ext}`;
+      const { error } = await supabase.storage
+        .from("company-assets")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("company-assets").getPublicUrl(path);
+      const url = data.publicUrl + `?t=${Date.now()}`;
+      setLocalCompany(prev => ({ ...prev, qr_bill_image_url: url }));
+    } finally {
+      setUploadingQr(false);
+    }
+  };
+
   const emptyPreset = (): Preset => ({
     name: "Neues Preset",
     beschreibung: "",
