@@ -14,6 +14,7 @@ const navItems = [
   { to: "/teile", icon: <Library className="w-[18px] h-[18px]" />, label: "Teile-Bibliothek" },
   { to: "/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
   { to: "/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
+  { to: "/uploads", icon: <Upload className="w-[18px] h-[18px]" />, label: "Projekt-Uploads" },
   { to: "/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
 ];
 
