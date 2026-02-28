@@ -859,7 +859,7 @@ export default function AuftragDetailPage() {
       )}
 
       {/* Summary */}
-      <div className="bg-card border border-border rounded-lg p-5 max-w-xs ml-auto">
+      <div className="bg-card border border-border rounded-lg p-4 md:p-5 md:max-w-xs md:ml-auto">
         <h3 className="font-semibold text-sm mb-3">Auftrags-Zusammenfassung</h3>
         <div className="space-y-1.5 text-sm">
           <div className="flex justify-between">
