@@ -44,6 +44,7 @@ interface Props {
 }
 
 export default function OfferMode({ orderId, orderName, customerId, datum, beschreibung }: Props) {
+  const isMobile = useIsMobile();
   const [positions, setPositions] = useState<OfferPosition[]>([emptyPos(0)]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
