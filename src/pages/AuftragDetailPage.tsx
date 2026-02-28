@@ -432,98 +432,109 @@ export default function AuftragDetailPage() {
   if (loading) return <div className="p-8 text-muted-foreground">Laden...</div>;
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate("/auftraege")} className="text-muted-foreground hover:text-foreground transition-colors">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center gap-2 md:gap-4">
+        <button onClick={() => navigate("/auftraege")} className="text-muted-foreground hover:text-foreground transition-colors p-1 shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-2xl font-bold flex-1">{isNew ? "Neuer Auftrag" : `Auftrag bearbeiten`}</h1>
-        {!isNew && (
-          <>
-            <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border" title="Rechnung als PDF herunterladen">
-              <FileDown className="w-4 h-4" />
-              Rechnung
-            </Button>
-            <Button
-              onClick={() => setConfirmEmailType("rechnung")}
-              disabled={!!sendingEmail}
-              variant="outline"
-              className="gap-2 border-border"
-              title="Rechnung per E-Mail senden"
-            >
-              {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              Rechnung mailen
-            </Button>
-            <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border" title="Offerte als PDF herunterladen">
-              <FileDown className="w-4 h-4" />
-              Offerte
-            </Button>
-            <Button
-              onClick={() => setConfirmEmailType("offerte")}
-              disabled={!!sendingEmail}
-              variant="outline"
-              className="gap-2 border-border"
-              title="Offerte per E-Mail senden"
-            >
-              {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              Offerte mailen
-            </Button>
-            {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
-              <Button
-                onClick={() => setConfirmEmailType("lieferung")}
-                disabled={!!sendingEmail}
-                variant="outline"
-                className="gap-2 border-border text-success border-success/40"
-                title={trackingNr ? `Lieferbenachrichtigung senden (Tracking: ${trackingNr})` : "Lieferbenachrichtigung senden"}
-              >
-                {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                {trackingNr ? "Update-Mail senden" : "Lieferung mailen"}
-              </Button>
-            )}
-          </>
-        )}
+        <h1 className="text-lg md:text-2xl font-bold flex-1 min-w-0 truncate">{isNew ? "Neuer Auftrag" : "Auftrag bearbeiten"}</h1>
 
-        {/* E-Mail Bestätigungsdialog */}
-        <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => !open && setConfirmEmailType(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {confirmEmailType === "rechnung" && "Die Rechnung wird als PDF per E-Mail an den Kunden gesendet."}
-                {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
-                {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (confirmEmailType) {
-                    handleSendEmail(confirmEmailType);
-                    setConfirmEmailType(null);
-                  }
-                }}
-              >
-                Ja, senden
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        {!isNew && (
-          <Button
-            onClick={() => setShowDeleteDialog(true)}
-            variant="outline"
-            className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="w-4 h-4" />
-            Löschen
-          </Button>
+        {/* Mobile: nur Speichern + Mehr-Menü */}
+        {isMobile ? (
+          <div className="flex items-center gap-2 shrink-0">
+            <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-1.5" size="sm">
+              <Save className="w-3.5 h-3.5" />
+              {saving ? "..." : "Speichern"}
+            </Button>
+            {!isNew && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="px-2 border-border">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                    <FileDown className="w-4 h-4" /> Rechnung PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} className="gap-2">
+                    {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Rechnung mailen
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportOffer} className="gap-2">
+                    <FileDown className="w-4 h-4" /> Offerte PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} className="gap-2">
+                    {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
+                  </DropdownMenuItem>
+                  {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
+                    <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} className="gap-2 text-success">
+                      {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                      {trackingNr ? "Update-Mail" : "Lieferung mailen"}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
+                    <Trash2 className="w-4 h-4" /> Löschen
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        ) : (
+          /* Desktop: alle Buttons */
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+            {!isNew && (
+              <>
+                <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border" title="Rechnung als PDF">
+                  <FileDown className="w-4 h-4" /> Rechnung
+                </Button>
+                <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border">
+                  {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Rechnung mailen
+                </Button>
+                <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border">
+                  <FileDown className="w-4 h-4" /> Offerte
+                </Button>
+                <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border">
+                  {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
+                </Button>
+                {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
+                  <Button onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border text-success border-success/40">
+                    {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    {trackingNr ? "Update-Mail senden" : "Lieferung mailen"}
+                  </Button>
+                )}
+                <Button onClick={() => setShowDeleteDialog(true)} variant="outline" className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10">
+                  <Trash2 className="w-4 h-4" /> Löschen
+                </Button>
+              </>
+            )}
+            <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
+              <Save className="w-4 h-4" />
+              {saving ? "Speichern..." : "Speichern"}
+            </Button>
+          </div>
         )}
-        <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
-          <Save className="w-4 h-4" />
-          {saving ? "Speichern..." : "Speichern"}
-        </Button>
       </div>
+
+      {/* E-Mail Bestätigungsdialog */}
+      <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => !open && setConfirmEmailType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmEmailType === "rechnung" && "Die Rechnung wird als PDF per E-Mail an den Kunden gesendet."}
+              {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
+              {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (confirmEmailType) { handleSendEmail(confirmEmailType); setConfirmEmailType(null); } }}>
+              Ja, senden
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Basic info */}
       <div className="bg-card border border-border rounded-lg p-5">
