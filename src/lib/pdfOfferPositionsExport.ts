@@ -162,8 +162,10 @@ export async function exportOfferPositionsPDF(
     cy += 4.5;
   }
   if (customerAdresse) {
-    doc.text(customerAdresse, margin, cy);
-    cy += 4.5;
+    customerAdresse.split("\n").forEach(line => {
+      doc.text(line, margin, cy);
+      cy += 4.5;
+    });
   }
   if (customerEmail) {
     doc.text(customerEmail, margin, cy);
