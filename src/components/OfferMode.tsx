@@ -46,6 +46,7 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showEmailConfirm, setShowEmailConfirm] = useState(false);
   const [offerNote, setOfferNote] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
   const { toast } = useToast();
   const { company } = useCompanySettings();
 
