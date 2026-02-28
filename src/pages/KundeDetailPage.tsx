@@ -208,11 +208,33 @@ export default function KundeDetailPage() {
                 <DropdownMenuItem onClick={() => setEditing(true)} className="gap-2">
                   <Edit2 className="w-4 h-4" /> Bearbeiten
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
+                  <Trash2 className="w-4 h-4" /> Kunde löschen
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kunde wirklich löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieser Vorgang löscht den Kunden sowie alle zugehörigen Aufträge, Teile und Dateien unwiderruflich.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              Ja, löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Tabs */}
       {!isNew && (
