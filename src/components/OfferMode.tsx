@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Save, FileDown, Mail, Loader2, ClipboardList, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Save, FileDown, Mail, Loader2, ClipboardList, ChevronDown, MoreVertical } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export default function OfferMode({ orderId, orderName, customerId, datum, beschreibung }: Props) {
+  const isMobile = useIsMobile();
   const [positions, setPositions] = useState<OfferPosition[]>([emptyPos(0)]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -187,14 +189,14 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       {/* Header */}
       <div className="px-5 py-3 border-b border-border flex items-center justify-between bg-muted/20">
-        <div className="flex items-center gap-2">
-          <ClipboardList className="w-4 h-4 text-primary" />
+        <div className="flex items-center gap-2 min-w-0">
+          <ClipboardList className="w-4 h-4 text-primary shrink-0" />
           <h2 className="font-semibold text-sm">Offertenmodus</h2>
-          <span className="text-xs text-muted-foreground ml-1">Tätigkeiten &amp; Positionen für die Offerte</span>
+          {!isMobile && <span className="text-xs text-muted-foreground ml-1">Tätigkeiten &amp; Positionen für die Offerte</span>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button onClick={addPos} variant="outline" size="sm" className="gap-1.5 border-border text-xs">
-            <Plus className="w-3.5 h-3.5" />Position
+            <Plus className="w-3.5 h-3.5" />{!isMobile && "Position"}
           </Button>
           <Button onClick={handleSave} disabled={saving} size="sm" className="gap-1.5 text-xs">
             <Save className="w-3.5 h-3.5" />
@@ -202,17 +204,16 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 border-border text-xs" disabled={sendingEmail}>
-                {sendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
-                Offerte <ChevronDown className="w-3 h-3 opacity-60" />
+              <Button variant="outline" size="sm" className="gap-1.5 border-border text-xs px-2" disabled={sendingEmail}>
+                {sendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MoreVertical className="w-3.5 h-3.5" />}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem onClick={handleExportPDF} className="gap-2 text-xs">
-                <FileDown className="w-3.5 h-3.5" /> PDF herunterladen
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                <FileDown className="w-4 h-4" /> PDF herunterladen
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowEmailConfirm(true)} disabled={sendingEmail} className="gap-2 text-xs">
-                <Mail className="w-3.5 h-3.5" /> Per E-Mail senden
+              <DropdownMenuItem onClick={() => setShowEmailConfirm(true)} disabled={sendingEmail} className="gap-2">
+                <Mail className="w-4 h-4" /> Per E-Mail senden
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
