@@ -119,7 +119,7 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
         const parts: string[] = [];
         if (c.strasse || c.hausnummer) parts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
         if (c.plz || c.ort) parts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
-        customerAdresse = parts.join(", ") || c.adresse || undefined;
+        customerAdresse = parts.join("\n") || c.adresse || undefined;
       }
     }
     return { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse };
