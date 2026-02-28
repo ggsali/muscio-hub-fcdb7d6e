@@ -481,28 +481,51 @@ export default function AuftragDetailPage() {
             )}
           </div>
         ) : (
-          /* Desktop: alle Buttons */
-          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          /* Desktop: gruppierte Dropdown-Menüs */
+          <div className="flex items-center gap-2 shrink-0">
             {!isNew && (
               <>
-                <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border" title="Rechnung als PDF">
-                  <FileDown className="w-4 h-4" /> Rechnung
-                </Button>
-                <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border">
-                  {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Rechnung mailen
-                </Button>
-                <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border">
-                  <FileDown className="w-4 h-4" /> Offerte
-                </Button>
-                <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border">
-                  {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
-                </Button>
-                {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
-                  <Button onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border text-success border-success/40">
-                    {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                    {trackingNr ? "Update-Mail senden" : "Lieferung mailen"}
-                  </Button>
-                )}
+                {/* PDF herunterladen */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="gap-2 border-border">
+                      <FileDown className="w-4 h-4" /> PDF <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-60" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                      <FileDown className="w-4 h-4" /> Rechnung
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportOffer} className="gap-2">
+                      <FileDown className="w-4 h-4" /> Offerte
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* E-Mail senden */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="gap-2 border-border" disabled={!!sendingEmail}>
+                      {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                      E-Mail <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-60" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem onClick={() => setConfirmEmailType("rechnung")} className="gap-2">
+                      <Mail className="w-4 h-4" /> Rechnung senden
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} className="gap-2">
+                      <Mail className="w-4 h-4" /> Offerte senden
+                    </DropdownMenuItem>
+                    {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
+                      <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} className="gap-2 text-success focus:text-success">
+                        <Mail className="w-4 h-4" />
+                        {trackingNr ? "Update-Mail senden" : "Lieferung senden"}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Button onClick={() => setShowDeleteDialog(true)} variant="outline" className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10">
                   <Trash2 className="w-4 h-4" /> Löschen
                 </Button>
