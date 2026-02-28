@@ -24,8 +24,9 @@ interface ExportProps {
 const BLACK  = [30, 30, 30]    as [number, number, number];
 const DARK   = [55, 55, 55]    as [number, number, number];
 const GRAY   = [120, 120, 120] as [number, number, number];
-const WHITE  = [255, 255, 255] as [number, number, number];
+const LGRAY  = [200, 200, 200] as [number, number, number];
 const XLGRAY = [245, 245, 245] as [number, number, number];
+const WHITE  = [255, 255, 255] as [number, number, number];
 
 function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace("#", "");
@@ -54,7 +55,7 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
 export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ base64: string; filename: string } | void> {
   const {
     orderId, datum, orderName, beschreibung, offerNote,
-    positions, total, discountPercent = 0, company,
+    positions, discountPercent = 0, company,
     customerName = "Kein Kunde", customerFirma, customerEmail,
     customerTelefon, customerAdresse,
     returnBase64,
@@ -62,18 +63,22 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const margin = 18;
   const colR = pageW / 2 + 4;
 
   const ACCENT = hexToRgb(company.primary_color || "#FF5A00");
   const firmenname = company.firmenname || "3DMuscio";
   const offerNr = `OF-${datum?.replace(/-/g, "")}-${orderId.slice(0, 6).toUpperCase()}`;
+  const gueltigBisDate = new Date(datum);
+  gueltigBisDate.setDate(gueltigBisDate.getDate() + 30);
+  const gueltigBis = gueltigBisDate.toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" });
+  const gueltigBisShort = gueltigBisDate.toISOString().split("T")[0];
 
   // ── Left dark header panel ────────────────────────────────────────
   doc.setFillColor(...BLACK);
   doc.rect(0, 0, pageW / 2 - 4, 68, "F");
 
-  // Logo or company name
   let logoLoaded = false;
   if (company.logo_url) {
     const b64 = await loadImageAsBase64(company.logo_url);
@@ -89,7 +94,6 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
     doc.text(firmenname.toUpperCase(), margin, 24);
   }
 
-  // Company details
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(180, 180, 180);
@@ -105,7 +109,6 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   doc.setTextColor(...BLACK);
   doc.text("OFFERTE", pageW - margin, 26, { align: "right" });
 
-  // Offer details
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...DARK);
@@ -117,158 +120,160 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   const datumFormatted = datum
     ? new Date(datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
     : "";
-  const validUntil = new Date(datum);
-  validUntil.setDate(validUntil.getDate() + 30);
-  const validFormatted = validUntil.toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" });
+  doc.text(`Datum:           ${datumFormatted}`, colR, 44);
+  doc.text(`Offerten-Nr.:    ${offerNr}`, colR, 49);
+  doc.text(`Gültig bis:      ${gueltigBisShort}`, colR, 54);
 
-  doc.text(`Datum:          ${datumFormatted}`, colR, 44);
-  doc.text(`Offerten-Nr.:   ${offerNr}`, colR, 49);
-  doc.text(`Gültig bis:     ${validFormatted}`, colR, 54);
-
-  // ── Customer block (light gray band) ─────────────────────────────
+  // ── Customer block ─────────────────────────────────────────────────
   doc.setFillColor(...XLGRAY);
   doc.rect(0, 68, pageW / 2 - 4, 42, "F");
 
-  const empX = margin;
-  const empY = 76;
-
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(...GRAY);
-  doc.text("AN", empX, empY);
+  doc.text("ANGEBOT FÜR", margin, 76);
 
+  const displayName = customerFirma || customerName;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
   doc.setTextColor(...BLACK);
-  const displayName = customerFirma || customerName;
-  doc.text(displayName, empX, empY + 7);
+  doc.text(displayName, margin, 83);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...DARK);
-  let cy = empY + 13;
-  if (customerFirma && customerName !== "Kein Kunde") { doc.text(customerName, empX, cy); cy += 4.5; }
-  if (customerAdresse) { doc.text(customerAdresse, empX, cy); cy += 4.5; }
-  if (customerEmail)   { doc.text(customerEmail,   empX, cy); cy += 4.5; }
-  if (customerTelefon) { doc.text(customerTelefon, empX, cy); }
+  let cy = 89;
+  if (customerFirma && customerName !== "Kein Kunde") { doc.text(customerName, margin, cy); cy += 4.5; }
+  if (customerAdresse) { doc.text(customerAdresse, margin, cy); cy += 4.5; }
+  if (customerEmail)   { doc.text(customerEmail,   margin, cy); cy += 4.5; }
+  if (customerTelefon) { doc.text(customerTelefon, margin, cy); }
 
-  // ── Right: Subject / description ─────────────────────────────────
+  // ── Right: Subject ────────────────────────────────────────────────
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(...GRAY);
-  doc.text("BETREFF / PROJEKT", colR, 76);
+  doc.text("BESCHREIBUNG / PROJEKT", colR, 76);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...DARK);
-  const subjectText = orderName ? `${orderName}${beschreibung ? " – " + beschreibung : ""}` : (beschreibung || "—");
+  const subjectText = orderName
+    ? `${orderName}${beschreibung ? " – " + beschreibung : ""}`
+    : (beschreibung || "—");
   const descLines = doc.splitTextToSize(subjectText, pageW - colR - margin) as string[];
   doc.text(descLines.slice(0, 4), colR, 83);
 
   // ── Positions table ───────────────────────────────────────────────
-  const tableY = 118;
-
   const subtotal = positions.reduce((s, p) => s + p.menge * p.preis_pro_einheit, 0);
-  const discountAmount = subtotal * (discountPercent / 100);
+  const discountAmount = discountPercent > 0 ? subtotal * (discountPercent / 100) : 0;
   const finalTotal = subtotal - discountAmount;
 
-  const tableBody = positions.map((p, i) => [
-    String(i + 1).padStart(2, "0"),
-    p.bezeichnung + (p.notiz ? `\n${p.notiz}` : ""),
-    `${p.menge} ${p.einheit}`,
-    `CHF ${p.preis_pro_einheit.toFixed(2)}`,
-    `CHF ${(p.menge * p.preis_pro_einheit).toFixed(2)}`,
-  ]);
-
-  const footRows: any[] = [];
-
-  if (discountPercent > 0) {
-    footRows.push([
-      { content: `Zwischensumme`, colSpan: 4, styles: { halign: "right", textColor: GRAY, fontStyle: "normal" } },
-      { content: `CHF ${subtotal.toFixed(2)}`, styles: { halign: "right", textColor: GRAY, fontStyle: "normal" } },
-    ]);
-    footRows.push([
-      { content: `Rabatt ${discountPercent}%`, colSpan: 4, styles: { halign: "right", textColor: GRAY, fontStyle: "normal" } },
-      { content: `- CHF ${discountAmount.toFixed(2)}`, styles: { halign: "right", textColor: [180, 60, 60] as [number,number,number], fontStyle: "normal" } },
-    ]);
-  }
-
-  footRows.push([
-    { content: "Gesamtbetrag (CHF)", colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 10 } },
-    { content: `CHF ${finalTotal.toFixed(2)}`, styles: { halign: "right", fontStyle: "bold", fillColor: ACCENT, textColor: WHITE, fontSize: 10 } },
-  ]);
-
   autoTable(doc, {
-    startY: tableY,
+    startY: 118,
     margin: { left: margin, right: margin },
     head: [["Nr.", "Bezeichnung / Tätigkeit", "Menge", "Preis/Einheit", "Total"]],
-    body: tableBody,
-    foot: footRows,
+    body: positions.map((p, i) => [
+      String(i + 1).padStart(2, "0"),
+      p.bezeichnung + (p.notiz ? `\n${p.notiz}` : ""),
+      `${p.menge} ${p.einheit}`,
+      `CHF ${p.preis_pro_einheit.toFixed(2)}`,
+      `CHF ${(p.menge * p.preis_pro_einheit).toFixed(2)}`,
+    ]),
     styles: {
       fontSize: 8.5,
       cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
       textColor: DARK,
     },
-    headStyles: {
-      fillColor: BLACK,
-      textColor: WHITE,
-      fontStyle: "bold",
-      fontSize: 8,
-    },
-    footStyles: {
-      fillColor: XLGRAY,
-      textColor: DARK,
-      fontStyle: "bold",
-      fontSize: 9,
-    },
+    headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
     columnStyles: {
       0: { cellWidth: 10, halign: "center" },
       2: { cellWidth: 24, halign: "right" },
-      3: { cellWidth: 28, halign: "right" },
+      3: { cellWidth: 30, halign: "right" },
       4: { cellWidth: 28, halign: "right", fontStyle: "bold" },
     },
-    alternateRowStyles: { fillColor: [250, 250, 252] as [number, number, number] },
+    alternateRowStyles: { fillColor: XLGRAY },
+    tableLineColor: LGRAY,
+    tableLineWidth: 0.1,
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  const afterTable = (doc as any).lastAutoTable.finalY + 6;
 
-  // ── Notes ─────────────────────────────────────────────────────────
-  if (offerNote) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    doc.text("BEMERKUNGEN / KONDITIONEN", margin, finalY);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...DARK);
-    const noteLines = doc.splitTextToSize(offerNote, pageW - margin * 2) as string[];
-    doc.text(noteLines, margin, finalY + 6);
+  // ── Summary box (right side) ──────────────────────────────────────
+  const sumW = 70;
+  const sumX = pageW - margin - sumW;
+  let sumY = afterTable;
+
+  doc.setDrawColor(...LGRAY);
+  doc.setLineWidth(0.3);
+  doc.line(sumX, sumY, pageW - margin, sumY);
+  sumY += 6;
+
+  const sumRows: [string, string][] = [["Zwischensumme", `CHF ${subtotal.toFixed(2)}`]];
+  if (discountPercent > 0) {
+    sumRows.push([`Rabatt ${discountPercent}%`, `- CHF ${discountAmount.toFixed(2)}`]);
   }
-
-  // ── Footer bar ────────────────────────────────────────────────────
-  const footerY = doc.internal.pageSize.getHeight() - 14;
-  doc.setFillColor(...BLACK);
-  doc.rect(0, footerY, pageW, 14, "F");
-
-  doc.setFillColor(...ACCENT);
-  doc.rect(0, footerY, 4, 14, "F");
+  sumRows.push(["MwSt. (0%)", "CHF 0.00"]);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(180, 180, 180);
-  const footParts = [firmenname, company.adresse, company.email].filter(Boolean);
-  doc.text(footParts.join("  ·  "), margin, footerY + 9);
+  doc.setFontSize(8.5);
+  sumRows.forEach(([label, val]) => {
+    doc.setTextColor(...GRAY);
+    doc.text(label, sumX, sumY);
+    doc.setTextColor(...DARK);
+    doc.text(val, pageW - margin, sumY, { align: "right" });
+    sumY += 6;
+  });
 
+  sumY += 2;
+  doc.setFillColor(...BLACK);
+  doc.rect(sumX, sumY - 4, sumW, 12, "F");
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
   doc.setTextColor(...WHITE);
-  doc.text("Vielen Dank für Ihr Vertrauen!", pageW - margin, footerY + 9, { align: "right" });
+  doc.text("ANGEBOTSSUMME", sumX + 3, sumY + 3.5);
+  doc.text(`CHF ${finalTotal.toFixed(2)}`, pageW - margin - 3, sumY + 3.5, { align: "right" });
+  const totalBoxBottom = sumY + 8;
+
+  // ── HINWEIS (below summary) ───────────────────────────────────────
+  const hinweisY = totalBoxBottom + 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...BLACK);
+  doc.text("HINWEIS", sumX, hinweisY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...GRAY);
+  const hinweisText = offerNote
+    || `Dieses Angebot ist gültig bis ${gueltigBis}. Bei Annahme erstellen wir eine verbindliche Auftragsbestätigung.`;
+  const hinweisLines = doc.splitTextToSize(hinweisText, pageW - sumX - margin) as string[];
+  doc.text(hinweisLines, sumX, hinweisY + 6);
+
+  // ── Vielen Dank! (left side) ──────────────────────────────────────
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...BLACK);
+  doc.text("Vielen Dank!", margin, afterTable + 10);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text("Wir freuen uns auf Ihre Rückmeldung.", margin, afterTable + 17);
+
+  // ── Footer ────────────────────────────────────────────────────────
+  doc.setFillColor(...BLACK);
+  doc.rect(0, pageH - 14, pageW, 14, "F");
+  doc.setFillColor(...ACCENT);
+  doc.rect(0, pageH - 14, pageW, 2, "F");
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(160, 160, 160);
+  const footParts = [firmenname, company.adresse, company.email, company.website].filter(Boolean);
+  doc.text(footParts.join("  |  "), margin, pageH - 5.5);
+  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH")}`, pageW - margin, pageH - 5.5, { align: "right" });
 
   const filename = `Offerte_${offerNr}_${datum}.pdf`;
-
   if (returnBase64) {
     const base64 = doc.output("datauristring").split(",")[1];
     return { base64, filename };
   }
-
   doc.save(filename);
 }
