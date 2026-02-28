@@ -154,7 +154,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setTextColor(...DARK);
   let cy = empY + 13;
   if (data.customerFirma)   { doc.text(data.customerFirma,   empX, cy); cy += 4.5; }
-  if (data.customerAdresse) { doc.text(data.customerAdresse, empX, cy); cy += 4.5; }
+  if (data.customerAdresse) {
+    data.customerAdresse.split("\n").forEach(line => { doc.text(line, empX, cy); cy += 4.5; });
+  }
   if (data.customerEmail)   { doc.text(data.customerEmail,   empX, cy); cy += 4.5; }
   if (data.customerTelefon) { doc.text(data.customerTelefon, empX, cy); }
 

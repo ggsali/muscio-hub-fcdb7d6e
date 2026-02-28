@@ -259,11 +259,10 @@ export default function AuftragDetailPage() {
             customerFirma = c.firma ?? undefined;
             customerEmail = c.email ?? undefined;
             customerTelefon = c.telefon ?? undefined;
-            // Adresse aus neuen Feldern zusammensetzen
-            const adresseParts = [];
+            const adresseParts: string[] = [];
             if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
             if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
-            customerAdresse = adresseParts.join(", ") || c.adresse || undefined;
+            customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
           }
         }
 
@@ -314,7 +313,7 @@ export default function AuftragDetailPage() {
         const adresseParts: string[] = [];
         if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
         if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
-        customerAdresse = adresseParts.join(", ") || c.adresse || undefined;
+        customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
       }
     }
     exportOrderPDF({
@@ -350,7 +349,7 @@ export default function AuftragDetailPage() {
         const adresseParts: string[] = [];
         if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
         if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
-        customerAdresse = adresseParts.join(", ") || c.adresse || undefined;
+        customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
       }
     }
     exportOfferPDF({
