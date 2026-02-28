@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { OfferPosition } from "@/components/OfferMode";
+import type { CompanySettings } from "@/lib/companySettings";
 
 interface ExportProps {
   orderId: string;
@@ -10,7 +11,7 @@ interface ExportProps {
   offerNote?: string;
   positions: OfferPosition[];
   total: number;
-  company: Record<string, string>;
+  company: CompanySettings;
   customerName?: string;
   customerFirma?: string;
   customerEmail?: string;
