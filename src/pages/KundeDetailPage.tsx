@@ -158,6 +158,16 @@ export default function KundeDetailPage() {
 
   if (loading) return <div className="p-8 text-muted-foreground">Laden...</div>;
 
+  const handleDelete = async () => {
+    if (!id || isNew) return;
+    await supabase.from("part_files").delete().eq("customer_id", id);
+    await supabase.from("parts").delete().eq("customer_id", id);
+    await supabase.from("inquiries").delete().eq("customer_id", id);
+    await supabase.from("orders").delete().eq("customer_id", id);
+    await supabase.from("customers").delete().eq("id", id);
+    navigate("/kunden");
+  };
+
   const field = (label: string, key: keyof Customer, placeholder?: string, colSpan = 1) => (
     <div className={`space-y-1.5 ${colSpan === 2 ? "col-span-2" : ""}`}>
       <Label>{label}</Label>
