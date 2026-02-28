@@ -320,16 +320,36 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
         </table>
       </div>
 
-      {/* Offer note */}
-      <div className="px-5 py-4 border-t border-border">
-        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Bemerkungen / Konditionen (erscheinen auf der Offerte)</label>
-        <Textarea
-          value={offerNote}
-          onChange={e => setOfferNote(e.target.value)}
-          placeholder="z.B. Gültig 30 Tage, Lieferzeit 5–7 Werktage, Zahlung innert 30 Tagen netto…"
-          className="bg-input border-border text-xs"
-          rows={2}
-        />
+      {/* Discount + Offer note */}
+      <div className="px-5 py-4 border-t border-border flex flex-col gap-3">
+        <div className="flex items-center gap-4">
+          <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Rabatt (%)</label>
+          <Input
+            type="number"
+            value={discountPercent}
+            onChange={e => setDiscountPercent(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+            className="bg-input border-border h-7 text-xs w-20"
+            min={0}
+            max={100}
+            step={1}
+            placeholder="0"
+          />
+          {discountPercent > 0 && (
+            <span className="text-xs text-destructive font-medium">
+              − {formatCHF(discountAmount)} Rabatt → Gesamt: {formatCHF(totalBetragFinal)}
+            </span>
+          )}
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Bemerkungen / Konditionen (erscheinen auf der Offerte)</label>
+          <Textarea
+            value={offerNote}
+            onChange={e => setOfferNote(e.target.value)}
+            placeholder="z.B. Gültig 30 Tage, Lieferzeit 5–7 Werktage, Zahlung innert 30 Tagen netto…"
+            className="bg-input border-border text-xs"
+            rows={2}
+          />
+        </div>
       </div>
 
       {/* Email confirmation */}
