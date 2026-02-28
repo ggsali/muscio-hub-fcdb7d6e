@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Save, FileDown, Mail, Loader2, ClipboardList } from "lucide-react";
+import { Plus, Trash2, Save, FileDown, Mail, Loader2, ClipboardList, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatCHF } from "@/lib/calc";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import { exportOfferPositionsPDF } from "@/lib/pdfOfferPositionsExport";
@@ -195,21 +198,24 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
           </Button>
           <Button onClick={handleSave} disabled={saving} size="sm" className="gap-1.5 text-xs">
             <Save className="w-3.5 h-3.5" />
-            {saving ? "Speichern..." : "Speichern"}
+            {saving ? "..." : "Speichern"}
           </Button>
-          <Button onClick={handleExportPDF} variant="outline" size="sm" className="gap-1.5 border-border text-xs">
-            <FileDown className="w-3.5 h-3.5" />PDF
-          </Button>
-          <Button
-            onClick={() => setShowEmailConfirm(true)}
-            disabled={sendingEmail}
-            variant="outline"
-            size="sm"
-            className="gap-1.5 border-border text-xs"
-          >
-            {sendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-            Mailen
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 border-border text-xs" disabled={sendingEmail}>
+                {sendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+                Offerte <ChevronDown className="w-3 h-3 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={handleExportPDF} className="gap-2 text-xs">
+                <FileDown className="w-3.5 h-3.5" /> PDF herunterladen
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowEmailConfirm(true)} disabled={sendingEmail} className="gap-2 text-xs">
+                <Mail className="w-3.5 h-3.5" /> Per E-Mail senden
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
