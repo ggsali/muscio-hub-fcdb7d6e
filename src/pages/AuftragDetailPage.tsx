@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF } from "@/lib/pdfOfferExport";
@@ -18,10 +18,14 @@ import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 import TimeTracker from "@/components/TimeTracker";
 import OfferMode from "@/components/OfferMode";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PartRow {
   id?: string;
@@ -70,6 +74,7 @@ export default function AuftragDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === "neu";
+  const isMobile = useIsMobile();
   const searchParams = new URLSearchParams(window.location.search);
   const preselectedCustomerId = searchParams.get("customer_id") || "";
   const { settings } = useSettings();
@@ -427,103 +432,114 @@ export default function AuftragDetailPage() {
   if (loading) return <div className="p-8 text-muted-foreground">Laden...</div>;
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate("/auftraege")} className="text-muted-foreground hover:text-foreground transition-colors">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center gap-2 md:gap-4">
+        <button onClick={() => navigate("/auftraege")} className="text-muted-foreground hover:text-foreground transition-colors p-1 shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-2xl font-bold flex-1">{isNew ? "Neuer Auftrag" : `Auftrag bearbeiten`}</h1>
-        {!isNew && (
-          <>
-            <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border" title="Rechnung als PDF herunterladen">
-              <FileDown className="w-4 h-4" />
-              Rechnung
-            </Button>
-            <Button
-              onClick={() => setConfirmEmailType("rechnung")}
-              disabled={!!sendingEmail}
-              variant="outline"
-              className="gap-2 border-border"
-              title="Rechnung per E-Mail senden"
-            >
-              {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              Rechnung mailen
-            </Button>
-            <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border" title="Offerte als PDF herunterladen">
-              <FileDown className="w-4 h-4" />
-              Offerte
-            </Button>
-            <Button
-              onClick={() => setConfirmEmailType("offerte")}
-              disabled={!!sendingEmail}
-              variant="outline"
-              className="gap-2 border-border"
-              title="Offerte per E-Mail senden"
-            >
-              {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              Offerte mailen
-            </Button>
-            {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
-              <Button
-                onClick={() => setConfirmEmailType("lieferung")}
-                disabled={!!sendingEmail}
-                variant="outline"
-                className="gap-2 border-border text-success border-success/40"
-                title={trackingNr ? `Lieferbenachrichtigung senden (Tracking: ${trackingNr})` : "Lieferbenachrichtigung senden"}
-              >
-                {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-                {trackingNr ? "Update-Mail senden" : "Lieferung mailen"}
-              </Button>
-            )}
-          </>
-        )}
+        <h1 className="text-lg md:text-2xl font-bold flex-1 min-w-0 truncate">{isNew ? "Neuer Auftrag" : "Auftrag bearbeiten"}</h1>
 
-        {/* E-Mail Bestätigungsdialog */}
-        <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => !open && setConfirmEmailType(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {confirmEmailType === "rechnung" && "Die Rechnung wird als PDF per E-Mail an den Kunden gesendet."}
-                {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
-                {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (confirmEmailType) {
-                    handleSendEmail(confirmEmailType);
-                    setConfirmEmailType(null);
-                  }
-                }}
-              >
-                Ja, senden
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        {!isNew && (
-          <Button
-            onClick={() => setShowDeleteDialog(true)}
-            variant="outline"
-            className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="w-4 h-4" />
-            Löschen
-          </Button>
+        {/* Mobile: nur Speichern + Mehr-Menü */}
+        {isMobile ? (
+          <div className="flex items-center gap-2 shrink-0">
+            <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-1.5" size="sm">
+              <Save className="w-3.5 h-3.5" />
+              {saving ? "..." : "Speichern"}
+            </Button>
+            {!isNew && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="px-2 border-border">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                    <FileDown className="w-4 h-4" /> Rechnung PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} className="gap-2">
+                    {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Rechnung mailen
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportOffer} className="gap-2">
+                    <FileDown className="w-4 h-4" /> Offerte PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} className="gap-2">
+                    {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
+                  </DropdownMenuItem>
+                  {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
+                    <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} className="gap-2 text-success">
+                      {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                      {trackingNr ? "Update-Mail" : "Lieferung mailen"}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
+                    <Trash2 className="w-4 h-4" /> Löschen
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        ) : (
+          /* Desktop: alle Buttons */
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+            {!isNew && (
+              <>
+                <Button onClick={handleExportPDF} variant="outline" className="gap-2 border-border" title="Rechnung als PDF">
+                  <FileDown className="w-4 h-4" /> Rechnung
+                </Button>
+                <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border">
+                  {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Rechnung mailen
+                </Button>
+                <Button onClick={handleExportOffer} variant="outline" className="gap-2 border-border">
+                  <FileDown className="w-4 h-4" /> Offerte
+                </Button>
+                <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border">
+                  {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
+                </Button>
+                {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
+                  <Button onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} variant="outline" className="gap-2 border-border text-success border-success/40">
+                    {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                    {trackingNr ? "Update-Mail senden" : "Lieferung mailen"}
+                  </Button>
+                )}
+                <Button onClick={() => setShowDeleteDialog(true)} variant="outline" className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10">
+                  <Trash2 className="w-4 h-4" /> Löschen
+                </Button>
+              </>
+            )}
+            <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
+              <Save className="w-4 h-4" />
+              {saving ? "Speichern..." : "Speichern"}
+            </Button>
+          </div>
         )}
-        <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2">
-          <Save className="w-4 h-4" />
-          {saving ? "Speichern..." : "Speichern"}
-        </Button>
       </div>
 
+      {/* E-Mail Bestätigungsdialog */}
+      <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => !open && setConfirmEmailType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmEmailType === "rechnung" && "Die Rechnung wird als PDF per E-Mail an den Kunden gesendet."}
+              {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
+              {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (confirmEmailType) { handleSendEmail(confirmEmailType); setConfirmEmailType(null); } }}>
+              Ja, senden
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Basic info */}
-      <div className="bg-card border border-border rounded-lg p-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="col-span-2 md:col-span-4 space-y-1.5">
+      <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-4 space-y-1.5">
             <Label>Auftragsname <span className="text-muted-foreground font-normal text-xs">(wird als E-Mail-Betreff verwendet)</span></Label>
             <Input
               value={orderName}
@@ -532,7 +548,7 @@ export default function AuftragDetailPage() {
               className="bg-input border-border"
             />
           </div>
-          <div className="col-span-2 space-y-1.5">
+          <div className="space-y-1.5">
             <Label>Kunde</Label>
             <select
               value={customerId}
@@ -559,25 +575,25 @@ export default function AuftragDetailPage() {
               {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div className="col-span-2 md:col-span-4 space-y-1.5">
+          <div className="md:col-span-4 space-y-1.5">
             <Label>Beschreibung</Label>
             <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={2} />
           </div>
         </div>
       </div>
 
-      {/* Parts table */}
+      {/* Parts */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-          <h2 className="font-semibold text-sm">Teile</h2>
-          <div className="flex items-center gap-2">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
+          <h2 className="font-semibold text-sm shrink-0">Teile</h2>
+          <div className="flex items-center gap-2 min-w-0">
             {presets.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Tag className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <select
                   value={selectedPresetId}
                   onChange={e => handlePresetChange(e.target.value)}
-                  className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground"
+                  className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground max-w-[130px] md:max-w-none truncate"
                 >
                   <option value="">— Standard-Sätze —</option>
                   {presets.map(p => (
@@ -586,126 +602,232 @@ export default function AuftragDetailPage() {
                 </select>
               </div>
             )}
-            <Button onClick={addPart} variant="outline" size="sm" className="gap-1.5 border-border text-xs">
-              <Plus className="w-3.5 h-3.5" />Teil hinzufügen
+            <Button onClick={addPart} variant="outline" size="sm" className="gap-1 border-border text-xs shrink-0 px-2 md:px-3">
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Teil </span>hinzufügen
             </Button>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs min-w-[900px]">
-            <thead>
-              <tr className="border-b border-border">
-                {["Teilname", "Filament / Material", "Menge", "Gewicht(g)", "Druck(h)", "NB(h)", "Konstr(h)", "Preis/St.", "Total", "Status", "Notizen", ""].map(h => (
-                  <th key={h} className="px-3 py-2.5 text-muted-foreground font-medium text-left whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {parts.map((part, idx) => (
-                <React.Fragment key={idx}>
-                  <tr className="border-b border-border/50 hover:bg-muted/20">
-                    <td className="px-2 py-2">
-                      <Input value={part.teilname} onChange={e => updatePart(idx, "teilname", e.target.value)} className="bg-input border-border h-7 text-xs w-28" placeholder="Name" />
-                    </td>
-                    <td className="px-2 py-2 min-w-[160px]">
-                      {filaments.length > 0 ? (
-                        <div className="space-y-0.5">
-                          <select
-                            value={part.filament_id || ""}
-                            onChange={e => {
-                              const fil = filaments.find(f => f.id === e.target.value);
-                              setParts(prev => {
-                                const updated = [...prev];
-                                const p = {
-                                  ...updated[idx],
-                                  filament_id: e.target.value,
-                                  filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
-                                  material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
-                                };
-                                updated[idx] = recalcPart(p);
-                                return updated;
-                              });
-                            }}
-                            className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
-                          >
-                            <option value="">Manuell eingeben…</option>
-                            {filaments.map(f => (
-                              <option key={f.id} value={f.id}>
-                                {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
-                              </option>
-                            ))}
+
+        {/* Mobile: Card je Teil */}
+        {isMobile ? (
+          <div className="divide-y divide-border/50">
+            {parts.map((part, idx) => (
+              <div key={idx} className="p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Input
+                    value={part.teilname}
+                    onChange={e => updatePart(idx, "teilname", e.target.value)}
+                    className="bg-input border-border h-9 text-sm flex-1"
+                    placeholder="Teilname"
+                  />
+                  <div className="flex gap-1 shrink-0">
+                    {part.id && (
+                      <button
+                        onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)}
+                        className={`p-2 rounded transition-colors ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground"}`}
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button onClick={() => removePart(idx)} className="p-2 rounded text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filament */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Filament / Material</label>
+                  {filaments.length > 0 ? (
+                    <select
+                      value={part.filament_id || ""}
+                      onChange={e => {
+                        const fil = filaments.find(f => f.id === e.target.value);
+                        setParts(prev => {
+                          const updated = [...prev];
+                          const p = {
+                            ...updated[idx],
+                            filament_id: e.target.value,
+                            filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                            material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
+                          };
+                          updated[idx] = recalcPart(p);
+                          return updated;
+                        });
+                      }}
+                      className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full"
+                    >
+                      <option value="">Manuell eingeben…</option>
+                      {filaments.map(f => (
+                        <option key={f.id} value={f.id}>
+                          {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full">
+                      {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  )}
+                  {part.filament_einkauf_pro_kg != null && (
+                    <div className="text-[10px] text-muted-foreground">
+                      Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf: CHF {((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g
+                    </div>
+                  )}
+                </div>
+
+                {/* Zahlen 2-spaltig */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Menge", field: "menge" as keyof PartRow, step: "1" },
+                    { label: "Gewicht (g)", field: "gewicht_g" as keyof PartRow, step: "0.1" },
+                    { label: "Druckzeit (h)", field: "druckzeit_h" as keyof PartRow, step: "0.1" },
+                    { label: "Nachbearb. (h)", field: "nachbearbeitung_h" as keyof PartRow, step: "0.1" },
+                    { label: "Konstruktion (h)", field: "konstruktion_h" as keyof PartRow, step: "0.1" },
+                  ].map(({ label, field, step }) => (
+                    <div key={field} className="space-y-1">
+                      <label className="text-xs text-muted-foreground">{label}</label>
+                      <Input
+                        type="number"
+                        value={part[field] as number}
+                        onChange={e => updatePart(idx, field, parseFloat(e.target.value) || 0)}
+                        className="bg-input border-border h-9 text-sm"
+                        step={step}
+                        inputMode="decimal"
+                      />
+                    </div>
+                  ))}
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Status</label>
+                    <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full">
+                      {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Notiz</label>
+                  <Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-9 text-sm w-full" placeholder="Notiz..." />
+                </div>
+
+                {/* Preisanzeige */}
+                <div className="flex items-center justify-between bg-muted/20 rounded-lg px-3 py-2">
+                  <span className="text-xs text-muted-foreground">Preis/Stk.</span>
+                  <span className="text-sm font-semibold text-primary">{formatCHF(part.preis_pro_stueck)}</span>
+                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className="text-sm font-bold">{formatCHF(part.preis_total)}</span>
+                </div>
+
+                {expandedPartIdx === idx && part.id && (
+                  <div className="pt-2 border-t border-border/50">
+                    <PartFileUpload
+                      partId={part.id}
+                      orderId={typeof id === "string" && id !== "neu" ? id : undefined}
+                      customerId={customerId || undefined}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Desktop: Tabelle */
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs min-w-[900px]">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Teilname", "Filament / Material", "Menge", "Gewicht(g)", "Druck(h)", "NB(h)", "Konstr(h)", "Preis/St.", "Total", "Status", "Notizen", ""].map(h => (
+                    <th key={h} className="px-3 py-2.5 text-muted-foreground font-medium text-left whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {parts.map((part, idx) => (
+                  <React.Fragment key={idx}>
+                    <tr className="border-b border-border/50 hover:bg-muted/20">
+                      <td className="px-2 py-2">
+                        <Input value={part.teilname} onChange={e => updatePart(idx, "teilname", e.target.value)} className="bg-input border-border h-7 text-xs w-28" placeholder="Name" />
+                      </td>
+                      <td className="px-2 py-2 min-w-[160px]">
+                        {filaments.length > 0 ? (
+                          <div className="space-y-0.5">
+                            <select
+                              value={part.filament_id || ""}
+                              onChange={e => {
+                                const fil = filaments.find(f => f.id === e.target.value);
+                                setParts(prev => {
+                                  const updated = [...prev];
+                                  const p = {
+                                    ...updated[idx],
+                                    filament_id: e.target.value,
+                                    filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                                    material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
+                                  };
+                                  updated[idx] = recalcPart(p);
+                                  return updated;
+                                });
+                              }}
+                              className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
+                            >
+                              <option value="">Manuell eingeben…</option>
+                              {filaments.map(f => (
+                                <option key={f.id} value={f.id}>
+                                  {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
+                                </option>
+                              ))}
+                            </select>
+                            {part.filament_einkauf_pro_kg != null && (
+                              <div className="text-[10px] text-muted-foreground px-0.5">
+                                Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf: CHF {((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
+                            {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
                           </select>
-                          {part.filament_einkauf_pro_kg != null && (
-                            <div className="text-[10px] text-muted-foreground px-0.5">
-                              Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf: CHF {((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
-                          {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
-                        </select>
-                      )}
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input type="number" value={part.menge} onChange={e => updatePart(idx, "menge", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input type="number" value={part.konstruktion_h} onChange={e => updatePart(idx, "konstruktion_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
-                    </td>
-                    <td className="px-2 py-2 text-right font-medium text-primary whitespace-nowrap">{formatCHF(part.preis_pro_stueck)}</td>
-                    <td className="px-2 py-2 text-right font-medium whitespace-nowrap">{formatCHF(part.preis_total)}</td>
-                    <td className="px-2 py-2">
-                      <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
-                        {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-7 text-xs w-24" placeholder="Notiz" />
-                    </td>
-                    <td className="px-2 py-2">
-                      <div className="flex items-center gap-1">
-                        {part.id && (
-                          <button
-                            onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)}
-                            title="Dateien"
-                            className={`transition-colors p-1 ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                          >
-                            <Paperclip className="w-3.5 h-3.5" />
-                          </button>
                         )}
-                        <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  {/* File upload row – only for saved parts */}
-                  {expandedPartIdx === idx && part.id && (
-                    <tr className="bg-muted/10 border-b border-border/50">
-                      <td colSpan={12} className="px-4 py-3">
-                        <PartFileUpload
-                          partId={part.id}
-                          orderId={typeof id === "string" && id !== "neu" ? id : undefined}
-                          customerId={customerId || undefined}
-                        />
+                      </td>
+                      <td className="px-2 py-2"><Input type="number" value={part.menge} onChange={e => updatePart(idx, "menge", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" /></td>
+                      <td className="px-2 py-2"><Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                      <td className="px-2 py-2"><Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                      <td className="px-2 py-2"><Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                      <td className="px-2 py-2"><Input type="number" value={part.konstruktion_h} onChange={e => updatePart(idx, "konstruktion_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                      <td className="px-2 py-2 text-right font-medium text-primary whitespace-nowrap">{formatCHF(part.preis_pro_stueck)}</td>
+                      <td className="px-2 py-2 text-right font-medium whitespace-nowrap">{formatCHF(part.preis_total)}</td>
+                      <td className="px-2 py-2">
+                        <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
+                          {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-2 py-2"><Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-7 text-xs w-24" placeholder="Notiz" /></td>
+                      <td className="px-2 py-2">
+                        <div className="flex items-center gap-1">
+                          {part.id && (
+                            <button onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)} className={`transition-colors p-1 ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                              <Paperclip className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    {expandedPartIdx === idx && part.id && (
+                      <tr className="bg-muted/10 border-b border-border/50">
+                        <td colSpan={12} className="px-4 py-3">
+                          <PartFileUpload partId={part.id} orderId={typeof id === "string" && id !== "neu" ? id : undefined} customerId={customerId || undefined} />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Zeit-Tracker – nur für gespeicherte Aufträge */}
@@ -737,7 +859,7 @@ export default function AuftragDetailPage() {
       )}
 
       {/* Summary */}
-      <div className="bg-card border border-border rounded-lg p-5 max-w-xs ml-auto">
+      <div className="bg-card border border-border rounded-lg p-4 md:p-5 md:max-w-xs md:ml-auto">
         <h3 className="font-semibold text-sm mb-3">Auftrags-Zusammenfassung</h3>
         <div className="space-y-1.5 text-sm">
           <div className="flex justify-between">
