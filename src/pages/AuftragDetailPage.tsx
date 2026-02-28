@@ -350,7 +350,7 @@ export default function AuftragDetailPage() {
         const adresseParts: string[] = [];
         if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
         if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
-        customerAdresse = adresseParts.join(", ") || c.adresse || undefined;
+        customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
       }
     }
     exportOfferPDF({
