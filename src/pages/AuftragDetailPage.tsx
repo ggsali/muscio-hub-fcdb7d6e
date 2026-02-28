@@ -575,7 +575,7 @@ export default function AuftragDetailPage() {
               {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div className="col-span-2 md:col-span-4 space-y-1.5">
+          <div className="md:col-span-4 space-y-1.5">
             <Label>Beschreibung</Label>
             <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={2} />
           </div>
