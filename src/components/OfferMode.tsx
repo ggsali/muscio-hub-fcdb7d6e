@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Save, FileDown, Mail, Loader2, ClipboardList } from "lucide-react";
+import { Plus, Trash2, Save, FileDown, Mail, Loader2, ClipboardList, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatCHF } from "@/lib/calc";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import { exportOfferPositionsPDF } from "@/lib/pdfOfferPositionsExport";
