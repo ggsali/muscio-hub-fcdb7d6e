@@ -42,7 +42,7 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.setTextColor(255, 255, 255);
-  doc.text(company.name || "3DMuscio", 14, 16);
+  doc.text(company.firmenname || "3DMuscio", 14, 16);
 
   // OFFERTE label
   doc.setFontSize(11);
