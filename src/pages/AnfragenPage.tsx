@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Mail, Phone, Clock, User, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Plus } from "lucide-react";
+import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 type Inquiry = {
   id: string;
@@ -31,6 +32,113 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUSES = ["Neu", "In Bearbeitung", "Erledigt", "Geschlossen"] as const;
 
+function InquiryDetail({
+  selected, notiz, setNotiz, saving,
+  onSaveNotiz, onUpdateStatus, onCreateOrder, onClose, navigate
+}: {
+  selected: Inquiry;
+  notiz: string;
+  setNotiz: (v: string) => void;
+  saving: boolean;
+  onSaveNotiz: () => void;
+  onUpdateStatus: (id: string, s: string) => void;
+  onCreateOrder: () => void;
+  onClose?: () => void;
+  navigate: (path: string) => void;
+}) {
+  return (
+    <div className="flex flex-col h-full overflow-y-auto p-4 md:p-6 space-y-5">
+      {onClose && (
+        <button onClick={onClose} className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+          <ArrowLeft className="w-4 h-4" /> Zurück
+        </button>
+      )}
+      <div className="flex items-center gap-2">
+        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <User className="w-4 h-4 text-primary" />
+        </div>
+        <div>
+          <p className="font-semibold text-sm text-foreground">{selected.name}</p>
+          <p className="text-xs text-muted-foreground">{selected.quelle ?? "website"}</p>
+        </div>
+      </div>
+
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Mail className="w-3.5 h-3.5 shrink-0" />
+          <a href={`mailto:${selected.email}`} className="text-primary hover:underline truncate">{selected.email}</a>
+        </div>
+        {selected.telefon && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Phone className="w-3.5 h-3.5 shrink-0" />
+            <a href={`tel:${selected.telefon}`} className="text-primary hover:underline">{selected.telefon}</a>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span>{new Date(selected.created_at).toLocaleString("de-CH")}</span>
+        </div>
+      </div>
+
+      <div className="bg-muted/30 border border-border rounded-lg p-4">
+        <p className="text-xs font-medium text-muted-foreground mb-1">{selected.betreff}</p>
+        <p className="text-sm text-foreground whitespace-pre-wrap">{selected.nachricht}</p>
+      </div>
+
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
+        <div className="flex flex-wrap gap-1.5">
+          {STATUSES.map(s => (
+            <button
+              key={s}
+              onClick={() => onUpdateStatus(selected.id, s)}
+              className={`text-xs px-2.5 py-1.5 rounded-full border font-medium transition-all ${selected.status === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:border-primary/40"}`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-2">Interne Notiz</p>
+        <Textarea
+          value={notiz}
+          onChange={e => setNotiz(e.target.value)}
+          placeholder="Notizen zur Anfrage..."
+          rows={3}
+          className="text-sm"
+        />
+        <Button onClick={onSaveNotiz} disabled={saving} size="sm" className="mt-2 w-full" variant="outline">
+          {saving ? "Speichern..." : "Notiz speichern"}
+        </Button>
+      </div>
+
+      <div className="space-y-2 pt-2 border-t border-border">
+        {selected.order_id ? (
+          <Button size="sm" className="w-full gap-2" variant="outline" onClick={() => navigate(`/auftraege/${selected.order_id}`)}>
+            <ExternalLink className="w-3.5 h-3.5" /> Zum Auftrag
+          </Button>
+        ) : (
+          <Button size="sm" className="w-full gap-2" onClick={onCreateOrder}>
+            <Plus className="w-3.5 h-3.5" /> Auftrag erstellen
+          </Button>
+        )}
+        <Button size="sm" className="w-full gap-2" variant="outline" asChild>
+          <a href={`mailto:${selected.email}?subject=Re: ${selected.betreff}`}>
+            <Mail className="w-3.5 h-3.5" /> Per E-Mail antworten
+          </a>
+        </Button>
+        {selected.customer_id && (
+          <Button size="sm" className="w-full gap-2" variant="ghost" onClick={() => navigate(`/kunden/${selected.customer_id}`)}>
+            <User className="w-3.5 h-3.5" /> Kundenprofil öffnen
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AnfragenPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +146,10 @@ export default function AnfragenPage() {
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [notiz, setNotiz] = useState("");
   const [saving, setSaving] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const load = async () => {
     setLoading(true);
@@ -88,13 +198,19 @@ export default function AnfragenPage() {
     }
   };
 
+  const handleSelect = (inq: Inquiry) => {
+    setSelected(inq);
+    setNotiz(inq.notiz || "");
+    if (isMobile) setSheetOpen(true);
+  };
+
   const filtered = filter === "alle" ? inquiries : inquiries.filter(i => i.status === filter);
   const newCount = inquiries.filter(i => i.status === "Neu").length;
 
   return (
-    <div className="flex h-full gap-0">
+    <div className={`${isMobile ? "flex flex-col h-full" : "flex h-full gap-0"}`}>
       {/* Liste */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className={`${isMobile ? "flex-1 overflow-y-auto" : "flex-1 overflow-y-auto"} p-4 md:p-6 space-y-4`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-foreground">Anfragen</h1>
@@ -102,18 +218,17 @@ export default function AnfragenPage() {
               <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">{newCount} neu</span>
             )}
           </div>
-          <button onClick={load} className="text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={load} className="text-muted-foreground hover:text-foreground transition-colors p-2">
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Filter */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap">
           {["alle", ...STATUSES].map(s => (
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${filter === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filter === s ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}
             >
               {s === "alle" ? "Alle" : s}
               {s !== "alle" && ` (${inquiries.filter(i => i.status === s).length})`}
@@ -135,8 +250,8 @@ export default function AnfragenPage() {
             {filtered.map(inq => (
               <button
                 key={inq.id}
-                onClick={() => { setSelected(inq); setNotiz(inq.notiz || ""); }}
-                className={`w-full text-left bg-card border rounded-lg p-4 hover:border-primary/40 transition-all ${selected?.id === inq.id ? "border-primary/60 shadow-sm" : "border-border"}`}
+                onClick={() => handleSelect(inq)}
+                className={`w-full text-left bg-card border rounded-xl p-4 hover:border-primary/40 transition-all active:bg-muted/40 ${selected?.id === inq.id && !isMobile ? "border-primary/60 shadow-sm" : "border-border"}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -144,12 +259,15 @@ export default function AnfragenPage() {
                       <span className="font-semibold text-sm text-foreground truncate">{inq.name}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium shrink-0 ${STATUS_COLORS[inq.status] ?? STATUS_COLORS["Neu"]}`}>{inq.status}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{inq.betreff}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 font-medium">{inq.betreff}</p>
                     <p className="text-xs text-muted-foreground truncate mt-1">{inq.nachricht}</p>
                   </div>
-                  <span className="text-[10px] text-muted-foreground shrink-0">
-                    {new Date(inq.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                  </span>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(inq.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                    </span>
+                    {isMobile && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                  </div>
                 </div>
               </button>
             ))}
@@ -157,94 +275,37 @@ export default function AnfragenPage() {
         )}
       </div>
 
-      {/* Detail */}
-      {selected ? (
-        <div className="w-96 border-l border-border overflow-y-auto p-6 space-y-5 bg-card/30">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <User className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <p className="font-semibold text-sm text-foreground">{selected.name}</p>
-              <p className="text-xs text-muted-foreground">{selected.quelle ?? "website"}</p>
-            </div>
-          </div>
-
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Mail className="w-3.5 h-3.5 shrink-0" />
-              <a href={`mailto:${selected.email}`} className="text-primary hover:underline truncate">{selected.email}</a>
-            </div>
-            {selected.telefon && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="w-3.5 h-3.5 shrink-0" />
-                <span>{selected.telefon}</span>
-              </div>
+      {/* Mobile: Sheet / Desktop: Side-Panel */}
+      {isMobile ? (
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0 bg-background border-border overflow-hidden">
+            {selected && (
+              <InquiryDetail
+                selected={selected}
+                notiz={notiz}
+                setNotiz={setNotiz}
+                saving={saving}
+                onSaveNotiz={saveNotiz}
+                onUpdateStatus={updateStatus}
+                onCreateOrder={createOrder}
+                onClose={() => setSheetOpen(false)}
+                navigate={navigate}
+              />
             )}
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="w-3.5 h-3.5 shrink-0" />
-              <span>{new Date(selected.created_at).toLocaleString("de-CH")}</span>
-            </div>
-          </div>
-
-          <div className="bg-muted/30 border border-border rounded-lg p-4">
-            <p className="text-xs font-medium text-muted-foreground mb-1">{selected.betreff}</p>
-            <p className="text-sm text-foreground whitespace-pre-wrap">{selected.nachricht}</p>
-          </div>
-
-          {/* Status */}
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
-            <div className="flex flex-wrap gap-1.5">
-              {STATUSES.map(s => (
-                <button
-                  key={s}
-                  onClick={() => updateStatus(selected.id, s)}
-                  className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${selected.status === s ? STATUS_COLORS[s] : "border-border text-muted-foreground hover:border-primary/40"}`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Notiz */}
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">Interne Notiz</p>
-            <Textarea
-              value={notiz}
-              onChange={e => setNotiz(e.target.value)}
-              placeholder="Notizen zur Anfrage..."
-              rows={3}
-              className="text-sm"
-            />
-            <Button onClick={saveNotiz} disabled={saving} size="sm" className="mt-2 w-full" variant="outline">
-              {saving ? "Speichern..." : "Notiz speichern"}
-            </Button>
-          </div>
-
-          {/* Aktionen */}
-          <div className="space-y-2 pt-2 border-t border-border">
-            {selected.order_id ? (
-              <Button size="sm" className="w-full gap-2" variant="outline" onClick={() => navigate(`/auftraege/${selected.order_id}`)}>
-                <ExternalLink className="w-3.5 h-3.5" /> Zum Auftrag
-              </Button>
-            ) : (
-              <Button size="sm" className="w-full gap-2" onClick={createOrder}>
-                <Plus className="w-3.5 h-3.5" /> Auftrag erstellen
-              </Button>
-            )}
-            <Button size="sm" className="w-full gap-2" variant="outline" asChild>
-              <a href={`mailto:${selected.email}?subject=Re: ${selected.betreff}`}>
-                <Mail className="w-3.5 h-3.5" /> Per E-Mail antworten
-              </a>
-            </Button>
-            {selected.customer_id && (
-              <Button size="sm" className="w-full gap-2" variant="ghost" onClick={() => navigate(`/kunden/${selected.customer_id}`)}>
-                <User className="w-3.5 h-3.5" /> Kundenprofil öffnen
-              </Button>
-            )}
-          </div>
+          </SheetContent>
+        </Sheet>
+      ) : selected ? (
+        <div className="w-96 border-l border-border overflow-y-auto bg-card/30">
+          <InquiryDetail
+            selected={selected}
+            notiz={notiz}
+            setNotiz={setNotiz}
+            saving={saving}
+            onSaveNotiz={saveNotiz}
+            onUpdateStatus={updateStatus}
+            onCreateOrder={createOrder}
+            navigate={navigate}
+          />
         </div>
       ) : (
         <div className="w-96 border-l border-border flex items-center justify-center text-muted-foreground bg-card/30">
