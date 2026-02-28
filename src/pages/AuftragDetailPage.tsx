@@ -74,6 +74,7 @@ export default function AuftragDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === "neu";
+  const isMobile = useIsMobile();
   const searchParams = new URLSearchParams(window.location.search);
   const preselectedCustomerId = searchParams.get("customer_id") || "";
   const { settings } = useSettings();
