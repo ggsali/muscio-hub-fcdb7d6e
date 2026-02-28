@@ -191,6 +191,53 @@ export type Database = {
           },
         ]
       }
+      offer_positions: {
+        Row: {
+          bezeichnung: string
+          created_at: string
+          einheit: string
+          id: string
+          menge: number
+          notiz: string | null
+          order_id: string
+          position_order: number
+          preis_pro_einheit: number
+          total: number | null
+        }
+        Insert: {
+          bezeichnung?: string
+          created_at?: string
+          einheit?: string
+          id?: string
+          menge?: number
+          notiz?: string | null
+          order_id: string
+          position_order?: number
+          preis_pro_einheit?: number
+          total?: number | null
+        }
+        Update: {
+          bezeichnung?: string
+          created_at?: string
+          einheit?: string
+          id?: string
+          menge?: number
+          notiz?: string | null
+          order_id?: string
+          position_order?: number
+          preis_pro_einheit?: number
+          total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_positions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_status_log: {
         Row: {
           created_at: string

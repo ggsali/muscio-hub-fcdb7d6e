@@ -17,6 +17,7 @@ import PartFileUpload from "@/components/PartFileUpload";
 import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 import TimeTracker from "@/components/TimeTracker";
+import OfferMode from "@/components/OfferMode";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -711,6 +712,17 @@ export default function AuftragDetailPage() {
       {/* Zeit-Tracker – nur für gespeicherte Aufträge */}
       {!isNew && (
         <TimeTracker orderId={id!} parts={parts} />
+      )}
+
+      {/* Offertenmodus – nur für gespeicherte Aufträge */}
+      {!isNew && (
+        <OfferMode
+          orderId={id!}
+          orderName={orderName}
+          customerId={customerId}
+          datum={datum}
+          beschreibung={beschreibung}
+        />
       )}
 
       {/* Status Workflow – nur für gespeicherte Aufträge */}
