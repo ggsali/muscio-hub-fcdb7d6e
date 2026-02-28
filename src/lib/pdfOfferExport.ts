@@ -42,7 +42,10 @@ function hexToRgb(hex: string): [number, number, number] {
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
-    const res = await fetch(url);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
     const blob = await res.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
