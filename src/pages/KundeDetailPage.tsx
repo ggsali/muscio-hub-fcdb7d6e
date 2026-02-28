@@ -96,6 +96,7 @@ export default function KundeDetailPage() {
   const [editing, setEditing] = useState(isNew);
   const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien">("kontakt");
   const [loading, setLoading] = useState(!isNew);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     if (isNew) return;
