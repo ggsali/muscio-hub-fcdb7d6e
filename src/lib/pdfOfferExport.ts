@@ -238,21 +238,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setTextColor(...GRAY);
   doc.text("Wir freuen uns auf Ihre Rückmeldung.", margin, afterTable + 16);
 
-  const hasBank = data.company.bank_iban || data.company.bank_name;
-  const bankY = afterTable + 30;
-  if (hasBank) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...BLACK);
-    doc.text("Kontaktinformationen", margin, bankY);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    let bl = bankY + 6;
-    if (data.company.email)   { doc.text(`E-Mail:    ${data.company.email}`, margin, bl); bl += 4.5; }
-    if (data.company.telefon) { doc.text(`Telefon:   ${data.company.telefon}`, margin, bl); bl += 4.5; }
-    if (data.company.website) { doc.text(`Web:       ${data.company.website}`, margin, bl); }
-  }
+  // Kontaktinformationen removed
 
   // ── Footer ─────────────────────────────────────────────────────────
   doc.setFillColor(...BLACK);
