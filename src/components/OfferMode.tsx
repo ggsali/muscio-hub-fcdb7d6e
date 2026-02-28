@@ -8,6 +8,7 @@ import { Plus, Trash2, Save, FileDown, Mail, Loader2, ClipboardList } from "luci
 import { formatCHF } from "@/lib/calc";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import { exportOfferPositionsPDF } from "@/lib/pdfOfferPositionsExport";
+import type { CompanySettings } from "@/lib/companySettings";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
