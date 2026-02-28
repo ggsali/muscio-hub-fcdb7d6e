@@ -1,10 +1,15 @@
 import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box, LogOut, FlaskConical, MessageSquare, Upload
+  LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
+  LogOut, FlaskConical, MessageSquare, Upload, Menu, X
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { NavLink } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, label: "Dashboard" },
@@ -18,7 +23,120 @@ const navItems = [
   { to: "/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
 ];
 
-export default function AppLayout() {
+// Bottom nav shows only the 5 most important items on mobile
+const mobileBottomNav = [
+  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/auftraege", icon: Package, label: "Aufträge" },
+  { to: "/anfragen", icon: MessageSquare, label: "Anfragen" },
+  { to: "/kunden", icon: Users, label: "Kunden" },
+  { to: "/kalkulator", icon: Calculator, label: "Kalkulator" },
+];
+
+function MobileLayout() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  return (
+    <div className="flex flex-col h-screen w-full bg-background">
+      {/* Mobile top bar */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-sidebar flex-shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+            <Box className="w-3.5 h-3.5 text-primary-foreground" />
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="font-bold text-foreground text-[13px] tracking-tight">3DMuscio</span>
+            <span className="text-[9px] text-muted-foreground font-medium tracking-wide uppercase">Pro Dashboard</span>
+          </div>
+        </div>
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger asChild>
+            <button className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
+              <Menu className="w-5 h-5 text-foreground" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[280px] bg-sidebar border-sidebar-border p-0">
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                    <Box className="w-3.5 h-3.5 text-primary-foreground" />
+                  </div>
+                  <span className="font-bold text-foreground text-[13px]">3DMuscio Pro</span>
+                </div>
+                <button onClick={() => setMenuOpen(false)} className="p-1 rounded hover:bg-sidebar-accent">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+              <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
+                {navItems.map(item => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/"}
+                    onClick={() => setMenuOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors",
+                        isActive
+                          ? "bg-primary/15 text-primary font-medium"
+                          : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                      )
+                    }
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </nav>
+              <div className="px-2 py-3 border-t border-sidebar-border">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full"
+                >
+                  <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+                  <span>Abmelden</span>
+                </button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </header>
+
+      {/* Main scrollable content */}
+      <main className="flex-1 overflow-auto pb-20">
+        <Outlet />
+      </main>
+
+      {/* Bottom navigation bar */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-sidebar border-t border-sidebar-border flex items-center justify-around px-2 py-2 z-50">
+        {mobileBottomNav.map(({ to, icon: Icon, label }) => {
+          const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              className={cn(
+                "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[52px]",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Icon className={cn("w-5 h-5", isActive && "text-primary")} />
+              <span className="text-[9px] font-medium leading-tight">{label}</span>
+            </NavLink>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}
+
+function DesktopLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
@@ -27,12 +145,10 @@ export default function AppLayout() {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      {/* Sidebar */}
       <aside
         className="flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-200 flex-shrink-0 relative"
         style={{ width: collapsed ? 60 : 228 }}
       >
-        {/* Logo / Brand */}
         <div className={`flex items-center gap-2.5 border-b border-sidebar-border flex-shrink-0 ${collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"}`}>
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 glow-primary">
             <Box className="w-4 h-4 text-primary-foreground" />
@@ -44,8 +160,6 @@ export default function AppLayout() {
             </div>
           )}
         </div>
-
-        {/* Nav */}
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
           {navItems.map(item => (
             <SidebarNavLink
@@ -57,8 +171,6 @@ export default function AppLayout() {
             />
           ))}
         </nav>
-
-        {/* Footer: collapse toggle + logout */}
         <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
           <button
             onClick={handleLogout}
@@ -76,11 +188,14 @@ export default function AppLayout() {
           </button>
         </div>
       </aside>
-
-      {/* Main content */}
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
     </div>
   );
+}
+
+export default function AppLayout() {
+  const isMobile = useIsMobile();
+  return isMobile ? <MobileLayout /> : <DesktopLayout />;
 }
