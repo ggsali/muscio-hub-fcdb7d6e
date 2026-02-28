@@ -7,10 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
-import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Customer {
   id: string;
@@ -92,6 +96,7 @@ export default function KundeDetailPage() {
   const [editing, setEditing] = useState(isNew);
   const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien">("kontakt");
   const [loading, setLoading] = useState(!isNew);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     if (isNew) return;
@@ -153,6 +158,16 @@ export default function KundeDetailPage() {
 
   if (loading) return <div className="p-8 text-muted-foreground">Laden...</div>;
 
+  const handleDelete = async () => {
+    if (!id || isNew) return;
+    await supabase.from("part_files").delete().eq("customer_id", id);
+    await supabase.from("parts").delete().eq("customer_id", id);
+    await supabase.from("inquiries").delete().eq("customer_id", id);
+    await supabase.from("orders").delete().eq("customer_id", id);
+    await supabase.from("customers").delete().eq("id", id);
+    navigate("/kunden");
+  };
+
   const field = (label: string, key: keyof Customer, placeholder?: string, colSpan = 1) => (
     <div className={`space-y-1.5 ${colSpan === 2 ? "col-span-2" : ""}`}>
       <Label>{label}</Label>
@@ -193,11 +208,33 @@ export default function KundeDetailPage() {
                 <DropdownMenuItem onClick={() => setEditing(true)} className="gap-2">
                   <Edit2 className="w-4 h-4" /> Bearbeiten
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
+                  <Trash2 className="w-4 h-4" /> Kunde löschen
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kunde wirklich löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieser Vorgang löscht den Kunden sowie alle zugehörigen Aufträge, Teile und Dateien unwiderruflich.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              Ja, löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Tabs */}
       {!isNew && (
