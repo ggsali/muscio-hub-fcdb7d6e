@@ -46,6 +46,7 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showEmailConfirm, setShowEmailConfirm] = useState(false);
   const [offerNote, setOfferNote] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
   const { toast } = useToast();
   const { company } = useCompanySettings();
 
@@ -124,6 +125,10 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
     return { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse };
   };
 
+  const subtotal = positions.reduce((s, p) => s + p.menge * p.preis_pro_einheit, 0);
+  const discountAmount = subtotal * (discountPercent / 100);
+  const totalBetragFinal = subtotal - discountAmount;
+
   const handleExportPDF = async () => {
     const cData = await getCustomerData();
     exportOfferPositionsPDF({
@@ -133,7 +138,8 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
       beschreibung,
       offerNote,
       positions,
-      total: totalBetrag,
+      total: totalBetragFinal,
+      discountPercent,
       company,
       ...cData,
     });
@@ -150,7 +156,8 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
         beschreibung,
         offerNote,
         positions,
-        total: totalBetrag,
+        total: totalBetragFinal,
+        discountPercent,
         company,
         returnBase64: true,
         ...cData,
@@ -288,10 +295,24 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
             ))}
           </tbody>
           <tfoot>
+            {discountPercent > 0 && (
+              <>
+                <tr className="bg-muted/10">
+                  <td colSpan={5} className="px-3 py-2 text-xs text-right text-muted-foreground">Zwischensumme</td>
+                  <td className="px-3 py-2 text-right text-xs text-muted-foreground whitespace-nowrap">{formatCHF(subtotal)}</td>
+                  <td colSpan={2} />
+                </tr>
+                <tr className="bg-muted/10">
+                  <td colSpan={5} className="px-3 py-2 text-xs text-right text-muted-foreground">Rabatt {discountPercent}%</td>
+                  <td className="px-3 py-2 text-right text-xs text-destructive whitespace-nowrap">- {formatCHF(discountAmount)}</td>
+                  <td colSpan={2} />
+                </tr>
+              </>
+            )}
             <tr className="bg-muted/20">
               <td colSpan={5} className="px-3 py-3 text-sm font-semibold text-right">Gesamtbetrag</td>
               <td className="px-3 py-3 text-right font-bold text-primary text-sm whitespace-nowrap">
-                {formatCHF(totalBetrag)}
+                {formatCHF(totalBetragFinal)}
               </td>
               <td colSpan={2} />
             </tr>
@@ -299,16 +320,36 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
         </table>
       </div>
 
-      {/* Offer note */}
-      <div className="px-5 py-4 border-t border-border">
-        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Bemerkungen / Konditionen (erscheinen auf der Offerte)</label>
-        <Textarea
-          value={offerNote}
-          onChange={e => setOfferNote(e.target.value)}
-          placeholder="z.B. Gültig 30 Tage, Lieferzeit 5–7 Werktage, Zahlung innert 30 Tagen netto…"
-          className="bg-input border-border text-xs"
-          rows={2}
-        />
+      {/* Discount + Offer note */}
+      <div className="px-5 py-4 border-t border-border flex flex-col gap-3">
+        <div className="flex items-center gap-4">
+          <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Rabatt (%)</label>
+          <Input
+            type="number"
+            value={discountPercent}
+            onChange={e => setDiscountPercent(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+            className="bg-input border-border h-7 text-xs w-20"
+            min={0}
+            max={100}
+            step={1}
+            placeholder="0"
+          />
+          {discountPercent > 0 && (
+            <span className="text-xs text-destructive font-medium">
+              − {formatCHF(discountAmount)} Rabatt → Gesamt: {formatCHF(totalBetragFinal)}
+            </span>
+          )}
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Bemerkungen / Konditionen (erscheinen auf der Offerte)</label>
+          <Textarea
+            value={offerNote}
+            onChange={e => setOfferNote(e.target.value)}
+            placeholder="z.B. Gültig 30 Tage, Lieferzeit 5–7 Werktage, Zahlung innert 30 Tagen netto…"
+            className="bg-input border-border text-xs"
+            rows={2}
+          />
+        </div>
       </div>
 
       {/* Email confirmation */}
