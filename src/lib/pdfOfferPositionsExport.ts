@@ -144,7 +144,9 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   doc.setTextColor(...DARK);
   let cy = 89;
   if (customerFirma && customerName !== "Kein Kunde") { doc.text(customerName, margin, cy); cy += 4.5; }
-  if (customerAdresse) { doc.text(customerAdresse, margin, cy); cy += 4.5; }
+  if (customerAdresse) {
+    customerAdresse.split("\n").forEach(line => { doc.text(line, margin, cy); cy += 4.5; });
+  }
   if (customerEmail)   { doc.text(customerEmail,   margin, cy); cy += 4.5; }
   if (customerTelefon) { doc.text(customerTelefon, margin, cy); }
 
