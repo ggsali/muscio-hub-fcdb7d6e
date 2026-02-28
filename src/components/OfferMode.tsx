@@ -125,6 +125,10 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
     return { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse };
   };
 
+  const subtotal = positions.reduce((s, p) => s + p.menge * p.preis_pro_einheit, 0);
+  const discountAmount = subtotal * (discountPercent / 100);
+  const totalBetragFinal = subtotal - discountAmount;
+
   const handleExportPDF = async () => {
     const cData = await getCustomerData();
     exportOfferPositionsPDF({
@@ -134,7 +138,8 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
       beschreibung,
       offerNote,
       positions,
-      total: totalBetrag,
+      total: totalBetragFinal,
+      discountPercent,
       company,
       ...cData,
     });
