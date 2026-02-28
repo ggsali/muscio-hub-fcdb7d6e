@@ -21,27 +21,23 @@ interface ExportProps {
   returnBase64?: boolean;
 }
 
-const BLACK  = [30, 30, 30]    as [number, number, number];
-const DARK   = [55, 55, 55]    as [number, number, number];
-const GRAY   = [120, 120, 120] as [number, number, number];
-const LGRAY  = [200, 200, 200] as [number, number, number];
+const BLACK = [30, 30, 30] as [number, number, number];
+const DARK = [55, 55, 55] as [number, number, number];
+const GRAY = [120, 120, 120] as [number, number, number];
+const LGRAY = [200, 200, 200] as [number, number, number];
 const XLGRAY = [245, 245, 245] as [number, number, number];
-const WHITE  = [255, 255, 255] as [number, number, number];
+const WHITE = [255, 255, 255] as [number, number, number];
 
 function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace("#", "");
-  return [
-    parseInt(clean.slice(0, 2), 16),
-    parseInt(clean.slice(2, 4), 16),
-    parseInt(clean.slice(4, 6), 16),
-  ];
+  return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
 }
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
     const blob = await res.blob();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
@@ -52,12 +48,23 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
   }
 }
 
-export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ base64: string; filename: string } | void> {
+export async function exportOfferPositionsPDF(
+  props: ExportProps,
+): Promise<{ base64: string; filename: string } | void> {
   const {
-    orderId, datum, orderName, beschreibung, offerNote,
-    positions, discountPercent = 0, company,
-    customerName = "Kein Kunde", customerFirma, customerEmail,
-    customerTelefon, customerAdresse,
+    orderId,
+    datum,
+    orderName,
+    beschreibung,
+    offerNote,
+    positions,
+    discountPercent = 0,
+    company,
+    customerName = "Kein Kunde",
+    customerFirma,
+    customerEmail,
+    customerTelefon,
+    customerAdresse,
     returnBase64,
   } = props;
 
@@ -98,10 +105,17 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   doc.setFontSize(8);
   doc.setTextColor(180, 180, 180);
   let sy = logoLoaded ? 38 : 34;
-  if (company.adresse) { doc.text(company.adresse, margin, sy); sy += 4.5; }
-  if (company.email)   { doc.text(company.email,   margin, sy); sy += 4.5; }
-  if (company.telefon) { doc.text(company.telefon, margin, sy); sy += 4.5; }
-  if (company.website) { doc.text(company.website, margin, sy); }
+  if (company.email) {
+    doc.text(company.email, margin, sy);
+    sy += 4.5;
+  }
+  if (company.telefon) {
+    doc.text(company.telefon, margin, sy);
+    sy += 4.5;
+  }
+  if (company.website) {
+    doc.text(company.website, margin, sy);
+  }
 
   // ── Right: OFFERTE title ──────────────────────────────────────────
   doc.setFont("helvetica", "bold");
@@ -143,12 +157,21 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   doc.setFontSize(8.5);
   doc.setTextColor(...DARK);
   let cy = 89;
-  if (customerFirma && customerName !== "Kein Kunde") { doc.text(customerName, margin, cy); cy += 4.5; }
-  if (customerAdresse) {
-    customerAdresse.split("\n").forEach(line => { doc.text(line, margin, cy); cy += 4.5; });
+  if (customerFirma && customerName !== "Kein Kunde") {
+    doc.text(customerName, margin, cy);
+    cy += 4.5;
   }
-  if (customerEmail)   { doc.text(customerEmail,   margin, cy); cy += 4.5; }
-  if (customerTelefon) { doc.text(customerTelefon, margin, cy); }
+  if (customerAdresse) {
+    doc.text(customerAdresse, margin, cy);
+    cy += 4.5;
+  }
+  if (customerEmail) {
+    doc.text(customerEmail, margin, cy);
+    cy += 4.5;
+  }
+  if (customerTelefon) {
+    doc.text(customerTelefon, margin, cy);
+  }
 
   // ── Right: Subject ────────────────────────────────────────────────
   doc.setFont("helvetica", "bold");
@@ -159,9 +182,7 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...DARK);
-  const subjectText = orderName
-    ? `${orderName}${beschreibung ? " – " + beschreibung : ""}`
-    : (beschreibung || "—");
+  const subjectText = orderName ? `${orderName}${beschreibung ? " – " + beschreibung : ""}` : beschreibung || "—";
   const descLines = doc.splitTextToSize(subjectText, pageW - colR - margin) as string[];
   doc.text(descLines.slice(0, 4), colR, 83);
 
@@ -245,8 +266,9 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...GRAY);
-  const hinweisText = offerNote
-    || `Dieses Angebot ist gültig bis ${gueltigBis}. Bei Annahme erstellen wir eine verbindliche Auftragsbestätigung.`;
+  const hinweisText =
+    offerNote ||
+    `Dieses Angebot ist gültig bis ${gueltigBis}. Bei Annahme erstellen wir eine verbindliche Auftragsbestätigung.`;
   const hinweisLines = doc.splitTextToSize(hinweisText, pageW - sumX - margin) as string[];
   doc.text(hinweisLines, sumX, hinweisY + 6);
 

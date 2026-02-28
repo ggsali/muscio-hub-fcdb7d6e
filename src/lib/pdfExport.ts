@@ -38,27 +38,23 @@ interface OrderExportData {
   returnBase64?: boolean;
 }
 
-const BLACK   = [30, 30, 30]   as [number, number, number];
-const DARK    = [55, 55, 55]   as [number, number, number];
-const GRAY    = [120, 120, 120] as [number, number, number];
-const LGRAY   = [200, 200, 200] as [number, number, number];
-const XLGRAY  = [245, 245, 245] as [number, number, number];
-const WHITE   = [255, 255, 255] as [number, number, number];
+const BLACK = [30, 30, 30] as [number, number, number];
+const DARK = [55, 55, 55] as [number, number, number];
+const GRAY = [120, 120, 120] as [number, number, number];
+const LGRAY = [200, 200, 200] as [number, number, number];
+const XLGRAY = [245, 245, 245] as [number, number, number];
+const WHITE = [255, 255, 255] as [number, number, number];
 
 function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace("#", "");
-  return [
-    parseInt(clean.slice(0, 2), 16),
-    parseInt(clean.slice(2, 4), 16),
-    parseInt(clean.slice(4, 6), 16),
-  ];
+  return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
 }
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
     const blob = await res.blob();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
@@ -107,10 +103,17 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(8);
   doc.setTextColor(180, 180, 180);
   let sy = logoLoaded ? 38 : 34;
-  if (data.company.adresse) { doc.text(data.company.adresse, margin, sy); sy += 4.5; }
-  if (data.company.email)   { doc.text(data.company.email,   margin, sy); sy += 4.5; }
-  if (data.company.telefon) { doc.text(data.company.telefon, margin, sy); sy += 4.5; }
-  if (data.company.website) { doc.text(data.company.website, margin, sy); }
+  if (data.company.email) {
+    doc.text(data.company.email, margin, sy);
+    sy += 4.5;
+  }
+  if (data.company.telefon) {
+    doc.text(data.company.telefon, margin, sy);
+    sy += 4.5;
+  }
+  if (data.company.website) {
+    doc.text(data.company.website, margin, sy);
+  }
 
   // ── Rechts: RECHNUNG Titel ──────────────────────────────────────
   doc.setFont("helvetica", "bold");
@@ -127,7 +130,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...GRAY);
-  const datumFormatted = data.datum ? new Date(data.datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" }) : "";
+  const datumFormatted = data.datum
+    ? new Date(data.datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
+    : "";
   doc.text(`Datum:          ${datumFormatted}`, colR, 44);
   doc.text(`Rechnungs-Nr.:  ${rechnungsNr}`, colR, 49);
   doc.text(`Status:         ${data.status}`, colR, 54);
@@ -153,12 +158,21 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(8.5);
   doc.setTextColor(...DARK);
   let cy = empY + 13;
-  if (data.customerFirma)   { doc.text(data.customerFirma,   empX, cy); cy += 4.5; }
-  if (data.customerAdresse) {
-    data.customerAdresse.split("\n").forEach(line => { doc.text(line, empX, cy); cy += 4.5; });
+  if (data.customerFirma) {
+    doc.text(data.customerFirma, empX, cy);
+    cy += 4.5;
   }
-  if (data.customerEmail)   { doc.text(data.customerEmail,   empX, cy); cy += 4.5; }
-  if (data.customerTelefon) { doc.text(data.customerTelefon, empX, cy); }
+  if (data.customerAdresse) {
+    doc.text(data.customerAdresse, empX, cy);
+    cy += 4.5;
+  }
+  if (data.customerEmail) {
+    doc.text(data.customerEmail, empX, cy);
+    cy += 4.5;
+  }
+  if (data.customerTelefon) {
+    doc.text(data.customerTelefon, empX, cy);
+  }
 
   // ── Rechts: Beschreibung ────────────────────────────────────────
   doc.setFont("helvetica", "bold");
@@ -261,7 +275,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...GRAY);
-  const termsText = data.company.zahlungsbedingungen || "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.";
+  const termsText =
+    data.company.zahlungsbedingungen ||
+    "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.";
   const termsLines = doc.splitTextToSize(termsText, pageW - sumX - margin);
   doc.text(termsLines, sumX, termsY + 6);
 
@@ -274,7 +290,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(8);
   doc.setTextColor(...GRAY);
   doc.text("Wir schätzen Ihr Vertrauen.", margin, afterTable + 16);
-  
+
   // UID
   if (data.company.uid_nummer) {
     doc.setFont("helvetica", "normal");
@@ -292,7 +308,12 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setTextColor(160, 160, 160);
   const footParts = [firmenname, data.company.adresse, data.company.email, data.company.website].filter(Boolean);
   doc.text(footParts.join("  |  "), margin, pageH - 5.5);
-  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}`, pageW - margin, pageH - 5.5, { align: "right" });
+  doc.text(
+    `Erstellt: ${new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}`,
+    pageW - margin,
+    pageH - 5.5,
+    { align: "right" },
+  );
 
   // Akzentlinie oben auf Footer
   doc.setFillColor(...ACCENT);

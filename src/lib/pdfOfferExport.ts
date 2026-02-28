@@ -28,29 +28,31 @@ interface OfferExportData {
   returnBase64?: boolean;
 }
 
-const BLACK   = [30, 30, 30]   as [number, number, number];
-const DARK    = [55, 55, 55]   as [number, number, number];
-const GRAY    = [120, 120, 120] as [number, number, number];
-const LGRAY   = [200, 200, 200] as [number, number, number];
-const XLGRAY  = [245, 245, 245] as [number, number, number];
-const WHITE   = [255, 255, 255] as [number, number, number];
+const BLACK = [30, 30, 30] as [number, number, number];
+const DARK = [55, 55, 55] as [number, number, number];
+const GRAY = [120, 120, 120] as [number, number, number];
+const LGRAY = [200, 200, 200] as [number, number, number];
+const XLGRAY = [245, 245, 245] as [number, number, number];
+const WHITE = [255, 255, 255] as [number, number, number];
 
 function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace("#", "");
-  return [parseInt(clean.slice(0,2),16), parseInt(clean.slice(2,4),16), parseInt(clean.slice(4,6),16)];
+  return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
 }
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
     const res = await fetch(url);
     const blob = await res.blob();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
     });
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export async function exportOfferPDF(data: OfferExportData) {
@@ -64,11 +66,13 @@ export async function exportOfferPDF(data: OfferExportData) {
   const firmenname = data.company.firmenname || "3DMuscio";
 
   const offerNr = `OF-${data.datum?.replace(/-/g, "")}-${data.orderId.slice(0, 6).toUpperCase()}`;
-  const gueltigBis = data.gueltigBis || (() => {
-    const d = new Date(data.datum);
-    d.setDate(d.getDate() + 30);
-    return d.toISOString().split("T")[0];
-  })();
+  const gueltigBis =
+    data.gueltigBis ||
+    (() => {
+      const d = new Date(data.datum);
+      d.setDate(d.getDate() + 30);
+      return d.toISOString().split("T")[0];
+    })();
 
   // ── Header links (dunkel) ────────────────────────────────────────
   doc.setFillColor(...BLACK);
@@ -77,7 +81,10 @@ export async function exportOfferPDF(data: OfferExportData) {
   let logoLoaded = false;
   if (data.company.logo_url) {
     const b64 = await loadImageAsBase64(data.company.logo_url);
-    if (b64) { doc.addImage(b64, "PNG", margin, 12, 0, 18); logoLoaded = true; }
+    if (b64) {
+      doc.addImage(b64, "PNG", margin, 12, 0, 18);
+      logoLoaded = true;
+    }
   }
   if (!logoLoaded) {
     doc.setFont("helvetica", "bold");
@@ -90,10 +97,17 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFontSize(8);
   doc.setTextColor(180, 180, 180);
   let sy = logoLoaded ? 38 : 34;
-  if (data.company.adresse) { doc.text(data.company.adresse, margin, sy); sy += 4.5; }
-  if (data.company.email)   { doc.text(data.company.email, margin, sy); sy += 4.5; }
-  if (data.company.telefon) { doc.text(data.company.telefon, margin, sy); sy += 4.5; }
-  if (data.company.website) { doc.text(data.company.website, margin, sy); }
+  if (data.company.email) {
+    doc.text(data.company.email, margin, sy);
+    sy += 4.5;
+  }
+  if (data.company.telefon) {
+    doc.text(data.company.telefon, margin, sy);
+    sy += 4.5;
+  }
+  if (data.company.website) {
+    doc.text(data.company.website, margin, sy);
+  }
 
   // ── OFFERTE Titel ────────────────────────────────────────────────
   doc.setFont("helvetica", "bold");
@@ -110,7 +124,9 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...GRAY);
-  const datumFormatted = data.datum ? new Date(data.datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" }) : "";
+  const datumFormatted = data.datum
+    ? new Date(data.datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
+    : "";
   doc.text(`Datum:           ${datumFormatted}`, colR, 44);
   doc.text(`Offerten-Nr.:    ${offerNr}`, colR, 49);
   doc.text(`Gültig bis:      ${gueltigBis}`, colR, 54);
@@ -133,12 +149,21 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFontSize(8.5);
   doc.setTextColor(...DARK);
   let cy = 89;
-  if (data.customerFirma)   { doc.text(data.customerFirma, margin, cy); cy += 4.5; }
-  if (data.customerAdresse) {
-    data.customerAdresse.split("\n").forEach(line => { doc.text(line, margin, cy); cy += 4.5; });
+  if (data.customerFirma) {
+    doc.text(data.customerFirma, margin, cy);
+    cy += 4.5;
   }
-  if (data.customerEmail)   { doc.text(data.customerEmail, margin, cy); cy += 4.5; }
-  if (data.customerTelefon) { doc.text(data.customerTelefon, margin, cy); }
+  if (data.customerAdresse) {
+    doc.text(data.customerAdresse, margin, cy);
+    cy += 4.5;
+  }
+  if (data.customerEmail) {
+    doc.text(data.customerEmail, margin, cy);
+    cy += 4.5;
+  }
+  if (data.customerTelefon) {
+    doc.text(data.customerTelefon, margin, cy);
+  }
 
   // ── Beschreibung ─────────────────────────────────────────────────
   doc.setFont("helvetica", "bold");
