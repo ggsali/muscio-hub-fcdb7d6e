@@ -295,10 +295,24 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
             ))}
           </tbody>
           <tfoot>
+            {discountPercent > 0 && (
+              <>
+                <tr className="bg-muted/10">
+                  <td colSpan={5} className="px-3 py-2 text-xs text-right text-muted-foreground">Zwischensumme</td>
+                  <td className="px-3 py-2 text-right text-xs text-muted-foreground whitespace-nowrap">{formatCHF(subtotal)}</td>
+                  <td colSpan={2} />
+                </tr>
+                <tr className="bg-muted/10">
+                  <td colSpan={5} className="px-3 py-2 text-xs text-right text-muted-foreground">Rabatt {discountPercent}%</td>
+                  <td className="px-3 py-2 text-right text-xs text-destructive whitespace-nowrap">- {formatCHF(discountAmount)}</td>
+                  <td colSpan={2} />
+                </tr>
+              </>
+            )}
             <tr className="bg-muted/20">
               <td colSpan={5} className="px-3 py-3 text-sm font-semibold text-right">Gesamtbetrag</td>
               <td className="px-3 py-3 text-right font-bold text-primary text-sm whitespace-nowrap">
-                {formatCHF(totalBetrag)}
+                {formatCHF(totalBetragFinal)}
               </td>
               <td colSpan={2} />
             </tr>
