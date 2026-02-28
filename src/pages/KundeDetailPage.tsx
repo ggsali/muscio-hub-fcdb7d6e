@@ -7,7 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
-import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Customer {
   id: string;
@@ -176,14 +179,23 @@ export default function KundeDetailPage() {
           {!isNew && customer.firma && <p className="text-muted-foreground text-sm">{customer.firma}</p>}
         </div>
         {!isNew && !editing && (
-          <>
-            <Button onClick={() => navigate(`/auftraege/neu?customer_id=${id}`)} className="gap-2">
+          <div className="flex items-center gap-2">
+            <Button onClick={() => navigate(`/auftraege/neu?customer_id=${id}`)} className="gap-2" size="sm">
               <Plus className="w-4 h-4" />Neuer Auftrag
             </Button>
-            <Button variant="outline" onClick={() => setEditing(true)} className="gap-2 border-border">
-              <Edit2 className="w-4 h-4" />Bearbeiten
-            </Button>
-          </>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="px-2 border-border">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={() => setEditing(true)} className="gap-2">
+                  <Edit2 className="w-4 h-4" /> Bearbeiten
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
       </div>
 
