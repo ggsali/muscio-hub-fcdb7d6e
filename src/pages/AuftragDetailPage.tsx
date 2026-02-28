@@ -714,6 +714,17 @@ export default function AuftragDetailPage() {
         <TimeTracker orderId={id!} parts={parts} />
       )}
 
+      {/* Offertenmodus – nur für gespeicherte Aufträge */}
+      {!isNew && (
+        <OfferMode
+          orderId={id!}
+          orderName={orderName}
+          customerId={customerId}
+          datum={datum}
+          beschreibung={beschreibung}
+        />
+      )}
+
       {/* Status Workflow – nur für gespeicherte Aufträge */}
       {!isNew && (
         <OrderStatusWorkflow
