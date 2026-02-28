@@ -157,8 +157,10 @@ export async function exportOfferPDF(data: OfferExportData) {
     cy += 4.5;
   }
   if (data.customerAdresse) {
-    doc.text(data.customerAdresse, margin, cy);
-    cy += 4.5;
+    data.customerAdresse.split("\n").forEach(line => {
+      doc.text(line, margin, cy);
+      cy += 4.5;
+    });
   }
   if (data.customerEmail) {
     doc.text(data.customerEmail, margin, cy);
