@@ -17,6 +17,7 @@ import PartFileUpload from "@/components/PartFileUpload";
 import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 import TimeTracker from "@/components/TimeTracker";
+import OfferMode from "@/components/OfferMode";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
