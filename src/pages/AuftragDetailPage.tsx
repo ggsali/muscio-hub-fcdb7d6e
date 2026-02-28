@@ -548,7 +548,7 @@ export default function AuftragDetailPage() {
               className="bg-input border-border"
             />
           </div>
-          <div className="col-span-2 space-y-1.5">
+          <div className="space-y-1.5">
             <Label>Kunde</Label>
             <select
               value={customerId}
