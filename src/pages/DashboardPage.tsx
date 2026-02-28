@@ -4,8 +4,9 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { formatCHF, formatPct } from "@/lib/calc";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus } from "lucide-react";
+import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell
@@ -45,6 +46,7 @@ const SUCCESS = "hsl(var(--success))";
 export default function DashboardPage() {
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [kpis, setKpis] = useState<KPIs>({ umsatz: 0, gewinn: 0, offeneAuftraege: 0, avgMarge: 0, investFonds: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -79,11 +81,10 @@ export default function DashboardPage() {
         }));
         setRecentOrders(recent);
 
-        // Monatliche Daten (letzte 6 Monate)
         const monthMap: Record<string, { umsatz: number; gewinn: number }> = {};
         abgeschlossen.forEach(o => {
           if (!o.datum) return;
-          const key = o.datum.substring(0, 7); // YYYY-MM
+          const key = o.datum.substring(0, 7);
           if (!monthMap[key]) monthMap[key] = { umsatz: 0, gewinn: 0 };
           monthMap[key].umsatz += o.umsatz_total || 0;
           monthMap[key].gewinn += o.gewinn_total || 0;
@@ -95,7 +96,6 @@ export default function DashboardPage() {
         }));
         setMonthlyData(months);
 
-        // Top-Kunden
         const kundeMap: Record<string, number> = {};
         orders.forEach(o => {
           const name = (o.customers as any)?.name || "Unbekannt";
@@ -116,32 +116,33 @@ export default function DashboardPage() {
   const skalierungsProgress = Math.min((kpis.gewinn / settings.skalierungsziel) * 100, 100);
 
   const kpiCards = [
-    { label: "Gesamtumsatz", value: formatCHF(kpis.umsatz), icon: <DollarSign className="w-5 h-5" />, color: "text-info" },
-    { label: "Reingewinn", value: formatCHF(kpis.gewinn), icon: <TrendingUp className="w-5 h-5" />, color: "text-success" },
-    { label: "Investitions-Fonds", value: formatCHF(kpis.investFonds), icon: <PiggyBank className="w-5 h-5" />, color: "text-primary" },
-    { label: "Ø Marge", value: formatPct(kpis.avgMarge), icon: <Percent className="w-5 h-5" />, color: "text-purple" },
-    { label: "Offene Aufträge", value: String(kpis.offeneAuftraege), icon: <Clock className="w-5 h-5" />, color: "text-warning" },
+    { label: "Gesamtumsatz", value: formatCHF(kpis.umsatz), icon: <DollarSign className="w-4 h-4 md:w-5 md:h-5" />, color: "text-info" },
+    { label: "Reingewinn", value: formatCHF(kpis.gewinn), icon: <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />, color: "text-success" },
+    { label: "Invest-Fonds", value: formatCHF(kpis.investFonds), icon: <PiggyBank className="w-4 h-4 md:w-5 md:h-5" />, color: "text-primary" },
+    { label: "Ø Marge", value: formatPct(kpis.avgMarge), icon: <Percent className="w-4 h-4 md:w-5 md:h-5" />, color: "text-purple" },
+    { label: "Offen", value: String(kpis.offeneAuftraege), icon: <Clock className="w-4 h-4 md:w-5 md:h-5" />, color: "text-warning" },
   ];
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-xl md:text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-0.5">Übersicht deines Business</p>
         </div>
-        <Button onClick={() => navigate("/auftraege/neu")} className="bg-primary hover:bg-primary/90 gap-2">
-          <Plus className="w-4 h-4" />Neuer Auftrag
+        <Button onClick={() => navigate("/auftraege/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
+          <Plus className="w-4 h-4" />
+          {isMobile ? "Neu" : "Neuer Auftrag"}
         </Button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* KPI Cards – 2 Spalten auf Mobile, 5 auf Desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
         {kpiCards.map(card => (
-          <div key={card.label} className="kpi-card">
+          <div key={card.label} className="kpi-card py-3 px-3 md:py-4 md:px-4">
             <div className={`${card.color}`}>{card.icon}</div>
-            <div className="text-xl font-bold">{card.value}</div>
-            <div className="text-xs text-muted-foreground">{card.label}</div>
+            <div className="text-lg md:text-xl font-bold leading-tight">{card.value}</div>
+            <div className="text-[10px] md:text-xs text-muted-foreground leading-tight">{card.label}</div>
           </div>
         ))}
       </div>
@@ -149,9 +150,9 @@ export default function DashboardPage() {
       {/* Skalierungsziel */}
       <div className="kpi-card">
         <div className="flex items-center gap-2 mb-2">
-          <Target className="w-5 h-5 text-success" />
+          <Target className="w-4 h-4 md:w-5 md:h-5 text-success" />
           <span className="font-medium text-sm">Skalierungsziel</span>
-          <span className="ml-auto text-sm text-muted-foreground">
+          <span className="ml-auto text-xs md:text-sm text-muted-foreground">
             {formatCHF(kpis.gewinn)} / {formatCHF(settings.skalierungsziel)}
           </span>
         </div>
@@ -164,11 +165,10 @@ export default function DashboardPage() {
       {/* Charts */}
       {!loading && (monthlyData.length > 0 || topKunden.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Monatlicher Umsatz */}
           {monthlyData.length > 0 && (
-            <div className="bg-card border border-border rounded-lg p-5">
-              <h2 className="font-semibold text-sm mb-4">Umsatz & Gewinn (letzte 6 Monate)</h2>
-              <ResponsiveContainer width="100%" height={200}>
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h2 className="font-semibold text-sm mb-3 md:mb-4">Umsatz & Gewinn (6 Monate)</h2>
+              <ResponsiveContainer width="100%" height={isMobile ? 160 : 200}>
                 <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gradUmsatz" x1="0" y1="0" x2="0" y2="1">
@@ -181,8 +181,8 @@ export default function DashboardPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="monat" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={v => `${v}`} />
+                  <XAxis dataKey="monat" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={v => `${v}`} />
                   <Tooltip
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
                     labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
@@ -199,15 +199,14 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Top-Kunden */}
           {topKunden.length > 0 && (
-            <div className="bg-card border border-border rounded-lg p-5">
-              <h2 className="font-semibold text-sm mb-4">Top-Kunden nach Umsatz</h2>
-              <ResponsiveContainer width="100%" height={200}>
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h2 className="font-semibold text-sm mb-3 md:mb-4">Top-Kunden nach Umsatz</h2>
+              <ResponsiveContainer width="100%" height={isMobile ? 160 : 200}>
                 <BarChart data={topKunden} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={v => `${v}`} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={80} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={v => `${v}`} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={isMobile ? 60 : 80} />
                   <Tooltip
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
                     formatter={(val: number) => [formatCHF(val), "Umsatz"]}
@@ -226,7 +225,7 @@ export default function DashboardPage() {
 
       {/* Recent Orders */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+        <div className="px-4 md:px-5 py-3 border-b border-border flex items-center justify-between">
           <h2 className="font-semibold text-sm">Letzte Aufträge</h2>
           <button onClick={() => navigate("/auftraege")} className="text-xs text-primary hover:underline">Alle anzeigen</button>
         </div>
@@ -234,7 +233,31 @@ export default function DashboardPage() {
           <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>
         ) : recentOrders.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Noch keine Aufträge</div>
+        ) : isMobile ? (
+          /* Mobile: Card-Liste */
+          <div className="divide-y divide-border/50">
+            {recentOrders.map(order => (
+              <div
+                key={order.id}
+                className="flex items-center justify-between px-4 py-3 cursor-pointer active:bg-muted/30 transition-colors"
+                onClick={() => navigate(`/auftraege/${order.id}`)}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium truncate">{order.customer_name}</span>
+                    <StatusBadge status={order.status} />
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{order.beschreibung}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 ml-2">
+                  <span className="text-sm font-bold">{formatCHF(order.umsatz_total)}</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
+          /* Desktop: Tabelle */
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
