@@ -159,8 +159,8 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
         body: {
           orderId,
           type: "offerte",
-          pdfBase64: result?.base64,
-          pdfFilename: result?.filename,
+          pdfBase64: result && "base64" in result ? result.base64 : undefined,
+          pdfFilename: result && "filename" in result ? result.filename : undefined,
         },
       });
       if (error || data?.error) throw new Error(data?.error || error?.message);

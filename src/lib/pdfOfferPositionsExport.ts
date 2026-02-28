@@ -61,9 +61,9 @@ export async function exportOfferPositionsPDF(props: ExportProps): Promise<{ bas
   doc.text(`Gültig bis: ${validUntil.toISOString().split("T")[0]}`, pageW - 14, 34, { align: "right" });
 
   // Company details in header
-  if (company.address || company.email) {
+  if (company.adresse || company.email) {
     doc.setFontSize(8);
-    doc.text([company.address || "", company.email || ""].filter(Boolean).join(" | "), 14, 26);
+    doc.text([company.adresse || "", company.email || ""].filter(Boolean).join(" | "), 14, 26);
   }
 
   let y = 50;
