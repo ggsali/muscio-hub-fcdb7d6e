@@ -18,6 +18,7 @@ import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 import TimeTracker from "@/components/TimeTracker";
 import OfferMode from "@/components/OfferMode";
+import BillsSection from "@/components/BillsSection";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -867,6 +868,11 @@ export default function AuftragDetailPage() {
           datum={datum}
           beschreibung={beschreibung}
         />
+      )}
+
+      {/* Rechnungen & Zahlungen – nur für gespeicherte Aufträge */}
+      {!isNew && (
+        <BillsSection orderId={id!} />
       )}
 
       {/* Status Workflow – nur für gespeicherte Aufträge */}

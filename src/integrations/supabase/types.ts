@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      bills: {
+        Row: {
+          betrag: number
+          bezahlt: boolean
+          bezahlt_am: string | null
+          created_at: string
+          faellig_am: string | null
+          file_path: string | null
+          filename: string | null
+          id: string
+          notiz: string | null
+          order_id: string | null
+          titel: string
+        }
+        Insert: {
+          betrag?: number
+          bezahlt?: boolean
+          bezahlt_am?: string | null
+          created_at?: string
+          faellig_am?: string | null
+          file_path?: string | null
+          filename?: string | null
+          id?: string
+          notiz?: string | null
+          order_id?: string | null
+          titel?: string
+        }
+        Update: {
+          betrag?: number
+          bezahlt?: boolean
+          bezahlt_am?: string | null
+          created_at?: string
+          faellig_am?: string | null
+          file_path?: string | null
+          filename?: string | null
+          id?: string
+          notiz?: string | null
+          order_id?: string | null
+          titel?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_settings: {
         Row: {
           id: string
