@@ -870,6 +870,11 @@ export default function AuftragDetailPage() {
         />
       )}
 
+      {/* Rechnungen & Zahlungen – nur für gespeicherte Aufträge */}
+      {!isNew && (
+        <BillsSection orderId={id!} />
+      )}
+
       {/* Status Workflow – nur für gespeicherte Aufträge */}
       {!isNew && (
         <OrderStatusWorkflow
