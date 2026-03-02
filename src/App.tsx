@@ -22,6 +22,7 @@ import EinstellungenPage from "@/pages/EinstellungenPage";
 import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
 import AnfragenPage from "@/pages/AnfragenPage";
+import KalenderPage from "@/pages/KalenderPage";
 import UploadLinksPage from "@/pages/UploadLinksPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
 
