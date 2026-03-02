@@ -128,7 +128,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFontSize(8.5);
   doc.setTextColor(...GRAY);
   const datumFormatted = data.datum
-    ? new Date(data.datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
     : "";
   doc.text(`Datum:           ${datumFormatted}`, colR, 44);
   doc.text(`Offerten-Nr.:    ${offerNr}`, colR, 49);
