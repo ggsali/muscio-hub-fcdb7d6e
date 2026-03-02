@@ -79,7 +79,8 @@ export async function exportOrderPDF(data: OrderExportData) {
   const firmenname = data.company.firmenname || "3DMuscio";
 
   // Rechnungsnummer generieren
-  const rechnungsNr = `RE-${data.datum?.replace(/-/g, "")}-${data.orderId.slice(0, 6).toUpperCase()}`;
+  const datumClean = data.datum ? new Date(data.datum + "T12:00:00").toISOString().split("T")[0].replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+  const rechnungsNr = `RE-${datumClean}-${data.orderId.slice(0, 6).toUpperCase()}`;
 
   // ── Linke dunkel Spalte (Kopf) ─────────────────────────────────
   doc.setFillColor(...BLACK);
@@ -134,7 +135,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(8.5);
   doc.setTextColor(...GRAY);
   const datumFormatted = data.datum
-    ? new Date(data.datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
     : "";
   doc.text(`Datum:          ${datumFormatted}`, colR, 44);
   doc.text(`Rechnungs-Nr.:  ${rechnungsNr}`, colR, 49);
@@ -326,7 +327,8 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFillColor(...ACCENT);
   doc.rect(0, pageH - 14, pageW, 2, "F");
 
-  const filename = `Rechnung_${rechnungsNr}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
+  const safeName = data.customerName.replace(/[äöüÄÖÜß]/g, (c) => ({ä:'ae',ö:'oe',ü:'ue',Ä:'Ae',Ö:'Oe',Ü:'Ue',ß:'ss'}[c]||c)).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filename = `Rechnung_${rechnungsNr}_${safeName}.pdf`;
 
   // ── Seite 2: Einzahlungsschein ──────────────────────────────────────────
   if (data.company.qr_bill_image_url) {

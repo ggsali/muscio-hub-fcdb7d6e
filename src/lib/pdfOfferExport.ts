@@ -68,7 +68,8 @@ export async function exportOfferPDF(data: OfferExportData) {
   const ACCENT = hexToRgb(data.company.primary_color || "#FF5A00");
   const firmenname = data.company.firmenname || "3DMuscio";
 
-  const offerNr = `OF-${data.datum?.replace(/-/g, "")}-${data.orderId.slice(0, 6).toUpperCase()}`;
+  const datumClean = data.datum ? new Date(data.datum + "T12:00:00").toISOString().split("T")[0].replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+  const offerNr = `OF-${datumClean}-${data.orderId.slice(0, 6).toUpperCase()}`;
   const gueltigBis =
     data.gueltigBis ||
     (() => {
@@ -128,7 +129,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFontSize(8.5);
   doc.setTextColor(...GRAY);
   const datumFormatted = data.datum
-    ? new Date(data.datum).toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
     : "";
   doc.text(`Datum:           ${datumFormatted}`, colR, 44);
   doc.text(`Offerten-Nr.:    ${offerNr}`, colR, 49);
@@ -284,7 +285,8 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFillColor(...ACCENT);
   doc.rect(0, pageH - 14, pageW, 2, "F");
 
-  const filename = `Offerte_${offerNr}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
+  const safeName = data.customerName.replace(/[äöüÄÖÜß]/g, (c) => ({ä:'ae',ö:'oe',ü:'ue',Ä:'Ae',Ö:'Oe',Ü:'Ue',ß:'ss'}[c]||c)).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filename = `Offerte_${offerNr}_${safeName}.pdf`;
 
   if (data.returnBase64) {
     return { base64: doc.output("datauristring").split(",")[1], filename };
