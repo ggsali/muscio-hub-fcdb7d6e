@@ -68,7 +68,8 @@ export async function exportOfferPDF(data: OfferExportData) {
   const ACCENT = hexToRgb(data.company.primary_color || "#FF5A00");
   const firmenname = data.company.firmenname || "3DMuscio";
 
-  const offerNr = `OF-${data.datum?.replace(/-/g, "")}-${data.orderId.slice(0, 6).toUpperCase()}`;
+  const datumClean = data.datum ? new Date(data.datum + "T12:00:00").toISOString().split("T")[0].replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+  const offerNr = `OF-${datumClean}-${data.orderId.slice(0, 6).toUpperCase()}`;
   const gueltigBis =
     data.gueltigBis ||
     (() => {

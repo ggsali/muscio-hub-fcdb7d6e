@@ -79,7 +79,8 @@ export async function exportOrderPDF(data: OrderExportData) {
   const firmenname = data.company.firmenname || "3DMuscio";
 
   // Rechnungsnummer generieren
-  const rechnungsNr = `RE-${data.datum?.replace(/-/g, "")}-${data.orderId.slice(0, 6).toUpperCase()}`;
+  const datumClean = data.datum ? new Date(data.datum + "T12:00:00").toISOString().split("T")[0].replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+  const rechnungsNr = `RE-${datumClean}-${data.orderId.slice(0, 6).toUpperCase()}`;
 
   // ── Linke dunkel Spalte (Kopf) ─────────────────────────────────
   doc.setFillColor(...BLACK);
