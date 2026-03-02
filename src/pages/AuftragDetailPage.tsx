@@ -596,6 +596,14 @@ export default function AuftragDetailPage() {
             <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} className="bg-input border-border" />
           </div>
           <div className="space-y-1.5">
+            <Label>Bearbeitung von</Label>
+            <Input type="date" value={geplantVon} onChange={e => setGeplantVon(e.target.value)} className="bg-input border-border" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Bearbeitung bis</Label>
+            <Input type="date" value={geplantBis} onChange={e => setGeplantBis(e.target.value)} className="bg-input border-border" />
+          </div>
+          <div className="space-y-1.5">
             <Label>Status</Label>
             <select
               value={status}
