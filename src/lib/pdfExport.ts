@@ -327,7 +327,8 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFillColor(...ACCENT);
   doc.rect(0, pageH - 14, pageW, 2, "F");
 
-  const filename = `Rechnung_${rechnungsNr}_${data.customerName.replace(/\s+/g, "_")}.pdf`;
+  const safeName = data.customerName.replace(/[äöüÄÖÜß]/g, (c) => ({ä:'ae',ö:'oe',ü:'ue',Ä:'Ae',Ö:'Oe',Ü:'Ue',ß:'ss'}[c]||c)).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filename = `Rechnung_${rechnungsNr}_${safeName}.pdf`;
 
   // ── Seite 2: Einzahlungsschein ──────────────────────────────────────────
   if (data.company.qr_bill_image_url) {
