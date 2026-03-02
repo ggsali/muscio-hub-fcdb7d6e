@@ -22,6 +22,7 @@ import EinstellungenPage from "@/pages/EinstellungenPage";
 import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
 import AnfragenPage from "@/pages/AnfragenPage";
+import KalenderPage from "@/pages/KalenderPage";
 import UploadLinksPage from "@/pages/UploadLinksPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
 
@@ -60,6 +61,7 @@ function AuthGate() {
             <Route path="/kalkulator" element={<KalkulatorPage />} />
             <Route path="/einstellungen" element={<EinstellungenPage />} />
             <Route path="/anfragen" element={<AnfragenPage />} />
+            <Route path="/kalender" element={<KalenderPage />} />
             <Route path="/uploads" element={<UploadLinksPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
