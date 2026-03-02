@@ -390,6 +390,8 @@ export default function AuftragDetailPage() {
       kosten_total: totalKosten,
       gewinn_total: totalGewinn,
       marge: totalMarge,
+      geplant_von: geplantVon || null,
+      geplant_bis: geplantBis || null,
     };
 
     let orderId = id === "neu" ? null : id;
