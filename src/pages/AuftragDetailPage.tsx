@@ -93,6 +93,8 @@ export default function AuftragDetailPage() {
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
   const [trackingNr, setTrackingNr] = useState("");
+  const [geplantVon, setGeplantVon] = useState("");
+  const [geplantBis, setGeplantBis] = useState("");
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | null>(null);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
@@ -129,6 +131,8 @@ export default function AuftragDetailPage() {
           setDatum(o.datum);
           setStatus(o.status);
           setTrackingNr((o as any).tracking_nr || "");
+          setGeplantVon((o as any).geplant_von || "");
+          setGeplantBis((o as any).geplant_bis || "");
         }
         const { data: p } = await supabase.from("parts").select("*").eq("order_id", id!);
         if (p && p.length > 0) setParts(p as PartRow[]);
@@ -386,6 +390,8 @@ export default function AuftragDetailPage() {
       kosten_total: totalKosten,
       gewinn_total: totalGewinn,
       marge: totalMarge,
+      geplant_von: geplantVon || null,
+      geplant_bis: geplantBis || null,
     };
 
     let orderId = id === "neu" ? null : id;
@@ -588,6 +594,14 @@ export default function AuftragDetailPage() {
           <div className="space-y-1.5">
             <Label>Datum</Label>
             <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} className="bg-input border-border" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Bearbeitung von</Label>
+            <Input type="date" value={geplantVon} onChange={e => setGeplantVon(e.target.value)} className="bg-input border-border" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Bearbeitung bis</Label>
+            <Input type="date" value={geplantBis} onChange={e => setGeplantBis(e.target.value)} className="bg-input border-border" />
           </div>
           <div className="space-y-1.5">
             <Label>Status</Label>

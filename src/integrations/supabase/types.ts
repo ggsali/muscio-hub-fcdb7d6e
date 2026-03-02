@@ -326,6 +326,8 @@ export type Database = {
           created_at: string | null
           customer_id: string | null
           datum: string | null
+          geplant_bis: string | null
+          geplant_von: string | null
           gewinn_total: number | null
           id: string
           kosten_total: number | null
@@ -341,6 +343,8 @@ export type Database = {
           created_at?: string | null
           customer_id?: string | null
           datum?: string | null
+          geplant_bis?: string | null
+          geplant_von?: string | null
           gewinn_total?: number | null
           id?: string
           kosten_total?: number | null
@@ -356,6 +360,8 @@ export type Database = {
           created_at?: string | null
           customer_id?: string | null
           datum?: string | null
+          geplant_bis?: string | null
+          geplant_von?: string | null
           gewinn_total?: number | null
           id?: string
           kosten_total?: number | null
