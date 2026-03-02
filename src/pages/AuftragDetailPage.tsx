@@ -93,6 +93,8 @@ export default function AuftragDetailPage() {
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
   const [trackingNr, setTrackingNr] = useState("");
+  const [geplantVon, setGeplantVon] = useState("");
+  const [geplantBis, setGeplantBis] = useState("");
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | null>(null);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
