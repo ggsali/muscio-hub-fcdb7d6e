@@ -77,7 +77,8 @@ serve(async (req) => {
           </div>
         </div>`;
     } else if (type === "offerte") {
-      const offerNr = `OF-${order.datum?.replace(/-/g, "") ?? ""}-${orderId.slice(0, 6).toUpperCase()}`;
+      const datumClean = order.datum ? order.datum.replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+      const offerNr = `OF-${datumClean}-${orderId.slice(0, 6).toUpperCase()}`;
       subject = `Offerte ${offerNr} – ${companyName}`;
       htmlBody = `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
