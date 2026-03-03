@@ -19,7 +19,10 @@ Deno.serve(async (req) => {
       throw new Error("STUDIO_SUPABASE_URL or STUDIO_SERVICE_ROLE_KEY not configured");
     }
 
-    const studioClient = createClient(studioUrl, studioKey);
+    const studioClient = createClient(studioUrl, studioKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      db: { schema: "public" },
+    });
 
     // Dashboard (target) client with service_role key
     const dashboardUrl = Deno.env.get("SUPABASE_URL")!;
