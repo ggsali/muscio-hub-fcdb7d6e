@@ -13,10 +13,10 @@ Deno.serve(async (req) => {
 
   try {
     // Studio (source) client with service_role key
-    const studioUrl = Deno.env.get("STUDIO_SUPABASE_URL");
+    const studioUrl = Deno.env.get("STUDIO_SUPABASE_URL") || "https://wkbxnicjqisiftyaodba.supabase.co";
     const studioKey = Deno.env.get("STUDIO_SERVICE_ROLE_KEY");
-    if (!studioUrl || !studioKey) {
-      throw new Error("STUDIO_SUPABASE_URL or STUDIO_SERVICE_ROLE_KEY not configured");
+    if (!studioKey) {
+      throw new Error("STUDIO_SERVICE_ROLE_KEY not configured");
     }
 
     const studioClient = createClient(studioUrl, studioKey, {
