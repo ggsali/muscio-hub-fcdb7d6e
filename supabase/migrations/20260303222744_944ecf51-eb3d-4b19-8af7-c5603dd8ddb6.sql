@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN preset_id uuid REFERENCES public.price_presets(id) ON DELETE SET NULL;

@@ -395,6 +395,7 @@ export type Database = {
           kosten_total: number | null
           marge: number | null
           name: string | null
+          preset_id: string | null
           status: string | null
           tracking_nr: string | null
           umsatz_total: number | null
@@ -412,6 +413,7 @@ export type Database = {
           kosten_total?: number | null
           marge?: number | null
           name?: string | null
+          preset_id?: string | null
           status?: string | null
           tracking_nr?: string | null
           umsatz_total?: number | null
@@ -429,6 +431,7 @@ export type Database = {
           kosten_total?: number | null
           marge?: number | null
           name?: string | null
+          preset_id?: string | null
           status?: string | null
           tracking_nr?: string | null
           umsatz_total?: number | null
@@ -440,6 +443,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_preset_id_fkey"
+            columns: ["preset_id"]
+            isOneToOne: false
+            referencedRelation: "price_presets"
             referencedColumns: ["id"]
           },
         ]

@@ -124,7 +124,12 @@ export default function AuftragDetailPage() {
 
     if (!isNew) {
       async function load() {
-        const { data: o } = await supabase.from("orders").select("*").eq("id", id!).single();
+        const [{ data: o }, { data: p }, { data: presetData }] = await Promise.all([
+          supabase.from("orders").select("*").eq("id", id!).single(),
+          supabase.from("parts").select("*").eq("order_id", id!),
+          supabase.from("price_presets").select("*").order("created_at"),
+        ]);
+        const loadedPresets = (presetData || []) as Preset[];
         if (o) {
           setOrderName((o as any).name || "");
           setCustomerId(o.customer_id || "");
@@ -134,8 +139,28 @@ export default function AuftragDetailPage() {
           setTrackingNr((o as any).tracking_nr || "");
           setGeplantVon((o as any).geplant_von || "");
           setGeplantBis((o as any).geplant_bis || "");
+          // Restore preset if saved
+          const savedPresetId = (o as any).preset_id;
+          if (savedPresetId) {
+            setSelectedPresetId(savedPresetId);
+            const preset = loadedPresets.find(pr => pr.id === savedPresetId);
+            if (preset) {
+              const discountFactor = 1 - (preset.rabatt_prozent || 0) / 100;
+              setActiveSettings({
+                ...settings,
+                setup_pauschale: preset.setup_pauschale * discountFactor,
+                material_verkauf_pro_g: preset.material_verkauf_pro_g * discountFactor,
+                maschinenzeit_pro_h: preset.maschinenzeit_pro_h * discountFactor,
+                nachbearbeitung_pro_h: preset.nachbearbeitung_pro_h * discountFactor,
+                konstruktion_pro_h: preset.konstruktion_pro_h * discountFactor,
+                material_einkauf_pro_kg: preset.material_einkauf_pro_kg,
+                strom_verschleiss_pro_h: preset.strom_verschleiss_pro_h,
+                skalierungsziel: settings.skalierungsziel,
+                investitions_fonds_prozent: settings.investitions_fonds_prozent,
+              });
+            }
+          }
         }
-        const { data: p } = await supabase.from("parts").select("*").eq("order_id", id!);
         if (p && p.length > 0) setParts(p as PartRow[]);
         setLoading(false);
       }
@@ -383,7 +408,7 @@ export default function AuftragDetailPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    const orderData = {
+    const orderData: Record<string, any> = {
       name: orderName || null,
       customer_id: customerId || null,
       beschreibung,
@@ -395,6 +420,7 @@ export default function AuftragDetailPage() {
       marge: totalMarge,
       geplant_von: geplantVon || null,
       geplant_bis: geplantBis || null,
+      preset_id: selectedPresetId || null,
     };
 
     let orderId = id === "neu" ? null : id;
