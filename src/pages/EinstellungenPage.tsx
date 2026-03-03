@@ -195,6 +195,7 @@ export default function EinstellungenPage() {
   const TABS: { key: Tab; label: string }[] = [
     { key: "raten", label: "Verrechnungssätze" },
     { key: "presets", label: "Preis-Presets" },
+    { key: "website", label: "Website-Kalkulator" },
     { key: "firma", label: "Firmenangaben" },
     { key: "rechnung", label: "Rechnungs-Design" },
   ];
