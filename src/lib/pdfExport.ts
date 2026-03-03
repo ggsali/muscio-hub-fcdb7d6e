@@ -199,44 +199,69 @@ export async function exportOrderPDF(data: OrderExportData) {
   const tableY = 118;
 
   if (data.withDetails) {
+    // Build detail rows: for each part, show the part row + cost breakdown sub-rows
+    const detailBody: any[][] = [];
+    data.parts.forEach((p, i) => {
+      const nr = String(i + 1).padStart(2, "0");
+      // Main part row
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold" } },
+        { content: p.teilname || "—", styles: { fontStyle: "bold" } },
+        `${p.menge}×`,
+        { content: formatCHF(p.preis_pro_stueck), styles: { fontStyle: "bold" } },
+        { content: formatCHF(p.preis_total), styles: { fontStyle: "bold" } },
+      ]);
+      // Cost breakdown sub-rows
+      const s = data.settings;
+      const subRows: [string, string][] = [];
+      if (s.setup_pauschale > 0) {
+        subRows.push(["Setup-Pauschale", formatCHF(s.setup_pauschale)]);
+      }
+      if (p.gewicht_g > 0) {
+        subRows.push([`Material: ${p.gewicht_g}g × ${formatCHF(s.material_verkauf_pro_g)}/g (${p.material})`, formatCHF(p.gewicht_g * s.material_verkauf_pro_g)]);
+      }
+      if (p.druckzeit_h > 0) {
+        subRows.push([`Druckzeit: ${p.druckzeit_h.toFixed(1)}h × ${formatCHF(s.maschinenzeit_pro_h)}/h`, formatCHF(p.druckzeit_h * s.maschinenzeit_pro_h)]);
+      }
+      if (p.konstruktion_h > 0) {
+        subRows.push([`Konstruktion: ${p.konstruktion_h.toFixed(1)}h × ${formatCHF(s.konstruktion_pro_h)}/h`, formatCHF(p.konstruktion_h * s.konstruktion_pro_h)]);
+      }
+      if (p.nachbearbeitung_h > 0) {
+        subRows.push([`Nachbearbeitung: ${p.nachbearbeitung_h.toFixed(1)}h × ${formatCHF(s.nachbearbeitung_pro_h)}/h`, formatCHF(p.nachbearbeitung_h * s.nachbearbeitung_pro_h)]);
+      }
+      subRows.forEach(([desc, val]) => {
+        detailBody.push([
+          "",
+          { content: `  ↳ ${desc}`, styles: { fontSize: 7, textColor: GRAY } },
+          "",
+          "",
+          { content: val, styles: { fontSize: 7, textColor: GRAY } },
+        ]);
+      });
+    });
+
     autoTable(doc, {
       startY: tableY,
       margin: { left: margin, right: margin },
-      head: [["Nr.", "Beschreibung", "Material", "Gewicht", "Druck (h)", "Konstr. (h)", "Nachb. (h)", "Menge", "Preis/St.", "Total"]],
-      body: data.parts.map((p, i) => [
-        String(i + 1).padStart(2, "0"),
-        p.teilname || "—",
-        p.material,
-        `${p.gewicht_g}g`,
-        p.druckzeit_h.toFixed(1),
-        p.konstruktion_h.toFixed(1),
-        p.nachbearbeitung_h.toFixed(1),
-        `${p.menge}×`,
-        formatCHF(p.preis_pro_stueck),
-        formatCHF(p.preis_total),
-      ]),
+      head: [["Nr.", "Beschreibung", "Menge", "Preis/St.", "Total"]],
+      body: detailBody,
       styles: {
-        fontSize: 7.5,
-        cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+        fontSize: 8,
+        cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
         textColor: DARK,
       },
       headStyles: {
         fillColor: BLACK,
         textColor: WHITE,
         fontStyle: "bold",
-        fontSize: 7,
+        fontSize: 8,
       },
       columnStyles: {
-        0: { cellWidth: 8, halign: "center" },
-        1: { cellWidth: 32 },
-        2: { cellWidth: 22 },
-        3: { cellWidth: 14, halign: "right" },
-        4: { cellWidth: 14, halign: "right" },
-        5: { cellWidth: 14, halign: "right" },
-        6: { cellWidth: 14, halign: "right" },
-        7: { cellWidth: 10, halign: "center" },
-        8: { halign: "right" },
-        9: { halign: "right", fontStyle: "bold" },
+        0: { cellWidth: 10, halign: "center" },
+        1: { cellWidth: 90 },
+        2: { cellWidth: 14, halign: "center" },
+        3: { halign: "right" },
+        4: { halign: "right" },
       },
       alternateRowStyles: { fillColor: XLGRAY },
       tableLineColor: LGRAY,
