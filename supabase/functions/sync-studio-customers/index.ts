@@ -24,12 +24,23 @@ Deno.serve(async (req) => {
     const dashboardKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const dashboardClient = createClient(dashboardUrl, dashboardKey);
 
-    // 1. Fetch profiles via direct REST API call (bypasses schema cache issues)
+    // Debug: check what tables are available
+    const tablesRes = await fetch(`${STUDIO_URL}/rest/v1/`, {
+      headers: {
+        "apikey": studioKey,
+        "Authorization": `Bearer ${studioKey}`,
+      },
+    });
+    const tablesBody = await tablesRes.text();
+    console.log(`Tables endpoint status: ${tablesRes.status}, body: ${tablesBody.substring(0, 500)}`);
+
+    // 1. Fetch profiles via direct REST API call
     const profilesRes = await fetch(`${STUDIO_URL}/rest/v1/profiles?select=*`, {
       headers: {
         "apikey": studioKey,
         "Authorization": `Bearer ${studioKey}`,
         "Content-Type": "application/json",
+        "Accept": "application/json",
       },
     });
 
