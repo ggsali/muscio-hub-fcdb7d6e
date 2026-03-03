@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
-  LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays
+  LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle, Globe
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
