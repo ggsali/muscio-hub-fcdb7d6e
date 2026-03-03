@@ -26,7 +26,7 @@ import KalenderPage from "@/pages/KalenderPage";
 import UploadLinksPage from "@/pages/UploadLinksPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
 import ChatPage from "@/pages/ChatPage";
-import WebsiteKundenPage from "@/pages/WebsiteKundenPage";
+
 
 const queryClient = new QueryClient();
 
@@ -66,7 +66,6 @@ function AuthGate() {
             <Route path="/kalender" element={<KalenderPage />} />
             <Route path="/uploads" element={<UploadLinksPage />} />
             <Route path="/chat" element={<ChatPage />} />
-            <Route path="/website-kunden" element={<WebsiteKundenPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
