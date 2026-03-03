@@ -24,23 +24,28 @@ Deno.serve(async (req) => {
     const dashboardKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const dashboardClient = createClient(dashboardUrl, dashboardKey);
 
-    // Debug: check what tables are available
+    // Debug: log swagger to see which tables are exposed
     const tablesRes = await fetch(`${STUDIO_URL}/rest/v1/`, {
       headers: {
         "apikey": studioKey,
         "Authorization": `Bearer ${studioKey}`,
+        "Accept": "application/openapi+json",
       },
     });
     const tablesBody = await tablesRes.text();
-    console.log(`Tables endpoint status: ${tablesRes.status}, body: ${tablesBody.substring(0, 500)}`);
+    // Log which paths are available (table names)
+    const hasProfiles = tablesBody.includes('"profiles"') || tablesBody.includes('/profiles');
+    console.log(`Swagger status: ${tablesRes.status}, hasProfiles: ${hasProfiles}`);
+    console.log(`Swagger excerpt: ${tablesBody.substring(0, 1000)}`);
 
-    // 1. Fetch profiles via direct REST API call
+    // 1. Fetch profiles — try with Accept-Profile header
     const profilesRes = await fetch(`${STUDIO_URL}/rest/v1/profiles?select=*`, {
       headers: {
         "apikey": studioKey,
         "Authorization": `Bearer ${studioKey}`,
         "Content-Type": "application/json",
         "Accept": "application/json",
+        "Accept-Profile": "public",
       },
     });
 
