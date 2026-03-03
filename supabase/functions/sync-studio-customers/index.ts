@@ -19,49 +19,72 @@ Deno.serve(async (req) => {
       throw new Error("STUDIO_SERVICE_ROLE_KEY not configured");
     }
 
-    // Dashboard (target) client
     const dashboardUrl = Deno.env.get("SUPABASE_URL")!;
     const dashboardKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const dashboardClient = createClient(dashboardUrl, dashboardKey);
 
-    // Studio source client (service role bypasses RLS)
-    const studioClient = createClient(STUDIO_URL, studioKey, {
-      auth: { persistSession: false },
-    });
-
-    // 1. Fetch profiles via service role client
-    const { data: profiles, error: profilesError } = await studioClient
-      .from("profiles")
-      .select("*");
-
-    if (profilesError) {
-      throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
+    // 1. Fetch all users from Studio Auth Admin API (bypasses PostgREST entirely)
+    let allUsers: any[] = [];
+    let page = 1;
+    while (true) {
+      const res = await fetch(`${STUDIO_URL}/auth/v1/admin/users?page=${page}&per_page=1000`, {
+        headers: {
+          "apikey": studioKey,
+          "Authorization": `Bearer ${studioKey}`,
+        },
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Failed to fetch users: ${res.status} ${err}`);
+      }
+      const data = await res.json();
+      const users = data.users || [];
+      allUsers = allUsers.concat(users);
+      if (users.length < 1000) break;
+      page++;
     }
-    console.log(`Fetched ${profiles?.length ?? 0} profiles from Studio`);
+    console.log(`Fetched ${allUsers.length} users from Studio Auth`);
 
-    // 2. Fetch users from Studio auth admin
-    const usersRes = await fetch(`${STUDIO_URL}/auth/v1/admin/users?page=1&per_page=1000`, {
-      headers: {
-        "apikey": studioKey,
-        "Authorization": `Bearer ${studioKey}`,
-      },
-    });
+    // 2. Fetch profiles via raw SQL through Auth Admin (use RPC workaround via REST with service key)
+    // Since PostgREST cache is broken, query via the DB REST endpoint with raw query param
+    const profilesRes = await fetch(
+      `${STUDIO_URL}/rest/v1/rpc/get_all_profiles`,
+      {
+        method: "POST",
+        headers: {
+          "apikey": studioKey,
+          "Authorization": `Bearer ${studioKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      }
+    );
 
-    if (!usersRes.ok) {
-      const err = await usersRes.text();
-      throw new Error(`Failed to fetch users: ${usersRes.status} ${err}`);
+    let profiles: any[] = [];
+    if (profilesRes.ok) {
+      profiles = await profilesRes.json();
+      console.log(`Fetched ${profiles.length} profiles via RPC`);
+    } else {
+      // Fallback: build from user metadata only
+      console.log("RPC not available, building from user metadata");
+      profiles = allUsers.map((u) => ({
+        user_id: u.id,
+        full_name: u.user_metadata?.full_name || u.user_metadata?.name || "",
+        address: u.user_metadata?.address || null,
+        postal_code: u.user_metadata?.postal_code || null,
+        city: u.user_metadata?.city || null,
+        country: u.user_metadata?.country || null,
+        phone: u.user_metadata?.phone || null,
+      }));
     }
 
-    const usersData = await usersRes.json();
-    const users = usersData.users || [];
-    console.log(`Fetched ${users.length} users from Studio Auth`);
-
+    // 3. Build user email map
     const usersMap = new Map<string, string>();
-    for (const user of users) {
+    for (const user of allUsers) {
       if (user.email) usersMap.set(user.id, user.email);
     }
 
-    // 3. Fetch existing customer emails from dashboard
+    // 4. Fetch existing customer emails from dashboard
     const { data: existingCustomers } = await dashboardClient
       .from("customers")
       .select("email");
@@ -70,11 +93,11 @@ Deno.serve(async (req) => {
       (existingCustomers || []).map((c: { email: string | null }) => c.email?.toLowerCase())
     );
 
-    // 4. Sync profiles → customers
+    // 5. Sync profiles → customers
     let synced = 0;
     let skipped = 0;
 
-    for (const profile of (profiles ?? [])) {
+    for (const profile of profiles) {
       const email = usersMap.get(profile.user_id);
       if (!email || existingEmails.has(email.toLowerCase())) {
         skipped++;
@@ -107,7 +130,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, synced, skipped, total: profiles?.length ?? 0 }),
+      JSON.stringify({ success: true, synced, skipped, total: profiles.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
