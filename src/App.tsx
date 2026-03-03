@@ -66,7 +66,6 @@ function AuthGate() {
             <Route path="/kalender" element={<KalenderPage />} />
             <Route path="/uploads" element={<UploadLinksPage />} />
             <Route path="/chat" element={<ChatPage />} />
-            <Route path="/website-kunden" element={<WebsiteKundenPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
