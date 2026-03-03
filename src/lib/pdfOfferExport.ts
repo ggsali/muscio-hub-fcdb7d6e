@@ -206,16 +206,16 @@ export async function exportOfferPDF(data: OfferExportData) {
         subRows.push(["Setup-Pauschale", formatCHF(s.setup_pauschale)]);
       }
       if ((p.gewicht_g ?? 0) > 0) {
-        subRows.push([`Material: ${p.gewicht_g}g × ${formatCHF(s.material_verkauf_pro_g)}/g (${p.material})`, formatCHF((p.gewicht_g ?? 0) * s.material_verkauf_pro_g)]);
+        subRows.push([`Material (${p.material}): ${p.gewicht_g}g`, formatCHF((p.gewicht_g ?? 0) * s.material_verkauf_pro_g)]);
       }
       if ((p.druckzeit_h ?? 0) > 0) {
-        subRows.push([`Druckzeit: ${(p.druckzeit_h ?? 0).toFixed(1)}h × ${formatCHF(s.maschinenzeit_pro_h)}/h`, formatCHF((p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h)]);
+        subRows.push([`Druckzeit: ${(p.druckzeit_h ?? 0).toFixed(1)}h`, formatCHF((p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h)]);
       }
       if ((p.konstruktion_h ?? 0) > 0) {
-        subRows.push([`Konstruktion: ${(p.konstruktion_h ?? 0).toFixed(1)}h × ${formatCHF(s.konstruktion_pro_h)}/h`, formatCHF((p.konstruktion_h ?? 0) * s.konstruktion_pro_h)]);
+        subRows.push([`Konstruktion: ${(p.konstruktion_h ?? 0).toFixed(1)}h`, formatCHF((p.konstruktion_h ?? 0) * s.konstruktion_pro_h)]);
       }
       if ((p.nachbearbeitung_h ?? 0) > 0) {
-        subRows.push([`Nachbearbeitung: ${(p.nachbearbeitung_h ?? 0).toFixed(1)}h × ${formatCHF(s.nachbearbeitung_pro_h)}/h`, formatCHF((p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h)]);
+        subRows.push([`Nachbearbeitung: ${(p.nachbearbeitung_h ?? 0).toFixed(1)}h`, formatCHF((p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h)]);
       }
       subRows.forEach(([desc, val]) => {
         detailBody.push([
