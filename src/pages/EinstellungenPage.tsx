@@ -48,7 +48,7 @@ const PRESET_RATE_FIELDS: { key: keyof Omit<Preset, "id" | "name" | "beschreibun
   { key: "rabatt_prozent", label: "Rabatt", unit: "%", step: "1" },
 ];
 
-type Tab = "raten" | "presets" | "firma" | "rechnung";
+type Tab = "raten" | "presets" | "firma" | "rechnung" | "website";
 
 export default function EinstellungenPage() {
   const { settings, reload: reloadSettings } = useSettings();
@@ -56,6 +56,14 @@ export default function EinstellungenPage() {
 
   const [tab, setTab] = useState<Tab>("raten");
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
+  const [websiteSettings, setWebsiteSettings] = useState<Record<string, number>>({
+    postProcessingFee: 5,
+    shippingCost: 8.9,
+    freeShippingThreshold: 100,
+    bulkDiscount5: 0.05,
+    bulkDiscount10: 0.10,
+    mwst: 0.081,
+  });
   const [localCompany, setLocalCompany] = useState<CompanySettings>(company);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
@@ -70,7 +78,29 @@ export default function EinstellungenPage() {
 
   useEffect(() => {
     loadPresets();
+    loadWebsiteSettings();
   }, []);
+
+  const loadWebsiteSettings = async () => {
+    const { data } = await supabase.from("settings").select("*").in("key", [
+      "postProcessingFee", "shippingCost", "freeShippingThreshold", "bulkDiscount5", "bulkDiscount10", "mwst",
+    ]);
+    if (data && data.length > 0) {
+      const ws: Record<string, number> = {};
+      for (const row of data) ws[row.key] = parseFloat(row.value);
+      setWebsiteSettings(prev => ({ ...prev, ...ws }));
+    }
+  };
+
+  const handleSaveWebsiteSettings = async () => {
+    const entries = Object.entries(websiteSettings).map(([key, value]) => ({
+      key, value: String(value), updated_at: new Date().toISOString(),
+    }));
+    for (const entry of entries) {
+      await supabase.from("settings").upsert(entry, { onConflict: "key" });
+    }
+    flashSaved();
+  };
 
   const loadPresets = async () => {
     const { data } = await supabase.from("price_presets").select("*").order("created_at");
@@ -165,6 +195,7 @@ export default function EinstellungenPage() {
   const TABS: { key: Tab; label: string }[] = [
     { key: "raten", label: "Verrechnungssätze" },
     { key: "presets", label: "Preis-Presets" },
+    { key: "website", label: "Website-Kalkulator" },
     { key: "firma", label: "Firmenangaben" },
     { key: "rechnung", label: "Rechnungs-Design" },
   ];
@@ -311,7 +342,51 @@ export default function EinstellungenPage() {
         </div>
       )}
 
-      {/* ── Tab: Firmenangaben ── */}
+      {tab === "website" && (
+        <div className="space-y-4 max-w-lg">
+          <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground">
+            Diese Einstellungen steuern den öffentlichen Kalkulator auf der <strong>3D Print Studio Website</strong>. Änderungen werden sofort für Besucher übernommen.
+          </div>
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <h3 className="font-semibold text-sm">Kalkulator-Parameter</h3>
+            {[
+              { key: "postProcessingFee", label: "Nachbearbeitung Pauschale", unit: "CHF / Bestellung", step: "0.5" },
+              { key: "shippingCost", label: "Versandkosten", unit: "CHF", step: "0.1" },
+              { key: "freeShippingThreshold", label: "Gratis-Versand ab", unit: "CHF", step: "5" },
+              { key: "bulkDiscount5", label: "Mengenrabatt ab 5 Stk.", unit: "Faktor (0.05 = 5%)", step: "0.01" },
+              { key: "bulkDiscount10", label: "Mengenrabatt ab 10 Stk.", unit: "Faktor (0.10 = 10%)", step: "0.01" },
+              { key: "mwst", label: "Mehrwertsteuer", unit: "Faktor (0.081 = 8.1%)", step: "0.001" },
+            ].map(f => (
+              <div key={f.key} className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <Label className="text-sm">{f.label}</Label>
+                  <div className="text-xs text-muted-foreground">{f.unit}</div>
+                </div>
+                <Input
+                  type="number"
+                  step={f.step}
+                  value={websiteSettings[f.key] ?? ""}
+                  onChange={e => setWebsiteSettings(prev => ({ ...prev, [f.key]: parseFloat(e.target.value) || 0 }))}
+                  className="w-32 bg-input border-border text-right tabular-nums"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <h3 className="font-semibold text-sm">Verrechnungssätze (wird vom ERP übernommen)</h3>
+            <p className="text-xs text-muted-foreground">Die Preise pro Gramm, Druckzeit etc. werden aus den Verrechnungssätzen oben automatisch für den Website-Kalkulator verwendet.</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex justify-between"><span className="text-muted-foreground">Material / g:</span><span className="font-mono">CHF {settings.material_verkauf_pro_g.toFixed(3)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit / h:</span><span className="font-mono">CHF {settings.maschinenzeit_pro_h.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Material Einkauf / kg:</span><span className="font-mono">CHF {settings.material_einkauf_pro_kg.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Strom & Verschleiß / h:</span><span className="font-mono">CHF {settings.strom_verschleiss_pro_h.toFixed(2)}</span></div>
+            </div>
+          </div>
+          <SaveButton saved={saved} onClick={handleSaveWebsiteSettings} />
+        </div>
+      )}
+
+
       {tab === "firma" && (
         <div className="space-y-6 max-w-lg">
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
