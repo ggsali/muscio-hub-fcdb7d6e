@@ -96,6 +96,7 @@ export default function AuftragDetailPage() {
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | null>(null);
+  const [withDetails, setWithDetails] = useState(false);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -282,14 +283,14 @@ export default function AuftragDetailPage() {
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts, umsatz_total: totalUmsatz, kosten_total: totalKosten,
             gewinn_total: totalGewinn, marge: totalMarge,
-            settings: activeSettings, company, returnBase64: true,
+            settings: activeSettings, company, returnBase64: true, withDetails,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true,
+            parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
@@ -310,7 +311,7 @@ export default function AuftragDetailPage() {
     setSendingEmail(null);
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (details = false) => {
     let customerName = "Kein Kunde";
     let customerFirma, customerEmail, customerTelefon, customerAdresse;
     if (customerId) {
@@ -343,10 +344,11 @@ export default function AuftragDetailPage() {
       marge: totalMarge,
       settings: activeSettings,
       company,
+      withDetails: details,
     });
   };
 
-  const handleExportOffer = async () => {
+  const handleExportOffer = async (details = false) => {
     let customerName = "Kein Kunde";
     let customerFirma, customerEmail, customerTelefon, customerAdresse;
     if (customerId) {
@@ -375,6 +377,7 @@ export default function AuftragDetailPage() {
       umsatz_total: totalUmsatz,
       settings: activeSettings,
       company,
+      withDetails: details,
     });
   };
 
@@ -462,14 +465,20 @@ export default function AuftragDetailPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                  <DropdownMenuItem onClick={() => handleExportPDF(false)} className="gap-2">
                     <FileDown className="w-4 h-4" /> Rechnung PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExportPDF(true)} className="gap-2">
+                    <FileDown className="w-4 h-4" /> Rechnung PDF (Details)
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} className="gap-2">
                     {sendingEmail === "rechnung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Rechnung mailen
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportOffer} className="gap-2">
+                  <DropdownMenuItem onClick={() => handleExportOffer(false)} className="gap-2">
                     <FileDown className="w-4 h-4" /> Offerte PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExportOffer(true)} className="gap-2">
+                    <FileDown className="w-4 h-4" /> Offerte PDF (Details)
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} className="gap-2">
                     {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
@@ -500,11 +509,17 @@ export default function AuftragDetailPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-44">
-                    <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                    <DropdownMenuItem onClick={() => handleExportPDF(false)} className="gap-2">
                       <FileDown className="w-4 h-4" /> Rechnung
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleExportOffer} className="gap-2">
+                    <DropdownMenuItem onClick={() => handleExportPDF(true)} className="gap-2">
+                      <FileDown className="w-4 h-4" /> Rechnung (Details)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportOffer(false)} className="gap-2">
                       <FileDown className="w-4 h-4" /> Offerte
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportOffer(true)} className="gap-2">
+                      <FileDown className="w-4 h-4" /> Offerte (Details)
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -547,7 +562,7 @@ export default function AuftragDetailPage() {
       </div>
 
       {/* E-Mail Bestätigungsdialog */}
-      <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => !open && setConfirmEmailType(null)}>
+      <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => { if (!open) { setConfirmEmailType(null); setWithDetails(false); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
@@ -557,6 +572,19 @@ export default function AuftragDetailPage() {
               {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {(confirmEmailType === "rechnung" || confirmEmailType === "offerte") && (
+            <div className="flex items-center gap-3 py-2">
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  checked={withDetails}
+                  onChange={e => setWithDetails(e.target.checked)}
+                  className="h-4 w-4 rounded border-border accent-primary"
+                />
+                <span>Mit Details <span className="text-muted-foreground text-xs">(Gewicht, Druckzeit, Konstruktion, Nachbearbeitung)</span></span>
+              </label>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (confirmEmailType) { handleSendEmail(confirmEmailType); setConfirmEmailType(null); } }}>

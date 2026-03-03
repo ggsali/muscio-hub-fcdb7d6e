@@ -36,6 +36,7 @@ interface OrderExportData {
   settings: Settings;
   company: CompanySettings;
   returnBase64?: boolean;
+  withDetails?: boolean;
 }
 
 const BLACK = [30, 30, 30] as [number, number, number];
@@ -197,41 +198,87 @@ export async function exportOrderPDF(data: OrderExportData) {
   // ── Positions-Tabelle ───────────────────────────────────────────
   const tableY = 118;
 
-  autoTable(doc, {
-    startY: tableY,
-    margin: { left: margin, right: margin },
-    head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
-    body: data.parts.map((p, i) => [
-      String(i + 1).padStart(2, "0"),
-      p.teilname || "—",
-      p.material,
-      `${p.menge}×`,
-      formatCHF(p.preis_pro_stueck),
-      formatCHF(p.preis_total),
-    ]),
-    styles: {
-      fontSize: 8.5,
-      cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
-      textColor: DARK,
-    },
-    headStyles: {
-      fillColor: BLACK,
-      textColor: WHITE,
-      fontStyle: "bold",
-      fontSize: 8,
-    },
-    columnStyles: {
-      0: { cellWidth: 10, halign: "center" },
-      1: { cellWidth: 55 },
-      2: { cellWidth: 30 },
-      3: { cellWidth: 12, halign: "center" },
-      4: { halign: "right" },
-      5: { halign: "right", fontStyle: "bold" },
-    },
-    alternateRowStyles: { fillColor: XLGRAY },
-    tableLineColor: LGRAY,
-    tableLineWidth: 0.1,
-  });
+  if (data.withDetails) {
+    autoTable(doc, {
+      startY: tableY,
+      margin: { left: margin, right: margin },
+      head: [["Nr.", "Beschreibung", "Material", "Gewicht", "Druck (h)", "Konstr. (h)", "Nachb. (h)", "Menge", "Preis/St.", "Total"]],
+      body: data.parts.map((p, i) => [
+        String(i + 1).padStart(2, "0"),
+        p.teilname || "—",
+        p.material,
+        `${p.gewicht_g}g`,
+        p.druckzeit_h.toFixed(1),
+        p.konstruktion_h.toFixed(1),
+        p.nachbearbeitung_h.toFixed(1),
+        `${p.menge}×`,
+        formatCHF(p.preis_pro_stueck),
+        formatCHF(p.preis_total),
+      ]),
+      styles: {
+        fontSize: 7.5,
+        cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+        textColor: DARK,
+      },
+      headStyles: {
+        fillColor: BLACK,
+        textColor: WHITE,
+        fontStyle: "bold",
+        fontSize: 7,
+      },
+      columnStyles: {
+        0: { cellWidth: 8, halign: "center" },
+        1: { cellWidth: 32 },
+        2: { cellWidth: 22 },
+        3: { cellWidth: 14, halign: "right" },
+        4: { cellWidth: 14, halign: "right" },
+        5: { cellWidth: 14, halign: "right" },
+        6: { cellWidth: 14, halign: "right" },
+        7: { cellWidth: 10, halign: "center" },
+        8: { halign: "right" },
+        9: { halign: "right", fontStyle: "bold" },
+      },
+      alternateRowStyles: { fillColor: XLGRAY },
+      tableLineColor: LGRAY,
+      tableLineWidth: 0.1,
+    });
+  } else {
+    autoTable(doc, {
+      startY: tableY,
+      margin: { left: margin, right: margin },
+      head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
+      body: data.parts.map((p, i) => [
+        String(i + 1).padStart(2, "0"),
+        p.teilname || "—",
+        p.material,
+        `${p.menge}×`,
+        formatCHF(p.preis_pro_stueck),
+        formatCHF(p.preis_total),
+      ]),
+      styles: {
+        fontSize: 8.5,
+        cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
+        textColor: DARK,
+      },
+      headStyles: {
+        fillColor: BLACK,
+        textColor: WHITE,
+        fontStyle: "bold",
+        fontSize: 8,
+      },
+      columnStyles: {
+        0: { cellWidth: 10, halign: "center" },
+        1: { cellWidth: 55 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 12, halign: "center" },
+        4: { halign: "right" },
+        5: { halign: "right", fontStyle: "bold" },
+      },
+      alternateRowStyles: { fillColor: XLGRAY },
+      tableLineColor: LGRAY,
+      tableLineWidth: 0.1,
+    });
+  }
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
 
