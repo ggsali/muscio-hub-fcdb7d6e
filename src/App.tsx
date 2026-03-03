@@ -25,6 +25,8 @@ import AnfragenPage from "@/pages/AnfragenPage";
 import KalenderPage from "@/pages/KalenderPage";
 import UploadLinksPage from "@/pages/UploadLinksPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
+import ChatPage from "@/pages/ChatPage";
+import WebsiteKundenPage from "@/pages/WebsiteKundenPage";
 
 const queryClient = new QueryClient();
 
