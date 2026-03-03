@@ -56,6 +56,14 @@ export default function EinstellungenPage() {
 
   const [tab, setTab] = useState<Tab>("raten");
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
+  const [websiteSettings, setWebsiteSettings] = useState<Record<string, number>>({
+    postProcessingFee: 5,
+    shippingCost: 8.9,
+    freeShippingThreshold: 100,
+    bulkDiscount5: 0.05,
+    bulkDiscount10: 0.10,
+    mwst: 0.081,
+  });
   const [localCompany, setLocalCompany] = useState<CompanySettings>(company);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
