@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     const dashboardKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const dashboardClient = createClient(dashboardUrl, dashboardKey);
 
-    // 1. Fetch all users from Studio Auth Admin API (bypasses PostgREST entirely)
+    // 1. Fetch all users from Studio Auth Admin API
     let allUsers: any[] = [];
     let page = 1;
     while (true) {
@@ -44,47 +44,12 @@ Deno.serve(async (req) => {
       page++;
     }
     console.log(`Fetched ${allUsers.length} users from Studio Auth`);
-
-    // 2. Fetch profiles via raw SQL through Auth Admin (use RPC workaround via REST with service key)
-    // Since PostgREST cache is broken, query via the DB REST endpoint with raw query param
-    const profilesRes = await fetch(
-      `${STUDIO_URL}/rest/v1/rpc/get_all_profiles`,
-      {
-        method: "POST",
-        headers: {
-          "apikey": studioKey,
-          "Authorization": `Bearer ${studioKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      }
-    );
-
-    let profiles: any[] = [];
-    if (profilesRes.ok) {
-      profiles = await profilesRes.json();
-      console.log(`Fetched ${profiles.length} profiles via RPC`);
-    } else {
-      // Fallback: build from user metadata only
-      console.log("RPC not available, building from user metadata");
-      profiles = allUsers.map((u) => ({
-        user_id: u.id,
-        full_name: u.user_metadata?.full_name || u.user_metadata?.name || "",
-        address: u.user_metadata?.address || null,
-        postal_code: u.user_metadata?.postal_code || null,
-        city: u.user_metadata?.city || null,
-        country: u.user_metadata?.country || null,
-        phone: u.user_metadata?.phone || null,
-      }));
+    // Log first user for debug
+    if (allUsers.length > 0) {
+      console.log(`First user sample: ${JSON.stringify(allUsers[0])}`);
     }
 
-    // 3. Build user email map
-    const usersMap = new Map<string, string>();
-    for (const user of allUsers) {
-      if (user.email) usersMap.set(user.id, user.email);
-    }
-
-    // 4. Fetch existing customer emails from dashboard
+    // 2. Fetch existing customer emails from dashboard
     const { data: existingCustomers } = await dashboardClient
       .from("customers")
       .select("email");
@@ -93,29 +58,32 @@ Deno.serve(async (req) => {
       (existingCustomers || []).map((c: { email: string | null }) => c.email?.toLowerCase())
     );
 
-    // 5. Sync profiles → customers
+    // 3. Sync users → customers (skip admins without confirmed email)
     let synced = 0;
     let skipped = 0;
 
-    for (const profile of profiles) {
-      const email = usersMap.get(profile.user_id);
+    for (const user of allUsers) {
+      const email = user.email;
       if (!email || existingEmails.has(email.toLowerCase())) {
         skipped++;
         continue;
       }
 
-      const nameParts = (profile.full_name || "").trim().split(" ");
+      // Extract name from user_metadata or raw_user_meta_data
+      const meta = user.user_metadata || user.raw_user_meta_data || {};
+      const fullName = meta.full_name || meta.name || "";
+      const nameParts = fullName.trim().split(" ");
       const vorname = nameParts[0] || "";
-      const name = nameParts.slice(1).join(" ") || vorname;
+      const name = nameParts.slice(1).join(" ") || vorname || "Unbekannt";
 
       const { error: insertError } = await dashboardClient.from("customers").insert({
-        name: name || "Unbekannt",
+        name,
         vorname,
-        strasse: profile.address || null,
-        plz: profile.postal_code || null,
-        ort: profile.city || null,
-        land: profile.country || "Schweiz",
-        telefon: profile.phone || null,
+        strasse: meta.address || null,
+        plz: meta.postal_code || null,
+        ort: meta.city || null,
+        land: meta.country || "Schweiz",
+        telefon: meta.phone || null,
         email,
         notizen: "Automatisch aus 3D Print Studio importiert",
       });
@@ -130,7 +98,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, synced, skipped, total: profiles.length }),
+      JSON.stringify({ success: true, synced, skipped, total: allUsers.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
