@@ -78,7 +78,29 @@ export default function EinstellungenPage() {
 
   useEffect(() => {
     loadPresets();
+    loadWebsiteSettings();
   }, []);
+
+  const loadWebsiteSettings = async () => {
+    const { data } = await supabase.from("settings").select("*").in("key", [
+      "postProcessingFee", "shippingCost", "freeShippingThreshold", "bulkDiscount5", "bulkDiscount10", "mwst",
+    ]);
+    if (data && data.length > 0) {
+      const ws: Record<string, number> = {};
+      for (const row of data) ws[row.key] = parseFloat(row.value);
+      setWebsiteSettings(prev => ({ ...prev, ...ws }));
+    }
+  };
+
+  const handleSaveWebsiteSettings = async () => {
+    const entries = Object.entries(websiteSettings).map(([key, value]) => ({
+      key, value: String(value), updated_at: new Date().toISOString(),
+    }));
+    for (const entry of entries) {
+      await supabase.from("settings").upsert(entry, { onConflict: "key" });
+    }
+    flashSaved();
+  };
 
   const loadPresets = async () => {
     const { data } = await supabase.from("price_presets").select("*").order("created_at");
