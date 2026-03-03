@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     const dashboardClient = createClient(dashboardUrl, dashboardKey);
 
     // 1. Fetch profiles via direct REST API call (bypasses schema cache issues)
-    const profilesRes = await fetch(`${STUDIO_URL}/rest/v1/customers?select=*`, {
+    const profilesRes = await fetch(`${STUDIO_URL}/rest/v1/profiles?select=*`, {
       headers: {
         "apikey": studioKey,
         "Authorization": `Bearer ${studioKey}`,
