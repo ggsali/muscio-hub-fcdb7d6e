@@ -22,7 +22,6 @@ const navItems = [
   { to: "/kalender", icon: <CalendarDays className="w-[18px] h-[18px]" />, label: "Kalender" },
   { to: "/uploads", icon: <Upload className="w-[18px] h-[18px]" />, label: "Projekt-Uploads" },
   { to: "/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
-  { to: "/website-kunden", icon: <Globe className="w-[18px] h-[18px]" />, label: "Website-Kunden" },
   { to: "/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
 ];
 
