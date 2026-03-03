@@ -24,7 +24,22 @@ Deno.serve(async (req) => {
     const dashboardKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const dashboardClient = createClient(dashboardUrl, dashboardKey);
 
-    // 1. Fetch ALL users directly from Studio Auth Admin API (no REST/RLS needed)
+    // Studio source client (service role bypasses RLS)
+    const studioClient = createClient(STUDIO_URL, studioKey, {
+      auth: { persistSession: false },
+    });
+
+    // 1. Fetch profiles via service role client
+    const { data: profiles, error: profilesError } = await studioClient
+      .from("profiles")
+      .select("*");
+
+    if (profilesError) {
+      throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
+    }
+    console.log(`Fetched ${profiles?.length ?? 0} profiles from Studio`);
+
+    // 2. Fetch users from Studio auth admin
     const usersRes = await fetch(`${STUDIO_URL}/auth/v1/admin/users?page=1&per_page=1000`, {
       headers: {
         "apikey": studioKey,
@@ -40,40 +55,6 @@ Deno.serve(async (req) => {
     const usersData = await usersRes.json();
     const users = usersData.users || [];
     console.log(`Fetched ${users.length} users from Studio Auth`);
-
-    // 2. Fetch profiles via Auth Admin API workaround — use service role client directly
-    const studioClient = (await import("https://esm.sh/@supabase/supabase-js@2")).createClient(
-      STUDIO_URL,
-      studioKey,
-      { auth: { persistSession: false } }
-    );
-
-    const { data: profiles, error: profilesError } = await studioClient
-      .from("profiles")
-      .select("*");
-
-    if (profilesError) {
-      throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
-    }
-
-    console.log(`Fetched ${profiles?.length ?? 0} profiles from Studio`);
-
-    // 2. Fetch users from Studio auth
-    const usersRes = await fetch(`${STUDIO_URL}/auth/v1/admin/users?page=1&per_page=1000`, {
-      headers: {
-        "apikey": studioKey,
-        "Authorization": `Bearer ${studioKey}`,
-      },
-    });
-
-    if (!usersRes.ok) {
-      const err = await usersRes.text();
-      throw new Error(`Failed to fetch users: ${usersRes.status} ${err}`);
-    }
-
-    const usersData = await usersRes.json();
-    const users = usersData.users || [];
-    console.log(`Fetched ${users.length} users from Studio`);
 
     const usersMap = new Map<string, string>();
     for (const user of users) {
@@ -93,7 +74,7 @@ Deno.serve(async (req) => {
     let synced = 0;
     let skipped = 0;
 
-    for (const profile of profiles) {
+    for (const profile of (profiles ?? [])) {
       const email = usersMap.get(profile.user_id);
       if (!email || existingEmails.has(email.toLowerCase())) {
         skipped++;
@@ -126,7 +107,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, synced, skipped, total: profiles.length }),
+      JSON.stringify({ success: true, synced, skipped, total: profiles?.length ?? 0 }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
