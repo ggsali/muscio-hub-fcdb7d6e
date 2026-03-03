@@ -24,38 +24,39 @@ Deno.serve(async (req) => {
     const dashboardKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const dashboardClient = createClient(dashboardUrl, dashboardKey);
 
-    // Debug: log swagger to see which tables are exposed
-    const tablesRes = await fetch(`${STUDIO_URL}/rest/v1/`, {
+    // 1. Fetch ALL users directly from Studio Auth Admin API (no REST/RLS needed)
+    const usersRes = await fetch(`${STUDIO_URL}/auth/v1/admin/users?page=1&per_page=1000`, {
       headers: {
         "apikey": studioKey,
         "Authorization": `Bearer ${studioKey}`,
-        "Accept": "application/openapi+json",
-      },
-    });
-    const tablesBody = await tablesRes.text();
-    // Log which paths are available (table names)
-    const hasProfiles = tablesBody.includes('"profiles"') || tablesBody.includes('/profiles');
-    console.log(`Swagger status: ${tablesRes.status}, hasProfiles: ${hasProfiles}`);
-    console.log(`Swagger excerpt: ${tablesBody.substring(0, 1000)}`);
-
-    // 1. Fetch profiles — try with Accept-Profile header
-    const profilesRes = await fetch(`${STUDIO_URL}/rest/v1/profiles?select=*`, {
-      headers: {
-        "apikey": studioKey,
-        "Authorization": `Bearer ${studioKey}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Accept-Profile": "public",
       },
     });
 
-    if (!profilesRes.ok) {
-      const err = await profilesRes.text();
-      throw new Error(`Failed to fetch profiles: ${profilesRes.status} ${err}`);
+    if (!usersRes.ok) {
+      const err = await usersRes.text();
+      throw new Error(`Failed to fetch users: ${usersRes.status} ${err}`);
     }
 
-    const profiles = await profilesRes.json();
-    console.log(`Fetched ${profiles.length} profiles from Studio`);
+    const usersData = await usersRes.json();
+    const users = usersData.users || [];
+    console.log(`Fetched ${users.length} users from Studio Auth`);
+
+    // 2. Fetch profiles via Auth Admin API workaround — use service role client directly
+    const studioClient = (await import("https://esm.sh/@supabase/supabase-js@2")).createClient(
+      STUDIO_URL,
+      studioKey,
+      { auth: { persistSession: false } }
+    );
+
+    const { data: profiles, error: profilesError } = await studioClient
+      .from("profiles")
+      .select("*");
+
+    if (profilesError) {
+      throw new Error(`Failed to fetch profiles: ${profilesError.message}`);
+    }
+
+    console.log(`Fetched ${profiles?.length ?? 0} profiles from Studio`);
 
     // 2. Fetch users from Studio auth
     const usersRes = await fetch(`${STUDIO_URL}/auth/v1/admin/users?page=1&per_page=1000`, {
