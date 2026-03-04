@@ -12,7 +12,7 @@ import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2,
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF } from "@/lib/pdfOfferExport";
-import { exportAkontoPDF } from "@/lib/pdfAkontoExport";
+import { exportAkontoPDF, exportRestbetragPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
 import type { Filament } from "@/pages/FilamentePage";
