@@ -96,7 +96,7 @@ export default function AuftragDetailPage() {
   const [trackingNr, setTrackingNr] = useState("");
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
-  const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | null>(null);
+  const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
   const [showAkontoDialog, setShowAkontoDialog] = useState(false);
   const [akontoPercent, setAkontoPercent] = useState(50);
@@ -283,16 +283,14 @@ export default function AuftragDetailPage() {
   const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
-  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung") => {
+  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung") => {
     setSendingEmail(type);
     try {
       let pdfBase64: string | null = null;
       let pdfFilename: string | null = null;
 
-      // PDF clientseitig generieren für Rechnung und Offerte
       if (type === "rechnung" || type === "offerte") {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-
         if (type === "rechnung") {
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung, status,
@@ -318,7 +316,7 @@ export default function AuftragDetailPage() {
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
       } else {
-        const labels = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung" };
+        const labels: Record<string, string> = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung", auftragsbestaetigung: "Auftragsbestätigung" };
         toast({ title: "E-Mail gesendet ✓", description: `${labels[type]} wurde erfolgreich versandt.` });
       }
     } catch (e: any) {
@@ -549,6 +547,9 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} className="gap-2">
                     {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmEmailType("auftragsbestaetigung")} disabled={!!sendingEmail} className="gap-2 text-primary">
+                    {sendingEmail === "auftragsbestaetigung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Auftragsbestätigung
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
                     <FileDown className="w-4 h-4" /> Akontorechnung
                   </DropdownMenuItem>
@@ -611,6 +612,9 @@ export default function AuftragDetailPage() {
                     <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} className="gap-2">
                       <Mail className="w-4 h-4" /> Offerte senden
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setConfirmEmailType("auftragsbestaetigung")} className="gap-2 text-primary">
+                      <Mail className="w-4 h-4" /> Auftragsbestätigung
+                    </DropdownMenuItem>
                     {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
                       <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} className="gap-2 text-success focus:text-success">
                         <Mail className="w-4 h-4" />
@@ -641,6 +645,7 @@ export default function AuftragDetailPage() {
             <AlertDialogDescription>
               {confirmEmailType === "rechnung" && "Die Rechnung wird als PDF per E-Mail an den Kunden gesendet."}
               {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
+              {confirmEmailType === "auftragsbestaetigung" && "Eine Auftragsbestätigung wird per E-Mail an den Kunden gesendet."}
               {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
             </AlertDialogDescription>
           </AlertDialogHeader>
