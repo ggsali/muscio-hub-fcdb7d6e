@@ -100,6 +100,7 @@ export default function AuftragDetailPage() {
   const [withDetails, setWithDetails] = useState(false);
   const [showAkontoDialog, setShowAkontoDialog] = useState(false);
   const [akontoPercent, setAkontoPercent] = useState(50);
+  const [akontoMode, setAkontoMode] = useState<"akonto" | "restbetrag">("akonto");
   const [sendingAkonto, setSendingAkonto] = useState(false);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
