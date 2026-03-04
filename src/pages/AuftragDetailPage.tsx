@@ -98,6 +98,9 @@ export default function AuftragDetailPage() {
   const [geplantBis, setGeplantBis] = useState("");
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
+  const [showAkontoDialog, setShowAkontoDialog] = useState(false);
+  const [akontoPercent, setAkontoPercent] = useState(50);
+  const [sendingAkonto, setSendingAkonto] = useState(false);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
