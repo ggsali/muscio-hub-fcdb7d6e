@@ -642,6 +642,7 @@ export default function AuftragDetailPage() {
             <AlertDialogDescription>
               {confirmEmailType === "rechnung" && "Die Rechnung wird als PDF per E-Mail an den Kunden gesendet."}
               {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
+              {confirmEmailType === "auftragsbestaetigung" && "Eine Auftragsbestätigung wird per E-Mail an den Kunden gesendet."}
               {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
             </AlertDialogDescription>
           </AlertDialogHeader>
