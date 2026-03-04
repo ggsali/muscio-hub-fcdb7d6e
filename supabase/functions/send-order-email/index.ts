@@ -82,7 +82,7 @@ serve(async (req) => {
             <p>vielen Dank für Ihren Auftrag. Im Anhang finden Sie Ihre Rechnung <strong>Nr. ${orderNr}</strong> vom ${datum}.</p>
             ${paymentButton}
             <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
           </div>
         </div>`;
     } else if (type === "offerte") {
@@ -98,7 +98,7 @@ serve(async (req) => {
             <p>Guten Tag ${customerName},</p>
             <p>gerne unterbreiten wir Ihnen unser Angebot. Im Anhang finden Sie die Offerte <strong>${offerNr}</strong> vom ${datum}.</p>
             <p style="color:#6b7280;font-size:13px;">Für Rückfragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
           </div>
         </div>`;
     } else if (type === "akonto") {
@@ -121,7 +121,7 @@ serve(async (req) => {
             </div>` : ""}
             <p>Die vollständige Akontorechnung finden Sie im Anhang als PDF.</p>
             <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
           </div>
         </div>`;
     } else if (type === "restbetrag") {
@@ -156,7 +156,7 @@ serve(async (req) => {
             </div>` : ""}
             <p>Die vollständige Schlussrechnung finden Sie im Anhang als PDF.</p>
             <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
           </div>
         </div>`;
     } else if (type === "auftragsbestaetigung") {
@@ -178,7 +178,7 @@ serve(async (req) => {
             <p>wir freuen uns, Ihnen mitteilen zu können, dass Ihr Auftrag <strong>„${orderName}"</strong> angenommen wurde und wir mit der Bearbeitung beginnen.</p>
             <p>Bei Fragen oder Änderungswünschen stehen wir Ihnen jederzeit zur Verfügung.</p>
             <p style="color:#6b7280;font-size:13px;">Vielen Dank für Ihr Vertrauen.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
           </div>
         </div>`;
     } else if (type === "druckfertig") {
@@ -200,7 +200,7 @@ serve(async (req) => {
             <p>wir freuen uns, Ihnen mitteilen zu können, dass Ihre 3D-Druckteile für den Auftrag <strong>„${orderName}"</strong> erfolgreich gedruckt wurden.</p>
             <p>Die Teile befinden sich derzeit in der Nachbearbeitung und werden in Kürze versandt. Sie erhalten eine weitere Benachrichtigung sobald Ihr Paket unterwegs ist.</p>
             <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
           </div>
         </div>`;
     } else if (type === "lieferung") {
@@ -228,7 +228,7 @@ serve(async (req) => {
               <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Verfolgen Sie Ihre Sendung auf der Website des Paketdienstes.</p>
             </div>` : ""}
             <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
           </div>
         </div>`;
     }
