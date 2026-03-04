@@ -283,16 +283,14 @@ export default function AuftragDetailPage() {
   const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
-  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung") => {
+  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung") => {
     setSendingEmail(type);
     try {
       let pdfBase64: string | null = null;
       let pdfFilename: string | null = null;
 
-      // PDF clientseitig generieren für Rechnung und Offerte
       if (type === "rechnung" || type === "offerte") {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-
         if (type === "rechnung") {
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung, status,
@@ -318,7 +316,7 @@ export default function AuftragDetailPage() {
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
       } else {
-        const labels = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung" };
+        const labels: Record<string, string> = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung", auftragsbestaetigung: "Auftragsbestätigung" };
         toast({ title: "E-Mail gesendet ✓", description: `${labels[type]} wurde erfolgreich versandt.` });
       }
     } catch (e: any) {
