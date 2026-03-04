@@ -217,7 +217,7 @@ export async function exportOfferPositionsPDF(
   doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(160, 160, 160);
   const footParts = [firmenname, company.adresse, company.email, company.website].filter(Boolean);
   doc.text(footParts.join("  |  "), margin, pageH - 5.5);
-  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH")}`, pageW - margin, pageH - 5.5, { align: "right" });
+  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}`, pageW - margin, pageH - 5.5, { align: "right" });
 
   const filename = `Offerte_${offerNr}_${datum}.pdf`;
   if (returnBase64) return { base64: doc.output("datauristring").split(",")[1], filename };

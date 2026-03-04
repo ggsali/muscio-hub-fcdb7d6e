@@ -136,7 +136,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(8.5);
   doc.setTextColor(...GRAY);
   const datumFormatted = data.datum
-    ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
+    ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })
     : "";
   doc.text(`Datum:          ${datumFormatted}`, colR, 44);
   doc.text(`Rechnungs-Nr.:  ${rechnungsNr}`, colR, 49);
