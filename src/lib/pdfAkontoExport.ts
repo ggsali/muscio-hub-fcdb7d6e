@@ -105,16 +105,30 @@ async function drawHeader(
   if (company.telefon) { doc.text(company.telefon, margin, sy); sy += 4.5; }
   if (company.website) { doc.text(company.website, margin, sy); }
 
-  // Titel rechtsbündig
+  // Titel zentriert in der rechten Spalte
+  // Rechte Spalte: von (pageW/2 + 4) bis pageW — Mitte davon
+  const rightColStart = pageW / 2 + 4;
+  const rightColEnd = pageW;
+  const rightColCenter = (rightColStart + rightColEnd) / 2;
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(titleLines.length === 1 ? 30 : 24);
   doc.setTextColor(...BLACK_);
+
   if (titleLines.length === 1) {
-    doc.text(titleLines[0], pageW - margin, 26, { align: "right" });
+    // Schriftgrösse automatisch anpassen: max 30, kleiner wenn zu lang
+    const maxWidth = rightColEnd - rightColStart - 8;
+    let fontSize = 30;
+    doc.setFontSize(fontSize);
+    while (doc.getTextWidth(titleLines[0]) > maxWidth && fontSize > 14) {
+      fontSize -= 1;
+      doc.setFontSize(fontSize);
+    }
+    doc.text(titleLines[0], rightColCenter, 26, { align: "center" });
   } else {
+    doc.setFontSize(22);
     let ty = 22;
     titleLines.forEach(line => {
-      doc.text(line, pageW - margin, ty, { align: "right" });
+      doc.text(line, rightColCenter, ty, { align: "center" });
       ty += 10;
     });
   }
