@@ -295,12 +295,13 @@ export async function exportOrderPDF(data: OrderExportData) {
       },
       columnStyles: {
         0: { cellWidth: 10, halign: "center" },
-        1: { cellWidth: 74 },
-        2: { cellWidth: 18, halign: "center" },
-        3: { cellWidth: 24, halign: "right" },
+        1: { cellWidth: 88 },
+        2: { cellWidth: 20, halign: "center" },
+        3: { cellWidth: 26, halign: "right" },
         4: { cellWidth: 10, halign: "right" },
-        5: { cellWidth: 22, halign: "right", fontStyle: "bold" },
+        5: { cellWidth: 20, halign: "right", fontStyle: "bold" },
       },
+      tableWidth: "wrap",
       tableLineColor: LGRAY,
       tableLineWidth: 0.1,
     });
