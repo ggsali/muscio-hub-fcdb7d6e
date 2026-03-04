@@ -25,7 +25,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { orderId, type, trackingNr, pdfBase64, pdfFilename } = body;
+    const { orderId, type, trackingNr, pdfBase64, pdfFilename, akontoPercent, akontoBetrag } = body;
 
     // Fetch order
     const { data: order, error: orderErr } = await supabase
