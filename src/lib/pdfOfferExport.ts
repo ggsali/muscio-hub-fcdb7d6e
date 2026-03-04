@@ -181,7 +181,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...DARK);
   doc.text("Offertendetails", colR, 38);
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...GRAY);
-  const datumFormatted = data.datum ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" }) : "";
+  const datumFormatted = data.datum ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
   doc.text(`Datum:           ${datumFormatted}`, colR, 44);
   doc.text(`Offerten-Nr.:    ${offerNr}`, colR, 49);
   doc.text(`Gültig bis:      ${gueltigBis}`, colR, 54);
