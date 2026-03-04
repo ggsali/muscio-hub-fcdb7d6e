@@ -115,6 +115,41 @@ serve(async (req) => {
             <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
           </div>
         </div>`;
+    } else if (type === "restbetrag") {
+      const datumClean = order.datum ? order.datum.replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+      const restNr = `RS-${datumClean}-${orderId.slice(0, 6).toUpperCase()}`;
+      const restFormatted = restbetrag != null ? `CHF ${Number(restbetrag).toFixed(2)}` : "";
+      const akontoFormatted = akontoBetrag != null ? `CHF ${Number(akontoBetrag).toFixed(2)}` : "";
+      subject = `Schlussrechnung ${restNr} – ${companyName}`;
+      htmlBody = `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+          <div style="background:#18181b;padding:24px 32px;border-radius:8px 8px 0 0;">
+            <h1 style="color:#ffffff;margin:0;font-size:22px;">${companyName}</h1>
+          </div>
+          <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+            <p>Guten Tag ${customerName},</p>
+            <p>anbei erhalten Sie unsere Schlussrechnung <strong>${restNr}</strong> für den Auftrag "${orderName}".</p>
+            ${akontoFormatted ? `
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin:20px 0;">
+              <p style="margin:0 0 8px;font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Zahlungsübersicht</p>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="color:#6b7280;font-size:13px;">Gesamtbetrag</span>
+                <span style="font-size:13px;">CHF ${(Number(akontoBetrag) + Number(restbetrag)).toFixed(2)}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="color:#6b7280;font-size:13px;">Abzüglich Akonto (${akontoPercent}%)</span>
+                <span style="font-size:13px;color:#ea580c;">- ${akontoFormatted}</span>
+              </div>
+              <div style="border-top:1px solid #e5e7eb;padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;">
+                <span style="font-size:14px;font-weight:700;">Restbetrag (fällig)</span>
+                <span style="font-size:18px;font-weight:700;">${restFormatted}</span>
+              </div>
+            </div>` : ""}
+            <p>Die vollständige Schlussrechnung finden Sie im Anhang als PDF.</p>
+            <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+          </div>
+        </div>`;
     } else if (type === "lieferung") {
       const trackingNrVal = trackingNr || order.tracking_nr || "";
       subject = `Ihre Bestellung "${orderName}" wurde geliefert`;
