@@ -289,10 +289,22 @@ export default function AuftragDetailPage() {
     try {
       let pdfBase64: string | null = null;
       let pdfFilename: string | null = null;
+      let paymentUrl: string | null = null;
 
       if (type === "rechnung" || type === "offerte") {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
         if (type === "rechnung") {
+          // Optionally generate Stripe payment link
+          if (withPaymentLink && totalUmsatz > 0) {
+            try {
+              const { data: plData, error: plErr } = await supabase.functions.invoke("create-stripe-payment-link", {
+                body: { orderId: id, betrag: totalUmsatz, orderName, customerEmail },
+              });
+              if (!plErr && plData?.url) paymentUrl = plData.url;
+            } catch (e) {
+              console.warn("Stripe payment link failed:", e);
+            }
+          }
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
@@ -312,7 +324,7 @@ export default function AuftragDetailPage() {
       }
 
       const { data, error } = await supabase.functions.invoke("send-order-email", {
-        body: { orderId: id, type, trackingNr, pdfBase64, pdfFilename },
+        body: { orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl },
       });
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
