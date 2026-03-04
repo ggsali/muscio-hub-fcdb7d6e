@@ -24,7 +24,7 @@ export const DEFAULT_COMPANY: CompanySettings = {
   uid_nummer: "",
   telefon: "",
   email: "",
-  website: "www.3dmuscio.com",
+  website: "www.3dmuscio.ch",
   bank_name: "",
   bank_iban: "",
   bank_inhaber: "",
