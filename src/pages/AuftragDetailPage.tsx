@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
-import { exportOfferPDF } from "@/lib/pdfOfferExport";
+import { exportOfferPDF, exportAuftragsbestaetiguungPDF } from "@/lib/pdfOfferExport";
 import { exportAkontoPDF, exportRestbetragPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
