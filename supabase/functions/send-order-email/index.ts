@@ -63,6 +63,18 @@ serve(async (req) => {
     let subject = "";
     let htmlBody = "";
 
+    const emailFooter = `
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;" />
+        <div style="text-align:center;">
+          <p style="margin:0;font-size:12px;color:#9ca3af;">
+            <a href="mailto:info@3dmuscio.com" style="color:#ea580c;text-decoration:none;">info@3dmuscio.com</a>
+            &nbsp;·&nbsp;
+            <span>+41 79 839 50 80</span>
+            &nbsp;·&nbsp;
+            <a href="https://www.3dmuscio.ch" style="color:#ea580c;text-decoration:none;">www.3dmuscio.ch</a>
+          </p>
+        </div>`;
+
     if (type === "rechnung") {
       subject = `Rechnung ${orderNr} – ${companyName}`;
       const paymentButton = paymentUrl ? `
@@ -82,7 +94,8 @@ serve(async (req) => {
             <p>vielen Dank für Ihren Auftrag. Im Anhang finden Sie Ihre Rechnung <strong>Nr. ${orderNr}</strong> vom ${datum}.</p>
             ${paymentButton}
             <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            ${emailFooter}
           </div>
         </div>`;
     } else if (type === "offerte") {
