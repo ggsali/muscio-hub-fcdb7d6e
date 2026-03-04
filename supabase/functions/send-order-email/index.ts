@@ -65,6 +65,13 @@ serve(async (req) => {
 
     if (type === "rechnung") {
       subject = `Rechnung ${orderNr} – ${companyName}`;
+      const paymentButton = paymentUrl ? `
+            <div style="margin:24px 0;text-align:center;">
+              <a href="${paymentUrl}" style="display:inline-block;background:#ea580c;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:8px;text-decoration:none;">
+                💳 Jetzt online bezahlen
+              </a>
+              <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Sichere Zahlung via Stripe (Kreditkarte, etc.)</p>
+            </div>` : "";
       htmlBody = `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
           <div style="background:#18181b;padding:24px 32px;border-radius:8px 8px 0 0;">
@@ -73,6 +80,7 @@ serve(async (req) => {
           <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
             <p>Guten Tag ${customerName},</p>
             <p>vielen Dank für Ihren Auftrag. Im Anhang finden Sie Ihre Rechnung <strong>Nr. ${orderNr}</strong> vom ${datum}.</p>
+            ${paymentButton}
             <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
             <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
           </div>
