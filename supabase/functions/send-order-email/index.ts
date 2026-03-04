@@ -194,7 +194,8 @@ serve(async (req) => {
             <p>wir freuen uns, Ihnen mitteilen zu können, dass Ihr Auftrag <strong>„${orderName}"</strong> angenommen wurde und wir mit der Bearbeitung beginnen.</p>
             <p>Bei Fragen oder Änderungswünschen stehen wir Ihnen jederzeit zur Verfügung.</p>
             <p style="color:#6b7280;font-size:13px;">Vielen Dank für Ihr Vertrauen.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            ${emailFooter}
           </div>
         </div>`;
     } else if (type === "druckfertig") {
