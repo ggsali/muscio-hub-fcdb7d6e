@@ -104,9 +104,10 @@ export async function exportAkontoPDF(data: AkontoExportData) {
 
   // ── Rechts: Titel ───────────────────────────────────────────────
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(24);
   doc.setTextColor(...BLACK);
-  doc.text("AKONTORECHNUNG", pageW - margin, 26, { align: "right" });
+  const rightColCenterX = (pageW / 2 - 4 + pageW) / 2;
+  doc.text("AKONTORECHNUNG", rightColCenterX, 26, { align: "center" });
 
   // Akontodetails
   doc.setFont("helvetica", "bold");
