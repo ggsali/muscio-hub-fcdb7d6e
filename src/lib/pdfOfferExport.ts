@@ -191,62 +191,87 @@ export async function exportOfferPDF(data: OfferExportData) {
   // ── Positionstabelle ─────────────────────────────────────────────
   if (data.withDetails) {
     const detailBody: any[][] = [];
+    const s = data.settings;
     data.parts.forEach((p, i) => {
       const nr = String(i + 1).padStart(2, "0");
+      const rowBg = i % 2 === 0 ? WHITE : XLGRAY;
+      // Header row per part
       detailBody.push([
-        { content: nr, styles: { fontStyle: "bold" } },
-        { content: p.teilname || "—", styles: { fontStyle: "bold" } },
-        `${p.menge}×`,
-        { content: formatCHF(p.preis_pro_stueck), styles: { fontStyle: "bold" } },
-        { content: formatCHF(p.preis_total), styles: { fontStyle: "bold" } },
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: p.teilname || "—", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: `${p.menge}×`, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: formatCHF(p.preis_pro_stueck), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(p.preis_total), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
-      const s = data.settings;
-      const subRows: [string, string][] = [];
+      // Sub-rows
       if (s.setup_pauschale > 0) {
-        subRows.push(["Setup-Pauschale", formatCHF(s.setup_pauschale)]);
+        detailBody.push([
+          { content: "", styles: { fillColor: rowBg } },
+          { content: "Setup-Pauschale", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
+          { content: "1×", styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+        ]);
       }
       if ((p.gewicht_g ?? 0) > 0) {
-        subRows.push([`Material (${p.material}): ${p.gewicht_g}g`, formatCHF((p.gewicht_g ?? 0) * s.material_verkauf_pro_g)]);
+        const matTotal = (p.gewicht_g ?? 0) * s.material_verkauf_pro_g * p.menge;
+        detailBody.push([
+          { content: "", styles: { fillColor: rowBg } },
+          { content: `Material (${p.material})`, styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
+          { content: `${p.gewicht_g}g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: `${formatCHF(s.material_verkauf_pro_g)}/g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: formatCHF(matTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+        ]);
       }
       if ((p.druckzeit_h ?? 0) > 0) {
-        subRows.push([`Druckzeit: ${(p.druckzeit_h ?? 0).toFixed(1)}h`, formatCHF((p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h)]);
+        const druckTotal = (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h * p.menge;
+        detailBody.push([
+          { content: "", styles: { fillColor: rowBg } },
+          { content: "Druckzeit (Maschinenzeit)", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
+          { content: `${(p.druckzeit_h ?? 0).toFixed(1)}h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: `${formatCHF(s.maschinenzeit_pro_h)}/h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: formatCHF(druckTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+        ]);
       }
       if ((p.konstruktion_h ?? 0) > 0) {
-        subRows.push([`Konstruktion: ${(p.konstruktion_h ?? 0).toFixed(1)}h`, formatCHF((p.konstruktion_h ?? 0) * s.konstruktion_pro_h)]);
+        const konstrTotal = (p.konstruktion_h ?? 0) * s.konstruktion_pro_h * p.menge;
+        detailBody.push([
+          { content: "", styles: { fillColor: rowBg } },
+          { content: "Konstruktion / Engineering", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
+          { content: `${(p.konstruktion_h ?? 0).toFixed(1)}h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: `${formatCHF(s.konstruktion_pro_h)}/h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: formatCHF(konstrTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+        ]);
       }
       if ((p.nachbearbeitung_h ?? 0) > 0) {
-        subRows.push([`Nachbearbeitung: ${(p.nachbearbeitung_h ?? 0).toFixed(1)}h`, formatCHF((p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h)]);
-      }
-      subRows.forEach(([desc, val]) => {
+        const nbTotal = (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h * p.menge;
         detailBody.push([
-          "",
-          { content: `  ↳ ${desc}`, styles: { fontSize: 7, textColor: GRAY } },
-          "",
-          "",
-          { content: val, styles: { fontSize: 7, textColor: GRAY } },
+          { content: "", styles: { fillColor: rowBg } },
+          { content: "Nachbearbeitung / Finishing", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
+          { content: `${(p.nachbearbeitung_h ?? 0).toFixed(1)}h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: `${formatCHF(s.nachbearbeitung_pro_h)}/h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: formatCHF(nbTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
         ]);
-      });
+      }
+      if (i < data.parts.length - 1) {
+        detailBody.push([{ content: "", colSpan: 5, styles: { cellPadding: 1, fillColor: WHITE } }]);
+      }
     });
 
     autoTable(doc, {
       startY: 118,
       margin: { left: margin, right: margin },
-      head: [["Nr.", "Beschreibung", "Menge", "Preis/St.", "Total"]],
+      head: [["Nr.", "Leistung / Beschreibung", "Menge", "Einzelpreis", "Total"]],
       body: detailBody,
-      styles: {
-        fontSize: 8,
-        cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
-        textColor: DARK,
-      },
+      styles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 3, right: 3 }, textColor: DARK },
       headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
       columnStyles: {
         0: { cellWidth: 10, halign: "center" },
-        1: { cellWidth: 90 },
-        2: { cellWidth: 14, halign: "center" },
-        3: { halign: "right" },
-        4: { halign: "right" },
+        1: { cellWidth: 88 },
+        2: { cellWidth: 20, halign: "center" },
+        3: { cellWidth: 28, halign: "right" },
+        4: { cellWidth: 28, halign: "right", fontStyle: "bold" },
       },
-      alternateRowStyles: { fillColor: XLGRAY },
       tableLineColor: LGRAY,
       tableLineWidth: 0.1,
     });
