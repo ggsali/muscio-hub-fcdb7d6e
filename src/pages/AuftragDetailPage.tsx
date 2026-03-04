@@ -547,6 +547,9 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} className="gap-2">
                     {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmEmailType("auftragsbestaetigung")} disabled={!!sendingEmail} className="gap-2 text-primary">
+                    {sendingEmail === "auftragsbestaetigung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Auftragsbestätigung
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
                     <FileDown className="w-4 h-4" /> Akontorechnung
                   </DropdownMenuItem>

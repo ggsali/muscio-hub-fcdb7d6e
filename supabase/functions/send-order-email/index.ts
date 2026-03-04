@@ -150,6 +150,28 @@ serve(async (req) => {
             <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
           </div>
         </div>`;
+    } else if (type === "auftragsbestaetigung") {
+      subject = `Auftragsbestätigung – ${orderName} | ${companyName}`;
+      htmlBody = `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+          <div style="background:#18181b;padding:24px 32px;border-radius:8px 8px 0 0;">
+            <h1 style="color:#ffffff;margin:0;font-size:22px;">${companyName}</h1>
+          </div>
+          <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;">
+              <span style="font-size:28px;">✅</span>
+              <div>
+                <p style="margin:0;font-size:15px;font-weight:700;color:#16a34a;">Ihr Auftrag wurde bestätigt!</p>
+                <p style="margin:4px 0 0;font-size:12px;color:#6b7280;">Auftrag Nr. ${orderNr} · ${datum}</p>
+              </div>
+            </div>
+            <p>Guten Tag ${customerName},</p>
+            <p>wir freuen uns, Ihnen mitteilen zu können, dass Ihr Auftrag <strong>„${orderName}"</strong> angenommen wurde und wir mit der Bearbeitung beginnen.</p>
+            <p>Bei Fragen oder Änderungswünschen stehen wir Ihnen jederzeit zur Verfügung.</p>
+            <p style="color:#6b7280;font-size:13px;">Vielen Dank für Ihr Vertrauen.</p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+          </div>
+        </div>`;
     } else if (type === "lieferung") {
       const trackingNrVal = trackingNr || order.tracking_nr || "";
       subject = `Ihre Bestellung "${orderName}" wurde geliefert`;
