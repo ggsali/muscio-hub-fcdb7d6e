@@ -117,7 +117,7 @@ function drawFooter(doc: jsPDF, company: CompanySettings, ACCENT: [number, numbe
   doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(160, 160, 160);
   const footParts = [company.firmenname || "3DMuscio", company.adresse, company.email, company.website].filter(Boolean);
   doc.text(footParts.join("  |  "), margin, pageH - 5.5);
-  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH")}`, pageW - margin, pageH - 5.5, { align: "right" });
+  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}`, pageW - margin, pageH - 5.5, { align: "right" });
   doc.setFillColor(...ACCENT);
   doc.rect(0, pageH - 14, pageW, 2, "F");
 }
@@ -181,7 +181,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...DARK);
   doc.text("Offertendetails", colR, 38);
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...GRAY);
-  const datumFormatted = data.datum ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" }) : "";
+  const datumFormatted = data.datum ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
   doc.text(`Datum:           ${datumFormatted}`, colR, 44);
   doc.text(`Offerten-Nr.:    ${offerNr}`, colR, 49);
   doc.text(`Gültig bis:      ${gueltigBis}`, colR, 54);
@@ -360,7 +360,7 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...DARK);
   doc.text("Auftragsdetails", colR, 38);
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...GRAY);
-  const datumFormatted = data.datum ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" }) : "";
+  const datumFormatted = data.datum ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
   doc.text(`Datum:           ${datumFormatted}`, colR, 44);
   doc.text(`Auftrags-Nr.:    ${abNr}`, colR, 49);
 
