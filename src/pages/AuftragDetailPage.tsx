@@ -694,7 +694,7 @@ export default function AuftragDetailPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           {(confirmEmailType === "rechnung" || confirmEmailType === "offerte") && (
-            <div className="flex items-center gap-3 py-2">
+            <div className="space-y-2 py-1">
               <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <input
                   type="checkbox"
@@ -704,6 +704,20 @@ export default function AuftragDetailPage() {
                 />
                 <span>Mit Details <span className="text-muted-foreground text-xs">(Gewicht, Druckzeit, Konstruktion, Nachbearbeitung)</span></span>
               </label>
+              {confirmEmailType === "rechnung" && totalUmsatz > 0 && (
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={withPaymentLink}
+                    onChange={e => setWithPaymentLink(e.target.checked)}
+                    className="h-4 w-4 rounded border-border accent-primary"
+                  />
+                  <span>
+                    💳 Stripe Zahlungslink hinzufügen{" "}
+                    <span className="text-muted-foreground text-xs">(CHF {totalUmsatz.toFixed(2)} – Kunde kann online bezahlen)</span>
+                  </span>
+                </label>
+              )}
             </div>
           )}
           <AlertDialogFooter>
