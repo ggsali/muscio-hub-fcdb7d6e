@@ -31,6 +31,12 @@ export interface AkontoExportData {
   returnBase64?: boolean;
 }
 
+export interface RestbetragExportData extends Omit<AkontoExportData, 'akontoPercent' | 'akontoBetrag'> {
+  akontoPercent: number;
+  akontoBetrag: number; // already-paid akonto
+  restbetrag: number;   // remaining amount to pay
+}
+
 const BLACK = [30, 30, 30] as [number, number, number];
 const DARK = [55, 55, 55] as [number, number, number];
 const GRAY = [120, 120, 120] as [number, number, number];
