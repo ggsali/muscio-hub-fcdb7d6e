@@ -121,7 +121,7 @@ serve(async (req) => {
             </div>` : ""}
             <p>Die vollständige Akontorechnung finden Sie im Anhang als PDF.</p>
             <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
           </div>
         </div>`;
     } else if (type === "restbetrag") {
