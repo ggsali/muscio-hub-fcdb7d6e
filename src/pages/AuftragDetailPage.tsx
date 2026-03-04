@@ -340,6 +340,54 @@ export default function AuftragDetailPage() {
     setSendingEmail(null);
   };
 
+  const getCustomerData = async () => {
+    let customerName = "Kein Kunde";
+    let customerFirma: string | undefined, customerEmail: string | undefined, customerTelefon: string | undefined, customerAdresse: string | undefined;
+    if (customerId) {
+      const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
+      if (c) {
+        customerName = [c.vorname, c.name].filter(Boolean).join(" ") || c.name;
+        customerFirma = c.firma ?? undefined;
+        customerEmail = c.email ?? undefined;
+        customerTelefon = c.telefon ?? undefined;
+        const adresseParts: string[] = [];
+        if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
+        if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
+        customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
+      }
+    }
+    return { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse };
+  };
+
+  const handleExportAkonto = async (download = true) => {
+    setSendingAkonto(true);
+    try {
+      const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+      const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
+      const result = await exportAkontoPDF({
+        orderId: id || "neu", datum, beschreibung, status,
+        customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+        parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag,
+        settings: activeSettings, company, returnBase64: !download,
+      });
+      if (!download && result) {
+        // Send via email
+        const { data, error } = await supabase.functions.invoke("send-order-email", {
+          body: { orderId: id, type: "akonto", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag },
+        });
+        if (error || data?.error) {
+          toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
+        } else {
+          toast({ title: "Akontorechnung gesendet ✓", description: `${akontoPercent}% (${formatCHF(akontoBetrag)}) wurde per E-Mail versandt.` });
+        }
+      }
+      setShowAkontoDialog(false);
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    }
+    setSendingAkonto(false);
+  };
+
   const handleExportPDF = async (details = false) => {
     let customerName = "Kein Kunde";
     let customerFirma, customerEmail, customerTelefon, customerAdresse;
