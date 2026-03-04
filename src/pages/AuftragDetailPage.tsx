@@ -283,7 +283,7 @@ export default function AuftragDetailPage() {
   const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
-  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung") => {
+  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig") => {
     setSendingEmail(type);
     try {
       let pdfBase64: string | null = null;
