@@ -389,21 +389,7 @@ export default function AuftragDetailPage() {
   };
 
   const handleExportPDF = async (details = false) => {
-    let customerName = "Kein Kunde";
-    let customerFirma, customerEmail, customerTelefon, customerAdresse;
-    if (customerId) {
-      const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
-      if (c) {
-        customerName = [c.vorname, c.name].filter(Boolean).join(" ") || c.name;
-        customerFirma = c.firma ?? undefined;
-        customerEmail = c.email ?? undefined;
-        customerTelefon = c.telefon ?? undefined;
-        const adresseParts: string[] = [];
-        if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
-        if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
-        customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
-      }
-    }
+    const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
     exportOrderPDF({
       orderId: id || "neu",
       datum,
