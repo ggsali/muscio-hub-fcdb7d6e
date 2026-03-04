@@ -444,6 +444,24 @@ export default function AuftragDetailPage() {
     });
   };
 
+  const handleExportAuftragsbestaetigung = async () => {
+    const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+    exportAuftragsbestaetiguungPDF({
+      orderId: id || "neu",
+      datum,
+      beschreibung,
+      customerName,
+      customerFirma,
+      customerEmail,
+      customerTelefon,
+      customerAdresse,
+      parts,
+      umsatz_total: totalUmsatz,
+      settings: activeSettings,
+      company,
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const orderData: Record<string, any> = {
