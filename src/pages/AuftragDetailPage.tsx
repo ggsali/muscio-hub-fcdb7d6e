@@ -574,6 +574,9 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
                     <FileDown className="w-4 h-4" /> Akontorechnung
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmEmailType("druckfertig")} disabled={!!sendingEmail} className="gap-2 text-warning focus:text-warning">
+                    {sendingEmail === "druckfertig" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Druckfertig-Mail
+                  </DropdownMenuItem>
                   {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
                     <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} className="gap-2 text-success">
                       {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
