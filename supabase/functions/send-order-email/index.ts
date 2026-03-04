@@ -25,7 +25,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { orderId, type, trackingNr, pdfBase64, pdfFilename } = body;
+    const { orderId, type, trackingNr, pdfBase64, pdfFilename, akontoPercent, akontoBetrag } = body;
 
     // Fetch order
     const { data: order, error: orderErr } = await supabase
@@ -89,6 +89,29 @@ serve(async (req) => {
             <p>Guten Tag ${customerName},</p>
             <p>gerne unterbreiten wir Ihnen unser Angebot. Im Anhang finden Sie die Offerte <strong>${offerNr}</strong> vom ${datum}.</p>
             <p style="color:#6b7280;font-size:13px;">Für Rückfragen stehen wir Ihnen gerne zur Verfügung.</p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+          </div>
+        </div>`;
+    } else if (type === "akonto") {
+      const datumClean = order.datum ? order.datum.replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+      const akontoNr = `AK-${datumClean}-${orderId.slice(0, 6).toUpperCase()}`;
+      const akontoFormatted = akontoBetrag != null ? `CHF ${Number(akontoBetrag).toFixed(2)}` : "";
+      subject = `Akontorechnung ${akontoNr} – ${companyName}`;
+      htmlBody = `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
+          <div style="background:#18181b;padding:24px 32px;border-radius:8px 8px 0 0;">
+            <h1 style="color:#ffffff;margin:0;font-size:22px;">${companyName}</h1>
+          </div>
+          <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+            <p>Guten Tag ${customerName},</p>
+            <p>anbei erhalten Sie unsere Akontorechnung <strong>${akontoNr}</strong> für den Auftrag "${orderName}".</p>
+            ${akontoFormatted ? `
+            <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:16px 20px;margin:20px 0;">
+              <p style="margin:0 0 4px;font-size:12px;color:#ea580c;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Akontozahlung (${akontoPercent}%)</p>
+              <p style="margin:0;font-size:22px;font-weight:700;">${akontoFormatted}</p>
+            </div>` : ""}
+            <p>Die vollständige Akontorechnung finden Sie im Anhang als PDF.</p>
+            <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
             <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
           </div>
         </div>`;

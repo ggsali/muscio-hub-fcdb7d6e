@@ -12,6 +12,7 @@ import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2,
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF } from "@/lib/pdfOfferExport";
+import { exportAkontoPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
 import type { Filament } from "@/pages/FilamentePage";
@@ -97,6 +98,9 @@ export default function AuftragDetailPage() {
   const [geplantBis, setGeplantBis] = useState("");
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
+  const [showAkontoDialog, setShowAkontoDialog] = useState(false);
+  const [akontoPercent, setAkontoPercent] = useState(50);
+  const [sendingAkonto, setSendingAkonto] = useState(false);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -286,21 +290,7 @@ export default function AuftragDetailPage() {
 
       // PDF clientseitig generieren für Rechnung und Offerte
       if (type === "rechnung" || type === "offerte") {
-        let customerName = "Kein Kunde";
-        let customerFirma, customerEmail, customerTelefon, customerAdresse;
-        if (customerId) {
-          const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
-          if (c) {
-            customerName = [c.vorname, c.name].filter(Boolean).join(" ") || c.name;
-            customerFirma = c.firma ?? undefined;
-            customerEmail = c.email ?? undefined;
-            customerTelefon = c.telefon ?? undefined;
-            const adresseParts: string[] = [];
-            if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
-            if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
-            customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
-          }
-        }
+        const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
 
         if (type === "rechnung") {
           const result = await exportOrderPDF({
@@ -336,9 +326,9 @@ export default function AuftragDetailPage() {
     setSendingEmail(null);
   };
 
-  const handleExportPDF = async (details = false) => {
+  const getCustomerData = async () => {
     let customerName = "Kein Kunde";
-    let customerFirma, customerEmail, customerTelefon, customerAdresse;
+    let customerFirma: string | undefined, customerEmail: string | undefined, customerTelefon: string | undefined, customerAdresse: string | undefined;
     if (customerId) {
       const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
       if (c) {
@@ -352,6 +342,40 @@ export default function AuftragDetailPage() {
         customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
       }
     }
+    return { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse };
+  };
+
+  const handleExportAkonto = async (download = true) => {
+    setSendingAkonto(true);
+    try {
+      const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+      const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
+      const result = await exportAkontoPDF({
+        orderId: id || "neu", datum, beschreibung, status,
+        customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+        parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag,
+        settings: activeSettings, company, returnBase64: !download,
+      });
+      if (!download && result) {
+        // Send via email
+        const { data, error } = await supabase.functions.invoke("send-order-email", {
+          body: { orderId: id, type: "akonto", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag },
+        });
+        if (error || data?.error) {
+          toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
+        } else {
+          toast({ title: "Akontorechnung gesendet ✓", description: `${akontoPercent}% (${formatCHF(akontoBetrag)}) wurde per E-Mail versandt.` });
+        }
+      }
+      setShowAkontoDialog(false);
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    }
+    setSendingAkonto(false);
+  };
+
+  const handleExportPDF = async (details = false) => {
+    const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
     exportOrderPDF({
       orderId: id || "neu",
       datum,
@@ -374,21 +398,7 @@ export default function AuftragDetailPage() {
   };
 
   const handleExportOffer = async (details = false) => {
-    let customerName = "Kein Kunde";
-    let customerFirma, customerEmail, customerTelefon, customerAdresse;
-    if (customerId) {
-      const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).single();
-      if (c) {
-        customerName = [c.vorname, c.name].filter(Boolean).join(" ") || c.name;
-        customerFirma = c.firma ?? undefined;
-        customerEmail = c.email ?? undefined;
-        customerTelefon = c.telefon ?? undefined;
-        const adresseParts: string[] = [];
-        if (c.strasse || c.hausnummer) adresseParts.push(`${c.strasse || ""} ${c.hausnummer || ""}`.trim());
-        if (c.plz || c.ort) adresseParts.push(`${c.plz || ""} ${c.ort || ""}`.trim());
-        customerAdresse = adresseParts.length ? adresseParts.join("\n") : (c.adresse || undefined);
-      }
-    }
+    const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
     exportOfferPDF({
       orderId: id || "neu",
       datum,
@@ -509,6 +519,9 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} className="gap-2">
                     {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
+                    <FileDown className="w-4 h-4" /> Akontorechnung
+                  </DropdownMenuItem>
                   {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
                     <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} className="gap-2 text-success">
                       {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
@@ -546,6 +559,9 @@ export default function AuftragDetailPage() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExportOffer(true)} className="gap-2">
                       <FileDown className="w-4 h-4" /> Offerte (Details)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
+                      <FileDown className="w-4 h-4" /> Akontorechnung
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -616,6 +632,90 @@ export default function AuftragDetailPage() {
             <AlertDialogAction onClick={() => { if (confirmEmailType) { handleSendEmail(confirmEmailType); setConfirmEmailType(null); } }}>
               Ja, senden
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Akontorechnung Dialog */}
+      <AlertDialog open={showAkontoDialog} onOpenChange={(open) => { if (!open) setShowAkontoDialog(false); }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Akontorechnung erstellen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Wähle den Prozentsatz der Akontozahlung. Die Akontorechnung basiert auf dem Gesamtbetrag von <strong>{formatCHF(totalUmsatz)}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Akontozahlung in %</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={5}
+                  max={95}
+                  step={5}
+                  value={akontoPercent}
+                  onChange={e => setAkontoPercent(Number(e.target.value))}
+                  className="flex-1 accent-primary"
+                />
+                <div className="flex items-center gap-1 shrink-0">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={akontoPercent}
+                    onChange={e => setAkontoPercent(Math.min(99, Math.max(1, Number(e.target.value))))}
+                    className="w-16 h-8 text-sm text-center"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap mt-1">
+                {[25, 33, 50, 66, 75].map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setAkontoPercent(p)}
+                    className={`text-xs px-2 py-1 rounded border transition-colors ${akontoPercent === p ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary"}`}
+                  >
+                    {p}%
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Gesamtbetrag</span>
+                <span>{formatCHF(totalUmsatz)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-semibold text-primary">
+                <span>Akontozahlung ({akontoPercent}%)</span>
+                <span>{formatCHF(Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Restbetrag</span>
+                <span>{formatCHF(totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+              </div>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={sendingAkonto}>Abbrechen</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => handleExportAkonto(true)}
+              disabled={sendingAkonto}
+              className="gap-2 border-border"
+            >
+              {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+              PDF herunterladen
+            </Button>
+            <Button
+              onClick={() => handleExportAkonto(false)}
+              disabled={sendingAkonto}
+              className="gap-2"
+            >
+              {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              Per E-Mail senden
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
