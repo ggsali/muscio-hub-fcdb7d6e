@@ -199,54 +199,90 @@ export async function exportOrderPDF(data: OrderExportData) {
   const tableY = 118;
 
   if (data.withDetails) {
-    // Build detail rows: for each part, show the part row + cost breakdown sub-rows
+    // Build detail rows: main part row + per-component cost breakdown
     const detailBody: any[][] = [];
+    const s = data.settings;
     data.parts.forEach((p, i) => {
       const nr = String(i + 1).padStart(2, "0");
-      // Main part row
+      // Header row for the part
       detailBody.push([
-        { content: nr, styles: { fontStyle: "bold" } },
-        { content: p.teilname || "—", styles: { fontStyle: "bold" } },
-        `${p.menge}×`,
-        { content: formatCHF(p.preis_pro_stueck), styles: { fontStyle: "bold" } },
-        { content: formatCHF(p.preis_total), styles: { fontStyle: "bold" } },
+        { content: nr, styles: { fontStyle: "bold", fillColor: [40, 40, 40], textColor: WHITE } },
+        { content: p.teilname || "—", styles: { fontStyle: "bold", fillColor: [40, 40, 40], textColor: WHITE } },
+        { content: `${p.menge}×`, styles: { fontStyle: "bold", fillColor: [40, 40, 40], textColor: WHITE, halign: "center" } },
+        { content: "", styles: { fillColor: [40, 40, 40] } },
+        { content: "", styles: { fillColor: [40, 40, 40] } },
+        { content: formatCHF(p.preis_total), styles: { fontStyle: "bold", fillColor: [40, 40, 40], textColor: WHITE, halign: "right" } },
       ]);
-      // Cost breakdown sub-rows
-      const s = data.settings;
-      const subRows: [string, string][] = [];
+      // Cost breakdown rows
       if (s.setup_pauschale > 0) {
-        subRows.push(["Setup-Pauschale", formatCHF(s.setup_pauschale)]);
-      }
-      if (p.gewicht_g > 0) {
-        subRows.push([`Material (${p.material}): ${p.gewicht_g}g`, formatCHF(p.gewicht_g * s.material_verkauf_pro_g)]);
-      }
-      if (p.druckzeit_h > 0) {
-        subRows.push([`Druckzeit: ${p.druckzeit_h.toFixed(1)}h`, formatCHF(p.druckzeit_h * s.maschinenzeit_pro_h)]);
-      }
-      if (p.konstruktion_h > 0) {
-        subRows.push([`Konstruktion: ${p.konstruktion_h.toFixed(1)}h`, formatCHF(p.konstruktion_h * s.konstruktion_pro_h)]);
-      }
-      if (p.nachbearbeitung_h > 0) {
-        subRows.push([`Nachbearbeitung: ${p.nachbearbeitung_h.toFixed(1)}h`, formatCHF(p.nachbearbeitung_h * s.nachbearbeitung_pro_h)]);
-      }
-      subRows.forEach(([desc, val]) => {
         detailBody.push([
           "",
-          { content: `  ↳ ${desc}`, styles: { fontSize: 7, textColor: GRAY } },
-          "",
-          "",
-          { content: val, styles: { fontSize: 7, textColor: GRAY } },
+          { content: "Setup-Pauschale", styles: { fontSize: 7.5, textColor: DARK } },
+          { content: "1×", styles: { fontSize: 7.5, textColor: GRAY, halign: "center" } },
+          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: "—", styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 7.5, textColor: DARK, halign: "right" } },
         ]);
-      });
+      }
+      if (p.gewicht_g > 0) {
+        const matTotal = p.gewicht_g * s.material_verkauf_pro_g * p.menge;
+        detailBody.push([
+          "",
+          { content: `Material (${p.material})`, styles: { fontSize: 7.5, textColor: DARK } },
+          { content: `${p.gewicht_g}g`, styles: { fontSize: 7.5, textColor: GRAY, halign: "center" } },
+          { content: `${formatCHF(s.material_verkauf_pro_g)}/g`, styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: `×${p.menge}`, styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: formatCHF(matTotal), styles: { fontSize: 7.5, textColor: DARK, halign: "right" } },
+        ]);
+      }
+      if (p.druckzeit_h > 0) {
+        const druckTotal = p.druckzeit_h * s.maschinenzeit_pro_h * p.menge;
+        detailBody.push([
+          "",
+          { content: "Druckzeit (Maschinenzeit)", styles: { fontSize: 7.5, textColor: DARK } },
+          { content: `${p.druckzeit_h.toFixed(1)}h`, styles: { fontSize: 7.5, textColor: GRAY, halign: "center" } },
+          { content: `${formatCHF(s.maschinenzeit_pro_h)}/h`, styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: `×${p.menge}`, styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: formatCHF(druckTotal), styles: { fontSize: 7.5, textColor: DARK, halign: "right" } },
+        ]);
+      }
+      if (p.konstruktion_h > 0) {
+        const konstrTotal = p.konstruktion_h * s.konstruktion_pro_h * p.menge;
+        detailBody.push([
+          "",
+          { content: "Konstruktion / Engineering", styles: { fontSize: 7.5, textColor: DARK } },
+          { content: `${p.konstruktion_h.toFixed(1)}h`, styles: { fontSize: 7.5, textColor: GRAY, halign: "center" } },
+          { content: `${formatCHF(s.konstruktion_pro_h)}/h`, styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: `×${p.menge}`, styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: formatCHF(konstrTotal), styles: { fontSize: 7.5, textColor: DARK, halign: "right" } },
+        ]);
+      }
+      if (p.nachbearbeitung_h > 0) {
+        const nbTotal = p.nachbearbeitung_h * s.nachbearbeitung_pro_h * p.menge;
+        detailBody.push([
+          "",
+          { content: "Nachbearbeitung / Finishing", styles: { fontSize: 7.5, textColor: DARK } },
+          { content: `${p.nachbearbeitung_h.toFixed(1)}h`, styles: { fontSize: 7.5, textColor: GRAY, halign: "center" } },
+          { content: `${formatCHF(s.nachbearbeitung_pro_h)}/h`, styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: `×${p.menge}`, styles: { fontSize: 7.5, textColor: GRAY, halign: "right" } },
+          { content: formatCHF(nbTotal), styles: { fontSize: 7.5, textColor: DARK, halign: "right" } },
+        ]);
+      }
+      // Spacer row between parts (except after last)
+      if (i < data.parts.length - 1) {
+        detailBody.push([
+          { content: "", colSpan: 6, styles: { cellPadding: 1.5, fillColor: WHITE } },
+        ]);
+      }
     });
 
     autoTable(doc, {
       startY: tableY,
       margin: { left: margin, right: margin },
-      head: [["Nr.", "Beschreibung", "Menge", "Preis/St.", "Total"]],
+      head: [["Nr.", "Leistung / Beschreibung", "Menge", "Einzelpreis", "×", "Total"]],
       body: detailBody,
       styles: {
-        fontSize: 8,
+        fontSize: 7.5,
         cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
         textColor: DARK,
       },
@@ -254,16 +290,16 @@ export async function exportOrderPDF(data: OrderExportData) {
         fillColor: BLACK,
         textColor: WHITE,
         fontStyle: "bold",
-        fontSize: 8,
+        fontSize: 7.5,
       },
       columnStyles: {
         0: { cellWidth: 10, halign: "center" },
-        1: { cellWidth: 90 },
-        2: { cellWidth: 14, halign: "center" },
-        3: { halign: "right" },
-        4: { halign: "right" },
+        1: { cellWidth: 74 },
+        2: { cellWidth: 18, halign: "center" },
+        3: { cellWidth: 24, halign: "right" },
+        4: { cellWidth: 10, halign: "right" },
+        5: { cellWidth: 22, halign: "right", fontStyle: "bold" },
       },
-      alternateRowStyles: { fillColor: XLGRAY },
       tableLineColor: LGRAY,
       tableLineWidth: 0.1,
     });
