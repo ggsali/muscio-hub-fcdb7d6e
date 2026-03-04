@@ -25,7 +25,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-  const { orderId, type, trackingNr, pdfBase64, pdfFilename, akontoPercent, akontoBetrag, restbetrag } = body;
+  const { orderId, type, trackingNr, pdfBase64, pdfFilename, akontoPercent, akontoBetrag, restbetrag, paymentUrl } = body;
 
 
     // Fetch order
