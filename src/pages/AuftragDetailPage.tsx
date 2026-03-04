@@ -612,6 +612,9 @@ export default function AuftragDetailPage() {
                     <DropdownMenuItem onClick={() => handleExportOffer(true)} className="gap-2">
                       <FileDown className="w-4 h-4" /> Offerte (Details)
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportAuftragsbestaetigung()} className="gap-2">
+                      <FileDown className="w-4 h-4" /> Auftragsbestätigung
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
                       <FileDown className="w-4 h-4" /> Akontorechnung
                     </DropdownMenuItem>
