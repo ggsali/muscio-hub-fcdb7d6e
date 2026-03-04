@@ -301,7 +301,6 @@ export async function exportOrderPDF(data: OrderExportData) {
         4: { cellWidth: 10, halign: "right" },
         5: { cellWidth: 20, halign: "right", fontStyle: "bold" },
       },
-      tableWidth: "wrap",
       tableLineColor: LGRAY,
       tableLineWidth: 0.1,
     });
