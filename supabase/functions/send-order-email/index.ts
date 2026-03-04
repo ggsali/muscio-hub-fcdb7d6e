@@ -111,7 +111,8 @@ serve(async (req) => {
             <p>Guten Tag ${customerName},</p>
             <p>gerne unterbreiten wir Ihnen unser Angebot. Im Anhang finden Sie die Offerte <strong>${offerNr}</strong> vom ${datum}.</p>
             <p style="color:#6b7280;font-size:13px;">Für Rückfragen stehen wir Ihnen gerne zur Verfügung.</p>
-            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong><br><a href="https://www.3dmuscio.com" style="color:#6b7280;font-size:12px;">www.3dmuscio.com</a></p>
+            <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
+            ${emailFooter}
           </div>
         </div>`;
     } else if (type === "akonto") {
