@@ -642,6 +642,9 @@ export default function AuftragDetailPage() {
                     <DropdownMenuItem onClick={() => setConfirmEmailType("auftragsbestaetigung")} className="gap-2 text-primary">
                       <Mail className="w-4 h-4" /> Auftragsbestätigung
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setConfirmEmailType("druckfertig")} className="gap-2 text-warning focus:text-warning">
+                      <Mail className="w-4 h-4" /> Druckfertig-Info senden
+                    </DropdownMenuItem>
                     {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
                       <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} className="gap-2 text-success focus:text-success">
                         <Mail className="w-4 h-4" />
