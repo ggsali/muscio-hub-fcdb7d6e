@@ -96,7 +96,7 @@ export default function AuftragDetailPage() {
   const [trackingNr, setTrackingNr] = useState("");
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
-  const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | null>(null);
+  const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
   const [showAkontoDialog, setShowAkontoDialog] = useState(false);
   const [akontoPercent, setAkontoPercent] = useState(50);
@@ -283,7 +283,7 @@ export default function AuftragDetailPage() {
   const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
-  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung") => {
+  const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig") => {
     setSendingEmail(type);
     try {
       let pdfBase64: string | null = null;
@@ -316,7 +316,7 @@ export default function AuftragDetailPage() {
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
       } else {
-        const labels: Record<string, string> = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung", auftragsbestaetigung: "Auftragsbestätigung" };
+        const labels: Record<string, string> = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung", auftragsbestaetigung: "Auftragsbestätigung", druckfertig: "Druckfertig-Info" };
         toast({ title: "E-Mail gesendet ✓", description: `${labels[type]} wurde erfolgreich versandt.` });
       }
     } catch (e: any) {
@@ -574,6 +574,9 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
                     <FileDown className="w-4 h-4" /> Akontorechnung
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmEmailType("druckfertig")} disabled={!!sendingEmail} className="gap-2 text-warning focus:text-warning">
+                    {sendingEmail === "druckfertig" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Druckfertig-Mail
+                  </DropdownMenuItem>
                   {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
                     <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} className="gap-2 text-success">
                       {sendingEmail === "lieferung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
@@ -639,6 +642,9 @@ export default function AuftragDetailPage() {
                     <DropdownMenuItem onClick={() => setConfirmEmailType("auftragsbestaetigung")} className="gap-2 text-primary">
                       <Mail className="w-4 h-4" /> Auftragsbestätigung
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setConfirmEmailType("druckfertig")} className="gap-2 text-warning focus:text-warning">
+                      <Mail className="w-4 h-4" /> Druckfertig-Info senden
+                    </DropdownMenuItem>
                     {(status === "Geliefert" || status === "Bezahlt" || status === "Abgeschlossen" || trackingNr) && (
                       <DropdownMenuItem onClick={() => setConfirmEmailType("lieferung")} className="gap-2 text-success focus:text-success">
                         <Mail className="w-4 h-4" />
@@ -671,6 +677,7 @@ export default function AuftragDetailPage() {
               {confirmEmailType === "offerte" && "Die Offerte wird als PDF per E-Mail an den Kunden gesendet."}
               {confirmEmailType === "auftragsbestaetigung" && "Eine Auftragsbestätigung wird per E-Mail an den Kunden gesendet."}
               {confirmEmailType === "lieferung" && "Eine Lieferungsbenachrichtigung wird per E-Mail an den Kunden gesendet."}
+              {confirmEmailType === "druckfertig" && "Der Kunde wird per E-Mail informiert, dass seine 3D-Druckteile fertig gedruckt sind und bald versendet werden."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {(confirmEmailType === "rechnung" || confirmEmailType === "offerte") && (
