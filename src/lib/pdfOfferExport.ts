@@ -387,3 +387,221 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.save(filename);
   return null;
 }
+
+export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 18;
+  const colR = pageW / 2 + 4;
+
+  const ACCENT = hexToRgb(data.company.primary_color || "#FF5A00");
+  const GREEN: [number, number, number] = [34, 139, 34];
+  const firmenname = data.company.firmenname || "3DMuscio";
+
+  const datumClean = data.datum ? new Date(data.datum + "T12:00:00").toISOString().split("T")[0].replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+  const abNr = `AB-${datumClean}-${data.orderId.slice(0, 6).toUpperCase()}`;
+
+  // ── Header links (dunkel) ────────────────────────────────────────
+  doc.setFillColor(...BLACK);
+  doc.rect(0, 0, pageW / 2 - 4, 68, "F");
+
+  let logoLoaded = false;
+  if (data.company.logo_url) {
+    const b64 = await loadImageAsBase64(data.company.logo_url);
+    if (b64) {
+      doc.addImage(b64, "PNG", margin, 12, 0, 18);
+      logoLoaded = true;
+    }
+  }
+  if (!logoLoaded) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(...WHITE);
+    doc.text(firmenname.toUpperCase(), margin, 24);
+  }
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(180, 180, 180);
+  let sy = logoLoaded ? 38 : 34;
+  if (data.company.email) { doc.text(data.company.email, margin, sy); sy += 4.5; }
+  if (data.company.telefon) { doc.text(data.company.telefon, margin, sy); sy += 4.5; }
+  if (data.company.website) { doc.text(data.company.website, margin, sy); }
+
+  // ── Titel ────────────────────────────────────────────────────────
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(24);
+  doc.setTextColor(...GREEN);
+  doc.text("AUFTRAGS-", pageW - margin, 22, { align: "right" });
+  doc.text("BESTÄTIGUNG", pageW - margin, 31, { align: "right" });
+
+  // Details rechts
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...DARK);
+  doc.text("Auftragsdetails", colR, 38);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GRAY);
+  const datumFormatted = data.datum
+    ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "long", year: "numeric" })
+    : "";
+  doc.text(`Datum:           ${datumFormatted}`, colR, 44);
+  doc.text(`Auftrags-Nr.:    ${abNr}`, colR, 49);
+
+  // Bestätigt-Badge
+  doc.setFillColor(...GREEN);
+  doc.roundedRect(colR, 54, 38, 7, 1.5, 1.5, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...WHITE);
+  doc.text("✓  BESTÄTIGT", colR + 5, 58.8);
+
+  // ── Empfänger ───────────────────────────────────────────────────
+  doc.setFillColor(...XLGRAY);
+  doc.rect(0, 68, pageW / 2 - 4, 42, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text("AUFTRAGGEBER", margin, 76);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  doc.setTextColor(...BLACK);
+  doc.text(data.customerName, margin, 83);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...DARK);
+  let cy = 89;
+  if (data.customerFirma) { doc.text(data.customerFirma, margin, cy); cy += 4.5; }
+  if (data.customerAdresse) {
+    data.customerAdresse.split("\n").forEach(line => { doc.text(line, margin, cy); cy += 4.5; });
+  }
+  if (data.customerEmail) { doc.text(data.customerEmail, margin, cy); cy += 4.5; }
+  if (data.customerTelefon) { doc.text(data.customerTelefon, margin, cy); }
+
+  // ── Beschreibung ─────────────────────────────────────────────────
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text("AUFTRAGSBESCHREIBUNG", colR, 76);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...DARK);
+  const descLines = doc.splitTextToSize(data.beschreibung || "—", pageW - colR - margin);
+  doc.text(descLines.slice(0, 4), colR, 83);
+
+  // ── Positionstabelle ─────────────────────────────────────────────
+  autoTable(doc, {
+    startY: 118,
+    margin: { left: margin, right: margin },
+    head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
+    body: data.parts.map((p, i) => [
+      String(i + 1).padStart(2, "0"),
+      p.teilname || "—",
+      p.material,
+      `${p.menge}×`,
+      formatCHF(p.preis_pro_stueck),
+      formatCHF(p.preis_total),
+    ]),
+    styles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 3, right: 3 }, textColor: DARK },
+    headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
+    columnStyles: {
+      0: { cellWidth: 10, halign: "center" },
+      1: { cellWidth: 55 },
+      2: { cellWidth: 30 },
+      3: { cellWidth: 12, halign: "center" },
+      4: { halign: "right" },
+      5: { halign: "right", fontStyle: "bold" },
+    },
+    alternateRowStyles: { fillColor: XLGRAY },
+    tableLineColor: LGRAY,
+    tableLineWidth: 0.1,
+  });
+
+  const afterTable = (doc as any).lastAutoTable.finalY + 6;
+
+  // ── Zusammenfassung ───────────────────────────────────────────────
+  const sumW = 70;
+  const sumX = pageW - margin - sumW;
+  let sumY = afterTable;
+
+  doc.setDrawColor(...LGRAY);
+  doc.setLineWidth(0.3);
+  doc.line(sumX, sumY, pageW - margin, sumY);
+  sumY += 6;
+
+  const sumRows: [string, string][] = [
+    ["Zwischensumme", formatCHF(data.umsatz_total)],
+    ["MwSt. (0%)", "CHF 0.00"],
+  ];
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  sumRows.forEach(([label, val]) => {
+    doc.setTextColor(...GRAY);
+    doc.text(label, sumX, sumY);
+    doc.setTextColor(...DARK);
+    doc.text(val, pageW - margin, sumY, { align: "right" });
+    sumY += 6;
+  });
+
+  sumY += 2;
+  doc.setFillColor(...GREEN);
+  doc.rect(sumX, sumY - 4, sumW, 12, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...WHITE);
+  doc.text("AUFTRAGSSUMME", sumX + 3, sumY + 3.5);
+  doc.text(formatCHF(data.umsatz_total), pageW - margin - 3, sumY + 3.5, { align: "right" });
+
+  const totalBoxBottom = sumY + 8;
+
+  // ── Hinweis ───────────────────────────────────────────────────────
+  const termsY = totalBoxBottom + 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...BLACK);
+  doc.text("NÄCHSTE SCHRITTE", sumX, termsY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...GRAY);
+  const termsText = `Ihr Auftrag ist bestätigt. Wir werden uns bei Rückfragen melden und Sie über den Fortschritt informieren.`;
+  const termsLines = doc.splitTextToSize(termsText, pageW - sumX - margin);
+  doc.text(termsLines, sumX, termsY + 6);
+
+  // ── Links ──────────────────────────────────────────────────────────
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...GREEN);
+  doc.text("Vielen Dank für Ihren Auftrag!", margin, afterTable + 10);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text("Wir freuen uns auf die Zusammenarbeit.", margin, afterTable + 16);
+
+  // ── Footer ─────────────────────────────────────────────────────────
+  doc.setFillColor(...BLACK);
+  doc.rect(0, pageH - 14, pageW, 14, "F");
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(160, 160, 160);
+  const footParts = [firmenname, data.company.adresse, data.company.email, data.company.website].filter(Boolean);
+  doc.text(footParts.join("  |  "), margin, pageH - 5.5);
+  doc.text(`Erstellt: ${new Date().toLocaleDateString("de-CH")}`, pageW - margin, pageH - 5.5, { align: "right" });
+  doc.setFillColor(...ACCENT);
+  doc.rect(0, pageH - 14, pageW, 2, "F");
+
+  const safeName = data.customerName.replace(/[äöüÄÖÜß]/g, (c) => ({ä:'ae',ö:'oe',ü:'ue',Ä:'Ae',Ö:'Oe',Ü:'Ue',ß:'ss'}[c]||c)).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filename = `Auftragsbestaetigung_${abNr}_${safeName}.pdf`;
+
+  if (data.returnBase64) {
+    return { base64: doc.output("datauristring").split(",")[1], filename };
+  }
+  doc.save(filename);
+  return null;
+}

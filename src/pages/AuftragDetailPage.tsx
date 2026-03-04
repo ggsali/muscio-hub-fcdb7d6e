@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
-import { exportOfferPDF } from "@/lib/pdfOfferExport";
+import { exportOfferPDF, exportAuftragsbestaetiguungPDF } from "@/lib/pdfOfferExport";
 import { exportAkontoPDF, exportRestbetragPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
@@ -444,6 +444,24 @@ export default function AuftragDetailPage() {
     });
   };
 
+  const handleExportAuftragsbestaetigung = async () => {
+    const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+    exportAuftragsbestaetiguungPDF({
+      orderId: id || "neu",
+      datum,
+      beschreibung,
+      customerName,
+      customerFirma,
+      customerEmail,
+      customerTelefon,
+      customerAdresse,
+      parts,
+      umsatz_total: totalUmsatz,
+      settings: activeSettings,
+      company,
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const orderData: Record<string, any> = {
@@ -547,8 +565,11 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} className="gap-2">
                     {sendingEmail === "offerte" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Offerte mailen
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExportAuftragsbestaetigung()} className="gap-2">
+                    <FileDown className="w-4 h-4" /> Auftragsbestätigung PDF
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setConfirmEmailType("auftragsbestaetigung")} disabled={!!sendingEmail} className="gap-2 text-primary">
-                    {sendingEmail === "auftragsbestaetigung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Auftragsbestätigung
+                    {sendingEmail === "auftragsbestaetigung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Auftragsbestätigung mailen
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
                     <FileDown className="w-4 h-4" /> Akontorechnung
@@ -590,6 +611,9 @@ export default function AuftragDetailPage() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExportOffer(true)} className="gap-2">
                       <FileDown className="w-4 h-4" /> Offerte (Details)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportAuftragsbestaetigung()} className="gap-2">
+                      <FileDown className="w-4 h-4" /> Auftragsbestätigung
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
                       <FileDown className="w-4 h-4" /> Akontorechnung
