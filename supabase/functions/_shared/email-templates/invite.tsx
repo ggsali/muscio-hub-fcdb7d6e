@@ -12,6 +12,7 @@ import {
   Link,
   Preview,
   Text,
+  Hr,
 } from 'npm:@react-email/components@0.0.22'
 
 interface InviteEmailProps {
@@ -25,27 +26,38 @@ export const InviteEmail = ({
   siteUrl,
   confirmationUrl,
 }: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="de" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
+    <Preview>Sie wurden eingeladen, {siteName} beizutreten</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
+        <div style={header}>
+          <span style={logo}>3DM</span>
+        </div>
+        <Heading style={h1}>Einladung erhalten</Heading>
         <Text style={text}>
-          You've been invited to join{' '}
+          Sie wurden eingeladen,{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
+          </Link>{' '}
+          beizutreten. Klicken Sie auf den Button um die Einladung anzunehmen und Ihr Konto zu erstellen.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Accept Invitation
+          Einladung annehmen
         </Button>
-        <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+        <Text style={footerNote}>
+          Falls Sie diese Einladung nicht erwartet haben, können Sie diese E-Mail ignorieren.
         </Text>
+        <Hr style={divider} />
+        <div style={footerBlock}>
+          <Text style={footerText}>
+            <a href="mailto:info@3dmuscio.com" style={footerLink}>info@3dmuscio.com</a>
+            {'  ·  '}
+            <span>+41 79 839 50 80</span>
+            {'  ·  '}
+            <a href="https://www.3dmuscio.ch" style={footerLink}>www.3dmuscio.ch</a>
+          </Text>
+        </div>
       </Container>
     </Body>
   </Html>
@@ -54,7 +66,21 @@ export const InviteEmail = ({
 export default InviteEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const container = { padding: '32px 28px', maxWidth: '560px', margin: '0 auto' }
+const header = {
+  backgroundColor: '#18181b',
+  borderRadius: '8px',
+  padding: '20px 24px',
+  marginBottom: '28px',
+  display: 'flex' as const,
+  alignItems: 'center' as const,
+}
+const logo = {
+  color: '#ffffff',
+  fontSize: '20px',
+  fontWeight: 'bold' as const,
+  letterSpacing: '0.05em',
+}
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
@@ -65,15 +91,19 @@ const text = {
   fontSize: '14px',
   color: '#55575d',
   lineHeight: '1.5',
-  margin: '0 0 25px',
+  margin: '0 0 20px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: '#ea580c', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: '#18181b',
   color: '#ffffff',
   fontSize: '14px',
   borderRadius: '8px',
   padding: '12px 20px',
   textDecoration: 'none',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footerNote = { fontSize: '12px', color: '#999999', margin: '24px 0 0' }
+const divider = { borderColor: '#e5e7eb', margin: '24px 0 16px' }
+const footerBlock = { textAlign: 'center' as const }
+const footerText = { fontSize: '12px', color: '#9ca3af', margin: '0' }
+const footerLink = { color: '#ea580c', textDecoration: 'none' }
