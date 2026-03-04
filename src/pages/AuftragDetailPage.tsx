@@ -98,6 +98,7 @@ export default function AuftragDetailPage() {
   const [geplantBis, setGeplantBis] = useState("");
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
+  const [withPaymentLink, setWithPaymentLink] = useState(false);
   const [showAkontoDialog, setShowAkontoDialog] = useState(false);
   const [akontoPercent, setAkontoPercent] = useState(50);
   const [akontoMode, setAkontoMode] = useState<"akonto" | "restbetrag">("akonto");
@@ -288,10 +289,22 @@ export default function AuftragDetailPage() {
     try {
       let pdfBase64: string | null = null;
       let pdfFilename: string | null = null;
+      let paymentUrl: string | null = null;
 
       if (type === "rechnung" || type === "offerte") {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
         if (type === "rechnung") {
+          // Optionally generate Stripe payment link
+          if (withPaymentLink && totalUmsatz > 0) {
+            try {
+              const { data: plData, error: plErr } = await supabase.functions.invoke("create-stripe-payment-link", {
+                body: { orderId: id, betrag: totalUmsatz, orderName, customerEmail },
+              });
+              if (!plErr && plData?.url) paymentUrl = plData.url;
+            } catch (e) {
+              console.warn("Stripe payment link failed:", e);
+            }
+          }
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
@@ -311,7 +324,7 @@ export default function AuftragDetailPage() {
       }
 
       const { data, error } = await supabase.functions.invoke("send-order-email", {
-        body: { orderId: id, type, trackingNr, pdfBase64, pdfFilename },
+        body: { orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl },
       });
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -668,7 +681,7 @@ export default function AuftragDetailPage() {
       </div>
 
       {/* E-Mail Bestätigungsdialog */}
-      <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => { if (!open) { setConfirmEmailType(null); setWithDetails(false); } }}>
+      <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => { if (!open) { setConfirmEmailType(null); setWithDetails(false); setWithPaymentLink(false); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
@@ -681,7 +694,7 @@ export default function AuftragDetailPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           {(confirmEmailType === "rechnung" || confirmEmailType === "offerte") && (
-            <div className="flex items-center gap-3 py-2">
+            <div className="space-y-2 py-1">
               <label className="flex items-center gap-2 cursor-pointer text-sm">
                 <input
                   type="checkbox"
@@ -691,6 +704,20 @@ export default function AuftragDetailPage() {
                 />
                 <span>Mit Details <span className="text-muted-foreground text-xs">(Gewicht, Druckzeit, Konstruktion, Nachbearbeitung)</span></span>
               </label>
+              {confirmEmailType === "rechnung" && totalUmsatz > 0 && (
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={withPaymentLink}
+                    onChange={e => setWithPaymentLink(e.target.checked)}
+                    className="h-4 w-4 rounded border-border accent-primary"
+                  />
+                  <span>
+                    💳 Stripe Zahlungslink hinzufügen{" "}
+                    <span className="text-muted-foreground text-xs">(CHF {totalUmsatz.toFixed(2)} – Kunde kann online bezahlen)</span>
+                  </span>
+                </label>
+              )}
             </div>
           )}
           <AlertDialogFooter>
