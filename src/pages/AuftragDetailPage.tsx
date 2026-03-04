@@ -784,21 +784,23 @@ export default function AuftragDetailPage() {
               )}
             </div>
           </div>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel disabled={sendingAkonto}>Abbrechen</AlertDialogCancel>
-            <Button variant="outline"
-              onClick={() => akontoMode === "akonto" ? handleExportAkonto(true) : handleExportRestbetrag(true)}
-              disabled={sendingAkonto} className="gap-2 border-border">
-              {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
-              PDF herunterladen
-            </Button>
-            <Button
-              onClick={() => akontoMode === "akonto" ? handleExportAkonto(false) : handleExportRestbetrag(false)}
-              disabled={sendingAkonto} className="gap-2">
-              {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              Per E-Mail senden
-            </Button>
-          </AlertDialogFooter>
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-2">
+              <Button
+                onClick={() => akontoMode === "akonto" ? handleExportAkonto(true) : handleExportRestbetrag(true)}
+                disabled={sendingAkonto} variant="outline" className="flex-1 gap-2 border-border">
+                {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                PDF herunterladen
+              </Button>
+              <Button
+                onClick={() => akontoMode === "akonto" ? handleExportAkonto(false) : handleExportRestbetrag(false)}
+                disabled={sendingAkonto} className="flex-1 gap-2">
+                {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                Per E-Mail senden
+              </Button>
+            </div>
+            <AlertDialogCancel disabled={sendingAkonto} className="w-full">Abbrechen</AlertDialogCancel>
+          </div>
         </AlertDialogContent>
 
       </AlertDialog>
