@@ -12,7 +12,7 @@ import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2,
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF } from "@/lib/pdfOfferExport";
-import { exportAkontoPDF } from "@/lib/pdfAkontoExport";
+import { exportAkontoPDF, exportRestbetragPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
 import type { Filament } from "@/pages/FilamentePage";
@@ -100,6 +100,7 @@ export default function AuftragDetailPage() {
   const [withDetails, setWithDetails] = useState(false);
   const [showAkontoDialog, setShowAkontoDialog] = useState(false);
   const [akontoPercent, setAkontoPercent] = useState(50);
+  const [akontoMode, setAkontoMode] = useState<"akonto" | "restbetrag">("akonto");
   const [sendingAkonto, setSendingAkonto] = useState(false);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
   const [loading, setLoading] = useState(!isNew);
@@ -374,6 +375,35 @@ export default function AuftragDetailPage() {
     setSendingAkonto(false);
   };
 
+  const handleExportRestbetrag = async (download = true) => {
+    setSendingAkonto(true);
+    try {
+      const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+      const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
+      const restbetrag = totalUmsatz - akontoBetrag;
+      const result = await exportRestbetragPDF({
+        orderId: id || "neu", datum, beschreibung, status,
+        customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+        parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag, restbetrag,
+        settings: activeSettings, company, returnBase64: !download,
+      });
+      if (!download && result) {
+        const { data, error } = await supabase.functions.invoke("send-order-email", {
+          body: { orderId: id, type: "restbetrag", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, restbetrag },
+        });
+        if (error || data?.error) {
+          toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
+        } else {
+          toast({ title: "Schlussrechnung gesendet ✓", description: `Restbetrag ${formatCHF(restbetrag)} wurde per E-Mail versandt.` });
+        }
+      }
+      setShowAkontoDialog(false);
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    }
+    setSendingAkonto(false);
+  };
+
   const handleExportPDF = async (details = false) => {
     const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
     exportOrderPDF({
@@ -637,32 +667,46 @@ export default function AuftragDetailPage() {
       </AlertDialog>
 
       {/* Akontorechnung Dialog */}
-      <AlertDialog open={showAkontoDialog} onOpenChange={(open) => { if (!open) setShowAkontoDialog(false); }}>
+      <AlertDialog open={showAkontoDialog} onOpenChange={(open) => { if (!open) { setShowAkontoDialog(false); setAkontoMode("akonto"); } }}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Akontorechnung erstellen</AlertDialogTitle>
+            <AlertDialogTitle>Teilrechnung / Schlussrechnung</AlertDialogTitle>
             <AlertDialogDescription>
-              Wähle den Prozentsatz der Akontozahlung. Die Akontorechnung basiert auf dem Gesamtbetrag von <strong>{formatCHF(totalUmsatz)}</strong>.
+              Gesamtbetrag: <strong>{formatCHF(totalUmsatz)}</strong>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-2">
+            {/* Mode Toggle */}
+            <div className="flex rounded-lg border border-border overflow-hidden">
+              <button
+                onClick={() => setAkontoMode("akonto")}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${akontoMode === "akonto" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/60"}`}
+              >
+                Akontorechnung
+              </button>
+              <button
+                onClick={() => setAkontoMode("restbetrag")}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${akontoMode === "restbetrag" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/60"}`}
+              >
+                Schlussrechnung
+              </button>
+            </div>
+
+            {/* Percent slider — shared for both modes */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Akontozahlung in %</label>
+              <label className="text-sm font-medium">
+                {akontoMode === "akonto" ? "Akontozahlung in %" : "Bereits bezahlter Akonto in %"}
+              </label>
               <div className="flex items-center gap-3">
                 <input
-                  type="range"
-                  min={5}
-                  max={95}
-                  step={5}
+                  type="range" min={5} max={95} step={5}
                   value={akontoPercent}
                   onChange={e => setAkontoPercent(Number(e.target.value))}
                   className="flex-1 accent-primary"
                 />
                 <div className="flex items-center gap-1 shrink-0">
                   <Input
-                    type="number"
-                    min={1}
-                    max={99}
+                    type="number" min={1} max={99}
                     value={akontoPercent}
                     onChange={e => setAkontoPercent(Math.min(99, Math.max(1, Number(e.target.value))))}
                     className="w-16 h-8 text-sm text-center"
@@ -672,52 +716,62 @@ export default function AuftragDetailPage() {
               </div>
               <div className="flex gap-2 flex-wrap mt-1">
                 {[25, 33, 50, 66, 75].map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setAkontoPercent(p)}
-                    className={`text-xs px-2 py-1 rounded border transition-colors ${akontoPercent === p ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary"}`}
-                  >
+                  <button key={p} onClick={() => setAkontoPercent(p)}
+                    className={`text-xs px-2 py-1 rounded border transition-colors ${akontoPercent === p ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary"}`}>
                     {p}%
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Summary box */}
             <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-1.5">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Gesamtbetrag</span>
                 <span>{formatCHF(totalUmsatz)}</span>
               </div>
-              <div className="flex justify-between text-sm font-semibold text-primary">
-                <span>Akontozahlung ({akontoPercent}%)</span>
-                <span>{formatCHF(Math.round(totalUmsatz * akontoPercent) / 100)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Restbetrag</span>
-                <span>{formatCHF(totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100)}</span>
-              </div>
+              {akontoMode === "akonto" ? (
+                <>
+                  <div className="flex justify-between text-sm font-semibold text-primary">
+                    <span>Akontozahlung ({akontoPercent}%)</span>
+                    <span>{formatCHF(Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground border-t border-border pt-1.5">
+                    <span>Verbleibender Restbetrag</span>
+                    <span>{formatCHF(totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Abzüglich Akonto ({akontoPercent}%)</span>
+                    <span>- {formatCHF(Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-semibold text-primary border-t border-border pt-1.5">
+                    <span>Restbetrag (fällig)</span>
+                    <span>{formatCHF(totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel disabled={sendingAkonto}>Abbrechen</AlertDialogCancel>
-            <Button
-              variant="outline"
-              onClick={() => handleExportAkonto(true)}
-              disabled={sendingAkonto}
-              className="gap-2 border-border"
-            >
+            <Button variant="outline"
+              onClick={() => akontoMode === "akonto" ? handleExportAkonto(true) : handleExportRestbetrag(true)}
+              disabled={sendingAkonto} className="gap-2 border-border">
               {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
               PDF herunterladen
             </Button>
             <Button
-              onClick={() => handleExportAkonto(false)}
-              disabled={sendingAkonto}
-              className="gap-2"
-            >
+              onClick={() => akontoMode === "akonto" ? handleExportAkonto(false) : handleExportRestbetrag(false)}
+              disabled={sendingAkonto} className="gap-2">
               {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
               Per E-Mail senden
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
+
       </AlertDialog>
 
       {/* Basic info */}
