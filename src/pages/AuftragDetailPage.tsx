@@ -636,6 +636,90 @@ export default function AuftragDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Akontorechnung Dialog */}
+      <AlertDialog open={showAkontoDialog} onOpenChange={(open) => { if (!open) setShowAkontoDialog(false); }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Akontorechnung erstellen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Wähle den Prozentsatz der Akontozahlung. Die Akontorechnung basiert auf dem Gesamtbetrag von <strong>{formatCHF(totalUmsatz)}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Akontozahlung in %</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min={5}
+                  max={95}
+                  step={5}
+                  value={akontoPercent}
+                  onChange={e => setAkontoPercent(Number(e.target.value))}
+                  className="flex-1 accent-primary"
+                />
+                <div className="flex items-center gap-1 shrink-0">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={akontoPercent}
+                    onChange={e => setAkontoPercent(Math.min(99, Math.max(1, Number(e.target.value))))}
+                    className="w-16 h-8 text-sm text-center"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap mt-1">
+                {[25, 33, 50, 66, 75].map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setAkontoPercent(p)}
+                    className={`text-xs px-2 py-1 rounded border transition-colors ${akontoPercent === p ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary"}`}
+                  >
+                    {p}%
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Gesamtbetrag</span>
+                <span>{formatCHF(totalUmsatz)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-semibold text-primary">
+                <span>Akontozahlung ({akontoPercent}%)</span>
+                <span>{formatCHF(Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Restbetrag</span>
+                <span>{formatCHF(totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+              </div>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={sendingAkonto}>Abbrechen</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => handleExportAkonto(true)}
+              disabled={sendingAkonto}
+              className="gap-2 border-border"
+            >
+              {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+              PDF herunterladen
+            </Button>
+            <Button
+              onClick={() => handleExportAkonto(false)}
+              disabled={sendingAkonto}
+              className="gap-2"
+            >
+              {sendingAkonto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              Per E-Mail senden
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Basic info */}
       <div className="bg-card border border-border rounded-lg p-4 md:p-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
