@@ -375,6 +375,35 @@ export default function AuftragDetailPage() {
     setSendingAkonto(false);
   };
 
+  const handleExportRestbetrag = async (download = true) => {
+    setSendingAkonto(true);
+    try {
+      const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+      const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
+      const restbetrag = totalUmsatz - akontoBetrag;
+      const result = await exportRestbetragPDF({
+        orderId: id || "neu", datum, beschreibung, status,
+        customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+        parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag, restbetrag,
+        settings: activeSettings, company, returnBase64: !download,
+      });
+      if (!download && result) {
+        const { data, error } = await supabase.functions.invoke("send-order-email", {
+          body: { orderId: id, type: "restbetrag", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, restbetrag },
+        });
+        if (error || data?.error) {
+          toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
+        } else {
+          toast({ title: "Schlussrechnung gesendet ✓", description: `Restbetrag ${formatCHF(restbetrag)} wurde per E-Mail versandt.` });
+        }
+      }
+      setShowAkontoDialog(false);
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    }
+    setSendingAkonto(false);
+  };
+
   const handleExportPDF = async (details = false) => {
     const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
     exportOrderPDF({
