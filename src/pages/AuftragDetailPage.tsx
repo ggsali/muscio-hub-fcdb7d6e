@@ -681,7 +681,7 @@ export default function AuftragDetailPage() {
       </div>
 
       {/* E-Mail Bestätigungsdialog */}
-      <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => { if (!open) { setConfirmEmailType(null); setWithDetails(false); } }}>
+      <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => { if (!open) { setConfirmEmailType(null); setWithDetails(false); setWithPaymentLink(false); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>E-Mail wirklich senden?</AlertDialogTitle>
