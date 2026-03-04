@@ -372,7 +372,7 @@ export async function exportOrderPDF(data: OrderExportData) {
 
   // Grand Total Box
   sumY += 2;
-  doc.setFillColor(...BLACK);
+  doc.setFillColor(...ACCENT);
   doc.rect(sumX, sumY - 4, sumW, 12, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
