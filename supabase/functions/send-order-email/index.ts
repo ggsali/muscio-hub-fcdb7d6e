@@ -253,7 +253,7 @@ serve(async (req) => {
     }
 
     const senderName = companyName;
-    const fromEmail = `${senderName} <info@notify.3dmuscio.com>`;
+    const fromEmail = `${senderName} <info@3dmuscio.com>`;
 
     // Build email payload – attach PDF if provided
     const emailPayload: Record<string, unknown> = {
