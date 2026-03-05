@@ -5,3 +5,5 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.sync-studio-customers]
     verify_jwt = false
+  [functions.stripe-webhook]
+    verify_jwt = false
