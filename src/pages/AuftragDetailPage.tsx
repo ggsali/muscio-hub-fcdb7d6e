@@ -300,9 +300,16 @@ export default function AuftragDetailPage() {
               const { data: plData, error: plErr } = await supabase.functions.invoke("create-stripe-payment-link", {
                 body: { orderId: id, betrag: totalUmsatz, orderName, customerEmail },
               });
-              if (!plErr && plData?.url) paymentUrl = plData.url;
+              if (plErr || plData?.error) {
+                setSendingEmail(null);
+                toast({ title: "Stripe Fehler", description: plData?.error || plErr?.message || "Zahlungslink konnte nicht erstellt werden.", variant: "destructive" });
+                return;
+              }
+              if (plData?.url) paymentUrl = plData.url;
             } catch (e) {
-              console.warn("Stripe payment link failed:", e);
+              setSendingEmail(null);
+              toast({ title: "Stripe Fehler", description: "Zahlungslink konnte nicht erstellt werden.", variant: "destructive" });
+              return;
             }
           }
           const result = await exportOrderPDF({
