@@ -29,6 +29,12 @@ serve(async (req) => {
       });
     }
 
+    if (betrag < 0.50) {
+      return new Response(JSON.stringify({ error: "Der Mindestbetrag für eine Online-Zahlung beträgt CHF 0.50." }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: "2025-08-27.basil",
     });
