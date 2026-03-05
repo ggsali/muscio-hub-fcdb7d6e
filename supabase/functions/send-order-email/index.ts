@@ -71,7 +71,7 @@ serve(async (req) => {
             &nbsp;·&nbsp;
             <span>+41 79 839 50 80</span>
             &nbsp;·&nbsp;
-            <a href="https://www.3dmuscio.ch" style="color:#ea580c;text-decoration:none;">www.3dmuscio.ch</a>
+            <a href="https://www.3dmuscio.com" style="color:#ea580c;text-decoration:none;">www.3dmuscio.com</a>
           </p>
         </div>`;
 
@@ -253,7 +253,7 @@ serve(async (req) => {
     }
 
     const senderName = companyName;
-    const fromEmail = companyEmail ? `${senderName} <${companyEmail}>` : `${senderName} <onboarding@resend.dev>`;
+    const fromEmail = `${senderName} <info@notify.3dmuscio.com>`;
 
     // Build email payload – attach PDF if provided
     const emailPayload: Record<string, unknown> = {
