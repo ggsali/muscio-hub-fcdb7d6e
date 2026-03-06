@@ -82,8 +82,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Public upload page – no auth required */}
+          {/* Public pages – no auth required */}
           <Route path="/upload/:token" element={<ProjectUploadPage />} />
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
           <Route path="*" element={<AuthGate />} />
         </Routes>
       </BrowserRouter>
