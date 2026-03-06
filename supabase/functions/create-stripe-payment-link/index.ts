@@ -70,8 +70,8 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.get("origin") || "https://muscio-hub.lovable.app"}/payment-success?order_id=${orderId}`,
-      cancel_url: `${req.headers.get("origin") || "https://muscio-hub.lovable.app"}/auftraege/${orderId}?payment=cancelled`,
+      success_url: `https://3dmuscio.com/payment-success?order_id=${orderId}`,
+      cancel_url: `https://3dmuscio.com/auftraege/${orderId}?payment=cancelled`,
       payment_method_types: ["card"],
       metadata: {
         order_id: orderId || "",
