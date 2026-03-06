@@ -72,7 +72,7 @@ serve(async (req) => {
       ],
       success_url: `${req.headers.get("origin") || "https://muscio-hub.lovable.app"}/auftraege/${orderId}?payment=success`,
       cancel_url: `${req.headers.get("origin") || "https://muscio-hub.lovable.app"}/auftraege/${orderId}?payment=cancelled`,
-      payment_method_types: ["card", "twint"],
+      payment_method_types: ["card"],
       metadata: {
         order_id: orderId || "",
       },
