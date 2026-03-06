@@ -26,6 +26,7 @@ import KalenderPage from "@/pages/KalenderPage";
 import UploadLinksPage from "@/pages/UploadLinksPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
 import ChatPage from "@/pages/ChatPage";
+import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 
 
 const queryClient = new QueryClient();
@@ -81,8 +82,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Public upload page – no auth required */}
+          {/* Public pages – no auth required */}
           <Route path="/upload/:token" element={<ProjectUploadPage />} />
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
           <Route path="*" element={<AuthGate />} />
         </Routes>
       </BrowserRouter>
