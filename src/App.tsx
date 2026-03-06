@@ -26,6 +26,7 @@ import KalenderPage from "@/pages/KalenderPage";
 import UploadLinksPage from "@/pages/UploadLinksPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
 import ChatPage from "@/pages/ChatPage";
+import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 
 
 const queryClient = new QueryClient();
