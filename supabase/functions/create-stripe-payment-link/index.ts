@@ -70,7 +70,7 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      success_url: `${req.headers.get("origin") || "https://muscio-hub.lovable.app"}/auftraege/${orderId}?payment=success`,
+      success_url: `${req.headers.get("origin") || "https://muscio-hub.lovable.app"}/payment-success?order_id=${orderId}`,
       cancel_url: `${req.headers.get("origin") || "https://muscio-hub.lovable.app"}/auftraege/${orderId}?payment=cancelled`,
       payment_method_types: ["card"],
       metadata: {
