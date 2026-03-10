@@ -284,6 +284,9 @@ export default function AuftragDetailPage() {
   const totalGewinn = calcGewinn(totalUmsatz, totalKosten);
   const totalMarge = calcMarge(totalGewinn, totalUmsatz);
 
+  // Auftragsname immer in der Beschreibung voranstellen
+  const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
+
   const setupKosten = activeSettings.setup_pauschale;
   const matKosten = parts.reduce((s, p) => s + p.gewicht_g * activeSettings.material_verkauf_pro_g * p.menge, 0);
   const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
@@ -319,7 +322,7 @@ export default function AuftragDetailPage() {
             }
           }
           const result = await exportOrderPDF({
-            orderId: id || "neu", datum, beschreibung, status,
+            orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts, umsatz_total: totalUmsatz, kosten_total: totalKosten,
             gewinn_total: totalGewinn, marge: totalMarge,
@@ -328,7 +331,7 @@ export default function AuftragDetailPage() {
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
           const result = await exportOfferPDF({
-            orderId: id || "neu", datum, beschreibung,
+            orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
           });
@@ -376,7 +379,7 @@ export default function AuftragDetailPage() {
       const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
       const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
       const result = await exportAkontoPDF({
-        orderId: id || "neu", datum, beschreibung, status,
+        orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag,
         settings: activeSettings, company, returnBase64: !download,
@@ -406,7 +409,7 @@ export default function AuftragDetailPage() {
       const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
       const restbetrag = totalUmsatz - akontoBetrag;
       const result = await exportRestbetragPDF({
-        orderId: id || "neu", datum, beschreibung, status,
+        orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag, restbetrag,
         settings: activeSettings, company, returnBase64: !download,
@@ -433,7 +436,7 @@ export default function AuftragDetailPage() {
     exportOrderPDF({
       orderId: id || "neu",
       datum,
-      beschreibung,
+      beschreibung: fullBeschreibung,
       status,
       customerName,
       customerFirma,
@@ -475,7 +478,7 @@ export default function AuftragDetailPage() {
     exportAuftragsbestaetiguungPDF({
       orderId: id || "neu",
       datum,
-      beschreibung,
+      beschreibung: fullBeschreibung,
       customerName,
       customerFirma,
       customerEmail,
