@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Play, Square, Clock, Trash2, ChevronDown, ChevronUp, Timer } from "lucide-react";
+import { Play, Square, Clock, Trash2, ChevronDown, ChevronUp, Timer, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface TimeEntry {
@@ -65,12 +64,21 @@ export default function TimeTracker({ orderId, parts }: TimeTrackerProps) {
   const [notiz, setNotiz] = useState("");
   const [expanded, setExpanded] = useState(true);
   const [loading, setLoading] = useState(true);
+
+  // Manual entry state
+  const [showManual, setShowManual] = useState(false);
+  const [manualKategorie, setManualKategorie] = useState<string>("Druck");
+  const [manualPartId, setManualPartId] = useState<string>("");
+  const [manualNotiz, setManualNotiz] = useState("");
+  const [manualDatum, setManualDatum] = useState(() => new Date().toISOString().slice(0, 10));
+  const [manualStunden, setManualStunden] = useState<string>("0");
+  const [manualMinuten, setManualMinuten] = useState<string>("30");
+  const [manualSaving, setManualSaving] = useState(false);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadEntries();
-  }, [orderId]);
+  useEffect(() => { loadEntries(); }, [orderId]);
 
   useEffect(() => {
     if (activeEntry) {
@@ -139,12 +147,44 @@ export default function TimeTracker({ orderId, parts }: TimeTrackerProps) {
     loadEntries();
   }
 
+  async function saveManualEntry() {
+    const stunden = parseFloat(manualStunden) || 0;
+    const minuten = parseFloat(manualMinuten) || 0;
+    const dauerSek = Math.round((stunden * 3600) + (minuten * 60));
+    if (dauerSek <= 0) {
+      toast({ title: "Fehler", description: "Dauer muss grösser als 0 sein.", variant: "destructive" });
+      return;
+    }
+    setManualSaving(true);
+    const startedAt = new Date(manualDatum + "T12:00:00").toISOString();
+    const stoppedAt = new Date(new Date(startedAt).getTime() + dauerSek * 1000).toISOString();
+    const { error } = await supabase.from("time_entries" as any).insert({
+      order_id: orderId,
+      part_id: manualPartId || null,
+      kategorie: manualKategorie,
+      notiz: manualNotiz || null,
+      started_at: startedAt,
+      stopped_at: stoppedAt,
+      dauer_sekunden: dauerSek,
+    });
+    setManualSaving(false);
+    if (error) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Zeiteintrag hinzugefügt", description: `${formatDuration(dauerSek)} · ${manualKategorie}` });
+    setShowManual(false);
+    setManualStunden("0");
+    setManualMinuten("30");
+    setManualNotiz("");
+    loadEntries();
+  }
+
   async function deleteEntry(id: string) {
     await supabase.from("time_entries" as any).delete().eq("id", id);
     setEntries(prev => prev.filter(e => e.id !== id));
   }
 
-  // Totals per Kategorie
   const totals = KATEGORIEN.reduce((acc, k) => {
     acc[k] = entries.filter(e => e.kategorie === k).reduce((s, e) => s + (e.dauer_sekunden || 0), 0);
     return acc;
@@ -153,8 +193,7 @@ export default function TimeTracker({ orderId, parts }: TimeTrackerProps) {
 
   const partName = (partId: string | null) => {
     if (!partId) return null;
-    const p = parts.find(p => p.id === partId);
-    return p?.teilname || null;
+    return parts.find(p => p.id === partId)?.teilname || null;
   };
 
   return (
@@ -233,10 +272,20 @@ export default function TimeTracker({ orderId, parts }: TimeTrackerProps) {
             </div>
 
             {!activeEntry ? (
-              <Button onClick={startTimer} className="gap-2 bg-success hover:bg-success/90 text-success-foreground h-8">
-                <Play className="w-3.5 h-3.5" />
-                Start
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={startTimer} className="gap-2 bg-success hover:bg-success/90 text-success-foreground h-8">
+                  <Play className="w-3.5 h-3.5" />
+                  Start
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowManual(v => !v)}
+                  className="gap-1.5 h-8 border-border text-muted-foreground hover:text-foreground"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Manuell
+                </Button>
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <div className="font-mono text-2xl font-bold tabular-nums text-foreground min-w-24 text-center">
@@ -249,6 +298,106 @@ export default function TimeTracker({ orderId, parts }: TimeTrackerProps) {
               </div>
             )}
           </div>
+
+          {/* Manual Entry Form */}
+          {showManual && !activeEntry && (
+            <div className="bg-muted/30 border border-border rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground">Zeiteintrag manuell hinzufügen</span>
+                <button onClick={() => setShowManual(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {/* Datum */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">Datum</label>
+                  <input
+                    type="date"
+                    value={manualDatum}
+                    onChange={e => setManualDatum(e.target.value)}
+                    className="h-8 w-full px-2 rounded bg-input border border-border text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+
+                {/* Stunden */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">Stunden</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="24"
+                    value={manualStunden}
+                    onChange={e => setManualStunden(e.target.value)}
+                    className="h-8 w-full px-2 rounded bg-input border border-border text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+
+                {/* Minuten */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">Minuten</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    value={manualMinuten}
+                    onChange={e => setManualMinuten(e.target.value)}
+                    className="h-8 w-full px-2 rounded bg-input border border-border text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+
+                {/* Kategorie */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">Kategorie</label>
+                  <select
+                    value={manualKategorie}
+                    onChange={e => setManualKategorie(e.target.value)}
+                    className="h-8 w-full px-2 rounded bg-input border border-border text-xs text-foreground"
+                  >
+                    {KATEGORIEN.map(k => <option key={k} value={k}>{k}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {parts.filter(p => p.id).length > 0 && (
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground font-medium">Teil (optional)</label>
+                    <select
+                      value={manualPartId}
+                      onChange={e => setManualPartId(e.target.value)}
+                      className="h-8 w-full px-2 rounded bg-input border border-border text-xs text-foreground"
+                    >
+                      <option value="">— Auftrag allgemein —</option>
+                      {parts.filter(p => p.id).map(p => (
+                        <option key={p.id} value={p.id}>{p.teilname || "Unbenanntes Teil"}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">Notiz (optional)</label>
+                  <input
+                    value={manualNotiz}
+                    onChange={e => setManualNotiz(e.target.value)}
+                    placeholder="z.B. Manuelle Erfassung…"
+                    className="h-8 w-full px-2 rounded bg-input border border-border text-xs text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  Dauer: {formatDuration(((parseFloat(manualStunden) || 0) * 3600) + ((parseFloat(manualMinuten) || 0) * 60))}
+                </span>
+                <Button onClick={saveManualEntry} disabled={manualSaving} className="h-8 gap-1.5 bg-primary hover:bg-primary/90">
+                  <Plus className="w-3.5 h-3.5" />
+                  {manualSaving ? "Speichern…" : "Eintrag speichern"}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Aktive Einträge Info */}
           {activeEntry && (
@@ -279,7 +428,7 @@ export default function TimeTracker({ orderId, parts }: TimeTrackerProps) {
             <div className="text-xs text-muted-foreground py-2">Laden…</div>
           ) : entries.length === 0 && !activeEntry ? (
             <div className="text-xs text-muted-foreground py-2 text-center">
-              Noch keine Zeiteinträge. Starte den Timer oben!
+              Noch keine Zeiteinträge. Starte den Timer oder füge einen Eintrag manuell hinzu!
             </div>
           ) : entries.length > 0 ? (
             <div className="space-y-1">
