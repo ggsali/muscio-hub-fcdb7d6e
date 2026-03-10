@@ -118,8 +118,19 @@ export default function FilamentePage() {
               <Input value={editing.hersteller ?? ""} onChange={e => setEditing({ ...editing, hersteller: e.target.value })} className="bg-input border-border h-8 text-sm" placeholder="Prusa, eSUN, Bambu…" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Preis (CHF / kg) *</Label>
+              <Label className="text-xs">Einkaufspreis (CHF / kg) *</Label>
               <Input type="number" step="0.5" value={editing.preis_pro_kg ?? ""} onChange={e => setEditing({ ...editing, preis_pro_kg: parseFloat(e.target.value) || 0 })} className="bg-input border-border h-8 text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Verkaufspreis (CHF / g)</Label>
+              <Input
+                type="number" step="0.001"
+                value={editing.verkaufspreis_pro_g ?? ""}
+                onChange={e => setEditing({ ...editing, verkaufspreis_pro_g: e.target.value === "" ? null : parseFloat(e.target.value) || 0 })}
+                className="bg-input border-border h-8 text-sm"
+                placeholder={`Auto: CHF ${(((editing.preis_pro_kg ?? 25) / 1000) * 3).toFixed(3)}`}
+              />
+              <p className="text-[10px] text-muted-foreground">Leer lassen = automatisch (Einkauf × 3)</p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Dichte (g/cm³)</Label>
