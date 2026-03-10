@@ -189,6 +189,12 @@ export default function FilamentePage() {
                         </td>
                         <td className="px-4 py-2.5 text-muted-foreground text-xs">{f.hersteller || "—"}</td>
                         <td className="px-4 py-2.5 text-right font-medium tabular-nums text-primary">CHF {f.preis_pro_kg.toFixed(2)}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+                          {f.verkaufspreis_pro_g != null
+                            ? <span className="text-primary font-medium">CHF {f.verkaufspreis_pro_g.toFixed(3)}</span>
+                            : <span className="text-muted-foreground">Auto ({((f.preis_pro_kg / 1000) * 3).toFixed(3)})</span>
+                          }
+                        </td>
                         <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums text-xs">{f.dichte_g_cm3}</td>
                         <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[140px] truncate">{f.notizen || "—"}</td>
                         <td className="px-4 py-2.5 text-center">
