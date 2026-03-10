@@ -203,14 +203,19 @@ export default function AuftragDetailPage() {
   const MATERIAL_AUFSCHLAG = 3.0;
 
   const recalcPart = (part: PartRow): PartRow => {
-    // Überschreibe material_verkauf_pro_g wenn individueller Filamentpreis vorhanden
-    const settingsForPart = part.filament_einkauf_pro_kg != null
-      ? {
-          ...activeSettings,
-          material_einkauf_pro_kg: part.filament_einkauf_pro_kg,
-          material_verkauf_pro_g: (part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG,
-        }
-      : activeSettings;
+    // Wenn manueller Verkaufspreis am Filament hinterlegt → direkt nutzen
+    // Sonst: wenn Einkaufspreis vorhanden → Auto × 3, sonst Preset-Setting
+    let effectiveVerkaufProG = activeSettings.material_verkauf_pro_g;
+    if (part.filament_verkauf_pro_g != null) {
+      effectiveVerkaufProG = part.filament_verkauf_pro_g;
+    } else if (part.filament_einkauf_pro_kg != null) {
+      effectiveVerkaufProG = (part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG;
+    }
+    const settingsForPart = {
+      ...activeSettings,
+      material_einkauf_pro_kg: part.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg,
+      material_verkauf_pro_g: effectiveVerkaufProG,
+    };
     const preis_pro_stueck = calcUmsatz(settingsForPart, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
     return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge };
   };
