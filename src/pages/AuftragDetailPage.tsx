@@ -284,6 +284,9 @@ export default function AuftragDetailPage() {
   const totalGewinn = calcGewinn(totalUmsatz, totalKosten);
   const totalMarge = calcMarge(totalGewinn, totalUmsatz);
 
+  // Auftragsname immer in der Beschreibung voranstellen
+  const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
+
   const setupKosten = activeSettings.setup_pauschale;
   const matKosten = parts.reduce((s, p) => s + p.gewicht_g * activeSettings.material_verkauf_pro_g * p.menge, 0);
   const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
