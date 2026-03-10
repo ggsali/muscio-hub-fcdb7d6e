@@ -35,6 +35,7 @@ interface PartRow {
   material: string;
   filament_id?: string;
   filament_einkauf_pro_kg?: number; // individueller Filamentpreis
+  filament_verkauf_pro_g?: number | null; // manuell gesetzter Verkaufspreis (überschreibt Auto-Berechnung)
   menge: number;
   gewicht_g: number;
   druckzeit_h: number;
