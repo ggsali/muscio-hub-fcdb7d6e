@@ -27,6 +27,7 @@ const emptyFilament = (): Omit<Filament, "id"> => ({
   hersteller: "",
   preis_pro_kg: 25,
   dichte_g_cm3: 1.24,
+  verkaufspreis_pro_g: null,
   notizen: "",
   aktiv: true,
 });
