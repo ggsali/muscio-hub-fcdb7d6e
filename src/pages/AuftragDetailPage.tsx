@@ -1109,7 +1109,11 @@ export default function AuftragDetailPage() {
                             </select>
                             {part.filament_einkauf_pro_kg != null && (
                               <div className="text-[10px] text-muted-foreground px-0.5">
-                                Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf: CHF {((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g
+                                Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}
+                                {part.filament_verkauf_pro_g != null
+                                  ? <span className="text-primary">CHF {part.filament_verkauf_pro_g.toFixed(3)}/g (manuell)</span>
+                                  : `CHF ${((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g`
+                                }
                               </div>
                             )}
                           </div>
