@@ -478,7 +478,7 @@ export default function AuftragDetailPage() {
     exportAuftragsbestaetiguungPDF({
       orderId: id || "neu",
       datum,
-      beschreibung,
+      beschreibung: fullBeschreibung,
       customerName,
       customerFirma,
       customerEmail,
