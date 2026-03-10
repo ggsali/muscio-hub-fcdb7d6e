@@ -169,7 +169,8 @@ export default function FilamentePage() {
                       <th className="px-4 py-2.5 text-left text-muted-foreground font-medium text-xs">Name</th>
                       <th className="px-4 py-2.5 text-left text-muted-foreground font-medium text-xs">Farbe</th>
                       <th className="px-4 py-2.5 text-left text-muted-foreground font-medium text-xs">Hersteller</th>
-                      <th className="px-4 py-2.5 text-right text-muted-foreground font-medium text-xs">CHF / kg</th>
+                      <th className="px-4 py-2.5 text-right text-muted-foreground font-medium text-xs">Einkauf / kg</th>
+                      <th className="px-4 py-2.5 text-right text-muted-foreground font-medium text-xs">Verkauf / g</th>
                       <th className="px-4 py-2.5 text-right text-muted-foreground font-medium text-xs">g/cm³</th>
                       <th className="px-4 py-2.5 text-left text-muted-foreground font-medium text-xs">Notizen</th>
                       <th className="px-4 py-2.5 text-center text-muted-foreground font-medium text-xs">Aktiv</th>
