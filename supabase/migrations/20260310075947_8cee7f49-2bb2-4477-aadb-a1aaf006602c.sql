@@ -1,0 +1,1 @@
+ALTER TABLE public.filaments ADD COLUMN IF NOT EXISTS verkaufspreis_pro_g numeric NULL DEFAULT NULL;
