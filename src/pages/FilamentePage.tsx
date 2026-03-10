@@ -13,6 +13,7 @@ export interface Filament {
   hersteller: string;
   preis_pro_kg: number;
   dichte_g_cm3: number;
+  verkaufspreis_pro_g: number | null;
   notizen: string;
   aktiv: boolean;
 }
