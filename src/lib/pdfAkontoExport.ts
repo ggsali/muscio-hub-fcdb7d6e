@@ -291,8 +291,9 @@ export async function exportAkontoPDF(data: AkontoExportData) {
   doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...GRAY);
   doc.text("BESCHREIBUNG / PROJEKT", colR, 76);
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...DARK);
-  const descLines = doc.splitTextToSize(data.beschreibung || "—", pageW - colR - margin);
-  doc.text(descLines.slice(0, 4), colR, 83);
+  const rawDesc = data.beschreibung || "—";
+  const descLines = rawDesc.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
+  doc.text(descLines.slice(0, 5), colR, 83);
 
   drawPartsTable(doc, data.parts, margin);
 
@@ -367,8 +368,9 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
   doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...GRAY);
   doc.text("BESCHREIBUNG / PROJEKT", colR, 76);
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...DARK);
-  const descLines = doc.splitTextToSize(data.beschreibung || "—", pageW - colR - margin);
-  doc.text(descLines.slice(0, 4), colR, 83);
+  const rawDesc2 = data.beschreibung || "—";
+  const descLines = rawDesc2.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
+  doc.text(descLines.slice(0, 5), colR, 83);
 
   drawPartsTable(doc, data.parts, margin);
 

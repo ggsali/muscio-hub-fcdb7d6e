@@ -192,8 +192,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...DARK);
-  const descLines = doc.splitTextToSize(data.beschreibung || "—", pageW - colR - margin);
-  doc.text(descLines.slice(0, 4), colR, 83);
+  const rawDesc = data.beschreibung || "—";
+  const descLines = rawDesc.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
+  doc.text(descLines.slice(0, 5), colR, 83);
 
   // ── Positions-Tabelle ───────────────────────────────────────────
   const tableY = 118;
