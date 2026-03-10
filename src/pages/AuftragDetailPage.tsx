@@ -331,7 +331,7 @@ export default function AuftragDetailPage() {
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
           const result = await exportOfferPDF({
-            orderId: id || "neu", datum, beschreibung,
+            orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
           });
