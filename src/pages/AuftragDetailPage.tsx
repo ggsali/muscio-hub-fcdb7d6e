@@ -974,6 +974,7 @@ export default function AuftragDetailPage() {
                             ...updated[idx],
                             filament_id: e.target.value,
                             filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                            filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
                             material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
                           };
                           updated[idx] = recalcPart(p);
