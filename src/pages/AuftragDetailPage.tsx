@@ -379,7 +379,7 @@ export default function AuftragDetailPage() {
       const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
       const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
       const result = await exportAkontoPDF({
-        orderId: id || "neu", datum, beschreibung, status,
+        orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag,
         settings: activeSettings, company, returnBase64: !download,
