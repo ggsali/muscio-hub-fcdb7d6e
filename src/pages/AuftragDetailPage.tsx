@@ -322,7 +322,7 @@ export default function AuftragDetailPage() {
             }
           }
           const result = await exportOrderPDF({
-            orderId: id || "neu", datum, beschreibung, status,
+            orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts, umsatz_total: totalUmsatz, kosten_total: totalKosten,
             gewinn_total: totalGewinn, marge: totalMarge,
