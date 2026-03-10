@@ -35,6 +35,7 @@ interface PartRow {
   material: string;
   filament_id?: string;
   filament_einkauf_pro_kg?: number; // individueller Filamentpreis
+  filament_verkauf_pro_g?: number | null; // manuell gesetzter Verkaufspreis (überschreibt Auto-Berechnung)
   menge: number;
   gewicht_g: number;
   druckzeit_h: number;
@@ -202,14 +203,19 @@ export default function AuftragDetailPage() {
   const MATERIAL_AUFSCHLAG = 3.0;
 
   const recalcPart = (part: PartRow): PartRow => {
-    // Überschreibe material_verkauf_pro_g wenn individueller Filamentpreis vorhanden
-    const settingsForPart = part.filament_einkauf_pro_kg != null
-      ? {
-          ...activeSettings,
-          material_einkauf_pro_kg: part.filament_einkauf_pro_kg,
-          material_verkauf_pro_g: (part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG,
-        }
-      : activeSettings;
+    // Wenn manueller Verkaufspreis am Filament hinterlegt → direkt nutzen
+    // Sonst: wenn Einkaufspreis vorhanden → Auto × 3, sonst Preset-Setting
+    let effectiveVerkaufProG = activeSettings.material_verkauf_pro_g;
+    if (part.filament_verkauf_pro_g != null) {
+      effectiveVerkaufProG = part.filament_verkauf_pro_g;
+    } else if (part.filament_einkauf_pro_kg != null) {
+      effectiveVerkaufProG = (part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG;
+    }
+    const settingsForPart = {
+      ...activeSettings,
+      material_einkauf_pro_kg: part.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg,
+      material_verkauf_pro_g: effectiveVerkaufProG,
+    };
     const preis_pro_stueck = calcUmsatz(settingsForPart, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
     return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge };
   };
@@ -968,6 +974,7 @@ export default function AuftragDetailPage() {
                             ...updated[idx],
                             filament_id: e.target.value,
                             filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                            filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
                             material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
                           };
                           updated[idx] = recalcPart(p);
@@ -988,11 +995,15 @@ export default function AuftragDetailPage() {
                       {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                   )}
-                  {part.filament_einkauf_pro_kg != null && (
-                    <div className="text-[10px] text-muted-foreground">
-                      Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf: CHF {((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g
-                    </div>
-                  )}
+                   {part.filament_einkauf_pro_kg != null && (
+                      <div className="text-[10px] text-muted-foreground">
+                        Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}
+                        {part.filament_verkauf_pro_g != null
+                          ? <span className="text-primary">CHF {part.filament_verkauf_pro_g.toFixed(3)}/g (manuell)</span>
+                          : `CHF ${((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g`
+                        }
+                      </div>
+                    )}
                 </div>
 
                 {/* Zahlen 2-spaltig */}
@@ -1080,6 +1091,7 @@ export default function AuftragDetailPage() {
                                     ...updated[idx],
                                     filament_id: e.target.value,
                                     filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                                    filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
                                     material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
                                   };
                                   updated[idx] = recalcPart(p);
@@ -1097,7 +1109,11 @@ export default function AuftragDetailPage() {
                             </select>
                             {part.filament_einkauf_pro_kg != null && (
                               <div className="text-[10px] text-muted-foreground px-0.5">
-                                Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf: CHF {((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g
+                                Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}
+                                {part.filament_verkauf_pro_g != null
+                                  ? <span className="text-primary">CHF {part.filament_verkauf_pro_g.toFixed(3)}/g (manuell)</span>
+                                  : `CHF ${((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g`
+                                }
                               </div>
                             )}
                           </div>
