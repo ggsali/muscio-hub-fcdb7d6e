@@ -97,6 +97,8 @@ export default function AuftragDetailPage() {
   const [trackingNr, setTrackingNr] = useState("");
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
+  const [expressKosten, setExpressKosten] = useState<number>(0);
+  const [expressLabel, setExpressLabel] = useState<string>("");
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
   const [withPaymentLink, setWithPaymentLink] = useState(false);
