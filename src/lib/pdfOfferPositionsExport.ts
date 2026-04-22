@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { OfferPosition } from "@/components/OfferMode";
 import type { CompanySettings } from "@/lib/companySettings";
+import { checkPdfPlausibility } from "./pdfPlausibility";
 
 interface ExportProps {
   orderId: string;
