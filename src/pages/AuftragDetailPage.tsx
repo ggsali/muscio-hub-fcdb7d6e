@@ -279,7 +279,9 @@ export default function AuftragDetailPage() {
   };
 
   // Totals
-  const totalUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
+  const partsUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
+  const expressBetrag = Math.max(0, Number(expressKosten) || 0);
+  const totalUmsatz = partsUmsatz + expressBetrag;
   const totalKosten = parts.reduce((s, p) => {
     const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
     const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
