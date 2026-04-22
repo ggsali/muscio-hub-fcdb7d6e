@@ -265,6 +265,19 @@ export async function exportOfferPDF(data: OfferExportData) {
       }
     });
 
+    // Express-Lieferung (Details-Modus)
+    if ((data.expressKosten ?? 0) > 0) {
+      const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
+      const nr = String(data.parts.length + 1).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: exLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: formatCHF(data.expressKosten!), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(data.expressKosten!), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
+
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
       head: [["Nr.", "Leistung / Beschreibung", "Menge", "Einzelpreis", "Total"]],
@@ -281,13 +294,22 @@ export async function exportOfferPDF(data: OfferExportData) {
       tableLineColor: LGRAY, tableLineWidth: 0.1,
     });
   } else {
+    const tableBody: any[][] = data.parts.map((p, i) => [
+      String(i + 1).padStart(2, "0"), p.teilname || "—", p.material,
+      `${p.menge}×`, formatCHF(p.preis_pro_stueck), formatCHF(p.preis_total),
+    ]);
+    if ((data.expressKosten ?? 0) > 0) {
+      const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        exLabel, "—", "1×",
+        formatCHF(data.expressKosten!), formatCHF(data.expressKosten!),
+      ]);
+    }
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
       head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
-      body: data.parts.map((p, i) => [
-        String(i + 1).padStart(2, "0"), p.teilname || "—", p.material,
-        `${p.menge}×`, formatCHF(p.preis_pro_stueck), formatCHF(p.preis_total),
-      ]),
+      body: tableBody,
       styles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 3, right: 3 }, textColor: DARK },
       headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
       columnStyles: {
