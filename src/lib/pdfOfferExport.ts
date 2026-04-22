@@ -31,6 +31,8 @@ interface OfferExportData {
   gueltigBis?: string;
   returnBase64?: boolean;
   withDetails?: boolean;
+  expressKosten?: number;
+  expressLabel?: string;
 }
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
