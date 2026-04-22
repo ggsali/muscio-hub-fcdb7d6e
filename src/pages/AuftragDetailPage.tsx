@@ -949,9 +949,6 @@ export default function AuftragDetailPage() {
           </div>
         </div>
       </div>
-{/* PLACEHOLDER_REMOVED */}
-        </div>
-      </div>
 
       {/* Parts */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
