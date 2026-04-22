@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { formatCHF, Settings } from "./calc";
 import { CompanySettings } from "./companySettings";
 import { appendQrBill } from "./pdfQrBill";
+import { checkPdfPlausibility } from "./pdfPlausibility";
 
 interface PartRow {
   teilname: string;
@@ -274,6 +275,12 @@ function drawTerms(doc: jsPDF, title: string, text: string, sumX: number, termsY
 
 // ─── Akontorechnung ──────────────────────────────────────────────────────────
 export async function exportAkontoPDF(data: AkontoExportData) {
+  checkPdfPlausibility({
+    parts: data.parts,
+    expressKosten: data.expressKosten,
+    umsatz_total: data.umsatz_total,
+    context: "Akontorechnung",
+  });
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -358,6 +365,12 @@ export async function exportAkontoPDF(data: AkontoExportData) {
 
 // ─── Schlussrechnung (Restbetrag) ────────────────────────────────────────────
 export async function exportRestbetragPDF(data: RestbetragExportData) {
+  checkPdfPlausibility({
+    parts: data.parts,
+    expressKosten: data.expressKosten,
+    umsatz_total: data.umsatz_total,
+    context: "Schlussrechnung",
+  });
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
