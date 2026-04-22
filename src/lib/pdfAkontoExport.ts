@@ -29,6 +29,8 @@ export interface AkontoExportData {
   settings: Settings;
   company: CompanySettings;
   returnBase64?: boolean;
+  expressKosten?: number;
+  expressLabel?: string;
 }
 
 export interface RestbetragExportData extends Omit<AkontoExportData, 'akontoPercent' | 'akontoBetrag'> {
@@ -180,19 +182,30 @@ function drawFooter(doc: jsPDF, company: CompanySettings, ACCENT: [number, numbe
 }
 
 /** Gemeinsame Positionen-Tabelle */
-function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number) {
+function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string) {
+  const body: any[][] = parts.map((p, i) => [
+    String(i + 1).padStart(2, "0"),
+    p.teilname || "—",
+    p.material,
+    `${p.menge}×`,
+    formatCHF(p.preis_pro_stueck),
+    formatCHF(p.preis_total),
+  ]);
+  if ((expressKosten ?? 0) > 0) {
+    body.push([
+      String(body.length + 1).padStart(2, "0"),
+      expressLabel?.trim() || "Express-Lieferung",
+      "—",
+      "1×",
+      formatCHF(expressKosten!),
+      formatCHF(expressKosten!),
+    ]);
+  }
   autoTable(doc, {
     startY: 118,
     margin: { left: margin, right: margin },
     head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
-    body: parts.map((p, i) => [
-      String(i + 1).padStart(2, "0"),
-      p.teilname || "—",
-      p.material,
-      `${p.menge}×`,
-      formatCHF(p.preis_pro_stueck),
-      formatCHF(p.preis_total),
-    ]),
+    body,
     styles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 3, right: 3 }, textColor: DARK },
     headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
     columnStyles: {
@@ -295,17 +308,22 @@ export async function exportAkontoPDF(data: AkontoExportData) {
   const descLines = rawDesc.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
   const sumRows: [string, string][] = [
-    ["Gesamtbetrag (Referenz)", formatCHF(data.umsatz_total)],
-    [`Akontozahlung (${data.akontoPercent}%)`, formatCHF(data.akontoBetrag)],
-    ["MwSt. (0%)", "CHF 0.00"],
+    ["Teile/Leistungen", formatCHF(partsSubtotal)],
   ];
+  if ((data.expressKosten ?? 0) > 0) {
+    sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  sumRows.push(["Gesamtbetrag (Referenz)", formatCHF(data.umsatz_total)]);
+  sumRows.push([`Akontozahlung (${data.akontoPercent}%)`, formatCHF(data.akontoBetrag)]);
+  sumRows.push(["MwSt. (0%)", "CHF 0.00"]);
   let sumY = drawSumRows(doc, sumRows, sumX, pageW, margin, afterTable);
 
   sumY += 2;
@@ -372,17 +390,22 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
   const descLines = rawDesc2.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
   const sumRows: [string, string][] = [
-    ["Gesamtbetrag", formatCHF(data.umsatz_total)],
-    [`Abzüglich Akonto (${data.akontoPercent}%)`, `- ${formatCHF(data.akontoBetrag)}`],
-    ["MwSt. (0%)", "CHF 0.00"],
+    ["Teile/Leistungen", formatCHF(partsSubtotal)],
   ];
+  if ((data.expressKosten ?? 0) > 0) {
+    sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  sumRows.push(["Gesamtbetrag", formatCHF(data.umsatz_total)]);
+  sumRows.push([`Abzüglich Akonto (${data.akontoPercent}%)`, `- ${formatCHF(data.akontoBetrag)}`]);
+  sumRows.push(["MwSt. (0%)", "CHF 0.00"]);
   let sumY = drawSumRows(doc, sumRows, sumX, pageW, margin, afterTable);
 
   sumY += 2;

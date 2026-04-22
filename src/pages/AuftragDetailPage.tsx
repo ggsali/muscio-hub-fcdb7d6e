@@ -97,6 +97,8 @@ export default function AuftragDetailPage() {
   const [trackingNr, setTrackingNr] = useState("");
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
+  const [expressKosten, setExpressKosten] = useState<number>(0);
+  const [expressLabel, setExpressLabel] = useState<string>("");
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
   const [withPaymentLink, setWithPaymentLink] = useState(false);
@@ -146,6 +148,8 @@ export default function AuftragDetailPage() {
           setTrackingNr((o as any).tracking_nr || "");
           setGeplantVon((o as any).geplant_von || "");
           setGeplantBis((o as any).geplant_bis || "");
+          setExpressKosten(Number((o as any).express_kosten) || 0);
+          setExpressLabel((o as any).express_label || "");
           // Restore preset if saved
           const savedPresetId = (o as any).preset_id;
           if (savedPresetId) {
@@ -275,7 +279,9 @@ export default function AuftragDetailPage() {
   };
 
   // Totals
-  const totalUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
+  const partsUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
+  const expressBetrag = Math.max(0, Number(expressKosten) || 0);
+  const totalUmsatz = partsUmsatz + expressBetrag;
   const totalKosten = parts.reduce((s, p) => {
     const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
     const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
@@ -327,6 +333,7 @@ export default function AuftragDetailPage() {
             parts, umsatz_total: totalUmsatz, kosten_total: totalKosten,
             gewinn_total: totalGewinn, marge: totalMarge,
             settings: activeSettings, company, returnBase64: true, withDetails,
+            expressKosten: expressBetrag, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
@@ -334,6 +341,7 @@ export default function AuftragDetailPage() {
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
+            expressKosten: expressBetrag, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
@@ -383,6 +391,7 @@ export default function AuftragDetailPage() {
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag,
         settings: activeSettings, company, returnBase64: !download,
+        expressKosten: expressBetrag, expressLabel,
       });
       if (!download && result) {
         // Send via email
@@ -413,6 +422,7 @@ export default function AuftragDetailPage() {
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag, restbetrag,
         settings: activeSettings, company, returnBase64: !download,
+        expressKosten: expressBetrag, expressLabel,
       });
       if (!download && result) {
         const { data, error } = await supabase.functions.invoke("send-order-email", {
@@ -451,6 +461,8 @@ export default function AuftragDetailPage() {
       settings: activeSettings,
       company,
       withDetails: details,
+      expressKosten: expressBetrag,
+      expressLabel,
     });
   };
 
@@ -459,7 +471,7 @@ export default function AuftragDetailPage() {
     exportOfferPDF({
       orderId: id || "neu",
       datum,
-      beschreibung,
+      beschreibung: fullBeschreibung,
       customerName,
       customerFirma,
       customerEmail,
@@ -470,6 +482,8 @@ export default function AuftragDetailPage() {
       settings: activeSettings,
       company,
       withDetails: details,
+      expressKosten: expressBetrag,
+      expressLabel,
     });
   };
 
@@ -488,6 +502,8 @@ export default function AuftragDetailPage() {
       umsatz_total: totalUmsatz,
       settings: activeSettings,
       company,
+      expressKosten: expressBetrag,
+      expressLabel,
     });
   };
 
@@ -506,15 +522,17 @@ export default function AuftragDetailPage() {
       geplant_von: geplantVon || null,
       geplant_bis: geplantBis || null,
       preset_id: selectedPresetId || null,
+      express_kosten: expressBetrag,
+      express_label: expressLabel || null,
     };
 
     let orderId = id === "neu" ? null : id;
 
     if (isNew) {
-      const { data } = await supabase.from("orders").insert(orderData).select().single();
+      const { data } = await supabase.from("orders").insert(orderData as any).select().single();
       orderId = data?.id;
     } else {
-      await supabase.from("orders").update(orderData).eq("id", id!);
+      await supabase.from("orders").update(orderData as any).eq("id", id!);
       await supabase.from("parts").delete().eq("order_id", id!);
     }
 
@@ -906,6 +924,29 @@ export default function AuftragDetailPage() {
             <Label>Beschreibung</Label>
             <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={2} />
           </div>
+          <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-border/50">
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>Express-Lieferung – Bezeichnung (optional)</Label>
+              <Input
+                value={expressLabel}
+                onChange={e => setExpressLabel(e.target.value)}
+                placeholder="z.B. Express 24h, Eilversand DHL Express"
+                className="bg-input border-border"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Express-Kosten (CHF)</Label>
+              <Input
+                type="number"
+                step="0.05"
+                min="0"
+                value={expressKosten || ""}
+                onChange={e => setExpressKosten(parseFloat(e.target.value) || 0)}
+                placeholder="0.00"
+                className="bg-input border-border"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1225,6 +1266,12 @@ export default function AuftragDetailPage() {
             <span>{formatCHF(konstrKosten)}</span>
           </div>
           <div className="border-t border-border my-2" />
+          {expressBetrag > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{expressLabel?.trim() || "Express-Lieferung"}</span>
+              <span>{formatCHF(expressBetrag)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold">
             <span>Total Umsatz</span>
             <span className="text-primary">{formatCHF(totalUmsatz)}</span>

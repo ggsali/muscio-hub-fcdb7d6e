@@ -31,6 +31,8 @@ interface OfferExportData {
   gueltigBis?: string;
   returnBase64?: boolean;
   withDetails?: boolean;
+  expressKosten?: number;
+  expressLabel?: string;
 }
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
@@ -263,6 +265,19 @@ export async function exportOfferPDF(data: OfferExportData) {
       }
     });
 
+    // Express-Lieferung (Details-Modus)
+    if ((data.expressKosten ?? 0) > 0) {
+      const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
+      const nr = String(data.parts.length + 1).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: exLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: formatCHF(data.expressKosten!), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(data.expressKosten!), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
+
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
       head: [["Nr.", "Leistung / Beschreibung", "Menge", "Einzelpreis", "Total"]],
@@ -279,13 +294,22 @@ export async function exportOfferPDF(data: OfferExportData) {
       tableLineColor: LGRAY, tableLineWidth: 0.1,
     });
   } else {
+    const tableBody: any[][] = data.parts.map((p, i) => [
+      String(i + 1).padStart(2, "0"), p.teilname || "—", p.material,
+      `${p.menge}×`, formatCHF(p.preis_pro_stueck), formatCHF(p.preis_total),
+    ]);
+    if ((data.expressKosten ?? 0) > 0) {
+      const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        exLabel, "—", "1×",
+        formatCHF(data.expressKosten!), formatCHF(data.expressKosten!),
+      ]);
+    }
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
       head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
-      body: data.parts.map((p, i) => [
-        String(i + 1).padStart(2, "0"), p.teilname || "—", p.material,
-        `${p.menge}×`, formatCHF(p.preis_pro_stueck), formatCHF(p.preis_total),
-      ]),
+      body: tableBody,
       styles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 3, right: 3 }, textColor: DARK },
       headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
       columnStyles: {
@@ -305,9 +329,16 @@ export async function exportOfferPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const offerSumRows: [string, string][] = [["Zwischensumme", formatCHF(partsSubtotal)]];
+  if ((data.expressKosten ?? 0) > 0) {
+    offerSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  offerSumRows.push(["MwSt. (0%)", "CHF 0.00"]);
+
   const totalBoxBottom = drawSummary(
     doc,
-    [["Zwischensumme", formatCHF(data.umsatz_total)], ["MwSt. (0%)", "CHF 0.00"]],
+    offerSumRows,
     "ANGEBOTSSUMME", formatCHF(data.umsatz_total),
     ACCENT, sumX, afterTable, pageW, margin,
   );
@@ -381,13 +412,21 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   doc.text(descLines.slice(0, 5), colR, 83);
 
   // Tabelle
+  const abTableBody: any[][] = data.parts.map((p, i) => [
+    String(i + 1).padStart(2, "0"), p.teilname || "—", p.material,
+    `${p.menge}×`, formatCHF(p.preis_pro_stueck), formatCHF(p.preis_total),
+  ]);
+  if ((data.expressKosten ?? 0) > 0) {
+    abTableBody.push([
+      String(abTableBody.length + 1).padStart(2, "0"),
+      data.expressLabel?.trim() || "Express-Lieferung", "—", "1×",
+      formatCHF(data.expressKosten!), formatCHF(data.expressKosten!),
+    ]);
+  }
   autoTable(doc, {
     startY: 118, margin: { left: margin, right: margin },
     head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
-    body: data.parts.map((p, i) => [
-      String(i + 1).padStart(2, "0"), p.teilname || "—", p.material,
-      `${p.menge}×`, formatCHF(p.preis_pro_stueck), formatCHF(p.preis_total),
-    ]),
+    body: abTableBody,
     styles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 3, right: 3 }, textColor: DARK },
     headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
     columnStyles: {
@@ -406,9 +445,16 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
+  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const abSumRows: [string, string][] = [["Zwischensumme", formatCHF(abPartsSubtotal)]];
+  if ((data.expressKosten ?? 0) > 0) {
+    abSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  abSumRows.push(["MwSt. (0%)", "CHF 0.00"]);
+
   const totalBoxBottom = drawSummary(
     doc,
-    [["Zwischensumme", formatCHF(data.umsatz_total)], ["MwSt. (0%)", "CHF 0.00"]],
+    abSumRows,
     "AUFTRAGSSUMME", formatCHF(data.umsatz_total),
     GREEN, sumX, afterTable, pageW, margin,
   );
