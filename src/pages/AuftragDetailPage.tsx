@@ -333,6 +333,7 @@ export default function AuftragDetailPage() {
             parts, umsatz_total: totalUmsatz, kosten_total: totalKosten,
             gewinn_total: totalGewinn, marge: totalMarge,
             settings: activeSettings, company, returnBase64: true, withDetails,
+            expressKosten: expressBetrag, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
@@ -340,6 +341,7 @@ export default function AuftragDetailPage() {
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
+            expressKosten: expressBetrag, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
