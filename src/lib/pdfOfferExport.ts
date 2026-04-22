@@ -160,6 +160,12 @@ function drawSummary(
 
 // ─── Offerte (Standard + Details) ───────────────────────────────────────────
 export async function exportOfferPDF(data: OfferExportData) {
+  checkPdfPlausibility({
+    parts: data.parts,
+    expressKosten: data.expressKosten,
+    umsatz_total: data.umsatz_total,
+    context: "Offerte",
+  });
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
