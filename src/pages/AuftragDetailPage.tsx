@@ -461,6 +461,8 @@ export default function AuftragDetailPage() {
       settings: activeSettings,
       company,
       withDetails: details,
+      expressKosten: expressBetrag,
+      expressLabel,
     });
   };
 
