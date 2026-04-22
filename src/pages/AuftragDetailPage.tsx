@@ -1266,6 +1266,12 @@ export default function AuftragDetailPage() {
             <span>{formatCHF(konstrKosten)}</span>
           </div>
           <div className="border-t border-border my-2" />
+          {expressBetrag > 0 && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{expressLabel?.trim() || "Express-Lieferung"}</span>
+              <span>{formatCHF(expressBetrag)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold">
             <span>Total Umsatz</span>
             <span className="text-primary">{formatCHF(totalUmsatz)}</span>
