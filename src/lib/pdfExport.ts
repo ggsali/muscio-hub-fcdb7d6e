@@ -37,6 +37,8 @@ interface OrderExportData {
   company: CompanySettings;
   returnBase64?: boolean;
   withDetails?: boolean;
+  expressKosten?: number;
+  expressLabel?: string;
 }
 
 const BLACK = [30, 30, 30] as [number, number, number];
