@@ -57,10 +57,19 @@ export async function exportOfferPositionsPDF(
 ): Promise<{ base64: string; filename: string } | void> {
   const {
     orderId, datum, orderName, beschreibung, offerNote,
-    positions, discountPercent = 0, company,
+    positions, total, discountPercent = 0, company,
     customerName = "Kein Kunde", customerFirma, customerEmail,
     customerTelefon, customerAdresse, returnBase64,
   } = props;
+
+  // Plausibilitäts-Check: Positions-Summe (nach Rabatt) gegen übergebenes Total
+  const _subtotal = positions.reduce((s, p) => s + p.menge * p.preis_pro_einheit, 0);
+  const _expected = _subtotal - (discountPercent > 0 ? _subtotal * (discountPercent / 100) : 0);
+  checkPdfPlausibility({
+    parts: [{ preis_total: _expected }],
+    umsatz_total: total,
+    context: "Offerte (Positionen)",
+  });
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
