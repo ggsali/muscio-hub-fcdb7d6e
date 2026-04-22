@@ -329,9 +329,16 @@ export async function exportOfferPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const offerSumRows: [string, string][] = [["Zwischensumme", formatCHF(partsSubtotal)]];
+  if ((data.expressKosten ?? 0) > 0) {
+    offerSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  offerSumRows.push(["MwSt. (0%)", "CHF 0.00"]);
+
   const totalBoxBottom = drawSummary(
     doc,
-    [["Zwischensumme", formatCHF(data.umsatz_total)], ["MwSt. (0%)", "CHF 0.00"]],
+    offerSumRows,
     "ANGEBOTSSUMME", formatCHF(data.umsatz_total),
     ACCENT, sumX, afterTable, pageW, margin,
   );
