@@ -924,6 +924,32 @@ export default function AuftragDetailPage() {
             <Label>Beschreibung</Label>
             <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={2} />
           </div>
+          <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-border/50">
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>Express-Lieferung – Bezeichnung (optional)</Label>
+              <Input
+                value={expressLabel}
+                onChange={e => setExpressLabel(e.target.value)}
+                placeholder="z.B. Express 24h, Eilversand DHL Express"
+                className="bg-input border-border"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Express-Kosten (CHF)</Label>
+              <Input
+                type="number"
+                step="0.05"
+                min="0"
+                value={expressKosten || ""}
+                onChange={e => setExpressKosten(parseFloat(e.target.value) || 0)}
+                placeholder="0.00"
+                className="bg-input border-border"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+{/* PLACEHOLDER_REMOVED */}
         </div>
       </div>
 
