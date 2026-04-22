@@ -293,8 +293,12 @@ export default function AuftragDetailPage() {
   // Auftragsname immer in der Beschreibung voranstellen
   const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
 
-  const setupKosten = activeSettings.setup_pauschale;
-  const matKosten = parts.reduce((s, p) => s + p.gewicht_g * activeSettings.material_verkauf_pro_g * p.menge, 0);
+  // Setup-Pauschale wird pro Teil berechnet (siehe calcUmsatz), daher × Anzahl Teile
+  const setupKosten = activeSettings.setup_pauschale * parts.length;
+  const matKosten = parts.reduce((s, p) => {
+    const verkaufPreis = p.filament_verkauf_pro_g ?? activeSettings.material_verkauf_pro_g;
+    return s + p.gewicht_g * verkaufPreis * p.menge;
+  }, 0);
   const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
   const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
