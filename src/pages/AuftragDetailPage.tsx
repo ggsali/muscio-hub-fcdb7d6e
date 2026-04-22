@@ -391,6 +391,7 @@ export default function AuftragDetailPage() {
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag,
         settings: activeSettings, company, returnBase64: !download,
+        expressKosten: expressBetrag, expressLabel,
       });
       if (!download && result) {
         // Send via email
