@@ -182,19 +182,30 @@ function drawFooter(doc: jsPDF, company: CompanySettings, ACCENT: [number, numbe
 }
 
 /** Gemeinsame Positionen-Tabelle */
-function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number) {
+function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string) {
+  const body: any[][] = parts.map((p, i) => [
+    String(i + 1).padStart(2, "0"),
+    p.teilname || "—",
+    p.material,
+    `${p.menge}×`,
+    formatCHF(p.preis_pro_stueck),
+    formatCHF(p.preis_total),
+  ]);
+  if ((expressKosten ?? 0) > 0) {
+    body.push([
+      String(body.length + 1).padStart(2, "0"),
+      expressLabel?.trim() || "Express-Lieferung",
+      "—",
+      "1×",
+      formatCHF(expressKosten!),
+      formatCHF(expressKosten!),
+    ]);
+  }
   autoTable(doc, {
     startY: 118,
     margin: { left: margin, right: margin },
     head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
-    body: parts.map((p, i) => [
-      String(i + 1).padStart(2, "0"),
-      p.teilname || "—",
-      p.material,
-      `${p.menge}×`,
-      formatCHF(p.preis_pro_stueck),
-      formatCHF(p.preis_total),
-    ]),
+    body,
     styles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 3, right: 3 }, textColor: DARK },
     headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8 },
     columnStyles: {
