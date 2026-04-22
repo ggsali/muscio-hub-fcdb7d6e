@@ -308,18 +308,30 @@ export async function exportOrderPDF(data: OrderExportData) {
       tableLineWidth: 0.1,
     });
   } else {
+    const tableBody: any[][] = data.parts.map((p, i) => [
+      String(i + 1).padStart(2, "0"),
+      p.teilname || "—",
+      p.material,
+      `${p.menge}×`,
+      formatCHF(p.preis_pro_stueck),
+      formatCHF(p.preis_total),
+    ]);
+    if ((data.expressKosten ?? 0) > 0) {
+      const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        exLabel,
+        "—",
+        "1×",
+        formatCHF(data.expressKosten!),
+        formatCHF(data.expressKosten!),
+      ]);
+    }
     autoTable(doc, {
       startY: tableY,
       margin: { left: margin, right: margin },
       head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
-      body: data.parts.map((p, i) => [
-        String(i + 1).padStart(2, "0"),
-        p.teilname || "—",
-        p.material,
-        `${p.menge}×`,
-        formatCHF(p.preis_pro_stueck),
-        formatCHF(p.preis_total),
-      ]),
+      body: tableBody,
       styles: {
         fontSize: 8.5,
         cellPadding: { top: 4, bottom: 4, left: 3, right: 3 },
