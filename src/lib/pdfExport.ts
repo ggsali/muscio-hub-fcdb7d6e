@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { formatCHF, Settings } from "./calc";
 import { CompanySettings } from "./companySettings";
 import { appendQrBill } from "./pdfQrBill";
+import { checkPdfPlausibility } from "./pdfPlausibility";
 
 interface PartRow {
   teilname: string;
@@ -72,6 +73,12 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
 }
 
 export async function exportOrderPDF(data: OrderExportData) {
+  checkPdfPlausibility({
+    parts: data.parts,
+    expressKosten: data.expressKosten,
+    umsatz_total: data.umsatz_total,
+    context: "Rechnung",
+  });
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
