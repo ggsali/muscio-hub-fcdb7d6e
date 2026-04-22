@@ -512,15 +512,17 @@ export default function AuftragDetailPage() {
       geplant_von: geplantVon || null,
       geplant_bis: geplantBis || null,
       preset_id: selectedPresetId || null,
+      express_kosten: expressBetrag,
+      express_label: expressLabel || null,
     };
 
     let orderId = id === "neu" ? null : id;
 
     if (isNew) {
-      const { data } = await supabase.from("orders").insert(orderData).select().single();
+      const { data } = await supabase.from("orders").insert(orderData as any).select().single();
       orderId = data?.id;
     } else {
-      await supabase.from("orders").update(orderData).eq("id", id!);
+      await supabase.from("orders").update(orderData as any).eq("id", id!);
       await supabase.from("parts").delete().eq("order_id", id!);
     }
 
