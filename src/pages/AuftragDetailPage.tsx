@@ -148,6 +148,8 @@ export default function AuftragDetailPage() {
           setTrackingNr((o as any).tracking_nr || "");
           setGeplantVon((o as any).geplant_von || "");
           setGeplantBis((o as any).geplant_bis || "");
+          setExpressKosten(Number((o as any).express_kosten) || 0);
+          setExpressLabel((o as any).express_label || "");
           // Restore preset if saved
           const savedPresetId = (o as any).preset_id;
           if (savedPresetId) {
