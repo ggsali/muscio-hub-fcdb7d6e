@@ -308,17 +308,22 @@ export async function exportAkontoPDF(data: AkontoExportData) {
   const descLines = rawDesc.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
   const sumRows: [string, string][] = [
-    ["Gesamtbetrag (Referenz)", formatCHF(data.umsatz_total)],
-    [`Akontozahlung (${data.akontoPercent}%)`, formatCHF(data.akontoBetrag)],
-    ["MwSt. (0%)", "CHF 0.00"],
+    ["Teile/Leistungen", formatCHF(partsSubtotal)],
   ];
+  if ((data.expressKosten ?? 0) > 0) {
+    sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  sumRows.push(["Gesamtbetrag (Referenz)", formatCHF(data.umsatz_total)]);
+  sumRows.push([`Akontozahlung (${data.akontoPercent}%)`, formatCHF(data.akontoBetrag)]);
+  sumRows.push(["MwSt. (0%)", "CHF 0.00"]);
   let sumY = drawSumRows(doc, sumRows, sumX, pageW, margin, afterTable);
 
   sumY += 2;
