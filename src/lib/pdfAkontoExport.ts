@@ -29,6 +29,8 @@ export interface AkontoExportData {
   settings: Settings;
   company: CompanySettings;
   returnBase64?: boolean;
+  expressKosten?: number;
+  expressLabel?: string;
 }
 
 export interface RestbetragExportData extends Omit<AkontoExportData, 'akontoPercent' | 'akontoBetrag'> {
