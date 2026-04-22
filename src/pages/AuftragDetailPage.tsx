@@ -471,7 +471,7 @@ export default function AuftragDetailPage() {
     exportOfferPDF({
       orderId: id || "neu",
       datum,
-      beschreibung,
+      beschreibung: fullBeschreibung,
       customerName,
       customerFirma,
       customerEmail,
@@ -482,6 +482,8 @@ export default function AuftragDetailPage() {
       settings: activeSettings,
       company,
       withDetails: details,
+      expressKosten: expressBetrag,
+      expressLabel,
     });
   };
 
@@ -500,6 +502,8 @@ export default function AuftragDetailPage() {
       umsatz_total: totalUmsatz,
       settings: activeSettings,
       company,
+      expressKosten: expressBetrag,
+      expressLabel,
     });
   };
 
