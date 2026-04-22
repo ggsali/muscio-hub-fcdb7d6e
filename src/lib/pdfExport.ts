@@ -385,10 +385,15 @@ export async function exportOrderPDF(data: OrderExportData) {
   sumY += 6;
 
   // Zeilen
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
   const sumRows: [string, string][] = [
-    ["Zwischensumme", formatCHF(data.umsatz_total)],
-    ["MwSt. (0%)", "CHF 0.00"],
+    ["Zwischensumme", formatCHF(partsSubtotal)],
   ];
+  if ((data.expressKosten ?? 0) > 0) {
+    sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  sumRows.push(["MwSt. (0%)", "CHF 0.00"]);
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   sumRows.forEach(([label, val]) => {
