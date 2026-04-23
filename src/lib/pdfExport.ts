@@ -17,6 +17,16 @@ interface PartRow {
   preis_total: number;
   status: string;
   notizen: string;
+  filament_einkauf_pro_kg?: number | null;
+  filament_verkauf_pro_g?: number | null;
+}
+
+const MATERIAL_AUFSCHLAG = 3.0;
+
+function effectiveMaterialPricePerG(p: PartRow, fallback: number): number {
+  if (p.filament_verkauf_pro_g != null) return Number(p.filament_verkauf_pro_g);
+  if (p.filament_einkauf_pro_kg != null) return (Number(p.filament_einkauf_pro_kg) / 1000) * MATERIAL_AUFSCHLAG;
+  return fallback;
 }
 
 interface OrderExportData {
