@@ -238,12 +238,13 @@ export async function exportOfferPDF(data: OfferExportData) {
         ]);
       }
       if ((p.gewicht_g ?? 0) > 0) {
-        const matTotal = (p.gewicht_g ?? 0) * s.material_verkauf_pro_g * p.menge;
+        const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
+        const matTotal = (p.gewicht_g ?? 0) * matRate * p.menge;
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
           { content: `Material (${p.material})`, styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
           { content: `${p.gewicht_g}g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
-          { content: `${formatCHF(s.material_verkauf_pro_g)}/g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: `${formatCHF(matRate)}/g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
           { content: formatCHF(matTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
         ]);
       }
