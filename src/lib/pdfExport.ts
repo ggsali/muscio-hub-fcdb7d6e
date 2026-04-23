@@ -17,6 +17,16 @@ interface PartRow {
   preis_total: number;
   status: string;
   notizen: string;
+  filament_einkauf_pro_kg?: number | null;
+  filament_verkauf_pro_g?: number | null;
+}
+
+const MATERIAL_AUFSCHLAG = 3.0;
+
+function effectiveMaterialPricePerG(p: PartRow, fallback: number): number {
+  if (p.filament_verkauf_pro_g != null) return Number(p.filament_verkauf_pro_g);
+  if (p.filament_einkauf_pro_kg != null) return (Number(p.filament_einkauf_pro_kg) / 1000) * MATERIAL_AUFSCHLAG;
+  return fallback;
 }
 
 interface OrderExportData {
@@ -236,12 +246,13 @@ export async function exportOrderPDF(data: OrderExportData) {
         ]);
       }
       if (p.gewicht_g > 0) {
-        const matTotal = p.gewicht_g * s.material_verkauf_pro_g * p.menge;
+        const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
+        const matTotal = p.gewicht_g * matRate * p.menge;
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
           { content: `Material (${p.material})`, styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
           { content: `${p.gewicht_g}g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
-          { content: `${formatCHF(s.material_verkauf_pro_g)}/g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: `${formatCHF(matRate)}/g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
           { content: `×${p.menge}`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
           { content: formatCHF(matTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
         ]);
