@@ -22,10 +22,12 @@ interface Order {
   gewinn_total: number;
   marge: number;
   status: string;
+  source: string;
   customer_name: string;
 }
 
 const STATUS_OPTIONS = ["Alle", "Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"] as const;
+const SOURCE_OPTIONS = ["Alle", "Manuell", "Website"] as const;
 
 export default function AuftraegePage() {
   const navigate = useNavigate();
