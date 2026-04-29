@@ -27,7 +27,10 @@ import UploadLinksPage from "@/pages/UploadLinksPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
 import ChatPage from "@/pages/ChatPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
-
+import WebsiteBestellungenPage from "@/pages/WebsiteBestellungenPage";
+import WebsiteKundenAdminPage from "@/pages/WebsiteKundenAdminPage";
+import EmailTemplatesPage from "@/pages/EmailTemplatesPage";
+import WebsiteEinstellungenPage from "@/pages/WebsiteEinstellungenPage";
 
 const queryClient = new QueryClient();
 
