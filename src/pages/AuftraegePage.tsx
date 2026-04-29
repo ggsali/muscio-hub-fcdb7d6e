@@ -35,6 +35,7 @@ export default function AuftraegePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Alle");
+  const [sourceFilter, setSourceFilter] = useState<typeof SOURCE_OPTIONS[number]>("Alle");
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
