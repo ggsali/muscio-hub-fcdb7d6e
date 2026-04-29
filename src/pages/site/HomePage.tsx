@@ -1,90 +1,315 @@
-import React from "react";
 import { Link } from "react-router-dom";
-import { Calculator, Zap, ShieldCheck, Truck, ArrowRight, Box, Layers, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollReveal } from "@/components/site/ScrollReveal";
+import { CountUp } from "@/components/site/CountUp";
+import { Marquee } from "@/components/site/Marquee";
+import {
+  Upload, Settings, ShoppingCart, Package,
+  Clock, Target, Layers, Users, ArrowRight, ArrowUpRight,
+} from "lucide-react";
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+} from "@/components/ui/accordion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
+import { HeroProjectsCarousel } from "@/components/site/HeroProjectsCarousel";
 
-export default function HomePage() {
+/* ─── HERO ─── */
+const Hero = () => {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], [0, 150]);
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const rightY = useTransform(scrollYProgress, [0, 1], [0, -60]);
+
   return (
-    <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.15),transparent_60%)] pointer-events-none" />
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-20 md:py-28 relative">
-          <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-medium mb-6">
-              <Zap className="w-3.5 h-3.5" /> Made in Switzerland
-            </span>
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight tracking-tight">
-              3D-Druck.<br />
-              <span className="text-primary">Schnell. Präzise. Fair.</span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-2xl">
-              Von der STL-Datei zum fertigen Bauteil – online kalkulieren, hochladen, drucken lassen.
-              Direkter Kontakt, transparente Preise, professionelle Qualität.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild size="lg" className="gap-2">
-                <Link to="/kalkulator-online">
-                  <Calculator className="w-4 h-4" /> Preis berechnen
-                </Link>
+    <section ref={ref} className="relative min-h-[95vh] flex items-center overflow-hidden pt-24 lg:pt-0">
+      <div className="absolute inset-0 bg-background" />
+      <div
+        className="absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage: "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+      <div className="absolute top-0 right-0 w-[600px] h-[500px] bg-primary/[0.06] rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 right-[25%] w-px h-full bg-gradient-to-b from-transparent via-primary/20 to-transparent hidden lg:block" />
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center min-h-[80vh]">
+          <motion.div style={{ y, opacity }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-xs font-medium text-primary mb-8 tracking-wide uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                3D-Druck aus der Schweiz
+              </div>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="font-heading text-[clamp(2.8rem,6vw,5.5rem)] font-extrabold leading-[1.0] mb-6 text-foreground tracking-tight"
+            >
+              Schicht für<br />
+              <span className="relative inline-block">
+                Schicht
+                <motion.span
+                  className="absolute -bottom-1 left-0 h-[3px] bg-primary rounded-full"
+                  initial={{ width: 0 }} animate={{ width: "100%" }}
+                  transition={{ delay: 0.8, duration: 0.6 }}
+                />
+              </span><br />
+              <span className="text-primary">perfekt.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="text-base text-muted-foreground mb-10 leading-relaxed max-w-sm"
+            >
+              Präzisionsdruck Layer für Layer. Von der Idee zum fertigen Teil in 48h — zuverlässig, bezahlbar, aus der Schweiz.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="flex flex-col sm:flex-row gap-3"
+            >
+              <Button variant="default" size="lg" asChild
+                className="rounded-full shadow-[0_0_30px_hsl(153_100%_40%/0.3)] hover:shadow-[0_0_40px_hsl(153_100%_40%/0.5)] transition-shadow">
+                <Link to="/kalkulator-online">Preis berechnen <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/kontakt">Anfrage stellen</Link>
+              <Button variant="outline" size="lg" asChild className="rounded-full">
+                <Link to="/materialien">Materialien entdecken</Link>
               </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+            </motion.div>
 
-      {/* Features */}
-      <section className="max-w-6xl mx-auto px-4 md:px-6 py-16 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { icon: Zap, title: "Schnelle Lieferung", text: "Standard 5–7 Werktage, Express auf Anfrage." },
-          { icon: ShieldCheck, title: "Schweizer Qualität", text: "Sorgfältige Nachbearbeitung, präzise Toleranzen." },
-          { icon: Truck, title: "Versand schweizweit", text: "A-Post oder Abholung in Absprache." },
-        ].map(f => (
-          <div key={f.title} className="bg-card border border-border rounded-xl p-6">
-            <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center mb-4">
-              <f.icon className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="font-semibold mb-2">{f.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{f.text}</p>
-          </div>
-        ))}
-      </section>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+              className="flex items-center gap-6 mt-12"
+            >
+              {[
+                { val: "48h", label: "Lieferzeit" },
+                { val: "0.1mm", label: "Präzision" },
+                { val: "12+", label: "Materialien" },
+              ].map((s, i) => (
+                <div key={i} className="flex flex-col">
+                  <span className="font-heading font-extrabold text-lg text-foreground leading-none">{s.val}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">{s.label}</span>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
 
-      {/* Materials */}
-      <section className="max-w-6xl mx-auto px-4 md:px-6 py-12">
-        <h2 className="text-2xl md:text-3xl font-bold mb-2">Materialien</h2>
-        <p className="text-muted-foreground mb-8">Vom Prototyp bis zum belastbaren Funktionsteil.</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: Box, name: "PLA", desc: "Standard, viele Farben" },
-            { icon: Layers, name: "PETG", desc: "Schlagfest, lebensmittelecht" },
-            { icon: Cpu, name: "ABS / ASA", desc: "Belastbar, UV-stabil" },
-            { icon: Zap, name: "TPU", desc: "Flexibel, gummiartig" },
-          ].map(m => (
-            <div key={m.name} className="bg-card border border-border rounded-lg p-5 text-center">
-              <m.icon className="w-6 h-6 text-primary mx-auto mb-2" />
-              <div className="font-semibold">{m.name}</div>
-              <div className="text-xs text-muted-foreground mt-1">{m.desc}</div>
-            </div>
-          ))}
+          <motion.div
+            className="flex items-center justify-center mt-8 lg:mt-0"
+            style={{ y: rightY }}
+            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.4 }}
+          >
+            <HeroProjectsCarousel />
+          </motion.div>
         </div>
-      </section>
-
-      {/* CTA */}
-      <section className="max-w-6xl mx-auto px-4 md:px-6 py-16">
-        <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 rounded-2xl p-8 md:p-12 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">Bereit für dein Projekt?</h2>
-          <p className="text-muted-foreground max-w-xl mx-auto mb-6">
-            Lade deine STL-Datei hoch und bekomme sofort einen unverbindlichen Preis.
-          </p>
-          <Button asChild size="lg" className="gap-2">
-            <Link to="/kalkulator-online">Jetzt kalkulieren <ArrowRight className="w-4 h-4" /></Link>
-          </Button>
-        </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
-}
+};
+
+/* ─── STATS ─── */
+const STATS = [
+  { icon: Clock, value: 48, suffix: "h", label: "Lieferzeit" },
+  { icon: Target, value: 0.1, suffix: "mm", label: "Präzision", decimals: 1 },
+  { icon: Layers, value: 12, suffix: "+", label: "Materialien" },
+  { icon: Users, value: 100, suffix: "%", label: "Schweizer Qualität" },
+];
+
+const Stats = () => (
+  <section className="py-20 overflow-hidden">
+    <div className="container mx-auto px-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12">
+        {STATS.map((s, i) => (
+          <ScrollReveal key={i} delay={i * 0.08}>
+            <div className="relative">
+              <span className="text-[3rem] font-heading font-black text-foreground/[0.03] absolute -top-4 -left-2 leading-none select-none">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div className="relative">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                  <s.icon className="w-4 h-4 text-primary" />
+                </div>
+                <div className="text-3xl md:text-4xl font-heading font-extrabold text-foreground tracking-tight">
+                  <CountUp end={s.value} suffix={s.suffix} decimals={s.decimals || 0} />
+                </div>
+                <p className="text-muted-foreground mt-1 text-xs uppercase tracking-widest">{s.label}</p>
+              </div>
+            </div>
+          </ScrollReveal>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+/* ─── HOW IT WORKS ─── */
+const steps = [
+  { icon: Upload, title: "Hochladen", desc: "3D-Modell als STL, OBJ, STEP oder 3MF hochladen." },
+  { icon: Settings, title: "Konfigurieren", desc: "Material, Farbe, Schichthöhe und Fülldichte wählen." },
+  { icon: ShoppingCart, title: "Bestellen", desc: "Sofort deinen Preis erhalten und Bestellung absenden." },
+  { icon: Package, title: "Erhalten", desc: "Wir drucken, prüfen und liefern innerhalb von 48h." },
+];
+
+const HowItWorks = () => {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const lineHeight = useTransform(scrollYProgress, [0.1, 0.7], ["0%", "100%"]);
+
+  return (
+    <section ref={ref} className="py-28 relative">
+      <div className="container mx-auto px-4">
+        <ScrollReveal>
+          <div className="mb-16 max-w-md">
+            <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Prozess</p>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+              Vier Schritte.<br />Ein Ergebnis.
+            </h2>
+          </div>
+        </ScrollReveal>
+
+        <div className="relative max-w-3xl">
+          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border hidden md:block">
+            <motion.div className="w-full bg-primary origin-top" style={{ height: lineHeight }} />
+          </div>
+
+          <div className="space-y-8 md:space-y-12">
+            {steps.map((step, i) => (
+              <ScrollReveal key={i} delay={i * 0.08}>
+                <motion.div className="flex gap-6 md:gap-8 items-start group" whileHover={{ x: 4 }}>
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg border border-border bg-card flex items-center justify-center relative z-10 group-hover:border-primary group-hover:bg-primary/5 transition-all duration-200">
+                    <step.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <div className="flex items-baseline gap-3 mb-1">
+                      <span className="text-[10px] font-bold text-muted-foreground tracking-widest">{String(i + 1).padStart(2, "0")}</span>
+                      <h3 className="font-heading text-lg font-bold text-foreground">{step.title}</h3>
+                    </div>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
+                  </div>
+                </motion.div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/* ─── MATERIALS TEASER ─── */
+const materialTeaser = [
+  { name: "PLA", price: "0.055", tag: "FDM", desc: "Bio-abbaubar, ideal für Prototypen" },
+  { name: "PETG", price: "0.055", tag: "FDM", desc: "Stark, chemisch beständig" },
+  { name: "ABS", price: "0.055", tag: "FDM", desc: "Hitzebeständig, industrietauglich" },
+  { name: "Resin", price: "0.12", tag: "SLA", desc: "Höchste Detailgenauigkeit" },
+];
+
+const MaterialsTeaser = () => (
+  <section className="py-24 bg-foreground text-background overflow-hidden">
+    <div className="container mx-auto px-4">
+      <div className="flex items-end justify-between mb-10">
+        <div>
+          <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Materialien</p>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold tracking-tight">
+            Für jeden Einsatz das<br className="hidden md:block" /> richtige Material.
+          </h2>
+        </div>
+        <Link to="/materialien" className="hidden md:flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4">
+          Alle ansehen <ArrowUpRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {materialTeaser.map((m, i) => (
+          <motion.div
+            key={i}
+            className="rounded-xl p-5 border border-background/10 hover:border-primary/40 bg-background/5 backdrop-blur-sm transition-colors group cursor-pointer"
+            whileHover={{ y: -4, scale: 1.02 }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-heading text-base font-bold">{m.name}</h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-background/10 tracking-wider">{m.tag}</span>
+            </div>
+            <p className="text-background/60 text-sm mb-4">{m.desc}</p>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-background/50">ab</span>
+              <span className="font-heading font-extrabold text-primary">CHF {m.price}/g</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+/* ─── FAQ ─── */
+const faqs = [
+  { q: "Wie lange dauert die Lieferung?", a: "Standard 48 Stunden ab Auftragsbestätigung. Express auf Anfrage möglich." },
+  { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF. Bei Fragen helfen wir gerne weiter." },
+  { q: "Wie genau sind die Drucke?", a: "Toleranzen typisch ±0.1 mm bei FDM, noch feiner bei Resin/SLA." },
+  { q: "Was kostet ein Druck?", a: "Online im Preisrechner direkt kalkulieren — Material, Zeit und Nachbearbeitung sind transparent ausgewiesen." },
+];
+
+const FAQ = () => (
+  <section className="py-28 relative">
+    <div className="container mx-auto px-4 max-w-3xl">
+      <ScrollReveal>
+        <div className="mb-12 text-center">
+          <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">FAQ</p>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+            Häufige Fragen.
+          </h2>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal>
+        <Accordion type="single" collapsible className="w-full">
+          {faqs.map((f, i) => (
+            <AccordionItem key={i} value={`f-${i}`} className="border-border">
+              <AccordionTrigger className="text-left font-heading font-semibold hover:no-underline">{f.q}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground text-sm leading-relaxed">{f.a}</AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </ScrollReveal>
+    </div>
+  </section>
+);
+
+/* ─── CTA ─── */
+const CTA = () => (
+  <section className="py-24">
+    <div className="container mx-auto px-4">
+      <div className="relative overflow-hidden rounded-3xl bg-foreground text-background p-10 md:p-16 text-center">
+        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
+        <h2 className="font-heading text-3xl md:text-5xl font-extrabold mb-4 relative">Bereit, dein Teil zu drucken?</h2>
+        <p className="text-background/70 mb-8 relative">Sofort Preis berechnen und in 48h dein Bauteil erhalten.</p>
+        <Button size="lg" variant="default" asChild className="rounded-full shadow-[0_0_30px_hsl(153_100%_40%/0.4)]">
+          <Link to="/kalkulator-online">Jetzt starten <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
+        </Button>
+      </div>
+    </div>
+  </section>
+);
+
+const Index = () => (
+  <div>
+    <Hero />
+    <Marquee />
+    <Stats />
+    <HowItWorks />
+    <MaterialsTeaser />
+    <FAQ />
+    <CTA />
+  </div>
+);
+
+export default Index;
