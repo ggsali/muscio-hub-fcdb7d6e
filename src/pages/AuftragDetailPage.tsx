@@ -533,6 +533,7 @@ export default function AuftragDetailPage() {
       preset_id: selectedPresetId || null,
       express_kosten: expressBetrag,
       express_label: expressLabel || null,
+      notes_internal: notesInternal || null,
     };
 
     let orderId = id === "neu" ? null : id;
