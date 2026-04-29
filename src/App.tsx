@@ -39,6 +39,11 @@ import HomePage from "@/pages/site/HomePage";
 import FaqPage from "@/pages/site/FaqPage";
 import ContactPage from "@/pages/site/ContactPage";
 import CalculatorOnlinePage from "@/pages/site/CalculatorOnlinePage";
+import MaterialienPage from "@/pages/site/MaterialienPage";
+import UeberUnsPage from "@/pages/site/UeberUnsPage";
+import AGBPage from "@/pages/site/AGBPage";
+import DatenschutzPage from "@/pages/site/DatenschutzPage";
+import ImpressumPage from "@/pages/site/ImpressumPage";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
@@ -84,8 +89,13 @@ const App = () => (
               <Route element={<MaintenanceGate><SiteLayout /></MaintenanceGate>}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/kalkulator-online" element={<CalculatorOnlinePage />} />
+                <Route path="/materialien" element={<MaterialienPage />} />
+                <Route path="/ueber-uns" element={<UeberUnsPage />} />
                 <Route path="/faq" element={<FaqPage />} />
                 <Route path="/kontakt" element={<ContactPage />} />
+                <Route path="/agb" element={<AGBPage />} />
+                <Route path="/datenschutz" element={<DatenschutzPage />} />
+                <Route path="/impressum" element={<ImpressumPage />} />
               </Route>
 
               {/* Auth */}
