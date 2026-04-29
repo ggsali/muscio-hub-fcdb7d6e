@@ -87,7 +87,7 @@ function MobileLayout() {
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    end={item.to === "/"}
+                    end={item.to === "/admin"}
                     onClick={() => setMenuOpen(false)}
                     className={({ isActive }) =>
                       cn(
@@ -146,12 +146,12 @@ function MobileLayout() {
       {/* Bottom navigation bar */}
       <nav className="fixed bottom-0 left-0 right-0 bg-sidebar border-t border-sidebar-border flex items-center justify-around px-2 py-2 z-50">
         {mobileBottomNav.map(({ to, icon: Icon, label }) => {
-          const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+          const isActive = to === "/admin" ? location.pathname === "/admin" : location.pathname.startsWith(to);
           return (
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
+              end={to === "/admin"}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[52px]",
                 isActive ? "text-primary" : "text-muted-foreground"
