@@ -99,6 +99,9 @@ export default function AuftragDetailPage() {
   const [geplantBis, setGeplantBis] = useState("");
   const [expressKosten, setExpressKosten] = useState<number>(0);
   const [expressLabel, setExpressLabel] = useState<string>("");
+  const [source, setSource] = useState<string>("manual");
+  const [notesInternal, setNotesInternal] = useState<string>("");
+  const [pendingStatusEmail, setPendingStatusEmail] = useState<string | null>(null);
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
   const [withPaymentLink, setWithPaymentLink] = useState(false);
