@@ -96,7 +96,7 @@ export default function KundenPage() {
     if (error) { toast.error("Fehler beim Importieren"); return; }
     toast.success(`${k.full_name || "Kunde"} importiert`);
     loadAll();
-    navigate(`/kunden/${data.id}`);
+    navigate(`/admin/kunden/${data.id}`);
   };
 
   const filtered = customers.filter(c => {
@@ -130,7 +130,7 @@ export default function KundenPage() {
           <p className="text-muted-foreground text-sm mt-0.5">{customers.length} Kunden · {profiles.length} Website-Registrierungen</p>
         </div>
         {tab === "kunden" && (
-          <Button onClick={() => navigate("/kunden/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
+          <Button onClick={() => navigate("/admin/kunden/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
             <Plus className="w-4 h-4" />
             {isMobile ? "Neu" : "Neuer Kunde"}
           </Button>
@@ -214,7 +214,7 @@ export default function KundenPage() {
               <div
                 key={c.id}
                 className="bg-card border border-border rounded-xl p-4 cursor-pointer active:bg-muted/40 transition-colors"
-                onClick={() => navigate(`/kunden/${c.id}`)}
+                onClick={() => navigate(`/admin/kunden/${c.id}`)}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -261,7 +261,7 @@ export default function KundenPage() {
                     <tr
                       key={c.id}
                       className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer"
-                      onClick={() => navigate(`/kunden/${c.id}`)}
+                      onClick={() => navigate(`/admin/kunden/${c.id}`)}
                     >
                       <td className="px-5 py-3 font-medium">{[c.vorname, c.name].filter(Boolean).join(" ")}</td>
                       <td className="px-5 py-3 text-muted-foreground">{c.firma || "—"}</td>

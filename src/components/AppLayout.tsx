@@ -13,33 +13,33 @@ import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: "/", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, label: "Dashboard" },
-  { to: "/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kunden" },
-  { to: "/auftraege", icon: <Package className="w-[18px] h-[18px]" />, label: "Aufträge" },
-  { to: "/anfragen", icon: <MessageSquare className="w-[18px] h-[18px]" />, label: "Anfragen" },
-  { to: "/teile", icon: <Library className="w-[18px] h-[18px]" />, label: "Teile-Bibliothek" },
-  { to: "/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
-  { to: "/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
-  { to: "/kalender", icon: <CalendarDays className="w-[18px] h-[18px]" />, label: "Kalender" },
-  { to: "/uploads", icon: <Upload className="w-[18px] h-[18px]" />, label: "Projekt-Uploads" },
-  { to: "/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
-  { to: "/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
+  { to: "/admin", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, label: "Dashboard" },
+  { to: "/admin/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kunden" },
+  { to: "/admin/auftraege", icon: <Package className="w-[18px] h-[18px]" />, label: "Aufträge" },
+  { to: "/admin/anfragen", icon: <MessageSquare className="w-[18px] h-[18px]" />, label: "Anfragen" },
+  { to: "/admin/teile", icon: <Library className="w-[18px] h-[18px]" />, label: "Teile-Bibliothek" },
+  { to: "/admin/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
+  { to: "/admin/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
+  { to: "/admin/kalender", icon: <CalendarDays className="w-[18px] h-[18px]" />, label: "Kalender" },
+  { to: "/admin/uploads", icon: <Upload className="w-[18px] h-[18px]" />, label: "Projekt-Uploads" },
+  { to: "/admin/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
+  { to: "/admin/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
 ];
 
 const websiteNavItems = [
-  { to: "/website/bestellungen", icon: <Globe className="w-[18px] h-[18px]" />, label: "Bestellungen" },
-  { to: "/website/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kundenverwaltung" },
-  { to: "/website/email-templates", icon: <Mail className="w-[18px] h-[18px]" />, label: "E-Mail Templates" },
-  { to: "/website/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Website-Einstellungen" },
+  { to: "/admin/website/bestellungen", icon: <Globe className="w-[18px] h-[18px]" />, label: "Bestellungen" },
+  { to: "/admin/website/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kundenverwaltung" },
+  { to: "/admin/website/email-templates", icon: <Mail className="w-[18px] h-[18px]" />, label: "E-Mail Templates" },
+  { to: "/admin/website/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Website-Einstellungen" },
 ];
 
 // Bottom nav shows only the 5 most important items on mobile
 const mobileBottomNav = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/auftraege", icon: Package, label: "Aufträge" },
-  { to: "/anfragen", icon: MessageSquare, label: "Anfragen" },
-  { to: "/kunden", icon: Users, label: "Kunden" },
-  { to: "/kalkulator", icon: Calculator, label: "Kalkulator" },
+  { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/admin/auftraege", icon: Package, label: "Aufträge" },
+  { to: "/admin/anfragen", icon: MessageSquare, label: "Anfragen" },
+  { to: "/admin/kunden", icon: Users, label: "Kunden" },
+  { to: "/admin/kalkulator", icon: Calculator, label: "Kalkulator" },
 ];
 
 function MobileLayout() {
@@ -87,7 +87,7 @@ function MobileLayout() {
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    end={item.to === "/"}
+                    end={item.to === "/admin"}
                     onClick={() => setMenuOpen(false)}
                     className={({ isActive }) =>
                       cn(
@@ -146,12 +146,12 @@ function MobileLayout() {
       {/* Bottom navigation bar */}
       <nav className="fixed bottom-0 left-0 right-0 bg-sidebar border-t border-sidebar-border flex items-center justify-around px-2 py-2 z-50">
         {mobileBottomNav.map(({ to, icon: Icon, label }) => {
-          const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+          const isActive = to === "/admin" ? location.pathname === "/admin" : location.pathname.startsWith(to);
           return (
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
+              end={to === "/admin"}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[52px]",
                 isActive ? "text-primary" : "text-muted-foreground"

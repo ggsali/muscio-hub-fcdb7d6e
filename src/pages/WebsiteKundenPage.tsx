@@ -83,7 +83,7 @@ export default function WebsiteKundenPage() {
 
     toast.success(`${k.full_name || "Kunde"} wurde importiert`);
     loadWebsiteKunden();
-    navigate(`/kunden/${data.id}`);
+    navigate(`/admin/kunden/${data.id}`);
   };
 
   return (
@@ -157,7 +157,7 @@ export default function WebsiteKundenPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => navigate(`/kunden/${k.customerId}`)}
+                    onClick={() => navigate(`/admin/kunden/${k.customerId}`)}
                     className="gap-1.5 text-xs"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />

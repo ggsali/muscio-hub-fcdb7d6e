@@ -68,7 +68,7 @@ export default function KalkulatorPage() {
           </div>
           <div className="flex gap-2 pt-2">
             <Button
-              onClick={() => navigate("/auftraege/neu")}
+              onClick={() => navigate("/admin/auftraege/neu")}
               className="bg-primary hover:bg-primary/90 flex-1"
             >
               Als Auftrag speichern

@@ -78,7 +78,7 @@ export default function WebsiteOrdersPage() {
             {filtered.map(o => (
               <div
                 key={o.id}
-                onClick={() => navigate(`/auftraege/${o.id}`)}
+                onClick={() => navigate(`/admin/auftraege/${o.id}`)}
                 className="p-4 flex items-center gap-4 cursor-pointer hover:bg-muted/30 transition-colors"
               >
                 <div className="flex-1 min-w-0">

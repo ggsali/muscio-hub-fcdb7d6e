@@ -87,7 +87,7 @@ export default function AuftraegePage() {
           <h1 className="text-xl md:text-2xl font-bold">Aufträge</h1>
           <p className="text-muted-foreground text-sm mt-0.5">{orders.length} Aufträge total</p>
         </div>
-        <Button onClick={() => navigate("/auftraege/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
+        <Button onClick={() => navigate("/admin/auftraege/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
           <Plus className="w-4 h-4" />
           {!isMobile && "Neuer Auftrag"}
           {isMobile && "Neu"}
@@ -143,7 +143,7 @@ export default function AuftraegePage() {
               <div
                 key={o.id}
                 className="bg-card border border-border rounded-xl p-4 cursor-pointer active:bg-muted/40 transition-colors"
-                onClick={() => navigate(`/auftraege/${o.id}`)}
+                onClick={() => navigate(`/admin/auftraege/${o.id}`)}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -201,7 +201,7 @@ export default function AuftraegePage() {
                   <tr
                     key={o.id}
                     className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer"
-                    onClick={() => navigate(`/auftraege/${o.id}`)}
+                    onClick={() => navigate(`/admin/auftraege/${o.id}`)}
                   >
                     <td className="px-4 py-3 text-muted-foreground">{o.datum}</td>
                     <td className="px-4 py-3 font-medium">{o.customer_name}</td>

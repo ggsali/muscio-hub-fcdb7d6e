@@ -280,7 +280,7 @@ export default function AuftragDetailPage() {
     await supabase.from("order_status_log").delete().eq("order_id", id);
     await supabase.from("orders").delete().eq("id", id);
     toast({ title: "Auftrag gelöscht" });
-    navigate("/auftraege");
+    navigate("/admin/auftraege");
   };
 
   // Totals
@@ -569,7 +569,7 @@ export default function AuftragDetailPage() {
 
     setSaving(false);
     if (isNew) {
-      navigate(`/auftraege/${orderId}`, { replace: true });
+      navigate(`/admin/auftraege/${orderId}`, { replace: true });
     } else {
       // Reload parts from DB to sync IDs, without losing local UI state
       const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!);
@@ -584,7 +584,7 @@ export default function AuftragDetailPage() {
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-2 md:gap-4">
-        <button onClick={() => navigate("/auftraege")} className="text-muted-foreground hover:text-foreground transition-colors p-1 shrink-0">
+        <button onClick={() => navigate("/admin/auftraege")} className="text-muted-foreground hover:text-foreground transition-colors p-1 shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-lg md:text-2xl font-bold flex-1 min-w-0 truncate">{isNew ? "Neuer Auftrag" : "Auftrag bearbeiten"}</h1>
