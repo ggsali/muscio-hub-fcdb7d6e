@@ -1,0 +1,84 @@
+import React, { useEffect, useState } from "react";
+import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
+import { Box, LayoutDashboard, Package, User, LogOut, ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Session } from "@supabase/supabase-js";
+
+const items = [
+  { to: "/portal", label: "Übersicht", icon: LayoutDashboard, end: true },
+  { to: "/portal/bestellungen", label: "Meine Bestellungen", icon: Package },
+  { to: "/portal/profil", label: "Profil", icon: User },
+];
+
+export default function PortalLayout() {
+  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const role = useUserRole(session?.user.id);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session === null) navigate("/login", { replace: true });
+  }, [session, navigate]);
+
+  if (session === undefined || role === undefined) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  }
+  if (!session) return null;
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="bg-sidebar border-b border-border">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <Box className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <div className="leading-tight">
+              <div className="font-bold text-sm">3DMuscio</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Mein Konto</div>
+            </div>
+          </Link>
+          <div className="flex items-center gap-2">
+            {role === "admin" && (
+              <button onClick={() => navigate("/admin")} className="text-xs text-primary hover:underline">Zum Admin-Dashboard</button>
+            )}
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5">
+              <ArrowLeft className="w-4 h-4" /> Website
+            </Link>
+            <button onClick={() => supabase.auth.signOut()} className="text-sm text-muted-foreground hover:text-destructive flex items-center gap-1.5 ml-2">
+              <LogOut className="w-4 h-4" /> Abmelden
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto w-full flex-1 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6 p-4 md:p-6">
+        <nav className="space-y-1">
+          {items.map(it => (
+            <NavLink
+              key={it.to}
+              to={it.to}
+              end={it.end}
+              className={({ isActive }) => cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <it.icon className="w-4 h-4" /> {it.label}
+            </NavLink>
+          ))}
+        </nav>
+        <main className="min-w-0">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
