@@ -201,6 +201,20 @@ function DesktopLayout() {
               collapsed={collapsed}
             />
           ))}
+          <div className="pt-3 mt-2 border-t border-sidebar-border">
+            {!collapsed && (
+              <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Website</p>
+            )}
+            {websiteNavItems.map(item => (
+              <SidebarNavLink
+                key={item.to}
+                to={item.to}
+                icon={item.icon}
+                label={item.label}
+                collapsed={collapsed}
+              />
+            ))}
+          </div>
         </nav>
         <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
           <button
