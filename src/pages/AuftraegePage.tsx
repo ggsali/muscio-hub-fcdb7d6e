@@ -205,6 +205,13 @@ export default function AuftraegePage() {
                   >
                     <td className="px-4 py-3 text-muted-foreground">{o.datum}</td>
                     <td className="px-4 py-3 font-medium">{o.customer_name}</td>
+                    <td className="px-4 py-3">
+                      {o.source === "website" ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website</span>
+                      ) : (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Manuell</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{o.beschreibung || "—"}</td>
                     <td className="px-4 py-3 num-right">{formatCHF(o.umsatz_total)}</td>
                     <td className="px-4 py-3 num-right text-destructive">{formatCHF(o.kosten_total)}</td>
