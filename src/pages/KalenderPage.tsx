@@ -296,7 +296,7 @@ export default function KalenderPage() {
                 return (
                   <div
                     key={o.id}
-                    onClick={() => navigate(`/auftraege/${o.id}`)}
+                    onClick={() => navigate(`/admin/auftraege/${o.id}`)}
                     className="flex items-center justify-between p-3 bg-background border border-border rounded-lg cursor-pointer hover:border-primary/40 transition-colors group"
                   >
                     <div className="flex items-center gap-3 min-w-0">

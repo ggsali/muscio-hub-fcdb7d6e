@@ -145,7 +145,7 @@ export default function KundeDetailPage() {
 
     if (isNew) {
       const { data } = await supabase.from("customers").insert(payload).select().single();
-      if (data) navigate(`/kunden/${data.id}`, { replace: true });
+      if (data) navigate(`/admin/kunden/${data.id}`, { replace: true });
     } else {
       await supabase.from("customers").update(payload).eq("id", id!);
       setEditing(false);
@@ -165,7 +165,7 @@ export default function KundeDetailPage() {
     await supabase.from("inquiries").delete().eq("customer_id", id);
     await supabase.from("orders").delete().eq("customer_id", id);
     await supabase.from("customers").delete().eq("id", id);
-    navigate("/kunden");
+    navigate("/admin/kunden");
   };
 
   const field = (label: string, key: keyof Customer, placeholder?: string, colSpan = 1) => (
@@ -184,7 +184,7 @@ export default function KundeDetailPage() {
   return (
     <div className="p-6 space-y-6 animate-fade-in">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate("/kunden")} className="text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={() => navigate("/admin/kunden")} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
@@ -195,7 +195,7 @@ export default function KundeDetailPage() {
         </div>
         {!isNew && !editing && (
           <div className="flex items-center gap-2">
-            <Button onClick={() => navigate(`/auftraege/neu?customer_id=${id}`)} className="gap-2" size="sm">
+            <Button onClick={() => navigate(`/admin/auftraege/neu?customer_id=${id}`)} className="gap-2" size="sm">
               <Plus className="w-4 h-4" />Neuer Auftrag
             </Button>
             <DropdownMenu>
@@ -351,7 +351,7 @@ export default function KundeDetailPage() {
               </thead>
               <tbody>
                 {orders.map(o => (
-                  <tr key={o.id} className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer" onClick={() => navigate(`/auftraege/${o.id}`)}>
+                  <tr key={o.id} className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer" onClick={() => navigate(`/admin/auftraege/${o.id}`)}>
                     <td className="px-5 py-3 text-muted-foreground">{o.datum}</td>
                     <td className="px-5 py-3 font-medium">{o.name || "—"}</td>
                     <td className="px-5 py-3 text-muted-foreground">{o.beschreibung || "—"}</td>
@@ -397,7 +397,7 @@ export default function KundeDetailPage() {
                       <td className="px-5 py-3 text-muted-foreground">{formatBytes(f.file_size_bytes)}</td>
                       <td className="px-5 py-3 text-muted-foreground">
                         {f.order_id ? (
-                          <button onClick={() => navigate(`/auftraege/${f.order_id}`)} className="text-primary hover:underline text-xs">
+                          <button onClick={() => navigate(`/admin/auftraege/${f.order_id}`)} className="text-primary hover:underline text-xs">
                             Auftrag öffnen
                           </button>
                         ) : "—"}

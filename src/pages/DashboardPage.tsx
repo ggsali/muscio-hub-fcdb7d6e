@@ -130,7 +130,7 @@ export default function DashboardPage() {
           <h1 className="text-xl md:text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground text-sm mt-0.5">Übersicht deines Business</p>
         </div>
-        <Button onClick={() => navigate("/auftraege/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
+        <Button onClick={() => navigate("/admin/auftraege/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
           <Plus className="w-4 h-4" />
           {isMobile ? "Neu" : "Neuer Auftrag"}
         </Button>
@@ -227,7 +227,7 @@ export default function DashboardPage() {
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="px-4 md:px-5 py-3 border-b border-border flex items-center justify-between">
           <h2 className="font-semibold text-sm">Letzte Aufträge</h2>
-          <button onClick={() => navigate("/auftraege")} className="text-xs text-primary hover:underline">Alle anzeigen</button>
+          <button onClick={() => navigate("/admin/auftraege")} className="text-xs text-primary hover:underline">Alle anzeigen</button>
         </div>
         {loading ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
               <div
                 key={order.id}
                 className="flex items-center justify-between px-4 py-3 cursor-pointer active:bg-muted/30 transition-colors"
-                onClick={() => navigate(`/auftraege/${order.id}`)}
+                onClick={() => navigate(`/admin/auftraege/${order.id}`)}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export default function DashboardPage() {
             </thead>
             <tbody>
               {recentOrders.map(order => (
-                <tr key={order.id} className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer" onClick={() => navigate(`/auftraege/${order.id}`)}>
+                <tr key={order.id} className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer" onClick={() => navigate(`/admin/auftraege/${order.id}`)}>
                   <td className="px-5 py-3">{order.customer_name}</td>
                   <td className="px-5 py-3 text-muted-foreground">{order.beschreibung}</td>
                   <td className="px-5 py-3 num-right">{formatCHF(order.umsatz_total)}</td>

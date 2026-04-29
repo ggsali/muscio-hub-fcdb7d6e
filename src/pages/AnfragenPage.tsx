@@ -116,7 +116,7 @@ function InquiryDetail({
 
       <div className="space-y-2 pt-2 border-t border-border">
         {selected.order_id ? (
-          <Button size="sm" className="w-full gap-2" variant="outline" onClick={() => navigate(`/auftraege/${selected.order_id}`)}>
+          <Button size="sm" className="w-full gap-2" variant="outline" onClick={() => navigate(`/admin/auftraege/${selected.order_id}`)}>
             <ExternalLink className="w-3.5 h-3.5" /> Zum Auftrag
           </Button>
         ) : (
@@ -130,7 +130,7 @@ function InquiryDetail({
           </a>
         </Button>
         {selected.customer_id && (
-          <Button size="sm" className="w-full gap-2" variant="ghost" onClick={() => navigate(`/kunden/${selected.customer_id}`)}>
+          <Button size="sm" className="w-full gap-2" variant="ghost" onClick={() => navigate(`/admin/kunden/${selected.customer_id}`)}>
             <User className="w-3.5 h-3.5" /> Kundenprofil öffnen
           </Button>
         )}
@@ -194,7 +194,7 @@ export default function AnfragenPage() {
     if (order) {
       await (supabase.from as any)("inquiries").update({ order_id: order.id, status: "In Bearbeitung" }).eq("id", selected.id);
       toast({ title: "Auftrag erstellt" });
-      navigate(`/auftraege/${order.id}`);
+      navigate(`/admin/auftraege/${order.id}`);
     }
   };
 

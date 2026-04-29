@@ -93,7 +93,7 @@ export default function TeileBibliothekPage() {
           status: "Ausstehend",
           notizen: "",
         });
-        navigate(`/auftraege/${order.id}`);
+        navigate(`/admin/auftraege/${order.id}`);
       }
     } finally {
       setReordering(null);
@@ -188,7 +188,7 @@ export default function TeileBibliothekPage() {
                   <td className="px-5 py-3 num-right text-primary">{formatCHF(p.preis_pro_stueck)}</td>
                   <td className="px-5 py-3 text-muted-foreground">{new Date(p.created_at).toLocaleDateString("de-CH")}</td>
                   <td className="px-5 py-3">
-                    <button onClick={() => navigate(`/auftraege/${p.order_id}`)} className="text-xs text-primary hover:underline">
+                    <button onClick={() => navigate(`/admin/auftraege/${p.order_id}`)} className="text-xs text-primary hover:underline">
                       Anzeigen
                     </button>
                   </td>
