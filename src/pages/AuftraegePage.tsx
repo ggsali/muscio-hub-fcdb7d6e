@@ -147,9 +147,12 @@ export default function AuftraegePage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-semibold text-sm truncate">{o.customer_name}</span>
                       <StatusBadge status={o.status} />
+                      {o.source === "website" && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website</span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{o.beschreibung || "—"}</p>
                     <p className="text-xs text-muted-foreground mt-1">{o.datum}</p>
