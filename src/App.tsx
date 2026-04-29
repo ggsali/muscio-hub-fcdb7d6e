@@ -27,7 +27,10 @@ import UploadLinksPage from "@/pages/UploadLinksPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
 import ChatPage from "@/pages/ChatPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
-
+import WebsiteBestellungenPage from "@/pages/WebsiteBestellungenPage";
+import WebsiteKundenAdminPage from "@/pages/WebsiteKundenAdminPage";
+import EmailTemplatesPage from "@/pages/EmailTemplatesPage";
+import WebsiteEinstellungenPage from "@/pages/WebsiteEinstellungenPage";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +70,10 @@ function AuthGate() {
             <Route path="/kalender" element={<KalenderPage />} />
             <Route path="/uploads" element={<UploadLinksPage />} />
             <Route path="/chat" element={<ChatPage />} />
+            <Route path="/website/bestellungen" element={<WebsiteBestellungenPage />} />
+            <Route path="/website/kunden" element={<WebsiteKundenAdminPage />} />
+            <Route path="/website/email-templates" element={<EmailTemplatesPage />} />
+            <Route path="/website/einstellungen" element={<WebsiteEinstellungenPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

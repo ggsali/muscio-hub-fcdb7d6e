@@ -151,6 +151,7 @@ export type Database = {
         Row: {
           adresse: string | null
           aktiv: boolean | null
+          auth_user_id: string | null
           created_at: string | null
           email: string | null
           firma: string | null
@@ -168,6 +169,7 @@ export type Database = {
         Insert: {
           adresse?: string | null
           aktiv?: boolean | null
+          auth_user_id?: string | null
           created_at?: string | null
           email?: string | null
           firma?: string | null
@@ -185,6 +187,7 @@ export type Database = {
         Update: {
           adresse?: string | null
           aktiv?: boolean | null
+          auth_user_id?: string | null
           created_at?: string | null
           email?: string | null
           firma?: string | null
@@ -198,6 +201,30 @@ export type Database = {
           strasse?: string | null
           telefon?: string | null
           vorname?: string | null
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          aktiv: boolean
+          betreff: string
+          nachricht: string
+          status_key: string
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          betreff: string
+          nachricht: string
+          status_key: string
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          betreff?: string
+          nachricht?: string
+          status_key?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -400,7 +427,9 @@ export type Database = {
           kosten_total: number | null
           marge: number | null
           name: string | null
+          notes_internal: string | null
           preset_id: string | null
+          source: string
           status: string | null
           tracking_nr: string | null
           umsatz_total: number | null
@@ -420,7 +449,9 @@ export type Database = {
           kosten_total?: number | null
           marge?: number | null
           name?: string | null
+          notes_internal?: string | null
           preset_id?: string | null
+          source?: string
           status?: string | null
           tracking_nr?: string | null
           umsatz_total?: number | null
@@ -440,7 +471,9 @@ export type Database = {
           kosten_total?: number | null
           marge?: number | null
           name?: string | null
+          notes_internal?: string | null
           preset_id?: string | null
+          source?: string
           status?: string | null
           tracking_nr?: string | null
           umsatz_total?: number | null
@@ -861,6 +894,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      website_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
       }
     }
     Views: {

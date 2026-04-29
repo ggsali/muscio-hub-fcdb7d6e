@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
-  LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle
+  LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle,
+  Globe, Mail
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,13 @@ const navItems = [
   { to: "/uploads", icon: <Upload className="w-[18px] h-[18px]" />, label: "Projekt-Uploads" },
   { to: "/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
   { to: "/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
+];
+
+const websiteNavItems = [
+  { to: "/website/bestellungen", icon: <Globe className="w-[18px] h-[18px]" />, label: "Bestellungen" },
+  { to: "/website/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kundenverwaltung" },
+  { to: "/website/email-templates", icon: <Mail className="w-[18px] h-[18px]" />, label: "E-Mail Templates" },
+  { to: "/website/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Website-Einstellungen" },
 ];
 
 // Bottom nav shows only the 5 most important items on mobile
@@ -94,6 +102,27 @@ function MobileLayout() {
                     <span>{item.label}</span>
                   </NavLink>
                 ))}
+                <div className="pt-3 mt-2 border-t border-sidebar-border">
+                  <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Website</p>
+                  {websiteNavItems.map(item => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors",
+                          isActive
+                            ? "bg-primary/15 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                        )
+                      }
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
               </nav>
               <div className="px-2 py-3 border-t border-sidebar-border">
                 <button
@@ -172,6 +201,20 @@ function DesktopLayout() {
               collapsed={collapsed}
             />
           ))}
+          <div className="pt-3 mt-2 border-t border-sidebar-border">
+            {!collapsed && (
+              <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Website</p>
+            )}
+            {websiteNavItems.map(item => (
+              <SidebarNavLink
+                key={item.to}
+                to={item.to}
+                icon={item.icon}
+                label={item.label}
+                collapsed={collapsed}
+              />
+            ))}
+          </div>
         </nav>
         <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
           <button

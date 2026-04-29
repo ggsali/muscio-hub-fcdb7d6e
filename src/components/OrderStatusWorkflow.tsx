@@ -87,11 +87,24 @@ export default function OrderStatusWorkflow({
     await commitStatus(newStatus, null);
   };
 
+  const STATUS_TO_TEMPLATE: Record<string, string> = {
+    "In Bearbeitung": "im_druck",
+    "Geliefert": "versandt",
+  };
+
   const commitStatus = async (newStatus: string, notiz: string | null) => {
     await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: newStatus, notiz });
     onStatusChange(newStatus);
     await loadLog();
     setShowTrackingInput(false);
+    const tplKey = STATUS_TO_TEMPLATE[newStatus];
+    if (tplKey) {
+      try {
+        await supabase.functions.invoke("send-status-email", {
+          body: { order_id: orderId, status_key: tplKey },
+        });
+      } catch (e) { console.error("send-status-email failed", e); }
+    }
   };
 
   const handleConfirmDelivery = async () => {

@@ -22,10 +22,12 @@ interface Order {
   gewinn_total: number;
   marge: number;
   status: string;
+  source: string;
   customer_name: string;
 }
 
 const STATUS_OPTIONS = ["Alle", "Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"] as const;
+const SOURCE_OPTIONS = ["Alle", "Manuell", "Website"] as const;
 
 export default function AuftraegePage() {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ export default function AuftraegePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Alle");
+  const [sourceFilter, setSourceFilter] = useState<typeof SOURCE_OPTIONS[number]>("Alle");
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -70,7 +73,11 @@ export default function AuftraegePage() {
       (o.beschreibung || "").toLowerCase().includes(search.toLowerCase()) ||
       o.customer_name.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "Alle" || o.status === filter;
-    return matchSearch && matchFilter;
+    const matchSource =
+      sourceFilter === "Alle" ||
+      (sourceFilter === "Website" && o.source === "website") ||
+      (sourceFilter === "Manuell" && (o.source === "manual" || !o.source));
+    return matchSearch && matchFilter && matchSource;
   });
 
   return (
@@ -109,6 +116,18 @@ export default function AuftraegePage() {
               {s}
             </button>
           ))}
+          <span className="w-px bg-border mx-1" />
+          {SOURCE_OPTIONS.map(s => (
+            <button
+              key={s}
+              onClick={() => setSourceFilter(s)}
+              className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                sourceFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              {s === "Alle" ? "Quelle: Alle" : s}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -128,9 +147,12 @@ export default function AuftraegePage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-semibold text-sm truncate">{o.customer_name}</span>
                       <StatusBadge status={o.status} />
+                      {o.source === "website" && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website</span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{o.beschreibung || "—"}</p>
                     <p className="text-xs text-muted-foreground mt-1">{o.datum}</p>
@@ -167,7 +189,7 @@ export default function AuftraegePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  {["Datum", "Kunde", "Beschreibung", "Umsatz", "Kosten", "Gewinn", "Marge", "Status", ""].map(h => (
+                  {["Datum", "Kunde", "Quelle", "Beschreibung", "Umsatz", "Kosten", "Gewinn", "Marge", "Status", ""].map(h => (
                     <th key={h} className={`px-4 py-3 text-muted-foreground font-medium ${["Umsatz", "Kosten", "Gewinn", "Marge"].includes(h) ? "text-right" : "text-left"}`}>
                       {h}
                     </th>
@@ -183,6 +205,13 @@ export default function AuftraegePage() {
                   >
                     <td className="px-4 py-3 text-muted-foreground">{o.datum}</td>
                     <td className="px-4 py-3 font-medium">{o.customer_name}</td>
+                    <td className="px-4 py-3">
+                      {o.source === "website" ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website</span>
+                      ) : (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Manuell</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{o.beschreibung || "—"}</td>
                     <td className="px-4 py-3 num-right">{formatCHF(o.umsatz_total)}</td>
                     <td className="px-4 py-3 num-right text-destructive">{formatCHF(o.kosten_total)}</td>

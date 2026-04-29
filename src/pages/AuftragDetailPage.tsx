@@ -99,6 +99,9 @@ export default function AuftragDetailPage() {
   const [geplantBis, setGeplantBis] = useState("");
   const [expressKosten, setExpressKosten] = useState<number>(0);
   const [expressLabel, setExpressLabel] = useState<string>("");
+  const [source, setSource] = useState<string>("manual");
+  const [notesInternal, setNotesInternal] = useState<string>("");
+  const [pendingStatusEmail, setPendingStatusEmail] = useState<string | null>(null);
   const [confirmEmailType, setConfirmEmailType] = useState<"rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig" | null>(null);
   const [withDetails, setWithDetails] = useState(false);
   const [withPaymentLink, setWithPaymentLink] = useState(false);
@@ -150,6 +153,8 @@ export default function AuftragDetailPage() {
           setGeplantBis((o as any).geplant_bis || "");
           setExpressKosten(Number((o as any).express_kosten) || 0);
           setExpressLabel((o as any).express_label || "");
+          setSource((o as any).source || "manual");
+          setNotesInternal((o as any).notes_internal || "");
           // Restore preset if saved
           const savedPresetId = (o as any).preset_id;
           if (savedPresetId) {
@@ -528,6 +533,7 @@ export default function AuftragDetailPage() {
       preset_id: selectedPresetId || null,
       express_kosten: expressBetrag,
       express_label: expressLabel || null,
+      notes_internal: notesInternal || null,
     };
 
     let orderId = id === "neu" ? null : id;
@@ -925,8 +931,17 @@ export default function AuftragDetailPage() {
             </select>
           </div>
           <div className="md:col-span-4 space-y-1.5">
-            <Label>Beschreibung</Label>
+            <Label className="flex items-center gap-2">
+              Beschreibung
+              {source === "website" && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website-Bestellung</span>
+              )}
+            </Label>
             <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={2} />
+          </div>
+          <div className="md:col-span-4 space-y-1.5">
+            <Label>Interne Notizen <span className="text-muted-foreground font-normal text-xs">(nie für Kunden sichtbar)</span></Label>
+            <Textarea value={notesInternal} onChange={e => setNotesInternal(e.target.value)} className="bg-input border-border" rows={2} placeholder="Nur intern sichtbar..." />
           </div>
           <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-border/50">
             <div className="space-y-1.5 md:col-span-2">

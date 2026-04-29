@@ -7,3 +7,9 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.stripe-webhook]
     verify_jwt = false
+  [functions.send-status-email]
+    verify_jwt = false
+  [functions.link-website-customers]
+    verify_jwt = false
+  [functions.website-customer-admin]
+    verify_jwt = false
