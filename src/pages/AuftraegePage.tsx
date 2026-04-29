@@ -73,7 +73,11 @@ export default function AuftraegePage() {
       (o.beschreibung || "").toLowerCase().includes(search.toLowerCase()) ||
       o.customer_name.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "Alle" || o.status === filter;
-    return matchSearch && matchFilter;
+    const matchSource =
+      sourceFilter === "Alle" ||
+      (sourceFilter === "Website" && o.source === "website") ||
+      (sourceFilter === "Manuell" && (o.source === "manual" || !o.source));
+    return matchSearch && matchFilter && matchSource;
   });
 
   return (
