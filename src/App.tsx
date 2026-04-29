@@ -132,6 +132,7 @@ const App = () => (
                 <Route path="kalender" element={<KalenderPage />} />
                 <Route path="uploads" element={<UploadLinksPage />} />
                 <Route path="chat" element={<ChatPage />} />
+                <Route path="shop" element={<AdminShopPage />} />
                 <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />
                 <Route path="website/email-templates" element={<EmailTemplatesPage />} />
