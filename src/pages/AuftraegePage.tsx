@@ -116,6 +116,18 @@ export default function AuftraegePage() {
               {s}
             </button>
           ))}
+          <span className="w-px bg-border mx-1" />
+          {SOURCE_OPTIONS.map(s => (
+            <button
+              key={s}
+              onClick={() => setSourceFilter(s)}
+              className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                sourceFilter === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              {s === "Alle" ? "Quelle: Alle" : s}
+            </button>
+          ))}
         </div>
       </div>
 
