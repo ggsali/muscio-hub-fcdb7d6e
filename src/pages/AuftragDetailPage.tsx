@@ -931,8 +931,17 @@ export default function AuftragDetailPage() {
             </select>
           </div>
           <div className="md:col-span-4 space-y-1.5">
-            <Label>Beschreibung</Label>
+            <Label className="flex items-center gap-2">
+              Beschreibung
+              {source === "website" && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website-Bestellung</span>
+              )}
+            </Label>
             <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={2} />
+          </div>
+          <div className="md:col-span-4 space-y-1.5">
+            <Label>Interne Notizen <span className="text-muted-foreground font-normal text-xs">(nie für Kunden sichtbar)</span></Label>
+            <Textarea value={notesInternal} onChange={e => setNotesInternal(e.target.value)} className="bg-input border-border" rows={2} placeholder="Nur intern sichtbar..." />
           </div>
           <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-border/50">
             <div className="space-y-1.5 md:col-span-2">
