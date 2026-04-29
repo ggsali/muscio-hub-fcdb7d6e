@@ -3,13 +3,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CompanySettingsProvider } from "@/contexts/CompanySettingsContext";
-import type { Session } from "@supabase/supabase-js";
 
-import AppLayout from "@/components/AppLayout";
+import AdminGate from "@/components/AdminGate";
+import SiteLayout from "@/components/SiteLayout";
+import PortalLayout from "@/components/PortalLayout";
+
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import KundenPage from "@/pages/KundenPage";
@@ -32,53 +34,40 @@ import WebsiteKundenAdminPage from "@/pages/WebsiteKundenAdminPage";
 import EmailTemplatesPage from "@/pages/EmailTemplatesPage";
 import WebsiteEinstellungenPage from "@/pages/WebsiteEinstellungenPage";
 
+// Public website
+import HomePage from "@/pages/site/HomePage";
+import FaqPage from "@/pages/site/FaqPage";
+import ContactPage from "@/pages/site/ContactPage";
+import CalculatorOnlinePage from "@/pages/site/CalculatorOnlinePage";
+
+// Customer portal
+import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
+import PortalOrdersPage from "@/pages/portal/PortalOrdersPage";
+import PortalProfilePage from "@/pages/portal/PortalProfilePage";
+
 const queryClient = new QueryClient();
 
-function AuthGate() {
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
-
+function MaintenanceGate({ children }: { children: React.ReactNode }) {
+  const [check, setCheck] = useState<{ active: boolean; msg: string } | null>(null);
   useEffect(() => {
-    supabase.auth.onAuthStateChange((_event, s) => setSession(s));
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.from("website_settings").select("value").eq("key", "wartungsmodus").maybeSingle()
+      .then(({ data }) => {
+        const v = (data?.value as any) || {};
+        setCheck({ active: !!v.aktiv, msg: v.nachricht || "Die Website ist gerade in Wartung. Wir sind bald zurück." });
+      });
   }, []);
-
-  if (session === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (!session) return <LoginPage />;
-
+  if (!check) return <>{children}</>;
+  if (!check.active) return <>{children}</>;
   return (
-    <SettingsProvider>
-      <CompanySettingsProvider>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/kunden" element={<KundenPage />} />
-            <Route path="/kunden/:id" element={<KundeDetailPage />} />
-            <Route path="/auftraege" element={<AuftraegePage />} />
-            <Route path="/auftraege/:id" element={<AuftragDetailPage />} />
-            <Route path="/teile" element={<TeileBibliothekPage />} />
-            <Route path="/filamente" element={<FilamentePage />} />
-            <Route path="/kalkulator" element={<KalkulatorPage />} />
-            <Route path="/einstellungen" element={<EinstellungenPage />} />
-            <Route path="/anfragen" element={<AnfragenPage />} />
-            <Route path="/kalender" element={<KalenderPage />} />
-            <Route path="/uploads" element={<UploadLinksPage />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/website/bestellungen" element={<WebsiteBestellungenPage />} />
-            <Route path="/website/kunden" element={<WebsiteKundenAdminPage />} />
-            <Route path="/website/email-templates" element={<EmailTemplatesPage />} />
-            <Route path="/website/einstellungen" element={<WebsiteEinstellungenPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </CompanySettingsProvider>
-    </SettingsProvider>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+      <div className="max-w-md text-center bg-card border border-border rounded-xl p-8">
+        <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center mx-auto mb-4">
+          <span className="text-primary text-xl">🛠</span>
+        </div>
+        <h1 className="text-xl font-bold mb-2">Wartungsarbeiten</h1>
+        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{check.msg}</p>
+      </div>
+    </div>
   );
 }
 
@@ -88,12 +77,71 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Public pages – no auth required */}
-          <Route path="/upload/:token" element={<ProjectUploadPage />} />
-          <Route path="/payment-success" element={<PaymentSuccessPage />} />
-          <Route path="*" element={<AuthGate />} />
-        </Routes>
+        <SettingsProvider>
+          <CompanySettingsProvider>
+            <Routes>
+              {/* Public website */}
+              <Route element={<MaintenanceGate><SiteLayout /></MaintenanceGate>}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/kalkulator-online" element={<CalculatorOnlinePage />} />
+                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/kontakt" element={<ContactPage />} />
+              </Route>
+
+              {/* Auth */}
+              <Route path="/login" element={<LoginPage />} />
+
+              {/* Public-flow pages (kein Layout) */}
+              <Route path="/upload/:token" element={<ProjectUploadPage />} />
+              <Route path="/payment-success" element={<PaymentSuccessPage />} />
+
+              {/* Customer portal */}
+              <Route path="/portal" element={<PortalLayout />}>
+                <Route index element={<PortalDashboardPage />} />
+                <Route path="bestellungen" element={<PortalOrdersPage />} />
+                <Route path="profil" element={<PortalProfilePage />} />
+              </Route>
+
+              {/* Admin dashboard – everything mounted under /admin */}
+              <Route path="/admin" element={<AdminGate />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="kunden" element={<KundenPage />} />
+                <Route path="kunden/:id" element={<KundeDetailPage />} />
+                <Route path="auftraege" element={<AuftraegePage />} />
+                <Route path="auftraege/:id" element={<AuftragDetailPage />} />
+                <Route path="teile" element={<TeileBibliothekPage />} />
+                <Route path="filamente" element={<FilamentePage />} />
+                <Route path="kalkulator" element={<KalkulatorPage />} />
+                <Route path="einstellungen" element={<EinstellungenPage />} />
+                <Route path="anfragen" element={<AnfragenPage />} />
+                <Route path="kalender" element={<KalenderPage />} />
+                <Route path="uploads" element={<UploadLinksPage />} />
+                <Route path="chat" element={<ChatPage />} />
+                <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
+                <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />
+                <Route path="website/email-templates" element={<EmailTemplatesPage />} />
+                <Route path="website/einstellungen" element={<WebsiteEinstellungenPage />} />
+              </Route>
+
+              {/* Legacy redirects → admin */}
+              <Route path="/auftraege" element={<Navigate to="/admin/auftraege" replace />} />
+              <Route path="/auftraege/:id" element={<Navigate to="/admin/auftraege" replace />} />
+              <Route path="/kunden" element={<Navigate to="/admin/kunden" replace />} />
+              <Route path="/kunden/:id" element={<Navigate to="/admin/kunden" replace />} />
+              <Route path="/teile" element={<Navigate to="/admin/teile" replace />} />
+              <Route path="/filamente" element={<Navigate to="/admin/filamente" replace />} />
+              <Route path="/kalkulator" element={<Navigate to="/admin/kalkulator" replace />} />
+              <Route path="/einstellungen" element={<Navigate to="/admin/einstellungen" replace />} />
+              <Route path="/anfragen" element={<Navigate to="/admin/anfragen" replace />} />
+              <Route path="/kalender" element={<Navigate to="/admin/kalender" replace />} />
+              <Route path="/uploads" element={<Navigate to="/admin/uploads" replace />} />
+              <Route path="/chat" element={<Navigate to="/admin/chat" replace />} />
+              <Route path="/website/*" element={<Navigate to="/admin" replace />} />
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </CompanySettingsProvider>
+        </SettingsProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
