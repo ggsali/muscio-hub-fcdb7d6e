@@ -153,6 +153,8 @@ export default function AuftragDetailPage() {
           setGeplantBis((o as any).geplant_bis || "");
           setExpressKosten(Number((o as any).express_kosten) || 0);
           setExpressLabel((o as any).express_label || "");
+          setSource((o as any).source || "manual");
+          setNotesInternal((o as any).notes_internal || "");
           // Restore preset if saved
           const savedPresetId = (o as any).preset_id;
           if (savedPresetId) {
