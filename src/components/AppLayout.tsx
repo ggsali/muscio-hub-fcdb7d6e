@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
-  LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle
+  LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle,
+  Globe, Mail
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,13 @@ const navItems = [
   { to: "/uploads", icon: <Upload className="w-[18px] h-[18px]" />, label: "Projekt-Uploads" },
   { to: "/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
   { to: "/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
+];
+
+const websiteNavItems = [
+  { to: "/website/bestellungen", icon: <Globe className="w-[18px] h-[18px]" />, label: "Bestellungen" },
+  { to: "/website/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kundenverwaltung" },
+  { to: "/website/email-templates", icon: <Mail className="w-[18px] h-[18px]" />, label: "E-Mail Templates" },
+  { to: "/website/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Website-Einstellungen" },
 ];
 
 // Bottom nav shows only the 5 most important items on mobile
