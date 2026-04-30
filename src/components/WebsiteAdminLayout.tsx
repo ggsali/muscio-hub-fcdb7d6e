@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Session } from "@supabase/supabase-js";
 import {
-  ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake, UserCircle2, Navigation,
+  ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake, UserCircle2, Navigation, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/website-admin/reviews", label: "Bewertungen", icon: Star },
   { to: "/website-admin/projekte", label: "Projekte", icon: FolderKanban },
   { to: "/website-admin/team", label: "Team", icon: UserCircle2 },
+  { to: "/website-admin/timeline", label: "Zeitleiste", icon: Clock },
   { to: "/website-admin/partner", label: "Partner", icon: Handshake },
   { to: "/website-admin/navigation", label: "Navigation", icon: Navigation },
   { to: "/website-admin/kunden", label: "Website-Kunden", icon: Users2 },
