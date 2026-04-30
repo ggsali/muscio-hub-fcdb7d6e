@@ -30,13 +30,26 @@ export default function LoginPage() {
   
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) return;
+    const redirect = async (userId: string) => {
       const { data: roles } = await supabase
-        .from("user_roles").select("role").eq("user_id", data.session.user.id);
+        .from("user_roles").select("role").eq("user_id", userId);
       if (roles?.some((r: any) => r.role === "admin")) navigate("/admin", { replace: true });
       else navigate("/portal", { replace: true });
+    };
+
+    // Listener FIRST so we catch SIGNED_IN events from email confirmation links
+    // (also fires when the user confirms their email in another tab on the same device)
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") && session) {
+        redirect(session.user.id);
+      }
     });
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) redirect(data.session.user.id);
+    });
+
+    return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
