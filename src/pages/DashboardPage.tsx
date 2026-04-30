@@ -60,8 +60,13 @@ export default function DashboardPage() {
     async function load() {
       const { data: orders } = await supabase
         .from("orders")
-        .select("*, customers(name)")
+        .select("*, customers(name, vorname, firma, email)")
         .order("datum", { ascending: false });
+
+      const fullName = (c: any) =>
+        c
+          ? [c.vorname, c.name].filter(Boolean).join(" ").trim() || c.firma || c.email || "Kunde ohne Name"
+          : "Kein Kunde";
 
       if (orders) {
         const abgeschlossen = orders.filter(o => o.status === "Abgeschlossen");
@@ -77,10 +82,10 @@ export default function DashboardPage() {
         const recent = orders.slice(0, 5).map(o => ({
           id: o.id,
           datum: o.datum,
-          beschreibung: o.beschreibung || "—",
+          beschreibung: o.name || o.beschreibung || "Ohne Titel",
           umsatz_total: o.umsatz_total || 0,
           status: o.status,
-          customer_name: (o.customers as any)?.name || "Kein Kunde",
+          customer_name: fullName(o.customers),
         }));
         setRecentOrders(recent);
 
@@ -101,7 +106,7 @@ export default function DashboardPage() {
 
         const kundeMap: Record<string, number> = {};
         orders.forEach(o => {
-          const name = (o.customers as any)?.name || "Unbekannt";
+          const name = fullName(o.customers);
           if (!kundeMap[name]) kundeMap[name] = 0;
           kundeMap[name] += o.umsatz_total || 0;
         });
