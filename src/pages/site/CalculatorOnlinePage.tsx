@@ -41,14 +41,30 @@ interface Part {
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
 const SHIPPING_COST = 8;
-const MWST = 0.081;
 
 const CalculatorOnlinePage = () => {
   const [parts, setParts] = useState<Part[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setIsLoggedIn(true);
+      const { data: profile } = await supabase
+        .from("profiles").select("full_name, phone").eq("user_id", user.id).maybeSingle();
+      setForm(f => ({
+        ...f,
+        name: profile?.full_name || user.user_metadata?.full_name || "",
+        email: user.email || "",
+        phone: profile?.phone || user.user_metadata?.phone || "",
+      }));
+    })();
+  }, []);
 
   const addFile = useCallback((file: File) => {
     // Schätzung: einfache Volumen-Heuristik basierend auf Dateigröße
