@@ -157,6 +157,8 @@ const App = () => (
                 <Route path="reviews" element={<ReviewsAdminPage />} />
                 <Route path="projekte" element={<ProjekteAdminPage />} />
                 <Route path="partner" element={<PartnersAdminPage />} />
+                <Route path="team" element={<TeamAdminPage />} />
+                <Route path="navigation" element={<NavigationAdminPage />} />
                 <Route path="kunden" element={<WebsiteKundenAdminPage />} />
                 <Route path="chat" element={<ChatPage />} />
                 <Route path="email-templates" element={<EmailTemplatesPage />} />
