@@ -183,8 +183,7 @@ export const Header = () => {
       <AnimatePresence>
         {open && (
           <motion.div
-            className="lg:hidden fixed left-0 right-0 z-40 bg-foreground/95 backdrop-blur-xl border-b border-white/10 shadow-2xl max-h-[calc(100vh-3.5rem)] overflow-y-auto"
-            style={{ top: 56 }}
+            className="lg:hidden absolute left-0 right-0 top-full z-40 bg-foreground/95 backdrop-blur-xl border-b border-white/10 shadow-2xl max-h-[calc(100vh-7rem)] overflow-y-auto"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
