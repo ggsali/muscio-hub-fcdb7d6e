@@ -46,16 +46,15 @@ export const Header = () => {
     <>
       <motion.header
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          scrolled || open
-            ? "bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm"
-            : "bg-transparent"
+          "relative w-full transition-all duration-300",
+          "bg-background/85 backdrop-blur-xl border-b border-border/50",
+          scrolled || open ? "shadow-sm" : ""
         )}
-        initial={{ y: -64, opacity: 0 }}
+        initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="container mx-auto flex items-center justify-between h-14 px-4">
+        <div className="container mx-auto flex items-center justify-between h-14 px-4 sm:px-6">
 
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
             <div className="relative">
