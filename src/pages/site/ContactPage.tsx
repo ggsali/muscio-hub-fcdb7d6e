@@ -56,6 +56,13 @@ const ContactPage = () => {
     if (!betreff) { toast.error("Bitte wähle einen Betreff aus."); return; }
     setSubmitting(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let customer_id: string | null = null;
+      if (user) {
+        const { data: cust } = await supabase
+          .from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
+        customer_id = cust?.id ?? null;
+      }
       const { error } = await supabase.from("inquiries").insert({
         name: form.name,
         email: form.email,
@@ -64,6 +71,7 @@ const ContactPage = () => {
         nachricht: form.message,
         status: "Neu",
         quelle: "website",
+        customer_id,
       });
       if (error) throw error;
       toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
