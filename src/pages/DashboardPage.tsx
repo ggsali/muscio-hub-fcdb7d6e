@@ -119,7 +119,7 @@ export default function DashboardPage() {
 
       // Webshop-Bestellungen + neue Anfragen + neueste Kunden parallel
       const [{ data: shopO }, { data: anfr }, { data: kun }] = await Promise.all([
-        supabase.from("orders").select("id, datum, beschreibung, umsatz_total, status, name, customers(name)").eq("source", "website-shop").order("datum", { ascending: false }).limit(5),
+        supabase.from("orders").select("id, datum, beschreibung, umsatz_total, status, name, customers(name, vorname, firma, email)").eq("source", "website-shop").order("datum", { ascending: false }).limit(5),
         supabase.from("inquiries").select("id, name, email, betreff, nachricht, status, created_at").eq("status", "Neu").order("created_at", { ascending: false }).limit(5),
         supabase.from("customers").select("id, name, vorname, firma, email, created_at").order("created_at", { ascending: false }).limit(5),
       ]);
