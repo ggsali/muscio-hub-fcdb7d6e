@@ -27,7 +27,7 @@ export default function LoginPage() {
     params.get("mode") === "register" ? "register" : "login"
   );
 
-  useEffect(() => { loadCompanySettings().then(setCompany).catch(() => {}); }, []);
+  
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
