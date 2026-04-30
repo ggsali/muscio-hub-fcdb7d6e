@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { loadCompanySettings, type CompanySettings } from "@/lib/companySettings";
+import logo from "@/assets/logo.jpeg";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const [company, setCompany] = useState<CompanySettings | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
