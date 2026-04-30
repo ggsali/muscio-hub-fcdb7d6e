@@ -46,11 +46,20 @@ import DatenschutzPage from "@/pages/site/DatenschutzPage";
 import ImpressumPage from "@/pages/site/ImpressumPage";
 import ShopPage from "@/pages/site/ShopPage";
 import ShopDetailPage from "@/pages/site/ShopDetailPage";
+import ProjektDetailPage from "@/pages/site/ProjektDetailPage";
+import BewertungPage from "@/pages/site/BewertungPage";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
 import PortalOrdersPage from "@/pages/portal/PortalOrdersPage";
 import PortalProfilePage from "@/pages/portal/PortalProfilePage";
+
+// Website Admin
+import WebsiteAdminLayout from "@/components/WebsiteAdminLayout";
+import WebsiteAdminDashboardPage from "@/pages/website-admin/WebsiteAdminDashboardPage";
+import ReviewsAdminPage from "@/pages/website-admin/ReviewsAdminPage";
+import ProjekteAdminPage from "@/pages/website-admin/ProjekteAdminPage";
+import PartnersAdminPage from "@/pages/website-admin/PartnersAdminPage";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +109,7 @@ const App = () => (
                 <Route path="/agb" element={<AGBPage />} />
                 <Route path="/datenschutz" element={<DatenschutzPage />} />
                 <Route path="/impressum" element={<ImpressumPage />} />
+                <Route path="/projekte/:slug" element={<ProjektDetailPage />} />
               </Route>
 
               {/* Auth */}
@@ -108,6 +118,7 @@ const App = () => (
               {/* Public-flow pages (kein Layout) */}
               <Route path="/upload/:token" element={<ProjectUploadPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
+              <Route path="/bewertung/:token?" element={<BewertungPage />} />
 
               {/* Customer portal */}
               <Route path="/portal" element={<PortalLayout />}>
