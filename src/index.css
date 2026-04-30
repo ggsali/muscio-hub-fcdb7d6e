@@ -6,28 +6,28 @@
 
 @layer base {
   :root {
-    /* Tiefes Anthrazit-Dunkel mit wärmerem Ton */
-    --background: 220 14% 7%;
-    --foreground: 210 20% 93%;
+    /* 3DPrint Studio palette: bright theme + green primary */
+    --background: 0 0% 99%;
+    --foreground: 0 0% 6%;
 
-    --card: 220 13% 11%;
-    --card-foreground: 210 20% 93%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 6%;
 
-    --popover: 220 13% 11%;
-    --popover-foreground: 210 20% 93%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 6%;
 
-    /* Orange Akzent – kräftig, präzise */
-    --primary: 22 95% 52%;
+    /* Green accent */
+    --primary: 153 100% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 12% 17%;
-    --secondary-foreground: 210 15% 85%;
+    --secondary: 18 100% 59%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 12% 15%;
-    --muted-foreground: 215 12% 52%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 22 95% 52%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 153 30% 95%;
+    --accent-foreground: 0 0% 6%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -39,26 +39,44 @@
     --info-foreground: 0 0% 100%;
 
     --warning: 43 96% 56%;
-    --warning-foreground: 220 14% 7%;
+    --warning-foreground: 0 0% 6%;
 
     --purple: 262 80% 65%;
     --purple-foreground: 0 0% 100%;
 
-    --border: 220 12% 18%;
-    --input: 220 12% 14%;
-    --ring: 22 95% 52%;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    --ring: 153 100% 40%;
 
     --radius: 0.5rem;
 
-    /* Sidebar – leicht heller als Background */
+    /* Sidebar — admin dashboard stays dark */
     --sidebar-background: 220 14% 9%;
     --sidebar-foreground: 215 14% 65%;
-    --sidebar-primary: 22 95% 52%;
+    --sidebar-primary: 153 100% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 12% 14%;
     --sidebar-accent-foreground: 210 20% 93%;
     --sidebar-border: 220 12% 14%;
-    --sidebar-ring: 22 95% 52%;
+    --sidebar-ring: 153 100% 45%;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 153 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 95%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 153 100% 45%;
   }
 }
 
