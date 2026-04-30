@@ -4,6 +4,7 @@ import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote } from "lucide-rea
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Timeline } from "@/components/site/Timeline";
 import werkstatt from "@/assets/werkstatt.jpg";
 
 const values = [
@@ -118,6 +119,9 @@ export default function UeberUnsPage() {
             ))}
           </div>
         </div>
+
+        {/* Timeline */}
+        <Timeline />
 
         {/* Team */}
         {team.length > 0 && (

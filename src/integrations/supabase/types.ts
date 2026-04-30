@@ -1218,6 +1218,42 @@ export type Database = {
           },
         ]
       }
+      timeline_events: {
+        Row: {
+          aktiv: boolean
+          beschreibung: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          jahr: string
+          sort_order: number
+          titel: string
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          jahr: string
+          sort_order?: number
+          titel: string
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          jahr?: string
+          sort_order?: number
+          titel?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       upload_link_files: {
         Row: {
           created_at: string
