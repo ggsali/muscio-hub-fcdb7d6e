@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Printer, User, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
 import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
