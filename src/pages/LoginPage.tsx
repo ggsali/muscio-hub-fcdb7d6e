@@ -135,6 +135,7 @@ export default function LoginPage() {
   const handleResendConfirmation = async () => {
     setError(""); setSuccess("");
     if (!email.trim()) { setError("Bitte zuerst deine E-Mail-Adresse eingeben."); return; }
+    if (cooldownLeft(resendStatus) > 0) return;
     setLoading(true);
     const { error } = await supabase.auth.resend({
       type: "signup",
@@ -142,20 +143,35 @@ export default function LoginPage() {
       options: { emailRedirectTo: "https://3dmuscio.com/portal" },
     });
     setLoading(false);
-    if (error) setError(error.message);
-    else setSuccess("Bestätigungs-E-Mail wurde erneut gesendet. Bitte prüfe dein Postfach (auch Spam-Ordner).");
+    const ts = Date.now();
+    if (error) {
+      persistStatus(RESEND_KEY, { state: "error", at: ts, message: error.message }, setResendStatus);
+    } else {
+      persistStatus(RESEND_KEY, {
+        state: "success", at: ts,
+        message: `Bestätigungs-E-Mail wurde erfolgreich an ${email.trim()} übergeben.`,
+      }, setResendStatus);
+    }
   };
 
   const handleForgotPassword = async () => {
     setError(""); setSuccess("");
     if (!email.trim()) { setError("Bitte zuerst deine E-Mail-Adresse eingeben."); return; }
+    if (cooldownLeft(resetStatus) > 0) return;
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: "https://3dmuscio.com/reset-password",
     });
     setLoading(false);
-    if (error) setError(error.message);
-    else setSuccess("Wir haben dir eine E-Mail zum Zurücksetzen des Passworts gesendet.");
+    const ts = Date.now();
+    if (error) {
+      persistStatus(RESET_KEY, { state: "error", at: ts, message: error.message }, setResetStatus);
+    } else {
+      persistStatus(RESET_KEY, {
+        state: "success", at: ts,
+        message: `Passwort-Reset-Link wurde erfolgreich an ${email.trim()} übergeben.`,
+      }, setResetStatus);
+    }
   };
 
   const firmenname = "3DMuscio";
