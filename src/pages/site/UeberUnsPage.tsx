@@ -111,7 +111,7 @@ export default function UeberUnsPage() {
 
         {/* Team – ausführlich */}
         {team.length > 0 && (
-          <div className="mb-20 md:mb-28">
+          <div id="team" className="mb-20 md:mb-28 scroll-mt-24">
             <ScrollReveal>
               <div className="mb-10">
                 <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Das Team</p>
@@ -190,7 +190,7 @@ export default function UeberUnsPage() {
 
         {/* Standort */}
         <ScrollReveal>
-          <div className="bg-card rounded-xl border border-border p-6 md:p-8 max-w-3xl">
+          <div id="standort" className="bg-card rounded-xl border border-border p-6 md:p-8 max-w-3xl scroll-mt-24">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <MapPin className="w-4 h-4 text-primary" />
