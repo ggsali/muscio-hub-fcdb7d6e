@@ -55,7 +55,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signUp({
         email, password,
         options: {
-          emailRedirectTo: `${window.location.origin}/portal`,
+          emailRedirectTo: "https://3dmuscio.com/portal",
           data: {
             full_name: fullName.trim(),
             phone: phone.trim(),
