@@ -108,9 +108,7 @@ const CalculatorOnlinePage = () => {
   const calcs = parts.map(p => ({ part: p, calc: calcPart(p) }));
   const subtotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const shipping = subtotal === 0 ? 0 : (subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST);
-  const beforeMwst = subtotal + shipping;
-  const mwst = beforeMwst * MWST;
-  const total = beforeMwst + mwst;
+  const total = subtotal + shipping;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
