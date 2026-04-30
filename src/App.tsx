@@ -7,12 +7,15 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CompanySettingsProvider } from "@/contexts/CompanySettingsContext";
+import { CustomerAuthProvider } from "@/contexts/CustomerAuthContext";
 
 import AdminGate from "@/components/AdminGate";
 import SiteLayout from "@/components/SiteLayout";
 import PortalLayout from "@/components/PortalLayout";
 
 import LoginPage from "@/pages/LoginPage";
+import KundeLogin from "@/pages/kunde/Login";
+import KundeRegister from "@/pages/kunde/Register";
 import DashboardPage from "@/pages/DashboardPage";
 import KundenPage from "@/pages/KundenPage";
 import KundeDetailPage from "@/pages/KundeDetailPage";
@@ -98,6 +101,7 @@ const App = () => (
       <BrowserRouter>
         <SettingsProvider>
           <CompanySettingsProvider>
+            <CustomerAuthProvider>
             <Routes>
               {/* Public website */}
               <Route element={<MaintenanceGate><SiteLayout /></MaintenanceGate>}>
@@ -116,7 +120,10 @@ const App = () => (
               </Route>
 
               {/* Auth */}
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/login" element={<Navigate to="/anmelden" replace />} />
+              <Route path="/anmelden" element={<KundeLogin />} />
+              <Route path="/registrieren" element={<KundeRegister />} />
+              <Route path="/admin/login" element={<LoginPage />} />
 
               {/* Public-flow pages (kein Layout) */}
               <Route path="/upload/:token" element={<ProjectUploadPage />} />
@@ -182,8 +189,11 @@ const App = () => (
               <Route path="/chat" element={<Navigate to="/admin/chat" replace />} />
               <Route path="/website/*" element={<Navigate to="/admin" replace />} />
 
+              <Route path="/mein-konto" element={<Navigate to="/portal" replace />} />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </CustomerAuthProvider>
           </CompanySettingsProvider>
         </SettingsProvider>
       </BrowserRouter>
