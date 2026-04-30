@@ -27,10 +27,7 @@ const navItems = [
 ];
 
 const websiteNavItems = [
-  { to: "/admin/website/bestellungen", icon: <Globe className="w-[18px] h-[18px]" />, label: "Bestellungen" },
-  { to: "/admin/website/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kundenverwaltung" },
-  { to: "/admin/website/email-templates", icon: <Mail className="w-[18px] h-[18px]" />, label: "E-Mail Templates" },
-  { to: "/admin/website/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Website-Einstellungen" },
+  { to: "/website-admin", icon: <Globe className="w-[18px] h-[18px]" />, label: "Website-Verwaltung öffnen" },
 ];
 
 // Bottom nav shows only the 5 most important items on mobile
