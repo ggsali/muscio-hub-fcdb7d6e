@@ -115,6 +115,13 @@ const CalculatorOnlinePage = () => {
     setSubmitting(true);
     try {
       const summary = parts.map(p => `${p.fileName} (${p.quantity}× ${p.materialId.toUpperCase()}, ${p.color}, ${p.infill}% Infill)`).join("; ");
+      const { data: { user } } = await supabase.auth.getUser();
+      let customer_id: string | null = null;
+      if (user) {
+        const { data: cust } = await supabase
+          .from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
+        customer_id = cust?.id ?? null;
+      }
       const { error } = await supabase.from("inquiries").insert({
         name: form.name,
         email: form.email,
@@ -123,6 +130,7 @@ const CalculatorOnlinePage = () => {
         nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}\n\nNachricht: ${form.message}`,
         status: "Neu",
         quelle: "kalkulator",
+        customer_id,
       });
       if (error) throw error;
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
