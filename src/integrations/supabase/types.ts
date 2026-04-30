@@ -554,6 +554,36 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          id: string
+          logo_path: string | null
+          name: string
+          sort_order: number
+          website_url: string | null
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          id?: string
+          logo_path?: string | null
+          name: string
+          sort_order?: number
+          website_url?: string | null
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          id?: string
+          logo_path?: string | null
+          name?: string
+          sort_order?: number
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       parts: {
         Row: {
           created_at: string | null
@@ -716,6 +746,99 @@ export type Database = {
         }
         Relationships: []
       }
+      projekte: {
+        Row: {
+          aktiv: boolean
+          beschreibung: string | null
+          created_at: string
+          featured: boolean
+          gallery_paths: string[] | null
+          hero_image_path: string | null
+          id: string
+          kategorie: string | null
+          kurzbeschreibung: string | null
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          featured?: boolean
+          gallery_paths?: string[] | null
+          hero_image_path?: string | null
+          id?: string
+          kategorie?: string | null
+          kurzbeschreibung?: string | null
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          featured?: boolean
+          gallery_paths?: string[] | null
+          hero_image_path?: string | null
+          id?: string
+          kategorie?: string | null
+          kurzbeschreibung?: string | null
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          freigegeben: boolean
+          id: string
+          kommentar: string | null
+          order_id: string | null
+          rating: number
+          sichtbar_auf_website: boolean
+          source: string | null
+          token: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          freigegeben?: boolean
+          id?: string
+          kommentar?: string | null
+          order_id?: string | null
+          rating?: number
+          sichtbar_auf_website?: boolean
+          source?: string | null
+          token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          freigegeben?: boolean
+          id?: string
+          kommentar?: string | null
+          order_id?: string | null
+          rating?: number
+          sichtbar_auf_website?: boolean
+          source?: string | null
+          token?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           id: string
@@ -827,6 +950,7 @@ export type Database = {
           id: string
           mwst: number
           notiz: string | null
+          order_id: string | null
           paid_at: string | null
           shipping: number
           shipping_address: string
@@ -848,6 +972,7 @@ export type Database = {
           id?: string
           mwst?: number
           notiz?: string | null
+          order_id?: string | null
           paid_at?: string | null
           shipping?: number
           shipping_address: string
@@ -869,6 +994,7 @@ export type Database = {
           id?: string
           mwst?: number
           notiz?: string | null
+          order_id?: string | null
           paid_at?: string | null
           shipping?: number
           shipping_address?: string
