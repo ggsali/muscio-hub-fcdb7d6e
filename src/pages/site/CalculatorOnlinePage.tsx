@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,14 +41,30 @@ interface Part {
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
 const SHIPPING_COST = 8;
-const MWST = 0.081;
 
 const CalculatorOnlinePage = () => {
   const [parts, setParts] = useState<Part[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setIsLoggedIn(true);
+      const { data: profile } = await supabase
+        .from("profiles").select("full_name, phone").eq("user_id", user.id).maybeSingle();
+      setForm(f => ({
+        ...f,
+        name: profile?.full_name || user.user_metadata?.full_name || "",
+        email: user.email || "",
+        phone: profile?.phone || user.user_metadata?.phone || "",
+      }));
+    })();
+  }, []);
 
   const addFile = useCallback((file: File) => {
     // Schätzung: einfache Volumen-Heuristik basierend auf Dateigröße
@@ -92,9 +108,7 @@ const CalculatorOnlinePage = () => {
   const calcs = parts.map(p => ({ part: p, calc: calcPart(p) }));
   const subtotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const shipping = subtotal === 0 ? 0 : (subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST);
-  const beforeMwst = subtotal + shipping;
-  const mwst = beforeMwst * MWST;
-  const total = beforeMwst + mwst;
+  const total = subtotal + shipping;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,9 +274,6 @@ const CalculatorOnlinePage = () => {
                 <div className="flex justify-between text-muted-foreground">
                   <span>Versand</span><span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>MwSt. (8.1%)</span><span className="text-foreground">{CHF(mwst)}</span>
-                </div>
                 <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
                   <span className="font-bold">Total</span>
                   <span className="text-xl font-bold text-primary">{CHF(total)}</span>
@@ -270,10 +281,16 @@ const CalculatorOnlinePage = () => {
               </div>
               <Button
                 className="w-full mt-5 gap-2"
-                disabled={parts.length === 0}
-                onClick={() => setShowQuote(true)}
+                disabled={parts.length === 0 || submitting}
+                onClick={async (e) => {
+                  if (isLoggedIn && form.name && form.email) {
+                    await handleSend(e as unknown as React.FormEvent);
+                  } else {
+                    setShowQuote(true);
+                  }
+                }}
               >
-                Angebot anfragen <ArrowRight className="w-4 h-4" />
+                {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</> : <>Angebot anfragen <ArrowRight className="w-4 h-4" /></>}
               </Button>
               <p className="text-xs text-muted-foreground mt-3 text-center">
                 Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.

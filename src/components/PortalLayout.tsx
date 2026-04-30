@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Box, LayoutDashboard, Package, User, LogOut, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Package, User, LogOut, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
+import logo from "@/assets/logo.jpeg";
 
 const items = [
   { to: "/portal", label: "Übersicht", icon: LayoutDashboard, end: true },
@@ -42,16 +43,25 @@ export default function PortalLayout() {
   if (!session) return null;
 
   return (
-    <div className="dark min-h-screen bg-background flex flex-col">
-      <header className="bg-sidebar border-b border-border">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <header className="bg-card border-b border-border">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Box className="w-4 h-4 text-primary-foreground" />
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="relative">
+              <img
+                src={logo}
+                alt="3DMuscio"
+                className="relative h-9 w-9 rounded-lg object-contain ring-1 ring-border group-hover:ring-primary/60 transition-all"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-card" />
             </div>
-            <div className="leading-tight">
-              <div className="font-bold text-sm">3DMuscio</div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Mein Konto</div>
+            <div className="flex flex-col leading-none">
+              <span className="font-heading text-sm font-extrabold tracking-tight text-foreground">
+                3D<span className="text-primary">Muscio</span>
+              </span>
+              <span className="text-[9px] uppercase tracking-[0.18em] font-medium text-muted-foreground">
+                Mein Konto
+              </span>
             </div>
           </Link>
           <div className="flex items-center gap-2">

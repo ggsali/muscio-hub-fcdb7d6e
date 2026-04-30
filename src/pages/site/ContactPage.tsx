@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
@@ -29,6 +29,21 @@ const ContactPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles").select("full_name, phone").eq("user_id", user.id).maybeSingle();
+      setForm(f => ({
+        ...f,
+        name: f.name || profile?.full_name || user.user_metadata?.full_name || "",
+        email: f.email || user.email || "",
+        phone: f.phone || profile?.phone || user.user_metadata?.phone || "",
+      }));
+    })();
+  }, []);
 
   const handleFiles = (fl: FileList | null) => {
     if (!fl) return;
