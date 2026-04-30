@@ -17,12 +17,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  signup: 'E-Mail-Adresse bestätigen',
+  invite: 'Einladung zu 3DMuscio',
+  magiclink: 'Dein Login-Link',
+  recovery: 'Passwort zurücksetzen',
+  email_change: 'Neue E-Mail-Adresse bestätigen',
+  reauthentication: 'Dein Bestätigungscode',
 }
 
 // Template mapping
@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "muscio-hub"
+const SITE_NAME = "3DMuscio"
 const SENDER_DOMAIN = "notify.3dmuscio.com"
 const ROOT_DOMAIN = "3dmuscio.com"
 const FROM_DOMAIN = "3dmuscio.com" // Domain shown in From address (may be root or sender subdomain)
