@@ -6,16 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SITE_NAME = "3DMuscio";
+const SENDER_DOMAIN = "notify.3dmuscio.com";
+const FROM_EMAIL = `${SITE_NAME} <noreply@3dmuscio.com>`;
+const REPLY_TO = "info@3dmuscio.com";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
-  }
-
-  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-  if (!RESEND_API_KEY) {
-    return new Response(JSON.stringify({ error: "RESEND_API_KEY not configured" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   }
 
   const supabase = createClient(
@@ -252,15 +250,19 @@ serve(async (req) => {
         </div>`;
     }
 
-    const senderName = companyName;
-    const fromEmail = `${senderName} <info@3dmuscio.com>`;
-
     // Build email payload – attach PDF if provided
     const emailPayload: Record<string, unknown> = {
-      from: fromEmail,
-      to: [customer.email],
+      message_id: crypto.randomUUID(),
+      to: customer.email,
+      from: FROM_EMAIL,
+      reply_to: REPLY_TO,
+      sender_domain: SENDER_DOMAIN,
       subject,
       html: htmlBody,
+      purpose: "transactional",
+      label: `order-${type || "mail"}`,
+      idempotency_key: `order-${orderId}-${type || "mail"}-${Date.now()}`,
+      queued_at: new Date().toISOString(),
     };
 
     if (pdfBase64 && pdfFilename) {
@@ -272,25 +274,33 @@ serve(async (req) => {
       ];
     }
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(emailPayload),
+    await supabase.from("email_send_log").insert({
+      message_id: emailPayload.message_id,
+      template_name: emailPayload.label,
+      recipient_email: customer.email,
+      status: "pending",
     });
 
-    const resData = await res.json();
+    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: emailPayload,
+    });
 
-    if (!res.ok) {
-      console.error("Resend error:", resData);
-      return new Response(JSON.stringify({ error: resData.message || "E-Mail Fehler" }), {
+    if (enqueueError) {
+      console.error("Email enqueue error:", enqueueError);
+      await supabase.from("email_send_log").insert({
+        message_id: emailPayload.message_id,
+        template_name: emailPayload.label,
+        recipient_email: customer.email,
+        status: "failed",
+        error_message: enqueueError.message,
+      });
+      return new Response(JSON.stringify({ error: "E-Mail konnte nicht in die Warteschlange gestellt werden" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ success: true, id: resData.id }), {
+    return new Response(JSON.stringify({ success: true, queued: true, id: emailPayload.message_id }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 

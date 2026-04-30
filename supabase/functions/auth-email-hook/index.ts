@@ -39,7 +39,8 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 const SITE_NAME = "3DMuscio"
 const SENDER_DOMAIN = "notify.3dmuscio.com"
 const ROOT_DOMAIN = "3dmuscio.com"
-const FROM_DOMAIN = "3dmuscio.com" // Domain shown in From address (may be root or sender subdomain)
+const FROM_DOMAIN = "notify.3dmuscio.com" // Keep From aligned with the verified sender domain for better delivery.
+const REPLY_TO = "info@3dmuscio.com"
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
@@ -257,6 +258,7 @@ async function handleWebhook(req: Request): Promise<Response> {
       message_id: messageId,
       to: payload.data.email,
       from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      reply_to: REPLY_TO,
       sender_domain: SENDER_DOMAIN,
       subject: EMAIL_SUBJECTS[emailType] || 'Notification',
       html,
