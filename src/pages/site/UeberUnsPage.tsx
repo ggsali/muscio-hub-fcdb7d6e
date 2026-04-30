@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Timeline } from "@/components/site/Timeline";
 import werkstatt from "@/assets/werkstatt.jpg";
