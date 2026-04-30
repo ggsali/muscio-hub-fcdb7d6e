@@ -178,47 +178,47 @@ export const Header = () => {
             </button>
           </div>
         </div>
-      </motion.header>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="lg:hidden absolute left-0 right-0 top-full z-40 bg-foreground/95 backdrop-blur-xl border-b border-white/10 shadow-2xl max-h-[calc(100vh-7rem)] overflow-y-auto"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            <nav className="flex flex-col p-3 gap-0.5">
-              {navLinks.map((l, i) => (
-                <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                  <Link
-                    to={l.path}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                      location.pathname === l.path
-                        ? "text-white bg-white/10 font-semibold"
-                        : "text-white/55 hover:text-white hover:bg-white/10"
-                    )}
-                  >
-                    {l.label}
-                    {location.pathname === l.path && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                  </Link>
-                </motion.div>
-              ))}
-              <div className="mt-2 pt-2 border-t border-white/10">
-                <Button variant="default" className="w-full rounded-lg" asChild>
-                  <Link to="/kalkulator-online" onClick={() => setOpen(false)}>
-                    <Printer className="w-4 h-4 mr-2" />
-                    Preis berechnen
-                  </Link>
-                </Button>
-              </div>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              className="lg:hidden absolute left-0 right-0 top-full z-40 bg-foreground/95 backdrop-blur-xl border-b border-white/10 shadow-2xl max-h-[calc(100vh-7rem)] overflow-y-auto"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <nav className="flex flex-col p-3 gap-0.5">
+                {navLinks.map((l, i) => (
+                  <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                    <Link
+                      to={l.path}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                        location.pathname === l.path
+                          ? "text-white bg-white/10 font-semibold"
+                          : "text-white/55 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      {l.label}
+                      {location.pathname === l.path && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                    </Link>
+                  </motion.div>
+                ))}
+                <div className="mt-2 pt-2 border-t border-white/10">
+                  <Button variant="default" className="w-full rounded-lg" asChild>
+                    <Link to="/kalkulator-online" onClick={() => setOpen(false)}>
+                      <Printer className="w-4 h-4 mr-2" />
+                      Preis berechnen
+                    </Link>
+                  </Button>
+                </div>
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
     </>
   );
 };
