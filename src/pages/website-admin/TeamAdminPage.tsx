@@ -56,7 +56,7 @@ export default function TeamAdminPage() {
   };
 
   const updateField = async (id: string, field: keyof Member, value: any) => {
-    await supabase.from("team_members").update({ [field]: value }).eq("id", id);
+    await (supabase.from("team_members") as any).update({ [field]: value }).eq("id", id);
     load();
   };
 
