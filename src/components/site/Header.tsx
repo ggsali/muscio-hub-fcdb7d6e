@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Printer, User, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
 import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
@@ -24,7 +23,6 @@ export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
-  const role = useUserRole(session?.user.id);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
@@ -41,8 +39,8 @@ export const Header = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const accountTarget = role === "admin" ? "/admin" : "/portal";
-  const accountLabel = role === "admin" ? "Dashboard" : "Mein Konto";
+  const accountTarget = "/portal";
+  const accountLabel = "Mein Konto";
 
   return (
     <>
