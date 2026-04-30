@@ -6,16 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SITE_NAME = "3DMuscio";
+const SENDER_DOMAIN = "notify.3dmuscio.com";
+const FROM_EMAIL = `${SITE_NAME} <noreply@3dmuscio.com>`;
+const REPLY_TO = "info@3dmuscio.com";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
-  }
-
-  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-  if (!RESEND_API_KEY) {
-    return new Response(JSON.stringify({ error: "RESEND_API_KEY not configured" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   }
 
   const supabase = createClient(
