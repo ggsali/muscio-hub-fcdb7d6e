@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Timeline } from "@/components/site/Timeline";
 import werkstatt from "@/assets/werkstatt.jpg";
@@ -29,6 +29,7 @@ export default function UeberUnsPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const location = useLocation();
 
   useEffect(() => {
     supabase
@@ -38,6 +39,17 @@ export default function UeberUnsPage() {
       .order("sort_order")
       .then(({ data }) => { if (data) setTeam(data as TeamMember[]); });
   }, []);
+
+  // Smooth scroll to hash anchors when navigating from header dropdown
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.slice(1);
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
+    }
+  }, [location.hash, team.length]);
 
   return (
     <div className="pb-16">
@@ -60,11 +72,13 @@ export default function UeberUnsPage() {
         </div>
 
         {/* Timeline (mit Team als Heute-Knoten) */}
-        <Timeline team={team} />
+        <div id="zeitleiste" className="scroll-mt-24">
+          <Timeline team={team} />
+        </div>
 
         {/* Story */}
         <ScrollReveal>
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 md:mb-28 max-w-5xl mx-auto">
+          <div id="geschichte" className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 md:mb-28 max-w-5xl mx-auto scroll-mt-24">
             <div className="md:col-span-5">
               <img
                 src={werkstatt}
@@ -97,7 +111,7 @@ export default function UeberUnsPage() {
 
         {/* Team – ausführlich */}
         {team.length > 0 && (
-          <div className="mb-20 md:mb-28">
+          <div id="team" className="mb-20 md:mb-28 scroll-mt-24">
             <ScrollReveal>
               <div className="mb-10">
                 <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Das Team</p>
@@ -176,7 +190,7 @@ export default function UeberUnsPage() {
 
         {/* Standort */}
         <ScrollReveal>
-          <div className="bg-card rounded-xl border border-border p-6 md:p-8 max-w-3xl">
+          <div id="standort" className="bg-card rounded-xl border border-border p-6 md:p-8 max-w-3xl scroll-mt-24">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <MapPin className="w-4 h-4 text-primary" />

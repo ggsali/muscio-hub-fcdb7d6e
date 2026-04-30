@@ -1225,6 +1225,7 @@ export type Database = {
           created_at: string
           icon: string | null
           id: string
+          image_path: string | null
           jahr: string
           sort_order: number
           titel: string
@@ -1236,6 +1237,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          image_path?: string | null
           jahr: string
           sort_order?: number
           titel: string
@@ -1247,6 +1249,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          image_path?: string | null
           jahr?: string
           sort_order?: number
           titel?: string

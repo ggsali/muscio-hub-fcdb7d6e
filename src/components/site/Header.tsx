@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Printer, User, ShoppingCart } from "lucide-react";
+import { Menu, X, Printer, User, ShoppingCart, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
@@ -9,14 +9,24 @@ import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
 
-interface NavItem { label: string; path: string; }
+interface NavChild { label: string; path: string; }
+interface NavItem { label: string; path: string; children?: NavChild[]; }
 
 const DEFAULT_NAV: NavItem[] = [
   { label: "Home", path: "/" },
   { label: "Shop", path: "/shop" },
   { label: "Kalkulator", path: "/kalkulator-online" },
   { label: "Materialien", path: "/materialien" },
-  { label: "Über uns", path: "/ueber-uns" },
+  {
+    label: "Über uns",
+    path: "/ueber-uns",
+    children: [
+      { label: "Unsere Geschichte", path: "/ueber-uns#geschichte" },
+      { label: "Zeitleiste", path: "/ueber-uns#zeitleiste" },
+      { label: "Team", path: "/ueber-uns#team" },
+      { label: "Standort", path: "/ueber-uns#standort" },
+    ],
+  },
   { label: "Kontakt", path: "/kontakt" },
 ];
 
@@ -26,17 +36,27 @@ export const Header = () => {
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
   const [navLinks, setNavLinks] = useState<NavItem[]>(DEFAULT_NAV);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
+  const dropdownTimer = useRef<number | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
 
   useEffect(() => {
     supabase.from("website_settings").select("value").eq("key", "nav_links").maybeSingle()
       .then(({ data }) => {
         const v = (data as any)?.value;
-        if (Array.isArray(v) && v.length) setNavLinks(v as NavItem[]);
+        if (Array.isArray(v) && v.length) {
+          // Merge children from defaults if admin-defined items match by path
+          const merged: NavItem[] = (v as NavItem[]).map(item => {
+            const def = DEFAULT_NAV.find(d => d.path === item.path);
+            return def?.children ? { ...item, children: item.children || def.children } : item;
+          });
+          setNavLinks(merged);
+        }
       });
   }, []);
 
-  useEffect(() => { setOpen(false); }, [location.pathname]);
+  useEffect(() => { setOpen(false); setOpenDropdown(null); }, [location.pathname]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -52,6 +72,15 @@ export const Header = () => {
 
   const accountTarget = "/portal";
   const accountLabel = "Mein Konto";
+
+  const handleEnter = (path: string) => {
+    if (dropdownTimer.current) window.clearTimeout(dropdownTimer.current);
+    setOpenDropdown(path);
+  };
+  const handleLeave = () => {
+    if (dropdownTimer.current) window.clearTimeout(dropdownTimer.current);
+    dropdownTimer.current = window.setTimeout(() => setOpenDropdown(null), 120);
+  };
 
   return (
     <>
@@ -90,27 +119,66 @@ export const Header = () => {
           <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((l) => {
               const active = location.pathname === l.path;
+              const hasChildren = l.children && l.children.length > 0;
               return (
-                <Link
+                <div
                   key={l.path}
-                  to={l.path}
-                  className="relative px-4 py-1.5 text-sm font-medium transition-colors group"
+                  className="relative"
+                  onMouseEnter={() => hasChildren && handleEnter(l.path)}
+                  onMouseLeave={() => hasChildren && handleLeave()}
                 >
-                  <motion.span
-                    className="absolute bottom-0 left-4 right-4 h-px bg-primary rounded-full"
-                    initial={false}
-                    animate={{ scaleX: active ? 1 : 0, opacity: active ? 1 : 0 }}
-                    transition={{ duration: 0.2 }}
-                    style={{ transformOrigin: "left" }}
-                  />
-                  <span className="absolute bottom-0 left-4 right-4 h-px rounded-full bg-foreground/20 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
-                  <span className={cn(
-                    "transition-colors duration-150",
-                    active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
-                  )}>
-                    {l.label}
-                  </span>
-                </Link>
+                  <Link
+                    to={l.path}
+                    className="relative px-4 py-1.5 text-sm font-medium transition-colors group flex items-center gap-1"
+                  >
+                    <motion.span
+                      className="absolute bottom-0 left-4 right-4 h-px bg-primary rounded-full"
+                      initial={false}
+                      animate={{ scaleX: active ? 1 : 0, opacity: active ? 1 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ transformOrigin: "left" }}
+                    />
+                    <span className="absolute bottom-0 left-4 right-4 h-px rounded-full bg-foreground/20 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
+                    <span className={cn(
+                      "transition-colors duration-150",
+                      active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                    )}>
+                      {l.label}
+                    </span>
+                    {hasChildren && (
+                      <ChevronDown className={cn(
+                        "w-3 h-3 transition-transform duration-200",
+                        active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                        openDropdown === l.path && "rotate-180"
+                      )} />
+                    )}
+                  </Link>
+
+                  <AnimatePresence>
+                    {hasChildren && openDropdown === l.path && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.97 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 min-w-[200px]"
+                      >
+                        <div className="bg-popover border border-border rounded-xl shadow-xl p-1.5">
+                          {l.children!.map(c => (
+                            <Link
+                              key={c.path}
+                              to={c.path}
+                              onClick={() => setOpenDropdown(null)}
+                              className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            >
+                              {c.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               );
             })}
           </nav>
@@ -200,23 +268,60 @@ export const Header = () => {
               transition={{ duration: 0.2 }}
             >
               <nav className="flex flex-col p-3 gap-0.5">
-                {navLinks.map((l, i) => (
-                  <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                    <Link
-                      to={l.path}
-                      onClick={() => setOpen(false)}
-                      className={cn(
-                        "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                        location.pathname === l.path
-                          ? "text-white bg-white/10 font-semibold"
-                          : "text-white/55 hover:text-white hover:bg-white/10"
-                      )}
-                    >
-                      {l.label}
-                      {location.pathname === l.path && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                    </Link>
-                  </motion.div>
-                ))}
+                {navLinks.map((l, i) => {
+                  const hasChildren = l.children && l.children.length > 0;
+                  const isExpanded = openMobileGroup === l.path;
+                  return (
+                    <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                      <div className="flex items-stretch">
+                        <Link
+                          to={l.path}
+                          onClick={() => !hasChildren && setOpen(false)}
+                          className={cn(
+                            "flex-1 flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                            location.pathname === l.path
+                              ? "text-white bg-white/10 font-semibold"
+                              : "text-white/55 hover:text-white hover:bg-white/10"
+                          )}
+                        >
+                          {l.label}
+                          {location.pathname === l.path && !hasChildren && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                        </Link>
+                        {hasChildren && (
+                          <button
+                            onClick={() => setOpenMobileGroup(isExpanded ? null : l.path)}
+                            className="px-3 text-white/55 hover:text-white"
+                            aria-label="Untermenü"
+                          >
+                            <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
+                          </button>
+                        )}
+                      </div>
+                      <AnimatePresence>
+                        {hasChildren && isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden ml-4 border-l border-white/10 pl-3"
+                          >
+                            {l.children!.map(c => (
+                              <Link
+                                key={c.path}
+                                to={c.path}
+                                onClick={() => setOpen(false)}
+                                className="block px-3 py-2 text-sm text-white/55 hover:text-white rounded-md"
+                              >
+                                {c.label}
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                })}
                 <div className="mt-2 pt-2 border-t border-white/10">
                   <Button variant="default" className="w-full rounded-lg" asChild>
                     <Link to="/kalkulator-online" onClick={() => setOpen(false)}>
