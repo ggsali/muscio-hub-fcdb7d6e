@@ -23,7 +23,6 @@ export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
-  const role = useUserRole(session?.user.id);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
