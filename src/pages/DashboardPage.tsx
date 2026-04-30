@@ -262,7 +262,7 @@ export default function DashboardPage() {
               {websiteOrders.map(o => (
                 <div key={o.id} onClick={() => navigate(`/admin/auftraege/${o.id}`)} className="px-4 py-2.5 cursor-pointer hover:bg-muted/30 active:bg-muted/40 transition-colors">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium truncate">{(o.customers as any)?.name || o.name || "Webshop"}</span>
+                    <span className="text-xs font-medium truncate">{(() => { const c: any = o.customers; return c ? ([c.vorname, c.name].filter(Boolean).join(" ").trim() || c.firma || c.email || o.name || "Webshop") : (o.name || "Webshop"); })()}</span>
                     <span className="text-xs font-bold shrink-0">{formatCHF(o.umsatz_total || 0)}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
