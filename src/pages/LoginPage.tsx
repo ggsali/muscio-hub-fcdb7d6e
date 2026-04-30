@@ -85,6 +85,32 @@ export default function LoginPage() {
     setLoading(false);
   };
 
+  const handleResendConfirmation = async () => {
+    setError(""); setSuccess("");
+    if (!email.trim()) { setError("Bitte zuerst deine E-Mail-Adresse eingeben."); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: "https://3dmuscio.com/portal" },
+    });
+    setLoading(false);
+    if (error) setError(error.message);
+    else setSuccess("Bestätigungs-E-Mail wurde erneut gesendet. Bitte prüfe dein Postfach (auch Spam-Ordner).");
+  };
+
+  const handleForgotPassword = async () => {
+    setError(""); setSuccess("");
+    if (!email.trim()) { setError("Bitte zuerst deine E-Mail-Adresse eingeben."); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: "https://3dmuscio.com/reset-password",
+    });
+    setLoading(false);
+    if (error) setError(error.message);
+    else setSuccess("Wir haben dir eine E-Mail zum Zurücksetzen des Passworts gesendet.");
+  };
+
   const firmenname = "3DMuscio";
 
   return (
@@ -169,6 +195,32 @@ export default function LoginPage() {
               {mode === "login" ? "Anmelden" : "Konto erstellen"}
             </Button>
           </form>
+
+          {mode === "login" && (
+            <div className="mt-3 text-center">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={loading}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+              >
+                Passwort vergessen?
+              </button>
+            </div>
+          )}
+
+          {mode === "register" && (
+            <div className="mt-3 text-center">
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={loading}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+              >
+                Bestätigungs-E-Mail erneut senden
+              </button>
+            </div>
+          )}
 
           <div className="mt-5 text-center text-sm text-muted-foreground">
             {mode === "login" ? (
