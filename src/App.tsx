@@ -13,6 +13,7 @@ import SiteLayout from "@/components/SiteLayout";
 import PortalLayout from "@/components/PortalLayout";
 
 import LoginPage from "@/pages/LoginPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import DashboardPage from "@/pages/DashboardPage";
 import KundenPage from "@/pages/KundenPage";
 import KundeDetailPage from "@/pages/KundeDetailPage";
@@ -117,6 +118,7 @@ const App = () => (
 
               {/* Auth */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               {/* Public-flow pages (kein Layout) */}
               <Route path="/upload/:token" element={<ProjectUploadPage />} />
