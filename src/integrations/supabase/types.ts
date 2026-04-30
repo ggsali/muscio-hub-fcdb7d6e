@@ -1131,6 +1131,42 @@ export type Database = {
           },
         ]
       }
+      team_members: {
+        Row: {
+          aktiv: boolean
+          bio: string | null
+          created_at: string
+          id: string
+          name: string
+          photo_path: string | null
+          role: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          bio?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          photo_path?: string | null
+          role?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          bio?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          photo_path?: string | null
+          role?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       time_entries: {
         Row: {
           created_at: string

@@ -60,6 +60,8 @@ import WebsiteAdminDashboardPage from "@/pages/website-admin/WebsiteAdminDashboa
 import ReviewsAdminPage from "@/pages/website-admin/ReviewsAdminPage";
 import ProjekteAdminPage from "@/pages/website-admin/ProjekteAdminPage";
 import PartnersAdminPage from "@/pages/website-admin/PartnersAdminPage";
+import TeamAdminPage from "@/pages/website-admin/TeamAdminPage";
+import NavigationAdminPage from "@/pages/website-admin/NavigationAdminPage";
 
 const queryClient = new QueryClient();
 
@@ -155,6 +157,8 @@ const App = () => (
                 <Route path="reviews" element={<ReviewsAdminPage />} />
                 <Route path="projekte" element={<ProjekteAdminPage />} />
                 <Route path="partner" element={<PartnersAdminPage />} />
+                <Route path="team" element={<TeamAdminPage />} />
+                <Route path="navigation" element={<NavigationAdminPage />} />
                 <Route path="kunden" element={<WebsiteKundenAdminPage />} />
                 <Route path="chat" element={<ChatPage />} />
                 <Route path="email-templates" element={<EmailTemplatesPage />} />

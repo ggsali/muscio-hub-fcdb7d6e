@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Session } from "@supabase/supabase-js";
 import {
-  ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake,
+  ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake, UserCircle2, Navigation,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +13,9 @@ const NAV = [
   { to: "/website-admin/bestellungen", label: "Shop-Bestellungen", icon: ShoppingBag },
   { to: "/website-admin/reviews", label: "Bewertungen", icon: Star },
   { to: "/website-admin/projekte", label: "Projekte", icon: FolderKanban },
+  { to: "/website-admin/team", label: "Team", icon: UserCircle2 },
   { to: "/website-admin/partner", label: "Partner", icon: Handshake },
+  { to: "/website-admin/navigation", label: "Navigation", icon: Navigation },
   { to: "/website-admin/kunden", label: "Website-Kunden", icon: Users2 },
   { to: "/website-admin/chat", label: "Chat-Postfach", icon: MessageCircle },
   { to: "/website-admin/email-templates", label: "E-Mail-Vorlagen", icon: Mail },
@@ -42,7 +44,7 @@ export default function WebsiteAdminLayout() {
   if (!session || role !== "admin") return null;
 
   return (
-    <div className="min-h-screen flex bg-background w-full">
+    <div className="dark min-h-screen flex bg-background w-full">
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         <div className="px-5 py-5 border-b border-border">
           <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Website-Admin</p>

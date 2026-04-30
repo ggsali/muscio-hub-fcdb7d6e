@@ -239,5 +239,9 @@ function DesktopLayout() {
 
 export default function AppLayout() {
   const isMobile = useIsMobile();
-  return isMobile ? <MobileLayout /> : <DesktopLayout />;
+  return (
+    <div className="dark">
+      {isMobile ? <MobileLayout /> : <DesktopLayout />}
+    </div>
+  );
 }
