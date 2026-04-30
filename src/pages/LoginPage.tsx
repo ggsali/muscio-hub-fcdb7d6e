@@ -62,6 +62,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -143,6 +144,7 @@ export default function LoginPage() {
       else navigate("/portal", { replace: true });
     } else {
       if (!fullName.trim()) { setError("Bitte Name angeben."); setLoading(false); return; }
+      if (password !== passwordConfirm) { setError("Die beiden Passwörter stimmen nicht überein."); setLoading(false); return; }
       const { error } = await supabase.auth.signUp({
         email, password,
         options: {
@@ -283,6 +285,23 @@ export default function LoginPage() {
               <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete={mode === "login" ? "current-password" : "new-password"} />
               {mode === "register" && <p className="text-xs text-muted-foreground">Mindestens 6 Zeichen</p>}
             </div>
+            {mode === "register" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="passwordConfirm">Passwort bestätigen *</Label>
+                <Input
+                  id="passwordConfirm"
+                  type="password"
+                  value={passwordConfirm}
+                  onChange={e => setPasswordConfirm(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+                {passwordConfirm.length > 0 && password !== passwordConfirm && (
+                  <p className="text-xs text-destructive">Passwörter stimmen nicht überein</p>
+                )}
+              </div>
+            )}
 
             <Button type="submit" className="w-full h-11" disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
