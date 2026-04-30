@@ -285,6 +285,23 @@ export default function LoginPage() {
               <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} autoComplete={mode === "login" ? "current-password" : "new-password"} />
               {mode === "register" && <p className="text-xs text-muted-foreground">Mindestens 6 Zeichen</p>}
             </div>
+            {mode === "register" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="passwordConfirm">Passwort bestätigen *</Label>
+                <Input
+                  id="passwordConfirm"
+                  type="password"
+                  value={passwordConfirm}
+                  onChange={e => setPasswordConfirm(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+                {passwordConfirm.length > 0 && password !== passwordConfirm && (
+                  <p className="text-xs text-destructive">Passwörter stimmen nicht überein</p>
+                )}
+              </div>
+            )}
 
             <Button type="submit" className="w-full h-11" disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
