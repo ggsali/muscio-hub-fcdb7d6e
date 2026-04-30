@@ -148,6 +148,19 @@ const App = () => (
                 <Route path="website/einstellungen" element={<WebsiteEinstellungenPage />} />
               </Route>
 
+              {/* Website Admin – separate area */}
+              <Route path="/website-admin" element={<WebsiteAdminLayout />}>
+                <Route index element={<WebsiteAdminDashboardPage />} />
+                <Route path="bestellungen" element={<WebsiteBestellungenPage />} />
+                <Route path="reviews" element={<ReviewsAdminPage />} />
+                <Route path="projekte" element={<ProjekteAdminPage />} />
+                <Route path="partner" element={<PartnersAdminPage />} />
+                <Route path="kunden" element={<WebsiteKundenAdminPage />} />
+                <Route path="chat" element={<ChatPage />} />
+                <Route path="email-templates" element={<EmailTemplatesPage />} />
+                <Route path="einstellungen" element={<WebsiteEinstellungenPage />} />
+              </Route>
+
               {/* Legacy redirects → admin */}
               <Route path="/auftraege" element={<Navigate to="/admin/auftraege" replace />} />
               <Route path="/auftraege/:id" element={<Navigate to="/admin/auftraege" replace />} />
