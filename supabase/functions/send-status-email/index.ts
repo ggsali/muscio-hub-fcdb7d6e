@@ -18,6 +18,11 @@ const STATUS_KEY_MAP: Record<string, string> = {
   "geliefert": "geliefert",
 };
 
+const SITE_NAME = "3DMuscio";
+const SENDER_DOMAIN = "notify.3dmuscio.com";
+const FROM_EMAIL = `${SITE_NAME} <noreply@3dmuscio.com>`;
+const REPLY_TO = "info@3dmuscio.com";
+
 function applyVars(text: string, vars: Record<string, string>) {
   return text.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? "");
 }
@@ -38,8 +43,6 @@ Deno.serve(async (req) => {
     }
 
     const key = STATUS_KEY_MAP[status_key] || status_key;
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY fehlt");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -76,23 +79,36 @@ Deno.serve(async (req) => {
     const text = applyVars(tpl.nachricht, vars);
     const html = `<div style="font-family:Inter,Arial,sans-serif;color:#222;line-height:1.55;font-size:14px;max-width:600px;">${nl2br(text)}</div>`;
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "3DMuscio <info@3dmuscio.com>",
-        to: [customer.email],
-        subject, html, text,
-      }),
+    const messageId = crypto.randomUUID();
+
+    await supabase.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: `status-${key}`,
+      recipient_email: customer.email,
+      status: "pending",
     });
 
-    const body = await res.json();
-    if (!res.ok) throw new Error(`Resend ${res.status}: ${JSON.stringify(body)}`);
+    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
+        message_id: messageId,
+        to: customer.email,
+        from: FROM_EMAIL,
+        reply_to: REPLY_TO,
+        sender_domain: SENDER_DOMAIN,
+        subject,
+        html,
+        text,
+        purpose: "transactional",
+        label: `status-${key}`,
+        idempotency_key: `status-${order_id}-${key}-${Date.now()}`,
+        queued_at: new Date().toISOString(),
+      },
+    });
 
-    return new Response(JSON.stringify({ ok: true, id: body.id }), {
+    if (enqueueError) throw new Error(enqueueError.message);
+
+    return new Response(JSON.stringify({ ok: true, queued: true, id: messageId }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
