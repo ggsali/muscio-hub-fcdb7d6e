@@ -11,6 +11,7 @@ import {
   Html,
   Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
@@ -21,38 +22,28 @@ interface SignupEmailProps {
   confirmationUrl: string
 }
 
-export const SignupEmail = ({
-  siteName,
-  siteUrl,
-  recipient,
-  confirmationUrl,
-}: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+export const SignupEmail = ({ siteUrl, recipient, confirmationUrl }: SignupEmailProps) => (
+  <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Bestätige deine E-Mail-Adresse für 3DMuscio</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
-        <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
-        </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
-        <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
-        </Text>
+        <Section style={header}>
+          <Text style={brand}>3D<span style={brandAccent}>MUSCIO</span></Text>
+        </Section>
+        <Section style={card}>
+          <Heading style={h1}>E-Mail-Adresse bestätigen</Heading>
+          <Text style={text}>
+            Danke für deine Registrierung. Bitte bestätige die E-Mail-Adresse <strong>{recipient}</strong>, damit dein Kundenkonto aktiviert wird.
+          </Text>
+          <Section style={buttonWrap}>
+            <Button style={button} href={confirmationUrl}>E-Mail bestätigen</Button>
+          </Section>
+          <Text style={smallText}>Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:</Text>
+          <Text style={linkText}><Link href={confirmationUrl} style={link}>{confirmationUrl}</Link></Text>
+          <Text style={footer}>Falls du dich nicht registriert hast, kannst du diese E-Mail ignorieren.</Text>
+        </Section>
+        <Text style={signature}>Dein 3DMuscio Team · <Link href={siteUrl} style={link}>3dmuscio.com</Link></Text>
       </Container>
     </Body>
   </Html>
@@ -60,27 +51,18 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Inter, Arial, sans-serif', padding: '24px 0' }
+const container = { maxWidth: '560px', margin: '0 auto', padding: '0 16px' }
+const header = { textAlign: 'center' as const, padding: '12px 0 22px' }
+const brand = { fontSize: '24px', fontWeight: 'bold' as const, color: '#1a1a1a', letterSpacing: '1px', margin: 0 }
+const brandAccent = { color: '#FF5A00' }
+const card = { backgroundColor: '#f7f7f8', borderRadius: '12px', padding: '32px 28px' }
+const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#1a1a1a', margin: '0 0 16px' }
+const text = { fontSize: '15px', color: '#3f3f46', lineHeight: '1.6', margin: '0 0 16px' }
+const smallText = { fontSize: '13px', color: '#71717a', margin: '24px 0 4px' }
+const linkText = { fontSize: '12px', color: '#FF5A00', wordBreak: 'break-all' as const, margin: '0 0 24px' }
+const link = { color: '#FF5A00', textDecoration: 'underline' }
+const buttonWrap = { textAlign: 'center' as const, margin: '32px 0' }
+const button = { backgroundColor: '#FF5A00', color: '#ffffff', fontSize: '15px', fontWeight: 'bold' as const, borderRadius: '8px', padding: '14px 28px', textDecoration: 'none', display: 'inline-block' }
+const footer = { fontSize: '12px', color: '#a1a1aa', margin: '24px 0 0' }
+const signature = { fontSize: '12px', color: '#a1a1aa', textAlign: 'center' as const, margin: '24px 0 0' }
