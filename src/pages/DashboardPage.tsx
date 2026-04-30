@@ -60,8 +60,13 @@ export default function DashboardPage() {
     async function load() {
       const { data: orders } = await supabase
         .from("orders")
-        .select("*, customers(name)")
+        .select("*, customers(name, vorname, firma, email)")
         .order("datum", { ascending: false });
+
+      const fullName = (c: any) =>
+        c
+          ? [c.vorname, c.name].filter(Boolean).join(" ").trim() || c.firma || c.email || "Kunde ohne Name"
+          : "Kein Kunde";
 
       if (orders) {
         const abgeschlossen = orders.filter(o => o.status === "Abgeschlossen");
@@ -77,10 +82,10 @@ export default function DashboardPage() {
         const recent = orders.slice(0, 5).map(o => ({
           id: o.id,
           datum: o.datum,
-          beschreibung: o.beschreibung || "—",
+          beschreibung: o.name || o.beschreibung || "Ohne Titel",
           umsatz_total: o.umsatz_total || 0,
           status: o.status,
-          customer_name: (o.customers as any)?.name || "Kein Kunde",
+          customer_name: fullName(o.customers),
         }));
         setRecentOrders(recent);
 
@@ -101,7 +106,7 @@ export default function DashboardPage() {
 
         const kundeMap: Record<string, number> = {};
         orders.forEach(o => {
-          const name = (o.customers as any)?.name || "Unbekannt";
+          const name = fullName(o.customers);
           if (!kundeMap[name]) kundeMap[name] = 0;
           kundeMap[name] += o.umsatz_total || 0;
         });
@@ -114,7 +119,7 @@ export default function DashboardPage() {
 
       // Webshop-Bestellungen + neue Anfragen + neueste Kunden parallel
       const [{ data: shopO }, { data: anfr }, { data: kun }] = await Promise.all([
-        supabase.from("orders").select("id, datum, beschreibung, umsatz_total, status, name, customers(name)").eq("source", "website-shop").order("datum", { ascending: false }).limit(5),
+        supabase.from("orders").select("id, datum, beschreibung, umsatz_total, status, name, customers(name, vorname, firma, email)").eq("source", "website-shop").order("datum", { ascending: false }).limit(5),
         supabase.from("inquiries").select("id, name, email, betreff, nachricht, status, created_at").eq("status", "Neu").order("created_at", { ascending: false }).limit(5),
         supabase.from("customers").select("id, name, vorname, firma, email, created_at").order("created_at", { ascending: false }).limit(5),
       ]);
@@ -257,7 +262,7 @@ export default function DashboardPage() {
               {websiteOrders.map(o => (
                 <div key={o.id} onClick={() => navigate(`/admin/auftraege/${o.id}`)} className="px-4 py-2.5 cursor-pointer hover:bg-muted/30 active:bg-muted/40 transition-colors">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium truncate">{(o.customers as any)?.name || o.name || "Webshop"}</span>
+                    <span className="text-xs font-medium truncate">{(() => { const c: any = o.customers; return c ? ([c.vorname, c.name].filter(Boolean).join(" ").trim() || c.firma || c.email || o.name || "Webshop") : (o.name || "Webshop"); })()}</span>
                     <span className="text-xs font-bold shrink-0">{formatCHF(o.umsatz_total || 0)}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
