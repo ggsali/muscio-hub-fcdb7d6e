@@ -90,6 +90,8 @@ const App = () => (
               {/* Public website */}
               <Route element={<MaintenanceGate><SiteLayout /></MaintenanceGate>}>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/shop" element={<ShopPage />} />
+                <Route path="/shop/:slug" element={<ShopDetailPage />} />
                 <Route path="/kalkulator-online" element={<CalculatorOnlinePage />} />
                 <Route path="/materialien" element={<MaterialienPage />} />
                 <Route path="/ueber-uns" element={<UeberUnsPage />} />
