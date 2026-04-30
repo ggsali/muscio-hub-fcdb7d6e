@@ -19,3 +19,5 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.submit-inquiry]
     verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
