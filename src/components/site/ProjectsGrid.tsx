@@ -40,12 +40,17 @@ export function ProjectsGrid() {
           {projects.map((p, i) => (
             <ScrollReveal key={p.id} delay={i * 0.05}>
               <Link to={`/projekte/${p.slug}`} className="group relative block rounded-2xl overflow-hidden border border-border bg-card aspect-[4/3]">
-                {p.bild_url ? (
-                  <img src={p.bild_url} alt={p.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                ) : (
-                  <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                    <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
-                  </div>
+                <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                  <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+                </div>
+                {p.bild_url && (
+                  <img
+                    src={p.bild_url}
+                    alt={p.name}
+                    loading="lazy"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
