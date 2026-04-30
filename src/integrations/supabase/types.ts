@@ -750,6 +750,7 @@ export type Database = {
         Row: {
           aktiv: boolean
           beschreibung: string | null
+          bild_url: string | null
           created_at: string
           featured: boolean
           gallery_paths: string[] | null
@@ -757,14 +758,19 @@ export type Database = {
           id: string
           kategorie: string | null
           kurzbeschreibung: string | null
+          lieferzeit: string | null
+          material: string | null
           name: string
           slug: string
           sort_order: number
+          toleranz: string | null
           updated_at: string
+          verfahren: string | null
         }
         Insert: {
           aktiv?: boolean
           beschreibung?: string | null
+          bild_url?: string | null
           created_at?: string
           featured?: boolean
           gallery_paths?: string[] | null
@@ -772,14 +778,19 @@ export type Database = {
           id?: string
           kategorie?: string | null
           kurzbeschreibung?: string | null
+          lieferzeit?: string | null
+          material?: string | null
           name: string
           slug: string
           sort_order?: number
+          toleranz?: string | null
           updated_at?: string
+          verfahren?: string | null
         }
         Update: {
           aktiv?: boolean
           beschreibung?: string | null
+          bild_url?: string | null
           created_at?: string
           featured?: boolean
           gallery_paths?: string[] | null
@@ -787,10 +798,14 @@ export type Database = {
           id?: string
           kategorie?: string | null
           kurzbeschreibung?: string | null
+          lieferzeit?: string | null
+          material?: string | null
           name?: string
           slug?: string
           sort_order?: number
+          toleranz?: string | null
           updated_at?: string
+          verfahren?: string | null
         }
         Relationships: []
       }
