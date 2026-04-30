@@ -30,6 +30,21 @@ const ContactPage = () => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles").select("full_name, phone").eq("user_id", user.id).maybeSingle();
+      setForm(f => ({
+        ...f,
+        name: f.name || profile?.full_name || user.user_metadata?.full_name || "",
+        email: f.email || user.email || "",
+        phone: f.phone || profile?.phone || user.user_metadata?.phone || "",
+      }));
+    })();
+  }, []);
+
   const handleFiles = (fl: FileList | null) => {
     if (!fl) return;
     const next = Array.from(fl).filter(f => !attachments.find(a => a.name === f.name));
