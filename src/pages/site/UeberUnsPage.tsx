@@ -29,6 +29,7 @@ export default function UeberUnsPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const location = useLocation();
 
   useEffect(() => {
     supabase
@@ -38,6 +39,17 @@ export default function UeberUnsPage() {
       .order("sort_order")
       .then(({ data }) => { if (data) setTeam(data as TeamMember[]); });
   }, []);
+
+  // Smooth scroll to hash anchors when navigating from header dropdown
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.slice(1);
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 200);
+    }
+  }, [location.hash, team.length]);
 
   return (
     <div className="pb-16">
@@ -60,11 +72,13 @@ export default function UeberUnsPage() {
         </div>
 
         {/* Timeline (mit Team als Heute-Knoten) */}
-        <Timeline team={team} />
+        <div id="zeitleiste" className="scroll-mt-24">
+          <Timeline team={team} />
+        </div>
 
         {/* Story */}
         <ScrollReveal>
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 md:mb-28 max-w-5xl mx-auto">
+          <div id="geschichte" className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 md:mb-28 max-w-5xl mx-auto scroll-mt-24">
             <div className="md:col-span-5">
               <img
                 src={werkstatt}
