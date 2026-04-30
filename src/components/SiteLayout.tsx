@@ -14,10 +14,13 @@ export default function SiteLayout() {
       <div className="site-theme min-h-screen flex flex-col">
         <CursorSpotlight />
         <CanonicalTag />
-        <ShopPromoBanner />
-        <Header />
+        {/* Sticky stack: Banner sits above the header — they no longer overlap */}
+        <div className="sticky top-0 z-50">
+          <ShopPromoBanner />
+          <Header />
+        </div>
         <CartDrawer />
-        <main className="flex-1 pt-14">
+        <main className="flex-1">
           <Outlet />
         </main>
         <Footer />
