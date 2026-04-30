@@ -34,7 +34,14 @@ export const SignupEmail = ({
     <Body style={main}>
       <Container style={container}>
         <div style={header}>
-          <span style={logo}>3DM</span>
+          <img
+            src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg"
+            alt="3DMuscio"
+            width={48}
+            height={48}
+            style={logoImg}
+          />
+          <span style={logo}>3DMuscio</span>
         </div>
         <Heading style={h1}>E-Mail-Adresse bestätigen</Heading>
         <Text style={text}>
@@ -78,17 +85,22 @@ const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '32px 28px', maxWidth: '560px', margin: '0 auto' }
 const header = {
   backgroundColor: '#18181b',
-  borderRadius: '8px',
+  borderRadius: '12px',
   padding: '20px 24px',
   marginBottom: '28px',
   display: 'flex' as const,
   alignItems: 'center' as const,
+  gap: '14px',
+}
+const logoImg = {
+  borderRadius: '8px',
+  display: 'block' as const,
 }
 const logo = {
   color: '#ffffff',
   fontSize: '20px',
   fontWeight: 'bold' as const,
-  letterSpacing: '0.05em',
+  letterSpacing: '0.02em',
 }
 const h1 = {
   fontSize: '22px',
