@@ -60,6 +60,8 @@ import WebsiteAdminDashboardPage from "@/pages/website-admin/WebsiteAdminDashboa
 import ReviewsAdminPage from "@/pages/website-admin/ReviewsAdminPage";
 import ProjekteAdminPage from "@/pages/website-admin/ProjekteAdminPage";
 import PartnersAdminPage from "@/pages/website-admin/PartnersAdminPage";
+import TeamAdminPage from "@/pages/website-admin/TeamAdminPage";
+import NavigationAdminPage from "@/pages/website-admin/NavigationAdminPage";
 
 const queryClient = new QueryClient();
 
