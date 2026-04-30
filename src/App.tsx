@@ -44,9 +44,6 @@ import UeberUnsPage from "@/pages/site/UeberUnsPage";
 import AGBPage from "@/pages/site/AGBPage";
 import DatenschutzPage from "@/pages/site/DatenschutzPage";
 import ImpressumPage from "@/pages/site/ImpressumPage";
-import ShopPage from "@/pages/site/ShopPage";
-import ShopDetailPage from "@/pages/site/ShopDetailPage";
-import AdminShopPage from "@/pages/AdminShopPage";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
@@ -91,8 +88,6 @@ const App = () => (
               {/* Public website */}
               <Route element={<MaintenanceGate><SiteLayout /></MaintenanceGate>}>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/shop" element={<ShopPage />} />
-                <Route path="/shop/:slug" element={<ShopDetailPage />} />
                 <Route path="/kalkulator-online" element={<CalculatorOnlinePage />} />
                 <Route path="/materialien" element={<MaterialienPage />} />
                 <Route path="/ueber-uns" element={<UeberUnsPage />} />
@@ -132,7 +127,6 @@ const App = () => (
                 <Route path="kalender" element={<KalenderPage />} />
                 <Route path="uploads" element={<UploadLinksPage />} />
                 <Route path="chat" element={<ChatPage />} />
-                <Route path="shop" element={<AdminShopPage />} />
                 <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />
                 <Route path="website/email-templates" element={<EmailTemplatesPage />} />

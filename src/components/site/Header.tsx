@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Printer, User, ShoppingCart } from "lucide-react";
+import { Menu, X, Printer, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
 
 const navLinks = [
   { label: "Home", path: "/" },
-  { label: "Shop", path: "/shop" },
   { label: "Kalkulator", path: "/kalkulator-online" },
   { label: "Materialien", path: "/materialien" },
   { label: "Über uns", path: "/ueber-uns" },
@@ -25,7 +23,6 @@ export const Header = () => {
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
   const role = useUserRole(session?.user.id);
-  const { totalItems, setIsOpen: setCartOpen } = useCart();
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
@@ -108,13 +105,6 @@ export const Header = () => {
           </nav>
 
           <div className="hidden lg:flex items-center gap-2">
-            <button onClick={() => setCartOpen(true)}
-              className="relative rounded-full h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-              <ShoppingCart className="w-4 h-4" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{totalItems}</span>
-              )}
-            </button>
             {session ? (
               <Button variant="ghost" size="sm" asChild
                 className="rounded-full h-8 px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
@@ -136,13 +126,6 @@ export const Header = () => {
           </div>
 
           <div className="lg:hidden flex items-center gap-2">
-            <button onClick={() => setCartOpen(true)}
-              className="relative h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground">
-              <ShoppingCart className="w-4 h-4" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{totalItems}</span>
-              )}
-            </button>
             {session ? (
               <Button variant="ghost" size="sm" asChild className="h-8 px-2 rounded-full text-muted-foreground">
                 <Link to={accountTarget}><User className="w-4 h-4" /></Link>
