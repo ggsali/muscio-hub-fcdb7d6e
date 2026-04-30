@@ -25,6 +25,37 @@ function formatTime(ts: number) {
   });
 }
 
+function StatusBox({ status, label }: { status: SendStatus | null; label: string }) {
+  if (!status) return null;
+  const isOk = status.state === "success";
+  return (
+    <div
+      className={
+        "rounded-md border text-xs p-2.5 flex items-start gap-2 " +
+        (isOk
+          ? "bg-primary/5 border-primary/20 text-foreground"
+          : "bg-destructive/10 border-destructive/30 text-destructive")
+      }
+    >
+      {isOk ? (
+        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+      ) : (
+        <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+      )}
+      <div className="flex-1 min-w-0 text-left">
+        <div className="font-medium">
+          {isOk ? `${label}: erfolgreich übergeben` : `${label}: Fehler`}
+        </div>
+        <div className={isOk ? "text-muted-foreground" : ""}>{status.message}</div>
+        <div className="flex items-center gap-1 text-muted-foreground mt-1">
+          <Clock className="w-3 h-3" />
+          <span>Zuletzt gesendet: {formatTime(status.at)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
