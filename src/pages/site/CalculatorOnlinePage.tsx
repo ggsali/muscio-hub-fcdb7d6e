@@ -274,9 +274,6 @@ const CalculatorOnlinePage = () => {
                 <div className="flex justify-between text-muted-foreground">
                   <span>Versand</span><span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>MwSt. (8.1%)</span><span className="text-foreground">{CHF(mwst)}</span>
-                </div>
                 <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
                   <span className="font-bold">Total</span>
                   <span className="text-xl font-bold text-primary">{CHF(total)}</span>
@@ -284,10 +281,16 @@ const CalculatorOnlinePage = () => {
               </div>
               <Button
                 className="w-full mt-5 gap-2"
-                disabled={parts.length === 0}
-                onClick={() => setShowQuote(true)}
+                disabled={parts.length === 0 || submitting}
+                onClick={async (e) => {
+                  if (isLoggedIn && form.name && form.email) {
+                    await handleSend(e as unknown as React.FormEvent);
+                  } else {
+                    setShowQuote(true);
+                  }
+                }}
               >
-                Angebot anfragen <ArrowRight className="w-4 h-4" />
+                {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</> : <>Angebot anfragen <ArrowRight className="w-4 h-4" /></>}
               </Button>
               <p className="text-xs text-muted-foreground mt-3 text-center">
                 Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.
