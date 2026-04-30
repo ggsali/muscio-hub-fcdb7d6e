@@ -45,7 +45,36 @@ export default function LoginPage() {
     params.get("mode") === "register" ? "register" : "login"
   );
 
-  
+  const [resendStatus, setResendStatus] = useState<SendStatus | null>(null);
+  const [resetStatus, setResetStatus] = useState<SendStatus | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  // Statuswerte aus localStorage laden (überleben Reload)
+  useEffect(() => {
+    try {
+      const r = localStorage.getItem(RESEND_KEY);
+      if (r) setResendStatus(JSON.parse(r));
+      const p = localStorage.getItem(RESET_KEY);
+      if (p) setResetStatus(JSON.parse(p));
+    } catch {}
+  }, []);
+
+  // Ticker für Cooldown-Anzeige
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const persistStatus = (key: string, status: SendStatus, setter: (s: SendStatus) => void) => {
+    setter(status);
+    try { localStorage.setItem(key, JSON.stringify(status)); } catch {}
+  };
+
+  const cooldownLeft = (status: SendStatus | null) => {
+    if (!status || status.state !== "success") return 0;
+    const left = COOLDOWN_SEC - Math.floor((now - status.at) / 1000);
+    return left > 0 ? left : 0;
+  };
 
   useEffect(() => {
     const redirect = async (userId: string) => {
