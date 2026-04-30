@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Box, LayoutDashboard, Package, User, LogOut, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Package, User, LogOut, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
+import logo from "@/assets/logo.jpeg";
 
 const items = [
   { to: "/portal", label: "Übersicht", icon: LayoutDashboard, end: true },
