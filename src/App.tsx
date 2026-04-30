@@ -44,6 +44,8 @@ import UeberUnsPage from "@/pages/site/UeberUnsPage";
 import AGBPage from "@/pages/site/AGBPage";
 import DatenschutzPage from "@/pages/site/DatenschutzPage";
 import ImpressumPage from "@/pages/site/ImpressumPage";
+import ShopPage from "@/pages/site/ShopPage";
+import ShopDetailPage from "@/pages/site/ShopDetailPage";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
