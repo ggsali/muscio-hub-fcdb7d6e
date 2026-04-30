@@ -51,6 +51,9 @@ export default function DashboardPage() {
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [topKunden, setTopKunden] = useState<TopKunde[]>([]);
+  const [websiteOrders, setWebsiteOrders] = useState<any[]>([]);
+  const [neueAnfragen, setNeueAnfragen] = useState<any[]>([]);
+  const [neueKunden, setNeueKunden] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
