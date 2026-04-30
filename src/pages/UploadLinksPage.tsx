@@ -137,9 +137,11 @@ export default function UploadLinksPage() {
   const saveNasConfig = () => {
     localStorage.setItem(NAS_URL_KEY, nasConfig.url);
     localStorage.setItem(NAS_USER_KEY, nasConfig.user);
-    localStorage.setItem(NAS_PASS_KEY, nasConfig.pass);
+    // Password kept only in sessionStorage (cleared when tab closes) to limit XSS exposure
+    sessionStorage.setItem(NAS_PASS_KEY, nasConfig.pass);
+    localStorage.removeItem(NAS_PASS_KEY); // remove any legacy plaintext copy
     setShowNasSettings(false);
-    toast.success("NAS-Verbindung gespeichert");
+    toast.success("NAS-Verbindung gespeichert (Passwort gilt nur für diese Browser-Sitzung)");
   };
 
   const nasConfigured = !!(nasConfig.url && nasConfig.user && nasConfig.pass);
