@@ -4,8 +4,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Mail, KeyRound, XCircle, Clock } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
+
+type SendStatus = {
+  state: "success" | "error";
+  at: number;
+  message: string;
+};
+
+const RESEND_KEY = "3dm_resend_status";
+const RESET_KEY = "3dm_reset_status";
+const COOLDOWN_SEC = 60;
+
+function formatTime(ts: number) {
+  const d = new Date(ts);
+  return d.toLocaleString("de-CH", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
