@@ -9,7 +9,9 @@ import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
 
-const navLinks = [
+interface NavItem { label: string; path: string; }
+
+const DEFAULT_NAV: NavItem[] = [
   { label: "Home", path: "/" },
   { label: "Shop", path: "/shop" },
   { label: "Kalkulator", path: "/kalkulator-online" },
@@ -23,7 +25,16 @@ export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
+  const [navLinks, setNavLinks] = useState<NavItem[]>(DEFAULT_NAV);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
+
+  useEffect(() => {
+    supabase.from("website_settings").select("value").eq("key", "nav_links").maybeSingle()
+      .then(({ data }) => {
+        const v = (data as any)?.value;
+        if (Array.isArray(v) && v.length) setNavLinks(v as NavItem[]);
+      });
+  }, []);
 
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
