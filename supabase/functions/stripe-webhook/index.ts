@@ -7,6 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SITE_NAME = "3DMuscio";
+const SENDER_DOMAIN = "notify.3dmuscio.com";
+const FROM_EMAIL = `${SITE_NAME} <noreply@3dmuscio.com>`;
+const REPLY_TO = "info@3dmuscio.com";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -14,7 +19,6 @@ serve(async (req) => {
 
   const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
   const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
   if (!STRIPE_SECRET_KEY) {
     return new Response("STRIPE_SECRET_KEY not configured", { status: 500 });
