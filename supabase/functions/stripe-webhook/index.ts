@@ -94,8 +94,7 @@ serve(async (req) => {
       });
 
       // 4. Send payment confirmation email
-      if (RESEND_API_KEY) {
-        try {
+      try {
           const { data: order } = await supabase
             .from("orders")
             .select("*, customers(*)")
@@ -152,26 +151,38 @@ serve(async (req) => {
                 </div>
               </div>`;
 
-            await fetch("https://api.resend.com/emails", {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${RESEND_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                from: `${companyName} <info@3dmuscio.com>`,
-                to: [customer.email],
-                subject: `Zahlungsbestätigung – ${orderName} | ${companyName}`,
-                html: htmlBody,
-              }),
+            const messageId = crypto.randomUUID();
+            await supabase.from("email_send_log").insert({
+              message_id: messageId,
+              template_name: "payment-confirmation",
+              recipient_email: customer.email,
+              status: "pending",
             });
 
-            console.log(`[stripe-webhook] Confirmation email sent to ${customer.email}`);
+            const { error: enqueueError } = await supabase.rpc("enqueue_email", {
+              queue_name: "transactional_emails",
+              payload: {
+                message_id: messageId,
+                to: customer.email,
+                from: FROM_EMAIL,
+                reply_to: REPLY_TO,
+                sender_domain: SENDER_DOMAIN,
+                subject: `Zahlungsbestätigung – ${orderName} | ${companyName}`,
+                html: htmlBody,
+                purpose: "transactional",
+                label: "payment-confirmation",
+                idempotency_key: `payment-confirmation-${orderId}`,
+                queued_at: new Date().toISOString(),
+              },
+            });
+
+            if (enqueueError) throw new Error(enqueueError.message);
+
+            console.log(`[stripe-webhook] Confirmation email queued for ${customer.email}`);
           }
-        } catch (emailErr) {
-          console.error("[stripe-webhook] Email sending failed:", emailErr);
-          // Don't fail the webhook because of email error
-        }
+      } catch (emailErr) {
+        console.error("[stripe-webhook] Email sending failed:", emailErr);
+        // Don't fail the webhook because of email error
       }
 
       return new Response(JSON.stringify({ received: true, orderId }), {
