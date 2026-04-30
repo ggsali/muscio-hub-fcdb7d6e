@@ -144,3 +144,15 @@
     box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
   }
 }
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee 35s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
