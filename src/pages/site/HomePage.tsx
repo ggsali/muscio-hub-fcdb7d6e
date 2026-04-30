@@ -13,6 +13,8 @@ import {
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { HeroProjectsCarousel } from "@/components/site/HeroProjectsCarousel";
+import { ReviewsSection } from "@/components/site/ReviewsSection";
+import { ProjectsGrid } from "@/components/site/ProjectsGrid";
 
 /* ─── HERO ─── */
 const Hero = () => {
@@ -306,7 +308,9 @@ const Index = () => (
     <Marquee />
     <Stats />
     <HowItWorks />
+    <ProjectsGrid />
     <MaterialsTeaser />
+    <ReviewsSection />
     <FAQ />
     <CTA />
   </div>

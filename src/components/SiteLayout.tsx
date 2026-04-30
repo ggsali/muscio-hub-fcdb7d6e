@@ -5,6 +5,7 @@ import { CursorSpotlight } from "./site/CursorSpotlight";
 import { CanonicalTag } from "./site/CanonicalTag";
 import { CartDrawer } from "./site/CartDrawer";
 import { ShopPromoBanner } from "./site/ShopPromoBanner";
+import { ChatWidget } from "./site/ChatWidget";
 import { CartProvider } from "@/contexts/CartContext";
 
 export default function SiteLayout() {
@@ -20,6 +21,7 @@ export default function SiteLayout() {
           <Outlet />
         </main>
         <Footer />
+        <ChatWidget />
       </div>
     </CartProvider>
   );
