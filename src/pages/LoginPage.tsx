@@ -260,28 +260,40 @@ export default function LoginPage() {
           </form>
 
           {mode === "login" && (
-            <div className="mt-3 text-center">
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                disabled={loading}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-              >
-                Passwort vergessen?
-              </button>
+            <div className="mt-3 space-y-2">
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={loading || cooldownLeft(resetStatus) > 0}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                >
+                  <KeyRound className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+                  {cooldownLeft(resetStatus) > 0
+                    ? `Erneut senden in ${cooldownLeft(resetStatus)}s`
+                    : "Passwort vergessen?"}
+                </button>
+              </div>
+              <StatusBox status={resetStatus} label="Passwort-Reset" />
             </div>
           )}
 
           {mode === "register" && (
-            <div className="mt-3 text-center">
-              <button
-                type="button"
-                onClick={handleResendConfirmation}
-                disabled={loading}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-              >
-                Bestätigungs-E-Mail erneut senden
-              </button>
+            <div className="mt-3 space-y-2">
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={loading || cooldownLeft(resendStatus) > 0}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                >
+                  <Mail className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+                  {cooldownLeft(resendStatus) > 0
+                    ? `Erneut senden in ${cooldownLeft(resendStatus)}s`
+                    : "Bestätigungs-E-Mail erneut senden"}
+                </button>
+              </div>
+              <StatusBox status={resendStatus} label="Bestätigungs-E-Mail" />
             </div>
           )}
 
