@@ -237,6 +237,93 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Website-Aktivität: Webshop-Bestellungen, Anfragen, neue Kunden */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4 text-primary" />
+              Webshop-Bestellungen
+              {websiteOrders.length > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary">{websiteOrders.length}</span>
+              )}
+            </h2>
+            <button onClick={() => navigate("/admin/auftraege")} className="text-xs text-primary hover:underline">Alle</button>
+          </div>
+          {websiteOrders.length === 0 ? (
+            <div className="p-6 text-center text-xs text-muted-foreground">Noch keine Webshop-Bestellungen</div>
+          ) : (
+            <div className="divide-y divide-border/50">
+              {websiteOrders.map(o => (
+                <div key={o.id} onClick={() => navigate(`/admin/auftraege/${o.id}`)} className="px-4 py-2.5 cursor-pointer hover:bg-muted/30 active:bg-muted/40 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium truncate">{(o.customers as any)?.name || o.name || "Webshop"}</span>
+                    <span className="text-xs font-bold shrink-0">{formatCHF(o.umsatz_total || 0)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <StatusBadge status={o.status} />
+                    <span className="text-[10px] text-muted-foreground">{o.datum}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2">
+              <Mail className="w-4 h-4 text-warning" />
+              Neue Anfragen
+              {neueAnfragen.length > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/15 text-warning">{neueAnfragen.length}</span>
+              )}
+            </h2>
+            <button onClick={() => navigate("/admin/anfragen")} className="text-xs text-primary hover:underline">Alle</button>
+          </div>
+          {neueAnfragen.length === 0 ? (
+            <div className="p-6 text-center text-xs text-muted-foreground">Keine offenen Anfragen</div>
+          ) : (
+            <div className="divide-y divide-border/50">
+              {neueAnfragen.map(a => (
+                <div key={a.id} onClick={() => navigate("/admin/anfragen")} className="px-4 py-2.5 cursor-pointer hover:bg-muted/30 active:bg-muted/40 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium truncate">{a.name}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{new Date(a.created_at).toLocaleDateString("de-CH")}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{a.betreff || a.nachricht}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold text-sm flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-success" />
+              Neueste Kunden
+            </h2>
+            <button onClick={() => navigate("/admin/kunden")} className="text-xs text-primary hover:underline">Alle</button>
+          </div>
+          {neueKunden.length === 0 ? (
+            <div className="p-6 text-center text-xs text-muted-foreground">Noch keine Kunden</div>
+          ) : (
+            <div className="divide-y divide-border/50">
+              {neueKunden.map(k => (
+                <div key={k.id} onClick={() => navigate(`/admin/kunden/${k.id}`)} className="px-4 py-2.5 cursor-pointer hover:bg-muted/30 active:bg-muted/40 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium truncate">{[k.vorname, k.name].filter(Boolean).join(" ") || k.firma || "—"}</span>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{new Date(k.created_at).toLocaleDateString("de-CH")}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{k.email || k.firma || "—"}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Recent Orders */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="px-4 md:px-5 py-3 border-b border-border flex items-center justify-between">
