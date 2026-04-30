@@ -33,7 +33,7 @@ export default function PortalLayout() {
   if (!session) return null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="dark min-h-screen bg-background flex flex-col">
       <header className="bg-sidebar border-b border-border">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
