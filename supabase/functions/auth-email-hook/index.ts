@@ -18,11 +18,11 @@ const corsHeaders = {
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'E-Mail-Adresse bestätigen',
-  invite: 'Einladung zu 3DMuscio',
-  magiclink: 'Dein Login-Link',
-  recovery: 'Passwort zurücksetzen',
-  email_change: 'Neue E-Mail-Adresse bestätigen',
-  reauthentication: 'Dein Bestätigungscode',
+  invite: "You've been invited",
+  magiclink: 'Your login link',
+  recovery: 'Reset your password',
+  email_change: 'Confirm your new email',
+  reauthentication: 'Your verification code',
 }
 
 // Template mapping
@@ -70,7 +70,6 @@ const SAMPLE_DATA: Record<string, object> = {
   },
   email_change: {
     siteName: SITE_NAME,
-    oldEmail: SAMPLE_EMAIL,
     email: SAMPLE_EMAIL,
     newEmail: SAMPLE_EMAIL,
     confirmationUrl: SAMPLE_PROJECT_URL,
@@ -226,7 +225,6 @@ async function handleWebhook(req: Request): Promise<Response> {
     confirmationUrl: payload.data.url,
     token: payload.data.token,
     email: payload.data.email,
-    oldEmail: payload.data.old_email,
     newEmail: payload.data.new_email,
   }
 
