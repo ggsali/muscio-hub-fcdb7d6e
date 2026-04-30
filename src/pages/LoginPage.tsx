@@ -144,6 +144,7 @@ export default function LoginPage() {
       else navigate("/portal", { replace: true });
     } else {
       if (!fullName.trim()) { setError("Bitte Name angeben."); setLoading(false); return; }
+      if (password !== passwordConfirm) { setError("Die beiden Passwörter stimmen nicht überein."); setLoading(false); return; }
       const { error } = await supabase.auth.signUp({
         email, password,
         options: {
