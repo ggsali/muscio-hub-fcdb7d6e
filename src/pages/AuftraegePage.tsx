@@ -17,6 +17,7 @@ interface Order {
   id: string;
   datum: string;
   beschreibung: string;
+  name: string | null;
   umsatz_total: number;
   kosten_total: number;
   gewinn_total: number;
@@ -44,14 +45,20 @@ export default function AuftraegePage() {
     async function load() {
       const { data } = await supabase
         .from("orders")
-        .select("*, customers(name)")
+        .select("*, customers(name, vorname, firma, email)")
         .order("datum", { ascending: false });
 
       if (data) {
-        setOrders(data.map(o => ({
-          ...o,
-          customer_name: (o.customers as any)?.name || "Kein Kunde",
-        })));
+        setOrders(data.map(o => {
+          const c: any = o.customers;
+          const fullName = c
+            ? [c.vorname, c.name].filter(Boolean).join(" ").trim() || c.firma || c.email || "Kunde ohne Name"
+            : "Kein Kunde";
+          return {
+            ...o,
+            customer_name: fullName,
+          };
+        }));
       }
       setLoading(false);
     }
@@ -69,9 +76,11 @@ export default function AuftraegePage() {
   };
 
   const filtered = orders.filter(o => {
+    const q = search.toLowerCase();
     const matchSearch =
-      (o.beschreibung || "").toLowerCase().includes(search.toLowerCase()) ||
-      o.customer_name.toLowerCase().includes(search.toLowerCase());
+      (o.beschreibung || "").toLowerCase().includes(q) ||
+      (o.name || "").toLowerCase().includes(q) ||
+      o.customer_name.toLowerCase().includes(q);
     const matchFilter = filter === "Alle" || o.status === filter;
     const matchSource =
       sourceFilter === "Alle" ||
@@ -154,7 +163,7 @@ export default function AuftraegePage() {
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website</span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{o.beschreibung || "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{o.name || o.beschreibung || "Ohne Titel"}</p>
                     <p className="text-xs text-muted-foreground mt-1">{o.datum}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
@@ -189,7 +198,7 @@ export default function AuftraegePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  {["Datum", "Kunde", "Quelle", "Beschreibung", "Umsatz", "Kosten", "Gewinn", "Marge", "Status", ""].map(h => (
+                  {["Datum", "Auftrag", "Kunde", "Quelle", "Umsatz", "Kosten", "Gewinn", "Marge", "Status", ""].map(h => (
                     <th key={h} className={`px-4 py-3 text-muted-foreground font-medium ${["Umsatz", "Kosten", "Gewinn", "Marge"].includes(h) ? "text-right" : "text-left"}`}>
                       {h}
                     </th>
@@ -203,8 +212,9 @@ export default function AuftraegePage() {
                     className="table-row-alt border-b border-border/50 last:border-0 cursor-pointer"
                     onClick={() => navigate(`/admin/auftraege/${o.id}`)}
                   >
-                    <td className="px-4 py-3 text-muted-foreground">{o.datum}</td>
-                    <td className="px-4 py-3 font-medium">{o.customer_name}</td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{o.datum}</td>
+                    <td className="px-4 py-3 font-medium max-w-[220px] truncate">{o.name || o.beschreibung || <span className="text-muted-foreground italic">Ohne Titel</span>}</td>
+                    <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate">{o.customer_name}</td>
                     <td className="px-4 py-3">
                       {o.source === "website" ? (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website</span>
@@ -212,7 +222,6 @@ export default function AuftraegePage() {
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Manuell</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{o.beschreibung || "—"}</td>
                     <td className="px-4 py-3 num-right">{formatCHF(o.umsatz_total)}</td>
                     <td className="px-4 py-3 num-right text-destructive">{formatCHF(o.kosten_total)}</td>
                     <td className="px-4 py-3 num-right text-success">{formatCHF(o.gewinn_total)}</td>
