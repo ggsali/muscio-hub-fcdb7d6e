@@ -39,8 +39,8 @@ export const Header = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const accountTarget = role === "admin" ? "/admin" : "/portal";
-  const accountLabel = role === "admin" ? "Dashboard" : "Mein Konto";
+  const accountTarget = "/portal";
+  const accountLabel = "Mein Konto";
 
   return (
     <>
