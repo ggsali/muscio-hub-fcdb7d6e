@@ -25,7 +25,7 @@ const Hero = () => {
   const rightY = useTransform(scrollYProgress, [0, 1], [0, -60]);
 
   return (
-    <section ref={ref} className="relative min-h-[95vh] flex items-center overflow-hidden pt-24 lg:pt-0">
+    <section ref={ref} className="relative min-h-[calc(100vh-7rem)] flex items-center overflow-hidden py-12 lg:py-16">
       <div className="absolute inset-0 bg-background" />
       <div
         className="absolute inset-0 opacity-[0.035]"

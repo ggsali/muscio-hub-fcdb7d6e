@@ -124,7 +124,7 @@ const CalculatorOnlinePage = () => {
   };
 
   return (
-    <div className="pt-24 pb-20">
+    <div className="pt-12 pb-20">
       <div className="container mx-auto px-4 max-w-6xl">
         <ScrollReveal>
           <div className="text-center mb-10">

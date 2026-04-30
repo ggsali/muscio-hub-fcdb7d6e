@@ -12,7 +12,7 @@ const values = [
 export default function UeberUnsPage() {
   return (
     <div>
-      <section className="container mx-auto px-4 pt-20 pb-12">
+      <section className="container mx-auto px-4 pt-12 pb-12">
         <ScrollReveal>
           <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Über uns</p>
           <h1 className="font-heading text-4xl md:text-6xl font-extrabold tracking-tight mb-6 max-w-3xl">

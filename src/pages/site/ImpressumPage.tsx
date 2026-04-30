@@ -1,7 +1,7 @@
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 
 const ImpressumPage = () => (
-  <div className="pt-24 pb-16">
+  <div className="pt-12 pb-16">
     <div className="container mx-auto px-4 max-w-3xl">
       <ScrollReveal>
         <div className="mb-10">

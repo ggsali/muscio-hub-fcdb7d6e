@@ -46,16 +46,15 @@ export const Header = () => {
     <>
       <motion.header
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          scrolled || open
-            ? "bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm"
-            : "bg-transparent"
+          "relative w-full transition-all duration-300",
+          "bg-background/85 backdrop-blur-xl border-b border-border/50",
+          scrolled || open ? "shadow-sm" : ""
         )}
-        initial={{ y: -64, opacity: 0 }}
+        initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="container mx-auto flex items-center justify-between h-14 px-4">
+        <div className="container mx-auto flex items-center justify-between h-14 px-4 sm:px-6">
 
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
             <div className="relative">
@@ -179,48 +178,47 @@ export const Header = () => {
             </button>
           </div>
         </div>
-      </motion.header>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="lg:hidden fixed left-0 right-0 z-40 bg-foreground/95 backdrop-blur-xl border-b border-white/10 shadow-2xl max-h-[calc(100vh-3.5rem)] overflow-y-auto"
-            style={{ top: 56 }}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            <nav className="flex flex-col p-3 gap-0.5">
-              {navLinks.map((l, i) => (
-                <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                  <Link
-                    to={l.path}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                      location.pathname === l.path
-                        ? "text-white bg-white/10 font-semibold"
-                        : "text-white/55 hover:text-white hover:bg-white/10"
-                    )}
-                  >
-                    {l.label}
-                    {location.pathname === l.path && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                  </Link>
-                </motion.div>
-              ))}
-              <div className="mt-2 pt-2 border-t border-white/10">
-                <Button variant="default" className="w-full rounded-lg" asChild>
-                  <Link to="/kalkulator-online" onClick={() => setOpen(false)}>
-                    <Printer className="w-4 h-4 mr-2" />
-                    Preis berechnen
-                  </Link>
-                </Button>
-              </div>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              className="lg:hidden absolute left-0 right-0 top-full z-40 bg-foreground/95 backdrop-blur-xl border-b border-white/10 shadow-2xl max-h-[calc(100vh-7rem)] overflow-y-auto"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <nav className="flex flex-col p-3 gap-0.5">
+                {navLinks.map((l, i) => (
+                  <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
+                    <Link
+                      to={l.path}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        "flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                        location.pathname === l.path
+                          ? "text-white bg-white/10 font-semibold"
+                          : "text-white/55 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      {l.label}
+                      {location.pathname === l.path && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                    </Link>
+                  </motion.div>
+                ))}
+                <div className="mt-2 pt-2 border-t border-white/10">
+                  <Button variant="default" className="w-full rounded-lg" asChild>
+                    <Link to="/kalkulator-online" onClick={() => setOpen(false)}>
+                      <Printer className="w-4 h-4 mr-2" />
+                      Preis berechnen
+                    </Link>
+                  </Button>
+                </div>
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
     </>
   );
 };
