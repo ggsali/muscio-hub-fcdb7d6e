@@ -140,7 +140,19 @@ export const Header = () => {
             </Button>
           </div>
 
-          <div className="lg:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-1.5">
+            <button
+              onClick={() => setCartOpen(true)}
+              className="relative p-1.5 rounded-md hover:bg-accent transition-colors"
+              aria-label="Warenkorb"
+            >
+              <ShoppingCart className="w-4 h-4 text-foreground" />
+              {totalItems > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] font-bold rounded-full h-3.5 min-w-3.5 px-1 flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
+            </button>
             {session ? (
               <Button variant="ghost" size="sm" asChild className="h-8 px-2 rounded-full text-muted-foreground">
                 <Link to={accountTarget}><User className="w-4 h-4" /></Link>
