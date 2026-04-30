@@ -43,7 +43,7 @@ export default function UeberUnsPage() {
     <div className="pb-16">
       <div className="container mx-auto px-4">
         {/* Hero */}
-        <div ref={heroRef} className="mb-20 md:mb-28 pt-12">
+        <div ref={heroRef} className="mb-16 md:mb-24 pt-12">
           <motion.div style={{ y: heroY }}>
             <ScrollReveal>
               <div className="max-w-xl">
@@ -58,6 +58,9 @@ export default function UeberUnsPage() {
             </ScrollReveal>
           </motion.div>
         </div>
+
+        {/* Timeline (mit Team als Heute-Knoten) */}
+        <Timeline team={team} />
 
         {/* Story */}
         <ScrollReveal>
@@ -92,45 +95,14 @@ export default function UeberUnsPage() {
           </div>
         </ScrollReveal>
 
-        {/* Values */}
-        <div className="mb-20 md:mb-28">
-          <ScrollReveal>
-            <div className="mb-10">
-              <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Werte</p>
-              <h2 className="font-heading text-3xl font-bold text-foreground tracking-tight">
-                Wofür wir stehen.
-              </h2>
-            </div>
-          </ScrollReveal>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {values.map((v, i) => (
-              <ScrollReveal key={i} delay={i * 0.08}>
-                <motion.div
-                  className="bg-card rounded-xl p-6 border border-border hover:border-primary/30 transition-colors h-full"
-                  whileHover={{ y: -2 }}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <v.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <h3 className="font-heading text-base font-bold text-foreground mb-2">{v.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{v.desc}</p>
-                </motion.div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
-
-        {/* Timeline */}
-        <Timeline />
-
-        {/* Team */}
+        {/* Team – ausführlich */}
         {team.length > 0 && (
           <div className="mb-20 md:mb-28">
             <ScrollReveal>
               <div className="mb-10">
                 <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Das Team</p>
                 <h2 className="font-heading text-3xl font-bold text-foreground tracking-tight">
-                  {team.length === 1 ? "Ein Gesicht hinter dem Druck." : "Die Köpfe hinter dem Druck."}
+                  {team.length === 1 ? "Lerne uns kennen." : "Die Köpfe hinter dem Druck."}
                 </h2>
               </div>
             </ScrollReveal>
@@ -173,6 +145,34 @@ export default function UeberUnsPage() {
             </div>
           </div>
         )}
+
+        {/* Values */}
+        <div className="mb-20 md:mb-28">
+          <ScrollReveal>
+            <div className="mb-10">
+              <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Werte</p>
+              <h2 className="font-heading text-3xl font-bold text-foreground tracking-tight">
+                Wofür wir stehen.
+              </h2>
+            </div>
+          </ScrollReveal>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {values.map((v, i) => (
+              <ScrollReveal key={i} delay={i * 0.08}>
+                <motion.div
+                  className="bg-card rounded-xl p-6 border border-border hover:border-primary/30 transition-colors h-full"
+                  whileHover={{ y: -2 }}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <v.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-heading text-base font-bold text-foreground mb-2">{v.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{v.desc}</p>
+                </motion.div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
 
         {/* Standort */}
         <ScrollReveal>
