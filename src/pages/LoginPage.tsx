@@ -4,8 +4,57 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Mail, KeyRound, XCircle, Clock } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
+
+type SendStatus = {
+  state: "success" | "error";
+  at: number;
+  message: string;
+};
+
+const RESEND_KEY = "3dm_resend_status";
+const RESET_KEY = "3dm_reset_status";
+const COOLDOWN_SEC = 60;
+
+function formatTime(ts: number) {
+  const d = new Date(ts);
+  return d.toLocaleString("de-CH", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+}
+
+function StatusBox({ status, label }: { status: SendStatus | null; label: string }) {
+  if (!status) return null;
+  const isOk = status.state === "success";
+  return (
+    <div
+      className={
+        "rounded-md border text-xs p-2.5 flex items-start gap-2 " +
+        (isOk
+          ? "bg-primary/5 border-primary/20 text-foreground"
+          : "bg-destructive/10 border-destructive/30 text-destructive")
+      }
+    >
+      {isOk ? (
+        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+      ) : (
+        <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+      )}
+      <div className="flex-1 min-w-0 text-left">
+        <div className="font-medium">
+          {isOk ? `${label}: erfolgreich übergeben` : `${label}: Fehler`}
+        </div>
+        <div className={isOk ? "text-muted-foreground" : ""}>{status.message}</div>
+        <div className="flex items-center gap-1 text-muted-foreground mt-1">
+          <Clock className="w-3 h-3" />
+          <span>Zuletzt gesendet: {formatTime(status.at)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -27,7 +76,36 @@ export default function LoginPage() {
     params.get("mode") === "register" ? "register" : "login"
   );
 
-  
+  const [resendStatus, setResendStatus] = useState<SendStatus | null>(null);
+  const [resetStatus, setResetStatus] = useState<SendStatus | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  // Statuswerte aus localStorage laden (überleben Reload)
+  useEffect(() => {
+    try {
+      const r = localStorage.getItem(RESEND_KEY);
+      if (r) setResendStatus(JSON.parse(r));
+      const p = localStorage.getItem(RESET_KEY);
+      if (p) setResetStatus(JSON.parse(p));
+    } catch {}
+  }, []);
+
+  // Ticker für Cooldown-Anzeige
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const persistStatus = (key: string, status: SendStatus, setter: (s: SendStatus) => void) => {
+    setter(status);
+    try { localStorage.setItem(key, JSON.stringify(status)); } catch {}
+  };
+
+  const cooldownLeft = (status: SendStatus | null) => {
+    if (!status || status.state !== "success") return 0;
+    const left = COOLDOWN_SEC - Math.floor((now - status.at) / 1000);
+    return left > 0 ? left : 0;
+  };
 
   useEffect(() => {
     const redirect = async (userId: string) => {
@@ -88,6 +166,7 @@ export default function LoginPage() {
   const handleResendConfirmation = async () => {
     setError(""); setSuccess("");
     if (!email.trim()) { setError("Bitte zuerst deine E-Mail-Adresse eingeben."); return; }
+    if (cooldownLeft(resendStatus) > 0) return;
     setLoading(true);
     const { error } = await supabase.auth.resend({
       type: "signup",
@@ -95,20 +174,35 @@ export default function LoginPage() {
       options: { emailRedirectTo: "https://3dmuscio.com/portal" },
     });
     setLoading(false);
-    if (error) setError(error.message);
-    else setSuccess("Bestätigungs-E-Mail wurde erneut gesendet. Bitte prüfe dein Postfach (auch Spam-Ordner).");
+    const ts = Date.now();
+    if (error) {
+      persistStatus(RESEND_KEY, { state: "error", at: ts, message: error.message }, setResendStatus);
+    } else {
+      persistStatus(RESEND_KEY, {
+        state: "success", at: ts,
+        message: `Bestätigungs-E-Mail wurde erfolgreich an ${email.trim()} übergeben.`,
+      }, setResendStatus);
+    }
   };
 
   const handleForgotPassword = async () => {
     setError(""); setSuccess("");
     if (!email.trim()) { setError("Bitte zuerst deine E-Mail-Adresse eingeben."); return; }
+    if (cooldownLeft(resetStatus) > 0) return;
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: "https://3dmuscio.com/reset-password",
     });
     setLoading(false);
-    if (error) setError(error.message);
-    else setSuccess("Wir haben dir eine E-Mail zum Zurücksetzen des Passworts gesendet.");
+    const ts = Date.now();
+    if (error) {
+      persistStatus(RESET_KEY, { state: "error", at: ts, message: error.message }, setResetStatus);
+    } else {
+      persistStatus(RESET_KEY, {
+        state: "success", at: ts,
+        message: `Passwort-Reset-Link wurde erfolgreich an ${email.trim()} übergeben.`,
+      }, setResetStatus);
+    }
   };
 
   const firmenname = "3DMuscio";
@@ -197,28 +291,40 @@ export default function LoginPage() {
           </form>
 
           {mode === "login" && (
-            <div className="mt-3 text-center">
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                disabled={loading}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-              >
-                Passwort vergessen?
-              </button>
+            <div className="mt-3 space-y-2">
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={loading || cooldownLeft(resetStatus) > 0}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                >
+                  <KeyRound className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+                  {cooldownLeft(resetStatus) > 0
+                    ? `Erneut senden in ${cooldownLeft(resetStatus)}s`
+                    : "Passwort vergessen?"}
+                </button>
+              </div>
+              <StatusBox status={resetStatus} label="Passwort-Reset" />
             </div>
           )}
 
           {mode === "register" && (
-            <div className="mt-3 text-center">
-              <button
-                type="button"
-                onClick={handleResendConfirmation}
-                disabled={loading}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-              >
-                Bestätigungs-E-Mail erneut senden
-              </button>
+            <div className="mt-3 space-y-2">
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={loading || cooldownLeft(resendStatus) > 0}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                >
+                  <Mail className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+                  {cooldownLeft(resendStatus) > 0
+                    ? `Erneut senden in ${cooldownLeft(resendStatus)}s`
+                    : "Bestätigungs-E-Mail erneut senden"}
+                </button>
+              </div>
+              <StatusBox status={resendStatus} label="Bestätigungs-E-Mail" />
             </div>
           )}
 
