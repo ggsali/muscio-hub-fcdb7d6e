@@ -204,7 +204,7 @@ export const Header = () => {
             ) : (
               <Button variant="ghost" size="sm" asChild
                 className="rounded-full h-8 px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
-                <Link to="/login">Anmelden</Link>
+                <Link to="/anmelden">Anmelden</Link>
               </Button>
             )}
             <Button variant="default" size="sm" asChild
@@ -235,7 +235,7 @@ export const Header = () => {
               </Button>
             ) : (
               <Button variant="ghost" size="sm" asChild className="h-8 px-3 text-xs rounded-full text-muted-foreground">
-                <Link to="/login">Anmelden</Link>
+                <Link to="/anmelden">Anmelden</Link>
               </Button>
             )}
             <button
