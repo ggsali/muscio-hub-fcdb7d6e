@@ -1,0 +1,1 @@
+UPDATE public.projekte SET bild_url = NULL WHERE bild_url LIKE '%waxrxxnncoeiuoxjmcom%';
