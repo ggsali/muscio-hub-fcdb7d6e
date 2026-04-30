@@ -42,7 +42,7 @@ export default function WebsiteAdminLayout() {
   if (!session || role !== "admin") return null;
 
   return (
-    <div className="min-h-screen flex bg-background w-full">
+    <div className="dark min-h-screen flex bg-background w-full">
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         <div className="px-5 py-5 border-b border-border">
           <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Website-Admin</p>
