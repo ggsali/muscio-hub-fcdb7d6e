@@ -4,7 +4,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { formatCHF, formatPct } from "@/lib/calc";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus, ChevronRight } from "lucide-react";
+import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus, ChevronRight, ShoppingBag, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
