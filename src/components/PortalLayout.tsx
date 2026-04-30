@@ -18,13 +18,22 @@ export default function PortalLayout() {
   const role = useUserRole(session?.user.id);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    // Listener FIRST to catch SIGNED_IN from email confirmation hash tokens
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
     return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (session === null) navigate("/login", { replace: true });
+    if (session === null) {
+      // Wait briefly so Supabase can process hash tokens from email links
+      const t = setTimeout(() => {
+        supabase.auth.getSession().then(({ data }) => {
+          if (!data.session) navigate("/login", { replace: true });
+        });
+      }, 600);
+      return () => clearTimeout(t);
+    }
   }, [session, navigate]);
 
   if (session === undefined || role === undefined) {
