@@ -72,8 +72,7 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  const logoUrl = company?.logo_url;
-  const firmenname = company?.firmenname || "3DMuscio";
+  const firmenname = "3DMuscio";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4 py-10">
@@ -83,12 +82,14 @@ export default function LoginPage() {
         </Link>
 
         <div className="flex flex-col items-center mb-6 text-center">
-          {logoUrl ? (
-            <img src={logoUrl} alt={firmenname} className="h-14 w-14 rounded-xl object-cover mb-4 shadow-lg" />
-          ) : (
-            <div className="h-14 w-14 rounded-xl bg-primary mb-4 shadow-lg" />
-          )}
-          <h1 className="text-2xl font-bold text-foreground">{firmenname}</h1>
+          <img
+            src={logo}
+            alt={firmenname}
+            className="h-16 w-16 rounded-xl object-contain mb-4 shadow-lg ring-1 ring-border"
+          />
+          <h1 className="font-heading text-2xl font-extrabold tracking-tight text-foreground">
+            3D<span className="text-primary">Muscio</span>
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {mode === "login" ? "Willkommen zurück" : "Konto erstellen"}
           </p>
