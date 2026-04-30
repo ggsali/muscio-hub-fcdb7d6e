@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Printer, User } from "lucide-react";
+import { Menu, X, Printer, User, ShoppingCart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
 
 const navLinks = [
   { label: "Home", path: "/" },
+  { label: "Shop", path: "/shop" },
   { label: "Kalkulator", path: "/kalkulator-online" },
   { label: "Materialien", path: "/materialien" },
   { label: "Über uns", path: "/ueber-uns" },
