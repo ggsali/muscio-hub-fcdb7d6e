@@ -30,7 +30,7 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="de" dir="ltr">
     <Head />
-    <Preview>E-Mail-Adresse bestätigen für {siteName}</Preview>
+    <Preview>E-Mail-Adresse bestätigen für 3DMuscio</Preview>
     <Body style={main}>
       <Container style={container}>
         <div style={header}>
@@ -47,7 +47,7 @@ export const SignupEmail = ({
         <Text style={text}>
           Vielen Dank für Ihre Registrierung bei{' '}
           <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
+            <strong>3DMuscio</strong>
           </Link>
           !
         </Text>
@@ -61,19 +61,17 @@ export const SignupEmail = ({
         <Button style={button} href={confirmationUrl}>
           E-Mail bestätigen
         </Button>
-        <Text style={footerNote}>
+        <Text style={footer}>
           Falls Sie kein Konto erstellt haben, können Sie diese E-Mail ignorieren.
         </Text>
         <Hr style={divider} />
-        <div style={footerBlock}>
-          <Text style={footerText}>
-            <a href="mailto:info@3dmuscio.com" style={footerLink}>info@3dmuscio.com</a>
-            {'  ·  '}
-            <span>+41 79 839 50 80</span>
-            {'  ·  '}
-            <a href="https://www.3dmuscio.ch" style={footerLink}>www.3dmuscio.ch</a>
-          </Text>
-        </div>
+        <Text style={footerText}>
+          <a href="mailto:info@3dmuscio.com" style={footerLink}>info@3dmuscio.com</a>
+          {'  ·  '}
+          <span>+41 79 839 50 80</span>
+          {'  ·  '}
+          <a href="https://3dmuscio.com" style={footerLink}>3dmuscio.com</a>
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -92,16 +90,8 @@ const header = {
   alignItems: 'center' as const,
   gap: '14px',
 }
-const logoImg = {
-  borderRadius: '8px',
-  display: 'block' as const,
-}
-const logo = {
-  color: '#ffffff',
-  fontSize: '20px',
-  fontWeight: 'bold' as const,
-  letterSpacing: '0.02em',
-}
+const logoImg = { borderRadius: '8px', display: 'block' as const }
+const logo = { color: '#ffffff', fontSize: '20px', fontWeight: 'bold' as const }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
@@ -112,7 +102,7 @@ const text = {
   fontSize: '14px',
   color: '#55575d',
   lineHeight: '1.5',
-  margin: '0 0 20px',
+  margin: '0 0 25px',
 }
 const link = { color: '#ea580c', textDecoration: 'underline' }
 const button = {
@@ -123,8 +113,7 @@ const button = {
   padding: '12px 20px',
   textDecoration: 'none',
 }
-const footerNote = { fontSize: '12px', color: '#999999', margin: '24px 0 0' }
+const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
 const divider = { borderColor: '#e5e7eb', margin: '24px 0 16px' }
-const footerBlock = { textAlign: 'center' as const }
-const footerText = { fontSize: '12px', color: '#9ca3af', margin: '0' }
+const footerText = { fontSize: '12px', color: '#9ca3af', margin: '0', textAlign: 'center' as const }
 const footerLink = { color: '#ea580c', textDecoration: 'none' }
