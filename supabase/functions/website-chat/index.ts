@@ -15,6 +15,45 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const { messages } = await req.json();
+
+    // Input validation: cap messages count and total content length
+    if (!Array.isArray(messages)) {
+      return new Response(JSON.stringify({ error: "messages must be an array" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (messages.length > 20) {
+      return new Response(JSON.stringify({ error: "Zu viele Nachrichten (max. 20)." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    let totalChars = 0;
+    for (const m of messages) {
+      if (!m || typeof m.content !== "string" || typeof m.role !== "string") {
+        return new Response(JSON.stringify({ error: "Ungültiges Nachrichtenformat." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (!["user", "assistant", "system"].includes(m.role)) {
+        return new Response(JSON.stringify({ error: "Ungültige Rolle." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      totalChars += m.content.length;
+      if (m.content.length > 4000) {
+        return new Response(JSON.stringify({ error: "Nachricht zu lang (max. 4000 Zeichen)." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+    if (totalChars > 8000) {
+      return new Response(JSON.stringify({ error: "Konversation zu lang. Bitte starte eine neue." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Simple in-memory per-IP rate limit (best-effort; resets on cold start)
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+    const now = Date.now();
+    const WINDOW_MS = 60_000;
+    const MAX_REQ = 10;
+    // @ts-ignore globalThis cache
+    const store: Map<string, number[]> = (globalThis.__chatRateStore ||= new Map());
+    const arr = (store.get(ip) || []).filter((t) => now - t < WINDOW_MS);
+    if (arr.length >= MAX_REQ) {
+      return new Response(JSON.stringify({ error: "Zu viele Anfragen. Bitte kurz warten." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    arr.push(now);
+    store.set(ip, arr);
+
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
