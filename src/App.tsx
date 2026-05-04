@@ -66,6 +66,7 @@ import PartnersAdminPage from "@/pages/website-admin/PartnersAdminPage";
 import TeamAdminPage from "@/pages/website-admin/TeamAdminPage";
 import NavigationAdminPage from "@/pages/website-admin/NavigationAdminPage";
 import TimelineAdminPage from "@/pages/website-admin/TimelineAdminPage";
+import ShopProdukteAdminPage from "@/pages/website-admin/ShopProdukteAdminPage";
 
 const queryClient = new QueryClient();
 
