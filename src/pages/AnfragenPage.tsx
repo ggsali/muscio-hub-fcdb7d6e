@@ -314,7 +314,14 @@ export default function AnfragenPage() {
                       <span className="font-semibold text-sm text-foreground truncate">{inq.name}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium shrink-0 ${STATUS_COLORS[inq.status] ?? STATUS_COLORS["Neu"]}`}>{inq.status}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 font-medium">{inq.betreff}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 font-medium flex items-center gap-1.5">
+                      {inq.betreff}
+                      {inq.attachments && inq.attachments.length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 text-primary">
+                          <Paperclip className="w-3 h-3" />{inq.attachments.length}
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground truncate mt-1">{inq.nachricht}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
