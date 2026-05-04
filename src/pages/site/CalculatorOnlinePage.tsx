@@ -227,7 +227,12 @@ const CalculatorOnlinePage = () => {
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">{p.fileName}</p>
-                          <p className="text-xs text-muted-foreground">~{calc.weight.toFixed(0)}g geschätzt</p>
+                          <p className="text-xs text-muted-foreground">
+                            ~{calc.weight.toFixed(0)}g geschätzt
+                            {p.uploading && <span className="ml-2 text-primary">· Datei wird hochgeladen…</span>}
+                            {!p.uploading && p.storagePath && <span className="ml-2 text-success">· Datei bereit</span>}
+                            {!p.uploading && !p.storagePath && <span className="ml-2 text-warning">· Datei nicht hochgeladen</span>}
+                          </p>
                         </div>
                       </div>
                       <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive">
