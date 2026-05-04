@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Session } from "@supabase/supabase-js";
 import {
-  ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake, UserCircle2, Navigation, Clock,
+  ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake, UserCircle2, Navigation, Clock, Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
