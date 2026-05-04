@@ -8,6 +8,13 @@ import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
+type Attachment = {
+  filename: string;
+  storage_path: string;
+  bucket?: string;
+  size_bytes?: number | null;
+};
+
 type Inquiry = {
   id: string;
   name: string;
@@ -21,7 +28,31 @@ type Inquiry = {
   order_id: string | null;
   notiz: string | null;
   created_at: string;
+  attachments?: Attachment[] | null;
 };
+
+const formatBytes = (n?: number | null) => {
+  if (!n) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+};
+
+async function downloadAttachment(att: Attachment) {
+  const bucket = att.bucket || "project-uploads";
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(att.storage_path, 60 * 10);
+  if (error || !data?.signedUrl) {
+    console.error(error);
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = data.signedUrl;
+  a.download = att.filename;
+  a.target = "_blank";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 
 const STATUS_COLORS: Record<string, string> = {
   Neu: "bg-primary/15 text-primary border-primary/20",
