@@ -320,7 +320,7 @@ const CalculatorOnlinePage = () => {
               </div>
               <Button
                 className="w-full mt-5 gap-2"
-                disabled={parts.length === 0 || submitting}
+                disabled={parts.length === 0 || submitting || parts.some(p => p.uploading)}
                 onClick={async (e) => {
                   if (isLoggedIn && form.name && form.email) {
                     await handleSend(e as unknown as React.FormEvent);
