@@ -137,7 +137,8 @@ export default function ShopProdukteAdminPage() {
   };
 
   const toggleField = async (p: Product, field: "aktiv" | "featured") => {
-    await supabase.from("shop_products").update({ [field]: !p[field] }).eq("id", p.id);
+    const patch = field === "aktiv" ? { aktiv: !p.aktiv } : { featured: !p.featured };
+    await supabase.from("shop_products").update(patch).eq("id", p.id);
     load();
   };
 
