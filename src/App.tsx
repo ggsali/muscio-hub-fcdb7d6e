@@ -66,6 +66,7 @@ import PartnersAdminPage from "@/pages/website-admin/PartnersAdminPage";
 import TeamAdminPage from "@/pages/website-admin/TeamAdminPage";
 import NavigationAdminPage from "@/pages/website-admin/NavigationAdminPage";
 import TimelineAdminPage from "@/pages/website-admin/TimelineAdminPage";
+import ShopProdukteAdminPage from "@/pages/website-admin/ShopProdukteAdminPage";
 
 const queryClient = new QueryClient();
 
@@ -162,6 +163,7 @@ const App = () => (
               <Route path="/website-admin" element={<WebsiteAdminLayout />}>
                 <Route index element={<WebsiteAdminDashboardPage />} />
                 <Route path="bestellungen" element={<WebsiteBestellungenPage />} />
+                <Route path="shop-produkte" element={<ShopProdukteAdminPage />} />
                 <Route path="reviews" element={<ReviewsAdminPage />} />
                 <Route path="projekte" element={<ProjekteAdminPage />} />
                 <Route path="partner" element={<PartnersAdminPage />} />

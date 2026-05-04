@@ -4,13 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Session } from "@supabase/supabase-js";
 import {
-  ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake, UserCircle2, Navigation, Clock,
+  ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake, UserCircle2, Navigation, Clock, Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/website-admin", label: "Übersicht", icon: Globe, end: true },
   { to: "/website-admin/bestellungen", label: "Shop-Bestellungen", icon: ShoppingBag },
+  { to: "/website-admin/shop-produkte", label: "Shop-Produkte", icon: Package },
   { to: "/website-admin/reviews", label: "Bewertungen", icon: Star },
   { to: "/website-admin/projekte", label: "Projekte", icon: FolderKanban },
   { to: "/website-admin/team", label: "Team", icon: UserCircle2 },
