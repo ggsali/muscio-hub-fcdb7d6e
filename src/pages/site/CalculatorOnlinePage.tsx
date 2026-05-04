@@ -31,6 +31,9 @@ const COLORS = ["Weiss", "Schwarz", "Grau", "Rot", "Blau", "Grün", "Gelb", "Ora
 interface Part {
   id: string;
   fileName: string;
+  file: File | null;
+  storagePath?: string;
+  uploading?: boolean;
   materialId: string;
   color: string;
   infill: number;
