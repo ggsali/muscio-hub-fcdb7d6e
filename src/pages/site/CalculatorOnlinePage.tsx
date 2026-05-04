@@ -139,6 +139,14 @@ const CalculatorOnlinePage = () => {
           .from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
         customer_id = cust?.id ?? null;
       }
+      const attachments = parts
+        .filter(p => p.storagePath)
+        .map(p => ({
+          filename: p.fileName,
+          storage_path: p.storagePath,
+          size_bytes: p.file?.size ?? null,
+          bucket: "project-uploads",
+        }));
       const { error } = await supabase.from("inquiries").insert({
         name: form.name,
         email: form.email,
@@ -148,7 +156,8 @@ const CalculatorOnlinePage = () => {
         status: "Neu",
         quelle: "kalkulator",
         customer_id,
-      });
+        attachments,
+      } as any);
       if (error) throw error;
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
       setShowQuote(false);
