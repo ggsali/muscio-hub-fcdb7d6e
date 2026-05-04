@@ -69,18 +69,32 @@ const CalculatorOnlinePage = () => {
     })();
   }, []);
 
-  const addFile = useCallback((file: File) => {
-    // Schätzung: einfache Volumen-Heuristik basierend auf Dateigröße
+  const addFile = useCallback(async (file: File) => {
     const estW = Math.max(8, Math.min(180, Math.round(file.size / 8000)));
+    const id = crypto.randomUUID();
     setParts(p => [...p, {
-      id: crypto.randomUUID(),
+      id,
       fileName: file.name,
+      file,
+      uploading: true,
       materialId: "pla",
       color: "Weiss",
       infill: 20,
       quantity: 1,
       estimatedWeight: estW,
     }]);
+    // Upload im Hintergrund
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `kalkulator/${id}-${safeName}`;
+      const { error } = await supabase.storage.from("project-uploads").upload(path, file, { upsert: false });
+      if (error) throw error;
+      setParts(p => p.map(x => x.id === id ? { ...x, storagePath: path, uploading: false } : x));
+    } catch (err) {
+      console.error("Upload-Fehler", err);
+      setParts(p => p.map(x => x.id === id ? { ...x, uploading: false } : x));
+      toast.error(`Upload von ${file.name} fehlgeschlagen — wir bitten dich, die Datei per Mail zu schicken.`);
+    }
   }, []);
 
   const handleDrop = (e: React.DragEvent) => {
