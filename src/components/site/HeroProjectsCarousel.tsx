@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, ArrowUpRight, ImageIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 import architektur from "@/assets/project-architektur.jpg";
 import buehler from "@/assets/project-buehler.jpg";
@@ -16,32 +17,71 @@ type HeroProject = {
   bild_url: string;
 };
 
-// Fallback project showcase using bundled assets.
-const projects: HeroProject[] = [
+const fallback: HeroProject[] = [
   { id: "1", slug: "architektur", name: "Architekturmodell", kategorie: "Architektur", beschreibung: "Skalierbares Gebäudemodell für Präsentationen.", bild_url: architektur },
   { id: "2", slug: "buehler", name: "Bühler Industrieteil", kategorie: "Industrie", beschreibung: "Funktionsteil aus Hochleistungs-Polymer.", bild_url: buehler },
   { id: "3", slug: "universitaet", name: "Universitäts-Prototyp", kategorie: "Forschung", beschreibung: "Komplexer Prototyp für Forschungsprojekt.", bild_url: universitaet },
 ];
 
+const resolveImage = (p: any): string => {
+  if (p.bild_url) return p.bild_url;
+  if (p.hero_image_path) {
+    return supabase.storage.from("projekte").getPublicUrl(p.hero_image_path).data.publicUrl;
+  }
+  if (p.gallery_paths?.[0]) {
+    return supabase.storage.from("projekte").getPublicUrl(p.gallery_paths[0]).data.publicUrl;
+  }
+  return "";
+};
+
 export const HeroProjectsCarousel = () => {
+  const [projects, setProjects] = useState<HeroProject[]>(fallback);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("projekte")
+        .select("id, slug, name, kategorie, kurzbeschreibung, beschreibung, bild_url, hero_image_path, gallery_paths")
+        .eq("aktiv", true)
+        .eq("featured", true)
+        .order("sort_order")
+        .limit(8);
+      if (data && data.length > 0) {
+        const mapped: HeroProject[] = data.map((p: any) => ({
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          kategorie: p.kategorie || "Projekt",
+          beschreibung: p.kurzbeschreibung || p.beschreibung || "",
+          bild_url: resolveImage(p),
+        })).filter(p => p.bild_url);
+        if (mapped.length > 0) setProjects(mapped);
+      }
+    })();
+  }, []);
 
   const next = useCallback(() => {
     setDirection(1);
     setIndex(i => (i + 1) % projects.length);
-  }, []);
+  }, [projects.length]);
   const prev = useCallback(() => {
     setDirection(-1);
     setIndex(i => (i - 1 + projects.length) % projects.length);
-  }, []);
+  }, [projects.length]);
 
   useEffect(() => {
+    if (projects.length <= 1) return;
     const id = setInterval(next, 6000);
     return () => clearInterval(id);
-  }, [next]);
+  }, [next, projects.length]);
 
-  const project = projects[index];
+  // Falls Index außerhalb (z.B. nach DB-Reload mit weniger Projekten)
+  useEffect(() => { if (index >= projects.length) setIndex(0); }, [projects.length, index]);
+
+  const project = projects[index] || projects[0];
+  if (!project) return null;
 
   return (
     <div className="relative w-full max-w-[460px] mx-auto">
@@ -59,7 +99,7 @@ export const HeroProjectsCarousel = () => {
               transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-0"
             >
-              <div className="block w-full h-full group">
+              <Link to={`/projekte/${project.slug}`} className="block w-full h-full group">
                 <img
                   src={project.bild_url}
                   alt={`${project.name} – ${project.kategorie}`}
@@ -77,9 +117,11 @@ export const HeroProjectsCarousel = () => {
                   <h3 className="font-heading text-xl sm:text-2xl font-bold text-foreground leading-tight mb-1.5">
                     {project.name}
                   </h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{project.beschreibung}</p>
+                  {project.beschreibung && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{project.beschreibung}</p>
+                  )}
                 </div>
-              </div>
+              </Link>
             </motion.div>
           </AnimatePresence>
         </div>
