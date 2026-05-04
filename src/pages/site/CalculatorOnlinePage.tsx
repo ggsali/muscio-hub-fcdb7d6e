@@ -31,6 +31,9 @@ const COLORS = ["Weiss", "Schwarz", "Grau", "Rot", "Blau", "Grün", "Gelb", "Ora
 interface Part {
   id: string;
   fileName: string;
+  file: File | null;
+  storagePath?: string;
+  uploading?: boolean;
   materialId: string;
   color: string;
   infill: number;
@@ -66,18 +69,32 @@ const CalculatorOnlinePage = () => {
     })();
   }, []);
 
-  const addFile = useCallback((file: File) => {
-    // Schätzung: einfache Volumen-Heuristik basierend auf Dateigröße
+  const addFile = useCallback(async (file: File) => {
     const estW = Math.max(8, Math.min(180, Math.round(file.size / 8000)));
+    const id = crypto.randomUUID();
     setParts(p => [...p, {
-      id: crypto.randomUUID(),
+      id,
       fileName: file.name,
+      file,
+      uploading: true,
       materialId: "pla",
       color: "Weiss",
       infill: 20,
       quantity: 1,
       estimatedWeight: estW,
     }]);
+    // Upload im Hintergrund
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `kalkulator/${id}-${safeName}`;
+      const { error } = await supabase.storage.from("project-uploads").upload(path, file, { upsert: false });
+      if (error) throw error;
+      setParts(p => p.map(x => x.id === id ? { ...x, storagePath: path, uploading: false } : x));
+    } catch (err) {
+      console.error("Upload-Fehler", err);
+      setParts(p => p.map(x => x.id === id ? { ...x, uploading: false } : x));
+      toast.error(`Upload von ${file.name} fehlgeschlagen — wir bitten dich, die Datei per Mail zu schicken.`);
+    }
   }, []);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -122,6 +139,14 @@ const CalculatorOnlinePage = () => {
           .from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
         customer_id = cust?.id ?? null;
       }
+      const attachments = parts
+        .filter(p => p.storagePath)
+        .map(p => ({
+          filename: p.fileName,
+          storage_path: p.storagePath,
+          size_bytes: p.file?.size ?? null,
+          bucket: "project-uploads",
+        }));
       const { error } = await supabase.from("inquiries").insert({
         name: form.name,
         email: form.email,
@@ -131,7 +156,8 @@ const CalculatorOnlinePage = () => {
         status: "Neu",
         quelle: "kalkulator",
         customer_id,
-      });
+        attachments,
+      } as any);
       if (error) throw error;
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
       setShowQuote(false);
@@ -201,7 +227,12 @@ const CalculatorOnlinePage = () => {
                         </div>
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">{p.fileName}</p>
-                          <p className="text-xs text-muted-foreground">~{calc.weight.toFixed(0)}g geschätzt</p>
+                          <p className="text-xs text-muted-foreground">
+                            ~{calc.weight.toFixed(0)}g geschätzt
+                            {p.uploading && <span className="ml-2 text-primary">· Datei wird hochgeladen…</span>}
+                            {!p.uploading && p.storagePath && <span className="ml-2 text-success">· Datei bereit</span>}
+                            {!p.uploading && !p.storagePath && <span className="ml-2 text-warning">· Datei nicht hochgeladen</span>}
+                          </p>
                         </div>
                       </div>
                       <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive">
@@ -289,7 +320,7 @@ const CalculatorOnlinePage = () => {
               </div>
               <Button
                 className="w-full mt-5 gap-2"
-                disabled={parts.length === 0 || submitting}
+                disabled={parts.length === 0 || submitting || parts.some(p => p.uploading)}
                 onClick={async (e) => {
                   if (isLoggedIn && form.name && form.email) {
                     await handleSend(e as unknown as React.FormEvent);

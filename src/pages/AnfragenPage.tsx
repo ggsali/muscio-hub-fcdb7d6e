@@ -3,10 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft } from "lucide-react";
+import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft, Download, Paperclip } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+
+type Attachment = {
+  filename: string;
+  storage_path: string;
+  bucket?: string;
+  size_bytes?: number | null;
+};
 
 type Inquiry = {
   id: string;
@@ -21,7 +28,31 @@ type Inquiry = {
   order_id: string | null;
   notiz: string | null;
   created_at: string;
+  attachments?: Attachment[] | null;
 };
+
+const formatBytes = (n?: number | null) => {
+  if (!n) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+};
+
+async function downloadAttachment(att: Attachment) {
+  const bucket = att.bucket || "project-uploads";
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(att.storage_path, 60 * 10);
+  if (error || !data?.signedUrl) {
+    console.error(error);
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = data.signedUrl;
+  a.download = att.filename;
+  a.target = "_blank";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 
 const STATUS_COLORS: Record<string, string> = {
   Neu: "bg-primary/15 text-primary border-primary/20",
@@ -84,6 +115,30 @@ function InquiryDetail({
         <p className="text-xs font-medium text-muted-foreground mb-1">{selected.betreff}</p>
         <p className="text-sm text-foreground whitespace-pre-wrap">{selected.nachricht}</p>
       </div>
+
+      {selected.attachments && selected.attachments.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Paperclip className="w-3.5 h-3.5" /> Anhänge ({selected.attachments.length})
+          </p>
+          <div className="space-y-1.5">
+            {selected.attachments.map((att, i) => (
+              <button
+                key={i}
+                onClick={() => downloadAttachment(att)}
+                className="w-full flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2 hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+              >
+                <Download className="w-4 h-4 text-primary shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground truncate">{att.filename}</p>
+                  {att.size_bytes && <p className="text-[10px] text-muted-foreground">{formatBytes(att.size_bytes)}</p>}
+                </div>
+                <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100">Herunterladen</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
@@ -259,7 +314,14 @@ export default function AnfragenPage() {
                       <span className="font-semibold text-sm text-foreground truncate">{inq.name}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium shrink-0 ${STATUS_COLORS[inq.status] ?? STATUS_COLORS["Neu"]}`}>{inq.status}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 font-medium">{inq.betreff}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 font-medium flex items-center gap-1.5">
+                      {inq.betreff}
+                      {inq.attachments && inq.attachments.length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 text-primary">
+                          <Paperclip className="w-3 h-3" />{inq.attachments.length}
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground truncate mt-1">{inq.nachricht}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
