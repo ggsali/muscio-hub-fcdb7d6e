@@ -72,10 +72,6 @@ Deno.serve(async (req) => {
 
     const key = STATUS_KEY_MAP[status_key] || status_key;
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
 
     const { data: tpl } = await supabase
       .from("email_templates").select("*").eq("status_key", key).maybeSingle();
