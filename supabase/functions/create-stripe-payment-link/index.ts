@@ -20,8 +20,54 @@ serve(async (req) => {
   }
 
   try {
+    // ---- AUTH: require admin ----
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: roleRow } = await admin
+      .from("user_roles").select("role")
+      .eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
+    if (!roleRow) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = await req.json();
-    const { orderId, betrag, orderName, customerEmail } = body;
+    const { orderId, orderName, customerEmail } = body;
+
+    if (!orderId || typeof orderId !== "string") {
+      return new Response(JSON.stringify({ error: "orderId erforderlich" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Re-fetch authoritative amount from DB (sum unpaid bills, fallback to order umsatz_total)
+    let betrag = 0;
+    const { data: bills } = await admin
+      .from("bills").select("betrag, bezahlt").eq("order_id", orderId);
+    if (bills && bills.length > 0) {
+      betrag = bills.filter((b: any) => !b.bezahlt).reduce((s: number, b: any) => s + Number(b.betrag || 0), 0);
+    }
+    if (!betrag || betrag <= 0) {
+      const { data: ord } = await admin
+        .from("orders").select("umsatz_total").eq("id", orderId).maybeSingle();
+      betrag = Number(ord?.umsatz_total || 0);
+    }
 
     if (!betrag || betrag <= 0) {
       return new Response(JSON.stringify({ error: "Ungültiger Betrag" }), {
