@@ -21,9 +21,55 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // ---- AUTH: require admin ----
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!token) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+  if (userErr || !userData?.user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const { data: roleRow } = await supabase
+    .from("user_roles").select("role")
+    .eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
+  if (!roleRow) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const body = await req.json();
-  const { orderId, type, trackingNr, pdfBase64, pdfFilename, akontoPercent, akontoBetrag, restbetrag, paymentUrl } = body;
+    let { orderId, type, trackingNr, pdfBase64, pdfFilename, akontoPercent, akontoBetrag, restbetrag, paymentUrl } = body;
+
+    // Validate paymentUrl: only allow https Stripe / 3dmuscio URLs
+    if (paymentUrl) {
+      try {
+        const u = new URL(paymentUrl);
+        const allowedHosts = ["checkout.stripe.com", "buy.stripe.com", "billing.stripe.com", "3dmuscio.com", "www.3dmuscio.com"];
+        if (u.protocol !== "https:" || !allowedHosts.includes(u.hostname)) {
+          paymentUrl = null;
+        }
+      } catch { paymentUrl = null; }
+    }
+    // Sanitize trackingNr to alphanumeric + hyphens, max 50 chars
+    if (trackingNr && (typeof trackingNr !== "string" || !/^[A-Za-z0-9\-]{1,50}$/.test(trackingNr))) {
+      trackingNr = null;
+    }
+    // Coerce numeric fields
+    const safeNum = (v: unknown) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    akontoPercent = safeNum(akontoPercent);
+    akontoBetrag = safeNum(akontoBetrag);
+    restbetrag = safeNum(restbetrag);
 
 
     // Fetch order
