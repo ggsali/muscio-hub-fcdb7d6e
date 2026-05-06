@@ -9,6 +9,7 @@ import { useNoIndex } from "@/hooks/useNoIndex";
 import logo from "@/assets/logo.jpeg";
 
 export default function LoginPage() {
+  useNoIndex();
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
