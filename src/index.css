@@ -50,15 +50,15 @@
 
     --radius: 0.5rem;
 
-    /* Sidebar — admin dashboard stays dark */
-    --sidebar-background: 220 14% 9%;
-    --sidebar-foreground: 215 14% 65%;
-    --sidebar-primary: 153 100% 45%;
+    /* Sidebar — light theme to match dashboard */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 35%;
+    --sidebar-primary: 153 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 12% 14%;
-    --sidebar-accent-foreground: 210 20% 93%;
-    --sidebar-border: 220 12% 14%;
-    --sidebar-ring: 153 100% 45%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 6%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 153 100% 40%;
   }
 
   .dark {
