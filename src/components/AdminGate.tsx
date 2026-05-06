@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useNoIndex } from "@/hooks/useNoIndex";
 import AppLayout from "./AppLayout";
 import type { Session } from "@supabase/supabase-js";
 
 export default function AdminGate() {
+  useNoIndex();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const role = useUserRole(session?.user.id);
