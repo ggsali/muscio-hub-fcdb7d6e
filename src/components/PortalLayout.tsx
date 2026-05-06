@@ -15,6 +15,7 @@ const items = [
 ];
 
 export default function PortalLayout() {
+  useNoIndex();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const role = useUserRole(session?.user.id);
