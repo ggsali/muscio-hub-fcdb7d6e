@@ -26,6 +26,7 @@ const NAV = [
 ];
 
 export default function WebsiteAdminLayout() {
+  useNoIndex();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const role = useUserRole(session?.user.id);
