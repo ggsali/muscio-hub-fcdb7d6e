@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useNoIndex } from "@/hooks/useNoIndex";
 import type { Session } from "@supabase/supabase-js";
 import {
   ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Mail, Settings, Globe, ArrowLeft, LogOut, Handshake, UserCircle2, Navigation, Clock, Package,
@@ -25,6 +26,7 @@ const NAV = [
 ];
 
 export default function WebsiteAdminLayout() {
+  useNoIndex();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const role = useUserRole(session?.user.id);
