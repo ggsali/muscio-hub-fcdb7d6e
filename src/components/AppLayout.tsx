@@ -57,7 +57,7 @@ function MobileLayout() {
           </div>
           <div className="flex flex-col leading-tight">
             <span className="font-bold text-foreground text-[13px] tracking-tight">3DMuscio</span>
-            <span className="text-[9px] text-muted-foreground font-medium tracking-wide uppercase">Pro Dashboard</span>
+            <span className="text-[9px] text-muted-foreground font-medium tracking-wide uppercase">3D-Druck Service</span>
           </div>
         </div>
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
@@ -184,7 +184,7 @@ function DesktopLayout() {
           {!collapsed && (
             <div className="flex flex-col leading-tight">
               <span className="font-bold text-foreground text-[13px] tracking-tight">3DMuscio</span>
-              <span className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">Pro Dashboard</span>
+              <span className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">3D-Druck Service</span>
             </div>
           )}
         </div>
