@@ -36,11 +36,38 @@ const SHIPPING_COST = 8;
 
 const CalculatorOnlinePage = () => {
   const [parts, setParts] = useState<Part[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [materialsLoading, setMaterialsLoading] = useState(true);
+  const [materialsError, setMaterialsError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  useEffect(() => {
+    (async () => {
+      setMaterialsLoading(true);
+      const { data, error } = await supabase
+        .from("materials")
+        .select("*")
+        .eq("aktiv", true)
+        .order("sort_order");
+      if (error) {
+        setMaterialsError("Materialien konnten nicht geladen werden.");
+      } else if (data) {
+        setMaterials(
+          data.map((m: any) => ({
+            id: m.id,
+            name: m.name,
+            pricePerGram: Number(m.price_per_gram),
+            density: Number(m.density),
+          })),
+        );
+      }
+      setMaterialsLoading(false);
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
