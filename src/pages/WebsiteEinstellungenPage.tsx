@@ -107,6 +107,18 @@ export default function WebsiteEinstellungenPage() {
         </div>
       </section>
 
+      {/* WhatsApp */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <h3 className="font-semibold">WhatsApp</h3>
+        <p className="text-xs text-muted-foreground">Nummer für den Chat-Button (Format: 41798395080, ohne + und ohne Leerzeichen). Leer lassen, um WhatsApp im Chat-Button auszublenden.</p>
+        <Input
+          value={whatsapp.nummer}
+          onChange={e => setWhatsapp({ nummer: e.target.value.replace(/[^0-9]/g, "") })}
+          placeholder="41798395080"
+          className="bg-input border-border"
+        />
+      </section>
+
       {/* FAQ */}
       <section className="bg-card border border-border rounded-lg p-5 space-y-3">
         <div className="flex items-center justify-between">
