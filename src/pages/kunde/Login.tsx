@@ -56,7 +56,15 @@ const KundeLogin = () => {
     setAppleLoading(true);
     setError("");
     const result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: `${window.location.origin}/mein-konto` });
-    if (result.error) { setError("Apple-Anmeldung fehlgeschlagen."); setAppleLoading(false); }
+    if (result.error) {
+      const msg = String((result.error as any)?.message || "");
+      if (msg.toLowerCase().includes("privaterelay") || msg.includes("E-Mail verbergen")) {
+        setError('Bitte deaktiviere "E-Mail verbergen" beim Apple-Login. Wir benötigen deine echte E-Mail-Adresse.');
+      } else {
+        setError("Apple-Anmeldung fehlgeschlagen.");
+      }
+      setAppleLoading(false);
+    }
   };
 
   return (
