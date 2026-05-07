@@ -263,15 +263,15 @@ export default function KundeDetailPage() {
       {/* Tabs */}
       {!isNew && (
         <div className="flex gap-1 border-b border-border">
-          {(["kontakt", "auftraege", "teile", "dateien"] as const).map(tab => (
+          {(["kontakt", "anfragen", "auftraege", "teile", "dateien"] as const).map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); setSearchParams(tab === "kontakt" ? {} : { tab }); }}
               className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
                 activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab === "auftraege" ? "Auftragshistorie" : tab === "teile" ? "Teile" : tab === "dateien" ? `Dateien (${files.length})` : "Kontakt"}
+              {tab === "auftraege" ? "Auftragshistorie" : tab === "teile" ? "Teile" : tab === "dateien" ? `Dateien (${files.length})` : tab === "anfragen" ? `Anfragen (${inquiries.length})` : "Kontakt"}
             </button>
           ))}
         </div>
