@@ -198,6 +198,7 @@ export default function EinstellungenPage() {
     { key: "website", label: "Website-Kalkulator" },
     { key: "firma", label: "Firmenangaben" },
     { key: "rechnung", label: "Rechnungs-Design" },
+    { key: "zugriff", label: "Admin-Zugriff" },
   ];
 
   return (
