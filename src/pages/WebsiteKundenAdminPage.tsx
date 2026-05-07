@@ -39,7 +39,15 @@ export default function WebsiteKundenAdminPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    (async () => {
+      // Beim Öffnen automatisch synchronisieren, damit Website-Konten als Kunden verfügbar sind
+      try {
+        await supabase.functions.invoke("link-website-customers", {});
+      } catch {}
+      load();
+    })();
+  }, []);
 
   const handleSync = async () => {
     setBusy(true);
