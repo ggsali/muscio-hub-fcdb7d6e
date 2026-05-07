@@ -21,11 +21,11 @@ const corsHeaders = {
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'E-Mail-Adresse bestätigen',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  invite: 'Einladung zu 3DMuscio',
+  magiclink: 'Dein Login-Link für 3DMuscio',
+  recovery: 'Passwort zurücksetzen für 3DMuscio',
+  email_change: 'E-Mail-Adresse ändern bei 3DMuscio',
+  reauthentication: 'Dein Bestätigungscode für 3DMuscio',
 }
 
 // Template mapping
@@ -40,17 +40,12 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 
 // Configuration
 const SITE_NAME = "3DMuscio"
-const SENDER_DOMAIN = "notify.3dmuscio.com"
 const ROOT_DOMAIN = "3dmuscio.com"
-const FROM_DOMAIN = "notify.3dmuscio.com" // Keep From aligned with the verified sender domain for better delivery.
+const FROM_EMAIL = "3DMuscio <noreply@3dmuscio.com>"
 const REPLY_TO = "info@3dmuscio.com"
 
 // Sample data for preview mode ONLY (not used in actual email sending).
-// URLs are baked in at scaffold time from the project's real data.
-// The sample email uses a fixed placeholder (RFC 6761 .test TLD) so the Go backend
-// can always find-and-replace it with the actual recipient when sending test emails,
-// even if the project's domain has changed since the template was scaffolded.
-const SAMPLE_PROJECT_URL = "https://muscio-hub.lovable.app"
+const SAMPLE_PROJECT_URL = "https://3dmuscio.com"
 const SAMPLE_EMAIL = "user@example.test"
 const SAMPLE_DATA: Record<string, object> = {
   signup: {
@@ -254,7 +249,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   })
 
   const { error: sendError } = await resend.emails.send({
-    from: `${SITE_NAME} <noreply@${ROOT_DOMAIN}>`,
+    from: FROM_EMAIL,
     to: payload.data.email,
     reply_to: REPLY_TO,
     subject: EMAIL_SUBJECTS[emailType] || 'Notification',

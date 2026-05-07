@@ -252,13 +252,12 @@ Deno.serve(async (req) => {
 
       try {
         const { error: sendErr } = await resend.emails.send({
-          from: payload.from || '3DMuscio <noreply@3dmuscio.com>',
+          from: '3DMuscio <noreply@3dmuscio.com>',
+          reply_to: 'info@3dmuscio.com',
           to: payload.to,
-          reply_to: payload.reply_to || 'info@3dmuscio.com',
           subject: payload.subject,
           html: payload.html,
           text: payload.text,
-          attachments: payload.attachments,
         } as any)
         if (sendErr) {
           throw Object.assign(new Error(String((sendErr as any).message || sendErr)), {
