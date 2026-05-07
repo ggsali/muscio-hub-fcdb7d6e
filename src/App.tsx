@@ -51,6 +51,7 @@ import ShopPage from "@/pages/site/ShopPage";
 import ShopDetailPage from "@/pages/site/ShopDetailPage";
 import ProjektDetailPage from "@/pages/site/ProjektDetailPage";
 import BewertungPage from "@/pages/site/BewertungPage";
+import UnsubscribePage from "@/pages/UnsubscribePage";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
