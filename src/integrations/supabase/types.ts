@@ -405,6 +405,51 @@ export type Database = {
           },
         ]
       }
+      inquiry_messages: {
+        Row: {
+          body: string
+          body_html: string | null
+          created_at: string
+          direction: string
+          from_email: string
+          from_name: string | null
+          id: string
+          in_reply_to: string | null
+          inquiry_id: string
+          message_id: string | null
+          subject: string | null
+          to_email: string
+        }
+        Insert: {
+          body: string
+          body_html?: string | null
+          created_at?: string
+          direction: string
+          from_email: string
+          from_name?: string | null
+          id?: string
+          in_reply_to?: string | null
+          inquiry_id: string
+          message_id?: string | null
+          subject?: string | null
+          to_email: string
+        }
+        Update: {
+          body?: string
+          body_html?: string | null
+          created_at?: string
+          direction?: string
+          from_email?: string
+          from_name?: string | null
+          id?: string
+          in_reply_to?: string | null
+          inquiry_id?: string
+          message_id?: string | null
+          subject?: string | null
+          to_email?: string
+        }
+        Relationships: []
+      }
       materials: {
         Row: {
           aktiv: boolean

@@ -7,6 +7,7 @@ import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus,
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import InquiryChat from "@/components/InquiryChat";
 
 type Attachment = {
   filename: string;
@@ -111,10 +112,13 @@ function InquiryDetail({
         </div>
       </div>
 
-      <div className="bg-muted/30 border border-border rounded-lg p-4">
-        <p className="text-xs font-medium text-muted-foreground mb-1">{selected.betreff}</p>
-        <p className="text-sm text-foreground whitespace-pre-wrap">{selected.nachricht}</p>
-      </div>
+      <InquiryChat
+        inquiryId={selected.id}
+        customerName={selected.name}
+        initialMessage={selected.nachricht}
+        initialFrom={selected.email}
+        initialAt={selected.created_at}
+      />
 
       {selected.attachments && selected.attachments.length > 0 && (
         <div>
@@ -179,11 +183,6 @@ function InquiryDetail({
             <Plus className="w-3.5 h-3.5" /> Auftrag erstellen
           </Button>
         )}
-        <Button size="sm" className="w-full gap-2" variant="outline" asChild>
-          <a href={`mailto:${selected.email}?subject=Re: ${selected.betreff}`}>
-            <Mail className="w-3.5 h-3.5" /> Per E-Mail antworten
-          </a>
-        </Button>
         {selected.customer_id && (
           <Button size="sm" className="w-full gap-2" variant="ghost" onClick={() => navigate(`/admin/kunden/${selected.customer_id}`)}>
             <User className="w-3.5 h-3.5" /> Kundenprofil öffnen
