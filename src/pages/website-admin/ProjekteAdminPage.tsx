@@ -95,6 +95,33 @@ export default function ProjekteAdminPage() {
     setEditing({ ...editing, gallery_paths: next });
   };
 
+  const onUploadStl = async (file: File) => {
+    if (!editing) return;
+    if (!file.name.toLowerCase().endsWith(".stl")) { toast.error("Nur .stl Dateien erlaubt"); return; }
+    setUploading(true);
+    const folder = editing.id || crypto.randomUUID();
+    const path = `${folder}/${file.name}`;
+    const { error } = await supabase.storage.from("project-stls").upload(path, file, { upsert: true });
+    if (error) { toast.error(error.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("project-stls").getPublicUrl(path);
+    setEditing({ ...editing, stl_url: data.publicUrl });
+    setUploading(false);
+    toast.success("STL hochgeladen");
+  };
+
+  const removeStl = async () => {
+    if (!editing?.stl_url) return;
+    try {
+      const marker = "/project-stls/";
+      const idx = editing.stl_url.indexOf(marker);
+      if (idx !== -1) {
+        const path = editing.stl_url.substring(idx + marker.length);
+        await supabase.storage.from("project-stls").remove([path]);
+      }
+    } catch {}
+    setEditing({ ...editing, stl_url: null });
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
