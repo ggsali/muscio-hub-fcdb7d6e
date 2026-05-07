@@ -710,6 +710,9 @@ export default function AuftragDetailPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem onClick={handleSendTestEmail} className="gap-2">
+                      <Mail className="w-4 h-4" /> Test-E-Mail senden
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setConfirmEmailType("rechnung")} className="gap-2">
                       <Mail className="w-4 h-4" /> Rechnung senden
                     </DropdownMenuItem>
