@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, CheckCircle, Upload, Plus, Trash2, Star } from "lucide-react";
+import AdminAllowlistManager from "@/components/AdminAllowlistManager";
 
 const RATE_FIELDS: { key: keyof Settings; label: string; unit: string; step: string }[] = [
   { key: "setup_pauschale", label: "Setup-Pauschale", unit: "CHF", step: "0.5" },
@@ -48,7 +49,7 @@ const PRESET_RATE_FIELDS: { key: keyof Omit<Preset, "id" | "name" | "beschreibun
   { key: "rabatt_prozent", label: "Rabatt", unit: "%", step: "1" },
 ];
 
-type Tab = "raten" | "presets" | "firma" | "rechnung" | "website";
+type Tab = "raten" | "presets" | "firma" | "rechnung" | "website" | "zugriff";
 
 export default function EinstellungenPage() {
   const { settings, reload: reloadSettings } = useSettings();
@@ -198,6 +199,7 @@ export default function EinstellungenPage() {
     { key: "website", label: "Website-Kalkulator" },
     { key: "firma", label: "Firmenangaben" },
     { key: "rechnung", label: "Rechnungs-Design" },
+    { key: "zugriff", label: "Admin-Zugriff" },
   ];
 
   return (
@@ -547,6 +549,8 @@ export default function EinstellungenPage() {
           <SaveButton saved={saved} onClick={handleSaveCompany} />
         </div>
       )}
+
+      {tab === "zugriff" && <AdminAllowlistManager />}
     </div>
   );
 }
