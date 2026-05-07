@@ -1,5 +1,8 @@
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
+import { Resend } from 'npm:resend@4.0.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+
+const FROM_ADDRESS = '3DMuscio <noreply@mail.3dmuscio.com>'
+const REPLY_TO = 'info@3dmuscio.com'
 
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10
@@ -79,11 +82,11 @@ async function moveToDlq(
 }
 
 Deno.serve(async (req) => {
-  const apiKey = Deno.env.get('LOVABLE_API_KEY')
+  const resendKey = Deno.env.get('RESEND_API_KEY')
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-  if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
+  if (!resendKey || !supabaseUrl || !supabaseServiceKey) {
     console.error('Missing required environment variables')
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
@@ -112,6 +115,7 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  const resend = new Resend(resendKey)
 
   // 1. Check rate-limit cooldown and read queue config
   const { data: state } = await supabase
@@ -249,26 +253,21 @@ Deno.serve(async (req) => {
       }
 
       try {
-        await sendLovableEmail(
-          {
-            run_id: payload.run_id,
-            to: payload.to,
-            from: payload.from,
-            sender_domain: payload.sender_domain,
-            subject: payload.subject,
-            html: payload.html,
-            text: payload.text,
-            purpose: payload.purpose,
-            label: payload.label,
-            idempotency_key: payload.idempotency_key,
-            unsubscribe_token: payload.unsubscribe_token,
-            message_id: payload.message_id,
-          },
-          // sendUrl is optional — when LOVABLE_SEND_URL is not set, the library
-          // falls back to the default Lovable API endpoint (https://api.lovable.dev).
-          // Set LOVABLE_SEND_URL as a Supabase secret to override (e.g. for local dev).
-          { apiKey, sendUrl: Deno.env.get('LOVABLE_SEND_URL') }
-        )
+        const { data: sendData, error: sendError } = await resend.emails.send({
+          from: FROM_ADDRESS,
+          reply_to: REPLY_TO,
+          to: payload.to,
+          subject: payload.subject,
+          html: payload.html,
+          text: payload.text,
+        })
+        if (sendError) {
+          const status = (sendError as any)?.statusCode ?? (sendError as any)?.status
+          const err: any = new Error((sendError as any)?.message || 'Resend send failed')
+          if (status) err.status = status
+          throw err
+        }
+        const _resendId = sendData?.id
 
         // Log success
         await supabase.from('email_send_log').insert({
