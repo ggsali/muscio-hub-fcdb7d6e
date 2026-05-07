@@ -621,8 +621,8 @@ export default function AuftragDetailPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem onClick={() => handleExportPDF(false)} className="gap-2">
-                    <FileDown className="w-4 h-4" /> Rechnung PDF
+                  <DropdownMenuItem onClick={handleSendTestEmail} disabled={!!sendingEmail} className="gap-2">
+                    {sendingEmail === "test" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Test-E-Mail senden
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleExportPDF(true)} className="gap-2">
                     <FileDown className="w-4 h-4" /> Rechnung PDF (Details)
