@@ -1,5 +1,8 @@
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
+import { Resend } from 'npm:resend@4.0.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+
+const FROM_ADDRESS = '3DMuscio <noreply@mail.3dmuscio.com>'
+const REPLY_TO = 'info@3dmuscio.com'
 
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10
