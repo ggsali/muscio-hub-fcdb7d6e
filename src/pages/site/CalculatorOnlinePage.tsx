@@ -15,14 +15,6 @@ interface Material {
   pricePerGram: number;
   density: number;
 }
-const MATERIALS: Material[] = [
-  { id: "pla", name: "PLA", pricePerGram: 0.055, density: 1.24 },
-  { id: "petg", name: "PETG", pricePerGram: 0.065, density: 1.27 },
-  { id: "abs", name: "ABS / ASA", pricePerGram: 0.075, density: 1.04 },
-  { id: "tpu", name: "TPU (flexibel)", pricePerGram: 0.090, density: 1.21 },
-  { id: "nylon", name: "Nylon", pricePerGram: 0.120, density: 1.14 },
-  { id: "resin", name: "Resin (SLA)", pricePerGram: 0.120, density: 1.10 },
-];
 const COLORS = ["Weiss", "Schwarz", "Grau", "Rot", "Blau", "Grün", "Gelb", "Orange"];
 
 interface Part {
@@ -44,11 +36,38 @@ const SHIPPING_COST = 8;
 
 const CalculatorOnlinePage = () => {
   const [parts, setParts] = useState<Part[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [materialsLoading, setMaterialsLoading] = useState(true);
+  const [materialsError, setMaterialsError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+
+  useEffect(() => {
+    (async () => {
+      setMaterialsLoading(true);
+      const { data, error } = await supabase
+        .from("materials")
+        .select("*")
+        .eq("aktiv", true)
+        .order("sort_order");
+      if (error) {
+        setMaterialsError("Materialien konnten nicht geladen werden.");
+      } else if (data) {
+        setMaterials(
+          data.map((m: any) => ({
+            id: m.id,
+            name: m.name,
+            pricePerGram: Number(m.price_per_gram),
+            density: Number(m.density),
+          })),
+        );
+      }
+      setMaterialsLoading(false);
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -81,7 +100,7 @@ const CalculatorOnlinePage = () => {
         fileName: file.name,
         file,
         uploading: true,
-        materialId: "pla",
+        materialId: materials[0]?.id || "",
         color: "Weiss",
         infill: 20,
         quantity: 1,
@@ -116,7 +135,8 @@ const CalculatorOnlinePage = () => {
   const remove = (id: string) => setParts((p) => p.filter((x) => x.id !== id));
 
   const calcPart = (p: Part) => {
-    const mat = MATERIALS.find((m) => m.id === p.materialId)!;
+    const mat = materials.find((m) => m.id === p.materialId);
+    if (!mat) return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
     const weight = p.estimatedWeight * (0.4 + (p.infill / 100) * 0.6);
     const matCost = weight * mat.pricePerGram;
     const setupCost = 5;
@@ -194,6 +214,13 @@ const CalculatorOnlinePage = () => {
           </div>
         </ScrollReveal>
 
+        {materialsLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : materialsError ? (
+          <div className="text-center py-20 text-destructive">{materialsError}</div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Upload + parts */}
           <div className="lg:col-span-2 space-y-6">
@@ -262,7 +289,7 @@ const CalculatorOnlinePage = () => {
                           onChange={(e) => update(p.id, { materialId: e.target.value })}
                           className="mt-1 w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
                         >
-                          {MATERIALS.map((m) => (
+                          {materials.map((m) => (
                             <option key={m.id} value={m.id}>
                               {m.name}
                             </option>
@@ -379,6 +406,7 @@ const CalculatorOnlinePage = () => {
             </div>
           </div>
         </div>
+        )}
 
         <Dialog open={showQuote} onOpenChange={setShowQuote}>
           <DialogContent className="max-w-md">

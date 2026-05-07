@@ -1,31 +1,46 @@
 // Lovable AI streaming chat for website ChatWidget
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Du bist der freundliche, hilfsbereite Support-Assistent von 3DMuscio – einem Schweizer 3D-Druck-Service (Website: https://3dmuscio.com).
+const BASE_PROMPT = `Du bist der freundliche, hilfsbereite Support-Assistent von 3DMuscio – einem Schweizer 3D-Druck-Service (Website: https://3dmuscio.com).
 - Antworte kurz, klar und auf Deutsch (Schweizer Höflichkeit).
-- Themen: 3D-Druck, Materialien (PLA, PETG, ABS, PA12, Resin u.a.), Lieferzeiten (~48h Standard), Preise, Bestellungen, Shop.
-- Materialpreise:
-  - PLA: CHF 0.055/g
-  - PETG: CHF 0.065/g
-  - ABS/ASA: CHF 0.075/g
-  - TPU (flexibel): CHF 0.090/g
-  - Nylon: CHF 0.120/g
-  - Resin (SLA): CHF 0.120/g
+- Themen: 3D-Druck, Materialien, Lieferzeiten (~48h Standard), Preise, Bestellungen, Shop.
 - Wenn etwas Menschliches nötig ist, sage: "Ein Mitarbeiter meldet sich gleich – du kannst hier weiterschreiben."
 - WICHTIG zu Links: Verwende AUSSCHLIESSLICH interne, relative Pfade als Markdown-Links, z. B. [Online-Kalkulator](/kalkulator-online), [Materialien](/materialien), [Shop](/shop), [Kontakt](/kontakt), [FAQ](/faq), [Über uns](/ueber-uns). Verwende NIEMALS absolute URLs, niemals lovable.app, niemals andere Domains. Wenn du eine vollständige URL nennen musst, dann nur https://3dmuscio.com/...
 - Bei Preisfragen: Preise direkt nennen (siehe oben) und auf 3dmuscio.com/kalkulator-online für eine genaue Berechnung verweisen.
 - Bei Materialfragen: auf 3dmuscio.com/materialien verweisen für den detaillierten Vergleich.
 - Keine Versprechen zu Lieferterminen ohne Auftragsbestätigung.`;
 
+async function buildSystemPrompt(): Promise<string> {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return BASE_PROMPT;
+    const sb = createClient(url, key);
+    const { data } = await sb
+      .from("materials")
+      .select("name, price_per_gram, tag")
+      .eq("aktiv", true)
+      .order("sort_order");
+    if (!data || data.length === 0) return BASE_PROMPT;
+    const lines = data
+      .map((m: any) => `- ${m.name} (${m.tag}): CHF ${Number(m.price_per_gram).toFixed(3)}/g`)
+      .join("\n");
+    return `${BASE_PROMPT}\n\nMATERIALIEN & PREISE (aktuell aus Datenbank):\n${lines}`;
+  } catch {
+    return BASE_PROMPT;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const { messages } = await req.json();
 
-    // Input validation: cap messages count and total content length
     if (!Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages must be an array" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -49,7 +64,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Konversation zu lang. Bitte starte eine neue." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Simple in-memory per-IP rate limit (best-effort; resets on cold start)
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
     const now = Date.now();
     const WINDOW_MS = 60_000;
@@ -67,13 +81,16 @@ Deno.serve(async (req) => {
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    const systemPrompt = await buildSystemPrompt();
+
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         stream: true,
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...(messages || [])],
+        messages: [{ role: "system", content: systemPrompt }, ...(messages || [])],
       }),
     });
     if (resp.status === 429) {
