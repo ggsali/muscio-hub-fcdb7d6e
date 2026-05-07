@@ -350,6 +350,7 @@ const Index = () => (
     <HowItWorks />
     <ProjectsGrid />
     <MaterialsTeaser />
+    <VolumeDiscounts />
     <ReviewsSection />
     <FAQ />
     <CTA />
