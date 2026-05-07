@@ -85,6 +85,51 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          autor: string
+          created_at: string
+          id: string
+          inhalt: string
+          slug: string
+          tags: string[] | null
+          titel: string
+          titelbild_url: string | null
+          updated_at: string
+          veroeffentlicht: boolean
+          veroeffentlicht_am: string | null
+          zusammenfassung: string | null
+        }
+        Insert: {
+          autor?: string
+          created_at?: string
+          id?: string
+          inhalt?: string
+          slug: string
+          tags?: string[] | null
+          titel: string
+          titelbild_url?: string | null
+          updated_at?: string
+          veroeffentlicht?: boolean
+          veroeffentlicht_am?: string | null
+          zusammenfassung?: string | null
+        }
+        Update: {
+          autor?: string
+          created_at?: string
+          id?: string
+          inhalt?: string
+          slug?: string
+          tags?: string[] | null
+          titel?: string
+          titelbild_url?: string | null
+          updated_at?: string
+          veroeffentlicht?: boolean
+          veroeffentlicht_am?: string | null
+          zusammenfassung?: string | null
+        }
+        Relationships: []
+      }
       calculator_uploads: {
         Row: {
           auth_user_id: string | null
@@ -571,6 +616,7 @@ export type Database = {
       orders: {
         Row: {
           beschreibung: string | null
+          bewertungs_token: string | null
           created_at: string | null
           customer_id: string | null
           datum: string | null
@@ -593,6 +639,7 @@ export type Database = {
         }
         Insert: {
           beschreibung?: string | null
+          bewertungs_token?: string | null
           created_at?: string | null
           customer_id?: string | null
           datum?: string | null
@@ -615,6 +662,7 @@ export type Database = {
         }
         Update: {
           beschreibung?: string | null
+          bewertungs_token?: string | null
           created_at?: string | null
           customer_id?: string | null
           datum?: string | null
@@ -922,6 +970,7 @@ export type Database = {
           name: string
           slug: string
           sort_order: number
+          stl_url: string | null
           toleranz: string | null
           updated_at: string
           verfahren: string | null
@@ -942,6 +991,7 @@ export type Database = {
           name: string
           slug: string
           sort_order?: number
+          stl_url?: string | null
           toleranz?: string | null
           updated_at?: string
           verfahren?: string | null
@@ -962,11 +1012,60 @@ export type Database = {
           name?: string
           slug?: string
           sort_order?: number
+          stl_url?: string | null
           toleranz?: string | null
           updated_at?: string
           verfahren?: string | null
         }
         Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          rabatt_code: string
+          rabatt_prozent: number
+          referred_customer_id: string | null
+          referred_email: string | null
+          referrer_customer_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rabatt_code: string
+          rabatt_prozent?: number
+          referred_customer_id?: string | null
+          referred_email?: string | null
+          referrer_customer_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rabatt_code?: string
+          rabatt_prozent?: number
+          referred_customer_id?: string | null
+          referred_email?: string | null
+          referrer_customer_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_customer_id_fkey"
+            columns: ["referred_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_customer_id_fkey"
+            columns: ["referrer_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
