@@ -548,6 +548,8 @@ export default function EinstellungenPage() {
           <SaveButton saved={saved} onClick={handleSaveCompany} />
         </div>
       )}
+
+      {tab === "zugriff" && <AdminAllowlistManager />}
     </div>
   );
 }
