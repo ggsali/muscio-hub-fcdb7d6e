@@ -112,10 +112,13 @@ function InquiryDetail({
         </div>
       </div>
 
-      <div className="bg-muted/30 border border-border rounded-lg p-4">
-        <p className="text-xs font-medium text-muted-foreground mb-1">{selected.betreff}</p>
-        <p className="text-sm text-foreground whitespace-pre-wrap">{selected.nachricht}</p>
-      </div>
+      <InquiryChat
+        inquiryId={selected.id}
+        customerName={selected.name}
+        initialMessage={selected.nachricht}
+        initialFrom={selected.email}
+        initialAt={selected.created_at}
+      />
 
       {selected.attachments && selected.attachments.length > 0 && (
         <div>
