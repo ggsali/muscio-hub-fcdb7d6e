@@ -269,7 +269,8 @@ const MaterialsTeaser = () => {
       </div>
     </div>
   </section>
-);
+  );
+};
 
 /* ─── VOLUME DISCOUNTS ─── */
 const discounts = [
