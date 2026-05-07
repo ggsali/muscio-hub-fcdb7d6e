@@ -65,10 +65,22 @@ export default function ProjektDetailPage() {
               return (
                 <div className="relative space-y-3">
                   <div className="relative rounded-2xl overflow-hidden border border-border bg-card aspect-square flex items-center justify-center">
-                    {current ? (
+                    {view3d && project.stl_url ? (
+                      <Suspense fallback={<div className="text-muted-foreground text-sm">Lädt 3D-Modell…</div>}>
+                        <StlViewer url={project.stl_url} />
+                      </Suspense>
+                    ) : current ? (
                       <img src={current} alt={project.name} className="w-full h-full object-cover transition-opacity duration-300" />
                     ) : (
                       <ImageIcon className="w-16 h-16 text-muted-foreground/40" />
+                    )}
+                    {project.stl_url && (
+                      <button
+                        onClick={() => setView3d(v => !v)}
+                        className="absolute top-3 right-3 bg-background/80 backdrop-blur border border-border rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 hover:bg-background"
+                      >
+                        <Box className="w-3.5 h-3.5" /> {view3d ? "Bild" : "3D-Ansicht"}
+                      </button>
                     )}
                   </div>
                   {images.length > 1 && (
