@@ -20,7 +20,7 @@ import {
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
   { q: "Wie schnell erhalte ich mein Teil?", a: "Standardlieferung innerhalb von 48 Stunden nach Bestellbestätigung." },
-  { q: "Gibt es Mengenrabatte?", a: "Ab 5 Stück 10%, ab 10 Stück 15% Rabatt auf den Gesamtpreis." },
+  { q: "Gibt es Mengenrabatte?", a: "Ab 5 Stück 10%, ab 10 Stück 15% Rabatt. Ab grösseren Mengen sprechen wir individuelle Konditionen ab." },
 ];
 
 const ContactPage = () => {
