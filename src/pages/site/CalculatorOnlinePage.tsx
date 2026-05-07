@@ -406,8 +406,7 @@ const CalculatorOnlinePage = () => {
             </div>
           </div>
         </div>
-
-        <Dialog open={showQuote} onOpenChange={setShowQuote}>
+        )}
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Angebot anfragen</DialogTitle>
