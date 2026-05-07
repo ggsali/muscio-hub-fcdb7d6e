@@ -195,15 +195,24 @@ const CalculatorOnlinePage = () => {
     setSubmitting(true);
     try {
       const summary = parts
-        .map((p) => `${p.fileName} (${p.quantity}× ${p.materialId.toUpperCase()}, ${p.color}, ${p.infill}% Infill)`)
+        .map((p) => `${p.fileName} (${p.quantity}× ${(materials.find(m=>m.id===p.materialId)?.name || p.materialId)}, ${p.color}, ${p.infill}% Infill)`)
         .join("; ");
       const {
         data: { user },
       } = await supabase.auth.getUser();
       let customer_id: string | null = null;
+      let resolvedName = form.name;
+      let resolvedEmail = form.email;
+      let resolvedPhone = form.phone;
       if (user) {
-        const { data: cust } = await supabase.from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
+        const { data: cust } = await supabase.from("customers").select("id, name, vorname, telefon").eq("auth_user_id", user.id).maybeSingle();
         customer_id = cust?.id ?? null;
+        if (!resolvedEmail) resolvedEmail = user.email || "";
+        if (!resolvedName) {
+          const fromCust = cust ? `${cust.vorname || ""} ${cust.name || ""}`.trim() : "";
+          resolvedName = fromCust || (user.user_metadata?.full_name as string) || user.email || "Kunde";
+        }
+        if (!resolvedPhone) resolvedPhone = (cust?.telefon as string) || "";
       }
       const attachments = parts
         .filter((p) => p.storagePath)
@@ -214,9 +223,9 @@ const CalculatorOnlinePage = () => {
           bucket: "project-uploads",
         }));
       const { error } = await supabase.from("inquiries").insert({
-        name: form.name,
-        email: form.email,
-        telefon: form.phone || null,
+        name: resolvedName,
+        email: resolvedEmail,
+        telefon: resolvedPhone || null,
         betreff: "Preisanfrage Kalkulator",
         nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}\n\nNachricht: ${form.message}`,
         status: "Neu",
