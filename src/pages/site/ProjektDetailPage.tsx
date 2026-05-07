@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, ImageIcon } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ImageIcon, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+
+const StlViewer = lazy(() => import("@/components/site/StlViewer"));
 
 type Project = {
   id: string; slug: string; name: string; kategorie: string | null;
@@ -11,6 +13,7 @@ type Project = {
   verfahren: string | null; material: string | null;
   toleranz: string | null; lieferzeit: string | null;
   gallery_paths: string[] | null;
+  stl_url: string | null;
 };
 
 export default function ProjektDetailPage() {
@@ -20,13 +23,14 @@ export default function ProjektDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const [view3d, setView3d] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
     (async () => {
       const { data } = await supabase
         .from("projekte")
-        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths")
+        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths, stl_url")
         .eq("slug", slug).eq("aktiv", true).maybeSingle();
       if (!data) { setNotFound(true); setLoading(false); return; }
       setProject(data as Project);
