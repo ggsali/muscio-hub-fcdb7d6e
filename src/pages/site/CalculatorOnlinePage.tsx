@@ -4,12 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight,
-} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -24,7 +20,7 @@ const MATERIALS: Material[] = [
   { id: "petg", name: "PETG", pricePerGram: 0.055, density: 1.27 },
   { id: "abs", name: "ABS", pricePerGram: 0.055, density: 1.04 },
   { id: "tpu", name: "TPU (flexibel)", pricePerGram: 0.055, density: 1.21 },
-  { id: "resin", name: "Resin (SLA)", pricePerGram: 0.12, density: 1.10 },
+  { id: "resin", name: "Resin (SLA)", pricePerGram: 0.12, density: 1.1 },
 ];
 const COLORS = ["Weiss", "Schwarz", "Grau", "Rot", "Blau", "Grün", "Gelb", "Orange"];
 
@@ -55,12 +51,17 @@ const CalculatorOnlinePage = () => {
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
       setIsLoggedIn(true);
       const { data: profile } = await supabase
-        .from("profiles").select("full_name, phone").eq("user_id", user.id).maybeSingle();
-      setForm(f => ({
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setForm((f) => ({
         ...f,
         name: profile?.full_name || user.user_metadata?.full_name || "",
         email: user.email || "",
@@ -72,33 +73,37 @@ const CalculatorOnlinePage = () => {
   const addFile = useCallback(async (file: File) => {
     const estW = Math.max(8, Math.min(180, Math.round(file.size / 8000)));
     const id = crypto.randomUUID();
-    setParts(p => [...p, {
-      id,
-      fileName: file.name,
-      file,
-      uploading: true,
-      materialId: "pla",
-      color: "Weiss",
-      infill: 20,
-      quantity: 1,
-      estimatedWeight: estW,
-    }]);
+    setParts((p) => [
+      ...p,
+      {
+        id,
+        fileName: file.name,
+        file,
+        uploading: true,
+        materialId: "pla",
+        color: "Weiss",
+        infill: 20,
+        quantity: 1,
+        estimatedWeight: estW,
+      },
+    ]);
     // Upload im Hintergrund
     try {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `kalkulator/${id}-${safeName}`;
       const { error } = await supabase.storage.from("project-uploads").upload(path, file, { upsert: false });
       if (error) throw error;
-      setParts(p => p.map(x => x.id === id ? { ...x, storagePath: path, uploading: false } : x));
+      setParts((p) => p.map((x) => (x.id === id ? { ...x, storagePath: path, uploading: false } : x)));
     } catch (err) {
       console.error("Upload-Fehler", err);
-      setParts(p => p.map(x => x.id === id ? { ...x, uploading: false } : x));
+      setParts((p) => p.map((x) => (x.id === id ? { ...x, uploading: false } : x)));
       toast.error(`Upload von ${file.name} fehlgeschlagen — wir bitten dich, die Datei per Mail zu schicken.`);
     }
   }, []);
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault(); setDragOver(false);
+    e.preventDefault();
+    setDragOver(false);
     Array.from(e.dataTransfer.files).forEach(addFile);
   };
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,42 +111,44 @@ const CalculatorOnlinePage = () => {
     e.target.value = "";
   };
 
-  const update = (id: string, u: Partial<Part>) =>
-    setParts(p => p.map(x => x.id === id ? { ...x, ...u } : x));
-  const remove = (id: string) => setParts(p => p.filter(x => x.id !== id));
+  const update = (id: string, u: Partial<Part>) => setParts((p) => p.map((x) => (x.id === id ? { ...x, ...u } : x)));
+  const remove = (id: string) => setParts((p) => p.filter((x) => x.id !== id));
 
   const calcPart = (p: Part) => {
-    const mat = MATERIALS.find(m => m.id === p.materialId)!;
-    const weight = p.estimatedWeight * (0.4 + p.infill / 100 * 0.6);
+    const mat = MATERIALS.find((m) => m.id === p.materialId)!;
+    const weight = p.estimatedWeight * (0.4 + (p.infill / 100) * 0.6);
     const matCost = weight * mat.pricePerGram;
     const setupCost = 5;
     const unit = matCost + setupCost;
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
-    else if (p.quantity >= 5) discount = 0.10;
+    else if (p.quantity >= 5) discount = 0.1;
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount };
   };
 
-  const calcs = parts.map(p => ({ part: p, calc: calcPart(p) }));
+  const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
   const subtotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
-  const shipping = subtotal === 0 ? 0 : (subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST);
+  const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
   const total = subtotal + shipping;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const summary = parts.map(p => `${p.fileName} (${p.quantity}× ${p.materialId.toUpperCase()}, ${p.color}, ${p.infill}% Infill)`).join("; ");
-      const { data: { user } } = await supabase.auth.getUser();
+      const summary = parts
+        .map((p) => `${p.fileName} (${p.quantity}× ${p.materialId.toUpperCase()}, ${p.color}, ${p.infill}% Infill)`)
+        .join("; ");
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       let customer_id: string | null = null;
       if (user) {
-        const { data: cust } = await supabase
-          .from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
+        const { data: cust } = await supabase.from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
         customer_id = cust?.id ?? null;
       }
       const attachments = parts
-        .filter(p => p.storagePath)
-        .map(p => ({
+        .filter((p) => p.storagePath)
+        .map((p) => ({
           filename: p.fileName,
           storage_path: p.storagePath,
           size_bytes: p.file?.size ?? null,
@@ -191,27 +198,31 @@ const CalculatorOnlinePage = () => {
           <div className="lg:col-span-2 space-y-6">
             <div
               onDrop={handleDrop}
-              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
               onDragLeave={() => setDragOver(false)}
               className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
                 dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
               }`}
             >
               <input
-                id="file-input" type="file" multiple
+                id="file-input"
+                type="file"
+                multiple
                 accept=".stl,.3mf,.step,.obj"
-                className="hidden" onChange={handleInput}
+                className="hidden"
+                onChange={handleInput}
               />
               <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-heading text-xl font-bold text-foreground mb-2">
-                Dateien hierher ziehen
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                STL, 3MF, STEP, OBJ — bis 500MB pro Datei
-              </p>
+              <h3 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h3>
+              <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
               <label htmlFor="file-input">
                 <Button asChild className="gap-2 cursor-pointer">
-                  <span><Upload className="w-4 h-4" /> Dateien auswählen</span>
+                  <span>
+                    <Upload className="w-4 h-4" /> Dateien auswählen
+                  </span>
                 </Button>
               </label>
             </div>
@@ -231,7 +242,9 @@ const CalculatorOnlinePage = () => {
                             ~{calc.weight.toFixed(0)}g geschätzt
                             {p.uploading && <span className="ml-2 text-primary">· Datei wird hochgeladen…</span>}
                             {!p.uploading && p.storagePath && <span className="ml-2 text-success">· Datei bereit</span>}
-                            {!p.uploading && !p.storagePath && <span className="ml-2 text-warning">· Datei nicht hochgeladen</span>}
+                            {!p.uploading && !p.storagePath && (
+                              <span className="ml-2 text-warning">· Datei nicht hochgeladen</span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -245,45 +258,62 @@ const CalculatorOnlinePage = () => {
                         <Label className="text-xs">Material</Label>
                         <select
                           value={p.materialId}
-                          onChange={e => update(p.id, { materialId: e.target.value })}
+                          onChange={(e) => update(p.id, { materialId: e.target.value })}
                           className="mt-1 w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
                         >
-                          {MATERIALS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          {MATERIALS.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div>
                         <Label className="text-xs">Farbe</Label>
                         <select
                           value={p.color}
-                          onChange={e => update(p.id, { color: e.target.value })}
+                          onChange={(e) => update(p.id, { color: e.target.value })}
                           className="mt-1 w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
                         >
-                          {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                          {COLORS.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
                         </select>
                       </div>
                       <div>
                         <Label className="text-xs">Fülldichte: {p.infill}%</Label>
                         <input
-                          type="range" min={5} max={100} step={5} value={p.infill}
-                          onChange={e => update(p.id, { infill: Number(e.target.value) })}
+                          type="range"
+                          min={5}
+                          max={100}
+                          step={5}
+                          value={p.infill}
+                          onChange={(e) => update(p.id, { infill: Number(e.target.value) })}
                           className="mt-3 w-full accent-primary"
                         />
                       </div>
                       <div>
                         <Label className="text-xs">Menge</Label>
                         <div className="mt-1 flex items-center gap-1">
-                          <button onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })}
-                            className="w-9 h-9 rounded-md border border-input flex items-center justify-center hover:bg-muted">
+                          <button
+                            onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })}
+                            className="w-9 h-9 rounded-md border border-input flex items-center justify-center hover:bg-muted"
+                          >
                             <Minus className="w-3 h-3" />
                           </button>
                           <Input
-                            type="number" min={1}
+                            type="number"
+                            min={1}
                             value={p.quantity}
-                            onChange={e => update(p.id, { quantity: Math.max(1, Number(e.target.value)) })}
+                            onChange={(e) => update(p.id, { quantity: Math.max(1, Number(e.target.value)) })}
                             className="h-9 text-center"
                           />
-                          <button onClick={() => update(p.id, { quantity: p.quantity + 1 })}
-                            className="w-9 h-9 rounded-md border border-input flex items-center justify-center hover:bg-muted">
+                          <button
+                            onClick={() => update(p.id, { quantity: p.quantity + 1 })}
+                            className="w-9 h-9 rounded-md border border-input flex items-center justify-center hover:bg-muted"
+                          >
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
@@ -292,7 +322,8 @@ const CalculatorOnlinePage = () => {
 
                     <div className="mt-4 flex items-center justify-between pt-3 border-t border-border">
                       <span className="text-xs text-muted-foreground">
-                        Stückpreis: {CHF(calc.unit)}{calc.discount > 0 && ` · ${calc.discount * 100}% Rabatt`}
+                        Stückpreis: {CHF(calc.unit)}
+                        {calc.discount > 0 && ` · ${calc.discount * 100}% Rabatt`}
                       </span>
                       <span className="text-lg font-bold text-primary">{CHF(calc.subtotal)}</span>
                     </div>
@@ -308,10 +339,12 @@ const CalculatorOnlinePage = () => {
               <h3 className="font-heading text-lg font-bold mb-4">Zusammenfassung</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Zwischensumme</span><span className="text-foreground">{CHF(subtotal)}</span>
+                  <span>Zwischensumme</span>
+                  <span className="text-foreground">{CHF(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Versand</span><span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
+                  <span>Versand</span>
+                  <span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
                 </div>
                 <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
                   <span className="font-bold">Total</span>
@@ -320,7 +353,7 @@ const CalculatorOnlinePage = () => {
               </div>
               <Button
                 className="w-full mt-5 gap-2"
-                disabled={parts.length === 0 || submitting || parts.some(p => p.uploading)}
+                disabled={parts.length === 0 || submitting || parts.some((p) => p.uploading)}
                 onClick={async (e) => {
                   if (isLoggedIn && form.name && form.email) {
                     await handleSend(e as unknown as React.FormEvent);
@@ -329,7 +362,15 @@ const CalculatorOnlinePage = () => {
                   }
                 }}
               >
-                {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</> : <>Angebot anfragen <ArrowRight className="w-4 h-4" /></>}
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...
+                  </>
+                ) : (
+                  <>
+                    Angebot anfragen <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </Button>
               <p className="text-xs text-muted-foreground mt-3 text-center">
                 Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.
@@ -346,24 +387,51 @@ const CalculatorOnlinePage = () => {
             <form onSubmit={handleSend} className="space-y-4">
               <div>
                 <Label className="text-xs">Name *</Label>
-                <Input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="mt-1" />
+                <Input
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <Label className="text-xs">E-Mail *</Label>
-                <Input type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="mt-1" />
+                <Input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <Label className="text-xs">Telefon (optional)</Label>
-                <Input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="mt-1" />
+                <Input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <Label className="text-xs">Nachricht (optional)</Label>
-                <Textarea rows={3} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} className="mt-1" />
+                <Textarea
+                  rows={3}
+                  value={form.message}
+                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                  className="mt-1"
+                />
               </div>
               <Button type="submit" className="w-full gap-2" disabled={submitting}>
-                {submitting
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</>
-                  : <><Send className="w-4 h-4" /> Anfrage senden</>}
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" /> Anfrage senden
+                  </>
+                )}
               </Button>
             </form>
           </DialogContent>
