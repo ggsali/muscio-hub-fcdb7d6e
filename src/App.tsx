@@ -131,6 +131,7 @@ const App = () => (
               <Route path="/upload/:token" element={<ProjectUploadPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/bewertung/:token?" element={<BewertungPage />} />
+              <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
               {/* Customer portal */}
               <Route path="/portal" element={<PortalLayout />}>
