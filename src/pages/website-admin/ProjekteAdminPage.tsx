@@ -102,7 +102,7 @@ export default function ProjekteAdminPage() {
           <h1 className="font-heading text-3xl font-bold text-foreground mb-1">Projekte / Portfolio</h1>
           <p className="text-muted-foreground">Referenzprojekte für die Website verwalten.</p>
         </div>
-        <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", gallery_paths: [], sort_order: projects.length + 1, featured: false, aktiv: true })}>
+        <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", gallery_paths: [], stl_url: null, sort_order: projects.length + 1, featured: false, aktiv: true })}>
           <Plus className="w-4 h-4 mr-1" /> Neues Projekt
         </Button>
       </div>
