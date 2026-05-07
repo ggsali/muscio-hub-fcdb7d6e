@@ -100,10 +100,10 @@ export default function OrderStatusWorkflow({
     const tplKey = STATUS_TO_TEMPLATE[newStatus];
     if (tplKey) {
       try {
-        await supabase.functions.invoke("send-status-email", {
-          body: { order_id: orderId, status_key: tplKey },
+        await supabase.functions.invoke("send-email", {
+          body: { kind: "status", orderId, statusKey: tplKey },
         });
-      } catch (e) { console.error("send-status-email failed", e); }
+      } catch (e) { console.error("send-email status failed", e); }
     }
   };
 

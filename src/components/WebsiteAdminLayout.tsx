@@ -21,7 +21,7 @@ const NAV = [
   { to: "/website-admin/navigation", label: "Navigation", icon: Navigation },
   { to: "/website-admin/kunden", label: "Website-Kunden", icon: Users2 },
   { to: "/website-admin/chat", label: "Chat-Postfach", icon: MessageCircle },
-  { to: "/website-admin/email-templates", label: "E-Mail-Vorlagen", icon: Mail },
+  
   { to: "/website-admin/einstellungen", label: "Website-Einstellungen", icon: Settings },
 ];
 

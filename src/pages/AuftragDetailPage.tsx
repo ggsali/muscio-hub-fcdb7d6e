@@ -356,8 +356,8 @@ export default function AuftragDetailPage() {
         }
       }
 
-      const { data, error } = await supabase.functions.invoke("send-order-email", {
-        body: { orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl },
+      const { data, error } = await supabase.functions.invoke("send-email", {
+        body: { kind: "order", orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl },
       });
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -404,8 +404,8 @@ export default function AuftragDetailPage() {
       });
       if (!download && result) {
         // Send via email
-        const { data, error } = await supabase.functions.invoke("send-order-email", {
-          body: { orderId: id, type: "akonto", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag },
+        const { data, error } = await supabase.functions.invoke("send-email", {
+          body: { kind: "order", orderId: id, type: "akonto", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag },
         });
         if (error || data?.error) {
           toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -434,8 +434,8 @@ export default function AuftragDetailPage() {
         expressKosten: expressBetrag, expressLabel,
       });
       if (!download && result) {
-        const { data, error } = await supabase.functions.invoke("send-order-email", {
-          body: { orderId: id, type: "restbetrag", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, restbetrag },
+        const { data, error } = await supabase.functions.invoke("send-email", {
+          body: { kind: "order", orderId: id, type: "restbetrag", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, restbetrag },
         });
         if (error || data?.error) {
           toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
