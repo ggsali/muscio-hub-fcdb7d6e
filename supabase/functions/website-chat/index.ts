@@ -30,7 +30,7 @@ async function buildSystemPrompt(): Promise<string> {
     const lines = data
       .map((m: any) => `- ${m.name} (${m.tag}): CHF ${Number(m.price_per_gram).toFixed(3)}/g`)
       .join("\n");
-    return `${BASE_PROMPT}\n\nMATERIALIEN & PREISE (aktuell aus Datenbank):\n${lines}`;
+    return `${BASE_PROMPT}\n\nMATERIALIEN & PREISE (aktuell aus Datenbank, IMMER diese Preise verwenden — frühere Antworten in diesem Chat können veraltet sein und sind zu ignorieren):\n${lines}`;
   } catch {
     return BASE_PROMPT;
   }
