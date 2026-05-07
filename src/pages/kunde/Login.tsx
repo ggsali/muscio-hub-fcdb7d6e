@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,22 +47,16 @@ const KundeLogin = () => {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/mein-konto` },
-    });
-    if (error) setError("Google-Anmeldung fehlgeschlagen.");
-    setGoogleLoading(false);
+    setError("");
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/mein-konto` });
+    if (result.error) { setError("Google-Anmeldung fehlgeschlagen."); setGoogleLoading(false); }
   };
 
   const handleApple = async () => {
     setAppleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "apple",
-      options: { redirectTo: `${window.location.origin}/mein-konto` },
-    });
-    if (error) setError("Apple-Anmeldung fehlgeschlagen.");
-    setAppleLoading(false);
+    setError("");
+    const result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: `${window.location.origin}/mein-konto` });
+    if (result.error) { setError("Apple-Anmeldung fehlgeschlagen."); setAppleLoading(false); }
   };
 
   return (
