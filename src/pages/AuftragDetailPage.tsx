@@ -308,6 +308,23 @@ export default function AuftragDetailPage() {
   const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
   const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
+  const handleSendTestEmail = async () => {
+    setSendingEmail("test" as any);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-email", {
+        body: { kind: "order", orderId: id, type: "test" },
+      });
+      if (error || data?.error) {
+        toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
+      } else {
+        toast({ title: "Test-E-Mail gesendet ✓", description: "Eine Test-Nachricht wurde an die Kundenadresse gesendet." });
+      }
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    }
+    setSendingEmail(null);
+  };
+
   const handleSendEmail = async (type: "rechnung" | "offerte" | "lieferung" | "auftragsbestaetigung" | "druckfertig") => {
     setSendingEmail(type);
     try {
