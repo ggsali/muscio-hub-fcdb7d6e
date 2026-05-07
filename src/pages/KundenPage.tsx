@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, ChevronRight, Building2, Globe, Phone, MapPin, CheckCircle2, Briefcase } from "lucide-react";
+import { Plus, Search, ChevronRight, Building2, Globe, Phone, MapPin, CheckCircle2, Briefcase, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCHF } from "@/lib/calc";
@@ -40,8 +41,23 @@ export default function KundenPage() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<TabType>("aktiv");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => { loadAll(); }, []);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("link-website-customers", {});
+      if (error) throw error;
+      toast.success("Sync erfolgreich", { description: `${data?.linked ?? 0} verknüpft, ${data?.created ?? 0} angelegt` });
+      await loadAll();
+    } catch (e: any) {
+      toast.error("Sync fehlgeschlagen", { description: e.message });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const loadAll = async () => {
     setLoading(true);
@@ -95,10 +111,16 @@ export default function KundenPage() {
             {customers.length} Kunden total · {aktive.length} aktiv · {abgeschlossene.length} abgeschlossen · {website.length} ohne Auftrag
           </p>
         </div>
-        <Button onClick={() => navigate("/admin/kunden/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
-          <Plus className="w-4 h-4" />
-          {isMobile ? "Neu" : "Neuer Kunde"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleSync} disabled={syncing} variant="outline" className="gap-2" size={isMobile ? "sm" : "default"}>
+            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
+            {isMobile ? "Sync" : "Website-Kunden synchronisieren"}
+          </Button>
+          <Button onClick={() => navigate("/admin/kunden/neu")} className="bg-primary hover:bg-primary/90 gap-2" size={isMobile ? "sm" : "default"}>
+            <Plus className="w-4 h-4" />
+            {isMobile ? "Neu" : "Neuer Kunde"}
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
