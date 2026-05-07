@@ -29,16 +29,20 @@ const WelcomeEmail = ({ name, needsAddress }: WelcomeProps) => (
     <Preview>Willkommen bei {SITE_NAME}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <div style={header}>
-          <img
-            src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg"
-            alt={SITE_NAME}
-            width={48}
-            height={48}
-            style={logoImg}
-          />
-          <span style={logo}>{SITE_NAME}</span>
-        </div>
+        <table role="presentation" cellPadding={0} cellSpacing={0} border={0} style={header}>
+          <tr>
+            <td width={48} style={{ verticalAlign: 'middle', paddingRight: '12px' }}>
+              <img
+                src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg"
+                alt={SITE_NAME}
+                width={48}
+                height={48}
+                style={logoImg}
+              />
+            </td>
+            <td style={{ verticalAlign: 'middle', ...logo, lineHeight: '48px' }}>{SITE_NAME}</td>
+          </tr>
+        </table>
 
         <Heading style={h1}>
           {name ? `Willkommen, ${name}!` : 'Willkommen bei 3DMuscio!'}
@@ -98,7 +102,7 @@ export const template = {
 
 const main: React.CSSProperties = { backgroundColor: '#ffffff', fontFamily: 'Inter, Arial, sans-serif', margin: 0, padding: 0 }
 const container: React.CSSProperties = { maxWidth: '560px', margin: '0 auto', padding: '32px 24px' }
-const header: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }
+const header: React.CSSProperties = { borderCollapse: 'separate', marginBottom: '24px' }
 const logoImg: React.CSSProperties = { borderRadius: '8px' }
 const logo: React.CSSProperties = { fontSize: '20px', fontWeight: 700, color: '#22c55e' }
 const h1: React.CSSProperties = { fontSize: '24px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }
