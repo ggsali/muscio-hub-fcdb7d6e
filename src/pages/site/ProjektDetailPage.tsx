@@ -10,6 +10,7 @@ type Project = {
   beschreibung: string | null; bild_url: string | null;
   verfahren: string | null; material: string | null;
   toleranz: string | null; lieferzeit: string | null;
+  gallery_paths: string[] | null;
 };
 
 export default function ProjektDetailPage() {
