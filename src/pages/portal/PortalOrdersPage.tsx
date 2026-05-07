@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF } from "@/lib/calc";
 import { Package, Download, FileText, ShoppingBag, ChevronDown, ChevronUp } from "lucide-react";
+import OrderProgress from "@/components/portal/OrderProgress";
 
 export default function PortalOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
