@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, Save, ImageIcon } from "lucide-react";
+import { Plus, Trash2, Save, ImageIcon, X, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ interface Project {
   kategorie: string | null; beschreibung: string | null; kurzbeschreibung: string | null;
   bild_url: string | null; verfahren: string | null; material: string | null;
   toleranz: string | null; lieferzeit: string | null;
+  gallery_paths: string[] | null;
   sort_order: number; featured: boolean; aktiv: boolean;
 }
 
@@ -22,6 +23,7 @@ export default function ProjekteAdminPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editing, setEditing] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -33,7 +35,7 @@ export default function ProjekteAdminPage() {
 
   const save = async () => {
     if (!editing) return;
-    const payload = { ...editing, slug: editing.slug || slugify(editing.name) };
+    const payload = { ...editing, slug: editing.slug || slugify(editing.name), gallery_paths: editing.gallery_paths || [] };
     if (editing.id) {
       const { id, ...rest } = payload;
       await supabase.from("projekte").update(rest).eq("id", id);
@@ -51,13 +53,45 @@ export default function ProjekteAdminPage() {
     load();
   };
 
-  const onUpload = async (file: File) => {
+  const onUploadHero = async (file: File) => {
     if (!editing) return;
     const path = `${crypto.randomUUID()}-${file.name}`;
     const { error } = await supabase.storage.from("projekte").upload(path, file);
     if (error) { toast.error(error.message); return; }
     const { data } = supabase.storage.from("projekte").getPublicUrl(path);
     setEditing({ ...editing, bild_url: data.publicUrl });
+  };
+
+  const onUploadGallery = async (files: FileList) => {
+    if (!editing || !files.length) return;
+    setUploading(true);
+    const urls: string[] = [];
+    for (const file of Array.from(files)) {
+      const path = `gallery/${crypto.randomUUID()}-${file.name}`;
+      const { error } = await supabase.storage.from("projekte").upload(path, file);
+      if (error) { toast.error(error.message); continue; }
+      const { data } = supabase.storage.from("projekte").getPublicUrl(path);
+      urls.push(data.publicUrl);
+    }
+    setEditing({ ...editing, gallery_paths: [...(editing.gallery_paths || []), ...urls] });
+    setUploading(false);
+    toast.success(`${urls.length} Bild(er) hinzugefügt`);
+  };
+
+  const removeGalleryImg = (idx: number) => {
+    if (!editing) return;
+    const next = [...(editing.gallery_paths || [])];
+    next.splice(idx, 1);
+    setEditing({ ...editing, gallery_paths: next });
+  };
+
+  const moveGalleryImg = (idx: number, dir: -1 | 1) => {
+    if (!editing) return;
+    const next = [...(editing.gallery_paths || [])];
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= next.length) return;
+    [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+    setEditing({ ...editing, gallery_paths: next });
   };
 
   return (
@@ -67,7 +101,7 @@ export default function ProjekteAdminPage() {
           <h1 className="font-heading text-3xl font-bold text-foreground mb-1">Projekte / Portfolio</h1>
           <p className="text-muted-foreground">Referenzprojekte für die Website verwalten.</p>
         </div>
-        <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", sort_order: projects.length + 1, featured: false, aktiv: true })}>
+        <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", gallery_paths: [], sort_order: projects.length + 1, featured: false, aktiv: true })}>
           <Plus className="w-4 h-4 mr-1" /> Neues Projekt
         </Button>
       </div>
@@ -81,9 +115,12 @@ export default function ProjekteAdminPage() {
               </div>
               <div className="p-4">
                 <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">{p.kategorie}</p>
-                <h3 className="font-heading font-bold text-foreground mb-3">{p.name}</h3>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setEditing(p)}>Bearbeiten</Button>
+                <h3 className="font-heading font-bold text-foreground mb-1">{p.name}</h3>
+                {p.gallery_paths && p.gallery_paths.length > 0 && (
+                  <p className="text-xs text-muted-foreground mb-3">{p.gallery_paths.length} Galerie-Bild(er)</p>
+                )}
+                <div className="flex gap-2 mt-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditing({ ...p, gallery_paths: p.gallery_paths || [] })}>Bearbeiten</Button>
                   <Button size="sm" variant="ghost" onClick={() => remove(p.id)}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
                 </div>
               </div>
@@ -111,13 +148,43 @@ export default function ProjekteAdminPage() {
                 <div><Label>Lieferzeit</Label><Input value={editing.lieferzeit || ""} onChange={e => setEditing({ ...editing, lieferzeit: e.target.value })} /></div>
               </div>
               <div>
-                <Label>Bild</Label>
+                <Label>Hauptbild (Cover)</Label>
                 <div className="flex gap-3 items-center">
                   {editing.bild_url && <img src={editing.bild_url} className="w-20 h-20 object-cover rounded-lg" />}
-                  <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
+                  <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && onUploadHero(e.target.files[0])} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+
+              <div className="border-t border-border pt-4">
+                <Label className="text-base">Galerie (mehrere Bilder)</Label>
+                <p className="text-xs text-muted-foreground mb-3">Diese Bilder werden auf der Projekt-Detailseite als Galerie angezeigt.</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  disabled={uploading}
+                  onChange={e => e.target.files && onUploadGallery(e.target.files)}
+                  className="mb-3"
+                />
+                {uploading && <p className="text-sm text-muted-foreground mb-2">Lädt hoch…</p>}
+                {editing.gallery_paths && editing.gallery_paths.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {editing.gallery_paths.map((url, idx) => (
+                      <div key={idx} className="relative group rounded-lg overflow-hidden border border-border aspect-square">
+                        <img src={url} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => moveGalleryImg(idx, -1)} disabled={idx === 0}><ArrowUp className="w-3.5 h-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => moveGalleryImg(idx, 1)} disabled={idx === (editing.gallery_paths!.length - 1)}><ArrowDown className="w-3.5 h-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeGalleryImg(idx)}><X className="w-3.5 h-3.5 text-destructive" /></Button>
+                        </div>
+                        <span className="absolute top-1 left-1 text-[10px] bg-background/80 px-1.5 rounded">{idx + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
                 <div><Label>Sortierung</Label><Input type="number" value={editing.sort_order} onChange={e => setEditing({ ...editing, sort_order: parseInt(e.target.value) || 0 })} /></div>
                 <div className="flex items-end gap-4">
                   <div className="flex items-center gap-2"><Switch checked={editing.featured} onCheckedChange={v => setEditing({ ...editing, featured: v })} /><Label>Featured</Label></div>
