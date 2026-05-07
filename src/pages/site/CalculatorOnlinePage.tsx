@@ -93,6 +93,8 @@ const CalculatorOnlinePage = () => {
   const addFile = useCallback(async (file: File) => {
     const estW = Math.max(8, Math.min(180, Math.round(file.size / 8000)));
     const id = crypto.randomUUID();
+    const defaultMatId = materials[0]?.id || "";
+    const defaultMatName = materials[0]?.name || "";
     setParts((p) => [
       ...p,
       {
@@ -100,7 +102,7 @@ const CalculatorOnlinePage = () => {
         fileName: file.name,
         file,
         uploading: true,
-        materialId: materials[0]?.id || "",
+        materialId: defaultMatId,
         color: "Weiss",
         infill: 20,
         quantity: 1,
@@ -114,12 +116,36 @@ const CalculatorOnlinePage = () => {
       const { error } = await supabase.storage.from("project-uploads").upload(path, file, { upsert: false });
       if (error) throw error;
       setParts((p) => p.map((x) => (x.id === id ? { ...x, storagePath: path, uploading: false } : x)));
+
+      // Sofort Eintrag in calculator_uploads anlegen, damit Admin die Datei direkt sieht
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("calculator_uploads").insert({
+          id,
+          file_name: file.name,
+          storage_path: path,
+          size_bytes: file.size,
+          bucket: "project-uploads",
+          material_id: defaultMatId || null,
+          material_name: defaultMatName || null,
+          color: "Weiss",
+          infill: 20,
+          quantity: 1,
+          estimated_weight: estW,
+          auth_user_id: user?.id ?? null,
+          customer_email: user?.email ?? null,
+          session_id: id,
+          status: "neu",
+        } as any);
+      } catch (logErr) {
+        console.warn("Upload-Eintrag konnte nicht angelegt werden", logErr);
+      }
     } catch (err) {
       console.error("Upload-Fehler", err);
       setParts((p) => p.map((x) => (x.id === id ? { ...x, uploading: false } : x)));
       toast.error(`Upload von ${file.name} fehlgeschlagen — wir bitten dich, die Datei per Mail zu schicken.`);
     }
-  }, []);
+  }, [materials]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -131,7 +157,19 @@ const CalculatorOnlinePage = () => {
     e.target.value = "";
   };
 
-  const update = (id: string, u: Partial<Part>) => setParts((p) => p.map((x) => (x.id === id ? { ...x, ...u } : x)));
+  const update = (id: string, u: Partial<Part>) => {
+    setParts((p) => p.map((x) => (x.id === id ? { ...x, ...u } : x)));
+    // Eintrag synchron aktualisieren (Material/Farbe/Menge/Infill)
+    const matName = u.materialId ? materials.find((m) => m.id === u.materialId)?.name : undefined;
+    const patch: any = {};
+    if (u.materialId !== undefined) { patch.material_id = u.materialId || null; patch.material_name = matName || null; }
+    if (u.color !== undefined) patch.color = u.color;
+    if (u.infill !== undefined) patch.infill = u.infill;
+    if (u.quantity !== undefined) patch.quantity = u.quantity;
+    if (Object.keys(patch).length > 0) {
+      supabase.from("calculator_uploads").update(patch).eq("id", id).then(() => {});
+    }
+  };
   const remove = (id: string) => setParts((p) => p.filter((x) => x.id !== id));
 
   const calcPart = (p: Part) => {

@@ -29,6 +29,7 @@ import NotFound from "@/pages/NotFound";
 import AnfragenPage from "@/pages/AnfragenPage";
 import KalenderPage from "@/pages/KalenderPage";
 import UploadLinksPage from "@/pages/UploadLinksPage";
+import KalkulatorUploadsPage from "@/pages/KalkulatorUploadsPage";
 import ProjectUploadPage from "@/pages/ProjectUploadPage";
 import ChatPage from "@/pages/ChatPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
@@ -154,6 +155,7 @@ const App = () => (
                 <Route path="anfragen" element={<AnfragenPage />} />
                 <Route path="kalender" element={<KalenderPage />} />
                 <Route path="uploads" element={<UploadLinksPage />} />
+                <Route path="kalkulator-uploads" element={<KalkulatorUploadsPage />} />
                 <Route path="chat" element={<ChatPage />} />
                 <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />

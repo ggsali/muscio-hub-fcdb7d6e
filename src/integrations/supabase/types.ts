@@ -64,6 +64,78 @@ export type Database = {
           },
         ]
       }
+      calculator_uploads: {
+        Row: {
+          auth_user_id: string | null
+          bucket: string
+          color: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          estimated_price: number | null
+          estimated_weight: number | null
+          file_name: string
+          id: string
+          infill: number | null
+          material_id: string | null
+          material_name: string | null
+          notes: string | null
+          quantity: number | null
+          session_id: string | null
+          size_bytes: number | null
+          status: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          bucket?: string
+          color?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          estimated_price?: number | null
+          estimated_weight?: number | null
+          file_name: string
+          id?: string
+          infill?: number | null
+          material_id?: string | null
+          material_name?: string | null
+          notes?: string | null
+          quantity?: number | null
+          session_id?: string | null
+          size_bytes?: number | null
+          status?: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          bucket?: string
+          color?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          estimated_price?: number | null
+          estimated_weight?: number | null
+          file_name?: string
+          id?: string
+          infill?: number | null
+          material_id?: string | null
+          material_name?: string | null
+          notes?: string | null
+          quantity?: number | null
+          session_id?: string | null
+          size_bytes?: number | null
+          status?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
