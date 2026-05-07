@@ -72,6 +72,12 @@ const ContactPage = () => {
           .from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
         customer_id = cust?.id ?? null;
       }
+      // Fallback: gleichen Kunden über E-Mail finden (auch für nicht-eingeloggte)
+      if (!customer_id && form.email) {
+        const { data: cust } = await supabase
+          .from("customers").select("id").eq("email", form.email).maybeSingle();
+        customer_id = cust?.id ?? null;
+      }
       const { error } = await supabase.from("inquiries").insert({
         name: form.name,
         email: form.email,
@@ -87,6 +93,7 @@ const ContactPage = () => {
       setForm({ name: "", email: "", phone: "", message: "" });
       setBetreff("");
       setAttachments([]);
+      if (!user) setShowAccountDialog(true);
     } catch (err) {
       console.error(err);
       toast.error("Fehler beim Senden. Bitte schreib uns direkt an info@3dmuscio.com");
