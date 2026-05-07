@@ -260,6 +260,23 @@ const ContactPage = () => {
           </ScrollReveal>
         </div>
       </div>
+
+      <AlertDialog open={showAccountDialog} onOpenChange={setShowAccountDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kundenkonto erstellen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Mit einem Kundenkonto siehst du den Status deiner Anfrage, kannst direkt antworten und behältst alle Aufträge und Anfragen an einem Ort.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Nein, danke</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate("/registrieren")}>
+              Konto erstellen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
