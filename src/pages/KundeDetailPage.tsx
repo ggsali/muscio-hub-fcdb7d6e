@@ -85,11 +85,28 @@ const emptyCustomer = (): Customer => ({
   adresse: "", notizen: "", aktiv: true,
 });
 
+type Attachment = { filename: string; storage_path: string; bucket?: string; size_bytes?: number | null };
 type InquiryRow = {
   id: string; name: string; email: string; telefon: string | null;
   betreff: string | null; nachricht: string; status: string; notiz: string | null;
-  created_at: string; order_id: string | null;
+  created_at: string; order_id: string | null; attachments?: Attachment[] | null;
 };
+
+async function downloadInquiryAttachment(att: Attachment) {
+  const bucket = att.bucket || "project-uploads";
+  const { data } = await supabase.storage.from(bucket).createSignedUrl(att.storage_path, 600);
+  if (!data?.signedUrl) return;
+  const a = document.createElement("a");
+  a.href = data.signedUrl; a.download = att.filename; a.target = "_blank";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function formatBytesAtt(n?: number | null) {
+  if (!n) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
 
 export default function KundeDetailPage() {
   const { id } = useParams();
