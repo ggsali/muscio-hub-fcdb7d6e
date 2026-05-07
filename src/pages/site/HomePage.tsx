@@ -11,7 +11,8 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { HeroProjectsCarousel } from "@/components/site/HeroProjectsCarousel";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
 import { ProjectsGrid } from "@/components/site/ProjectsGrid";
