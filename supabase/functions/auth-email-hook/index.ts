@@ -34,7 +34,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 
 const SITE_NAME = '3DMuscio'
 const ROOT_DOMAIN = '3dmuscio.com'
-const FROM_ADDRESS = '3DMuscio <noreply@mail.3dmuscio.com>'
+const FROM_ADDRESS = '3DMuscio <noreply@3dmuscio.com>'
 const REPLY_TO = 'info@3dmuscio.com'
 
 const SAMPLE_PROJECT_URL = `https://${ROOT_DOMAIN}`
