@@ -157,7 +157,19 @@ const CalculatorOnlinePage = () => {
     e.target.value = "";
   };
 
-  const update = (id: string, u: Partial<Part>) => setParts((p) => p.map((x) => (x.id === id ? { ...x, ...u } : x)));
+  const update = (id: string, u: Partial<Part>) => {
+    setParts((p) => p.map((x) => (x.id === id ? { ...x, ...u } : x)));
+    // Eintrag synchron aktualisieren (Material/Farbe/Menge/Infill)
+    const matName = u.materialId ? materials.find((m) => m.id === u.materialId)?.name : undefined;
+    const patch: any = {};
+    if (u.materialId !== undefined) { patch.material_id = u.materialId || null; patch.material_name = matName || null; }
+    if (u.color !== undefined) patch.color = u.color;
+    if (u.infill !== undefined) patch.infill = u.infill;
+    if (u.quantity !== undefined) patch.quantity = u.quantity;
+    if (Object.keys(patch).length > 0) {
+      supabase.from("calculator_uploads").update(patch).eq("id", id).then(() => {});
+    }
+  };
   const remove = (id: string) => setParts((p) => p.filter((x) => x.id !== id));
 
   const calcPart = (p: Part) => {
