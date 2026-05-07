@@ -239,10 +239,10 @@ export default function AuftragDetailPage() {
     });
   };
 
-  // Alle Teile neu kalkulieren wenn sich activeSettings ändert (Preset-Wechsel)
+  // Alle Teile neu kalkulieren wenn sich activeSettings oder das Preset ändert
   useEffect(() => {
     setParts(prev => prev.map(p => recalcPart(p)));
-  }, [activeSettings]);
+  }, [activeSettings, selectedPresetId]);
 
   const addPart = async () => {
     const newPart = emptyPart();
