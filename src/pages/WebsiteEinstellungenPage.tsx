@@ -38,7 +38,7 @@ export default function WebsiteEinstellungenPage() {
   }, []);
 
   const saveOne = async (key: string, value: any) => {
-    const { error } = await supabase.from("website_settings").update({ value }).eq("key", key);
+    const { error } = await supabase.from("website_settings").upsert({ key, value }, { onConflict: "key" });
     return error;
   };
 
@@ -49,6 +49,7 @@ export default function WebsiteEinstellungenPage() {
       saveOne("kontakt_info", kontakt),
       saveOne("faq", { eintraege: faq }),
       saveOne("material_preise", { eintraege: preise }),
+      saveOne("whatsapp", whatsapp),
     ]);
     setSaving(false);
     if (errs.some(Boolean)) toast({ title: "Fehler beim Speichern", variant: "destructive" });
