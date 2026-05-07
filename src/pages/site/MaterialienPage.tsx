@@ -1,18 +1,45 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Layers } from "lucide-react";
+import { ArrowRight, Layers, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const materials = [
-  { name: "PLA", tag: "FDM", price: "0.055", desc: "Bio-abbaubar, einfach zu drucken, viele Farben.", uses: ["Prototypen", "Modelle", "Dekoration"] },
-  { name: "PETG", tag: "FDM", price: "0.065", desc: "Schlagzäh, chemisch beständig, lebensmittelecht.", uses: ["Funktionsteile", "Behälter", "Outdoor"] },
-  { name: "ABS / ASA", tag: "FDM", price: "0.075", desc: "Hitzebeständig, UV-stabil, mechanisch robust.", uses: ["Industrie", "Automotive", "Outdoor"] },
-  { name: "TPU", tag: "FDM", price: "0.090", desc: "Flexibel, gummiartig, abriebfest.", uses: ["Dichtungen", "Griffe", "Sport"] },
-  { name: "Nylon", tag: "FDM", price: "0.120", desc: "Sehr fest, abriebfest, geringe Reibung.", uses: ["Zahnräder", "Lager", "Werkzeuge"] },
-  { name: "Resin", tag: "SLA", price: "0.120", desc: "Höchste Detailgenauigkeit, glatte Oberflächen.", uses: ["Schmuck", "Miniaturen", "Dental"] },
-];
+interface MaterialRow {
+  id: string;
+  name: string;
+  tag: string;
+  price_per_gram: number;
+  description: string | null;
+}
+
+const USES: Record<string, string[]> = {
+  PLA: ["Prototypen", "Modelle", "Dekoration"],
+  PETG: ["Funktionsteile", "Behälter", "Outdoor"],
+  "ABS/ASA": ["Industrie", "Automotive", "Outdoor"],
+  TPU: ["Dichtungen", "Griffe", "Sport"],
+  Nylon: ["Zahnräder", "Lager", "Werkzeuge"],
+  Resin: ["Schmuck", "Miniaturen", "Dental"],
+};
 
 export default function MaterialienPage() {
+  const [materials, setMaterials] = useState<MaterialRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("materials")
+        .select("id, name, tag, price_per_gram, description")
+        .eq("aktiv", true)
+        .order("sort_order");
+      if (error) setError("Materialien konnten nicht geladen werden.");
+      else if (data) setMaterials(data as MaterialRow[]);
+      setLoading(false);
+    })();
+  }, []);
+
   return (
     <div>
       <section className="container mx-auto px-4 pt-12 pb-12">
@@ -28,9 +55,19 @@ export default function MaterialienPage() {
       </section>
 
       <section className="container mx-auto px-4 pb-24">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-20 text-destructive">{error}</div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {materials.map((m, i) => (
-            <ScrollReveal key={m.name} delay={i * 0.05}>
+          {materials.map((m, i) => {
+            const uses = USES[m.name] || [];
+            const price = Number(m.price_per_gram).toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+            return (
+            <ScrollReveal key={m.id} delay={i * 0.05}>
               <div className="bg-card border border-border rounded-2xl p-6 hover:border-primary/40 transition-colors h-full">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -41,20 +78,24 @@ export default function MaterialienPage() {
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted tracking-wider">{m.tag}</span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">{m.desc}</p>
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {m.uses.map(u => (
-                    <span key={u} className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{u}</span>
-                  ))}
-                </div>
+                <p className="text-sm text-muted-foreground mb-4">{m.description}</p>
+                {uses.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {uses.map(u => (
+                      <span key={u} className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{u}</span>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <span className="text-xs text-muted-foreground">ab</span>
-                  <span className="font-heading font-extrabold text-primary">CHF {m.price}/g</span>
+                  <span className="font-heading font-extrabold text-primary">CHF {price}/g</span>
                 </div>
               </div>
             </ScrollReveal>
-          ))}
+            );
+          })}
         </div>
+        )}
 
         <div className="mt-16 text-center">
           <Button asChild size="lg" className="rounded-full">
