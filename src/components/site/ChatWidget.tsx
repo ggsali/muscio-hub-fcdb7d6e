@@ -212,8 +212,42 @@ export function ChatWidget() {
                     {msg.role === "admin" ? <User className="w-3.5 h-3.5 text-primary" /> : <Bot className="w-3.5 h-3.5 text-primary" />}
                   </div>
                 )}
-                <div className={cn("max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed", msg.role === "user" ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted text-foreground rounded-tl-sm")}>
-                  {msg.content || (
+                <div className={cn("max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed break-words", msg.role === "user" ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted text-foreground rounded-tl-sm")}>
+                  {msg.content ? (
+                    <ReactMarkdown
+                      components={{
+                        a: ({ href = "", children }) => {
+                          const isExternal = /^https?:\/\//i.test(href);
+                          if (isExternal) {
+                            return (
+                              <a href={href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-medium hover:opacity-80">
+                                {children}
+                              </a>
+                            );
+                          }
+                          return (
+                            <a
+                              href={href}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setOpen(false);
+                                window.history.pushState({}, "", href);
+                                window.dispatchEvent(new PopStateEvent("popstate"));
+                              }}
+                              className="underline underline-offset-2 font-medium hover:opacity-80 cursor-pointer"
+                            >
+                              {children}
+                            </a>
+                          );
+                        },
+                        p: ({ children }) => <p className="m-0 whitespace-pre-wrap">{children}</p>,
+                        ul: ({ children }) => <ul className="list-disc pl-4 my-1 space-y-0.5">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 my-1 space-y-0.5">{children}</ol>,
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  ) : (
                     <span className="flex gap-1 items-center">
                       <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
                       <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
