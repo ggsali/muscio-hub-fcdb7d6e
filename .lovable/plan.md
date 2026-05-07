@@ -1,90 +1,63 @@
+# Implementierungsplan: 5 neue Features für 3DMuscio
 
-# Migration "3D Print Studio Features" → 3DMuscio
+Das ist ein sehr umfangreicher Auftrag mit 5 unabhängigen Features. Ich schlage vor, sie in der unten stehenden Reihenfolge umzusetzen — kleinere/risikoärmere zuerst, große am Schluss.
 
-## Grundprinzipien
+## 1. Automatische Bewertungsanfrage (klein)
 
-1. **Projekt-Manager (`/admin`) bleibt unangetastet** — keine Änderung an Sidebar, Seiten, Logik.
-2. **Website-Verwaltung kommt in eigenen Bereich `/website-admin`** mit eigener Sidebar, eigenem Login-Gate (admin-Rolle).
-3. **Schnittstellen zum Projekt-Manager**: 
-   - Website-Anfragen landen wie bisher in `inquiries` → sichtbar in `/admin/anfragen`.
-   - Website-Kundenregistrierungen landen via `sync_profile_to_customer` Trigger in `customers` → sichtbar in `/admin/kunden`.
-   - Shop-Bestellungen erzeugen zusätzlich einen `orders`-Eintrag (Quelle `website-shop`) → im Projekt-Manager wie ein normaler Auftrag.
-4. **Farbkonzept**: Das Print-Studio-Theme (helles Weiß + Grün `153 100% 40%` + Orange-Akzent `18 100% 59%`) gilt nur unter `.site-theme` (Public-Site) und `.site-theme` für `/website-admin`. Das `/admin`-Dashboard behält dunkel + orange.
-5. **Reviews**: Bestehende Bewertungen aus 3D-Print-Studio-DB werden via einmaligem Sync-Skript (Edge Function `sync-studio-reviews`) ins neue `reviews`-Table kopiert.
+**DB:** Migration — `orders.bewertungs_token uuid` hinzufügen.
 
-## Phase A — DB-Schema & Daten (1 Migration)
+**Code:**
+- `OrderStatusWorkflow.tsx`: Bei Statuswechsel auf `Abgeschlossen` Token generieren, in `orders` speichern, dann `send-transactional-email` mit Template `bewertung` aufrufen.
+- `transactional-email-templates/bewertung.tsx` neu anlegen (3DMuscio-Branding, 2 Buttons: interner Bewertungslink + Google-Review).
+- In `registry.ts` registrieren.
+- Edge Function `send-transactional-email` re-deployen.
 
-Neue Tabellen:
-- **`reviews`** (id, customer_name, customer_email, rating 1-5, kommentar, freigegeben bool, sichtbar_auf_website bool, order_id nullable, token unique, created_at)
-- **`projekte`** (id, slug unique, name, kurzbeschreibung, beschreibung, kategorie, hero_image_path, gallery_paths text[], featured bool, sort_order, aktiv, created_at)
-- **`partners`** (id, name, logo_path, website_url, sort_order, aktiv)
-- Erweitern `shop_orders`: Spalte `order_id uuid` (Referenz auf `orders` im Projekt-Manager).
+## 2. Visueller Fortschrittsbalken im Kundenportal (klein)
 
-RLS:
-- `reviews`: public read (nur freigegebene), admin manage. Public insert via token.
-- `projekte` + `partners`: public read aktiv, admin manage.
+**Code:**
+- Neue Komponente `src/components/portal/OrderProgress.tsx` mit 5 Schritten (Bestellt → In Produktion → QK → Versandbereit → Abgeschlossen), Status-Mapping, Framer-Motion, responsive (horizontal Desktop / vertikal Mobile).
+- In `PortalOrdersPage.tsx` pro Auftrag einbinden.
 
-## Phase B — Public Website komplettieren (Print-Studio 1:1)
+## 3. 3D-Viewer für Referenzprojekte (mittel)
 
-Neue/ersetzte Seiten unter `SiteLayout`:
-- `ShopPage` (`/shop`) + `ShopDetailPage` (`/shop/:slug`) — Produkte aus `shop_products`, Cart-Drawer.
-- `ProjektDetailPage` (`/projekte/:slug`) + Projekte-Übersicht im Index.
-- `BewertungPage` (`/bewertung/:token`) — Kunde gibt Bewertung ab.
-- Reviews-Sektion auf Homepage.
-- `ChatWidget` (floating, public) — schreibt in bestehende `chat_sessions`/`chat_messages`.
-- `CartContext` + `CartDrawer` + `ShopPromoBanner`.
-- Übernehmen: `AnimatedCounter`, `FloatingOrbs`, `GlowCard`, `ModelViewer3D`, `PartnerMarquee`-Daten.
+**DB:** Migration — `projekte.stl_url text`, neuer öffentlicher Storage-Bucket `project-stls` mit Admin-Write/Public-Read RLS.
 
-Edge Functions:
-- `create-shop-checkout` — Stripe Checkout für Warenkorb (mode: payment).
-- `shop-webhook` — bei Erfolg: `shop_orders.status='paid'`, erzeugt `orders`-Eintrag im Projekt-Manager.
-- `submit-review` — public, schreibt Bewertung mit Token.
-- `sync-studio-reviews` — einmalig, holt Reviews aus 3D-Print-Studio-DB via STUDIO_SERVICE_ROLE_KEY und kopiert sie.
+**Code:**
+- `bun add three@0.160.0 @types/three`
+- Neue Komponente `src/components/site/StlViewer.tsx` (STLLoader + OrbitControls, Auto-Rotate, dunkler Hintergrund, weiches Licht).
+- `ProjektDetailPage.tsx`: wenn `stl_url` vorhanden → Viewer statt Hauptbild, sonst Fallback.
+- `ProjekteAdminPage.tsx`: STL-Upload-Feld (Bucket `project-stls`).
 
-## Phase C — Website-Admin (`/website-admin`)
+## 4. Blog/News-Seite (groß)
 
-Eigene Sidebar mit:
-- Dashboard (Übersicht: offene Anfragen, neue Bestellungen, Reviews zum Freigeben)
-- Shop → Produkte, Kategorien, Bestellungen
-- Projekte (CRUD)
-- Bewertungen (freigeben/ablehnen)
-- Partner-Logos
-- Chat-Postfach (Public Chat)
-- E-Mail-Templates
-- Website-Einstellungen (Wartungsmodus, Kontakt, FAQ, Materialpreise)
+**DB:** Migration — `blog_posts` Tabelle mit RLS (öffentlich lesen wenn veröffentlicht; Admin schreiben).
 
-Komponenten:
-- `WebsiteAdminLayout.tsx` (eigene Sidebar, eigener Header, separater Theme-Scope)
-- `WebsiteAdminGate.tsx` (prüft auth + admin-Rolle, sonst Redirect zu `/login?next=/website-admin`)
+**Code:**
+- `bun add react-markdown`
+- `src/pages/site/BlogPage.tsx` — Karten-Übersicht, Route `/blog`.
+- `src/pages/site/BlogPostPage.tsx` — Einzelpost, Markdown, Route `/blog/:slug`.
+- `src/pages/website-admin/BlogAdminPage.tsx` — CRUD mit Markdown-Editor + Live-Vorschau.
+- Routen in `App.tsx` ergänzen, Admin-Eintrag im `WebsiteAdminLayout`.
+- Header (`SiteHeader` / `site/Header`): „Blog" zwischen „Über uns" und „FAQ".
+- Footer: Link zu `/blog`.
+- 3 Seed-Posts via `insert`-Tool nach Migration.
 
-Bestehende Seiten verschieben:
-- `WebsiteBestellungenPage` → `/website-admin/bestellungen`
-- `WebsiteKundenAdminPage` → entfällt (Kunden sind im Projekt-Manager)
-- `EmailTemplatesPage` → `/website-admin/email-templates`
-- `WebsiteEinstellungenPage` → `/website-admin/einstellungen`
-- `ChatPage` (Public Chat-Postfach) → `/website-admin/chat` (im /admin gibt's keinen Public-Chat-Eintrag mehr)
+## 5. Affiliate/Empfehlungsprogramm (groß)
 
-Aus `/admin`-Sidebar entfernen: Website-Bestellungen, Website-Kunden, E-Mail-Templates, Website-Einstellungen, Public-Chat. (Projekt-Manager-Funktionen wie Aufträge, Kunden, Filamente, Kalkulator, Teile, Kalender, interne Einstellungen, Anfragen bleiben.)
+**DB:** Migration — `referrals` Tabelle (referrer_customer_id, referred_email, referred_customer_id, status, rabatt_code unique, rabatt_prozent, created_at) mit RLS (Kunde sieht eigene Referrals, Admin alles).
 
-## Technische Hinweise
+**Code:**
+- `PortalProfilePage.tsx`: Abschnitt „Freunde empfehlen" — persönlicher Link mit Code, Copy-Button, Tabelle eigener Empfehlungen, Erklärtext.
+- `kunde/Register.tsx`: `?ref=CODE` aus URL nach erfolgreicher Registrierung in `referrals` einfügen (referred_customer_id setzen).
+- `EinstellungenPage.tsx`: Abschnitt „Empfehlungsprogramm" mit Aktiv-Toggle und Rabatt-Prozentsatz (in `settings`-Tabelle).
 
-- `/login` erkennt `?next=…` und redirected nach Login dorthin.
-- Cross-Tenant Reviews-Sync nutzt bestehende Secrets `STUDIO_SUPABASE_URL`, `STUDIO_SERVICE_ROLE_KEY`.
-- Stripe-Webhook reuses bestehender `STRIPE_WEBHOOK_SECRET` (neuer Endpoint `shop-webhook` separat eintragen).
-- Theme: gleiche `.site-theme`-Klasse auf `WebsiteAdminLayout` anwenden → identisches helles Grün-Design.
-- `cloud_status` vor Migration prüfen.
+---
 
-## Reihenfolge der Umsetzung
+## Hinweise / Risiken
 
-1. **Phase A** (Migration genehmigen) → ich warte auf dein OK pro Migration.
-2. **Phase B** Schritt 1: Cart/Shop-Seiten + Stripe-Checkout.
-3. **Phase B** Schritt 2: Reviews + ProjektDetail + ChatWidget + Reviews-Sync.
-4. **Phase C**: Website-Admin Sidebar/Routing + Seiten verschieben + /admin entrümpeln.
+- **Umfang:** Das sind viele Files (~15+ neue, ~10 geänderte) und 4 separate Migrationen. Es ist möglich dass nicht alle Features in einem Durchlauf 100% bug-frei rauskommen — ich teste Build/Typen, aber kleinere Nachbesserungen können nötig sein.
+- **3D-Viewer Performance:** Three.js ist ~600KB. Ich lade die Komponente lazy.
+- **Bewertungs-Token-Seite:** `/bewertung/:token` existiert vermutlich noch nicht für Token-Lookup — ich prüfe `BewertungPage` und passe ggf. an, damit der Link aus der Mail funktioniert.
+- **Empfehlungs-Rabatt anwenden:** Ich speichere die Empfehlungen nur — die tatsächliche Rabatt-Verrechnung beim nächsten Auftrag würde eine separate Logik im Bestellprozess brauchen (kann ich später nachziehen, wenn gewünscht).
 
-Nach jeder Phase: kurze Visual-Kontrolle im Preview, dann nächste Phase.
-
-## Was NICHT geändert wird
-
-- Keine Änderung an Tabellen `parts`, `orders`, `customers` (außer neue Spalte für shop-Verknüpfung), `bills`, `time_entries`, `filaments`, `price_presets`, `email_templates` (Inhalt).
-- Keine Änderung an `/admin`-Seiten-Logik (Dashboard, Aufträge, Teile, Kalkulator, Filamente, Kalender, Einstellungen, Anfragen, Kunden).
-- Dashboard-Theme bleibt dunkel + orange.
+Soll ich so loslegen?
