@@ -430,7 +430,7 @@ const CalculatorOnlinePage = () => {
                 className="w-full mt-5 gap-2"
                 disabled={parts.length === 0 || submitting || parts.some((p) => p.uploading)}
                 onClick={async (e) => {
-                  if (isLoggedIn && form.name && form.email) {
+                  if (isLoggedIn) {
                     await handleSend(e as unknown as React.FormEvent);
                   } else {
                     setShowQuote(true);
