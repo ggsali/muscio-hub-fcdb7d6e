@@ -16,6 +16,11 @@ import { toast } from "sonner";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger
 } from "@/components/ui/accordion";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
 
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
@@ -29,11 +34,15 @@ const ContactPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showAccountDialog, setShowAccountDialog] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setIsLoggedIn(true);
       const { data: profile } = await supabase
         .from("profiles").select("full_name, phone").eq("user_id", user.id).maybeSingle();
       setForm(f => ({
@@ -63,6 +72,12 @@ const ContactPage = () => {
           .from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
         customer_id = cust?.id ?? null;
       }
+      // Fallback: gleichen Kunden über E-Mail finden (auch für nicht-eingeloggte)
+      if (!customer_id && form.email) {
+        const { data: cust } = await supabase
+          .from("customers").select("id").eq("email", form.email).maybeSingle();
+        customer_id = cust?.id ?? null;
+      }
       const { error } = await supabase.from("inquiries").insert({
         name: form.name,
         email: form.email,
@@ -78,6 +93,7 @@ const ContactPage = () => {
       setForm({ name: "", email: "", phone: "", message: "" });
       setBetreff("");
       setAttachments([]);
+      if (!user) setShowAccountDialog(true);
     } catch (err) {
       console.error(err);
       toast.error("Fehler beim Senden. Bitte schreib uns direkt an info@3dmuscio.com");
@@ -244,6 +260,23 @@ const ContactPage = () => {
           </ScrollReveal>
         </div>
       </div>
+
+      <AlertDialog open={showAccountDialog} onOpenChange={setShowAccountDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kundenkonto erstellen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Mit einem Kundenkonto siehst du den Status deiner Anfrage, kannst direkt antworten und behältst alle Aufträge und Anfragen an einem Ort.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Nein, danke</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate("/registrieren")}>
+              Konto erstellen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

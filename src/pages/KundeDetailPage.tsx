@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import InquiryChat from "@/components/InquiryChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
-import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -84,17 +85,29 @@ const emptyCustomer = (): Customer => ({
   adresse: "", notizen: "", aktiv: true,
 });
 
+type InquiryRow = {
+  id: string; name: string; email: string; telefon: string | null;
+  betreff: string | null; nachricht: string; status: string; notiz: string | null;
+  created_at: string; order_id: string | null;
+};
+
 export default function KundeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isNew = id === "neu";
+
+  const initialTab = (searchParams.get("tab") as any) || "kontakt";
+  const initialInquiry = searchParams.get("inquiry");
 
   const [customer, setCustomer] = useState<Customer>(emptyCustomer());
   const [orders, setOrders] = useState<Order[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
   const [files, setFiles] = useState<CustomerFile[]>([]);
+  const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
+  const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(initialInquiry);
   const [editing, setEditing] = useState(isNew);
-  const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien">("kontakt");
+  const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien" | "anfragen">(initialTab);
   const [loading, setLoading] = useState(!isNew);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -112,6 +125,17 @@ export default function KundeDetailPage() {
 
       const { data: f } = await supabase.from("part_files").select("*").eq("customer_id", id!).order("created_at", { ascending: false });
       if (f) setFiles(f as CustomerFile[]);
+
+      // Anfragen: nach customer_id ODER E-Mail
+      const email = (c as any)?.email;
+      let q = supabase.from("inquiries").select("*").order("created_at", { ascending: false });
+      if (email) {
+        q = q.or(`customer_id.eq.${id},email.eq.${email}`);
+      } else {
+        q = q.eq("customer_id", id!);
+      }
+      const { data: inqs } = await q;
+      if (inqs) setInquiries(inqs as InquiryRow[]);
 
       setLoading(false);
     }
@@ -239,15 +263,15 @@ export default function KundeDetailPage() {
       {/* Tabs */}
       {!isNew && (
         <div className="flex gap-1 border-b border-border">
-          {(["kontakt", "auftraege", "teile", "dateien"] as const).map(tab => (
+          {(["kontakt", "anfragen", "auftraege", "teile", "dateien"] as const).map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); setSearchParams(tab === "kontakt" ? {} : { tab }); }}
               className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
                 activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab === "auftraege" ? "Auftragshistorie" : tab === "teile" ? "Teile" : tab === "dateien" ? `Dateien (${files.length})` : "Kontakt"}
+              {tab === "auftraege" ? "Auftragshistorie" : tab === "teile" ? "Teile" : tab === "dateien" ? `Dateien (${files.length})` : tab === "anfragen" ? `Anfragen (${inquiries.length})` : "Kontakt"}
             </button>
           ))}
         </div>
@@ -320,6 +344,51 @@ export default function KundeDetailPage() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Anfragen Tab */}
+      {activeTab === "anfragen" && !isNew && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2 md:col-span-1">
+            {inquiries.length === 0 ? (
+              <div className="bg-card border border-border rounded-lg p-6 text-center text-muted-foreground text-sm">
+                Keine Anfragen
+              </div>
+            ) : inquiries.map(inq => (
+              <button
+                key={inq.id}
+                onClick={() => setSelectedInquiryId(inq.id)}
+                className={`w-full text-left bg-card border rounded-lg p-3 hover:border-primary/40 transition-all ${selectedInquiryId === inq.id ? "border-primary/60" : "border-border"}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium truncate">{inq.betreff || "Anfrage"}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground shrink-0">{inq.status}</span>
+                </div>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{inq.nachricht}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{new Date(inq.created_at).toLocaleString("de-CH")}</p>
+              </button>
+            ))}
+          </div>
+          <div className="md:col-span-2">
+            {(() => {
+              const sel = inquiries.find(i => i.id === selectedInquiryId) || inquiries[0];
+              if (!sel) return (
+                <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" /> Anfrage auswählen
+                </div>
+              );
+              return (
+                <InquiryChat
+                  inquiryId={sel.id}
+                  customerName={sel.name}
+                  initialMessage={sel.nachricht}
+                  initialFrom={sel.email}
+                  initialAt={sel.created_at}
+                />
+              );
+            })()}
+          </div>
         </div>
       )}
 
