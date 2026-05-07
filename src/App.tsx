@@ -155,6 +155,7 @@ const App = () => (
                 <Route path="anfragen" element={<AnfragenPage />} />
                 <Route path="kalender" element={<KalenderPage />} />
                 <Route path="uploads" element={<UploadLinksPage />} />
+                <Route path="kalkulator-uploads" element={<KalkulatorUploadsPage />} />
                 <Route path="chat" element={<ChatPage />} />
                 <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />
