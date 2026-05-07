@@ -35,8 +35,7 @@ export function ChatFab() {
 
   const goLiveChat = () => {
     setOpen(false);
-    if (user) navigate("/portal");
-    else navigate("/anmelden?redirect=/portal");
+    window.dispatchEvent(new CustomEvent("open-chat-widget"));
   };
 
   return (
