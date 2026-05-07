@@ -167,8 +167,9 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
         returnBase64: true,
         ...cData,
       });
-      const { data, error } = await supabase.functions.invoke("send-order-email", {
+      const { data, error } = await supabase.functions.invoke("send-email", {
         body: {
+          kind: "order",
           orderId,
           type: "offerte",
           pdfBase64: result && "base64" in result ? result.base64 : undefined,
