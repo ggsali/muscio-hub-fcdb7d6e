@@ -88,16 +88,26 @@ async function handleAuthHook(req: Request): Promise<Response> {
   }
 
   let payload: any
+  let rawBody = ''
   try {
-    payload = await req.json()
+    rawBody = await req.text()
+    payload = JSON.parse(rawBody)
   } catch (e) {
+    console.error('Invalid JSON in auth hook', { rawBody: rawBody.substring(0, 500) })
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
+
+  console.log('Auth hook payload received', { keys: Object.keys(payload || {}), preview: JSON.stringify(payload).substring(0, 500) })
 
   const user = payload?.user
   const emailData = payload?.email_data
   if (!user?.email || !emailData?.email_action_type) {
-    console.error('Invalid auth hook payload', { hasUser: !!user, hasEmailData: !!emailData })
+    console.error('Invalid auth hook payload', {
+      hasUser: !!user,
+      hasEmailData: !!emailData,
+      topKeys: Object.keys(payload || {}),
+      fullPayload: JSON.stringify(payload).substring(0, 1000),
+    })
     return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 
