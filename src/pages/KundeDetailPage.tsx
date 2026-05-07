@@ -168,6 +168,10 @@ export default function KundeDetailPage() {
   };
 
   const handleSave = async () => {
+    if (!customer.name?.trim()) {
+      toast.error("Name ist erforderlich");
+      return;
+    }
     const payload = {
       vorname: customer.vorname || null,
       name: customer.name,
@@ -185,10 +189,15 @@ export default function KundeDetailPage() {
     };
 
     if (isNew) {
-      const { data } = await supabase.from("customers").insert(payload).select().single();
+      const { data, error } = await supabase.from("customers").insert(payload).select().single();
+      if (error) { toast.error("Fehler beim Speichern: " + error.message); return; }
+      toast.success("Kunde erstellt");
       if (data) navigate(`/admin/kunden/${data.id}`, { replace: true });
     } else {
-      await supabase.from("customers").update(payload).eq("id", id!);
+      const { data, error } = await supabase.from("customers").update(payload).eq("id", id!).select().single();
+      if (error) { toast.error("Fehler beim Speichern: " + error.message); return; }
+      if (data) setCustomer({ ...emptyCustomer(), ...(data as any) });
+      toast.success("Änderungen gespeichert");
       setEditing(false);
     }
   };
