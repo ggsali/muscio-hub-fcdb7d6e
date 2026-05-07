@@ -1,6 +1,8 @@
 project_id = "ukqtjdsjmtxgzhklvqky"
 
 [functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
   [functions.sync-studio-customers]
     verify_jwt = false
   [functions.stripe-webhook]
