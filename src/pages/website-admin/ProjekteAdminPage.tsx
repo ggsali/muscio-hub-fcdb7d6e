@@ -212,6 +212,24 @@ export default function ProjekteAdminPage() {
                 )}
               </div>
 
+              <div className="border-t border-border pt-4">
+                <Label className="text-base">3D-Modell (STL-Datei)</Label>
+                <p className="text-xs text-muted-foreground mb-3">Optional: STL-Datei für den 3D-Viewer auf der Projektdetailseite</p>
+                {editing.stl_url ? (
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <span className="text-sm flex-1 truncate">{decodeURIComponent(editing.stl_url.split("/").pop() || "STL-Datei")}</span>
+                    <Button size="sm" variant="ghost" onClick={removeStl}><X className="w-3.5 h-3.5 text-destructive mr-1" /> Entfernen</Button>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept=".stl"
+                    disabled={uploading}
+                    onChange={e => e.target.files?.[0] && onUploadStl(e.target.files[0])}
+                  />
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
                 <div><Label>Sortierung</Label><Input type="number" value={editing.sort_order} onChange={e => setEditing({ ...editing, sort_order: parseInt(e.target.value) || 0 })} /></div>
                 <div className="flex items-end gap-4">
