@@ -221,6 +221,55 @@ export default function WebsiteEinstellungenPage() {
           </div>
         ))}
       </section>
+
+      {/* Materialien & Preise (zentral, aus materials-Tabelle) */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold">Materialien & Preise</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Wird im Kalkulator, auf der Homepage und vom Chatbot genutzt.</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={addMaterial} className="gap-1.5">
+            <Plus className="w-3.5 h-3.5" />Material
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-xs text-muted-foreground">
+              <tr className="border-b border-border">
+                <th className="text-left p-2">Name</th>
+                <th className="text-left p-2">Tag</th>
+                <th className="text-left p-2">Preis/g</th>
+                <th className="text-left p-2">Dichte</th>
+                <th className="text-left p-2">Beschreibung</th>
+                <th className="text-left p-2">Aktiv</th>
+                <th className="p-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {materials.map(m => (
+                <tr key={m.id} className="border-b border-border/50">
+                  <td className="p-1"><Input value={m.name} onChange={e => updateMaterial(m.id, { name: e.target.value })} className="bg-input border-border h-9" /></td>
+                  <td className="p-1">
+                    <select value={m.tag} onChange={e => updateMaterial(m.id, { tag: e.target.value })} className="h-9 rounded-md border border-border bg-input px-2 text-sm">
+                      <option value="FDM">FDM</option>
+                      <option value="SLA">SLA</option>
+                    </select>
+                  </td>
+                  <td className="p-1"><Input type="number" step="0.001" value={m.price_per_gram} onChange={e => updateMaterial(m.id, { price_per_gram: Number(e.target.value) })} className="bg-input border-border h-9 w-24" /></td>
+                  <td className="p-1"><Input type="number" step="0.01" value={m.density} onChange={e => updateMaterial(m.id, { density: Number(e.target.value) })} className="bg-input border-border h-9 w-20" /></td>
+                  <td className="p-1"><Input value={m.description ?? ""} onChange={e => updateMaterial(m.id, { description: e.target.value })} className="bg-input border-border h-9" /></td>
+                  <td className="p-1"><Switch checked={m.aktiv} onCheckedChange={v => updateMaterial(m.id, { aktiv: v })} /></td>
+                  <td className="p-1 whitespace-nowrap">
+                    <Button size="sm" variant="outline" onClick={() => saveMaterial(m)}>Speichern</Button>
+                    <button onClick={() => deleteMaterial(m)} className="text-destructive p-2 ml-1"><Trash2 className="w-4 h-4" /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
