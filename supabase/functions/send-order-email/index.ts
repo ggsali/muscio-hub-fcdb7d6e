@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -296,57 +299,52 @@ serve(async (req) => {
         </div>`;
     }
 
-    // Build email payload – attach PDF if provided
-    const emailPayload: Record<string, unknown> = {
-      message_id: crypto.randomUUID(),
-      to: customer.email,
-      from: FROM_EMAIL,
-      reply_to: REPLY_TO,
-      sender_domain: SENDER_DOMAIN,
-      subject,
-      html: htmlBody,
-      purpose: "transactional",
-      label: `order-${type || "mail"}`,
-      idempotency_key: `order-${orderId}-${type || "mail"}-${Date.now()}`,
-      queued_at: new Date().toISOString(),
-    };
-
-    if (pdfBase64 && pdfFilename) {
-      emailPayload.attachments = [
-        {
-          filename: pdfFilename,
-          content: pdfBase64,
-        },
-      ];
-    }
+    const messageId = crypto.randomUUID();
+    const label = `order-${type || "mail"}`;
 
     await supabase.from("email_send_log").insert({
-      message_id: emailPayload.message_id,
-      template_name: emailPayload.label,
+      message_id: messageId,
+      template_name: label,
       recipient_email: customer.email,
       status: "pending",
     });
 
-    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: emailPayload,
-    });
+    const sendPayload: Record<string, unknown> = {
+      from: FROM_EMAIL,
+      to: customer.email,
+      reply_to: REPLY_TO,
+      subject,
+      html: htmlBody,
+    };
 
-    if (enqueueError) {
-      console.error("Email enqueue error:", enqueueError);
+    if (pdfBase64 && pdfFilename) {
+      sendPayload.attachments = [{ filename: pdfFilename, content: pdfBase64 }];
+    }
+
+    const { error: sendError } = await resend.emails.send(sendPayload as any);
+
+    if (sendError) {
+      console.error("Resend send error:", sendError);
       await supabase.from("email_send_log").insert({
-        message_id: emailPayload.message_id,
-        template_name: emailPayload.label,
+        message_id: messageId,
+        template_name: label,
         recipient_email: customer.email,
         status: "failed",
-        error_message: enqueueError.message,
+        error_message: String((sendError as any).message || sendError),
       });
-      return new Response(JSON.stringify({ error: "E-Mail konnte nicht in die Warteschlange gestellt werden" }), {
+      return new Response(JSON.stringify({ error: "E-Mail konnte nicht gesendet werden" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ success: true, queued: true, id: emailPayload.message_id }), {
+    await supabase.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: label,
+      recipient_email: customer.email,
+      status: "sent",
+    });
+
+    return new Response(JSON.stringify({ success: true, id: messageId }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 

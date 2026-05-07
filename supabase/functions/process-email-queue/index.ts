@@ -1,5 +1,7 @@
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
+import { Resend } from 'npm:resend'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10
@@ -79,11 +81,11 @@ async function moveToDlq(
 }
 
 Deno.serve(async (req) => {
-  const apiKey = Deno.env.get('LOVABLE_API_KEY')
+  const resendKey = Deno.env.get('RESEND_API_KEY')
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-  if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
+  if (!resendKey || !supabaseUrl || !supabaseServiceKey) {
     console.error('Missing required environment variables')
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
@@ -249,28 +251,20 @@ Deno.serve(async (req) => {
       }
 
       try {
-        await sendLovableEmail(
-          {
-            run_id: payload.run_id,
-            to: payload.to,
-            from: payload.from,
-            reply_to: payload.reply_to,
-            sender_domain: payload.sender_domain,
-            subject: payload.subject,
-            html: payload.html,
-            text: payload.text,
-            attachments: payload.attachments,
-            purpose: payload.purpose,
-            label: payload.label,
-            idempotency_key: payload.idempotency_key,
-            unsubscribe_token: payload.unsubscribe_token,
-            message_id: payload.message_id,
-          },
-          // sendUrl is optional — when LOVABLE_SEND_URL is not set, the library
-          // falls back to the default Lovable API endpoint (https://api.lovable.dev).
-          // Set LOVABLE_SEND_URL as a Supabase secret to override (e.g. for local dev).
-          { apiKey, sendUrl: Deno.env.get('LOVABLE_SEND_URL') }
-        )
+        const { error: sendErr } = await resend.emails.send({
+          from: payload.from || '3DMuscio <noreply@3dmuscio.com>',
+          to: payload.to,
+          reply_to: payload.reply_to || 'info@3dmuscio.com',
+          subject: payload.subject,
+          html: payload.html,
+          text: payload.text,
+          attachments: payload.attachments,
+        } as any)
+        if (sendErr) {
+          throw Object.assign(new Error(String((sendErr as any).message || sendErr)), {
+            status: (sendErr as any).statusCode || (sendErr as any).status,
+          })
+        }
 
         // Log success
         await supabase.from('email_send_log').insert({

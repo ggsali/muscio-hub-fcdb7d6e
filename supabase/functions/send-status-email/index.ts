@@ -1,4 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -112,27 +115,34 @@ Deno.serve(async (req) => {
       status: "pending",
     });
 
-    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    const { error: sendError } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: customer.email,
+      reply_to: REPLY_TO,
+      subject,
+      html,
+      text,
+    } as any);
+
+    if (sendError) {
+      await supabase.from("email_send_log").insert({
         message_id: messageId,
-        to: customer.email,
-        from: FROM_EMAIL,
-        reply_to: REPLY_TO,
-        sender_domain: SENDER_DOMAIN,
-        subject,
-        html,
-        text,
-        purpose: "transactional",
-        label: `status-${key}`,
-        idempotency_key: `status-${order_id}-${key}-${Date.now()}`,
-        queued_at: new Date().toISOString(),
-      },
+        template_name: `status-${key}`,
+        recipient_email: customer.email,
+        status: "failed",
+        error_message: String((sendError as any).message || sendError),
+      });
+      throw new Error(String((sendError as any).message || sendError));
+    }
+
+    await supabase.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: `status-${key}`,
+      recipient_email: customer.email,
+      status: "sent",
     });
 
-    if (enqueueError) throw new Error(enqueueError.message);
-
-    return new Response(JSON.stringify({ ok: true, queued: true, id: messageId }), {
+    return new Response(JSON.stringify({ ok: true, id: messageId }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
