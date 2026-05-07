@@ -209,14 +209,31 @@ const HowItWorks = () => {
 };
 
 /* ─── MATERIALS TEASER ─── */
-const materialTeaser = [
-  { name: "PLA", price: "0.055", tag: "FDM", desc: "Bio-abbaubar, ideal für Prototypen" },
-  { name: "PETG", price: "0.065", tag: "FDM", desc: "Stark, chemisch beständig" },
-  { name: "ABS", price: "0.070", tag: "FDM", desc: "Hitzebeständig, industrietauglich" },
-  { name: "Resin", price: "0.15", tag: "SLA", desc: "Höchste Detailgenauigkeit" },
-];
+interface MaterialTeaser { name: string; price: string; tag: string; desc: string; }
 
-const MaterialsTeaser = () => (
+const MaterialsTeaser = () => {
+  const [materialTeaser, setMaterialTeaser] = useState<MaterialTeaser[]>([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("materials")
+        .select("name, price_per_gram, tag, description")
+        .eq("aktiv", true)
+        .order("sort_order")
+        .limit(4);
+      if (data) {
+        setMaterialTeaser(
+          data.map((m: any) => ({
+            name: m.name,
+            price: Number(m.price_per_gram).toFixed(3).replace(/0+$/, "").replace(/\.$/, ""),
+            tag: m.tag,
+            desc: m.description || "",
+          })),
+        );
+      }
+    })();
+  }, []);
+  return (
   <section className="py-24 bg-foreground text-background overflow-hidden">
     <div className="container mx-auto px-4">
       <div className="flex items-end justify-between mb-10">
