@@ -14,6 +14,7 @@ interface Project {
   bild_url: string | null; verfahren: string | null; material: string | null;
   toleranz: string | null; lieferzeit: string | null;
   gallery_paths: string[] | null;
+  stl_url: string | null;
   sort_order: number; featured: boolean; aktiv: boolean;
 }
 
