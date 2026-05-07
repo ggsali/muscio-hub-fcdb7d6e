@@ -141,6 +141,10 @@ export default function PortalOrdersPage() {
                     </div>
                   </button>
 
+                  <div className="px-5 pb-4">
+                    <OrderProgress status={o.status} />
+                  </div>
+
                   {isOpen && (
                     <div className="border-t border-border px-5 py-4 space-y-4 bg-muted/20">
                       {orderParts.length > 0 && (
