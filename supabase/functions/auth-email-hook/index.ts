@@ -21,11 +21,11 @@ const corsHeaders = {
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'E-Mail-Adresse bestätigen',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  invite: 'Einladung zu 3DMuscio',
+  magiclink: 'Dein Login-Link für 3DMuscio',
+  recovery: 'Passwort zurücksetzen für 3DMuscio',
+  email_change: 'E-Mail-Adresse ändern bei 3DMuscio',
+  reauthentication: 'Dein Bestätigungscode für 3DMuscio',
 }
 
 // Template mapping
