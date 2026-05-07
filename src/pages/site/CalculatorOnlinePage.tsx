@@ -20,11 +20,11 @@ interface Material {
   density: number;
 }
 const MATERIALS: Material[] = [
-  { id: "pla", name: "PLA", pricePerGram: 0.08, density: 1.24 },
-  { id: "petg", name: "PETG", pricePerGram: 0.10, density: 1.27 },
-  { id: "abs", name: "ABS", pricePerGram: 0.11, density: 1.04 },
-  { id: "tpu", name: "TPU (flexibel)", pricePerGram: 0.18, density: 1.21 },
-  { id: "resin", name: "Resin (SLA)", pricePerGram: 0.25, density: 1.10 },
+  { id: "pla", name: "PLA", pricePerGram: 0.055, density: 1.24 },
+  { id: "petg", name: "PETG", pricePerGram: 0.055, density: 1.27 },
+  { id: "abs", name: "ABS", pricePerGram: 0.055, density: 1.04 },
+  { id: "tpu", name: "TPU (flexibel)", pricePerGram: 0.055, density: 1.21 },
+  { id: "resin", name: "Resin (SLA)", pricePerGram: 0.12, density: 1.10 },
 ];
 const COLORS = ["Weiss", "Schwarz", "Grau", "Rot", "Blau", "Grün", "Gelb", "Orange"];
 

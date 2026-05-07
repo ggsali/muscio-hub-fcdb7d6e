@@ -20,7 +20,7 @@ import {
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
   { q: "Wie schnell erhalte ich mein Teil?", a: "Standardlieferung innerhalb von 48 Stunden nach Bestellbestätigung." },
-  { q: "Gibt es Mengenrabatte?", a: "Ab 5 Stück 10%, ab 10 Stück 15% Rabatt auf den Gesamtpreis." },
+  { q: "Gibt es Mengenrabatte?", a: "Ab 5 Stück 10%, ab 10 Stück 15% Rabatt. Ab grösseren Mengen sprechen wir individuelle Konditionen ab." },
 ];
 
 const ContactPage = () => {
@@ -212,6 +212,18 @@ const ContactPage = () => {
                     <p className="text-xs text-muted-foreground">Garantierte Reaktionszeit</p>
                   </div>
                 </div>
+              </div>
+
+              <div className="rounded-xl overflow-hidden border border-border bg-card">
+                <iframe
+                  src="https://maps.google.com/maps?q=Gartensiedlung+13,+8360+Eschlikon+TG&output=embed"
+                  width="100%"
+                  height="250"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Standort 3DMuscio"
+                />
               </div>
 
               <div className="bg-card rounded-2xl border border-border p-8">
