@@ -238,7 +238,7 @@ async function handleWebhook(req: Request): Promise<Response> {
     plainText: true,
   })
 
-  // Enqueue email for async processing by the dispatcher (process-email-queue).
+  // Send email directly via Resend
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -246,7 +246,6 @@ async function handleWebhook(req: Request): Promise<Response> {
 
   const messageId = crypto.randomUUID()
 
-  // Log pending BEFORE enqueue so we have a record even if enqueue crashes
   await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: emailType,
@@ -254,43 +253,41 @@ async function handleWebhook(req: Request): Promise<Response> {
     status: 'pending',
   })
 
-  const { error: enqueueError } = await supabase.rpc('enqueue_email', {
-    queue_name: 'auth_emails',
-    payload: {
-      run_id,
-      message_id: messageId,
-      to: payload.data.email,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-      reply_to: REPLY_TO,
-      sender_domain: SENDER_DOMAIN,
-      subject: EMAIL_SUBJECTS[emailType] || 'Notification',
-      html,
-      text,
-      purpose: 'transactional',
-      label: emailType,
-      queued_at: new Date().toISOString(),
-    },
-  })
+  const { error: sendError } = await resend.emails.send({
+    from: `${SITE_NAME} <noreply@${ROOT_DOMAIN}>`,
+    to: payload.data.email,
+    reply_to: REPLY_TO,
+    subject: EMAIL_SUBJECTS[emailType] || 'Notification',
+    html,
+    text,
+  } as any)
 
-  if (enqueueError) {
-    console.error('Failed to enqueue auth email', { error: enqueueError, run_id, emailType })
+  if (sendError) {
+    console.error('Failed to send auth email via Resend', { error: sendError, run_id, emailType })
     await supabase.from('email_send_log').insert({
       message_id: messageId,
       template_name: emailType,
       recipient_email: payload.data.email,
       status: 'failed',
-      error_message: 'Failed to enqueue email',
+      error_message: String((sendError as any).message || sendError),
     })
-    return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
+    return new Response(JSON.stringify({ error: 'Failed to send email' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 
-  console.log('Auth email enqueued', { emailType, email: payload.data.email, run_id })
+  await supabase.from('email_send_log').insert({
+    message_id: messageId,
+    template_name: emailType,
+    recipient_email: payload.data.email,
+    status: 'sent',
+  })
+
+  console.log('Auth email sent via Resend', { emailType, email: payload.data.email, run_id })
 
   return new Response(
-    JSON.stringify({ success: true, queued: true }),
+    JSON.stringify({ success: true, sent: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
 }
