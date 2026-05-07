@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, CheckCircle, Upload, Plus, Trash2, Star } from "lucide-react";
+import AdminAllowlistManager from "@/components/AdminAllowlistManager";
 
 const RATE_FIELDS: { key: keyof Settings; label: string; unit: string; step: string }[] = [
   { key: "setup_pauschale", label: "Setup-Pauschale", unit: "CHF", step: "0.5" },
