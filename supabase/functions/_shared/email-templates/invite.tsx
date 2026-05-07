@@ -81,4 +81,4 @@ const button = {
 }
 const divider = { borderColor: '#e5e7eb', margin: '24px 0 16px' }
 const footerText = { fontSize: '12px', color: '#9ca3af', margin: '0', textAlign: 'center' as const }
-const footerLink = { color: '#ea580c', textDecoration: 'none' }
+const footerLink = { color: '#22c55e', textDecoration: 'none' }
