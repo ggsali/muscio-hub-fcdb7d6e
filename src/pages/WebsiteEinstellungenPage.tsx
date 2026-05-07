@@ -40,9 +40,41 @@ export default function WebsiteEinstellungenPage() {
           if (row.key === "whatsapp") setWhatsapp({ nummer: (row.value as any)?.nummer || "" });
         }
       }
+      await reloadMaterials();
       setLoading(false);
     })();
   }, []);
+
+  const updateMaterial = (id: string, patch: Partial<MaterialRow>) => {
+    setMaterials(ms => ms.map(m => m.id === id ? { ...m, ...patch } : m));
+  };
+  const saveMaterial = async (m: MaterialRow) => {
+    const { _new, id, ...rest } = m;
+    if (_new) {
+      const { error } = await supabase.from("materials").insert({ ...rest });
+      if (error) toast({ title: "Fehler", description: error.message, variant: "destructive" });
+      else { toast({ title: "Material gespeichert" }); await reloadMaterials(); }
+    } else {
+      const { error } = await supabase.from("materials").update(rest).eq("id", id);
+      if (error) toast({ title: "Fehler", description: error.message, variant: "destructive" });
+      else toast({ title: "Material gespeichert" });
+    }
+  };
+  const deleteMaterial = async (m: MaterialRow) => {
+    if (!confirm(`Material "${m.name}" wirklich löschen?`)) return;
+    if (m._new) { setMaterials(ms => ms.filter(x => x.id !== m.id)); return; }
+    const { error } = await supabase.from("materials").delete().eq("id", m.id);
+    if (error) toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    else { toast({ title: "Gelöscht" }); await reloadMaterials(); }
+  };
+  const addMaterial = () => {
+    setMaterials(ms => [...ms, {
+      id: `new-${crypto.randomUUID()}`,
+      name: "", tag: "FDM", price_per_gram: 0.05, density: 1.24,
+      description: "", aktiv: true, sort_order: (ms[ms.length - 1]?.sort_order ?? 0) + 1,
+      _new: true,
+    }]);
+  };
 
   const saveOne = async (key: string, value: any) => {
     const { error } = await supabase.from("website_settings").upsert({ key, value }, { onConflict: "key" });
