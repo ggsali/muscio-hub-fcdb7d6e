@@ -6,8 +6,8 @@ import { CanonicalTag } from "./site/CanonicalTag";
 import { CartDrawer } from "./site/CartDrawer";
 import { ShopPromoBanner } from "./site/ShopPromoBanner";
 import { ChatWidget } from "./site/ChatWidget";
+import { ChatFab } from "./site/ChatFab";
 import { CartProvider } from "@/contexts/CartContext";
-import { MessageCircle } from "lucide-react";
 
 export default function SiteLayout() {
   return (
