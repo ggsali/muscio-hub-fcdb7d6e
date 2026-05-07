@@ -282,7 +282,7 @@ const CalculatorOnlinePage = () => {
                           onChange={(e) => update(p.id, { materialId: e.target.value })}
                           className="mt-1 w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
                         >
-                          {MATERIALS.map((m) => (
+                          {materials.map((m) => (
                             <option key={m.id} value={m.id}>
                               {m.name}
                             </option>
