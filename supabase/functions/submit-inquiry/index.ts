@@ -34,15 +34,8 @@ Deno.serve(async (req) => {
 
     let customerId: string | null = existingCustomer?.id ?? null;
 
-    // Neuen Kunden anlegen falls nicht vorhanden
-    if (!customerId) {
-      const { data: newCustomer } = await supabase
-        .from("customers")
-        .insert({ name, email, telefon: telefon || null })
-        .select("id")
-        .single();
-      customerId = newCustomer?.id ?? null;
-    }
+    // Neuen Kunden NICHT automatisch anlegen — nur verknüpfen falls vorhanden.
+    // (Konto-Erstellung wird auf der Website angeboten.)
 
     // Anfrage speichern
     const { error } = await supabase.from("inquiries").insert({
