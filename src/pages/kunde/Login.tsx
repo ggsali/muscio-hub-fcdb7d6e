@@ -48,14 +48,14 @@ const KundeLogin = () => {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     setError("");
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/mein-konto` });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/portal` });
     if (result.error) { setError("Google-Anmeldung fehlgeschlagen."); setGoogleLoading(false); }
   };
 
   const handleApple = async () => {
     setAppleLoading(true);
     setError("");
-    const result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: `${window.location.origin}/mein-konto` });
+    const result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: `${window.location.origin}/portal` });
     if (result.error) {
       const msg = String((result.error as any)?.message || "");
       if (msg.toLowerCase().includes("privaterelay") || msg.includes("E-Mail verbergen")) {
