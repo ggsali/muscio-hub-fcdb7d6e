@@ -30,6 +30,7 @@ export default function WebsiteEinstellungenPage() {
           if (row.key === "kontakt_info") setKontakt(row.value as any);
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
+          if (row.key === "whatsapp") setWhatsapp({ nummer: (row.value as any)?.nummer || "" });
         }
       }
       setLoading(false);
