@@ -25,24 +25,16 @@ const KundeRegister = () => {
 
   const handleGoogle = async () => {
     if (!agb) { setError("Bitte akzeptiere die AGB und Datenschutzerklärung."); return; }
-    setGoogleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/mein-konto` },
-    });
-    if (error) setError("Google-Anmeldung fehlgeschlagen.");
-    setGoogleLoading(false);
+    setGoogleLoading(true); setError("");
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/mein-konto` });
+    if (result.error) { setError("Google-Anmeldung fehlgeschlagen."); setGoogleLoading(false); }
   };
 
   const handleApple = async () => {
     if (!agb) { setError("Bitte akzeptiere die AGB und Datenschutzerklärung."); return; }
-    setAppleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "apple",
-      options: { redirectTo: `${window.location.origin}/mein-konto` },
-    });
-    if (error) setError("Apple-Anmeldung fehlgeschlagen.");
-    setAppleLoading(false);
+    setAppleLoading(true); setError("");
+    const result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: `${window.location.origin}/mein-konto` });
+    if (result.error) { setError("Apple-Anmeldung fehlgeschlagen."); setAppleLoading(false); }
   };
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
