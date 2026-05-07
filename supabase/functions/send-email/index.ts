@@ -61,10 +61,14 @@ const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: stri
 function emailLayout({ title, bodyHtml }: { title: string; bodyHtml: string }) {
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;color:#1a1a1a;">
   <div style="max-width:600px;margin:0 auto;padding:24px;">
-    <div style="background:#18181b;padding:24px 32px;border-radius:12px 12px 0 0;display:flex;align-items:center;gap:14px;">
-      <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" alt="3DMuscio" width="44" height="44" style="border-radius:8px;display:block;" />
-      <span style="color:#ffffff;font-size:20px;font-weight:700;">3DMuscio</span>
-    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:#18181b;padding:20px 28px;border-radius:12px 12px 0 0;width:100%;border-collapse:separate;">
+      <tr>
+        <td width="44" style="vertical-align:middle;padding-right:14px;">
+          <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" alt="3DMuscio" width="44" height="44" style="border-radius:8px;display:block;" />
+        </td>
+        <td style="vertical-align:middle;color:#ffffff;font-size:20px;font-weight:700;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;line-height:44px;">3DMuscio</td>
+      </tr>
+    </table>
     <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;line-height:1.6;font-size:14px;">
       <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#000;">${title}</h1>
       ${bodyHtml}

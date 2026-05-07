@@ -17,10 +17,14 @@ function htmlBody(text: string, quotedHistory?: string) {
     : "";
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#1a1a1a;">
   <div style="max-width:600px;margin:0 auto;padding:24px;">
-    <div style="background:#18181b;padding:20px 28px;border-radius:12px 12px 0 0;display:flex;align-items:center;gap:12px;">
-      <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" width="40" height="40" style="border-radius:8px;display:block;" alt="3DMuscio"/>
-      <span style="color:#fff;font-size:18px;font-weight:700;">3DMuscio</span>
-    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:#18181b;padding:18px 24px;border-radius:12px 12px 0 0;width:100%;border-collapse:separate;">
+      <tr>
+        <td width="40" style="vertical-align:middle;padding-right:12px;">
+          <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" width="40" height="40" style="border-radius:8px;display:block;" alt="3DMuscio"/>
+        </td>
+        <td style="vertical-align:middle;color:#fff;font-size:18px;font-weight:700;font-family:-apple-system,Segoe UI,Arial,sans-serif;line-height:40px;">3DMuscio</td>
+      </tr>
+    </table>
     <div style="background:#fff;padding:28px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;line-height:1.6;font-size:14px;">
       <div>${safe}</div>
       ${quoted}
