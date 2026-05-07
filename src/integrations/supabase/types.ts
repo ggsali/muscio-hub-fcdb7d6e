@@ -423,6 +423,45 @@ export type Database = {
           },
         ]
       }
+      materials: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          density: number
+          description: string | null
+          id: string
+          name: string
+          price_per_gram: number
+          sort_order: number
+          tag: string
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          density?: number
+          description?: string | null
+          id?: string
+          name: string
+          price_per_gram: number
+          sort_order?: number
+          tag: string
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          density?: number
+          description?: string | null
+          id?: string
+          name?: string
+          price_per_gram?: number
+          sort_order?: number
+          tag?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       offer_positions: {
         Row: {
           bezeichnung: string
