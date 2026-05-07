@@ -51,6 +51,7 @@ import ShopPage from "@/pages/site/ShopPage";
 import ShopDetailPage from "@/pages/site/ShopDetailPage";
 import ProjektDetailPage from "@/pages/site/ProjektDetailPage";
 import BewertungPage from "@/pages/site/BewertungPage";
+import UnsubscribePage from "@/pages/UnsubscribePage";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
@@ -130,6 +131,7 @@ const App = () => (
               <Route path="/upload/:token" element={<ProjectUploadPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/bewertung/:token?" element={<BewertungPage />} />
+              <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
               {/* Customer portal */}
               <Route path="/portal" element={<PortalLayout />}>
