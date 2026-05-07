@@ -35,6 +35,22 @@ export function ChatWidget() {
         loadMessages(sid);
       } catch {}
     }
+    // Prefill from logged-in user if available
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data.user;
+      if (!u) return;
+      setUserInfo(prev => {
+        if (prev.name && prev.email) return prev;
+        const meta = (u.user_metadata || {}) as any;
+        return {
+          name: prev.name || meta.full_name || meta.name || (u.email ? u.email.split("@")[0] : ""),
+          email: prev.email || u.email || "",
+        };
+      });
+    });
+    const openHandler = () => setOpen(true);
+    window.addEventListener("open-chat-widget", openHandler);
+    return () => window.removeEventListener("open-chat-widget", openHandler);
   }, []);
 
   useEffect(() => {
@@ -154,16 +170,6 @@ export function ChatWidget() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(v => !v)}
-        className={cn("fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 bg-primary text-primary-foreground hover:scale-105 active:scale-95")}
-        aria-label="Chat öffnen"
-      >
-        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-        {hasUnread && !open && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full text-[10px] text-destructive-foreground flex items-center justify-center font-bold">!</span>
-        )}
-      </button>
 
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-[360px] max-h-[520px] flex flex-col bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
@@ -171,10 +177,13 @@ export function ChatWidget() {
             <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center">
               <Bot className="w-4 h-4 text-primary-foreground" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-primary-foreground font-semibold text-sm">3DMuscio Support</p>
               <p className="text-primary-foreground/70 text-xs">KI-Assistent · Live-Chat</p>
             </div>
+            <button onClick={() => setOpen(false)} className="text-primary-foreground/80 hover:text-primary-foreground" aria-label="Schliessen">
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
