@@ -217,8 +217,20 @@ export function ChatWidget() {
                     <ReactMarkdown
                       components={{
                         a: ({ href = "", children }) => {
-                          const isExternal = /^https?:\/\//i.test(href);
-                          if (isExternal) {
+                          // Treat 3dmuscio.com URLs as internal navigation
+                          let internalHref: string | null = null;
+                          try {
+                            if (/^https?:\/\//i.test(href)) {
+                              const u = new URL(href);
+                              if (/(^|\.)3dmuscio\.com$/i.test(u.hostname)) {
+                                internalHref = u.pathname + u.search + u.hash;
+                              }
+                            } else if (href.startsWith("/")) {
+                              internalHref = href;
+                            }
+                          } catch {}
+
+                          if (!internalHref) {
                             return (
                               <a href={href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-medium hover:opacity-80">
                                 {children}
@@ -227,11 +239,11 @@ export function ChatWidget() {
                           }
                           return (
                             <a
-                              href={href}
+                              href={internalHref}
                               onClick={(e) => {
                                 e.preventDefault();
                                 setOpen(false);
-                                window.history.pushState({}, "", href);
+                                window.history.pushState({}, "", internalHref!);
                                 window.dispatchEvent(new PopStateEvent("popstate"));
                               }}
                               className="underline underline-offset-2 font-medium hover:opacity-80 cursor-pointer"
