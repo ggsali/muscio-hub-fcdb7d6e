@@ -14,6 +14,7 @@ interface Project {
   bild_url: string | null; verfahren: string | null; material: string | null;
   toleranz: string | null; lieferzeit: string | null;
   gallery_paths: string[] | null;
+  stl_url: string | null;
   sort_order: number; featured: boolean; aktiv: boolean;
 }
 
@@ -94,6 +95,33 @@ export default function ProjekteAdminPage() {
     setEditing({ ...editing, gallery_paths: next });
   };
 
+  const onUploadStl = async (file: File) => {
+    if (!editing) return;
+    if (!file.name.toLowerCase().endsWith(".stl")) { toast.error("Nur .stl Dateien erlaubt"); return; }
+    setUploading(true);
+    const folder = editing.id || crypto.randomUUID();
+    const path = `${folder}/${file.name}`;
+    const { error } = await supabase.storage.from("project-stls").upload(path, file, { upsert: true });
+    if (error) { toast.error(error.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("project-stls").getPublicUrl(path);
+    setEditing({ ...editing, stl_url: data.publicUrl });
+    setUploading(false);
+    toast.success("STL hochgeladen");
+  };
+
+  const removeStl = async () => {
+    if (!editing?.stl_url) return;
+    try {
+      const marker = "/project-stls/";
+      const idx = editing.stl_url.indexOf(marker);
+      if (idx !== -1) {
+        const path = editing.stl_url.substring(idx + marker.length);
+        await supabase.storage.from("project-stls").remove([path]);
+      }
+    } catch {}
+    setEditing({ ...editing, stl_url: null });
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
@@ -101,7 +129,7 @@ export default function ProjekteAdminPage() {
           <h1 className="font-heading text-3xl font-bold text-foreground mb-1">Projekte / Portfolio</h1>
           <p className="text-muted-foreground">Referenzprojekte für die Website verwalten.</p>
         </div>
-        <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", gallery_paths: [], sort_order: projects.length + 1, featured: false, aktiv: true })}>
+        <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", gallery_paths: [], stl_url: null, sort_order: projects.length + 1, featured: false, aktiv: true })}>
           <Plus className="w-4 h-4 mr-1" /> Neues Projekt
         </Button>
       </div>
@@ -181,6 +209,24 @@ export default function ProjekteAdminPage() {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+
+              <div className="border-t border-border pt-4">
+                <Label className="text-base">3D-Modell (STL-Datei)</Label>
+                <p className="text-xs text-muted-foreground mb-3">Optional: STL-Datei für den 3D-Viewer auf der Projektdetailseite</p>
+                {editing.stl_url ? (
+                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                    <span className="text-sm flex-1 truncate">{decodeURIComponent(editing.stl_url.split("/").pop() || "STL-Datei")}</span>
+                    <Button size="sm" variant="ghost" onClick={removeStl}><X className="w-3.5 h-3.5 text-destructive mr-1" /> Entfernen</Button>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept=".stl"
+                    disabled={uploading}
+                    onChange={e => e.target.files?.[0] && onUploadStl(e.target.files[0])}
+                  />
                 )}
               </div>
 
