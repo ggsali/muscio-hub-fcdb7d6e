@@ -183,11 +183,6 @@ function InquiryDetail({
             <Plus className="w-3.5 h-3.5" /> Auftrag erstellen
           </Button>
         )}
-        <Button size="sm" className="w-full gap-2" variant="outline" asChild>
-          <a href={`mailto:${selected.email}?subject=Re: ${selected.betreff}`}>
-            <Mail className="w-3.5 h-3.5" /> Per E-Mail antworten
-          </a>
-        </Button>
         {selected.customer_id && (
           <Button size="sm" className="w-full gap-2" variant="ghost" onClick={() => navigate(`/admin/kunden/${selected.customer_id}`)}>
             <User className="w-3.5 h-3.5" /> Kundenprofil öffnen
