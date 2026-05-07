@@ -187,10 +187,13 @@ export function ChatWidget() {
             <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center">
               <Bot className="w-4 h-4 text-primary-foreground" />
             </div>
-            <div>
+            <div className="flex-1">
               <p className="text-primary-foreground font-semibold text-sm">3DMuscio Support</p>
               <p className="text-primary-foreground/70 text-xs">KI-Assistent · Live-Chat</p>
             </div>
+            <button onClick={() => setOpen(false)} className="text-primary-foreground/80 hover:text-primary-foreground" aria-label="Schliessen">
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
