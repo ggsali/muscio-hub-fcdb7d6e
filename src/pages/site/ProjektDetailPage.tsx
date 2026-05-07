@@ -25,13 +25,13 @@ export default function ProjektDetailPage() {
     (async () => {
       const { data } = await supabase
         .from("projekte")
-        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit")
+        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths")
         .eq("slug", slug).eq("aktiv", true).maybeSingle();
       if (!data) { setNotFound(true); setLoading(false); return; }
       setProject(data as Project);
       const { data: rest } = await supabase
         .from("projekte")
-        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit")
+        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths")
         .eq("aktiv", true).neq("slug", slug)
         .order("sort_order", { ascending: true }).limit(3);
       setOthers((rest as Project[]) || []);
