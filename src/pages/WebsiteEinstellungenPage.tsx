@@ -17,6 +17,7 @@ export default function WebsiteEinstellungenPage() {
 
   const [wartung, setWartung] = useState({ aktiv: false, nachricht: "" });
   const [kontakt, setKontakt] = useState({ email: "", telefon: "", adresse: "" });
+  const [whatsapp, setWhatsapp] = useState({ nummer: "" });
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [preise, setPreise] = useState<MaterialPrice[]>([]);
 
