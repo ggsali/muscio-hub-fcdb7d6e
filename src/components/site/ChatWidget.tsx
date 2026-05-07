@@ -35,6 +35,22 @@ export function ChatWidget() {
         loadMessages(sid);
       } catch {}
     }
+    // Prefill from logged-in user if available
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data.user;
+      if (!u) return;
+      setUserInfo(prev => {
+        if (prev.name && prev.email) return prev;
+        const meta = (u.user_metadata || {}) as any;
+        return {
+          name: prev.name || meta.full_name || meta.name || (u.email ? u.email.split("@")[0] : ""),
+          email: prev.email || u.email || "",
+        };
+      });
+    });
+    const openHandler = () => setOpen(true);
+    window.addEventListener("open-chat-widget", openHandler);
+    return () => window.removeEventListener("open-chat-widget", openHandler);
   }, []);
 
   useEffect(() => {
