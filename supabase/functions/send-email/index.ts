@@ -70,9 +70,9 @@ function emailLayout({ title, bodyHtml }: { title: string; bodyHtml: string }) {
       ${bodyHtml}
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0 16px;" />
       <div style="text-align:center;font-size:12px;color:#9ca3af;">
-        <a href="mailto:info@3dmuscio.com" style="color:#FF5A00;text-decoration:none;">info@3dmuscio.com</a>
+        <a href="mailto:info@3dmuscio.com" style="color:#22c55e;text-decoration:none;">info@3dmuscio.com</a>
         &nbsp;·&nbsp; +41 79 839 50 80 &nbsp;·&nbsp;
-        <a href="https://3dmuscio.com" style="color:#FF5A00;text-decoration:none;">3dmuscio.com</a>
+        <a href="https://3dmuscio.com" style="color:#22c55e;text-decoration:none;">3dmuscio.com</a>
       </div>
     </div>
   </div>
@@ -97,7 +97,7 @@ function buildOrderEmail(opts: {
 
   const paymentBtn = paymentUrl
     ? `<div style="margin:24px 0;text-align:center;">
-        <a href="${paymentUrl}" style="display:inline-block;background:#FF5A00;color:#fff;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">💳 Jetzt online bezahlen</a>
+        <a href="${paymentUrl}" style="display:inline-block;background:#22c55e;color:#fff;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">💳 Jetzt online bezahlen</a>
         <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Sichere Zahlung via Stripe</p>
       </div>`
     : "";
@@ -126,7 +126,7 @@ function buildOrderEmail(opts: {
       subject: `Akontorechnung – 3DMuscio`,
       html: emailLayout({
         title: "Akontorechnung",
-        bodyHtml: `${greet}<p>anbei erhalten Sie unsere Akontorechnung für den Auftrag „${orderName}".</p>${ak ? `<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#FF5A00;font-weight:700;text-transform:uppercase;">Akontozahlung (${akontoPercent}%)</p><p style="margin:0;font-size:22px;font-weight:700;">${ak}</p></div>` : ""}<p>Die vollständige Akontorechnung finden Sie im Anhang als PDF.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        bodyHtml: `${greet}<p>anbei erhalten Sie unsere Akontorechnung für den Auftrag „${orderName}".</p>${ak ? `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#22c55e;font-weight:700;text-transform:uppercase;">Akontozahlung (${akontoPercent}%)</p><p style="margin:0;font-size:22px;font-weight:700;">${ak}</p></div>` : ""}<p>Die vollständige Akontorechnung finden Sie im Anhang als PDF.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
     };
   }
@@ -137,7 +137,7 @@ function buildOrderEmail(opts: {
       subject: `Schlussrechnung – 3DMuscio`,
       html: emailLayout({
         title: "Schlussrechnung",
-        bodyHtml: `${greet}<p>anbei erhalten Sie unsere Schlussrechnung für den Auftrag „${orderName}".</p>${ak ? `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin:20px 0;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Gesamtbetrag</span><span>CHF ${(Number(akontoBetrag) + Number(restbetrag)).toFixed(2)}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Akonto (${akontoPercent}%)</span><span style="color:#FF5A00;">- ${ak}</span></div><div style="border-top:1px solid #e5e7eb;padding-top:8px;display:flex;justify-content:space-between;"><strong>Restbetrag (fällig)</strong><strong style="font-size:18px;">${rest}</strong></div></div>` : ""}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        bodyHtml: `${greet}<p>anbei erhalten Sie unsere Schlussrechnung für den Auftrag „${orderName}".</p>${ak ? `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin:20px 0;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Gesamtbetrag</span><span>CHF ${(Number(akontoBetrag) + Number(restbetrag)).toFixed(2)}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Akonto (${akontoPercent}%)</span><span style="color:#22c55e;">- ${ak}</span></div><div style="border-top:1px solid #e5e7eb;padding-top:8px;display:flex;justify-content:space-between;"><strong>Restbetrag (fällig)</strong><strong style="font-size:18px;">${rest}</strong></div></div>` : ""}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
     };
   }
