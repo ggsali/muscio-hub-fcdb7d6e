@@ -253,6 +253,10 @@ export default function AnfragenPage() {
   };
 
   const handleSelect = (inq: Inquiry) => {
+    if (inq.customer_id) {
+      navigate(`/admin/kunden/${inq.customer_id}?tab=anfragen&inquiry=${inq.id}`);
+      return;
+    }
     setSelected(inq);
     setNotiz(inq.notiz || "");
     if (isMobile) setSheetOpen(true);
