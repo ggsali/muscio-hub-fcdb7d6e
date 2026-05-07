@@ -7,6 +7,7 @@ import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus,
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import InquiryChat from "@/components/InquiryChat";
 
 type Attachment = {
   filename: string;
