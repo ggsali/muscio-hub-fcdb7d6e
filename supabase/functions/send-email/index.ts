@@ -159,6 +159,15 @@ function buildOrderEmail(opts: {
       }),
     };
   }
+  if (type === "test") {
+    return {
+      subject: `Test-E-Mail von 3DMuscio`,
+      html: emailLayout({
+        title: "✉️ Test-E-Mail",
+        bodyHtml: `${greet}<p>dies ist eine Test-E-Mail von 3DMuscio. Wenn Sie diese Nachricht erhalten, funktioniert der E-Mail-Versand zu Ihrer Adresse einwandfrei.</p><p style="color:#6b7280;font-size:13px;">Bezug: Auftrag „${orderName}" · Nr. ${orderNr}${datum ? ` · ${datum}` : ""}</p><p>Sie müssen auf diese E-Mail nicht antworten.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+      }),
+    };
+  }
   if (type === "lieferung") {
     return {
       subject: `Ihre Bestellung „${orderName}" wurde versendet`,
