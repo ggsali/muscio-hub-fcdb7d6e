@@ -170,16 +170,6 @@ export function ChatWidget() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(v => !v)}
-        className={cn("fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 bg-primary text-primary-foreground hover:scale-105 active:scale-95")}
-        aria-label="Chat öffnen"
-      >
-        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-        {hasUnread && !open && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full text-[10px] text-destructive-foreground flex items-center justify-center font-bold">!</span>
-        )}
-      </button>
 
       {open && (
         <div className="fixed bottom-24 right-6 z-50 w-[360px] max-h-[520px] flex flex-col bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
