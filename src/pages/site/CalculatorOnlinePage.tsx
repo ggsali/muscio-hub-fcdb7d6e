@@ -100,7 +100,7 @@ const CalculatorOnlinePage = () => {
         fileName: file.name,
         file,
         uploading: true,
-        materialId: "pla",
+        materialId: materials[0]?.id || "",
         color: "Weiss",
         infill: 20,
         quantity: 1,
