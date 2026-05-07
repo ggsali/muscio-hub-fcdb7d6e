@@ -34,7 +34,7 @@ import ChatPage from "@/pages/ChatPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 import WebsiteBestellungenPage from "@/pages/WebsiteBestellungenPage";
 import WebsiteKundenAdminPage from "@/pages/WebsiteKundenAdminPage";
-import EmailTemplatesPage from "@/pages/EmailTemplatesPage";
+
 import WebsiteEinstellungenPage from "@/pages/WebsiteEinstellungenPage";
 
 // Public website
@@ -155,7 +155,7 @@ const App = () => (
                 <Route path="chat" element={<ChatPage />} />
                 <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />
-                <Route path="website/email-templates" element={<EmailTemplatesPage />} />
+                
                 <Route path="website/einstellungen" element={<WebsiteEinstellungenPage />} />
               </Route>
 
@@ -172,7 +172,7 @@ const App = () => (
                 <Route path="navigation" element={<NavigationAdminPage />} />
                 <Route path="kunden" element={<WebsiteKundenAdminPage />} />
                 <Route path="chat" element={<ChatPage />} />
-                <Route path="email-templates" element={<EmailTemplatesPage />} />
+                
                 <Route path="einstellungen" element={<WebsiteEinstellungenPage />} />
               </Route>
 
