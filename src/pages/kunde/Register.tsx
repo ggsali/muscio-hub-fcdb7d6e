@@ -20,7 +20,6 @@ const KundeRegister = () => {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
   const { signUp } = useCustomerAuth();
 
   const handleGoogle = async () => {
@@ -28,21 +27,6 @@ const KundeRegister = () => {
     setGoogleLoading(true); setError("");
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/portal` });
     if (result.error) { setError("Google-Anmeldung fehlgeschlagen."); setGoogleLoading(false); }
-  };
-
-  const handleApple = async () => {
-    if (!agb) { setError("Bitte akzeptiere die AGB und Datenschutzerklärung."); return; }
-    setAppleLoading(true); setError("");
-    const result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: `${window.location.origin}/portal` });
-    if (result.error) {
-      const msg = String((result.error as any)?.message || "");
-      if (msg.toLowerCase().includes("privaterelay") || msg.includes("E-Mail verbergen")) {
-        setError('Bitte deaktiviere "E-Mail verbergen" beim Apple-Login. Wir benötigen deine echte E-Mail-Adresse.');
-      } else {
-        setError("Apple-Anmeldung fehlgeschlagen.");
-      }
-      setAppleLoading(false);
-    }
   };
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
