@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings as SettingsIcon, Save, Plus, Trash2 } from "lucide-react";
+import { Settings as SettingsIcon, Save, Plus, Trash2, Mail, ExternalLink, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -112,6 +112,43 @@ export default function WebsiteEinstellungenPage() {
           {saving ? "Speichert..." : "Alles speichern"}
         </Button>
       </div>
+
+      {/* E-Mail System Status */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Mail className="w-4 h-4 text-primary" />
+            E-Mail System
+          </h3>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-medium border border-green-500/20">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Resend aktiv
+          </span>
+        </div>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-start gap-2 text-muted-foreground">
+            <span className="text-primary mt-0.5">•</span>
+            <span>Auth-Mails (Registrierung, Passwort-Reset, E-Mail-Änderung) via <strong className="text-foreground">Supabase SMTP → Resend</strong></span>
+          </div>
+          <div className="flex items-start gap-2 text-muted-foreground">
+            <span className="text-primary mt-0.5">•</span>
+            <span>Transaktionale Mails (Offerten, Rechnungen, Bestellbestätigungen, Status-Updates) via <strong className="text-foreground">Resend Edge Functions</strong> (<code className="text-xs bg-muted px-1 py-0.5 rounded">send-email</code>)</span>
+          </div>
+          <div className="flex items-start gap-2 text-muted-foreground">
+            <span className="text-primary mt-0.5">•</span>
+            <span>Absender: <code className="text-xs bg-muted px-1 py-0.5 rounded">noreply@3dmuscio.com</code> · Reply-To: <code className="text-xs bg-muted px-1 py-0.5 rounded">info@3dmuscio.com</code></span>
+          </div>
+        </div>
+        <a
+          href="https://resend.com/emails"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline mt-1"
+        >
+          Resend Logs öffnen
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
+      </section>
 
       {/* Wartungsmodus */}
       <section className="bg-card border border-border rounded-lg p-5 space-y-3">
