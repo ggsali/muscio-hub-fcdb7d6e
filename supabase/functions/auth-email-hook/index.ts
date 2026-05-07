@@ -165,15 +165,15 @@ async function handleAuthHook(req: Request): Promise<Response> {
     const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
       reply_to: REPLY_TO,
-      to: user.email,
+      to: userEmail,
       subject: EMAIL_SUBJECTS[emailType] || 'Benachrichtigung',
       html,
     })
     if (error) {
-      console.error('Resend send error', { error, emailType, to: user.email })
+      console.error('Resend send error', { error, emailType, to: userEmail })
       return new Response(JSON.stringify({ error: 'Failed to send email', details: error }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
-    console.log('Auth email sent via Resend', { emailType, to: user.email, id: data?.id })
+    console.log('Auth email sent via Resend', { emailType, to: userEmail, id: data?.id })
     return new Response(JSON.stringify({ success: true, id: data?.id }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
     console.error('Resend exception', err)
