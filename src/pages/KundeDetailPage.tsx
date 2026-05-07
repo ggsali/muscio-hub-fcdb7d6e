@@ -347,6 +347,51 @@ export default function KundeDetailPage() {
         </div>
       )}
 
+      {/* Anfragen Tab */}
+      {activeTab === "anfragen" && !isNew && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2 md:col-span-1">
+            {inquiries.length === 0 ? (
+              <div className="bg-card border border-border rounded-lg p-6 text-center text-muted-foreground text-sm">
+                Keine Anfragen
+              </div>
+            ) : inquiries.map(inq => (
+              <button
+                key={inq.id}
+                onClick={() => setSelectedInquiryId(inq.id)}
+                className={`w-full text-left bg-card border rounded-lg p-3 hover:border-primary/40 transition-all ${selectedInquiryId === inq.id ? "border-primary/60" : "border-border"}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium truncate">{inq.betreff || "Anfrage"}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground shrink-0">{inq.status}</span>
+                </div>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{inq.nachricht}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{new Date(inq.created_at).toLocaleString("de-CH")}</p>
+              </button>
+            ))}
+          </div>
+          <div className="md:col-span-2">
+            {(() => {
+              const sel = inquiries.find(i => i.id === selectedInquiryId) || inquiries[0];
+              if (!sel) return (
+                <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" /> Anfrage auswählen
+                </div>
+              );
+              return (
+                <InquiryChat
+                  inquiryId={sel.id}
+                  customerName={sel.name}
+                  initialMessage={sel.nachricht}
+                  initialFrom={sel.email}
+                  initialAt={sel.created_at}
+                />
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* Auftraege Tab */}
       {activeTab === "auftraege" && !isNew && (
         <div className="space-y-4">
