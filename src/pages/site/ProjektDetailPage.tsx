@@ -55,13 +55,34 @@ export default function ProjektDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="relative">
             <div className="absolute inset-[-30px] bg-primary/[0.05] rounded-3xl blur-[60px] pointer-events-none" />
-            <div className="relative rounded-2xl overflow-hidden border border-border bg-card aspect-square flex items-center justify-center">
-              {project.bild_url ? (
-                <img src={project.bild_url} alt={project.name} className="w-full h-full object-cover" />
-              ) : (
-                <ImageIcon className="w-16 h-16 text-muted-foreground/40" />
-              )}
-            </div>
+            {(() => {
+              const images = [project.bild_url, ...((project.gallery_paths as string[] | null) || [])].filter(Boolean) as string[];
+              const current = images[activeImg] || project.bild_url;
+              return (
+                <div className="relative space-y-3">
+                  <div className="relative rounded-2xl overflow-hidden border border-border bg-card aspect-square flex items-center justify-center">
+                    {current ? (
+                      <img src={current} alt={project.name} className="w-full h-full object-cover transition-opacity duration-300" />
+                    ) : (
+                      <ImageIcon className="w-16 h-16 text-muted-foreground/40" />
+                    )}
+                  </div>
+                  {images.length > 1 && (
+                    <div className="grid grid-cols-5 gap-2">
+                      {images.map((url, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActiveImg(i)}
+                          className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${i === activeImg ? "border-primary" : "border-border hover:border-primary/50"}`}
+                        >
+                          <img src={url} alt={`${project.name} ${i + 1}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
