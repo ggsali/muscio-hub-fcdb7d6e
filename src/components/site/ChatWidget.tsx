@@ -93,7 +93,7 @@ export function ChatWidget() {
   const streamAI = async (sid: string, allMessages: Message[]) => {
     const resp = await fetch(CHAT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
       body: JSON.stringify({ messages: allMessages.map(m => ({ role: m.role === "admin" ? "assistant" : m.role, content: m.content })) }),
     });
     if (!resp.ok || !resp.body) {
