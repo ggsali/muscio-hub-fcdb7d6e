@@ -214,6 +214,13 @@ const CalculatorOnlinePage = () => {
           </div>
         </ScrollReveal>
 
+        {materialsLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : materialsError ? (
+          <div className="text-center py-20 text-destructive">{materialsError}</div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Upload + parts */}
           <div className="lg:col-span-2 space-y-6">
