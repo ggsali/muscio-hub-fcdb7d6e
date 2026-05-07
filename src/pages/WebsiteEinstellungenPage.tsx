@@ -21,6 +21,12 @@ export default function WebsiteEinstellungenPage() {
   const [whatsapp, setWhatsapp] = useState({ nummer: "" });
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [preise, setPreise] = useState<MaterialPrice[]>([]);
+  const [materials, setMaterials] = useState<MaterialRow[]>([]);
+
+  const reloadMaterials = async () => {
+    const { data } = await supabase.from("materials").select("*").order("sort_order");
+    if (data) setMaterials(data as MaterialRow[]);
+  };
 
   useEffect(() => {
     (async () => {
