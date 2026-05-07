@@ -214,6 +214,18 @@ const ContactPage = () => {
                 </div>
               </div>
 
+              <div className="rounded-xl overflow-hidden border border-border bg-card">
+                <iframe
+                  src="https://maps.google.com/maps?q=Gartensiedlung+13,+8360+Eschlikon+TG&output=embed"
+                  width="100%"
+                  height="250"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Standort 3DMuscio"
+                />
+              </div>
+
               <div className="bg-card rounded-2xl border border-border p-8">
                 <h3 className="font-heading text-lg font-bold text-foreground mb-4">Häufige Fragen</h3>
                 <Accordion type="single" collapsible className="space-y-2">
