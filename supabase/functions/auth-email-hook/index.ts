@@ -1,125 +1,319 @@
-import { Resend } from "npm:resend@4.0.1";
-import { Webhook } from "npm:standardwebhooks@1.0.0";
+import * as React from 'npm:react@18.3.1'
+import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { parseEmailWebhookPayload } from 'npm:@lovable.dev/email-js'
+import { WebhookError, verifyWebhookRequest } from 'npm:@lovable.dev/webhooks-js'
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import { SignupEmail } from '../_shared/email-templates/signup.tsx'
+import { InviteEmail } from '../_shared/email-templates/invite.tsx'
+import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
+import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
+import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
+import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
 
-const FROM_EMAIL = "3DMuscio <noreply@3dmuscio.com>";
-const REPLY_TO = "info@3dmuscio.com";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-function layout(title: string, body: string): string {
-  return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;color:#1a1a1a;">
-  <div style="max-width:600px;margin:0 auto;padding:24px;">
-    <div style="background:#18181b;padding:24px 32px;border-radius:12px 12px 0 0;display:flex;align-items:center;gap:14px;">
-      <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" alt="3DMuscio" width="44" height="44" style="border-radius:8px;display:block;" />
-      <span style="color:#ffffff;font-size:20px;font-weight:700;">3DMuscio</span>
-    </div>
-    <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;line-height:1.6;font-size:14px;">
-      <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#000;">${title}</h1>
-      ${body}
-      <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0 16px;" />
-      <div style="text-align:center;font-size:12px;color:#9ca3af;">
-        <a href="mailto:info@3dmuscio.com" style="color:#22c55e;text-decoration:none;">info@3dmuscio.com</a>
-        &nbsp;·&nbsp; +41 79 839 50 80 &nbsp;·&nbsp;
-        <a href="https://3dmuscio.com" style="color:#22c55e;text-decoration:none;">3dmuscio.com</a>
-      </div>
-    </div>
-  </div>
-</body></html>`;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-lovable-signature, x-lovable-timestamp, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-function btn(url: string, label: string): string {
-  return `<div style="margin:24px 0;text-align:center;"><a href="${url}" style="display:inline-block;background:#18181b;color:#fff;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">${label}</a></div>`;
+const EMAIL_SUBJECTS: Record<string, string> = {
+  signup: 'Confirm your email',
+  invite: "You've been invited",
+  magiclink: 'Your login link',
+  recovery: 'Reset your password',
+  email_change: 'Confirm your new email',
+  reauthentication: 'Your verification code',
 }
 
-function buildEmail(actionType: string, link: string, recipient: string, token?: string): { subject: string; html: string } {
-  switch (actionType) {
-    case "signup":
-      return {
-        subject: "E-Mail-Adresse bestätigen – 3DMuscio",
-        html: layout("E-Mail-Adresse bestätigen", `<p>Vielen Dank für Ihre Registrierung bei <strong>3DMuscio</strong>!</p><p>Bitte bestätigen Sie Ihre E-Mail-Adresse (${recipient}) mit einem Klick:</p>${btn(link, "E-Mail bestätigen")}<p style="font-size:12px;color:#999;">Falls Sie kein Konto erstellt haben, ignorieren Sie diese E-Mail.</p>`),
-      };
-    case "recovery":
-      return {
-        subject: "Passwort zurücksetzen – 3DMuscio",
-        html: layout("Passwort zurücksetzen", `<p>Wir haben eine Anfrage erhalten, dein Passwort zurückzusetzen.</p>${btn(link, "Passwort zurücksetzen")}<p style="font-size:12px;color:#999;">Falls du keine Anfrage gestellt hast, ignoriere diese E-Mail.</p>`),
-      };
-    case "magiclink":
-      return {
-        subject: "Dein Login-Link – 3DMuscio",
-        html: layout("Mit einem Klick einloggen", `<p>Klicke auf den Button um dich einzuloggen. Der Link ist 60 Minuten gültig.</p>${btn(link, "Jetzt einloggen")}`),
-      };
-    case "invite":
-      return {
-        subject: "Du wurdest zu 3DMuscio eingeladen",
-        html: layout("Einladung", `<p>Du wurdest eingeladen, 3DMuscio beizutreten.</p>${btn(link, "Einladung annehmen")}`),
-      };
-    case "email_change":
-    case "email_change_new":
-      return {
-        subject: "E-Mail-Änderung bestätigen – 3DMuscio",
-        html: layout("E-Mail-Änderung bestätigen", `<p>Bitte bestätige die Änderung deiner E-Mail-Adresse.</p>${btn(link, "Änderung bestätigen")}`),
-      };
-    case "reauthentication":
-      return {
-        subject: "Bestätigungscode – 3DMuscio",
-        html: layout("Bestätigungscode", `<p>Dein Bestätigungscode lautet:</p><div style="text-align:center;font-size:32px;font-weight:700;letter-spacing:0.2em;margin:24px 0;color:#18181b;">${token || ""}</div>`),
-      };
-    default:
-      return {
-        subject: "Aktion erforderlich – 3DMuscio",
-        html: layout("Aktion erforderlich", `${btn(link, "Weiter")}`),
-      };
+// Template mapping
+const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
+  signup: SignupEmail,
+  invite: InviteEmail,
+  magiclink: MagicLinkEmail,
+  recovery: RecoveryEmail,
+  email_change: EmailChangeEmail,
+  reauthentication: ReauthenticationEmail,
+}
+
+// Configuration
+const SITE_NAME = "muscio-hub"
+const SENDER_DOMAIN = "notify.3dmuscio.com"
+const ROOT_DOMAIN = "3dmuscio.com"
+const FROM_DOMAIN = "3dmuscio.com" // Domain shown in From address (may be root or sender subdomain)
+
+// Sample data for preview mode ONLY (not used in actual email sending).
+// URLs are baked in at scaffold time from the project's real data.
+// The sample email uses a fixed placeholder (RFC 6761 .test TLD) so the Go backend
+// can always find-and-replace it with the actual recipient when sending test emails,
+// even if the project's domain has changed since the template was scaffolded.
+const SAMPLE_PROJECT_URL = "https://muscio-hub.lovable.app"
+const SAMPLE_EMAIL = "user@example.test"
+const SAMPLE_DATA: Record<string, object> = {
+  signup: {
+    siteName: SITE_NAME,
+    siteUrl: SAMPLE_PROJECT_URL,
+    recipient: SAMPLE_EMAIL,
+    confirmationUrl: SAMPLE_PROJECT_URL,
+  },
+  magiclink: {
+    siteName: SITE_NAME,
+    confirmationUrl: SAMPLE_PROJECT_URL,
+  },
+  recovery: {
+    siteName: SITE_NAME,
+    confirmationUrl: SAMPLE_PROJECT_URL,
+  },
+  invite: {
+    siteName: SITE_NAME,
+    siteUrl: SAMPLE_PROJECT_URL,
+    confirmationUrl: SAMPLE_PROJECT_URL,
+  },
+  email_change: {
+    siteName: SITE_NAME,
+    oldEmail: SAMPLE_EMAIL,
+    email: SAMPLE_EMAIL,
+    newEmail: SAMPLE_EMAIL,
+    confirmationUrl: SAMPLE_PROJECT_URL,
+  },
+  reauthentication: {
+    token: '123456',
+  },
+}
+
+// Preview endpoint handler - returns rendered HTML without sending email
+async function handlePreview(req: Request): Promise<Response> {
+  const previewCorsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, content-type',
   }
+
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: previewCorsHeaders })
+  }
+
+  const apiKey = Deno.env.get('LOVABLE_API_KEY')
+  const authHeader = req.headers.get('Authorization')
+
+  if (!apiKey || authHeader !== `Bearer ${apiKey}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...previewCorsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  let type: string
+  try {
+    const body = await req.json()
+    type = body.type
+  } catch (error) {
+    return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), {
+      status: 400,
+      headers: { ...previewCorsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  const EmailTemplate = EMAIL_TEMPLATES[type]
+
+  if (!EmailTemplate) {
+    return new Response(JSON.stringify({ error: `Unknown email type: ${type}` }), {
+      status: 400,
+      headers: { ...previewCorsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  const sampleData = SAMPLE_DATA[type] || {}
+  const html = await renderAsync(React.createElement(EmailTemplate, sampleData))
+
+  return new Response(html, {
+    status: 200,
+    headers: { ...previewCorsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+  })
+}
+
+// Webhook handler - verifies signature and sends email
+async function handleWebhook(req: Request): Promise<Response> {
+  const apiKey = Deno.env.get('LOVABLE_API_KEY')
+
+  if (!apiKey) {
+    console.error('LOVABLE_API_KEY not configured')
+    return new Response(
+      JSON.stringify({ error: 'Server configuration error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // Verify signature + timestamp, then parse payload.
+  let payload: any
+  let run_id = ''
+  try {
+    const verified = await verifyWebhookRequest({
+      req,
+      secret: apiKey,
+      parser: parseEmailWebhookPayload,
+    })
+    payload = verified.payload
+    run_id = payload.run_id
+  } catch (error) {
+    if (error instanceof WebhookError) {
+      switch (error.code) {
+        case 'invalid_signature':
+        case 'missing_timestamp':
+        case 'invalid_timestamp':
+        case 'stale_timestamp':
+          console.error('Invalid webhook signature', { error: error.message })
+          return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        case 'invalid_payload':
+        case 'invalid_json':
+          console.error('Invalid webhook payload', { error: error.message })
+          return new Response(
+            JSON.stringify({ error: 'Invalid webhook payload' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+      }
+    }
+
+    console.error('Webhook verification failed', { error })
+    return new Response(
+      JSON.stringify({ error: 'Invalid webhook payload' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  if (!run_id) {
+    console.error('Webhook payload missing run_id')
+    return new Response(
+      JSON.stringify({ error: 'Invalid webhook payload' }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
+  if (payload.version !== '1') {
+    console.error('Unsupported payload version', { version: payload.version, run_id })
+    return new Response(
+      JSON.stringify({ error: `Unsupported payload version: ${payload.version}` }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
+  // The email action type is in payload.data.action_type (e.g., "signup", "recovery")
+  // payload.type is the hook event type ("auth")
+  const emailType = payload.data.action_type
+  console.log('Received auth event', { emailType, email: payload.data.email, run_id })
+
+  const EmailTemplate = EMAIL_TEMPLATES[emailType]
+  if (!EmailTemplate) {
+    console.error('Unknown email type', { emailType, run_id })
+    return new Response(
+      JSON.stringify({ error: `Unknown email type: ${emailType}` }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // Build template props from payload.data (HookData structure)
+  const templateProps = {
+    siteName: SITE_NAME,
+    siteUrl: `https://${ROOT_DOMAIN}`,
+    recipient: payload.data.email,
+    confirmationUrl: payload.data.url,
+    token: payload.data.token,
+    email: payload.data.email,
+    oldEmail: payload.data.old_email,
+    newEmail: payload.data.new_email,
+  }
+
+  // Render React Email to HTML and plain text
+  const html = await renderAsync(React.createElement(EmailTemplate, templateProps))
+  const text = await renderAsync(React.createElement(EmailTemplate, templateProps), {
+    plainText: true,
+  })
+
+  // Enqueue email for async processing by the dispatcher (process-email-queue).
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+
+  const messageId = crypto.randomUUID()
+
+  // Log pending BEFORE enqueue so we have a record even if enqueue crashes
+  await supabase.from('email_send_log').insert({
+    message_id: messageId,
+    template_name: emailType,
+    recipient_email: payload.data.email,
+    status: 'pending',
+  })
+
+  const { error: enqueueError } = await supabase.rpc('enqueue_email', {
+    queue_name: 'auth_emails',
+    payload: {
+      run_id,
+      message_id: messageId,
+      to: payload.data.email,
+      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      sender_domain: SENDER_DOMAIN,
+      subject: EMAIL_SUBJECTS[emailType] || 'Notification',
+      html,
+      text,
+      purpose: 'transactional',
+      label: emailType,
+      queued_at: new Date().toISOString(),
+    },
+  })
+
+  if (enqueueError) {
+    console.error('Failed to enqueue auth email', { error: enqueueError, run_id, emailType })
+    await supabase.from('email_send_log').insert({
+      message_id: messageId,
+      template_name: emailType,
+      recipient_email: payload.data.email,
+      status: 'failed',
+      error_message: 'Failed to enqueue email',
+    })
+    return new Response(JSON.stringify({ error: 'Failed to enqueue email' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  console.log('Auth email enqueued', { emailType, email: payload.data.email, run_id })
+
+  return new Response(
+    JSON.stringify({ success: true, queued: true }),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  )
 }
 
 Deno.serve(async (req) => {
-  try {
-    const payload = await req.text();
-    const headers = Object.fromEntries(req.headers);
+  const url = new URL(req.url)
 
-    const hookSecret = Deno.env.get("SEND_EMAIL_HOOK_SECRET");
-    if (!hookSecret) {
-      console.error("SEND_EMAIL_HOOK_SECRET not configured");
-      return new Response(JSON.stringify({ error: "Hook secret missing" }), { status: 500 });
-    }
-
-    // Standard Webhooks: secret may be prefixed with v1,whsec_
-    const secret = hookSecret.replace(/^v1,/, "");
-    const wh = new Webhook(secret);
-    const data = wh.verify(payload, headers) as {
-      user: { email: string };
-      email_data: {
-        token: string;
-        token_hash: string;
-        redirect_to: string;
-        email_action_type: string;
-        site_url: string;
-        token_new?: string;
-        token_hash_new?: string;
-      };
-    };
-
-    const { user, email_data } = data;
-    const link = `${email_data.site_url}/auth/v1/verify?token=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to)}`;
-
-    const { subject, html } = buildEmail(email_data.email_action_type, link, user.email, email_data.token);
-
-    const { error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: user.email,
-      reply_to: REPLY_TO,
-      subject,
-      html,
-    });
-
-    if (error) {
-      console.error("Resend error:", error);
-      return new Response(JSON.stringify({ error: String((error as any).message || error) }), { status: 500 });
-    }
-
-    return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "Content-Type": "application/json" } });
-  } catch (e) {
-    console.error("Auth email hook error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), { status: 500 });
+  // Handle CORS preflight for main endpoint
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
   }
-});
+
+  // Route to preview handler for /preview path
+  if (url.pathname.endsWith('/preview')) {
+    return handlePreview(req)
+  }
+
+  // Main webhook handler
+  try {
+    return await handleWebhook(req)
+  } catch (error) {
+    console.error('Webhook handler error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+})
