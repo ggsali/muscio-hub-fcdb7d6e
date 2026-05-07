@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 interface FaqEntry { frage: string; antwort: string; }
 
 const fallback: FaqEntry[] = [
-  { frage: "Wie lange dauert der 3D-Druck?", antwort: "Üblich 5–7 Werktage ab Auftragsbestätigung. Express ist oft möglich – einfach anfragen." },
+  { frage: "Wie lange dauert der 3D-Druck?", antwort: "Standard 48 Stunden ab Auftragsbestätigung. Express auf Anfrage möglich." },
   { frage: "Welche Dateiformate akzeptiert ihr?", antwort: "STL, STEP, 3MF und OBJ. Für Anfragen reicht meist eine STL-Datei." },
   { frage: "Wie genau sind die Drucke?", antwort: "Toleranzen typisch ±0.2 mm. Bei höheren Anforderungen sprich uns an." },
   { frage: "Was kostet ein Druck?", antwort: "Online im Preisrechner direkt kalkulieren – Material, Zeit und Nachbearbeitung sind transparent ausgewiesen." },
