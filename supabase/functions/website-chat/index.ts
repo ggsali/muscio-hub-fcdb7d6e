@@ -36,6 +36,11 @@ async function buildSystemPrompt(): Promise<string> {
   }
 }
 
+function stripOutdatedMaterialPriceContext(messages: any[]): any[] {
+  const materialPricePattern = /(MATERIALIEN|Materialpreise|CHF\s*\d+[.,]\d+\s*\/g|CHF\s*\d+[.,]\d+\s*pro\s*g|PLA|PETG|ABS|ASA|TPU|Nylon|Resin)/i;
+  return messages.filter((m) => m.role !== "assistant" || !materialPricePattern.test(m.content));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -83,6 +88,7 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = await buildSystemPrompt();
+    const sanitizedMessages = stripOutdatedMaterialPriceContext(messages || []);
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -90,7 +96,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         stream: true,
-        messages: [{ role: "system", content: systemPrompt }, ...(messages || [])],
+        messages: [{ role: "system", content: systemPrompt }, ...sanitizedMessages, { role: "system", content: "Verbindliche Anweisung: Wenn nach Materialpreisen gefragt wird, nutze ausschliesslich die oben im System-Prompt aufgeführten aktuellen Datenbankpreise. Ignoriere alle alten Preisangaben aus dem bisherigen Chatverlauf." }],
       }),
     });
     if (resp.status === 429) {
