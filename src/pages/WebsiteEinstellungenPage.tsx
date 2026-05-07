@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings as SettingsIcon, Save, Plus, Trash2 } from "lucide-react";
+import { Settings as SettingsIcon, Save, Plus, Trash2, Mail, ExternalLink, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
