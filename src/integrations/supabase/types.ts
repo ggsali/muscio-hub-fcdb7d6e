@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_allowlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          notiz: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          notiz?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          notiz?: string | null
+        }
+        Relationships: []
+      }
       bills: {
         Row: {
           betrag: number
@@ -1505,6 +1526,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_email: { Args: { _email: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "customer"
