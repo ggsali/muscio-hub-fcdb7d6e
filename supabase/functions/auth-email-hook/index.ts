@@ -97,44 +97,65 @@ async function handleAuthHook(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 
-  console.log('Auth hook payload received', { keys: Object.keys(payload || {}), preview: JSON.stringify(payload).substring(0, 500) })
+  // Normalize payload: supports BOTH
+  //  (a) standard Supabase auth hook format: { user: {email}, email_data: {email_action_type, token, token_hash, redirect_to, site_url} }
+  //  (b) Lovable webhook format:             { type: "auth", data: { action_type, email, token, url, site_url, new_email, old_email, callback_url } }
+  let userEmail: string | undefined
+  let newEmail: string | undefined
+  let emailType: string | undefined
+  let token: string | undefined
+  let confirmationUrl: string | undefined
+  let siteUrl: string = `https://${ROOT_DOMAIN}`
 
-  const user = payload?.user
-  const emailData = payload?.email_data
-  if (!user?.email || !emailData?.email_action_type) {
-    console.error('Invalid auth hook payload', {
-      hasUser: !!user,
-      hasEmailData: !!emailData,
+  if (payload?.user?.email && payload?.email_data?.email_action_type) {
+    // Standard Supabase format
+    userEmail = payload.user.email
+    newEmail = payload.user.new_email
+    emailType = payload.email_data.email_action_type
+    token = payload.email_data.token
+    siteUrl = payload.email_data.site_url || siteUrl
+    const redirectTo = payload.email_data.redirect_to || siteUrl
+    const verifyType = emailType === 'signup' || emailType === 'email_change' ? 'signup' : emailType
+    confirmationUrl = payload.email_data.token_hash
+      ? `${siteUrl.replace(/\/$/, '')}/auth/v1/verify?token=${payload.email_data.token_hash}&type=${verifyType}&redirect_to=${encodeURIComponent(redirectTo)}`
+      : redirectTo
+  } else if (payload?.data?.email && payload?.data?.action_type) {
+    // Lovable webhook format
+    const d = payload.data
+    userEmail = d.email
+    newEmail = d.new_email || undefined
+    emailType = d.action_type
+    token = d.token || d.new_token
+    siteUrl = d.site_url || siteUrl
+    confirmationUrl = d.url || siteUrl
+  } else {
+    console.error('Invalid auth hook payload — unknown format', {
       topKeys: Object.keys(payload || {}),
       fullPayload: JSON.stringify(payload).substring(0, 1000),
     })
     return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 
-  const emailType = emailData.email_action_type
+  if (!userEmail || !emailType) {
+    console.error('Missing required fields after normalization', { userEmail, emailType })
+    return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+
   const EmailTemplate = EMAIL_TEMPLATES[emailType]
   if (!EmailTemplate) {
     console.error('Unknown email type', { emailType })
     return new Response(JSON.stringify({ error: `Unknown email type: ${emailType}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 
-  // Build the confirmation URL from token_hash + redirect_to
-  const siteUrl = emailData.site_url || `https://${ROOT_DOMAIN}`
-  const redirectTo = emailData.redirect_to || siteUrl
-  const verifyType = emailType === 'signup' || emailType === 'email_change' ? 'signup' : emailType === 'recovery' ? 'recovery' : emailType === 'magiclink' ? 'magiclink' : emailType === 'invite' ? 'invite' : emailType
-  const confirmationUrl = emailData.token_hash
-    ? `${siteUrl.replace(/\/$/, '')}/auth/v1/verify?token=${emailData.token_hash}&type=${verifyType}&redirect_to=${encodeURIComponent(redirectTo)}`
-    : redirectTo
-
   const templateProps = {
     siteName: SITE_NAME,
     siteUrl: `https://${ROOT_DOMAIN}`,
-    recipient: user.email,
-    confirmationUrl,
-    token: emailData.token,
-    email: user.email,
-    oldEmail: user.email,
-    newEmail: payload?.user?.new_email || user.email,
+    recipient: userEmail,
+    confirmationUrl: confirmationUrl || siteUrl,
+    token: token || '',
+    email: userEmail,
+    oldEmail: userEmail,
+    newEmail: newEmail || userEmail,
   }
 
   const html = await renderAsync(React.createElement(EmailTemplate, templateProps))
@@ -144,15 +165,15 @@ async function handleAuthHook(req: Request): Promise<Response> {
     const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
       reply_to: REPLY_TO,
-      to: user.email,
+      to: userEmail,
       subject: EMAIL_SUBJECTS[emailType] || 'Benachrichtigung',
       html,
     })
     if (error) {
-      console.error('Resend send error', { error, emailType, to: user.email })
+      console.error('Resend send error', { error, emailType, to: userEmail })
       return new Response(JSON.stringify({ error: 'Failed to send email', details: error }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
-    console.log('Auth email sent via Resend', { emailType, to: user.email, id: data?.id })
+    console.log('Auth email sent via Resend', { emailType, to: userEmail, id: data?.id })
     return new Response(JSON.stringify({ success: true, id: data?.id }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
     console.error('Resend exception', err)
