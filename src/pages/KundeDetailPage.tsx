@@ -85,17 +85,29 @@ const emptyCustomer = (): Customer => ({
   adresse: "", notizen: "", aktiv: true,
 });
 
+type InquiryRow = {
+  id: string; name: string; email: string; telefon: string | null;
+  betreff: string | null; nachricht: string; status: string; notiz: string | null;
+  created_at: string; order_id: string | null;
+};
+
 export default function KundeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isNew = id === "neu";
+
+  const initialTab = (searchParams.get("tab") as any) || "kontakt";
+  const initialInquiry = searchParams.get("inquiry");
 
   const [customer, setCustomer] = useState<Customer>(emptyCustomer());
   const [orders, setOrders] = useState<Order[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
   const [files, setFiles] = useState<CustomerFile[]>([]);
+  const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
+  const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(initialInquiry);
   const [editing, setEditing] = useState(isNew);
-  const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien">("kontakt");
+  const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien" | "anfragen">(initialTab);
   const [loading, setLoading] = useState(!isNew);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -113,6 +125,17 @@ export default function KundeDetailPage() {
 
       const { data: f } = await supabase.from("part_files").select("*").eq("customer_id", id!).order("created_at", { ascending: false });
       if (f) setFiles(f as CustomerFile[]);
+
+      // Anfragen: nach customer_id ODER E-Mail
+      const email = (c as any)?.email;
+      let q = supabase.from("inquiries").select("*").order("created_at", { ascending: false });
+      if (email) {
+        q = q.or(`customer_id.eq.${id},email.eq.${email}`);
+      } else {
+        q = q.eq("customer_id", id!);
+      }
+      const { data: inqs } = await q;
+      if (inqs) setInquiries(inqs as InquiryRow[]);
 
       setLoading(false);
     }
