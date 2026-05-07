@@ -161,14 +161,13 @@ export default function AuftragDetailPage() {
             setSelectedPresetId(savedPresetId);
             const preset = loadedPresets.find(pr => pr.id === savedPresetId);
             if (preset) {
-              const discountFactor = 1 - (preset.rabatt_prozent || 0) / 100;
               setActiveSettings({
                 ...settings,
-                setup_pauschale: preset.setup_pauschale * discountFactor,
-                material_verkauf_pro_g: preset.material_verkauf_pro_g * discountFactor,
-                maschinenzeit_pro_h: preset.maschinenzeit_pro_h * discountFactor,
-                nachbearbeitung_pro_h: preset.nachbearbeitung_pro_h * discountFactor,
-                konstruktion_pro_h: preset.konstruktion_pro_h * discountFactor,
+                setup_pauschale: preset.setup_pauschale,
+                material_verkauf_pro_g: preset.material_verkauf_pro_g,
+                maschinenzeit_pro_h: preset.maschinenzeit_pro_h,
+                nachbearbeitung_pro_h: preset.nachbearbeitung_pro_h,
+                konstruktion_pro_h: preset.konstruktion_pro_h,
                 material_einkauf_pro_kg: preset.material_einkauf_pro_kg,
                 strom_verschleiss_pro_h: preset.strom_verschleiss_pro_h,
                 skalierungsziel: settings.skalierungsziel,
