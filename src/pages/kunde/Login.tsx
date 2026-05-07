@@ -15,7 +15,7 @@ const KundeLogin = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
+  
   const { signIn } = useCustomerAuth();
   const navigate = useNavigate();
 
