@@ -52,20 +52,6 @@ const KundeLogin = () => {
     if (result.error) { setError("Google-Anmeldung fehlgeschlagen."); setGoogleLoading(false); }
   };
 
-  const handleApple = async () => {
-    setAppleLoading(true);
-    setError("");
-    const result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: `${window.location.origin}/portal` });
-    if (result.error) {
-      const msg = String((result.error as any)?.message || "");
-      if (msg.toLowerCase().includes("privaterelay") || msg.includes("E-Mail verbergen")) {
-        setError('Bitte deaktiviere "E-Mail verbergen" beim Apple-Login. Wir benötigen deine echte E-Mail-Adresse.');
-      } else {
-        setError("Apple-Anmeldung fehlgeschlagen.");
-      }
-      setAppleLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted p-4">
