@@ -152,7 +152,7 @@ export default function KundeDetailPage() {
         q = q.eq("customer_id", id!);
       }
       const { data: inqs } = await q;
-      if (inqs) setInquiries(inqs as InquiryRow[]);
+      if (inqs) setInquiries(inqs as unknown as InquiryRow[]);
 
       setLoading(false);
     }
