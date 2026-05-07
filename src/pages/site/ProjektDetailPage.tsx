@@ -19,6 +19,7 @@ export default function ProjektDetailPage() {
   const [others, setOthers] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
     if (!slug) return;
