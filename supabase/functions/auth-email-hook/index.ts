@@ -249,7 +249,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   })
 
   const { error: sendError } = await resend.emails.send({
-    from: `${SITE_NAME} <noreply@${ROOT_DOMAIN}>`,
+    from: FROM_EMAIL,
     to: payload.data.email,
     reply_to: REPLY_TO,
     subject: EMAIL_SUBJECTS[emailType] || 'Notification',
