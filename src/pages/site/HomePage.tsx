@@ -5,7 +5,7 @@ import { CountUp } from "@/components/site/CountUp";
 import { Marquee } from "@/components/site/Marquee";
 import {
   Upload, Settings, ShoppingCart, Package,
-  Clock, Target, Layers, Users, ArrowRight, ArrowUpRight,
+  Clock, Target, Layers, Users, ArrowRight, ArrowUpRight, Percent,
 } from "lucide-react";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
