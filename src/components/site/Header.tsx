@@ -27,6 +27,7 @@ const DEFAULT_NAV: NavItem[] = [
       { label: "Standort", path: "/ueber-uns#standort" },
     ],
   },
+  { label: "Blog", path: "/blog" },
   { label: "Kontakt", path: "/kontakt" },
 ];
 

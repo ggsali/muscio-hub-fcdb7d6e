@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF } from "@/lib/calc";
 import { Package, Download, FileText, ShoppingBag, ChevronDown, ChevronUp } from "lucide-react";
+import OrderProgress from "@/components/portal/OrderProgress";
 
 export default function PortalOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -139,6 +140,10 @@ export default function PortalOrdersPage() {
                       </div>
                     </div>
                   </button>
+
+                  <div className="px-5 pb-4">
+                    <OrderProgress status={o.status} />
+                  </div>
 
                   {isOpen && (
                     <div className="border-t border-border px-5 py-4 space-y-4 bg-muted/20">

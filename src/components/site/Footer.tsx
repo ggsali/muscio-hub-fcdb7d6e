@@ -7,6 +7,7 @@ const footerLinks = [
   { label: "Kalkulator", path: "/kalkulator-online" },
   { label: "Materialien", path: "/materialien" },
   { label: "Über uns", path: "/ueber-uns" },
+  { label: "Blog", path: "/blog" },
   { label: "Kontakt", path: "/kontakt" },
 ];
 

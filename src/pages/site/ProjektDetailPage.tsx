@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, ImageIcon } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ImageIcon, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+
+const StlViewer = lazy(() => import("@/components/site/StlViewer"));
 
 type Project = {
   id: string; slug: string; name: string; kategorie: string | null;
@@ -11,6 +13,7 @@ type Project = {
   verfahren: string | null; material: string | null;
   toleranz: string | null; lieferzeit: string | null;
   gallery_paths: string[] | null;
+  stl_url: string | null;
 };
 
 export default function ProjektDetailPage() {
@@ -20,13 +23,14 @@ export default function ProjektDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const [view3d, setView3d] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
     (async () => {
       const { data } = await supabase
         .from("projekte")
-        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths")
+        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths, stl_url")
         .eq("slug", slug).eq("aktiv", true).maybeSingle();
       if (!data) { setNotFound(true); setLoading(false); return; }
       setProject(data as Project);
@@ -61,10 +65,22 @@ export default function ProjektDetailPage() {
               return (
                 <div className="relative space-y-3">
                   <div className="relative rounded-2xl overflow-hidden border border-border bg-card aspect-square flex items-center justify-center">
-                    {current ? (
+                    {view3d && project.stl_url ? (
+                      <Suspense fallback={<div className="text-muted-foreground text-sm">Lädt 3D-Modell…</div>}>
+                        <StlViewer url={project.stl_url} />
+                      </Suspense>
+                    ) : current ? (
                       <img src={current} alt={project.name} className="w-full h-full object-cover transition-opacity duration-300" />
                     ) : (
                       <ImageIcon className="w-16 h-16 text-muted-foreground/40" />
+                    )}
+                    {project.stl_url && (
+                      <button
+                        onClick={() => setView3d(v => !v)}
+                        className="absolute top-3 right-3 bg-background/80 backdrop-blur border border-border rounded-full px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 hover:bg-background"
+                      >
+                        <Box className="w-3.5 h-3.5" /> {view3d ? "Bild" : "3D-Ansicht"}
+                      </button>
                     )}
                   </div>
                   {images.length > 1 && (

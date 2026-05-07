@@ -105,6 +105,38 @@ export default function OrderStatusWorkflow({
         });
       } catch (e) { console.error("send-email status failed", e); }
     }
+
+    // Bewertungs-Mail bei Status "Abgeschlossen"
+    if (newStatus === "Abgeschlossen") {
+      try {
+        const { data: order } = await supabase
+          .from("orders")
+          .select("bewertungs_token, customer_id, customers:customer_id(email, vorname, name)")
+          .eq("id", orderId)
+          .maybeSingle();
+        let token = (order as any)?.bewertungs_token as string | null;
+        if (!token) {
+          token = crypto.randomUUID();
+          await supabase.from("orders").update({ bewertungs_token: token } as any).eq("id", orderId);
+        }
+        const cust = (order as any)?.customers;
+        const kundenEmail = cust?.email;
+        const kundenName = [cust?.vorname, cust?.name].filter(Boolean).join(" ").trim() || "Kunde";
+        if (kundenEmail) {
+          await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "bewertung",
+              recipientEmail: kundenEmail,
+              idempotencyKey: `bewertung-${orderId}`,
+              templateData: {
+                name: kundenName,
+                bewertungsLink: `https://3dmuscio.com/bewertung/${token}`,
+              },
+            },
+          });
+        }
+      } catch (e) { console.error("bewertung email failed", e); }
+    }
   };
 
   const handleConfirmDelivery = async () => {

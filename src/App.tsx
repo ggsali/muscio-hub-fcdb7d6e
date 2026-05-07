@@ -50,6 +50,8 @@ import ShopPage from "@/pages/site/ShopPage";
 import ShopDetailPage from "@/pages/site/ShopDetailPage";
 import ProjektDetailPage from "@/pages/site/ProjektDetailPage";
 import BewertungPage from "@/pages/site/BewertungPage";
+import BlogPage from "@/pages/site/BlogPage";
+import BlogPostPage from "@/pages/site/BlogPostPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 
 // Customer portal
@@ -67,6 +69,7 @@ import TeamAdminPage from "@/pages/website-admin/TeamAdminPage";
 import NavigationAdminPage from "@/pages/website-admin/NavigationAdminPage";
 import TimelineAdminPage from "@/pages/website-admin/TimelineAdminPage";
 import ShopProdukteAdminPage from "@/pages/website-admin/ShopProdukteAdminPage";
+import BlogAdminPage from "@/pages/website-admin/BlogAdminPage";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +121,8 @@ const App = () => (
                 <Route path="/datenschutz" element={<DatenschutzPage />} />
                 <Route path="/impressum" element={<ImpressumPage />} />
                 <Route path="/projekte/:slug" element={<ProjektDetailPage />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="/blog/:slug" element={<BlogPostPage />} />
               </Route>
 
               {/* Auth */}
@@ -164,6 +169,7 @@ const App = () => (
                 <Route index element={<WebsiteAdminDashboardPage />} />
                 <Route path="bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="shop-produkte" element={<ShopProdukteAdminPage />} />
+                <Route path="blog" element={<BlogAdminPage />} />
                 <Route path="reviews" element={<ReviewsAdminPage />} />
                 <Route path="projekte" element={<ProjekteAdminPage />} />
                 <Route path="partner" element={<PartnersAdminPage />} />
