@@ -48,7 +48,7 @@ const KundeLogin = () => {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     setError("");
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/mein-konto` });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/portal` });
     if (result.error) { setError("Google-Anmeldung fehlgeschlagen."); setGoogleLoading(false); }
   };
 
