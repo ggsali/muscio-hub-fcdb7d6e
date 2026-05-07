@@ -21,8 +21,6 @@ const navItems = [
   { to: "/admin/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
   { to: "/admin/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
   { to: "/admin/kalender", icon: <CalendarDays className="w-[18px] h-[18px]" />, label: "Kalender" },
-  { to: "/admin/uploads", icon: <Upload className="w-[18px] h-[18px]" />, label: "Projekt-Uploads" },
-  { to: "/admin/kalkulator-uploads", icon: <Upload className="w-[18px] h-[18px]" />, label: "Kalkulator-Uploads" },
   { to: "/admin/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
   { to: "/admin/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
 ];
