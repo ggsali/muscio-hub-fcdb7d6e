@@ -17,6 +17,7 @@ export default function WebsiteEinstellungenPage() {
 
   const [wartung, setWartung] = useState({ aktiv: false, nachricht: "" });
   const [kontakt, setKontakt] = useState({ email: "", telefon: "", adresse: "" });
+  const [whatsapp, setWhatsapp] = useState({ nummer: "" });
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [preise, setPreise] = useState<MaterialPrice[]>([]);
 
@@ -29,6 +30,7 @@ export default function WebsiteEinstellungenPage() {
           if (row.key === "kontakt_info") setKontakt(row.value as any);
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
+          if (row.key === "whatsapp") setWhatsapp({ nummer: (row.value as any)?.nummer || "" });
         }
       }
       setLoading(false);
@@ -36,7 +38,7 @@ export default function WebsiteEinstellungenPage() {
   }, []);
 
   const saveOne = async (key: string, value: any) => {
-    const { error } = await supabase.from("website_settings").update({ value }).eq("key", key);
+    const { error } = await supabase.from("website_settings").upsert({ key, value }, { onConflict: "key" });
     return error;
   };
 
@@ -47,6 +49,7 @@ export default function WebsiteEinstellungenPage() {
       saveOne("kontakt_info", kontakt),
       saveOne("faq", { eintraege: faq }),
       saveOne("material_preise", { eintraege: preise }),
+      saveOne("whatsapp", whatsapp),
     ]);
     setSaving(false);
     if (errs.some(Boolean)) toast({ title: "Fehler beim Speichern", variant: "destructive" });
@@ -102,6 +105,18 @@ export default function WebsiteEinstellungenPage() {
           <label className="text-xs text-muted-foreground mb-1 block">Adresse</label>
           <Textarea value={kontakt.adresse} onChange={e => setKontakt({ ...kontakt, adresse: e.target.value })} className="bg-input border-border" />
         </div>
+      </section>
+
+      {/* WhatsApp */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <h3 className="font-semibold">WhatsApp</h3>
+        <p className="text-xs text-muted-foreground">Nummer für den Chat-Button (Format: 41798395080, ohne + und ohne Leerzeichen). Leer lassen, um WhatsApp im Chat-Button auszublenden.</p>
+        <Input
+          value={whatsapp.nummer}
+          onChange={e => setWhatsapp({ nummer: e.target.value.replace(/[^0-9]/g, "") })}
+          placeholder="41798395080"
+          className="bg-input border-border"
+        />
       </section>
 
       {/* FAQ */}
