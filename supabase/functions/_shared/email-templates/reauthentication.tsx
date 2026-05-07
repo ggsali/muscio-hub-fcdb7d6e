@@ -46,4 +46,4 @@ const codeBox = { backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '24p
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
 const divider = { borderColor: '#e5e7eb', margin: '24px 0 16px' }
 const footerText = { fontSize: '12px', color: '#9ca3af', margin: '0', textAlign: 'center' as const }
-const footerLink = { color: '#FF5A00', textDecoration: 'none' }
+const footerLink = { color: '#22c55e', textDecoration: 'none' }
