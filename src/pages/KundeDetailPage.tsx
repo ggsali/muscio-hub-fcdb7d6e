@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
+import { toast } from "sonner";
 import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -168,6 +169,10 @@ export default function KundeDetailPage() {
   };
 
   const handleSave = async () => {
+    if (!customer.name?.trim()) {
+      toast.error("Name ist erforderlich");
+      return;
+    }
     const payload = {
       vorname: customer.vorname || null,
       name: customer.name,
@@ -185,10 +190,15 @@ export default function KundeDetailPage() {
     };
 
     if (isNew) {
-      const { data } = await supabase.from("customers").insert(payload).select().single();
+      const { data, error } = await supabase.from("customers").insert(payload).select().single();
+      if (error) { toast.error("Fehler beim Speichern: " + error.message); return; }
+      toast.success("Kunde erstellt");
       if (data) navigate(`/admin/kunden/${data.id}`, { replace: true });
     } else {
-      await supabase.from("customers").update(payload).eq("id", id!);
+      const { data, error } = await supabase.from("customers").update(payload).eq("id", id!).select().single();
+      if (error) { toast.error("Fehler beim Speichern: " + error.message); return; }
+      if (data) setCustomer({ ...emptyCustomer(), ...(data as any) });
+      toast.success("Änderungen gespeichert");
       setEditing(false);
     }
   };
