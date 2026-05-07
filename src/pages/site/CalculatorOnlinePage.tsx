@@ -135,7 +135,8 @@ const CalculatorOnlinePage = () => {
   const remove = (id: string) => setParts((p) => p.filter((x) => x.id !== id));
 
   const calcPart = (p: Part) => {
-    const mat = MATERIALS.find((m) => m.id === p.materialId)!;
+    const mat = materials.find((m) => m.id === p.materialId);
+    if (!mat) return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
     const weight = p.estimatedWeight * (0.4 + (p.infill / 100) * 0.6);
     const matCost = weight * mat.pricePerGram;
     const setupCost = 5;
