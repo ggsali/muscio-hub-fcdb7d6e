@@ -145,10 +145,11 @@ export function ChatWidget() {
       if (!sid) { setLoading(false); return; }
     }
     const userMsg: Message = { role: "user", content: text };
-    const isFirstMessage = messages.filter(m => m.role === "user").length === 0;
     setMessages(prev => [...prev, userMsg]);
     await saveMessage(sid, "user", text);
-    if (isFirstMessage) {
+    try { await streamAI(sid, [...messages, userMsg]); }
+    catch (e: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e.message}` }]); }
+    if (shouldNotify(text)) {
       supabase.functions.invoke("send-sms-notification", {
         body: {
           message: text,
@@ -158,35 +159,7 @@ export function ChatWidget() {
         },
       }).catch(console.error);
     }
-    try { await streamAI(sid, [...messages, userMsg]); }
-    catch (e: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e.message}` }]); }
     setLoading(false);
-  };
-
-  const requestLiveChat = async () => {
-    let sid = sessionId;
-    if (!sid) {
-      if (!userInfo.name) {
-        setInfoStep(true);
-        return;
-      }
-      sid = await createSession(userInfo.name, userInfo.email);
-      if (!sid) return;
-    }
-    try {
-      const { data } = await supabase.functions.invoke("send-sms-notification", {
-        body: { customerName: userInfo.name, customerEmail: userInfo.email, sessionId: sid },
-      });
-      const inside = (data as any)?.insideOpeningHours !== false;
-      const content = inside
-        ? "Danke! Unser Team wurde benachrichtigt und meldet sich gleich bei dir."
-        : "Unser Team ist aktuell nicht verfügbar. Öffnungszeiten: Mo–Fr 08–18 Uhr, Sa 09–14 Uhr. Wir melden uns beim nächsten Werktag! Du kannst uns auch direkt schreiben: info@3dmuscio.com";
-      const msg: Message = { role: "assistant", content };
-      setMessages(prev => [...prev, msg]);
-      await saveMessage(sid, "assistant", content);
-    } catch (e: any) {
-      setMessages(prev => [...prev, { role: "assistant", content: `Fehler: ${e.message}` }]);
-    }
   };
 
   const handleInfoSubmit = async (e: React.FormEvent) => {
