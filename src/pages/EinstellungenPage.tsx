@@ -408,7 +408,7 @@ export default function EinstellungenPage() {
                 <Input
                   value={(localCompany as any)[f.key] || ""}
                   onChange={e => setLocalCompany({ ...localCompany, [f.key]: e.target.value })}
-                  className="w-56 bg-input border-border text-sm"
+                  className="w-full md:w-56 bg-input border-border text-sm flex-shrink-0"
                 />
               </div>
             ))}
@@ -425,7 +425,7 @@ export default function EinstellungenPage() {
                 <Input
                   value={(localCompany as any)[f.key] || ""}
                   onChange={e => setLocalCompany({ ...localCompany, [f.key]: e.target.value })}
-                  className="w-56 bg-input border-border text-sm"
+                  className="w-full md:w-56 bg-input border-border text-sm flex-shrink-0"
                 />
               </div>
             ))}
