@@ -403,7 +403,7 @@ export default function EinstellungenPage() {
               { key: "email", label: "E-Mail" },
               { key: "website", label: "Website" },
             ] as { key: keyof CompanySettings; label: string }[]).map(f => (
-              <div key={f.key} className="flex items-center justify-between gap-4">
+              <div key={f.key} className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-4">
                 <Label className="text-sm flex-1">{f.label}</Label>
                 <Input
                   value={(localCompany as any)[f.key] || ""}
@@ -420,7 +420,7 @@ export default function EinstellungenPage() {
               { key: "bank_iban", label: "IBAN" },
               { key: "bank_name", label: "Bank" },
             ] as { key: keyof CompanySettings; label: string }[]).map(f => (
-              <div key={f.key} className="flex items-center justify-between gap-4">
+              <div key={f.key} className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-4">
                 <Label className="text-sm flex-1">{f.label}</Label>
                 <Input
                   value={(localCompany as any)[f.key] || ""}
