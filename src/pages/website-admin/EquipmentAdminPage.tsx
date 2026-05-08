@@ -179,7 +179,7 @@ export default function EquipmentAdminPage() {
               {editing.vorschaubild_url && !imageFile && <img src={editing.vorschaubild_url} alt="" className="mt-2 h-16 rounded object-cover" />}
             </div>
             <div>
-              <Label>3D-Modell (.glb / .gltf)</Label>
+              <Label>3D-Modell (.glb / .gltf / .obj / .3mf)</Label>
               <Input type="file" accept=".glb,.gltf,.3mf,.obj,model/gltf-binary,model/gltf+json" onChange={e => setModelFile(e.target.files?.[0] || null)} />
               {(editing.modell_url || modelFile) && (
                 <div className="flex items-center gap-2 mt-1">
@@ -191,6 +191,15 @@ export default function EquipmentAdminPage() {
                   )}
                   {modelFile && (
                     <p className="text-xs text-primary">Zuerst speichern, dann ausrichten</p>
+                  )}
+                </div>
+              )}
+              {(modelFile?.name.toLowerCase().endsWith('.obj') || editing.modell_url?.toLowerCase().endsWith('.obj')) && (
+                <div className="mt-2">
+                  <Label>Material-Datei (.mtl) — für OBJ-Farben</Label>
+                  <Input type="file" accept=".mtl" onChange={e => setMtlFile(e.target.files?.[0] || null)} />
+                  {editing.mtl_url && !mtlFile && (
+                    <p className="text-xs text-muted-foreground mt-1">Aktuell: {editing.mtl_url.split('/').pop()}</p>
                   )}
                 </div>
               )}
