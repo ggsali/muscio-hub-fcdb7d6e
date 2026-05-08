@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import ModelPreview from "@/components/site/ModelPreview";
 import { colorHex } from "@/lib/colorMap";
+import JSZip from "jszip";
 
 interface Material {
   id: string;
@@ -108,28 +109,50 @@ async function calcObjVolumeCm3(file: File): Promise<number> {
 
 async function calc3mfVolumeCm3(file: File): Promise<number> {
   try {
-    const JSZip = (await import("jszip")).default;
-    const zip = await JSZip.loadAsync(await file.arrayBuffer());
-    const modelFile = zip.file(/3D\/.*\.model$/i)[0];
-    if (!modelFile) return 0;
-    const xml = await modelFile.async("text");
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, "text/xml");
-    const vertices: [number, number, number][] = [];
-    Array.from(doc.querySelectorAll("vertex")).forEach((v) => {
-      vertices.push([parseFloat(v.getAttribute("x")!), parseFloat(v.getAttribute("y")!), parseFloat(v.getAttribute("z")!)]);
-    });
-    let volume = 0;
-    Array.from(doc.querySelectorAll("triangle")).forEach((t) => {
-      const a = parseInt(t.getAttribute("v1")!), b = parseInt(t.getAttribute("v2")!), c = parseInt(t.getAttribute("v3")!);
-      const v1 = vertices[a], v2 = vertices[b], v3 = vertices[c];
+    const buffer = await file.arrayBuffer()
+    const zip = await JSZip.loadAsync(buffer)
+
+    const modelEntry = Object.values(zip.files).find(f =>
+      f.name.endsWith('.model') && !f.dir
+    )
+    if (!modelEntry) return 0
+
+    const xml = await modelEntry.async('text')
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(xml, 'text/xml')
+
+    const vertexNodes = doc.querySelectorAll('vertices vertex')
+    const vertices: [number, number, number][] = []
+    vertexNodes.forEach(v => {
+      vertices.push([
+        parseFloat(v.getAttribute('x') || '0'),
+        parseFloat(v.getAttribute('y') || '0'),
+        parseFloat(v.getAttribute('z') || '0')
+      ])
+    })
+
+    if (vertices.length === 0) return 0
+
+    const triangleNodes = doc.querySelectorAll('triangles triangle')
+    let volume = 0
+    triangleNodes.forEach(t => {
+      const a = parseInt(t.getAttribute('v1') || '0')
+      const b = parseInt(t.getAttribute('v2') || '0')
+      const c = parseInt(t.getAttribute('v3') || '0')
+      const v1 = vertices[a], v2 = vertices[b], v3 = vertices[c]
       if (v1 && v2 && v3) {
-        volume += (v1[0] * (v2[1] * v3[2] - v2[2] * v3[1]) + v2[0] * (v3[1] * v1[2] - v3[2] * v1[1]) + v3[0] * (v1[1] * v2[2] - v1[2] * v2[1])) / 6;
+        volume += (
+          v1[0] * (v2[1] * v3[2] - v2[2] * v3[1]) +
+          v2[0] * (v3[1] * v1[2] - v3[2] * v1[1]) +
+          v3[0] * (v1[1] * v2[2] - v1[2] * v2[1])
+        ) / 6
       }
-    });
-    return Math.abs(volume) / 1000;
-  } catch {
-    return 0;
+    })
+
+    return Math.abs(volume) / 1000
+  } catch (e) {
+    console.error('3MF Volumen Fehler:', e)
+    return 0
   }
 }
 
