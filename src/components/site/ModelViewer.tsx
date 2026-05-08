@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
 
 interface Rotation { x: number; y: number; z: number; px?: number; py?: number; pz?: number }
 export default function ModelViewer({ url, rotation, showAxes }: { url: string; rotation?: Rotation; showAxes?: boolean }) {
