@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { COLOR_MAP, colorHex } from "@/lib/colorMap";
 import { X } from "lucide-react";
@@ -172,266 +173,289 @@ export default function WebsiteEinstellungenPage() {
         </a>
       </section>
 
+      {/* Aufklappbare Sektionen */}
+      <Accordion type="multiple" defaultValue={["wartung"]} className="space-y-3">
+
       {/* Wartungsmodus */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Wartungsmodus</h3>
-          <Switch checked={wartung.aktiv} onCheckedChange={v => setWartung({ ...wartung, aktiv: v })} />
-        </div>
-        <Textarea
-          value={wartung.nachricht}
-          onChange={e => setWartung({ ...wartung, nachricht: e.target.value })}
-          placeholder="Nachricht für Besucher während Wartung"
-          className="bg-input border-border"
-        />
-      </section>
+      <AccordionItem value="wartung" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Wartungsmodus</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Wartungsmodus aktiv</span>
+            <Switch checked={wartung.aktiv} onCheckedChange={v => setWartung({ ...wartung, aktiv: v })} />
+          </div>
+          <Textarea
+            value={wartung.nachricht}
+            onChange={e => setWartung({ ...wartung, nachricht: e.target.value })}
+            placeholder="Nachricht für Besucher während Wartung"
+            className="bg-input border-border w-full"
+          />
+        </AccordionContent>
+      </AccordionItem>
 
       {/* Kontakt */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <h3 className="font-semibold">Kontakt-Informationen</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">E-Mail</label>
-            <Input value={kontakt.email} onChange={e => setKontakt({ ...kontakt, email: e.target.value })} className="bg-input border-border" />
+      <AccordionItem value="kontakt" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Kontakt-Informationen</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">E-Mail</label>
+              <Input value={kontakt.email} onChange={e => setKontakt({ ...kontakt, email: e.target.value })} className="bg-input border-border w-full" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Telefon</label>
+              <Input value={kontakt.telefon} onChange={e => setKontakt({ ...kontakt, telefon: e.target.value })} className="bg-input border-border w-full" />
+            </div>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Telefon</label>
-            <Input value={kontakt.telefon} onChange={e => setKontakt({ ...kontakt, telefon: e.target.value })} className="bg-input border-border" />
+            <label className="text-xs text-muted-foreground mb-1 block">Adresse</label>
+            <Textarea value={kontakt.adresse} onChange={e => setKontakt({ ...kontakt, adresse: e.target.value })} className="bg-input border-border w-full" />
           </div>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Adresse</label>
-          <Textarea value={kontakt.adresse} onChange={e => setKontakt({ ...kontakt, adresse: e.target.value })} className="bg-input border-border" />
-        </div>
-      </section>
+        </AccordionContent>
+      </AccordionItem>
 
       {/* WhatsApp */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <h3 className="font-semibold">WhatsApp</h3>
-        <p className="text-xs text-muted-foreground">Nummer für den Chat-Button (Format: 41798395080, ohne + und ohne Leerzeichen). Leer lassen, um WhatsApp im Chat-Button auszublenden.</p>
-        <Input
-          value={whatsapp.nummer}
-          onChange={e => setWhatsapp({ nummer: e.target.value.replace(/[^0-9]/g, "") })}
-          placeholder="41798395080"
-          className="bg-input border-border"
-        />
-      </section>
+      <AccordionItem value="whatsapp" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">WhatsApp</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">Nummer für den Chat-Button (Format: 41798395080, ohne + und ohne Leerzeichen). Leer lassen, um WhatsApp im Chat-Button auszublenden.</p>
+          <Input
+            value={whatsapp.nummer}
+            onChange={e => setWhatsapp({ nummer: e.target.value.replace(/[^0-9]/g, "") })}
+            placeholder="41798395080"
+            className="bg-input border-border w-full"
+          />
+        </AccordionContent>
+      </AccordionItem>
 
       {/* FAQ */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">FAQ-Einträge</h3>
-          <Button size="sm" variant="outline" onClick={() => setFaq([...faq, { frage: "", antwort: "" }])} className="gap-1.5">
-            <Plus className="w-3.5 h-3.5" />Eintrag
-          </Button>
-        </div>
-        {faq.length === 0 && <p className="text-xs text-muted-foreground">Keine Einträge</p>}
-        {faq.map((entry, i) => (
-          <div key={i} className="border border-border rounded p-3 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <Input
-                value={entry.frage}
-                onChange={e => setFaq(faq.map((f, j) => j === i ? { ...f, frage: e.target.value } : f))}
-                placeholder="Frage"
-                className="bg-input border-border"
+      <AccordionItem value="faq" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">FAQ-Einträge</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <div className="flex justify-end">
+            <Button size="sm" variant="outline" onClick={() => setFaq([...faq, { frage: "", antwort: "" }])} className="gap-1.5">
+              <Plus className="w-3.5 h-3.5" />Eintrag
+            </Button>
+          </div>
+          {faq.length === 0 && <p className="text-xs text-muted-foreground">Keine Einträge</p>}
+          {faq.map((entry, i) => (
+            <div key={i} className="border border-border rounded p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Input
+                  value={entry.frage}
+                  onChange={e => setFaq(faq.map((f, j) => j === i ? { ...f, frage: e.target.value } : f))}
+                  placeholder="Frage"
+                  className="bg-input border-border w-full"
+                />
+                <button onClick={() => setFaq(faq.filter((_, j) => j !== i))} className="text-destructive p-2 flex-shrink-0">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+              <Textarea
+                value={entry.antwort}
+                onChange={e => setFaq(faq.map((f, j) => j === i ? { ...f, antwort: e.target.value } : f))}
+                placeholder="Antwort"
+                className="bg-input border-border w-full"
               />
-              <button onClick={() => setFaq(faq.filter((_, j) => j !== i))} className="text-destructive p-2">
+            </div>
+          ))}
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* Materialpreise */}
+      <AccordionItem value="materialpreise" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Materialpreise (Website-Anzeige)</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <div className="flex justify-end">
+            <Button size="sm" variant="outline" onClick={() => setPreise([...preise, { material: "", preis_pro_g: 0 }])} className="gap-1.5">
+              <Plus className="w-3.5 h-3.5" />Material
+            </Button>
+          </div>
+          {preise.length === 0 && <p className="text-xs text-muted-foreground">Keine Einträge</p>}
+          {preise.map((p, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input
+                value={p.material}
+                onChange={e => setPreise(preise.map((x, j) => j === i ? { ...x, material: e.target.value } : x))}
+                placeholder="z.B. PLA Standard"
+                className="bg-input border-border flex-1 min-w-0"
+              />
+              <Input
+                type="number"
+                step="0.001"
+                value={p.preis_pro_g}
+                onChange={e => setPreise(preise.map((x, j) => j === i ? { ...x, preis_pro_g: Number(e.target.value) } : x))}
+                placeholder="CHF / g"
+                className="bg-input border-border w-24 md:w-32 flex-shrink-0"
+              />
+              <button onClick={() => setPreise(preise.filter((_, j) => j !== i))} className="text-destructive p-2 flex-shrink-0">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
-            <Textarea
-              value={entry.antwort}
-              onChange={e => setFaq(faq.map((f, j) => j === i ? { ...f, antwort: e.target.value } : f))}
-              placeholder="Antwort"
-              className="bg-input border-border"
-            />
-          </div>
-        ))}
-      </section>
-
-      {/* Materialpreise */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Materialpreise (Website-Anzeige)</h3>
-          <Button size="sm" variant="outline" onClick={() => setPreise([...preise, { material: "", preis_pro_g: 0 }])} className="gap-1.5">
-            <Plus className="w-3.5 h-3.5" />Material
-          </Button>
-        </div>
-        {preise.length === 0 && <p className="text-xs text-muted-foreground">Keine Einträge</p>}
-        {preise.map((p, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              value={p.material}
-              onChange={e => setPreise(preise.map((x, j) => j === i ? { ...x, material: e.target.value } : x))}
-              placeholder="z.B. PLA Standard"
-              className="bg-input border-border flex-1"
-            />
-            <Input
-              type="number"
-              step="0.001"
-              value={p.preis_pro_g}
-              onChange={e => setPreise(preise.map((x, j) => j === i ? { ...x, preis_pro_g: Number(e.target.value) } : x))}
-              placeholder="CHF / g"
-              className="bg-input border-border w-32"
-            />
-            <button onClick={() => setPreise(preise.filter((_, j) => j !== i))} className="text-destructive p-2">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </section>
+          ))}
+        </AccordionContent>
+      </AccordionItem>
 
       {/* Materialien & Preise (zentral, aus materials-Tabelle) */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold">Materialien & Preise</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">Wird im Kalkulator, auf der Homepage und vom Chatbot genutzt.</p>
+      <AccordionItem value="materialien" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Materialien & Preise</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-xs text-muted-foreground">Wird im Kalkulator, auf der Homepage und vom Chatbot genutzt.</p>
+            <Button size="sm" variant="outline" onClick={addMaterial} className="gap-1.5">
+              <Plus className="w-3.5 h-3.5" />Material
+            </Button>
           </div>
-          <Button size="sm" variant="outline" onClick={addMaterial} className="gap-1.5">
-            <Plus className="w-3.5 h-3.5" />Material
-          </Button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-xs text-muted-foreground">
-              <tr className="border-b border-border">
-                <th className="text-left p-2">Name</th>
-                <th className="text-left p-2">Tag</th>
-                <th className="text-left p-2">Preis/g</th>
-                <th className="text-left p-2">Dichte</th>
-                <th className="text-left p-2">Beschreibung</th>
-                <th className="text-left p-2">Aktiv</th>
-                <th className="p-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {materials.map(m => (
-                <React.Fragment key={m.id}>
-                <tr className="border-b border-border/30">
-                  <td className="p-1"><Input value={m.name} onChange={e => updateMaterial(m.id, { name: e.target.value })} className="bg-input border-border h-9" /></td>
-                  <td className="p-1">
-                    <select value={m.tag} onChange={e => updateMaterial(m.id, { tag: e.target.value })} className="h-9 rounded-md border border-border bg-input px-2 text-sm">
-                      <option value="FDM">FDM</option>
-                      <option value="SLA">SLA</option>
-                    </select>
-                  </td>
-                  <td className="p-1"><Input type="number" step="0.001" value={m.price_per_gram} onChange={e => updateMaterial(m.id, { price_per_gram: Number(e.target.value) })} className="bg-input border-border h-9 w-24" /></td>
-                  <td className="p-1"><Input type="number" step="0.01" value={m.density} onChange={e => updateMaterial(m.id, { density: Number(e.target.value) })} className="bg-input border-border h-9 w-20" /></td>
-                  <td className="p-1"><Input value={m.description ?? ""} onChange={e => updateMaterial(m.id, { description: e.target.value })} className="bg-input border-border h-9" /></td>
-                  <td className="p-1"><Switch checked={m.aktiv} onCheckedChange={v => updateMaterial(m.id, { aktiv: v })} /></td>
-                  <td className="p-1 whitespace-nowrap">
-                    <Button size="sm" variant="outline" onClick={() => saveMaterial(m)}>Speichern</Button>
-                    <button onClick={() => deleteMaterial(m)} className="text-destructive p-2 ml-1"><Trash2 className="w-4 h-4" /></button>
-                  </td>
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead className="text-xs text-muted-foreground">
+                <tr className="border-b border-border">
+                  <th className="text-left p-2">Name</th>
+                  <th className="text-left p-2">Tag</th>
+                  <th className="text-left p-2">Preis/g</th>
+                  <th className="text-left p-2">Dichte</th>
+                  <th className="text-left p-2">Beschreibung</th>
+                  <th className="text-left p-2">Aktiv</th>
+                  <th className="p-2"></th>
                 </tr>
-                <tr className="border-b border-border/50 bg-muted/20">
-                  <td colSpan={7} className="p-3">
-                    <FarbenEditor
-                      farben={m.farben || []}
-                      onChange={(farben) => updateMaterial(m.id, { farben })}
-                    />
-                  </td>
-                </tr>
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {materials.map(m => (
+                  <React.Fragment key={m.id}>
+                  <tr className="border-b border-border/30">
+                    <td className="p-1"><Input value={m.name} onChange={e => updateMaterial(m.id, { name: e.target.value })} className="bg-input border-border h-9" /></td>
+                    <td className="p-1">
+                      <select value={m.tag} onChange={e => updateMaterial(m.id, { tag: e.target.value })} className="h-9 rounded-md border border-border bg-input px-2 text-sm">
+                        <option value="FDM">FDM</option>
+                        <option value="SLA">SLA</option>
+                      </select>
+                    </td>
+                    <td className="p-1"><Input type="number" step="0.001" value={m.price_per_gram} onChange={e => updateMaterial(m.id, { price_per_gram: Number(e.target.value) })} className="bg-input border-border h-9 w-24" /></td>
+                    <td className="p-1"><Input type="number" step="0.01" value={m.density} onChange={e => updateMaterial(m.id, { density: Number(e.target.value) })} className="bg-input border-border h-9 w-20" /></td>
+                    <td className="p-1"><Input value={m.description ?? ""} onChange={e => updateMaterial(m.id, { description: e.target.value })} className="bg-input border-border h-9" /></td>
+                    <td className="p-1"><Switch checked={m.aktiv} onCheckedChange={v => updateMaterial(m.id, { aktiv: v })} /></td>
+                    <td className="p-1 whitespace-nowrap">
+                      <Button size="sm" variant="outline" onClick={() => saveMaterial(m)}>Speichern</Button>
+                      <button onClick={() => deleteMaterial(m)} className="text-destructive p-2 ml-1"><Trash2 className="w-4 h-4" /></button>
+                    </td>
+                  </tr>
+                  <tr className="border-b border-border/50 bg-muted/20">
+                    <td colSpan={7} className="p-3">
+                      <FarbenEditor
+                        farben={m.farben || []}
+                        onChange={(farben) => updateMaterial(m.id, { farben })}
+                      />
+                    </td>
+                  </tr>
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
 
       {/* Marquee / Ticker */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <h3 className="font-semibold">Ticker / Marquee</h3>
-          <Button
-            size="sm"
-            disabled={savingKarussel}
-            onClick={async () => {
-              setSavingKarussel(true);
-              const cleaned = karussel.map(i => ({ text: i.text.trim() })).filter(i => i.text);
-              const err = await saveOne("karussel", { items: cleaned });
-              setSavingKarussel(false);
-              if (err) toast({ title: "Fehler", description: err.message, variant: "destructive" });
-              else toast({ title: "Ticker gespeichert" });
-            }}
-            className="gap-1.5"
-          >
-            <Save className="w-3.5 h-3.5" />
-            {savingKarussel ? "Speichert..." : "Speichern"}
-          </Button>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          ℹ️ Materialien werden automatisch synchronisiert und hier nicht angezeigt.
-        </p>
-        {karussel.map((item, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              value={item.text}
-              onChange={e => setKarussel(karussel.map((x, j) => j === i ? { text: e.target.value } : x))}
-              placeholder="z.B. 48h Lieferung"
-              className="bg-input border-border flex-1"
-            />
+      <AccordionItem value="ticker" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Ticker / Marquee</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-sm text-muted-foreground">
+              ℹ️ Materialien werden automatisch synchronisiert.
+            </p>
             <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                if (i === 0) return;
-                const next = [...karussel];
-                [next[i - 1], next[i]] = [next[i], next[i - 1]];
-                setKarussel(next);
+              size="sm"
+              disabled={savingKarussel}
+              onClick={async () => {
+                setSavingKarussel(true);
+                const cleaned = karussel.map(i => ({ text: i.text.trim() })).filter(i => i.text);
+                const err = await saveOne("karussel", { items: cleaned });
+                setSavingKarussel(false);
+                if (err) toast({ title: "Fehler", description: err.message, variant: "destructive" });
+                else toast({ title: "Ticker gespeichert" });
               }}
-              disabled={i === 0}
+              className="gap-1.5"
             >
-              ↑
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                if (i === karussel.length - 1) return;
-                const next = [...karussel];
-                [next[i + 1], next[i]] = [next[i], next[i + 1]];
-                setKarussel(next);
-              }}
-              disabled={i === karussel.length - 1}
-            >
-              ↓
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setKarussel(karussel.filter((_, j) => j !== i))}
-            >
-              <X className="w-4 h-4 text-destructive" />
+              <Save className="w-3.5 h-3.5" />
+              {savingKarussel ? "Speichert..." : "Speichern"}
             </Button>
           </div>
-        ))}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setKarussel([...karussel, { text: "" }])}
-          className="gap-1.5"
-        >
-          <Plus className="w-3.5 h-3.5" />Eintrag hinzufügen
-        </Button>
-      </section>
+          {karussel.map((item, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input
+                value={item.text}
+                onChange={e => setKarussel(karussel.map((x, j) => j === i ? { text: e.target.value } : x))}
+                placeholder="z.B. 48h Lieferung"
+                className="bg-input border-border flex-1 min-w-0"
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  if (i === 0) return;
+                  const next = [...karussel];
+                  [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                  setKarussel(next);
+                }}
+                disabled={i === 0}
+                className="flex-shrink-0"
+              >
+                ↑
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  if (i === karussel.length - 1) return;
+                  const next = [...karussel];
+                  [next[i + 1], next[i]] = [next[i], next[i + 1]];
+                  setKarussel(next);
+                }}
+                disabled={i === karussel.length - 1}
+                className="flex-shrink-0"
+              >
+                ↓
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setKarussel(karussel.filter((_, j) => j !== i))}
+                className="flex-shrink-0"
+              >
+                <X className="w-4 h-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setKarussel([...karussel, { text: "" }])}
+            className="gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />Eintrag hinzufügen
+          </Button>
+        </AccordionContent>
+      </AccordionItem>
 
       {/* Benachrichtigungen */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <h3 className="font-semibold">Benachrichtigungen</h3>
-        <p className="text-sm text-muted-foreground">
-          Wenn ein Kunde im Live-Chat auf "Mit Team sprechen" klickt, wird eine E-Mail an <strong>info@3dmuscio.com</strong> gesendet — aber nur während der Öffnungszeiten.
-        </p>
-        <div className="bg-muted/30 border border-border rounded-md p-4 text-sm space-y-1">
-          <div className="flex justify-between"><span className="font-medium">Mo–Fr</span><span>08:00–18:00</span></div>
-          <div className="flex justify-between"><span className="font-medium">Sa</span><span>09:00–14:00</span></div>
-          <div className="flex justify-between text-muted-foreground"><span className="font-medium">So</span><span>Geschlossen</span></div>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          ℹ️ Benachrichtigungen werden nur während dieser Zeiten gesendet. Ausserhalb erhält der Kunde im Chat einen Hinweis auf die Öffnungszeiten.
-        </p>
-      </section>
+      <AccordionItem value="benachrichtigungen" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Benachrichtigungen</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Wenn ein Kunde im Live-Chat auf "Mit Team sprechen" klickt, wird eine E-Mail an <strong>info@3dmuscio.com</strong> gesendet — aber nur während der Öffnungszeiten.
+          </p>
+          <div className="bg-muted/30 border border-border rounded-md p-4 text-sm space-y-1">
+            <div className="flex justify-between"><span className="font-medium">Mo–Fr</span><span>08:00–18:00</span></div>
+            <div className="flex justify-between"><span className="font-medium">Sa</span><span>09:00–14:00</span></div>
+            <div className="flex justify-between text-muted-foreground"><span className="font-medium">So</span><span>Geschlossen</span></div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            ℹ️ Benachrichtigungen werden nur während dieser Zeiten gesendet. Ausserhalb erhält der Kunde im Chat einen Hinweis auf die Öffnungszeiten.
+          </p>
+        </AccordionContent>
+      </AccordionItem>
+
+      </Accordion>
     </div>
   );
 }

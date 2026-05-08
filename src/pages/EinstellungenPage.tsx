@@ -203,19 +203,19 @@ export default function EinstellungenPage() {
   ];
 
   return (
-    <div className="p-6 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Einstellungen</h1>
+    <div className="p-4 md:p-6 animate-fade-in">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold">Einstellungen</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Preise, Firmeninfos & Rechnungsdesign</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-border">
+      {/* Tabs — horizontal scrollbar auf Mobile */}
+      <div className="flex gap-1 mb-4 md:mb-6 border-b border-border overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 scrollbar-none">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-3 md:px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
               tab === t.key
                 ? "border-primary text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -226,9 +226,10 @@ export default function EinstellungenPage() {
         ))}
       </div>
 
+
       {/* ── Tab: Verrechnungssätze ── */}
       {tab === "raten" && (
-        <div className="bg-card border border-border rounded-lg p-5 max-w-lg space-y-4">
+        <div className="bg-card border border-border rounded-lg p-4 md:p-5 max-w-full md:max-w-lg space-y-4">
           {RATE_FIELDS.map(f => (
             <div key={f.key} className="flex items-center justify-between gap-4">
               <div className="flex-1">
@@ -240,7 +241,7 @@ export default function EinstellungenPage() {
                 step={f.step}
                 value={localSettings[f.key] || ""}
                 onChange={e => setLocalSettings({ ...localSettings, [f.key]: parseFloat(e.target.value) || 0 })}
-                className="w-32 bg-input border-border text-right tabular-nums"
+                className="w-28 md:w-32 bg-input border-border text-right tabular-nums flex-shrink-0"
               />
             </div>
           ))}
@@ -252,7 +253,7 @@ export default function EinstellungenPage() {
 
       {/* ── Tab: Preis-Presets ── */}
       {tab === "presets" && (
-        <div className="space-y-4 max-w-2xl">
+        <div className="space-y-4 max-w-full md:max-w-2xl">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">Presets sind beim Auftrag auswählbar und überschreiben die Standard-Verrechnungssätze.</p>
             <Button size="sm" onClick={() => setEditingPreset(emptyPreset())} className="gap-1.5">
@@ -308,7 +309,7 @@ export default function EinstellungenPage() {
           {editingPreset && (
             <div className="bg-card border border-primary/30 rounded-lg p-5 space-y-4">
               <h3 className="font-semibold text-sm">{editingPreset.id ? "Preset bearbeiten" : "Neues Preset"}</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Name</Label>
                   <Input value={editingPreset.name} onChange={e => setEditingPreset({ ...editingPreset, name: e.target.value })} className="bg-input border-border h-8 text-sm" />
@@ -318,7 +319,7 @@ export default function EinstellungenPage() {
                   <Input value={editingPreset.beschreibung} onChange={e => setEditingPreset({ ...editingPreset, beschreibung: e.target.value })} className="bg-input border-border h-8 text-sm" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {PRESET_RATE_FIELDS.map(f => (
                   <div key={f.key} className="flex items-center justify-between gap-2">
                     <div>
@@ -330,7 +331,7 @@ export default function EinstellungenPage() {
                       step={f.step}
                       value={(editingPreset as any)[f.key] ?? ""}
                       onChange={e => setEditingPreset({ ...editingPreset, [f.key]: parseFloat(e.target.value) || 0 })}
-                      className="w-24 bg-input border-border text-right tabular-nums h-8 text-sm"
+                      className="w-20 md:w-24 bg-input border-border text-right tabular-nums h-8 text-sm flex-shrink-0"
                     />
                   </div>
                 ))}
@@ -345,7 +346,7 @@ export default function EinstellungenPage() {
       )}
 
       {tab === "website" && (
-        <div className="space-y-4 max-w-lg">
+        <div className="space-y-4 max-w-full md:max-w-lg">
           <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground">
             Diese Einstellungen steuern den öffentlichen Kalkulator auf der <strong>3D Print Studio Website</strong>. Änderungen werden sofort für Besucher übernommen.
           </div>
@@ -369,7 +370,7 @@ export default function EinstellungenPage() {
                   step={f.step}
                   value={websiteSettings[f.key] ?? ""}
                   onChange={e => setWebsiteSettings(prev => ({ ...prev, [f.key]: parseFloat(e.target.value) || 0 }))}
-                  className="w-32 bg-input border-border text-right tabular-nums"
+                  className="w-28 md:w-32 bg-input border-border text-right tabular-nums flex-shrink-0"
                 />
               </div>
             ))}
@@ -377,7 +378,7 @@ export default function EinstellungenPage() {
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <h3 className="font-semibold text-sm">Verrechnungssätze (wird vom ERP übernommen)</h3>
             <p className="text-xs text-muted-foreground">Die Preise pro Gramm, Druckzeit etc. werden aus den Verrechnungssätzen oben automatisch für den Website-Kalkulator verwendet.</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
               <div className="flex justify-between"><span className="text-muted-foreground">Material / g:</span><span className="font-mono">CHF {settings.material_verkauf_pro_g.toFixed(3)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit / h:</span><span className="font-mono">CHF {settings.maschinenzeit_pro_h.toFixed(2)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Material Einkauf / kg:</span><span className="font-mono">CHF {settings.material_einkauf_pro_kg.toFixed(2)}</span></div>
@@ -390,7 +391,7 @@ export default function EinstellungenPage() {
 
 
       {tab === "firma" && (
-        <div className="space-y-6 max-w-lg">
+        <div className="space-y-6 max-w-full md:max-w-lg">
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <h3 className="font-semibold text-sm">Firmendaten</h3>
             {([
@@ -402,12 +403,12 @@ export default function EinstellungenPage() {
               { key: "email", label: "E-Mail" },
               { key: "website", label: "Website" },
             ] as { key: keyof CompanySettings; label: string }[]).map(f => (
-              <div key={f.key} className="flex items-center justify-between gap-4">
+              <div key={f.key} className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-4">
                 <Label className="text-sm flex-1">{f.label}</Label>
                 <Input
                   value={(localCompany as any)[f.key] || ""}
                   onChange={e => setLocalCompany({ ...localCompany, [f.key]: e.target.value })}
-                  className="w-56 bg-input border-border text-sm"
+                  className="w-full md:w-56 bg-input border-border text-sm flex-shrink-0"
                 />
               </div>
             ))}
@@ -419,12 +420,12 @@ export default function EinstellungenPage() {
               { key: "bank_iban", label: "IBAN" },
               { key: "bank_name", label: "Bank" },
             ] as { key: keyof CompanySettings; label: string }[]).map(f => (
-              <div key={f.key} className="flex items-center justify-between gap-4">
+              <div key={f.key} className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-4">
                 <Label className="text-sm flex-1">{f.label}</Label>
                 <Input
                   value={(localCompany as any)[f.key] || ""}
                   onChange={e => setLocalCompany({ ...localCompany, [f.key]: e.target.value })}
-                  className="w-56 bg-input border-border text-sm"
+                  className="w-full md:w-56 bg-input border-border text-sm flex-shrink-0"
                 />
               </div>
             ))}
