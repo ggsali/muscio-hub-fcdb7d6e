@@ -54,6 +54,7 @@ interface Part {
   volumeCm3: number; // 0 wenn unbekannt
   manualWeightG?: number; // für non-STL
   isStl: boolean;
+  previewUrl?: string;
 }
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
