@@ -309,7 +309,7 @@ export default function EinstellungenPage() {
           {editingPreset && (
             <div className="bg-card border border-primary/30 rounded-lg p-5 space-y-4">
               <h3 className="font-semibold text-sm">{editingPreset.id ? "Preset bearbeiten" : "Neues Preset"}</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Name</Label>
                   <Input value={editingPreset.name} onChange={e => setEditingPreset({ ...editingPreset, name: e.target.value })} className="bg-input border-border h-8 text-sm" />
