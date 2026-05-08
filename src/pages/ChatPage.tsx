@@ -29,6 +29,7 @@ interface ChatMessage {
 }
 
 export default function ChatPage() {
+  const isMobile = useIsMobile();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
