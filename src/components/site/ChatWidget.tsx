@@ -219,6 +219,12 @@ export function ChatWidget() {
                 <Bot className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Hallo! Wie kann ich dir helfen?</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">Frag mich zu 3D-Druck, Preisen oder Bestellungen.</p>
+                <button
+                  onClick={requestLiveChat}
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                >
+                  <User className="w-3.5 h-3.5" /> Mit Team sprechen
+                </button>
               </div>
             )}
 
