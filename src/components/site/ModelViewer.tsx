@@ -80,29 +80,31 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
         } else {
           root.rotation.x = -Math.PI / 2;
         }
-        const box = new THREE.Box3().setFromObject(root);
+        const box = new THREE.Box3().setFromObject(gltf.scene);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
-        root.position.sub(center);
+
+        gltf.scene.position.x = -center.x;
+        gltf.scene.position.z = -center.z;
+        gltf.scene.position.y = -box.min.y;
         if (rotation) {
-          root.position.x += rotation.px || 0;
-          root.position.y += rotation.py || 0;
-          root.position.z += rotation.pz || 0;
+          gltf.scene.position.x += rotation.px || 0;
+          gltf.scene.position.y += rotation.py || 0;
+          gltf.scene.position.z += rotation.pz || 0;
         }
         scene.add(root);
 
-        const shadowBox = new THREE.Box3().setFromObject(gltf.scene);
-        const shadowSize = shadowBox.getSize(new THREE.Vector3());
-        const shadowCenter = shadowBox.getCenter(new THREE.Vector3());
-        const shadowRadius = Math.max(shadowSize.x, shadowSize.z) * 0.55;
+        const box2 = new THREE.Box3().setFromObject(gltf.scene);
+        const size2 = box2.getSize(new THREE.Vector3());
 
-        const shadows = [
-          { radius: shadowRadius * 1.0, opacity: 0.12, scale: 1.0 },
-          { radius: shadowRadius * 0.7, opacity: 0.08, scale: 0.8 },
-          { radius: shadowRadius * 0.4, opacity: 0.06, scale: 0.5 },
+        const shadowRadius = Math.max(size2.x, size2.z) * 0.45;
+        const shadowLayers = [
+          { radius: shadowRadius * 1.0, opacity: 0.10 },
+          { radius: shadowRadius * 0.65, opacity: 0.07 },
+          { radius: shadowRadius * 0.35, opacity: 0.05 },
         ];
 
-        shadows.forEach(({ radius, opacity, scale }) => {
+        shadowLayers.forEach(({ radius, opacity }) => {
           const geo = new THREE.CircleGeometry(radius, 64);
           const mat = new THREE.MeshBasicMaterial({
             color: 0x000000,
@@ -112,18 +114,18 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
           });
           const mesh = new THREE.Mesh(geo, mat);
           mesh.rotation.x = -Math.PI / 2;
-          mesh.position.set(shadowCenter.x, shadowBox.min.y + 0.01, shadowCenter.z);
-          mesh.scale.set(scale, 1, scale);
+          mesh.position.set(0, 0.01, 0);
           scene.add(mesh);
         });
 
-        const maxDim = Math.max(size.x, size.y, size.z);
-        camera.position.set(0, maxDim * 0.5, maxDim * 2);
-        camera.lookAt(0, 0, 0);
-        controls.target.set(0, 0, 0);
+        const maxDim = Math.max(size2.x, size2.y, size2.z);
+        const height = size2.y;
+        camera.position.set(maxDim * 1.2, height * 0.8, maxDim * 1.5);
+        camera.lookAt(0, height * 0.3, 0);
+        controls.target.set(0, height * 0.3, 0);
         controls.update();
-        // store base center offset for re-applying position
-        (root as any).__baseOffset = center.clone();
+        // store base offset for re-applying position
+        (root as any).__baseOffset = new THREE.Vector3(center.x, box.min.y, center.z);
       },
       undefined,
       (err) => console.error("GLB load failed", err),
