@@ -494,28 +494,14 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
 
-                    {/* Farbauswahl als Punkte */}
+                    {/* Farbauswahl als Punkte (dynamisch aus Material) */}
                     <div className="mt-4">
                       <Label className="text-xs">Farbe</Label>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {COLORS.map((c) => {
-                          const selected = p.color === c.name;
-                          return (
-                            <Tooltip key={c.name}>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={() => update(p.id, { color: c.name })}
-                                  className={`w-7 h-7 rounded-full border-2 transition-all ${selected ? "border-primary ring-2 ring-primary/30 scale-110" : "border-border hover:border-foreground/40"}`}
-                                  style={{ backgroundColor: c.hex }}
-                                  aria-label={c.name}
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>{c.name}</TooltipContent>
-                            </Tooltip>
-                          );
-                        })}
-                      </div>
+                      <ColorPicker
+                        farben={materials.find((m) => m.id === p.materialId)?.farben || []}
+                        selected={p.color}
+                        onSelect={(c) => update(p.id, { color: c })}
+                      />
                     </div>
 
                     {/* Qualitätsstufen */}
