@@ -39,8 +39,8 @@ interface Part {
   infill: number;
   quantity: number;
   volumeCm3: number; // 0 wenn unbekannt
-  manualWeightG?: number; // für non-STL
-  isStl: boolean;
+  hasVolume: boolean;
+  estimatedWeight: number;
   previewUrl?: string;
 }
 
@@ -83,6 +83,59 @@ async function calcStlVolumeCm3(file: File): Promise<number> {
     }
   }
   return Math.abs(volume) / 1000; // mm³ → cm³
+}
+
+async function calcObjVolumeCm3(file: File): Promise<number> {
+  const text = await file.text();
+  const vertices: [number, number, number][] = [];
+  let volume = 0;
+  text.split("\n").forEach((line) => {
+    const parts = line.trim().split(/\s+/);
+    if (parts[0] === "v") {
+      vertices.push([parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3])]);
+    } else if (parts[0] === "f") {
+      const idx = parts.slice(1).map((p) => parseInt(p.split("/")[0]) - 1);
+      for (let i = 1; i < idx.length - 1; i++) {
+        const v1 = vertices[idx[0]], v2 = vertices[idx[i]], v3 = vertices[idx[i + 1]];
+        if (v1 && v2 && v3) {
+          volume += (v1[0] * (v2[1] * v3[2] - v2[2] * v3[1]) + v2[0] * (v3[1] * v1[2] - v3[2] * v1[1]) + v3[0] * (v1[1] * v2[2] - v1[2] * v2[1])) / 6;
+        }
+      }
+    }
+  });
+  return Math.abs(volume) / 1000;
+}
+
+async function calc3mfVolumeCm3(file: File): Promise<number> {
+  try {
+    const JSZip = (await import("jszip")).default;
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const modelFile = zip.file(/3D\/.*\.model$/i)[0];
+    if (!modelFile) return 0;
+    const xml = await modelFile.async("text");
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, "text/xml");
+    const vertices: [number, number, number][] = [];
+    Array.from(doc.querySelectorAll("vertex")).forEach((v) => {
+      vertices.push([parseFloat(v.getAttribute("x")!), parseFloat(v.getAttribute("y")!), parseFloat(v.getAttribute("z")!)]);
+    });
+    let volume = 0;
+    Array.from(doc.querySelectorAll("triangle")).forEach((t) => {
+      const a = parseInt(t.getAttribute("v1")!), b = parseInt(t.getAttribute("v2")!), c = parseInt(t.getAttribute("v3")!);
+      const v1 = vertices[a], v2 = vertices[b], v3 = vertices[c];
+      if (v1 && v2 && v3) {
+        volume += (v1[0] * (v2[1] * v3[2] - v2[2] * v3[1]) + v2[0] * (v3[1] * v1[2] - v3[2] * v1[1]) + v3[0] * (v1[1] * v2[2] - v1[2] * v2[1])) / 6;
+      }
+    });
+    return Math.abs(volume) / 1000;
+  } catch {
+    return 0;
+  }
+}
+
+function isStepFile(name: string): boolean {
+  const ext = name.split(".").pop()?.toLowerCase();
+  return ext === "step" || ext === "stp";
 }
 
 const CalculatorOnlinePage = () => {
@@ -157,8 +210,9 @@ const CalculatorOnlinePage = () => {
     const defaultMatId = defaultMat?.id || "";
     const defaultMatName = defaultMat?.name || "";
     const defaultColor = defaultMat?.farben?.[0] || "";
-    const isStl = /\.stl$/i.test(file.name);
-    const previewUrl = isStl ? URL.createObjectURL(file) : undefined;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const previewable = ext === "stl" || ext === "obj" || ext === "3mf";
+    const previewUrl = previewable ? URL.createObjectURL(file) : undefined;
 
     setParts((p) => [
       ...p,
@@ -172,20 +226,33 @@ const CalculatorOnlinePage = () => {
         infill: 20,
         quantity: 1,
         volumeCm3: 0,
-        manualWeightG: isStl ? undefined : undefined,
-        isStl,
+        hasVolume: false,
+        estimatedWeight: 0,
         previewUrl,
       },
     ]);
 
-    // STL volume berechnen
-    if (isStl) {
-      try {
-        const vol = await calcStlVolumeCm3(file);
-        setParts((p) => p.map((x) => (x.id === id ? { ...x, volumeCm3: vol } : x)));
-      } catch (err) {
-        console.warn("Volumen-Berechnung fehlgeschlagen", err);
+    // Volumen berechnen
+    try {
+      let vol = 0;
+      if (ext === "stl") vol = await calcStlVolumeCm3(file);
+      else if (ext === "obj") vol = await calcObjVolumeCm3(file);
+      else if (ext === "3mf") vol = await calc3mfVolumeCm3(file);
+
+      if (vol > 0) {
+        const mat = materials[0];
+        const fillFactor = 0.25 + 0.75 * 0.20;
+        const weightG = mat
+          ? Math.max(1, Math.round(vol * mat.density * fillFactor * 10) / 10)
+          : 0;
+        setParts((p) =>
+          p.map((x) =>
+            x.id === id ? { ...x, volumeCm3: vol, hasVolume: true, estimatedWeight: weightG } : x,
+          ),
+        );
       }
+    } catch (err) {
+      console.warn("Volumen-Berechnung fehlgeschlagen", err);
     }
 
     // Upload im Hintergrund
@@ -236,10 +303,20 @@ const CalculatorOnlinePage = () => {
   };
 
   const update = (id: string, u: Partial<Part>) => {
+    const currentPart = parts.find((x) => x.id === id);
+    if (currentPart && currentPart.volumeCm3 > 0 && (u.infill !== undefined || u.materialId !== undefined)) {
+      const newInfill = u.infill ?? currentPart.infill;
+      const newMatId = u.materialId ?? currentPart.materialId;
+      const mat = materials.find((m) => m.id === newMatId);
+      if (mat) {
+        const fillFactor = 0.25 + 0.75 * (newInfill / 100);
+        const newWeight = Math.max(1, Math.round(currentPart.volumeCm3 * mat.density * fillFactor * 10) / 10);
+        u = { ...u, estimatedWeight: newWeight };
+      }
+    }
     setParts((p) => p.map((x) => {
       if (x.id !== id) return x;
       const next = { ...x, ...u };
-      // Wenn Material gewechselt wurde: Farbe ggf. auf erste verfügbare Farbe setzen
       if (u.materialId !== undefined && u.materialId !== x.materialId) {
         const newMat = materials.find((m) => m.id === u.materialId);
         const avail = newMat?.farben || [];
@@ -267,23 +344,18 @@ const CalculatorOnlinePage = () => {
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
-    if (!mat) return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
-    const shellRatio = 0.25;
-    const infillRatio = p.infill / 100;
-    const fillFactor = shellRatio + (1 - shellRatio) * infillRatio;
-    let weight = 0;
-    if (p.isStl && p.volumeCm3 > 0) {
-      weight = p.volumeCm3 * mat.density * fillFactor;
-    } else if (p.manualWeightG && p.manualWeightG > 0) {
-      weight = p.manualWeightG * fillFactor;
+    if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
+      return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
     }
+    const weight = p.estimatedWeight;
     const matCost = weight * mat.pricePerGram;
-    const unit = matCost; // Setup-Gebühr separat unten
+    const unit = matCost;
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount };
   };
+
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
@@ -433,13 +505,11 @@ const CalculatorOnlinePage = () => {
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{p.fileName}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {p.isStl && p.volumeCm3 > 0
+                            {p.hasVolume && p.volumeCm3 > 0
                               ? <>Volumen: {p.volumeCm3.toFixed(1)} cm³ · Gewicht: ~{calc.weight.toFixed(1)}g</>
-                              : !p.isStl && p.manualWeightG
-                                ? <>Gewicht: ~{calc.weight.toFixed(1)}g</>
-                                : p.isStl
-                                  ? <>Volumen wird berechnet…</>
-                                  : <>Bitte Gewicht eintragen</>}
+                              : isStepFile(p.fileName)
+                                ? <>STEP-Datei · Preis auf Anfrage</>
+                                : <>Volumen wird berechnet…</>}
                             {p.uploading && <span className="ml-2 text-primary">· Datei wird hochgeladen…</span>}
                             {!p.uploading && p.storagePath && <span className="ml-2 text-success">· Datei bereit</span>}
                             {!p.uploading && !p.storagePath && (
@@ -528,19 +598,19 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
 
-                    {/* Manuelles Gewicht für non-STL */}
-                    {!p.isStl && (
-                      <div className="mt-4">
-                        <Label className="text-xs">Gewicht</Label>
-                        <Input
-                          type="number"
-                          min={0}
-                          step="0.1"
-                          value={p.manualWeightG ?? ""}
-                          onChange={(e) => update(p.id, { manualWeightG: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)) })}
-                          placeholder="Gewicht in Gramm (aus Slicer)"
-                          className="mt-1"
-                        />
+                    {/* STEP-Hinweis */}
+                    {isStepFile(p.fileName) && (
+                      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+                        <p className="font-medium text-amber-800">⚠️ STEP-Dateien können nicht automatisch berechnet werden.</p>
+                        <p className="text-amber-700 text-xs mt-1">Konvertiere deine Datei zu STL für eine automatische Preisberechnung.</p>
+                        <a
+                          href="https://www.cadexchanger.com/convert/step-to-stl/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary font-medium mt-2 hover:underline"
+                        >
+                          Kostenlos zu STL konvertieren →
+                        </a>
                       </div>
                     )}
 
@@ -557,10 +627,11 @@ const CalculatorOnlinePage = () => {
 
                     <div className="mt-4 flex items-center justify-between pt-3 border-t border-border">
                       <span className="text-xs text-muted-foreground">
-                        Stückpreis: {CHF(calc.unit)}
-                        {calc.discount > 0 && ` · ${calc.discount * 100}% Rabatt`}
+                        {isStepFile(p.fileName) ? "Preis nach Prüfung" : <>Stückpreis: {CHF(calc.unit)}{calc.discount > 0 && ` · ${calc.discount * 100}% Rabatt`}</>}
                       </span>
-                      <span className="text-lg font-bold text-primary">{CHF(calc.subtotal)}</span>
+                      <span className="text-lg font-bold text-primary">
+                        {isStepFile(p.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -583,7 +654,7 @@ const CalculatorOnlinePage = () => {
                     {calcs.map(({ part, calc }, i) => (
                       <div key={part.id} className="flex justify-between gap-2 text-xs text-muted-foreground">
                         <span className="truncate">Teil {i + 1}: {part.fileName} ({part.quantity}×)</span>
-                        <span className="text-foreground shrink-0">{CHF(calc.subtotal)}</span>
+                        <span className="text-foreground shrink-0">{isStepFile(part.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}</span>
                       </div>
                     ))}
                   </div>
