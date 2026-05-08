@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote, Cpu, ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
