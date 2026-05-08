@@ -391,7 +391,7 @@ export default function EinstellungenPage() {
 
 
       {tab === "firma" && (
-        <div className="space-y-6 max-w-lg">
+        <div className="space-y-6 max-w-full md:max-w-lg">
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <h3 className="font-semibold text-sm">Firmendaten</h3>
             {([
