@@ -234,7 +234,19 @@ const CalculatorOnlinePage = () => {
   };
 
   const update = (id: string, u: Partial<Part>) => {
-    setParts((p) => p.map((x) => (x.id === id ? { ...x, ...u } : x)));
+    setParts((p) => p.map((x) => {
+      if (x.id !== id) return x;
+      const next = { ...x, ...u };
+      // Wenn Material gewechselt wurde: Farbe ggf. auf erste verfügbare Farbe setzen
+      if (u.materialId !== undefined && u.materialId !== x.materialId) {
+        const newMat = materials.find((m) => m.id === u.materialId);
+        const avail = newMat?.farben || [];
+        if (avail.length > 0 && !avail.includes(next.color)) {
+          next.color = avail[0];
+        }
+      }
+      return next;
+    }));
     const matName = u.materialId ? materials.find((m) => m.id === u.materialId)?.name : undefined;
     const patch: any = {};
     if (u.materialId !== undefined) { patch.material_id = u.materialId || null; patch.material_name = matName || null; }
