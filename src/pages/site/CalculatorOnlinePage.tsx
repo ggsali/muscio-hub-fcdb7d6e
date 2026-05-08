@@ -153,8 +153,10 @@ const CalculatorOnlinePage = () => {
 
   const addFile = useCallback(async (file: File) => {
     const id = crypto.randomUUID();
-    const defaultMatId = materials[0]?.id || "";
-    const defaultMatName = materials[0]?.name || "";
+    const defaultMat = materials[0];
+    const defaultMatId = defaultMat?.id || "";
+    const defaultMatName = defaultMat?.name || "";
+    const defaultColor = defaultMat?.farben?.[0] || "";
     const isStl = /\.stl$/i.test(file.name);
     const previewUrl = isStl ? URL.createObjectURL(file) : undefined;
 
@@ -166,7 +168,7 @@ const CalculatorOnlinePage = () => {
         file,
         uploading: true,
         materialId: defaultMatId,
-        color: "Weiss",
+        color: defaultColor,
         infill: 20,
         quantity: 1,
         volumeCm3: 0,
