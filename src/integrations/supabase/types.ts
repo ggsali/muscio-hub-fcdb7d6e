@@ -540,6 +540,7 @@ export type Database = {
           created_at: string
           density: number
           description: string | null
+          farben: string[]
           id: string
           name: string
           price_per_gram: number
@@ -552,6 +553,7 @@ export type Database = {
           created_at?: string
           density?: number
           description?: string | null
+          farben?: string[]
           id?: string
           name: string
           price_per_gram: number
@@ -564,6 +566,7 @@ export type Database = {
           created_at?: string
           density?: number
           description?: string | null
+          farben?: string[]
           id?: string
           name?: string
           price_per_gram?: number

@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { COLOR_MAP, colorHex } from "@/lib/colorMap";
+import { X } from "lucide-react";
 
 interface FaqEntry { frage: string; antwort: string; }
 interface MaterialPrice { material: string; preis_pro_g: number; }
-interface MaterialRow { id: string; name: string; tag: string; price_per_gram: number; density: number; description: string | null; aktiv: boolean; sort_order: number; _new?: boolean; }
+interface MaterialRow { id: string; name: string; tag: string; price_per_gram: number; density: number; description: string | null; aktiv: boolean; sort_order: number; farben: string[]; _new?: boolean; }
 
 export default function WebsiteEinstellungenPage() {
   const { toast } = useToast();
@@ -70,7 +72,7 @@ export default function WebsiteEinstellungenPage() {
   const addMaterial = () => {
     setMaterials(ms => [...ms, {
       id: `new-${crypto.randomUUID()}`,
-      name: "", tag: "FDM", price_per_gram: 0.05, density: 1.24,
+      name: "", tag: "FDM", price_per_gram: 0.05, density: 1.24, farben: [],
       description: "", aktiv: true, sort_order: (ms[ms.length - 1]?.sort_order ?? 0) + 1,
       _new: true,
     }]);
@@ -285,7 +287,8 @@ export default function WebsiteEinstellungenPage() {
             </thead>
             <tbody>
               {materials.map(m => (
-                <tr key={m.id} className="border-b border-border/50">
+                <React.Fragment key={m.id}>
+                <tr className="border-b border-border/30">
                   <td className="p-1"><Input value={m.name} onChange={e => updateMaterial(m.id, { name: e.target.value })} className="bg-input border-border h-9" /></td>
                   <td className="p-1">
                     <select value={m.tag} onChange={e => updateMaterial(m.id, { tag: e.target.value })} className="h-9 rounded-md border border-border bg-input px-2 text-sm">
@@ -302,11 +305,63 @@ export default function WebsiteEinstellungenPage() {
                     <button onClick={() => deleteMaterial(m)} className="text-destructive p-2 ml-1"><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
+                <tr className="border-b border-border/50 bg-muted/20">
+                  <td colSpan={7} className="p-3">
+                    <FarbenEditor
+                      farben={m.farben || []}
+                      onChange={(farben) => updateMaterial(m.id, { farben })}
+                    />
+                  </td>
+                </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
         </div>
       </section>
+    </div>
+  );
+}
+
+function FarbenEditor({ farben, onChange }: { farben: string[]; onChange: (f: string[]) => void }) {
+  const [input, setInput] = useState("");
+  const add = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed || farben.includes(trimmed)) return;
+    onChange([...farben, trimmed]);
+    setInput("");
+  };
+  const remove = (name: string) => onChange(farben.filter(f => f !== name));
+  const suggestions = Object.keys(COLOR_MAP).filter(c => !farben.includes(c));
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-medium text-muted-foreground">Verfügbare Farben</div>
+      <div className="flex flex-wrap gap-1.5">
+        {farben.length === 0 && <span className="text-xs text-muted-foreground italic">Keine Farben hinterlegt</span>}
+        {farben.map(name => (
+          <span key={name} className="inline-flex items-center gap-1.5 pl-1.5 pr-1 py-0.5 rounded-full border border-border bg-background text-xs">
+            <span className="w-3 h-3 rounded-full border border-border" style={{ backgroundColor: colorHex(name) }} />
+            {name}
+            <button type="button" onClick={() => remove(name)} className="hover:text-destructive p-0.5">
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-1.5">
+        <Input
+          list="farben-suggestions"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); add(input); } }}
+          placeholder="Farbname (z.B. Weiss)"
+          className="bg-input border-border h-8 text-sm max-w-xs"
+        />
+        <datalist id="farben-suggestions">
+          {suggestions.map(s => <option key={s} value={s} />)}
+        </datalist>
+        <Button type="button" size="sm" variant="outline" onClick={() => add(input)}>Hinzufügen</Button>
+      </div>
     </div>
   );
 }

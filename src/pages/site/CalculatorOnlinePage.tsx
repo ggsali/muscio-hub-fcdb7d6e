@@ -11,28 +11,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import StlPreview from "@/components/site/StlPreview";
+import { colorHex } from "@/lib/colorMap";
 
 interface Material {
   id: string;
   name: string;
   pricePerGram: number;
   density: number;
+  farben: string[];
 }
-
-const COLORS: { name: string; hex: string }[] = [
-  { name: "Weiss", hex: "#FFFFFF" },
-  { name: "Schwarz", hex: "#111111" },
-  { name: "Grau", hex: "#9CA3AF" },
-  { name: "Rot", hex: "#DC2626" },
-  { name: "Blau", hex: "#2563EB" },
-  { name: "Grün", hex: "#16A34A" },
-  { name: "Gelb", hex: "#FACC15" },
-  { name: "Orange", hex: "#F97316" },
-  { name: "Violett", hex: "#7C3AED" },
-  { name: "Pink", hex: "#EC4899" },
-  { name: "Türkis", hex: "#06B6D4" },
-  { name: "Braun", hex: "#92400E" },
-];
 
 const QUALITY_PRESETS: { key: string; label: string; infill: number; desc: string }[] = [
   { key: "schnell", label: "Schnell", infill: 15, desc: "Schnell = leicht & günstig" },
@@ -109,29 +96,39 @@ const CalculatorOnlinePage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
 
-  useEffect(() => {
-    (async () => {
-      setMaterialsLoading(true);
-      const { data, error } = await supabase
-        .from("materials")
-        .select("*")
-        .eq("aktiv", true)
-        .order("sort_order");
-      if (error) {
-        setMaterialsError("Materialien konnten nicht geladen werden.");
-      } else if (data) {
-        setMaterials(
-          data.map((m: any) => ({
-            id: m.id,
-            name: m.name,
-            pricePerGram: Number(m.price_per_gram),
-            density: Number(m.density),
-          })),
-        );
-      }
-      setMaterialsLoading(false);
-    })();
+  const loadMaterials = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("materials")
+      .select("*")
+      .eq("aktiv", true)
+      .order("sort_order");
+    if (error) {
+      setMaterialsError("Materialien konnten nicht geladen werden.");
+    } else if (data) {
+      setMaterials(
+        data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          pricePerGram: Number(m.price_per_gram),
+          density: Number(m.density),
+          farben: Array.isArray(m.farben) ? m.farben : [],
+        })),
+      );
+    }
+    setMaterialsLoading(false);
   }, []);
+
+  useEffect(() => {
+    setMaterialsLoading(true);
+    loadMaterials();
+    const channel = supabase
+      .channel("materials-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "materials" }, () => {
+        loadMaterials();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loadMaterials]);
 
   useEffect(() => {
     (async () => {
@@ -156,8 +153,10 @@ const CalculatorOnlinePage = () => {
 
   const addFile = useCallback(async (file: File) => {
     const id = crypto.randomUUID();
-    const defaultMatId = materials[0]?.id || "";
-    const defaultMatName = materials[0]?.name || "";
+    const defaultMat = materials[0];
+    const defaultMatId = defaultMat?.id || "";
+    const defaultMatName = defaultMat?.name || "";
+    const defaultColor = defaultMat?.farben?.[0] || "";
     const isStl = /\.stl$/i.test(file.name);
     const previewUrl = isStl ? URL.createObjectURL(file) : undefined;
 
@@ -169,7 +168,7 @@ const CalculatorOnlinePage = () => {
         file,
         uploading: true,
         materialId: defaultMatId,
-        color: "Weiss",
+        color: defaultColor,
         infill: 20,
         quantity: 1,
         volumeCm3: 0,
@@ -237,7 +236,19 @@ const CalculatorOnlinePage = () => {
   };
 
   const update = (id: string, u: Partial<Part>) => {
-    setParts((p) => p.map((x) => (x.id === id ? { ...x, ...u } : x)));
+    setParts((p) => p.map((x) => {
+      if (x.id !== id) return x;
+      const next = { ...x, ...u };
+      // Wenn Material gewechselt wurde: Farbe ggf. auf erste verfügbare Farbe setzen
+      if (u.materialId !== undefined && u.materialId !== x.materialId) {
+        const newMat = materials.find((m) => m.id === u.materialId);
+        const avail = newMat?.farben || [];
+        if (avail.length > 0 && !avail.includes(next.color)) {
+          next.color = avail[0];
+        }
+      }
+      return next;
+    }));
     const matName = u.materialId ? materials.find((m) => m.id === u.materialId)?.name : undefined;
     const patch: any = {};
     if (u.materialId !== undefined) { patch.material_id = u.materialId || null; patch.material_name = matName || null; }
@@ -483,28 +494,14 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
 
-                    {/* Farbauswahl als Punkte */}
+                    {/* Farbauswahl als Punkte (dynamisch aus Material) */}
                     <div className="mt-4">
                       <Label className="text-xs">Farbe</Label>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {COLORS.map((c) => {
-                          const selected = p.color === c.name;
-                          return (
-                            <Tooltip key={c.name}>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={() => update(p.id, { color: c.name })}
-                                  className={`w-7 h-7 rounded-full border-2 transition-all ${selected ? "border-primary ring-2 ring-primary/30 scale-110" : "border-border hover:border-foreground/40"}`}
-                                  style={{ backgroundColor: c.hex }}
-                                  aria-label={c.name}
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>{c.name}</TooltipContent>
-                            </Tooltip>
-                          );
-                        })}
-                      </div>
+                      <ColorPicker
+                        farben={materials.find((m) => m.id === p.materialId)?.farben || []}
+                        selected={p.color}
+                        onSelect={(c) => update(p.id, { color: c })}
+                      />
                     </div>
 
                     {/* Qualitätsstufen */}
@@ -701,3 +698,44 @@ const CalculatorOnlinePage = () => {
 };
 
 export default CalculatorOnlinePage;
+
+function ColorPicker({ farben, selected, onSelect }: { farben: string[]; selected: string; onSelect: (c: string) => void }) {
+  const [showAll, setShowAll] = useState(false);
+  if (farben.length === 0) {
+    return <p className="mt-2 text-xs text-muted-foreground italic">Farbe auf Anfrage</p>;
+  }
+  const visible = showAll ? farben : farben.slice(0, 8);
+  const hiddenCount = farben.length - visible.length;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      {visible.map((name) => {
+        const sel = selected === name;
+        const isWeiss = name === "Weiss";
+        return (
+          <button
+            key={name}
+            type="button"
+            title={name}
+            onClick={() => onSelect(name)}
+            aria-label={name}
+            className={`w-7 h-7 rounded-full border-2 transition-all ${
+              sel
+                ? "border-primary ring-2 ring-primary/30 scale-110"
+                : `border-border hover:border-primary/50 ${isWeiss ? "border-gray-200" : ""}`
+            }`}
+            style={{ backgroundColor: colorHex(name) }}
+          />
+        );
+      })}
+      {!showAll && hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="h-7 px-2 rounded-full border border-border text-xs text-muted-foreground hover:bg-muted"
+        >
+          +{hiddenCount} mehr
+        </button>
+      )}
+    </div>
+  );
+}
