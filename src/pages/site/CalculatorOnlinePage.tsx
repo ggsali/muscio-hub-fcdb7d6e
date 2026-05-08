@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight } from "lucide-react";
+import { Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight, FileText, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import StlPreview from "@/components/site/StlPreview";
 
 interface Material {
   id: string;
