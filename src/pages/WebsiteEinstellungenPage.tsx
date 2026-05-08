@@ -416,6 +416,22 @@ export default function WebsiteEinstellungenPage() {
           <Plus className="w-3.5 h-3.5" />Eintrag hinzufügen
         </Button>
       </section>
+
+      {/* Benachrichtigungen */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <h3 className="font-semibold">Benachrichtigungen</h3>
+        <p className="text-sm text-muted-foreground">
+          Wenn ein Kunde im Live-Chat auf "Mit Team sprechen" klickt, wird eine E-Mail an <strong>info@3dmuscio.com</strong> gesendet — aber nur während der Öffnungszeiten.
+        </p>
+        <div className="bg-muted/30 border border-border rounded-md p-4 text-sm space-y-1">
+          <div className="flex justify-between"><span className="font-medium">Mo–Fr</span><span>08:00–18:00</span></div>
+          <div className="flex justify-between"><span className="font-medium">Sa</span><span>09:00–14:00</span></div>
+          <div className="flex justify-between text-muted-foreground"><span className="font-medium">So</span><span>Geschlossen</span></div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          ℹ️ Benachrichtigungen werden nur während dieser Zeiten gesendet. Ausserhalb erhält der Kunde im Chat einen Hinweis auf die Öffnungszeiten.
+        </p>
+      </section>
     </div>
   );
 }

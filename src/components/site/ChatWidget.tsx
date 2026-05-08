@@ -152,6 +152,32 @@ export function ChatWidget() {
     setLoading(false);
   };
 
+  const requestLiveChat = async () => {
+    let sid = sessionId;
+    if (!sid) {
+      if (!userInfo.name) {
+        setInfoStep(true);
+        return;
+      }
+      sid = await createSession(userInfo.name, userInfo.email);
+      if (!sid) return;
+    }
+    try {
+      const { data } = await supabase.functions.invoke("send-sms-notification", {
+        body: { customerName: userInfo.name, customerEmail: userInfo.email, sessionId: sid },
+      });
+      const inside = (data as any)?.insideOpeningHours !== false;
+      const content = inside
+        ? "Danke! Unser Team wurde benachrichtigt und meldet sich gleich bei dir."
+        : "Unser Team ist aktuell nicht verfügbar. Öffnungszeiten: Mo–Fr 08–18 Uhr, Sa 09–14 Uhr. Wir melden uns beim nächsten Werktag! Du kannst uns auch direkt schreiben: info@3dmuscio.com";
+      const msg: Message = { role: "assistant", content };
+      setMessages(prev => [...prev, msg]);
+      await saveMessage(sid, "assistant", content);
+    } catch (e: any) {
+      setMessages(prev => [...prev, { role: "assistant", content: `Fehler: ${e.message}` }]);
+    }
+  };
+
   const handleInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userInfo.name.trim()) return;
@@ -193,6 +219,12 @@ export function ChatWidget() {
                 <Bot className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Hallo! Wie kann ich dir helfen?</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">Frag mich zu 3D-Druck, Preisen oder Bestellungen.</p>
+                <button
+                  onClick={requestLiveChat}
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                >
+                  <User className="w-3.5 h-3.5" /> Mit Team sprechen
+                </button>
               </div>
             )}
 
@@ -276,6 +308,17 @@ export function ChatWidget() {
             ))}
             <div ref={bottomRef} />
           </div>
+
+          {!infoStep && messages.length > 0 && (
+            <div className="px-3 pt-2 flex-shrink-0">
+              <button
+                onClick={requestLiveChat}
+                className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1"
+              >
+                <User className="w-3 h-3" /> Mit Team sprechen
+              </button>
+            </div>
+          )}
 
           {!infoStep && (
             <div className="p-3 border-t border-border flex gap-2 flex-shrink-0">
