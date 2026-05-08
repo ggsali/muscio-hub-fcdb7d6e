@@ -598,19 +598,19 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
 
-                    {/* Manuelles Gewicht für non-STL */}
-                    {!p.isStl && (
-                      <div className="mt-4">
-                        <Label className="text-xs">Gewicht</Label>
-                        <Input
-                          type="number"
-                          min={0}
-                          step="0.1"
-                          value={p.manualWeightG ?? ""}
-                          onChange={(e) => update(p.id, { manualWeightG: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)) })}
-                          placeholder="Gewicht in Gramm (aus Slicer)"
-                          className="mt-1"
-                        />
+                    {/* STEP-Hinweis */}
+                    {isStepFile(p.fileName) && (
+                      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+                        <p className="font-medium text-amber-800">⚠️ STEP-Dateien können nicht automatisch berechnet werden.</p>
+                        <p className="text-amber-700 text-xs mt-1">Konvertiere deine Datei zu STL für eine automatische Preisberechnung.</p>
+                        <a
+                          href="https://www.cadexchanger.com/convert/step-to-stl/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary font-medium mt-2 hover:underline"
+                        >
+                          Kostenlos zu STL konvertieren →
+                        </a>
                       </div>
                     )}
 
