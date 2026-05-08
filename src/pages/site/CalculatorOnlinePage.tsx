@@ -848,7 +848,7 @@ function ColorPicker({ farben, selected, onSelect }: { farben: string[]; selecte
             title={name}
             onClick={() => onSelect(name)}
             aria-label={name}
-            className={`w-7 h-7 rounded-full border-2 transition-all ${
+            className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full border-2 transition-all ${
               sel
                 ? "border-primary ring-2 ring-primary/30 scale-110"
                 : `border-border hover:border-primary/50 ${isWeiss ? "border-gray-200" : ""}`
