@@ -11,28 +11,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import StlPreview from "@/components/site/StlPreview";
+import { colorHex } from "@/lib/colorMap";
 
 interface Material {
   id: string;
   name: string;
   pricePerGram: number;
   density: number;
+  farben: string[];
 }
-
-const COLORS: { name: string; hex: string }[] = [
-  { name: "Weiss", hex: "#FFFFFF" },
-  { name: "Schwarz", hex: "#111111" },
-  { name: "Grau", hex: "#9CA3AF" },
-  { name: "Rot", hex: "#DC2626" },
-  { name: "Blau", hex: "#2563EB" },
-  { name: "Grün", hex: "#16A34A" },
-  { name: "Gelb", hex: "#FACC15" },
-  { name: "Orange", hex: "#F97316" },
-  { name: "Violett", hex: "#7C3AED" },
-  { name: "Pink", hex: "#EC4899" },
-  { name: "Türkis", hex: "#06B6D4" },
-  { name: "Braun", hex: "#92400E" },
-];
 
 const QUALITY_PRESETS: { key: string; label: string; infill: number; desc: string }[] = [
   { key: "schnell", label: "Schnell", infill: 15, desc: "Schnell = leicht & günstig" },
