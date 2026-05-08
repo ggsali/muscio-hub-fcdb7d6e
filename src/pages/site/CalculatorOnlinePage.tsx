@@ -363,6 +363,16 @@ const CalculatorOnlinePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Upload + parts */}
           <div className="lg:col-span-2 space-y-6">
+            <div className="rounded-2xl border border-border bg-primary/5 p-4 flex items-start gap-3">
+              <Layers className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div>
+                <Badge className="mb-1">Mehrere Teile möglich</Badge>
+                <p className="text-sm text-muted-foreground">
+                  Lade mehrere STL-Dateien hoch — jedes Teil wird separat konfiguriert und kalkuliert.
+                </p>
+              </div>
+            </div>
+
             <div
               onDrop={handleDrop}
               onDragOver={(e) => {
