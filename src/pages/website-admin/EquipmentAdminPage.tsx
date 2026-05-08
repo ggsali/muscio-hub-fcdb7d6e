@@ -166,10 +166,17 @@ export default function EquipmentAdminPage() {
             <div>
               <Label>3D-Modell (.glb / .gltf)</Label>
               <Input type="file" accept=".glb,.gltf,.3mf,.obj,model/gltf-binary,model/gltf+json" onChange={e => setModelFile(e.target.files?.[0] || null)} />
-              {editing.modell_url && !modelFile && (
+              {(editing.modell_url || modelFile) && (
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-xs text-muted-foreground truncate flex-1">Aktuell: {editing.modell_url.split("/").pop()}</p>
-                  <Button size="sm" variant="outline" onClick={() => setCalibration({ url: editing.modell_url!, rotation: editing.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } })}>Ausrichten</Button>
+                  <p className="text-xs text-muted-foreground truncate flex-1">
+                    {modelFile ? modelFile.name : editing.modell_url?.split("/").pop()}
+                  </p>
+                  {editing.modell_url && !modelFile && (
+                    <Button size="sm" variant="outline" onClick={() => setCalibration({ url: editing.modell_url!, rotation: editing.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } })}>Ausrichten</Button>
+                  )}
+                  {modelFile && (
+                    <p className="text-xs text-primary">Zuerst speichern, dann ausrichten</p>
+                  )}
                 </div>
               )}
             </div>
