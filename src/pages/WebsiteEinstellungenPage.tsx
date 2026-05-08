@@ -319,6 +319,17 @@ export default function WebsiteEinstellungenPage() {
           </table>
         </div>
       </section>
+
+      {/* Marquee / Ticker Hinweis */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-2">
+        <h3 className="font-semibold">Ticker / Marquee</h3>
+        <p className="text-sm text-muted-foreground">
+          ℹ️ Materialien werden automatisch aus „Materialien & Preise" synchronisiert.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Hier kannst du zusätzliche Einträge wie „48h Lieferung", „Swiss Made" etc. verwalten.
+        </p>
+      </section>
     </div>
   );
 }
