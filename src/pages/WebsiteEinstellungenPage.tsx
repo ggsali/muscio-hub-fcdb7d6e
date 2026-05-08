@@ -70,7 +70,7 @@ export default function WebsiteEinstellungenPage() {
   const addMaterial = () => {
     setMaterials(ms => [...ms, {
       id: `new-${crypto.randomUUID()}`,
-      name: "", tag: "FDM", price_per_gram: 0.05, density: 1.24,
+      name: "", tag: "FDM", price_per_gram: 0.05, density: 1.24, farben: [],
       description: "", aktiv: true, sort_order: (ms[ms.length - 1]?.sort_order ?? 0) + 1,
       _new: true,
     }]);
