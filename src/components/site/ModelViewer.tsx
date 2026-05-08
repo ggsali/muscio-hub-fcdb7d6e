@@ -28,13 +28,19 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     container.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const key = new THREE.DirectionalLight(0xffffff, 1.2);
-    key.position.set(120, 180, 200);
-    scene.add(key);
-    const fill = new THREE.DirectionalLight(0xff8a3d, 0.35);
-    fill.position.set(-150, -80, 80);
-    scene.add(fill);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(2, 4, 3);
+    scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    fillLight.position.set(-2, 1, -1);
+    scene.add(fillLight);
+
+    const groundLight = new THREE.DirectionalLight(0xffffff, 0.15);
+    groundLight.position.set(0, -1, 0);
+    scene.add(groundLight);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
     if (showAxes) {
       const mkAxis = (a: [number, number, number], b: [number, number, number], color: number) => {
@@ -87,17 +93,29 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
 
         const shadowBox = new THREE.Box3().setFromObject(gltf.scene);
         const shadowSize = shadowBox.getSize(new THREE.Vector3());
-        const shadowGeo = new THREE.CircleGeometry(Math.max(shadowSize.x, shadowSize.z) * 0.6, 32);
-        const shadowMat = new THREE.MeshBasicMaterial({
-          color: 0x000000,
-          transparent: true,
-          opacity: 0.08,
-          side: THREE.DoubleSide,
+        const shadowCenter = shadowBox.getCenter(new THREE.Vector3());
+        const shadowRadius = Math.max(shadowSize.x, shadowSize.z) * 0.55;
+
+        const shadows = [
+          { radius: shadowRadius * 1.0, opacity: 0.12, scale: 1.0 },
+          { radius: shadowRadius * 0.7, opacity: 0.08, scale: 0.8 },
+          { radius: shadowRadius * 0.4, opacity: 0.06, scale: 0.5 },
+        ];
+
+        shadows.forEach(({ radius, opacity, scale }) => {
+          const geo = new THREE.CircleGeometry(radius, 64);
+          const mat = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            transparent: true,
+            opacity,
+            depthWrite: false,
+          });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.rotation.x = -Math.PI / 2;
+          mesh.position.set(shadowCenter.x, shadowBox.min.y + 0.01, shadowCenter.z);
+          mesh.scale.set(scale, 1, scale);
+          scene.add(mesh);
         });
-        const shadow = new THREE.Mesh(shadowGeo, shadowMat);
-        shadow.rotation.x = -Math.PI / 2;
-        shadow.position.y = shadowBox.min.y - 0.1;
-        scene.add(shadow);
 
         const maxDim = Math.max(size.x, size.y, size.z);
         camera.position.set(0, maxDim * 0.5, maxDim * 2);
