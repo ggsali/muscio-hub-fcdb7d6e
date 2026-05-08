@@ -627,10 +627,11 @@ const CalculatorOnlinePage = () => {
 
                     <div className="mt-4 flex items-center justify-between pt-3 border-t border-border">
                       <span className="text-xs text-muted-foreground">
-                        Stückpreis: {CHF(calc.unit)}
-                        {calc.discount > 0 && ` · ${calc.discount * 100}% Rabatt`}
+                        {isStepFile(p.fileName) ? "Preis nach Prüfung" : <>Stückpreis: {CHF(calc.unit)}{calc.discount > 0 && ` · ${calc.discount * 100}% Rabatt`}</>}
                       </span>
-                      <span className="text-lg font-bold text-primary">{CHF(calc.subtotal)}</span>
+                      <span className="text-lg font-bold text-primary">
+                        {isStepFile(p.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}
+                      </span>
                     </div>
                   </div>
                 ))}
