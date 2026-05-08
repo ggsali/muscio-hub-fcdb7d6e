@@ -61,7 +61,7 @@ export default function BlogPage() {
                   to={`/blog/${p.slug}`}
                   className="group block rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/50 transition-all"
                 >
-                  <div className="aspect-[16/9] bg-muted relative">
+                  <div className="h-[160px] md:h-auto md:aspect-[16/9] bg-muted relative">
                     {p.titelbild_url ? (
                       <img src={p.titelbild_url} alt={p.titel} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     ) : (
