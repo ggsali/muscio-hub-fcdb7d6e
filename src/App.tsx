@@ -70,6 +70,8 @@ import NavigationAdminPage from "@/pages/website-admin/NavigationAdminPage";
 import TimelineAdminPage from "@/pages/website-admin/TimelineAdminPage";
 import ShopProdukteAdminPage from "@/pages/website-admin/ShopProdukteAdminPage";
 import BlogAdminPage from "@/pages/website-admin/BlogAdminPage";
+import EquipmentAdminPage from "@/pages/website-admin/EquipmentAdminPage";
+import EquipmentPage from "@/pages/site/EquipmentPage";
 
 const queryClient = new QueryClient();
 
@@ -123,6 +125,7 @@ const App = () => (
                 <Route path="/projekte/:slug" element={<ProjektDetailPage />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
+                <Route path="/maschinen" element={<EquipmentPage />} />
               </Route>
 
               {/* Auth */}
@@ -177,6 +180,7 @@ const App = () => (
                 <Route path="timeline" element={<TimelineAdminPage />} />
                 <Route path="navigation" element={<NavigationAdminPage />} />
                 <Route path="kunden" element={<WebsiteKundenAdminPage />} />
+                <Route path="equipment" element={<EquipmentAdminPage />} />
                 <Route path="chat" element={<ChatPage />} />
                 
                 <Route path="einstellungen" element={<WebsiteEinstellungenPage />} />
