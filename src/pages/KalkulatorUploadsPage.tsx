@@ -126,9 +126,9 @@ const KalkulatorUploadsPage = () => {
 
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-muted-foreground">Lade…</div>
+          <div className="p-4 md:p-8 text-center text-muted-foreground">Lade…</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">Noch keine Uploads vorhanden.</div>
+          <div className="p-4 md:p-8 text-center text-muted-foreground">Noch keine Uploads vorhanden.</div>
         ) : (
           <div className="divide-y divide-border">
             {filtered.map((item) => (

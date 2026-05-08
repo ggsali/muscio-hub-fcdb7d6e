@@ -124,7 +124,7 @@ export default function TimelineAdminPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-4xl">
+    <div className="p-4 md:p-6 md:p-8 max-w-4xl">
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -139,7 +139,7 @@ export default function TimelineAdminPage() {
       {loading ? (
         <div className="text-sm text-muted-foreground">Lade…</div>
       ) : events.length === 0 ? (
-        <div className="text-sm text-muted-foreground border border-dashed border-border rounded-xl p-8 text-center">
+        <div className="text-sm text-muted-foreground border border-dashed border-border rounded-xl p-4 md:p-8 text-center">
           Noch keine Ereignisse. Klick "Neues Ereignis", um zu starten.
         </div>
       ) : (

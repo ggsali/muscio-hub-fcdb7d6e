@@ -207,7 +207,7 @@ export default function KundeDetailPage() {
   const totalGewinn = orders.reduce((s, o) => s + o.gewinn_total, 0);
   const avgMarge = orders.length ? orders.reduce((s, o) => s + o.marge, 0) / orders.length : 0;
 
-  if (loading) return <div className="p-8 text-muted-foreground">Laden...</div>;
+  if (loading) return <div className="p-4 md:p-8 text-muted-foreground">Laden...</div>;
 
   const handleDelete = async () => {
     if (!id || isNew) return;
@@ -233,7 +233,7 @@ export default function KundeDetailPage() {
   );
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="p-4 md:p-6 space-y-6 animate-fade-in">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate("/admin/kunden")} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
@@ -310,7 +310,7 @@ export default function KundeDetailPage() {
           {/* Person */}
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Person</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {field("Vorname", "vorname", "Max")}
               {field("Nachname *", "name", "Mustermann")}
               {field("Firma / Organisation", "firma", "Mustermann GmbH", 2)}
@@ -320,7 +320,7 @@ export default function KundeDetailPage() {
           {/* Kontakt */}
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Kontakt</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {field("E-Mail", "email", "max@beispiel.ch")}
               {field("Telefon", "telefon", "+41 79 123 45 67")}
             </div>
@@ -329,7 +329,7 @@ export default function KundeDetailPage() {
           {/* Adresse */}
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Adresse</h3>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="col-span-3 space-y-1.5">
                 <Label>Strasse</Label>
                 <Input value={customer.strasse || ""} onChange={e => setCustomer({ ...customer, strasse: e.target.value })} disabled={!editing} placeholder="Musterstrasse" className="bg-input border-border" />
@@ -379,7 +379,7 @@ export default function KundeDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2 md:col-span-1">
             {inquiries.length === 0 ? (
-              <div className="bg-card border border-border rounded-lg p-6 text-center text-muted-foreground text-sm">
+              <div className="bg-card border border-border rounded-lg p-4 md:p-6 text-center text-muted-foreground text-sm">
                 Keine Anfragen
               </div>
             ) : inquiries.map(inq => (
@@ -401,7 +401,7 @@ export default function KundeDetailPage() {
             {(() => {
               const sel = inquiries.find(i => i.id === selectedInquiryId) || inquiries[0];
               if (!sel) return (
-                <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+                <div className="bg-card border border-border rounded-lg p-4 md:p-8 text-center text-muted-foreground text-sm">
                   <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" /> Anfrage auswählen
                 </div>
               );
@@ -445,7 +445,7 @@ export default function KundeDetailPage() {
       {/* Auftraege Tab */}
       {activeTab === "auftraege" && !isNew && (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="kpi-card">
               <div className="text-xs text-muted-foreground">Umsatz Total</div>
               <div className="text-lg font-bold">{formatCHF(totalUmsatz)}</div>
@@ -490,7 +490,7 @@ export default function KundeDetailPage() {
       {activeTab === "dateien" && !isNew && (
         <div className="space-y-2">
           {files.length === 0 ? (
-            <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+            <div className="bg-card border border-border rounded-lg p-4 md:p-8 text-center text-muted-foreground text-sm">
               Keine Dateien für diesen Kunden vorhanden.
             </div>
           ) : (

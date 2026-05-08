@@ -60,10 +60,10 @@ export default function BlogAdminPage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-foreground mb-1 flex items-center gap-2"><FileText className="w-6 h-6 text-primary" /> Blog / News</h1>
+          <h1 className="font-heading text-xl md:text-3xl font-bold text-foreground mb-1 flex items-center gap-2"><FileText className="w-6 h-6 text-primary" /> Blog / News</h1>
           <p className="text-muted-foreground">Beiträge erstellen und veröffentlichen.</p>
         </div>
         <Button onClick={() => setEditing({
@@ -102,7 +102,7 @@ export default function BlogAdminPage() {
 
       {editing && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" onClick={() => setEditing(null)}>
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-5xl w-full max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-border rounded-2xl p-4 md:p-6 max-w-5xl w-full max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-heading text-xl font-bold">{editing.id ? "Beitrag bearbeiten" : "Neuer Beitrag"}</h2>
               <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)}>
@@ -111,13 +111,13 @@ export default function BlogAdminPage() {
             </div>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><Label>Titel *</Label><Input value={editing.titel} onChange={e => setEditing({ ...editing, titel: e.target.value, slug: editing.slug || slugify(e.target.value) })} /></div>
                 <div><Label>Slug</Label><Input value={editing.slug} onChange={e => setEditing({ ...editing, slug: slugify(e.target.value) })} /></div>
               </div>
               <div><Label>Zusammenfassung</Label><Textarea rows={2} value={editing.zusammenfassung || ""} onChange={e => setEditing({ ...editing, zusammenfassung: e.target.value })} /></div>
               <div><Label>Titelbild URL</Label><Input value={editing.titelbild_url || ""} onChange={e => setEditing({ ...editing, titelbild_url: e.target.value })} placeholder="https://..." /></div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><Label>Autor</Label><Input value={editing.autor} onChange={e => setEditing({ ...editing, autor: e.target.value })} /></div>
                 <div><Label>Tags (Komma getrennt)</Label><Input value={(editing.tags || []).join(", ")} onChange={e => setEditing({ ...editing, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })} /></div>
               </div>

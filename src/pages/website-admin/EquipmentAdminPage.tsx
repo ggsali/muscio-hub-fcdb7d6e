@@ -136,10 +136,10 @@ export default function EquipmentAdminPage() {
   const removeSpec = (i: number) => editing && setEditing({ ...editing, specs: editing.specs.filter((_, idx) => idx !== i) });
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-heading text-3xl font-bold mb-1">Maschinen & Equipment</h1>
+          <h1 className="font-heading text-xl md:text-3xl font-bold mb-1">Maschinen & Equipment</h1>
           <p className="text-muted-foreground">Verwaltet die Drucker und Maschinen für die öffentliche Seite /maschinen.</p>
         </div>
         <Button onClick={startNew}><Plus className="w-4 h-4 mr-1" /> Neue Maschine</Button>
@@ -147,7 +147,7 @@ export default function EquipmentAdminPage() {
 
       {editing && (
         <div className="bg-card border border-border rounded-xl p-5 mb-6 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><Label>Name</Label><Input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} /></div>
             <div><Label>Sortierung</Label><Input type="number" value={editing.sort_order} onChange={e => setEditing({ ...editing, sort_order: Number(e.target.value) })} /></div>
           </div>
@@ -167,7 +167,7 @@ export default function EquipmentAdminPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label>Vorschaubild</Label>
               <Input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} />

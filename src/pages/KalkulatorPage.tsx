@@ -49,7 +49,7 @@ export default function KalkulatorPage() {
   );
 
   return (
-    <div className="p-6 animate-fade-in">
+    <div className="p-4 md:p-6 animate-fade-in">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Kalkulator</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Schnellkalkulation ohne Auftrag zu erstellen</p>
@@ -59,7 +59,7 @@ export default function KalkulatorPage() {
         {/* Inputs */}
         <div className="bg-card border border-border rounded-lg p-5 space-y-4">
           <h2 className="font-semibold">Eingabe</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {field("Gewicht", gewicht, setGewicht, 0.1, "g")}
             {field("Druckzeit", druckzeit, setDruckzeit, 0.1, "h")}
             {field("Nachbearbeitung", nachbearbeitung, setNachbearbeitung, 0.1, "h")}
