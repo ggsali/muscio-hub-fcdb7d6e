@@ -103,7 +103,7 @@ export default function EquipmentAdminPage() {
         toast.success("Gespeichert");
         load();
         if (data) {
-          setEditing({ ...editing, id: data.id, modell_url: modell_url || "", vorschaubild_url: vorschaubild_url || "" });
+          setEditing({ ...editing, id: data.id, modell_url: modell_url || "", mtl_url: mtl_url || "", vorschaubild_url: vorschaubild_url || "" });
           if (openCalibration) {
             setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } });
           } else {
