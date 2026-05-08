@@ -223,9 +223,14 @@ export default function EquipmentAdminPage() {
               ))}
               {(["px", "py", "pz"] as const).map(axis => (
                 <div key={axis}>
-                  <div className="flex justify-between mb-2">
+                  <div className="flex justify-between mb-2 items-center gap-2">
                     <Label>{axis.charAt(1).toUpperCase()}-Position</Label>
-                    <span className="text-sm text-muted-foreground">{Math.round(calibration.rotation[axis])}</span>
+                    <Input
+                      type="number"
+                      className="w-24 h-8"
+                      value={calibration.rotation[axis]}
+                      onChange={e => setCalibration({ ...calibration, rotation: { ...calibration.rotation, [axis]: Number(e.target.value) || 0 } })}
+                    />
                   </div>
                   <Slider
                     min={-100} max={100} step={1}
