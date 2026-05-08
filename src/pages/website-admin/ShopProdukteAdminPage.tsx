@@ -193,10 +193,10 @@ export default function ShopProdukteAdminPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-heading text-3xl font-bold mb-1">Shop-Produkte</h1>
+          <h1 className="font-heading text-xl md:text-3xl font-bold mb-1">Shop-Produkte</h1>
           <p className="text-muted-foreground">Verwalte Produkte, Bilder und Kategorien.</p>
         </div>
         {tab === "products" && (
@@ -290,7 +290,7 @@ export default function ShopProdukteAdminPage() {
         <div className="space-y-4 max-w-2xl">
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
             <p className="font-semibold text-sm">Neue Kategorie</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div><Label>Name</Label><Input value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} /></div>
               <div><Label>Slug (optional)</Label><Input value={catForm.slug} onChange={e => setCatForm({ ...catForm, slug: e.target.value })} placeholder="auto" /></div>
             </div>
@@ -319,23 +319,23 @@ export default function ShopProdukteAdminPage() {
             <DialogTitle>{editing ? "Produkt bearbeiten" : "Neues Produkt"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
               <div><Label>Slug</Label><Input value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="auto" /></div>
             </div>
             <div><Label>Kurzbeschreibung</Label><Input value={form.kurzbeschreibung} onChange={e => setForm({ ...form, kurzbeschreibung: e.target.value })} /></div>
             <div><Label>Beschreibung</Label><Textarea rows={4} value={form.beschreibung} onChange={e => setForm({ ...form, beschreibung: e.target.value })} /></div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div><Label>Preis (CHF) *</Label><Input type="number" step="0.01" value={form.preis} onChange={e => setForm({ ...form, preis: e.target.value })} /></div>
               <div><Label>Vergleichspreis</Label><Input type="number" step="0.01" value={form.vergleichspreis} onChange={e => setForm({ ...form, vergleichspreis: e.target.value })} /></div>
               <div><Label>Material</Label><Input value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} /></div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div><Label>Lagerbestand</Label><Input type="number" value={form.lagerbestand} onChange={e => setForm({ ...form, lagerbestand: e.target.value })} disabled={form.unendlich_bestand} /></div>
               <div className="flex items-end pb-2"><label className="flex items-center gap-2 text-sm"><Switch checked={form.unendlich_bestand} onCheckedChange={v => setForm({ ...form, unendlich_bestand: v })} /> Unbegrenzt</label></div>
               <div><Label>Reihenfolge</Label><Input type="number" value={form.sort_order} onChange={e => setForm({ ...form, sort_order: Number(e.target.value) })} /></div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <Label>Kategorie</Label>
                 <Select value={form.kategorie_id || "none"} onValueChange={v => setForm({ ...form, kategorie_id: v === "none" ? "" : v })}>

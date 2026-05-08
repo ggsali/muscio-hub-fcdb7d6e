@@ -50,13 +50,13 @@ export default function NavigationAdminPage() {
   const add = () => setItems([...items, { label: "Neu", path: "/" }]);
   const reset = () => setItems(DEFAULT_NAV);
 
-  if (loading) return <div className="p-8">Lädt…</div>;
+  if (loading) return <div className="p-4 md:p-8">Lädt…</div>;
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto">
+    <div className="p-4 md:p-6 md:p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-2 flex-wrap gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-bold mb-1">Navigation</h1>
+          <h1 className="font-heading text-xl md:text-3xl font-bold mb-1">Navigation</h1>
           <p className="text-muted-foreground text-sm">Menü-Einträge in der oberen Leiste der Website.</p>
         </div>
         <div className="flex gap-2">

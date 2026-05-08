@@ -86,10 +86,10 @@ export default function TeamAdminPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-6 md:p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
         <div>
-          <h1 className="font-heading text-3xl font-bold mb-1">Team</h1>
+          <h1 className="font-heading text-xl md:text-3xl font-bold mb-1">Team</h1>
           <p className="text-muted-foreground text-sm">Personen, die im "Über uns"-Bereich vorgestellt werden.</p>
         </div>
         <Button onClick={() => setAdding(true)}><Plus className="w-4 h-4 mr-1" /> Person hinzufügen</Button>

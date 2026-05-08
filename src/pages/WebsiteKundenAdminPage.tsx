@@ -117,9 +117,9 @@ export default function WebsiteKundenAdminPage() {
 
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>
+          <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Laden...</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">Keine Konten gefunden</div>
+          <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Keine Konten gefunden</div>
         ) : (
           <table className="w-full text-sm">
             <thead>

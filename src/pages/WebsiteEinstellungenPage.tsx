@@ -118,7 +118,7 @@ export default function WebsiteEinstellungenPage() {
     else toast({ title: "Einstellungen gespeichert" });
   };
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>;
+  if (loading) return <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Laden...</div>;
 
   return (
     <div className="p-4 md:p-6 space-y-6 animate-fade-in max-w-4xl">

@@ -123,10 +123,10 @@ export default function ProjekteAdminPage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-foreground mb-1">Projekte / Portfolio</h1>
+          <h1 className="font-heading text-xl md:text-3xl font-bold text-foreground mb-1">Projekte / Portfolio</h1>
           <p className="text-muted-foreground">Referenzprojekte für die Website verwalten.</p>
         </div>
         <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", gallery_paths: [], stl_url: null, sort_order: projects.length + 1, featured: false, aktiv: true })}>
@@ -159,17 +159,17 @@ export default function ProjekteAdminPage() {
 
       {editing && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" onClick={() => setEditing(null)}>
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-border rounded-2xl p-4 md:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h2 className="font-heading text-xl font-bold mb-4">{editing.id ? "Projekt bearbeiten" : "Neues Projekt"}</h2>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><Label>Name *</Label><Input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value, slug: editing.slug || slugify(e.target.value) })} /></div>
                 <div><Label>Slug</Label><Input value={editing.slug} onChange={e => setEditing({ ...editing, slug: slugify(e.target.value) })} /></div>
               </div>
               <div><Label>Kategorie</Label><Input value={editing.kategorie || ""} onChange={e => setEditing({ ...editing, kategorie: e.target.value })} /></div>
               <div><Label>Kurzbeschreibung</Label><Input value={editing.kurzbeschreibung || ""} onChange={e => setEditing({ ...editing, kurzbeschreibung: e.target.value })} /></div>
               <div><Label>Beschreibung</Label><Textarea rows={4} value={editing.beschreibung || ""} onChange={e => setEditing({ ...editing, beschreibung: e.target.value })} /></div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><Label>Verfahren</Label><Input value={editing.verfahren || ""} onChange={e => setEditing({ ...editing, verfahren: e.target.value })} /></div>
                 <div><Label>Material</Label><Input value={editing.material || ""} onChange={e => setEditing({ ...editing, material: e.target.value })} /></div>
                 <div><Label>Toleranz</Label><Input value={editing.toleranz || ""} onChange={e => setEditing({ ...editing, toleranz: e.target.value })} /></div>
@@ -196,7 +196,7 @@ export default function ProjekteAdminPage() {
                 />
                 {uploading && <p className="text-sm text-muted-foreground mb-2">Lädt hoch…</p>}
                 {editing.gallery_paths && editing.gallery_paths.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     {editing.gallery_paths.map((url, idx) => (
                       <div key={idx} className="relative group rounded-lg overflow-hidden border border-border aspect-square">
                         <img src={url} className="w-full h-full object-cover" />
@@ -230,7 +230,7 @@ export default function ProjekteAdminPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t border-border pt-4">
                 <div><Label>Sortierung</Label><Input type="number" value={editing.sort_order} onChange={e => setEditing({ ...editing, sort_order: parseInt(e.target.value) || 0 })} /></div>
                 <div className="flex items-end gap-4">
                   <div className="flex items-center gap-2"><Switch checked={editing.featured} onCheckedChange={v => setEditing({ ...editing, featured: v })} /><Label>Featured</Label></div>

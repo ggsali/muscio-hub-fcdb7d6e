@@ -213,7 +213,7 @@ export default function UploadLinksPage() {
   const selectedFiles = selectedLink ? filesForLink(selectedLink) : files;
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="p-4 md:p-6 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Projekt-Uploads</h1>
@@ -234,7 +234,7 @@ export default function UploadLinksPage() {
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="kpi-card">
           <div className="text-xs text-muted-foreground">Aktive Links</div>
           <div className="text-2xl font-bold">{links.filter(l => l.aktiv).length}</div>
@@ -465,7 +465,7 @@ export default function UploadLinksPage() {
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Ablaufdatum <span className="text-muted-foreground">(optional)</span></Label>
                 <Input type="date" value={form.expires_at} onChange={e => setForm({ ...form, expires_at: e.target.value })} className="bg-input border-border" />

@@ -37,10 +37,10 @@ export default function PartnersAdminPage() {
   const remove = async (id: string) => { if (!confirm("Partner löschen?")) return; await supabase.from("partners").delete().eq("id", id); load(); };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-heading text-3xl font-bold mb-1">Partner</h1>
+          <h1 className="font-heading text-xl md:text-3xl font-bold mb-1">Partner</h1>
           <p className="text-muted-foreground">Logos der Partnerfirmen für den Marquee-Slider.</p>
         </div>
         <Button onClick={() => setAdding(true)}><Plus className="w-4 h-4 mr-1" /> Partner</Button>
@@ -48,7 +48,7 @@ export default function PartnersAdminPage() {
 
       {adding && (
         <div className="bg-card border border-border rounded-xl p-5 mb-6 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><Label>Name</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div><Label>Website</Label><Input value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} placeholder="https://…" /></div>
           </div>

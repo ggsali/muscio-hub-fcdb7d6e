@@ -596,7 +596,7 @@ export default function AuftragDetailPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-muted-foreground">Laden...</div>;
+  if (loading) return <div className="p-4 md:p-8 text-muted-foreground">Laden...</div>;
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 animate-fade-in">
@@ -1094,7 +1094,7 @@ export default function AuftragDetailPage() {
                 </div>
 
                 {/* Zahlen 2-spaltig */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {[
                     { label: "Menge", field: "menge" as keyof PartRow, step: "1" },
                     { label: "Gewicht (g)", field: "gewicht_g" as keyof PartRow, step: "0.1" },

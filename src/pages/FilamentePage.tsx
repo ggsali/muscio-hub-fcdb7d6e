@@ -80,7 +80,7 @@ export default function FilamentePage() {
   if (sonstige.length) grouped["Sonstige"] = sonstige;
 
   return (
-    <div className="p-6 animate-fade-in space-y-6">
+    <div className="p-4 md:p-6 animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Filament-Bibliothek</h1>
@@ -95,7 +95,7 @@ export default function FilamentePage() {
       {editing && (
         <div className="bg-card border border-primary/40 rounded-lg p-5 space-y-4">
           <h3 className="font-semibold text-sm">{editing.isNew ? "Neues Filament" : "Filament bearbeiten"}</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Name / Bezeichnung *</Label>
               <Input value={editing.name ?? ""} onChange={e => setEditing({ ...editing, name: e.target.value })} className="bg-input border-border h-8 text-sm" placeholder="z.B. Prusament PLA Galaxy" />

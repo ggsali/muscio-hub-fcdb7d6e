@@ -34,8 +34,8 @@ export default function ReviewsAdminPage() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <h1 className="font-heading text-3xl font-bold text-foreground mb-2">Bewertungen</h1>
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
+      <h1 className="font-heading text-xl md:text-3xl font-bold text-foreground mb-2">Bewertungen</h1>
       <p className="text-muted-foreground mb-8">Reviews freigeben, ausblenden oder löschen.</p>
 
       {loading ? <p className="text-muted-foreground">Lädt…</p> : (

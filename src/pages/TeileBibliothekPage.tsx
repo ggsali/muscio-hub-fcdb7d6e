@@ -123,14 +123,14 @@ export default function TeileBibliothekPage() {
   }, {} as Record<string, { sum: number; count: number }>);
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="p-4 md:p-6 space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold">Teile-Bibliothek</h1>
         <p className="text-muted-foreground text-sm mt-0.5">{parts.length} Teile total</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 md:grid-cols-4 gap-4">
         {topPart && (
           <div className="kpi-card col-span-2">
             <div className="text-xs text-muted-foreground">Meistgedrucktes Teil</div>
@@ -163,9 +163,9 @@ export default function TeileBibliothekPage() {
 
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>
+          <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Laden...</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">Keine Teile gefunden</div>
+          <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Keine Teile gefunden</div>
         ) : (
           <table className="w-full text-sm">
             <thead>

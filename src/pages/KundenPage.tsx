@@ -156,7 +156,7 @@ export default function KundenPage() {
       </div>
 
       {loading ? (
-        <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>
+        <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Laden...</div>
       ) : filtered.length === 0 ? (
         <div className="bg-card border border-border rounded-xl p-12 text-center">
           {tab === "website" ? <Globe className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" /> :

@@ -34,8 +34,8 @@ export default function WebsiteAdminDashboardPage() {
   ];
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <h1 className="font-heading text-3xl font-bold text-foreground mb-2">Website-Verwaltung</h1>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      <h1 className="font-heading text-xl md:text-3xl font-bold text-foreground mb-2">Website-Verwaltung</h1>
       <p className="text-muted-foreground mb-10">Verwalte hier Shop, Reviews, Portfolio und alle Website-Funktionen. Aufträge, Kunden &amp; Buchhaltung bleiben im Projekt-Manager.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -47,7 +47,7 @@ export default function WebsiteAdminDashboardPage() {
               </div>
               <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
-            <p className="text-3xl font-heading font-extrabold text-foreground">{c.value}</p>
+            <p className="text-xl md:text-3xl font-heading font-extrabold text-foreground">{c.value}</p>
             <p className="text-sm text-muted-foreground mt-1">{c.label}</p>
           </Link>
         ))}

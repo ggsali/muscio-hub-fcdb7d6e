@@ -156,7 +156,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards – 2 Spalten auf Mobile, 5 auf Desktop */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
         {kpiCards.map(card => (
           <div key={card.label} className="kpi-card py-3 px-3 md:py-4 md:px-4">
             <div className={`${card.color}`}>{card.icon}</div>
@@ -256,7 +256,7 @@ export default function DashboardPage() {
             <button onClick={() => navigate("/admin/auftraege")} className="text-xs text-primary hover:underline">Alle</button>
           </div>
           {websiteOrders.length === 0 ? (
-            <div className="p-6 text-center text-xs text-muted-foreground">Noch keine Webshop-Bestellungen</div>
+            <div className="p-4 md:p-6 text-center text-xs text-muted-foreground">Noch keine Webshop-Bestellungen</div>
           ) : (
             <div className="divide-y divide-border/50">
               {websiteOrders.map(o => (
@@ -287,7 +287,7 @@ export default function DashboardPage() {
             <button onClick={() => navigate("/admin/anfragen")} className="text-xs text-primary hover:underline">Alle</button>
           </div>
           {neueAnfragen.length === 0 ? (
-            <div className="p-6 text-center text-xs text-muted-foreground">Keine offenen Anfragen</div>
+            <div className="p-4 md:p-6 text-center text-xs text-muted-foreground">Keine offenen Anfragen</div>
           ) : (
             <div className="divide-y divide-border/50">
               {neueAnfragen.map(a => (
@@ -312,7 +312,7 @@ export default function DashboardPage() {
             <button onClick={() => navigate("/admin/kunden")} className="text-xs text-primary hover:underline">Alle</button>
           </div>
           {neueKunden.length === 0 ? (
-            <div className="p-6 text-center text-xs text-muted-foreground">Noch keine Kunden</div>
+            <div className="p-4 md:p-6 text-center text-xs text-muted-foreground">Noch keine Kunden</div>
           ) : (
             <div className="divide-y divide-border/50">
               {neueKunden.map(k => (
@@ -336,9 +336,9 @@ export default function DashboardPage() {
           <button onClick={() => navigate("/admin/auftraege")} className="text-xs text-primary hover:underline">Alle anzeigen</button>
         </div>
         {loading ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>
+          <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Laden...</div>
         ) : recentOrders.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">Noch keine Aufträge</div>
+          <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Noch keine Aufträge</div>
         ) : isMobile ? (
           /* Mobile: Card-Liste */
           <div className="divide-y divide-border/50">

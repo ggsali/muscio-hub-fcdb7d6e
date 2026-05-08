@@ -262,7 +262,7 @@ export default function EinstellungenPage() {
           </div>
 
           {presets.length === 0 && !editingPreset && (
-            <div className="bg-card border border-border rounded-lg p-8 text-center text-muted-foreground text-sm">
+            <div className="bg-card border border-border rounded-lg p-4 md:p-8 text-center text-muted-foreground text-sm">
               Noch keine Presets. Erstelle dein erstes Preset.
             </div>
           )}
