@@ -331,7 +331,7 @@ export default function EinstellungenPage() {
                       step={f.step}
                       value={(editingPreset as any)[f.key] ?? ""}
                       onChange={e => setEditingPreset({ ...editingPreset, [f.key]: parseFloat(e.target.value) || 0 })}
-                      className="w-24 bg-input border-border text-right tabular-nums h-8 text-sm"
+                      className="w-20 md:w-24 bg-input border-border text-right tabular-nums h-8 text-sm flex-shrink-0"
                     />
                   </div>
                 ))}
