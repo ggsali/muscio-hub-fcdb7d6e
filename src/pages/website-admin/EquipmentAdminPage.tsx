@@ -69,23 +69,25 @@ export default function EquipmentAdminPage() {
     try {
       let vorschaubild_url = editing.vorschaubild_url || null;
       let modell_url = editing.modell_url || null;
+      let mtl_url = editing.mtl_url || null;
       let openCalibration: string | null = null;
       if (imageFile) vorschaubild_url = await upload("equipment-images", imageFile);
       if (modelFile) {
         modell_url = await upload("equipment-models", modelFile);
         openCalibration = modell_url;
       }
+      if (mtlFile) mtl_url = await upload("equipment-models", mtlFile);
 
       const payload = {
         name: editing.name,
         beschreibung: editing.beschreibung || null,
         specs: editing.specs.filter(s => s.key.trim()),
-        vorschaubild_url, modell_url,
+        vorschaubild_url, modell_url, mtl_url,
         sort_order: editing.sort_order,
         aktiv: editing.aktiv,
         model_rotation: editing.model_rotation,
       };
-      setModelFile(null); setImageFile(null);
+      setModelFile(null); setImageFile(null); setMtlFile(null);
       if (editing.id) {
         await (supabase.from as any)("equipment").update(payload).eq("id", editing.id);
         toast.success("Gespeichert");
