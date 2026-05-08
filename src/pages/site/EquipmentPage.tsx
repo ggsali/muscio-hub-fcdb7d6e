@@ -13,6 +13,7 @@ interface Equipment {
   specs: Spec[] | null;
   modell_url: string | null;
   vorschaubild_url: string | null;
+  model_rotation?: { x: number; y: number; z: number } | null;
 }
 
 export default function EquipmentPage() {
@@ -73,7 +74,7 @@ export default function EquipmentPage() {
                     <div className={`md:col-span-6 ${reversed ? "md:order-2" : ""}`}>
                       <div className="bg-muted rounded-xl overflow-hidden min-h-[400px] h-full flex items-center justify-center">
                         {it.modell_url ? (
-                          <ModelViewer url={it.modell_url} />
+                          <ModelViewer url={it.modell_url} rotation={it.model_rotation || undefined} />
                         ) : it.vorschaubild_url ? (
                           <img src={it.vorschaubild_url} alt={it.name} className="w-full h-full object-cover" />
                         ) : (

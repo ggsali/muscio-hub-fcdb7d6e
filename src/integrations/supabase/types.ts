@@ -348,6 +348,7 @@ export type Database = {
           beschreibung: string | null
           created_at: string
           id: string
+          model_rotation: Json
           modell_url: string | null
           name: string
           sort_order: number
@@ -359,6 +360,7 @@ export type Database = {
           beschreibung?: string | null
           created_at?: string
           id?: string
+          model_rotation?: Json
           modell_url?: string | null
           name: string
           sort_order?: number
@@ -370,6 +372,7 @@ export type Database = {
           beschreibung?: string | null
           created_at?: string
           id?: string
+          model_rotation?: Json
           modell_url?: string | null
           name?: string
           sort_order?: number

@@ -3,8 +3,10 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-export default function ModelViewer({ url }: { url: string }) {
+interface Rotation { x: number; y: number; z: number }
+export default function ModelViewer({ url, rotation }: { url: string; rotation?: Rotation }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<THREE.Object3D | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -51,8 +53,13 @@ export default function ModelViewer({ url }: { url: string }) {
       url,
       (gltf) => {
         root = gltf.scene;
-        // Modell aufrecht stellen (falls auf der Seite liegend)
-        root.rotation.x = -Math.PI / 2;
+        rootRef.current = root;
+        // Rotation: custom prop oder Default (aufrecht stellen)
+        if (rotation) {
+          root.rotation.set(rotation.x * Math.PI / 180, rotation.y * Math.PI / 180, rotation.z * Math.PI / 180);
+        } else {
+          root.rotation.x = -Math.PI / 2;
+        }
         // Bounding Box nach Rotation berechnen
         const box = new THREE.Box3().setFromObject(root);
         const center = box.getCenter(new THREE.Vector3());
@@ -111,6 +118,16 @@ export default function ModelViewer({ url }: { url: string }) {
       }
     };
   }, [url]);
+
+  useEffect(() => {
+    if (rootRef.current && rotation) {
+      rootRef.current.rotation.set(
+        rotation.x * Math.PI / 180,
+        rotation.y * Math.PI / 180,
+        rotation.z * Math.PI / 180,
+      );
+    }
+  }, [rotation?.x, rotation?.y, rotation?.z]);
 
   return <div ref={containerRef} className="w-full h-full min-h-[400px]" />;
 }
