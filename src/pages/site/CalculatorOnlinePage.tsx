@@ -409,13 +409,19 @@ const CalculatorOnlinePage = () => {
                 {calcs.map(({ part: p, calc }) => (
                   <div key={p.id} className="bg-card rounded-2xl border border-border p-5">
                     <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                          <Package className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
+                      <div className="flex items-start gap-4 min-w-0 flex-1">
+                        {p.isStl && p.previewUrl ? (
+                          <div className="w-[150px] h-[150px] rounded-xl bg-muted overflow-hidden shrink-0">
+                            <StlPreview url={p.previewUrl} />
+                          </div>
+                        ) : (
+                          <div className="w-[150px] h-[150px] rounded-xl bg-muted flex items-center justify-center shrink-0">
+                            <FileText className="w-12 h-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{p.fileName}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {p.isStl && p.volumeCm3 > 0
                               ? <>Volumen: {p.volumeCm3.toFixed(1)} cm³ · Gewicht: ~{calc.weight.toFixed(1)}g</>
                               : !p.isStl && p.manualWeightG
