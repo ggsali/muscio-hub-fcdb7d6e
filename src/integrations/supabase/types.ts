@@ -342,6 +342,42 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment: {
+        Row: {
+          aktiv: boolean
+          beschreibung: string | null
+          created_at: string
+          id: string
+          modell_url: string | null
+          name: string
+          sort_order: number
+          specs: Json | null
+          vorschaubild_url: string | null
+        }
+        Insert: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          id?: string
+          modell_url?: string | null
+          name: string
+          sort_order?: number
+          specs?: Json | null
+          vorschaubild_url?: string | null
+        }
+        Update: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          id?: string
+          modell_url?: string | null
+          name?: string
+          sort_order?: number
+          specs?: Json | null
+          vorschaubild_url?: string | null
+        }
+        Relationships: []
+      }
       filaments: {
         Row: {
           aktiv: boolean | null

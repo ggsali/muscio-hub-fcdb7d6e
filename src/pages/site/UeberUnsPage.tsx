@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
-import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote } from "lucide-react";
+import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote, Cpu, ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Timeline } from "@/components/site/Timeline";
@@ -159,6 +159,29 @@ export default function UeberUnsPage() {
             </div>
           </div>
         )}
+
+        {/* Maschinen-Banner */}
+        <ScrollReveal>
+          <motion.div
+            whileHover={{ y: -2 }}
+            transition={{ duration: 0.3 }}
+            className="mb-20 md:mb-28 rounded-2xl border border-primary/30 bg-gradient-to-r from-card via-card to-primary/10 px-5 py-5 md:px-8 md:py-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-all"
+          >
+            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+              <Cpu className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-heading text-base md:text-lg font-bold text-foreground">Neugierig auf unsere Technologie?</h3>
+              <p className="text-sm text-muted-foreground">Entdecke die Maschinen hinter deinen Drucken</p>
+            </div>
+            <Link
+              to="/maschinen"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex-shrink-0"
+            >
+              Unsere Maschinen <ArrowRight className="w-4 h-4" />
+            </Link>
+          </motion.div>
+        </ScrollReveal>
 
         {/* Values */}
         <div className="mb-20 md:mb-28">

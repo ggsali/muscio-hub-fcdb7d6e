@@ -6,6 +6,7 @@ import logo from "@/assets/logo.jpeg";
 const footerLinks = [
   { label: "Kalkulator", path: "/kalkulator-online" },
   { label: "Materialien", path: "/materialien" },
+  { label: "Unsere Maschinen", path: "/maschinen" },
   { label: "Über uns", path: "/ueber-uns" },
   { label: "Blog", path: "/blog" },
   { label: "Kontakt", path: "/kontakt" },
