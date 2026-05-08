@@ -654,7 +654,7 @@ const CalculatorOnlinePage = () => {
                     {calcs.map(({ part, calc }, i) => (
                       <div key={part.id} className="flex justify-between gap-2 text-xs text-muted-foreground">
                         <span className="truncate">Teil {i + 1}: {part.fileName} ({part.quantity}×)</span>
-                        <span className="text-foreground shrink-0">{CHF(calc.subtotal)}</span>
+                        <span className="text-foreground shrink-0">{isStepFile(part.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}</span>
                       </div>
                     ))}
                   </div>
