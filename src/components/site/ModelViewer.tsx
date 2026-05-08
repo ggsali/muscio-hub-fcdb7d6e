@@ -119,5 +119,15 @@ export default function ModelViewer({ url, rotation }: { url: string; rotation?:
     };
   }, [url]);
 
+  useEffect(() => {
+    if (rootRef.current && rotation) {
+      rootRef.current.rotation.set(
+        rotation.x * Math.PI / 180,
+        rotation.y * Math.PI / 180,
+        rotation.z * Math.PI / 180,
+      );
+    }
+  }, [rotation?.x, rotation?.y, rotation?.z]);
+
   return <div ref={containerRef} className="w-full h-full min-h-[400px]" />;
 }
