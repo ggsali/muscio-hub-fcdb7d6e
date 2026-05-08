@@ -113,12 +113,18 @@ async function handleAuthHook(req: Request): Promise<Response> {
     newEmail = payload.user.new_email
     emailType = payload.email_data.email_action_type
     token = payload.email_data.token
-    siteUrl = payload.email_data.site_url || siteUrl
-    const redirectTo = payload.email_data.redirect_to || siteUrl
+    const rawSiteUrl = payload.email_data.site_url || ''
+    siteUrl = rawSiteUrl.includes('lovable') || rawSiteUrl.includes('localhost')
+      ? `https://${ROOT_DOMAIN}`
+      : rawSiteUrl || `https://${ROOT_DOMAIN}`
+    const redirectTo = payload.email_data.redirect_to || `https://${ROOT_DOMAIN}`
+    const safeRedirectTo = redirectTo.includes('lovable') || redirectTo.includes('localhost')
+      ? `https://${ROOT_DOMAIN}/portal`
+      : redirectTo
     const verifyType = emailType === 'signup' || emailType === 'email_change' ? 'signup' : emailType
     confirmationUrl = payload.email_data.token_hash
-      ? `${siteUrl.replace(/\/$/, '')}/auth/v1/verify?token=${payload.email_data.token_hash}&type=${verifyType}&redirect_to=${encodeURIComponent(redirectTo)}`
-      : redirectTo
+      ? `https://ukqtjdsjmtxgzhklvqky.supabase.co/auth/v1/verify?token=${payload.email_data.token_hash}&type=${verifyType}&redirect_to=${encodeURIComponent(safeRedirectTo)}`
+      : safeRedirectTo
   } else if (payload?.data?.email && payload?.data?.action_type) {
     // Lovable webhook format
     const d = payload.data
@@ -127,7 +133,10 @@ async function handleAuthHook(req: Request): Promise<Response> {
     emailType = d.action_type
     token = d.token || d.new_token
     siteUrl = d.site_url || siteUrl
-    confirmationUrl = d.url || siteUrl
+    const rawUrl = d.url || siteUrl
+    confirmationUrl = rawUrl.includes('lovable') || rawUrl.includes('localhost')
+      ? `https://${ROOT_DOMAIN}/portal`
+      : rawUrl
   } else {
     console.error('Invalid auth hook payload — unknown format', {
       topKeys: Object.keys(payload || {}),
