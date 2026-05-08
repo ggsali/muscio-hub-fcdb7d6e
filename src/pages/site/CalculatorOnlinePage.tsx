@@ -10,7 +10,7 @@ import { Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight, FileTe
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import StlPreview from "@/components/site/StlPreview";
+import ModelPreview from "@/components/site/ModelPreview";
 import { colorHex } from "@/lib/colorMap";
 
 interface Material {
@@ -421,9 +421,9 @@ const CalculatorOnlinePage = () => {
                   <div key={p.id} className="bg-card rounded-2xl border border-border p-5">
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div className="flex items-start gap-4 min-w-0 flex-1">
-                        {p.isStl && p.previewUrl ? (
+                        {p.file ? (
                           <div className="w-[150px] h-[150px] rounded-xl bg-muted overflow-hidden shrink-0">
-                            <StlPreview url={p.previewUrl} />
+                            <ModelPreview file={p.file} />
                           </div>
                         ) : (
                           <div className="w-[150px] h-[150px] rounded-xl bg-muted flex items-center justify-center shrink-0">
