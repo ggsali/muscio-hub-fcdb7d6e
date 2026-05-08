@@ -19,21 +19,19 @@ interface Equipment {
   beschreibung: string | null;
   specs: Spec[] | null;
   modell_url: string | null;
-  mtl_url?: string | null;
   vorschaubild_url: string | null;
   sort_order: number;
   aktiv: boolean;
   model_rotation?: Rotation | null;
 }
 
-const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", mtl_url: "", model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation };
+const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation };
 
 export default function EquipmentAdminPage() {
   const [items, setItems] = useState<Equipment[]>([]);
   const [editing, setEditing] = useState<(typeof empty & { id?: string }) | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [modelFile, setModelFile] = useState<File | null>(null);
-  const [mtlFile, setMtlFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [calibration, setCalibration] = useState<{ url: string; rotation: Rotation } | null>(null);
 

@@ -221,7 +221,7 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
         container.removeChild(renderer.domElement);
       }
     };
-  }, [url, mtlUrl, showAxes]);
+  }, [url, showAxes]);
 
   useEffect(() => {
     const root = rootRef.current;
