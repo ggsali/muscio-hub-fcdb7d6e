@@ -42,6 +42,24 @@ export default function WebsiteEinstellungenPage() {
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
           if (row.key === "whatsapp") setWhatsapp({ nummer: (row.value as any)?.nummer || "" });
+          if (row.key === "karussel") {
+            const items = ((row.value as any)?.items) as { text: string }[] | undefined;
+            if (items && items.length > 0) setKarussel(items);
+            else setKarussel([
+              { text: "48h Lieferung" },
+              { text: "0.1mm Präzision" },
+              { text: "Swiss Made" },
+              { text: "100+ Kunden" },
+            ]);
+          }
+        }
+        if (!data.find(r => r.key === "karussel")) {
+          setKarussel([
+            { text: "48h Lieferung" },
+            { text: "0.1mm Präzision" },
+            { text: "Swiss Made" },
+            { text: "100+ Kunden" },
+          ]);
         }
       }
       await reloadMaterials();
