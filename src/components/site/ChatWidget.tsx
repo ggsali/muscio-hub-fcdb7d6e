@@ -14,6 +14,17 @@ interface Message {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/website-chat`;
 const SESSION_KEY = "3dmuscio_chat_session";
 
+const triggerWords = [
+  "mitarbeiter", "mensch", "person", "sprechen", "anrufen",
+  "rückruf", "direkt", "persönlich", "meldet sich", "weiterleiten",
+  "telefon", "ansprechpartner", "jemanden erreichen",
+];
+
+const shouldNotify = (userMessage: string): boolean => {
+  const lower = userMessage.toLowerCase();
+  return triggerWords.some(word => lower.includes(word));
+};
+
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
