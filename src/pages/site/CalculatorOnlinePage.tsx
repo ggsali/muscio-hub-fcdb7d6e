@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight } from "lucide-react";
+import { Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight, FileText, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import StlPreview from "@/components/site/StlPreview";
 
 interface Material {
   id: string;
@@ -52,6 +54,7 @@ interface Part {
   volumeCm3: number; // 0 wenn unbekannt
   manualWeightG?: number; // für non-STL
   isStl: boolean;
+  previewUrl?: string;
 }
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
@@ -156,6 +159,7 @@ const CalculatorOnlinePage = () => {
     const defaultMatId = materials[0]?.id || "";
     const defaultMatName = materials[0]?.name || "";
     const isStl = /\.stl$/i.test(file.name);
+    const previewUrl = isStl ? URL.createObjectURL(file) : undefined;
 
     setParts((p) => [
       ...p,
@@ -171,6 +175,7 @@ const CalculatorOnlinePage = () => {
         volumeCm3: 0,
         manualWeightG: isStl ? undefined : undefined,
         isStl,
+        previewUrl,
       },
     ]);
 
@@ -243,7 +248,11 @@ const CalculatorOnlinePage = () => {
       supabase.from("calculator_uploads").update(patch).eq("id", id).then(() => {});
     }
   };
-  const remove = (id: string) => setParts((p) => p.filter((x) => x.id !== id));
+  const remove = (id: string) => setParts((p) => {
+    const target = p.find((x) => x.id === id);
+    if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+    return p.filter((x) => x.id !== id);
+  });
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
@@ -354,6 +363,16 @@ const CalculatorOnlinePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Upload + parts */}
           <div className="lg:col-span-2 space-y-6">
+            <div className="rounded-2xl border border-border bg-primary/5 p-4 flex items-start gap-3">
+              <Layers className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div>
+                <Badge className="mb-1">Mehrere Teile möglich</Badge>
+                <p className="text-sm text-muted-foreground">
+                  Lade mehrere STL-Dateien hoch — jedes Teil wird separat konfiguriert und kalkuliert.
+                </p>
+              </div>
+            </div>
+
             <div
               onDrop={handleDrop}
               onDragOver={(e) => {
@@ -390,13 +409,19 @@ const CalculatorOnlinePage = () => {
                 {calcs.map(({ part: p, calc }) => (
                   <div key={p.id} className="bg-card rounded-2xl border border-border p-5">
                     <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                          <Package className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
+                      <div className="flex items-start gap-4 min-w-0 flex-1">
+                        {p.isStl && p.previewUrl ? (
+                          <div className="w-[150px] h-[150px] rounded-xl bg-muted overflow-hidden shrink-0">
+                            <StlPreview url={p.previewUrl} />
+                          </div>
+                        ) : (
+                          <div className="w-[150px] h-[150px] rounded-xl bg-muted flex items-center justify-center shrink-0">
+                            <FileText className="w-12 h-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{p.fileName}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {p.isStl && p.volumeCm3 > 0
                               ? <>Volumen: {p.volumeCm3.toFixed(1)} cm³ · Gewicht: ~{calc.weight.toFixed(1)}g</>
                               : !p.isStl && p.manualWeightG
@@ -542,6 +567,11 @@ const CalculatorOnlinePage = () => {
                     </div>
                   </div>
                 ))}
+                <label htmlFor="file-input" className="block">
+                  <div className="rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all p-4 flex items-center justify-center gap-2 cursor-pointer text-sm text-muted-foreground">
+                    <Plus className="w-4 h-4" /> Weitere Datei hinzufügen
+                  </div>
+                </label>
               </div>
             )}
           </div>
@@ -551,6 +581,16 @@ const CalculatorOnlinePage = () => {
             <div className="sticky top-24 bg-card rounded-2xl border border-border p-6">
               <h3 className="font-heading text-lg font-bold mb-4">Zusammenfassung</h3>
               <div className="space-y-2 text-sm">
+                {calcs.length > 0 && (
+                  <div className="space-y-1.5 pb-3 mb-1 border-b border-border">
+                    {calcs.map(({ part, calc }, i) => (
+                      <div key={part.id} className="flex justify-between gap-2 text-xs text-muted-foreground">
+                        <span className="truncate">Teil {i + 1}: {part.fileName} ({part.quantity}×)</span>
+                        <span className="text-foreground shrink-0">{CHF(calc.subtotal)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex justify-between text-muted-foreground">
                   <span>Materialkosten</span>
                   <span className="text-foreground">{CHF(materialTotal)}</span>
