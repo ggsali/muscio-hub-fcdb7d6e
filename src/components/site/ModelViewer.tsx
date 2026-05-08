@@ -4,9 +4,10 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 
 interface Rotation { x: number; y: number; z: number; px?: number; py?: number; pz?: number }
-export default function ModelViewer({ url, rotation, showAxes }: { url: string; rotation?: Rotation; showAxes?: boolean }) {
+export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: string; mtlUrl?: string | null; rotation?: Rotation; showAxes?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<THREE.Object3D | null>(null);
 
@@ -74,11 +75,10 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
     const ext = url.split('.').pop()?.toLowerCase().split('?')[0];
 
     if (ext === '3mf' || ext === 'obj') {
-      const loader = ext === 'obj' ? new OBJLoader() : new ThreeMFLoader();
-      loader.load(url, (obj) => {
+      const applyDefaults = (obj: THREE.Object3D) => {
         obj.traverse((child) => {
           const m = child as THREE.Mesh;
-          if (m.isMesh && (!m.material || Array.isArray(m.material))) {
+          if (m.isMesh && (!m.material || (Array.isArray(m.material) && m.material.length === 0))) {
             m.material = new THREE.MeshStandardMaterial({
               color: 0xcccccc,
               metalness: 0.1,
@@ -86,6 +86,8 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
             });
           }
         });
+      };
+      const frameObject = (obj: THREE.Object3D) => {
         const box = new THREE.Box3().setFromObject(obj);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
@@ -98,7 +100,25 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
         controls.target.set(0, size.y * 0.3, 0);
         controls.update();
         scene.add(obj);
-      });
+      };
+
+      if (ext === 'obj' && mtlUrl) {
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load(mtlUrl, (materials) => {
+          materials.preload();
+          const objLoader = new OBJLoader();
+          objLoader.setMaterials(materials);
+          objLoader.load(url, (obj) => {
+            frameObject(obj);
+          });
+        });
+      } else {
+        const loader = ext === 'obj' ? new OBJLoader() : new ThreeMFLoader();
+        loader.load(url, (obj) => {
+          applyDefaults(obj);
+          frameObject(obj);
+        });
+      }
     } else {
     const loader = new GLTFLoader();
     loader.load(
@@ -214,7 +234,7 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
         container.removeChild(renderer.domElement);
       }
     };
-  }, [url, showAxes]);
+  }, [url, mtlUrl, showAxes]);
 
   useEffect(() => {
     const root = rootRef.current;

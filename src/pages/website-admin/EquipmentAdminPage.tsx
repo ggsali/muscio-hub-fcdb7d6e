@@ -19,19 +19,21 @@ interface Equipment {
   beschreibung: string | null;
   specs: Spec[] | null;
   modell_url: string | null;
+  mtl_url?: string | null;
   vorschaubild_url: string | null;
   sort_order: number;
   aktiv: boolean;
   model_rotation?: Rotation | null;
 }
 
-const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation };
+const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", mtl_url: "", model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation };
 
 export default function EquipmentAdminPage() {
   const [items, setItems] = useState<Equipment[]>([]);
   const [editing, setEditing] = useState<(typeof empty & { id?: string }) | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [modelFile, setModelFile] = useState<File | null>(null);
+  const [mtlFile, setMtlFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [calibration, setCalibration] = useState<{ url: string; rotation: Rotation } | null>(null);
 
@@ -41,16 +43,17 @@ export default function EquipmentAdminPage() {
   };
   useEffect(() => { load(); }, []);
 
-  const startNew = () => { setEditing({ ...empty, sort_order: items.length + 1 }); setImageFile(null); setModelFile(null); };
+  const startNew = () => { setEditing({ ...empty, sort_order: items.length + 1 }); setImageFile(null); setModelFile(null); setMtlFile(null); };
   const startEdit = (e: Equipment) => {
     setEditing({
       id: e.id, name: e.name, beschreibung: e.beschreibung || "",
       specs: Array.isArray(e.specs) ? e.specs : [],
       aktiv: e.aktiv, sort_order: e.sort_order,
       vorschaubild_url: e.vorschaubild_url || "", modell_url: e.modell_url || "",
+      mtl_url: e.mtl_url || "",
       model_rotation: e.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 },
     });
-    setImageFile(null); setModelFile(null);
+    setImageFile(null); setModelFile(null); setMtlFile(null);
   };
 
   const upload = async (bucket: string, file: File) => {
@@ -66,23 +69,25 @@ export default function EquipmentAdminPage() {
     try {
       let vorschaubild_url = editing.vorschaubild_url || null;
       let modell_url = editing.modell_url || null;
+      let mtl_url = editing.mtl_url || null;
       let openCalibration: string | null = null;
       if (imageFile) vorschaubild_url = await upload("equipment-images", imageFile);
       if (modelFile) {
         modell_url = await upload("equipment-models", modelFile);
         openCalibration = modell_url;
       }
+      if (mtlFile) mtl_url = await upload("equipment-models", mtlFile);
 
       const payload = {
         name: editing.name,
         beschreibung: editing.beschreibung || null,
         specs: editing.specs.filter(s => s.key.trim()),
-        vorschaubild_url, modell_url,
+        vorschaubild_url, modell_url, mtl_url,
         sort_order: editing.sort_order,
         aktiv: editing.aktiv,
         model_rotation: editing.model_rotation,
       };
-      setModelFile(null); setImageFile(null);
+      setModelFile(null); setImageFile(null); setMtlFile(null);
       if (editing.id) {
         await (supabase.from as any)("equipment").update(payload).eq("id", editing.id);
         toast.success("Gespeichert");
@@ -98,7 +103,7 @@ export default function EquipmentAdminPage() {
         toast.success("Gespeichert");
         load();
         if (data) {
-          setEditing({ ...editing, id: data.id, modell_url: modell_url || "", vorschaubild_url: vorschaubild_url || "" });
+          setEditing({ ...editing, id: data.id, modell_url: modell_url || "", mtl_url: mtl_url || "", vorschaubild_url: vorschaubild_url || "" });
           if (openCalibration) {
             setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } });
           } else {
@@ -174,7 +179,7 @@ export default function EquipmentAdminPage() {
               {editing.vorschaubild_url && !imageFile && <img src={editing.vorschaubild_url} alt="" className="mt-2 h-16 rounded object-cover" />}
             </div>
             <div>
-              <Label>3D-Modell (.glb / .gltf)</Label>
+              <Label>3D-Modell (.glb / .gltf / .obj / .3mf)</Label>
               <Input type="file" accept=".glb,.gltf,.3mf,.obj,model/gltf-binary,model/gltf+json" onChange={e => setModelFile(e.target.files?.[0] || null)} />
               {(editing.modell_url || modelFile) && (
                 <div className="flex items-center gap-2 mt-1">
@@ -186,6 +191,15 @@ export default function EquipmentAdminPage() {
                   )}
                   {modelFile && (
                     <p className="text-xs text-primary">Zuerst speichern, dann ausrichten</p>
+                  )}
+                </div>
+              )}
+              {(modelFile?.name.toLowerCase().endsWith('.obj') || editing.modell_url?.toLowerCase().endsWith('.obj')) && (
+                <div className="mt-2">
+                  <Label>Material-Datei (.mtl) — für OBJ-Farben</Label>
+                  <Input type="file" accept=".mtl" onChange={e => setMtlFile(e.target.files?.[0] || null)} />
+                  {editing.mtl_url && !mtlFile && (
+                    <p className="text-xs text-muted-foreground mt-1">Aktuell: {editing.mtl_url.split('/').pop()}</p>
                   )}
                 </div>
               )}

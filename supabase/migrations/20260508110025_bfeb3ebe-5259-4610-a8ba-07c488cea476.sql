@@ -1,0 +1,1 @@
+alter table public.equipment add column if not exists mtl_url text;
