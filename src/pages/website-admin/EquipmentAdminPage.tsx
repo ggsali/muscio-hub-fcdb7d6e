@@ -165,7 +165,7 @@ export default function EquipmentAdminPage() {
             </div>
             <div>
               <Label>3D-Modell (.glb / .gltf)</Label>
-              <Input type="file" accept=".glb,.gltf,.3mf,model/gltf-binary,model/gltf+json" onChange={e => setModelFile(e.target.files?.[0] || null)} />
+              <Input type="file" accept=".glb,.gltf,.3mf,.obj,model/gltf-binary,model/gltf+json" onChange={e => setModelFile(e.target.files?.[0] || null)} />
               {editing.modell_url && !modelFile && (
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-xs text-muted-foreground truncate flex-1">Aktuell: {editing.modell_url.split("/").pop()}</p>
