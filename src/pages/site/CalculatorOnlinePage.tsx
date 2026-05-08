@@ -676,9 +676,19 @@ const CalculatorOnlinePage = () => {
                   <span className="text-xl font-bold text-primary">{CHF(total)}</span>
                 </div>
               </div>
+              {parts.some(p => /\.step$|\.stp$/i.test(p.fileName)) && (
+                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+                  ⚠️ Entferne alle STEP-Dateien oder konvertiere sie zu STL um eine Anfrage zu senden.
+                </div>
+              )}
               <Button
                 className="w-full mt-5 gap-2"
-                disabled={parts.length === 0 || submitting || parts.some((p) => p.uploading)}
+                disabled={
+                  parts.length === 0 ||
+                  submitting ||
+                  parts.some((p) => p.uploading) ||
+                  parts.some((p) => /\.step$|\.stp$/i.test(p.fileName))
+                }
                 onClick={async (e) => {
                   if (isLoggedIn) {
                     await handleSend(e as unknown as React.FormEvent);
