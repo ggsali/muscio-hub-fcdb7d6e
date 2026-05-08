@@ -12,7 +12,7 @@ import ModelViewer from "@/components/site/ModelViewer";
 import { toast } from "sonner";
 
 interface Spec { key: string; value: string; }
-interface Rotation { x: number; y: number; z: number }
+interface Rotation { x: number; y: number; z: number; px: number; py: number; pz: number }
 interface Equipment {
   id: string;
   name: string;
