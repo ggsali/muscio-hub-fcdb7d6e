@@ -287,7 +287,8 @@ export default function WebsiteEinstellungenPage() {
             </thead>
             <tbody>
               {materials.map(m => (
-                <tr key={m.id} className="border-b border-border/50">
+                <React.Fragment key={m.id}>
+                <tr className="border-b border-border/30">
                   <td className="p-1"><Input value={m.name} onChange={e => updateMaterial(m.id, { name: e.target.value })} className="bg-input border-border h-9" /></td>
                   <td className="p-1">
                     <select value={m.tag} onChange={e => updateMaterial(m.id, { tag: e.target.value })} className="h-9 rounded-md border border-border bg-input px-2 text-sm">
@@ -304,6 +305,15 @@ export default function WebsiteEinstellungenPage() {
                     <button onClick={() => deleteMaterial(m)} className="text-destructive p-2 ml-1"><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
+                <tr className="border-b border-border/50 bg-muted/20">
+                  <td colSpan={7} className="p-3">
+                    <FarbenEditor
+                      farben={m.farben || []}
+                      onChange={(farben) => updateMaterial(m.id, { farben })}
+                    />
+                  </td>
+                </tr>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
