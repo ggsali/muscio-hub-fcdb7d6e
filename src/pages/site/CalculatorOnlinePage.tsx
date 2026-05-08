@@ -581,6 +581,16 @@ const CalculatorOnlinePage = () => {
             <div className="sticky top-24 bg-card rounded-2xl border border-border p-6">
               <h3 className="font-heading text-lg font-bold mb-4">Zusammenfassung</h3>
               <div className="space-y-2 text-sm">
+                {calcs.length > 0 && (
+                  <div className="space-y-1.5 pb-3 mb-1 border-b border-border">
+                    {calcs.map(({ part, calc }, i) => (
+                      <div key={part.id} className="flex justify-between gap-2 text-xs text-muted-foreground">
+                        <span className="truncate">Teil {i + 1}: {part.fileName} ({part.quantity}×)</span>
+                        <span className="text-foreground shrink-0">{CHF(calc.subtotal)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex justify-between text-muted-foreground">
                   <span>Materialkosten</span>
                   <span className="text-foreground">{CHF(materialTotal)}</span>
