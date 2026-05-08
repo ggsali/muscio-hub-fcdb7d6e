@@ -108,7 +108,7 @@ const ContactPage = () => {
         <ScrollReveal>
           <div className="text-center mb-12">
             <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Kontakt</p>
-            <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground mb-4">Kontakt</h1>
+            <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground mb-4">Kontakt</h1>
             <p className="text-muted-foreground text-lg">Wir freuen uns auf deine Nachricht</p>
           </div>
         </ScrollReveal>
