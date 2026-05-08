@@ -145,8 +145,19 @@ export function ChatWidget() {
       if (!sid) { setLoading(false); return; }
     }
     const userMsg: Message = { role: "user", content: text };
+    const isFirstMessage = messages.filter(m => m.role === "user").length === 0;
     setMessages(prev => [...prev, userMsg]);
     await saveMessage(sid, "user", text);
+    if (isFirstMessage) {
+      supabase.functions.invoke("send-sms-notification", {
+        body: {
+          message: text,
+          customerName: userInfo.name || "Unbekannt",
+          customerEmail: userInfo.email || "",
+          sessionId: sid,
+        },
+      }).catch(console.error);
+    }
     try { await streamAI(sid, [...messages, userMsg]); }
     catch (e: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e.message}` }]); }
     setLoading(false);
