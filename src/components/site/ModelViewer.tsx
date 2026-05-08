@@ -172,6 +172,7 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
       undefined,
       (err) => console.error("GLB load failed", err),
     );
+    }
 
     const animate = () => {
       if (stopped) return;
