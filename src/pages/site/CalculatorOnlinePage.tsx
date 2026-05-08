@@ -96,29 +96,39 @@ const CalculatorOnlinePage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
 
-  useEffect(() => {
-    (async () => {
-      setMaterialsLoading(true);
-      const { data, error } = await supabase
-        .from("materials")
-        .select("*")
-        .eq("aktiv", true)
-        .order("sort_order");
-      if (error) {
-        setMaterialsError("Materialien konnten nicht geladen werden.");
-      } else if (data) {
-        setMaterials(
-          data.map((m: any) => ({
-            id: m.id,
-            name: m.name,
-            pricePerGram: Number(m.price_per_gram),
-            density: Number(m.density),
-          })),
-        );
-      }
-      setMaterialsLoading(false);
-    })();
+  const loadMaterials = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("materials")
+      .select("*")
+      .eq("aktiv", true)
+      .order("sort_order");
+    if (error) {
+      setMaterialsError("Materialien konnten nicht geladen werden.");
+    } else if (data) {
+      setMaterials(
+        data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          pricePerGram: Number(m.price_per_gram),
+          density: Number(m.density),
+          farben: Array.isArray(m.farben) ? m.farben : [],
+        })),
+      );
+    }
+    setMaterialsLoading(false);
   }, []);
+
+  useEffect(() => {
+    setMaterialsLoading(true);
+    loadMaterials();
+    const channel = supabase
+      .channel("materials-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "materials" }, () => {
+        loadMaterials();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loadMaterials]);
 
   useEffect(() => {
     (async () => {
