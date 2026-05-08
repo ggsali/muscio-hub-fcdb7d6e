@@ -25,7 +25,7 @@ interface Equipment {
   model_rotation?: Rotation | null;
 }
 
-const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0 } as Rotation };
+const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation };
 
 export default function EquipmentAdminPage() {
   const [items, setItems] = useState<Equipment[]>([]);
@@ -48,7 +48,7 @@ export default function EquipmentAdminPage() {
       specs: Array.isArray(e.specs) ? e.specs : [],
       aktiv: e.aktiv, sort_order: e.sort_order,
       vorschaubild_url: e.vorschaubild_url || "", modell_url: e.modell_url || "",
-      model_rotation: e.model_rotation || { x: 0, y: 0, z: 0 },
+      model_rotation: e.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 },
     });
     setImageFile(null); setModelFile(null);
   };
@@ -92,7 +92,7 @@ export default function EquipmentAdminPage() {
       setModelFile(null); setImageFile(null);
       load();
       if (openCalibration) {
-        setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0 } });
+        setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } });
       } else {
         setEditing(null);
       }
@@ -169,7 +169,7 @@ export default function EquipmentAdminPage() {
               {editing.modell_url && !modelFile && (
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-xs text-muted-foreground truncate flex-1">Aktuell: {editing.modell_url.split("/").pop()}</p>
-                  <Button size="sm" variant="outline" onClick={() => setCalibration({ url: editing.modell_url!, rotation: editing.model_rotation || { x: 0, y: 0, z: 0 } })}>Ausrichten</Button>
+                  <Button size="sm" variant="outline" onClick={() => setCalibration({ url: editing.modell_url!, rotation: editing.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } })}>Ausrichten</Button>
                 </div>
               )}
             </div>
@@ -222,7 +222,7 @@ export default function EquipmentAdminPage() {
                 </div>
               ))}
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setCalibration({ ...calibration, rotation: { x: 0, y: 0, z: 0 } })}>Zurücksetzen</Button>
+                <Button variant="outline" onClick={() => setCalibration({ ...calibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } })}>Zurücksetzen</Button>
                 <Button onClick={saveCalibration}>So ist es gut ✓</Button>
               </div>
             </div>
