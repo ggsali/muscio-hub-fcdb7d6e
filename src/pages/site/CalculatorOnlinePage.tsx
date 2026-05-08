@@ -248,7 +248,11 @@ const CalculatorOnlinePage = () => {
       supabase.from("calculator_uploads").update(patch).eq("id", id).then(() => {});
     }
   };
-  const remove = (id: string) => setParts((p) => p.filter((x) => x.id !== id));
+  const remove = (id: string) => setParts((p) => {
+    const target = p.find((x) => x.id === id);
+    if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+    return p.filter((x) => x.id !== id);
+  });
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
