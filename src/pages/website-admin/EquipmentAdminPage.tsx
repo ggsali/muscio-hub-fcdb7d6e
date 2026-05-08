@@ -82,19 +82,29 @@ export default function EquipmentAdminPage() {
         aktiv: editing.aktiv,
         model_rotation: editing.model_rotation,
       };
+      setModelFile(null); setImageFile(null);
       if (editing.id) {
         await (supabase.from as any)("equipment").update(payload).eq("id", editing.id);
+        toast.success("Gespeichert");
+        load();
+        if (openCalibration) {
+          setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } });
+        } else {
+          setEditing(null);
+        }
       } else {
-        const { data } = await (supabase.from as any)("equipment").insert(payload).select().single();
-        if (data) setEditing({ ...editing, id: data.id, modell_url, vorschaubild_url: vorschaubild_url || "" });
-      }
-      toast.success("Gespeichert");
-      setModelFile(null); setImageFile(null);
-      load();
-      if (openCalibration) {
-        setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } });
-      } else {
-        setEditing(null);
+        const { data, error } = await (supabase.from as any)("equipment").insert(payload).select().single();
+        if (error) throw error;
+        toast.success("Gespeichert");
+        load();
+        if (data) {
+          setEditing({ ...editing, id: data.id, modell_url: modell_url || "", vorschaubild_url: vorschaubild_url || "" });
+          if (openCalibration) {
+            setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } });
+          } else {
+            setEditing(null);
+          }
+        }
       }
     } catch (e: any) {
       toast.error(e.message || "Fehler beim Speichern");
