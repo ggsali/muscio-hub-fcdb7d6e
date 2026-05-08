@@ -24,6 +24,8 @@ export default function WebsiteEinstellungenPage() {
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [preise, setPreise] = useState<MaterialPrice[]>([]);
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
+  const [karussel, setKarussel] = useState<{ text: string }[]>([]);
+  const [savingKarussel, setSavingKarussel] = useState(false);
 
   const reloadMaterials = async () => {
     const { data } = await supabase.from("materials").select("*").order("sort_order");
@@ -40,6 +42,24 @@ export default function WebsiteEinstellungenPage() {
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
           if (row.key === "whatsapp") setWhatsapp({ nummer: (row.value as any)?.nummer || "" });
+          if (row.key === "karussel") {
+            const items = ((row.value as any)?.items) as { text: string }[] | undefined;
+            if (items && items.length > 0) setKarussel(items);
+            else setKarussel([
+              { text: "48h Lieferung" },
+              { text: "0.1mm Präzision" },
+              { text: "Swiss Made" },
+              { text: "100+ Kunden" },
+            ]);
+          }
+        }
+        if (!data.find(r => r.key === "karussel")) {
+          setKarussel([
+            { text: "48h Lieferung" },
+            { text: "0.1mm Präzision" },
+            { text: "Swiss Made" },
+            { text: "100+ Kunden" },
+          ]);
         }
       }
       await reloadMaterials();
@@ -320,15 +340,81 @@ export default function WebsiteEinstellungenPage() {
         </div>
       </section>
 
-      {/* Marquee / Ticker Hinweis */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-2">
-        <h3 className="font-semibold">Ticker / Marquee</h3>
+      {/* Marquee / Ticker */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className="font-semibold">Ticker / Marquee</h3>
+          <Button
+            size="sm"
+            disabled={savingKarussel}
+            onClick={async () => {
+              setSavingKarussel(true);
+              const cleaned = karussel.map(i => ({ text: i.text.trim() })).filter(i => i.text);
+              const err = await saveOne("karussel", { items: cleaned });
+              setSavingKarussel(false);
+              if (err) toast({ title: "Fehler", description: err.message, variant: "destructive" });
+              else toast({ title: "Ticker gespeichert" });
+            }}
+            className="gap-1.5"
+          >
+            <Save className="w-3.5 h-3.5" />
+            {savingKarussel ? "Speichert..." : "Speichern"}
+          </Button>
+        </div>
         <p className="text-sm text-muted-foreground">
-          ℹ️ Materialien werden automatisch aus „Materialien & Preise" synchronisiert.
+          ℹ️ Materialien werden automatisch synchronisiert und hier nicht angezeigt.
         </p>
-        <p className="text-sm text-muted-foreground">
-          Hier kannst du zusätzliche Einträge wie „48h Lieferung", „Swiss Made" etc. verwalten.
-        </p>
+        {karussel.map((item, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              value={item.text}
+              onChange={e => setKarussel(karussel.map((x, j) => j === i ? { text: e.target.value } : x))}
+              placeholder="z.B. 48h Lieferung"
+              className="bg-input border-border flex-1"
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                if (i === 0) return;
+                const next = [...karussel];
+                [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                setKarussel(next);
+              }}
+              disabled={i === 0}
+            >
+              ↑
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                if (i === karussel.length - 1) return;
+                const next = [...karussel];
+                [next[i + 1], next[i]] = [next[i], next[i + 1]];
+                setKarussel(next);
+              }}
+              disabled={i === karussel.length - 1}
+            >
+              ↓
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setKarussel(karussel.filter((_, j) => j !== i))}
+            >
+              <X className="w-4 h-4 text-destructive" />
+            </Button>
+          </div>
+        ))}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setKarussel([...karussel, { text: "" }])}
+          className="gap-1.5"
+        >
+          <Plus className="w-3.5 h-3.5" />Eintrag hinzufügen
+        </Button>
       </section>
     </div>
   );
