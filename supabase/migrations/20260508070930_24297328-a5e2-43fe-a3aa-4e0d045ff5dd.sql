@@ -1,0 +1,1 @@
+ALTER TABLE public.equipment ADD COLUMN IF NOT EXISTS model_rotation jsonb NOT NULL DEFAULT '{"x":0,"y":0,"z":0}'::jsonb;
