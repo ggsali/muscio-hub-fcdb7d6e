@@ -36,7 +36,7 @@ export default function BlogPage() {
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="max-w-3xl mb-14">
           <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Blog & News</p>
-          <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground tracking-tight leading-[1.05] mb-4">
+          <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground tracking-tight leading-[1.05] mb-4">
             Wissen rund um den 3D-Druck
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed">
