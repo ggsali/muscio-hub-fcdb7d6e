@@ -159,6 +159,7 @@ const CalculatorOnlinePage = () => {
     const defaultMatId = materials[0]?.id || "";
     const defaultMatName = materials[0]?.name || "";
     const isStl = /\.stl$/i.test(file.name);
+    const previewUrl = isStl ? URL.createObjectURL(file) : undefined;
 
     setParts((p) => [
       ...p,
@@ -174,6 +175,7 @@ const CalculatorOnlinePage = () => {
         volumeCm3: 0,
         manualWeightG: isStl ? undefined : undefined,
         isStl,
+        previewUrl,
       },
     ]);
 
