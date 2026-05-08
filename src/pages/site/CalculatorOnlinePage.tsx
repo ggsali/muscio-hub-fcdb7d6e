@@ -454,11 +454,31 @@ const CalculatorOnlinePage = () => {
   return (
     <TooltipProvider delayDuration={150}>
     <div className="pt-12 pb-20">
+      {/* Mobile sticky total bar */}
+      {parts.length > 0 && (
+        <div className="lg:hidden sticky top-16 z-30 bg-card/95 backdrop-blur border-b border-border px-4 py-2 flex items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</span>
+            <span className="text-base font-bold text-primary">{CHF(total)}</span>
+          </div>
+          <Button
+            size="sm"
+            className="gap-1.5"
+            disabled={parts.length === 0 || submitting || parts.some(p => p.uploading) || parts.some(p => /\.step$|\.stp$/i.test(p.fileName))}
+            onClick={async (e) => {
+              if (isLoggedIn) await handleSend(e as unknown as React.FormEvent);
+              else setShowQuote(true);
+            }}
+          >
+            Anfragen <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
       <div className="container mx-auto px-4 max-w-6xl">
         <ScrollReveal>
           <div className="text-center mb-10">
             <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Online-Kalkulator</p>
-            <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground mb-4">
+            <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground mb-4">
               Preis sofort berechnen
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
