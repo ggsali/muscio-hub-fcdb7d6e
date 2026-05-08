@@ -346,7 +346,7 @@ export default function EinstellungenPage() {
       )}
 
       {tab === "website" && (
-        <div className="space-y-4 max-w-lg">
+        <div className="space-y-4 max-w-full md:max-w-lg">
           <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground">
             Diese Einstellungen steuern den öffentlichen Kalkulator auf der <strong>3D Print Studio Website</strong>. Änderungen werden sofort für Besucher übernommen.
           </div>
