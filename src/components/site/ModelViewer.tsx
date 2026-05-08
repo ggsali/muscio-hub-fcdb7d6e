@@ -16,12 +16,13 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
     const height = container.clientHeight;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x111315);
+    scene.background = null;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000);
     camera.position.set(0, 0, 200);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(width, height);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -54,6 +55,7 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.8;
     controls.enablePan = false;
+    controls.enableZoom = false;
 
     let root: THREE.Object3D | null = null;
     let stopped = false;
@@ -82,6 +84,21 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
           root.position.z += rotation.pz || 0;
         }
         scene.add(root);
+
+        const shadowBox = new THREE.Box3().setFromObject(gltf.scene);
+        const shadowSize = shadowBox.getSize(new THREE.Vector3());
+        const shadowGeo = new THREE.CircleGeometry(Math.max(shadowSize.x, shadowSize.z) * 0.6, 32);
+        const shadowMat = new THREE.MeshBasicMaterial({
+          color: 0x000000,
+          transparent: true,
+          opacity: 0.08,
+          side: THREE.DoubleSide,
+        });
+        const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+        shadow.rotation.x = -Math.PI / 2;
+        shadow.position.y = shadowBox.min.y - 0.1;
+        scene.add(shadow);
+
         const maxDim = Math.max(size.x, size.y, size.z);
         camera.position.set(0, maxDim * 0.5, maxDim * 2);
         camera.lookAt(0, 0, 0);
