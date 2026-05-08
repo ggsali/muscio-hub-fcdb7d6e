@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { COLOR_MAP, colorHex } from "@/lib/colorMap";
+import { X } from "lucide-react";
 
 interface FaqEntry { frage: string; antwort: string; }
 interface MaterialPrice { material: string; preis_pro_g: number; }
