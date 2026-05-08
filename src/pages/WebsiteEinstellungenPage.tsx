@@ -194,35 +194,39 @@ export default function WebsiteEinstellungenPage() {
       </AccordionItem>
 
       {/* Kontakt */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <h3 className="font-semibold">Kontakt-Informationen</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">E-Mail</label>
-            <Input value={kontakt.email} onChange={e => setKontakt({ ...kontakt, email: e.target.value })} className="bg-input border-border" />
+      <AccordionItem value="kontakt" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Kontakt-Informationen</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">E-Mail</label>
+              <Input value={kontakt.email} onChange={e => setKontakt({ ...kontakt, email: e.target.value })} className="bg-input border-border w-full" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Telefon</label>
+              <Input value={kontakt.telefon} onChange={e => setKontakt({ ...kontakt, telefon: e.target.value })} className="bg-input border-border w-full" />
+            </div>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Telefon</label>
-            <Input value={kontakt.telefon} onChange={e => setKontakt({ ...kontakt, telefon: e.target.value })} className="bg-input border-border" />
+            <label className="text-xs text-muted-foreground mb-1 block">Adresse</label>
+            <Textarea value={kontakt.adresse} onChange={e => setKontakt({ ...kontakt, adresse: e.target.value })} className="bg-input border-border w-full" />
           </div>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Adresse</label>
-          <Textarea value={kontakt.adresse} onChange={e => setKontakt({ ...kontakt, adresse: e.target.value })} className="bg-input border-border" />
-        </div>
-      </section>
+        </AccordionContent>
+      </AccordionItem>
 
       {/* WhatsApp */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <h3 className="font-semibold">WhatsApp</h3>
-        <p className="text-xs text-muted-foreground">Nummer für den Chat-Button (Format: 41798395080, ohne + und ohne Leerzeichen). Leer lassen, um WhatsApp im Chat-Button auszublenden.</p>
-        <Input
-          value={whatsapp.nummer}
-          onChange={e => setWhatsapp({ nummer: e.target.value.replace(/[^0-9]/g, "") })}
-          placeholder="41798395080"
-          className="bg-input border-border"
-        />
-      </section>
+      <AccordionItem value="whatsapp" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">WhatsApp</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">Nummer für den Chat-Button (Format: 41798395080, ohne + und ohne Leerzeichen). Leer lassen, um WhatsApp im Chat-Button auszublenden.</p>
+          <Input
+            value={whatsapp.nummer}
+            onChange={e => setWhatsapp({ nummer: e.target.value.replace(/[^0-9]/g, "") })}
+            placeholder="41798395080"
+            className="bg-input border-border w-full"
+          />
+        </AccordionContent>
+      </AccordionItem>
 
       {/* FAQ */}
       <section className="bg-card border border-border rounded-lg p-5 space-y-3">
