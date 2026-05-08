@@ -24,6 +24,8 @@ export default function WebsiteEinstellungenPage() {
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [preise, setPreise] = useState<MaterialPrice[]>([]);
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
+  const [karussel, setKarussel] = useState<{ text: string }[]>([]);
+  const [savingKarussel, setSavingKarussel] = useState(false);
 
   const reloadMaterials = async () => {
     const { data } = await supabase.from("materials").select("*").order("sort_order");
