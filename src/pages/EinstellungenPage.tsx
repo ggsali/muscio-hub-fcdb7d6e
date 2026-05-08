@@ -253,7 +253,7 @@ export default function EinstellungenPage() {
 
       {/* ── Tab: Preis-Presets ── */}
       {tab === "presets" && (
-        <div className="space-y-4 max-w-2xl">
+        <div className="space-y-4 max-w-full md:max-w-2xl">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">Presets sind beim Auftrag auswählbar und überschreiben die Standard-Verrechnungssätze.</p>
             <Button size="sm" onClick={() => setEditingPreset(emptyPreset())} className="gap-1.5">
