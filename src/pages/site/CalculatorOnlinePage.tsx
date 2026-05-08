@@ -210,8 +210,9 @@ const CalculatorOnlinePage = () => {
     const defaultMatId = defaultMat?.id || "";
     const defaultMatName = defaultMat?.name || "";
     const defaultColor = defaultMat?.farben?.[0] || "";
-    const isStl = /\.stl$/i.test(file.name);
-    const previewUrl = isStl ? URL.createObjectURL(file) : undefined;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const previewable = ext === "stl" || ext === "obj" || ext === "3mf";
+    const previewUrl = previewable ? URL.createObjectURL(file) : undefined;
 
     setParts((p) => [
       ...p,
@@ -225,20 +226,33 @@ const CalculatorOnlinePage = () => {
         infill: 20,
         quantity: 1,
         volumeCm3: 0,
-        manualWeightG: isStl ? undefined : undefined,
-        isStl,
+        hasVolume: false,
+        estimatedWeight: 0,
         previewUrl,
       },
     ]);
 
-    // STL volume berechnen
-    if (isStl) {
-      try {
-        const vol = await calcStlVolumeCm3(file);
-        setParts((p) => p.map((x) => (x.id === id ? { ...x, volumeCm3: vol } : x)));
-      } catch (err) {
-        console.warn("Volumen-Berechnung fehlgeschlagen", err);
+    // Volumen berechnen
+    try {
+      let vol = 0;
+      if (ext === "stl") vol = await calcStlVolumeCm3(file);
+      else if (ext === "obj") vol = await calcObjVolumeCm3(file);
+      else if (ext === "3mf") vol = await calc3mfVolumeCm3(file);
+
+      if (vol > 0) {
+        const mat = materials[0];
+        const fillFactor = 0.25 + 0.75 * 0.20;
+        const weightG = mat
+          ? Math.max(1, Math.round(vol * mat.density * fillFactor * 10) / 10)
+          : 0;
+        setParts((p) =>
+          p.map((x) =>
+            x.id === id ? { ...x, volumeCm3: vol, hasVolume: true, estimatedWeight: weightG } : x,
+          ),
+        );
       }
+    } catch (err) {
+      console.warn("Volumen-Berechnung fehlgeschlagen", err);
     }
 
     // Upload im Hintergrund
@@ -289,10 +303,20 @@ const CalculatorOnlinePage = () => {
   };
 
   const update = (id: string, u: Partial<Part>) => {
+    const currentPart = parts.find((x) => x.id === id);
+    if (currentPart && currentPart.volumeCm3 > 0 && (u.infill !== undefined || u.materialId !== undefined)) {
+      const newInfill = u.infill ?? currentPart.infill;
+      const newMatId = u.materialId ?? currentPart.materialId;
+      const mat = materials.find((m) => m.id === newMatId);
+      if (mat) {
+        const fillFactor = 0.25 + 0.75 * (newInfill / 100);
+        const newWeight = Math.max(1, Math.round(currentPart.volumeCm3 * mat.density * fillFactor * 10) / 10);
+        u = { ...u, estimatedWeight: newWeight };
+      }
+    }
     setParts((p) => p.map((x) => {
       if (x.id !== id) return x;
       const next = { ...x, ...u };
-      // Wenn Material gewechselt wurde: Farbe ggf. auf erste verfügbare Farbe setzen
       if (u.materialId !== undefined && u.materialId !== x.materialId) {
         const newMat = materials.find((m) => m.id === u.materialId);
         const avail = newMat?.farben || [];
@@ -320,23 +344,18 @@ const CalculatorOnlinePage = () => {
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
-    if (!mat) return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
-    const shellRatio = 0.25;
-    const infillRatio = p.infill / 100;
-    const fillFactor = shellRatio + (1 - shellRatio) * infillRatio;
-    let weight = 0;
-    if (p.isStl && p.volumeCm3 > 0) {
-      weight = p.volumeCm3 * mat.density * fillFactor;
-    } else if (p.manualWeightG && p.manualWeightG > 0) {
-      weight = p.manualWeightG * fillFactor;
+    if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
+      return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
     }
+    const weight = p.estimatedWeight;
     const matCost = weight * mat.pricePerGram;
-    const unit = matCost; // Setup-Gebühr separat unten
+    const unit = matCost;
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount };
   };
+
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
