@@ -173,19 +173,25 @@ export default function WebsiteEinstellungenPage() {
         </a>
       </section>
 
+      {/* Aufklappbare Sektionen */}
+      <Accordion type="multiple" defaultValue={["wartung"]} className="space-y-3">
+
       {/* Wartungsmodus */}
-      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Wartungsmodus</h3>
-          <Switch checked={wartung.aktiv} onCheckedChange={v => setWartung({ ...wartung, aktiv: v })} />
-        </div>
-        <Textarea
-          value={wartung.nachricht}
-          onChange={e => setWartung({ ...wartung, nachricht: e.target.value })}
-          placeholder="Nachricht für Besucher während Wartung"
-          className="bg-input border-border"
-        />
-      </section>
+      <AccordionItem value="wartung" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Wartungsmodus</AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Wartungsmodus aktiv</span>
+            <Switch checked={wartung.aktiv} onCheckedChange={v => setWartung({ ...wartung, aktiv: v })} />
+          </div>
+          <Textarea
+            value={wartung.nachricht}
+            onChange={e => setWartung({ ...wartung, nachricht: e.target.value })}
+            placeholder="Nachricht für Besucher während Wartung"
+            className="bg-input border-border w-full"
+          />
+        </AccordionContent>
+      </AccordionItem>
 
       {/* Kontakt */}
       <section className="bg-card border border-border rounded-lg p-5 space-y-3">
