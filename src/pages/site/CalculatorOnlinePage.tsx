@@ -39,8 +39,8 @@ interface Part {
   infill: number;
   quantity: number;
   volumeCm3: number; // 0 wenn unbekannt
-  manualWeightG?: number; // für non-STL
-  isStl: boolean;
+  hasVolume: boolean;
+  estimatedWeight: number;
   previewUrl?: string;
 }
 
