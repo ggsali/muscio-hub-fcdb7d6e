@@ -116,7 +116,7 @@ export default function EquipmentPage() {
 
         {/* CTA */}
         <ScrollReveal>
-          <div className="bg-muted rounded-2xl px-6 py-14 md:px-12 md:py-20 text-center">
+          <div className="rounded-2xl px-6 py-14 md:px-12 md:py-20 text-center">
             <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-foreground tracking-tight mb-3">
               Bereit für dein Projekt?
             </h2>
@@ -132,7 +132,7 @@ export default function EquipmentPage() {
               </Link>
               <Link
                 to="/kontakt"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border bg-background text-foreground text-sm font-semibold hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border text-foreground text-sm font-semibold hover:bg-accent hover:text-accent-foreground transition-colors"
               >
                 Kontakt aufnehmen
               </Link>
