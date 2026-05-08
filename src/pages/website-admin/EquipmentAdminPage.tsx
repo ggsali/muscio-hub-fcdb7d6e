@@ -12,7 +12,7 @@ import ModelViewer from "@/components/site/ModelViewer";
 import { toast } from "sonner";
 
 interface Spec { key: string; value: string; }
-interface Rotation { x: number; y: number; z: number }
+interface Rotation { x: number; y: number; z: number; px: number; py: number; pz: number }
 interface Equipment {
   id: string;
   name: string;
@@ -25,7 +25,7 @@ interface Equipment {
   model_rotation?: Rotation | null;
 }
 
-const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0 } as Rotation };
+const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation };
 
 export default function EquipmentAdminPage() {
   const [items, setItems] = useState<Equipment[]>([]);
@@ -48,7 +48,7 @@ export default function EquipmentAdminPage() {
       specs: Array.isArray(e.specs) ? e.specs : [],
       aktiv: e.aktiv, sort_order: e.sort_order,
       vorschaubild_url: e.vorschaubild_url || "", modell_url: e.modell_url || "",
-      model_rotation: e.model_rotation || { x: 0, y: 0, z: 0 },
+      model_rotation: e.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 },
     });
     setImageFile(null); setModelFile(null);
   };
@@ -92,7 +92,7 @@ export default function EquipmentAdminPage() {
       setModelFile(null); setImageFile(null);
       load();
       if (openCalibration) {
-        setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0 } });
+        setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } });
       } else {
         setEditing(null);
       }
@@ -169,7 +169,7 @@ export default function EquipmentAdminPage() {
               {editing.modell_url && !modelFile && (
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-xs text-muted-foreground truncate flex-1">Aktuell: {editing.modell_url.split("/").pop()}</p>
-                  <Button size="sm" variant="outline" onClick={() => setCalibration({ url: editing.modell_url!, rotation: editing.model_rotation || { x: 0, y: 0, z: 0 } })}>Ausrichten</Button>
+                  <Button size="sm" variant="outline" onClick={() => setCalibration({ url: editing.modell_url!, rotation: editing.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } })}>Ausrichten</Button>
                 </div>
               )}
             </div>
@@ -206,12 +206,12 @@ export default function EquipmentAdminPage() {
           {calibration && (
             <div className="space-y-4">
               <div className="bg-muted rounded-lg overflow-hidden h-[400px]">
-                <ModelViewer url={calibration.url} rotation={calibration.rotation} />
+                <ModelViewer url={calibration.url} rotation={calibration.rotation} showAxes />
               </div>
               {(["x", "y", "z"] as const).map(axis => (
                 <div key={axis}>
                   <div className="flex justify-between mb-2">
-                    <Label>{axis.toUpperCase()}-Achse</Label>
+                    <Label>{axis.toUpperCase()}-Achse (Rotation)</Label>
                     <span className="text-sm text-muted-foreground">{Math.round(calibration.rotation[axis])}°</span>
                   </div>
                   <Slider
@@ -221,8 +221,21 @@ export default function EquipmentAdminPage() {
                   />
                 </div>
               ))}
+              {(["px", "py", "pz"] as const).map(axis => (
+                <div key={axis}>
+                  <div className="flex justify-between mb-2">
+                    <Label>{axis.charAt(1).toUpperCase()}-Position</Label>
+                    <span className="text-sm text-muted-foreground">{Math.round(calibration.rotation[axis])}</span>
+                  </div>
+                  <Slider
+                    min={-100} max={100} step={1}
+                    value={[calibration.rotation[axis]]}
+                    onValueChange={([v]) => setCalibration({ ...calibration, rotation: { ...calibration.rotation, [axis]: v } })}
+                  />
+                </div>
+              ))}
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setCalibration({ ...calibration, rotation: { x: 0, y: 0, z: 0 } })}>Zurücksetzen</Button>
+                <Button variant="outline" onClick={() => setCalibration({ ...calibration, rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } })}>Zurücksetzen</Button>
                 <Button onClick={saveCalibration}>So ist es gut ✓</Button>
               </div>
             </div>
