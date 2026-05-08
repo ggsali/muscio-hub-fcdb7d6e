@@ -370,7 +370,7 @@ export default function EinstellungenPage() {
                   step={f.step}
                   value={websiteSettings[f.key] ?? ""}
                   onChange={e => setWebsiteSettings(prev => ({ ...prev, [f.key]: parseFloat(e.target.value) || 0 }))}
-                  className="w-32 bg-input border-border text-right tabular-nums"
+                  className="w-28 md:w-32 bg-input border-border text-right tabular-nums flex-shrink-0"
                 />
               </div>
             ))}
