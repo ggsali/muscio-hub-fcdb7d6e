@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, MessageCircle, User, Bot, Circle, Trash2, ArrowLeft } from "lucide-react";
+import { Send, MessageCircle, ArrowLeft, Trash2, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -133,184 +134,149 @@ export default function ChatPage() {
     loadSessions();
   };
 
-  const selectedSessionData = sessions.find(s => s.id === selectedSession);
-  const totalUnread = sessions.reduce((sum, s) => sum + (s.unread_count || 0), 0);
+  const activeConv = sessions.find(s => s.id === selectedSession);
 
   return (
-    <div className="p-3 md:p-6 animate-fade-in h-full">
-      <div className="mb-3 md:mb-5 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            Live-Chat
-            {totalUnread > 0 && (
-              <span className="w-6 h-6 bg-primary rounded-full text-[11px] text-primary-foreground flex items-center justify-center font-bold">
-                {totalUnread}
-              </span>
-            )}
-          </h1>
-          <p className="text-muted-foreground text-xs md:text-sm mt-0.5">Website-Chat der 3D Print Studio</p>
+    <div className="flex h-[calc(100vh-56px)] md:h-screen overflow-hidden">
+      {/* Konversationsliste */}
+      <div className={cn(
+        "flex-col w-full md:w-80 border-r border-border bg-background",
+        isMobile && selectedSession ? "hidden" : "flex"
+      )}>
+        <div className="p-4 border-b border-border">
+          <h2 className="font-bold text-lg">Konversationen</h2>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {sessions.map(conv => (
+            <button
+              key={conv.id}
+              onClick={() => handleSelectSession(conv.id)}
+              className={cn(
+                "w-full flex items-center gap-3 p-4 hover:bg-muted border-b border-border text-left transition-colors group relative",
+                selectedSession === conv.id && "bg-muted"
+              )}
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-primary">{(conv.user_name || "?")[0]?.toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-0.5">
+                  <span className="font-medium text-sm truncate">{conv.user_name || "Unbekannt"}</span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                    {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true, locale: de })}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground truncate">{conv.last_message}</p>
+              </div>
+              {(conv.unread_count || 0) > 0 && (
+                <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center flex-shrink-0 font-bold">
+                  {conv.unread_count}
+                </span>
+              )}
+              <button
+                onClick={(e) => handleDeleteSession(conv.id, e)}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-all"
+                aria-label="Löschen"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </button>
+          ))}
+          {sessions.length === 0 && (
+            <p className="text-center text-muted-foreground text-sm p-8">Keine Konversationen</p>
+          )}
         </div>
       </div>
 
-      <div className="flex bg-card border border-border rounded-xl overflow-hidden" style={{ height: "calc(100vh - 160px)" }}>
-        {/* Sidebar — auf Mobile nur sichtbar wenn keine Session ausgewählt */}
-        <div className={cn(
-          "border-r border-border flex-col flex-shrink-0",
-          isMobile ? (selectedSession ? "hidden" : "flex w-full") : "flex w-72"
-        )}>
-          <div className="px-4 py-3 border-b border-border">
-            <p className="text-xs text-muted-foreground">{sessions.length} Konversationen</p>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {sessions.length === 0 ? (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                <MessageCircle className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                <p>Noch keine Chat-Anfragen</p>
-                <p className="text-xs mt-1 opacity-60">Besucher der Website können über das Chat-Widget schreiben</p>
-              </div>
-            ) : sessions.map(s => (
+      {/* Chat-Fenster */}
+      <div className={cn(
+        "flex-col flex-1 bg-background min-w-0",
+        isMobile && !selectedSession ? "hidden" : "flex"
+      )}>
+        {selectedSession ? (
+          <>
+            <div className="flex items-center gap-3 p-4 border-b border-border bg-background">
               <button
-                key={s.id}
-                onClick={() => handleSelectSession(s.id)}
-                className={cn(
-                  "w-full text-left px-4 py-3 border-b border-border/50 hover:bg-muted transition-colors group relative",
-                  selectedSession === s.id && "bg-primary/10 border-l-2 border-l-primary"
-                )}
+                className="md:hidden p-2 -ml-2 rounded-lg hover:bg-muted transition-colors"
+                onClick={() => setSelectedSession(null)}
+                aria-label="Zurück"
               >
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="font-medium text-sm truncate">{s.user_name || "Anonym"}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground flex-shrink-0">
-                      {formatDistanceToNow(new Date(s.updated_at), { addSuffix: true, locale: de })}
-                    </span>
-                    <button
-                      onClick={(e) => handleDeleteSession(s.id, e)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive/10 hover:text-destructive transition-all ml-1"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-                {s.user_email && (
-                  <p className="text-xs text-muted-foreground truncate">{s.user_email}</p>
-                )}
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-muted-foreground truncate flex-1">{s.last_message}</p>
-                  {(s.unread_count || 0) > 0 && (
-                    <span className="ml-2 w-5 h-5 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
-                      {s.unread_count}
-                    </span>
-                  )}
-                </div>
+                <ArrowLeft className="w-5 h-5" />
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Chat Area — auf Mobile nur sichtbar wenn Session ausgewählt */}
-        <div className={cn(
-          "flex-1 flex-col min-w-0",
-          isMobile ? (selectedSession ? "flex" : "hidden") : "flex"
-        )}>
-          {!selectedSession ? (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <MessageCircle className="w-14 h-14 mx-auto mb-4 opacity-20" />
-                <p className="font-medium">Konversation auswählen</p>
-                <p className="text-sm mt-1 opacity-60">Klicke links auf eine Chat-Anfrage</p>
+              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-primary">{(activeConv?.user_name || "?")[0]?.toUpperCase()}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate">{activeConv?.user_name || "Anonym"}</p>
+                {activeConv?.user_email && (
+                  <p className="text-xs text-muted-foreground truncate">{activeConv.user_email}</p>
+                )}
               </div>
             </div>
-          ) : (
-            <>
-              {/* Header */}
-              <div className="px-3 md:px-5 py-3 md:py-3.5 border-b border-border bg-card/50 flex items-center gap-2 md:gap-3 flex-shrink-0">
-                {isMobile && (
-                  <button
-                    onClick={() => setSelectedSession(null)}
-                    className="p-1.5 -ml-1 rounded-lg hover:bg-muted text-muted-foreground"
-                    aria-label="Zurück"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </button>
-                )}
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">{selectedSessionData?.user_name || "Anonym"}</p>
-                  {selectedSessionData?.user_email && (
-                    <p className="text-xs text-muted-foreground">{selectedSessionData.user_email}</p>
-                  )}
-                </div>
-                <div className="ml-auto flex items-center gap-1.5">
-                  <Circle className="w-2 h-2 fill-green-500 text-green-500" />
-                  <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(selectedSessionData?.updated_at || ""), { addSuffix: true, locale: de })}
-                  </span>
-                </div>
-              </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                {messages.map(msg => (
-                  <div key={msg.id} className={cn("flex gap-2.5", msg.role !== "user" ? "justify-end" : "justify-start")}>
-                    {msg.role === "user" && (
-                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <User className="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-1 max-w-[70%]">
-                      {msg.role === "assistant" && (
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <Bot className="w-3 h-3" /> KI-Assistent
-                        </span>
-                      )}
-                      <div className={cn(
-                        "rounded-2xl px-4 py-2.5 text-sm",
-                        msg.role === "user"
-                          ? "bg-muted text-foreground rounded-tl-sm"
-                          : msg.role === "admin"
-                            ? "bg-primary text-primary-foreground rounded-tr-sm"
-                            : "bg-secondary text-secondary-foreground rounded-tl-sm"
-                      )}>
-                        {msg.content}
-                      </div>
-                      <span className="text-[10px] text-muted-foreground px-1">
-                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: de })}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {messages.map(msg => (
+                <div key={msg.id} className={cn("flex", msg.role !== "user" ? "justify-end" : "justify-start")}>
+                  <div className={cn(
+                    "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
+                    msg.role === "user"
+                      ? "bg-muted text-foreground rounded-tl-sm"
+                      : msg.role === "admin"
+                        ? "bg-primary text-primary-foreground rounded-tr-sm"
+                        : "bg-secondary text-secondary-foreground rounded-tr-sm"
+                  )}>
+                    {msg.role === "assistant" && (
+                      <span className="text-[10px] flex items-center gap-1 mb-1 opacity-70">
+                        <Bot className="w-3 h-3" /> KI-Assistent
                       </span>
-                    </div>
-                    {msg.role !== "user" && (
-                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {msg.role === "admin" ? <User className="w-3.5 h-3.5 text-primary" /> : <Bot className="w-3.5 h-3.5 text-primary" />}
-                      </div>
                     )}
+                    <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    <p className={cn(
+                      "text-[10px] mt-1 text-right",
+                      msg.role === "admin" ? "text-primary-foreground/70" : "text-muted-foreground"
+                    )}>
+                      {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: de })}
+                    </p>
                   </div>
-                ))}
-                <div ref={bottomRef} />
-              </div>
+                </div>
+              ))}
+              <div ref={bottomRef} />
+            </div>
 
-              {/* Reply Input */}
-              <div className="p-4 border-t border-border flex gap-2 flex-shrink-0">
-                <input
-                  className="flex-1 bg-input border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
-                  placeholder="Als Admin antworten... (Enter zum Senden)"
+            <div className="p-4 border-t border-border bg-background">
+              <div className="flex gap-2 items-end">
+                <Textarea
                   value={reply}
                   onChange={e => setReply(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
+                  placeholder="Nachricht schreiben..."
+                  className="flex-1 min-h-[44px] max-h-32 resize-none rounded-2xl"
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendReply();
+                    }
+                  }}
                   disabled={sending}
                 />
                 <Button
+                  size="icon"
                   onClick={handleSendReply}
                   disabled={!reply.trim() || sending}
-                  size="icon"
-                  className="rounded-xl h-10 w-10 flex-shrink-0"
+                  className="h-11 w-11 rounded-full flex-shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Wähle eine Konversation aus</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
