@@ -37,7 +37,7 @@ export default function EquipmentPage() {
           <ScrollReveal>
             <div className="max-w-xl">
               <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Unsere Technologie</p>
-              <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
+              <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
                 Unsere Maschinen.
               </h1>
               <p className="text-muted-foreground text-base leading-relaxed">
