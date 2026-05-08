@@ -3,8 +3,10 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-export default function ModelViewer({ url }: { url: string }) {
+interface Rotation { x: number; y: number; z: number }
+export default function ModelViewer({ url, rotation }: { url: string; rotation?: Rotation }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<THREE.Object3D | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
