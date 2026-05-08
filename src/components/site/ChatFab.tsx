@@ -38,10 +38,18 @@ export function ChatFab() {
     window.dispatchEvent(new CustomEvent("open-chat-widget"));
   };
 
+  const handleClick = () => {
+    if (whatsapp) {
+      setOpen(o => !o);
+    } else {
+      goLiveChat();
+    }
+  };
+
   return (
     <div ref={ref} className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       <AnimatePresence>
-        {open && (
+        {open && whatsapp && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -49,20 +57,18 @@ export function ChatFab() {
             transition={{ duration: 0.18 }}
             className="bg-card border border-border rounded-xl shadow-lg p-2 min-w-[220px]"
           >
-            {whatsapp && (
-              <a
-                href={`https://wa.me/${whatsapp}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors"
-              >
-                <span className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4" />
-                </span>
-                <span className="text-sm font-medium">WhatsApp schreiben</span>
-              </a>
-            )}
+            <a
+              href={`https://wa.me/${whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors"
+            >
+              <span className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center">
+                <MessageCircle className="w-4 h-4" />
+              </span>
+              <span className="text-sm font-medium">WhatsApp schreiben</span>
+            </a>
             <button
               onClick={goLiveChat}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors text-left"
@@ -70,18 +76,18 @@ export function ChatFab() {
               <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
                 <MessageCircle className="w-4 h-4" />
               </span>
-              <span className="text-sm font-medium">Live Chat starten</span>
+              <span className="text-sm font-medium">Live Chat öffnen</span>
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={handleClick}
         aria-label="Chat öffnen"
         className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition-transform hover:scale-110"
       >
-        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-7 h-7" />}
+        {open && whatsapp ? <X className="w-6 h-6" /> : <MessageCircle className="w-7 h-7" />}
       </button>
     </div>
   );
