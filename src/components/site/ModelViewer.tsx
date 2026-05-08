@@ -97,26 +97,41 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
         const box2 = new THREE.Box3().setFromObject(gltf.scene);
         const size2 = box2.getSize(new THREE.Vector3());
 
-        const shadowRadius = Math.max(size2.x, size2.z) * 0.45;
-        const shadowLayers = [
-          { radius: shadowRadius * 1.0, opacity: 0.10 },
-          { radius: shadowRadius * 0.65, opacity: 0.07 },
-          { radius: shadowRadius * 0.35, opacity: 0.05 },
-        ];
+        const shadowCanvas = document.createElement('canvas');
+        shadowCanvas.width = 256;
+        shadowCanvas.height = 256;
+        const ctx = shadowCanvas.getContext('2d')!;
 
-        shadowLayers.forEach(({ radius, opacity }) => {
-          const geo = new THREE.CircleGeometry(radius, 64);
-          const mat = new THREE.MeshBasicMaterial({
-            color: 0x000000,
-            transparent: true,
-            opacity,
-            depthWrite: false,
-          });
-          const mesh = new THREE.Mesh(geo, mat);
-          mesh.rotation.x = -Math.PI / 2;
-          mesh.position.set(0, 0.01, 0);
-          scene.add(mesh);
+        const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.35)');
+        gradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.20)');
+        gradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.08)');
+        gradient.addColorStop(0.85, 'rgba(0, 0, 0, 0.02)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.ellipse(128, 128, 128, 80, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+
+        const shadowGeo = new THREE.PlaneGeometry(1, 1);
+        const shadowMat = new THREE.MeshBasicMaterial({
+          map: shadowTexture,
+          transparent: true,
+          depthWrite: false,
+          opacity: 1,
         });
+        const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+        shadowMesh.rotation.x = -Math.PI / 2;
+        shadowMesh.position.set(0, 0.02, 0);
+
+        const shadowWidth = Math.max(size2.x, size2.z) * 1.1;
+        const shadowDepth = Math.max(size2.x, size2.z) * 0.7;
+        shadowMesh.scale.set(shadowWidth, shadowDepth, 1);
+
+        scene.add(shadowMesh);
 
         const maxDim = Math.max(size2.x, size2.y, size2.z);
         const height = size2.y;
