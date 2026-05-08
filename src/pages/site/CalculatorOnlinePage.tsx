@@ -645,39 +645,7 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
 
-                    {/* Farbauswahl als Punkte (dynamisch aus Material) */}
-                    <div className="mt-4">
-                      <Label className="text-xs">Farbe</Label>
-                      <ColorPicker
-                        farben={materials.find((m) => m.id === p.materialId)?.farben || []}
-                        selected={p.color}
-                        onSelect={(c) => update(p.id, { color: c })}
-                      />
-                    </div>
 
-                    {/* Qualitätsstufen */}
-                    <div className="mt-4">
-                      <Label className="text-xs">Qualität / Festigkeit</Label>
-                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {QUALITY_PRESETS.map((q) => {
-                          const selected = p.infill === q.infill;
-                          return (
-                            <Tooltip key={q.key}>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={() => update(p.id, { infill: q.infill })}
-                                  className={`h-9 rounded-md border text-sm font-medium transition-all ${selected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background hover:bg-muted"}`}
-                                >
-                                  {q.label}
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>{q.desc}</TooltipContent>
-                            </Tooltip>
-                          );
-                        })}
-                      </div>
-                    </div>
 
                     {/* STEP-Hinweis */}
                     {isStepFile(p.fileName) && (
