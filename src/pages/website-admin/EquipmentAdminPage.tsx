@@ -206,16 +206,29 @@ export default function EquipmentAdminPage() {
           {calibration && (
             <div className="space-y-4">
               <div className="bg-muted rounded-lg overflow-hidden h-[400px]">
-                <ModelViewer url={calibration.url} rotation={calibration.rotation} />
+                <ModelViewer url={calibration.url} rotation={calibration.rotation} showAxes />
               </div>
               {(["x", "y", "z"] as const).map(axis => (
                 <div key={axis}>
                   <div className="flex justify-between mb-2">
-                    <Label>{axis.toUpperCase()}-Achse</Label>
+                    <Label>{axis.toUpperCase()}-Achse (Rotation)</Label>
                     <span className="text-sm text-muted-foreground">{Math.round(calibration.rotation[axis])}°</span>
                   </div>
                   <Slider
                     min={-180} max={180} step={1}
+                    value={[calibration.rotation[axis]]}
+                    onValueChange={([v]) => setCalibration({ ...calibration, rotation: { ...calibration.rotation, [axis]: v } })}
+                  />
+                </div>
+              ))}
+              {(["px", "py", "pz"] as const).map(axis => (
+                <div key={axis}>
+                  <div className="flex justify-between mb-2">
+                    <Label>{axis.charAt(1).toUpperCase()}-Position</Label>
+                    <span className="text-sm text-muted-foreground">{Math.round(calibration.rotation[axis])}</span>
+                  </div>
+                  <Slider
+                    min={-100} max={100} step={1}
                     value={[calibration.rotation[axis]]}
                     onValueChange={([v]) => setCalibration({ ...calibration, rotation: { ...calibration.rotation, [axis]: v } })}
                   />
