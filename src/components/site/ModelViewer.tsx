@@ -75,11 +75,10 @@ export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: 
     const ext = url.split('.').pop()?.toLowerCase().split('?')[0];
 
     if (ext === '3mf' || ext === 'obj') {
-      const loader = ext === 'obj' ? new OBJLoader() : new ThreeMFLoader();
-      loader.load(url, (obj) => {
+      const applyDefaults = (obj: THREE.Object3D) => {
         obj.traverse((child) => {
           const m = child as THREE.Mesh;
-          if (m.isMesh && (!m.material || Array.isArray(m.material))) {
+          if (m.isMesh && (!m.material || (Array.isArray(m.material) && m.material.length === 0))) {
             m.material = new THREE.MeshStandardMaterial({
               color: 0xcccccc,
               metalness: 0.1,
@@ -87,6 +86,8 @@ export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: 
             });
           }
         });
+      };
+      const frameObject = (obj: THREE.Object3D) => {
         const box = new THREE.Box3().setFromObject(obj);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
@@ -99,7 +100,25 @@ export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: 
         controls.target.set(0, size.y * 0.3, 0);
         controls.update();
         scene.add(obj);
-      });
+      };
+
+      if (ext === 'obj' && mtlUrl) {
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load(mtlUrl, (materials) => {
+          materials.preload();
+          const objLoader = new OBJLoader();
+          objLoader.setMaterials(materials);
+          objLoader.load(url, (obj) => {
+            frameObject(obj);
+          });
+        });
+      } else {
+        const loader = ext === 'obj' ? new OBJLoader() : new ThreeMFLoader();
+        loader.load(url, (obj) => {
+          applyDefaults(obj);
+          frameObject(obj);
+        });
+      }
     } else {
     const loader = new GLTFLoader();
     loader.load(
