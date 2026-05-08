@@ -604,7 +604,7 @@ const CalculatorOnlinePage = () => {
                         <p className="font-medium text-amber-800">⚠️ STEP-Dateien können nicht automatisch berechnet werden.</p>
                         <p className="text-amber-700 text-xs mt-1">Konvertiere deine Datei zu STL für eine automatische Preisberechnung.</p>
                         <a
-                          href="https://www.cadexchanger.com/convert/step-to-stl/"
+                          href="https://convert3d.org/step-to-stl"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs text-primary font-medium mt-2 hover:underline"
