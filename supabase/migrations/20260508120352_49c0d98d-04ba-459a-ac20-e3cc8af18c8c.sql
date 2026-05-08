@@ -1,0 +1,1 @@
+ALTER TABLE public.equipment DROP COLUMN IF EXISTS mtl_url;
