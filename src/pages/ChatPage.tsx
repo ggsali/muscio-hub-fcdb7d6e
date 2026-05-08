@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, MessageCircle, User, Bot, Circle, Trash2 } from "lucide-react";
+import { Send, MessageCircle, User, Bot, Circle, Trash2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatSession {
   id: string;
