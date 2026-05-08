@@ -72,7 +72,7 @@ export default function EquipmentPage() {
                   <div className="grid grid-cols-1 md:grid-cols-10 gap-6 md:gap-8 items-stretch border-b border-border py-12 md:py-16">
                     {/* Viewer / Bild */}
                     <div className={`md:col-span-6 ${reversed ? "md:order-2" : ""}`}>
-                      <div className="bg-muted rounded-xl overflow-hidden min-h-[400px] h-full flex items-center justify-center">
+                      <div className="rounded-xl overflow-hidden min-h-[400px] h-full flex items-center justify-center" style={{ background: "transparent" }}>
                         {it.modell_url ? (
                           <ModelViewer url={it.modell_url} rotation={it.model_rotation || undefined} />
                         ) : it.vorschaubild_url ? (
