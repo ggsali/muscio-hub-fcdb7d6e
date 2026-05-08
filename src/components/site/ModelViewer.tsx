@@ -88,35 +88,57 @@ export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: 
         });
       };
       const frameObject = (obj: THREE.Object3D) => {
+        obj.updateMatrixWorld(true);
         const box = new THREE.Box3().setFromObject(obj);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
-        obj.position.x = -center.x;
-        obj.position.z = -center.z;
-        obj.position.y = -box.min.y;
-        const maxDim = Math.max(size.x, size.y, size.z);
+        obj.position.x -= center.x;
+        obj.position.z -= center.z;
+        obj.position.y -= box.min.y;
+        const maxDim = Math.max(size.x, size.y, size.z) || 1;
         camera.position.set(maxDim * 1.2, size.y * 0.8, maxDim * 1.5);
         camera.lookAt(0, size.y * 0.3, 0);
         controls.target.set(0, size.y * 0.3, 0);
         controls.update();
-        scene.add(obj);
       };
 
-      if (ext === 'obj' && mtlUrl) {
-        const mtlLoader = new MTLLoader();
-        mtlLoader.load(mtlUrl, (materials) => {
-          materials.preload();
-          const objLoader = new OBJLoader();
-          objLoader.setMaterials(materials);
-          objLoader.load(url, (obj) => {
-            frameObject(obj);
+      if (ext === 'obj') {
+        if (mtlUrl) {
+          const mtlLoader = new MTLLoader();
+          mtlLoader.setCrossOrigin('anonymous');
+          mtlLoader.load(mtlUrl, (materials) => {
+            materials.preload();
+            const objLoader = new OBJLoader();
+            objLoader.setMaterials(materials);
+            objLoader.load(url, (obj) => {
+              obj.rotation.x = -Math.PI / 2;
+              frameObject(obj);
+              scene.add(obj);
+            });
+          }, undefined, () => {
+            const objLoader = new OBJLoader();
+            objLoader.load(url, (obj) => {
+              obj.rotation.x = -Math.PI / 2;
+              applyDefaults(obj);
+              frameObject(obj);
+              scene.add(obj);
+            });
           });
-        });
+        } else {
+          const objLoader = new OBJLoader();
+          objLoader.load(url, (obj) => {
+            obj.rotation.x = -Math.PI / 2;
+            applyDefaults(obj);
+            frameObject(obj);
+            scene.add(obj);
+          });
+        }
       } else {
-        const loader = ext === 'obj' ? new OBJLoader() : new ThreeMFLoader();
+        const loader = new ThreeMFLoader();
         loader.load(url, (obj) => {
           applyDefaults(obj);
           frameObject(obj);
+          scene.add(obj);
         });
       }
     } else {
