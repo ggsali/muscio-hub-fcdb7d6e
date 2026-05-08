@@ -72,7 +72,7 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
 
     const ext = url.split('.').pop()?.toLowerCase().split('?')[0];
 
-    if (ext === '3mf' || ext === 'obj') {
+    if (ext === '3mf') {
       const applyDefaults = (obj: THREE.Object3D) => {
         obj.traverse((child) => {
           const m = child as THREE.Mesh;
@@ -100,45 +100,12 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
         controls.update();
       };
 
-      if (ext === 'obj') {
-        if (mtlUrl) {
-          const mtlLoader = new MTLLoader();
-          mtlLoader.setCrossOrigin('anonymous');
-          mtlLoader.load(mtlUrl, (materials) => {
-            materials.preload();
-            const objLoader = new OBJLoader();
-            objLoader.setMaterials(materials);
-            objLoader.load(url, (obj) => {
-              obj.rotation.x = -Math.PI / 2;
-              frameObject(obj);
-              scene.add(obj);
-            });
-          }, undefined, () => {
-            const objLoader = new OBJLoader();
-            objLoader.load(url, (obj) => {
-              obj.rotation.x = -Math.PI / 2;
-              applyDefaults(obj);
-              frameObject(obj);
-              scene.add(obj);
-            });
-          });
-        } else {
-          const objLoader = new OBJLoader();
-          objLoader.load(url, (obj) => {
-            obj.rotation.x = -Math.PI / 2;
-            applyDefaults(obj);
-            frameObject(obj);
-            scene.add(obj);
-          });
-        }
-      } else {
-        const loader = new ThreeMFLoader();
-        loader.load(url, (obj) => {
-          applyDefaults(obj);
-          frameObject(obj);
-          scene.add(obj);
-        });
-      }
+      const loader = new ThreeMFLoader();
+      loader.load(url, (obj) => {
+        applyDefaults(obj);
+        frameObject(obj);
+        scene.add(obj);
+      });
     } else {
     const loader = new GLTFLoader();
     loader.load(
