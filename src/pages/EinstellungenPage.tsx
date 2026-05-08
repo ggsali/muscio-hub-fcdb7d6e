@@ -378,7 +378,7 @@ export default function EinstellungenPage() {
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <h3 className="font-semibold text-sm">Verrechnungssätze (wird vom ERP übernommen)</h3>
             <p className="text-xs text-muted-foreground">Die Preise pro Gramm, Druckzeit etc. werden aus den Verrechnungssätzen oben automatisch für den Website-Kalkulator verwendet.</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
               <div className="flex justify-between"><span className="text-muted-foreground">Material / g:</span><span className="font-mono">CHF {settings.material_verkauf_pro_g.toFixed(3)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit / h:</span><span className="font-mono">CHF {settings.maschinenzeit_pro_h.toFixed(2)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Material Einkauf / kg:</span><span className="font-mono">CHF {settings.material_einkauf_pro_kg.toFixed(2)}</span></div>
