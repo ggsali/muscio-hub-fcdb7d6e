@@ -115,27 +115,34 @@ async function calc3mfVolumeCm3(file: File): Promise<number> {
     const modelEntry = Object.values(zip.files).find(f =>
       f.name.endsWith('.model') && !f.dir
     )
-    if (!modelEntry) return 0
+    if (!modelEntry) {
+      console.warn('3MF: Kein .model File gefunden')
+      return 0
+    }
 
     const xml = await modelEntry.async('text')
     const parser = new DOMParser()
     const doc = parser.parseFromString(xml, 'text/xml')
 
-    const vertexNodes = doc.querySelectorAll('vertices vertex')
+    // getElementsByTagName ignoriert Namespaces
+    const vertexNodes = doc.getElementsByTagName('vertex')
     const vertices: [number, number, number][] = []
-    vertexNodes.forEach(v => {
+    for (let i = 0; i < vertexNodes.length; i++) {
+      const v = vertexNodes[i]
       vertices.push([
         parseFloat(v.getAttribute('x') || '0'),
         parseFloat(v.getAttribute('y') || '0'),
         parseFloat(v.getAttribute('z') || '0')
       ])
-    })
+    }
 
+    console.log('3MF: Vertices gefunden:', vertices.length)
     if (vertices.length === 0) return 0
 
-    const triangleNodes = doc.querySelectorAll('triangles triangle')
+    const triangleNodes = doc.getElementsByTagName('triangle')
     let volume = 0
-    triangleNodes.forEach(t => {
+    for (let i = 0; i < triangleNodes.length; i++) {
+      const t = triangleNodes[i]
       const a = parseInt(t.getAttribute('v1') || '0')
       const b = parseInt(t.getAttribute('v2') || '0')
       const c = parseInt(t.getAttribute('v3') || '0')
@@ -147,8 +154,9 @@ async function calc3mfVolumeCm3(file: File): Promise<number> {
           v3[0] * (v1[1] * v2[2] - v1[2] * v2[1])
         ) / 6
       }
-    })
+    }
 
+    console.log('3MF: Volumen berechnet:', Math.abs(volume) / 1000, 'cm³')
     return Math.abs(volume) / 1000
   } catch (e) {
     console.error('3MF Volumen Fehler:', e)
