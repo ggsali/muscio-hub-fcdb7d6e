@@ -85,6 +85,59 @@ async function calcStlVolumeCm3(file: File): Promise<number> {
   return Math.abs(volume) / 1000; // mm³ → cm³
 }
 
+async function calcObjVolumeCm3(file: File): Promise<number> {
+  const text = await file.text();
+  const vertices: [number, number, number][] = [];
+  let volume = 0;
+  text.split("\n").forEach((line) => {
+    const parts = line.trim().split(/\s+/);
+    if (parts[0] === "v") {
+      vertices.push([parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3])]);
+    } else if (parts[0] === "f") {
+      const idx = parts.slice(1).map((p) => parseInt(p.split("/")[0]) - 1);
+      for (let i = 1; i < idx.length - 1; i++) {
+        const v1 = vertices[idx[0]], v2 = vertices[idx[i]], v3 = vertices[idx[i + 1]];
+        if (v1 && v2 && v3) {
+          volume += (v1[0] * (v2[1] * v3[2] - v2[2] * v3[1]) + v2[0] * (v3[1] * v1[2] - v3[2] * v1[1]) + v3[0] * (v1[1] * v2[2] - v1[2] * v2[1])) / 6;
+        }
+      }
+    }
+  });
+  return Math.abs(volume) / 1000;
+}
+
+async function calc3mfVolumeCm3(file: File): Promise<number> {
+  try {
+    const JSZip = (await import("jszip")).default;
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const modelFile = zip.file(/3D\/.*\.model$/i)[0];
+    if (!modelFile) return 0;
+    const xml = await modelFile.async("text");
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, "text/xml");
+    const vertices: [number, number, number][] = [];
+    Array.from(doc.querySelectorAll("vertex")).forEach((v) => {
+      vertices.push([parseFloat(v.getAttribute("x")!), parseFloat(v.getAttribute("y")!), parseFloat(v.getAttribute("z")!)]);
+    });
+    let volume = 0;
+    Array.from(doc.querySelectorAll("triangle")).forEach((t) => {
+      const a = parseInt(t.getAttribute("v1")!), b = parseInt(t.getAttribute("v2")!), c = parseInt(t.getAttribute("v3")!);
+      const v1 = vertices[a], v2 = vertices[b], v3 = vertices[c];
+      if (v1 && v2 && v3) {
+        volume += (v1[0] * (v2[1] * v3[2] - v2[2] * v3[1]) + v2[0] * (v3[1] * v1[2] - v3[2] * v1[1]) + v3[0] * (v1[1] * v2[2] - v1[2] * v2[1])) / 6;
+      }
+    });
+    return Math.abs(volume) / 1000;
+  } catch {
+    return 0;
+  }
+}
+
+function isStepFile(name: string): boolean {
+  const ext = name.split(".").pop()?.toLowerCase();
+  return ext === "step" || ext === "stp";
+}
+
 const CalculatorOnlinePage = () => {
   const [parts, setParts] = useState<Part[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
