@@ -698,3 +698,44 @@ const CalculatorOnlinePage = () => {
 };
 
 export default CalculatorOnlinePage;
+
+function ColorPicker({ farben, selected, onSelect }: { farben: string[]; selected: string; onSelect: (c: string) => void }) {
+  const [showAll, setShowAll] = useState(false);
+  if (farben.length === 0) {
+    return <p className="mt-2 text-xs text-muted-foreground italic">Farbe auf Anfrage</p>;
+  }
+  const visible = showAll ? farben : farben.slice(0, 8);
+  const hiddenCount = farben.length - visible.length;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      {visible.map((name) => {
+        const sel = selected === name;
+        const isWeiss = name === "Weiss";
+        return (
+          <button
+            key={name}
+            type="button"
+            title={name}
+            onClick={() => onSelect(name)}
+            aria-label={name}
+            className={`w-7 h-7 rounded-full border-2 transition-all ${
+              sel
+                ? "border-primary ring-2 ring-primary/30 scale-110"
+                : `border-border hover:border-primary/50 ${isWeiss ? "border-gray-200" : ""}`
+            }`}
+            style={{ backgroundColor: colorHex(name) }}
+          />
+        );
+      })}
+      {!showAll && hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="h-7 px-2 rounded-full border border-border text-xs text-muted-foreground hover:bg-muted"
+        >
+          +{hiddenCount} mehr
+        </button>
+      )}
+    </div>
+  );
+}
