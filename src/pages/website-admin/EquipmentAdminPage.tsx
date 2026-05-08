@@ -33,6 +33,7 @@ export default function EquipmentAdminPage() {
   const [editing, setEditing] = useState<(typeof empty & { id?: string }) | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [modelFile, setModelFile] = useState<File | null>(null);
+  const [mtlFile, setMtlFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [calibration, setCalibration] = useState<{ url: string; rotation: Rotation } | null>(null);
 
@@ -42,16 +43,17 @@ export default function EquipmentAdminPage() {
   };
   useEffect(() => { load(); }, []);
 
-  const startNew = () => { setEditing({ ...empty, sort_order: items.length + 1 }); setImageFile(null); setModelFile(null); };
+  const startNew = () => { setEditing({ ...empty, sort_order: items.length + 1 }); setImageFile(null); setModelFile(null); setMtlFile(null); };
   const startEdit = (e: Equipment) => {
     setEditing({
       id: e.id, name: e.name, beschreibung: e.beschreibung || "",
       specs: Array.isArray(e.specs) ? e.specs : [],
       aktiv: e.aktiv, sort_order: e.sort_order,
       vorschaubild_url: e.vorschaubild_url || "", modell_url: e.modell_url || "",
+      mtl_url: e.mtl_url || "",
       model_rotation: e.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 },
     });
-    setImageFile(null); setModelFile(null);
+    setImageFile(null); setModelFile(null); setMtlFile(null);
   };
 
   const upload = async (bucket: string, file: File) => {
