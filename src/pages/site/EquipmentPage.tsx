@@ -12,6 +12,7 @@ interface Equipment {
   beschreibung: string | null;
   specs: Spec[] | null;
   modell_url: string | null;
+  mtl_url?: string | null;
   vorschaubild_url: string | null;
   model_rotation?: { x: number; y: number; z: number } | null;
 }
