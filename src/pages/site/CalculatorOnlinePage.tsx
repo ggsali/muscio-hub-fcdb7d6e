@@ -567,6 +567,11 @@ const CalculatorOnlinePage = () => {
                     </div>
                   </div>
                 ))}
+                <label htmlFor="file-input" className="block">
+                  <div className="rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all p-4 flex items-center justify-center gap-2 cursor-pointer text-sm text-muted-foreground">
+                    <Plus className="w-4 h-4" /> Weitere Datei hinzufügen
+                  </div>
+                </label>
               </div>
             )}
           </div>
