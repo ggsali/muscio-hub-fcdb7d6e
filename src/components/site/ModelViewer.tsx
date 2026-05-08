@@ -98,24 +98,23 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
         const size2 = box2.getSize(new THREE.Vector3());
 
         const shadowCanvas = document.createElement('canvas');
-        shadowCanvas.width = 256;
-        shadowCanvas.height = 256;
+        shadowCanvas.width = 512;
+        shadowCanvas.height = 512;
         const ctx = shadowCanvas.getContext('2d')!;
 
-        const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.35)');
-        gradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.20)');
-        gradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.08)');
-        gradient.addColorStop(0.85, 'rgba(0, 0, 0, 0.02)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+        gradient.addColorStop(0,    'rgba(0, 0, 0, 0.45)');
+        gradient.addColorStop(0.15, 'rgba(0, 0, 0, 0.35)');
+        gradient.addColorStop(0.35, 'rgba(0, 0, 0, 0.20)');
+        gradient.addColorStop(0.55, 'rgba(0, 0, 0, 0.10)');
+        gradient.addColorStop(0.75, 'rgba(0, 0, 0, 0.03)');
+        gradient.addColorStop(0.90, 'rgba(0, 0, 0, 0.01)');
+        gradient.addColorStop(1.0,  'rgba(0, 0, 0, 0)');
 
         ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.ellipse(128, 128, 128, 80, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillRect(0, 0, 512, 512);
 
         const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
-
         const shadowGeo = new THREE.PlaneGeometry(1, 1);
         const shadowMat = new THREE.MeshBasicMaterial({
           map: shadowTexture,
@@ -127,10 +126,8 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
         shadowMesh.rotation.x = -Math.PI / 2;
         shadowMesh.position.set(0, 0.02, 0);
 
-        const shadowWidth = Math.max(size2.x, size2.z) * 1.1;
-        const shadowDepth = Math.max(size2.x, size2.z) * 0.7;
-        shadowMesh.scale.set(shadowWidth, shadowDepth, 1);
-
+        const shadowSize = Math.max(size2.x, size2.z) * 1.4;
+        shadowMesh.scale.set(shadowSize, shadowSize, 1);
         scene.add(shadowMesh);
 
         const maxDim = Math.max(size2.x, size2.y, size2.z);
