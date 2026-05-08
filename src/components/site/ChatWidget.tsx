@@ -309,6 +309,17 @@ export function ChatWidget() {
             <div ref={bottomRef} />
           </div>
 
+          {!infoStep && messages.length > 0 && (
+            <div className="px-3 pt-2 flex-shrink-0">
+              <button
+                onClick={requestLiveChat}
+                className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1"
+              >
+                <User className="w-3 h-3" /> Mit Team sprechen
+              </button>
+            </div>
+          )}
+
           {!infoStep && (
             <div className="p-3 border-t border-border flex gap-2 flex-shrink-0">
               <input
