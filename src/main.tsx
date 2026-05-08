@@ -5,7 +5,7 @@ import "./index.css";
 createRoot(document.getElementById("root")!).render(<App />);
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    window.location.reload();
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((reg) => reg.unregister());
   });
 }
