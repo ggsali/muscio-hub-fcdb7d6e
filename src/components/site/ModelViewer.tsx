@@ -3,11 +3,9 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
-import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 
 interface Rotation { x: number; y: number; z: number; px?: number; py?: number; pz?: number }
-export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: string; mtlUrl?: string | null; rotation?: Rotation; showAxes?: boolean }) {
+export default function ModelViewer({ url, rotation, showAxes }: { url: string; rotation?: Rotation; showAxes?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<THREE.Object3D | null>(null);
 
@@ -74,7 +72,7 @@ export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: 
 
     const ext = url.split('.').pop()?.toLowerCase().split('?')[0];
 
-    if (ext === '3mf' || ext === 'obj') {
+    if (ext === '3mf') {
       const applyDefaults = (obj: THREE.Object3D) => {
         obj.traverse((child) => {
           const m = child as THREE.Mesh;
@@ -102,45 +100,12 @@ export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: 
         controls.update();
       };
 
-      if (ext === 'obj') {
-        if (mtlUrl) {
-          const mtlLoader = new MTLLoader();
-          mtlLoader.setCrossOrigin('anonymous');
-          mtlLoader.load(mtlUrl, (materials) => {
-            materials.preload();
-            const objLoader = new OBJLoader();
-            objLoader.setMaterials(materials);
-            objLoader.load(url, (obj) => {
-              obj.rotation.x = -Math.PI / 2;
-              frameObject(obj);
-              scene.add(obj);
-            });
-          }, undefined, () => {
-            const objLoader = new OBJLoader();
-            objLoader.load(url, (obj) => {
-              obj.rotation.x = -Math.PI / 2;
-              applyDefaults(obj);
-              frameObject(obj);
-              scene.add(obj);
-            });
-          });
-        } else {
-          const objLoader = new OBJLoader();
-          objLoader.load(url, (obj) => {
-            obj.rotation.x = -Math.PI / 2;
-            applyDefaults(obj);
-            frameObject(obj);
-            scene.add(obj);
-          });
-        }
-      } else {
-        const loader = new ThreeMFLoader();
-        loader.load(url, (obj) => {
-          applyDefaults(obj);
-          frameObject(obj);
-          scene.add(obj);
-        });
-      }
+      const loader = new ThreeMFLoader();
+      loader.load(url, (obj) => {
+        applyDefaults(obj);
+        frameObject(obj);
+        scene.add(obj);
+      });
     } else {
     const loader = new GLTFLoader();
     loader.load(
@@ -256,7 +221,7 @@ export default function ModelViewer({ url, mtlUrl, rotation, showAxes }: { url: 
         container.removeChild(renderer.domElement);
       }
     };
-  }, [url, mtlUrl, showAxes]);
+  }, [url, showAxes]);
 
   useEffect(() => {
     const root = rootRef.current;
