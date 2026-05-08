@@ -322,3 +322,46 @@ export default function WebsiteEinstellungenPage() {
     </div>
   );
 }
+
+function FarbenEditor({ farben, onChange }: { farben: string[]; onChange: (f: string[]) => void }) {
+  const [input, setInput] = useState("");
+  const add = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed || farben.includes(trimmed)) return;
+    onChange([...farben, trimmed]);
+    setInput("");
+  };
+  const remove = (name: string) => onChange(farben.filter(f => f !== name));
+  const suggestions = Object.keys(COLOR_MAP).filter(c => !farben.includes(c));
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-medium text-muted-foreground">Verfügbare Farben</div>
+      <div className="flex flex-wrap gap-1.5">
+        {farben.length === 0 && <span className="text-xs text-muted-foreground italic">Keine Farben hinterlegt</span>}
+        {farben.map(name => (
+          <span key={name} className="inline-flex items-center gap-1.5 pl-1.5 pr-1 py-0.5 rounded-full border border-border bg-background text-xs">
+            <span className="w-3 h-3 rounded-full border border-border" style={{ backgroundColor: colorHex(name) }} />
+            {name}
+            <button type="button" onClick={() => remove(name)} className="hover:text-destructive p-0.5">
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+      </div>
+      <div className="flex gap-1.5">
+        <Input
+          list="farben-suggestions"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); add(input); } }}
+          placeholder="Farbname (z.B. Weiss)"
+          className="bg-input border-border h-8 text-sm max-w-xs"
+        />
+        <datalist id="farben-suggestions">
+          {suggestions.map(s => <option key={s} value={s} />)}
+        </datalist>
+        <Button type="button" size="sm" variant="outline" onClick={() => add(input)}>Hinzufügen</Button>
+      </div>
+    </div>
+  );
+}
