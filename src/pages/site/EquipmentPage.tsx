@@ -13,6 +13,7 @@ interface Equipment {
   specs: Spec[] | null;
   modell_url: string | null;
   vorschaubild_url: string | null;
+  model_rotation?: { x: number; y: number; z: number } | null;
 }
 
 export default function EquipmentPage() {
