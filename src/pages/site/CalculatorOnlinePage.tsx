@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,7 +16,28 @@ interface Material {
   pricePerGram: number;
   density: number;
 }
-const COLORS = ["Weiss", "Schwarz", "Grau", "Rot", "Blau", "Grün", "Gelb", "Orange"];
+
+const COLORS: { name: string; hex: string }[] = [
+  { name: "Weiss", hex: "#FFFFFF" },
+  { name: "Schwarz", hex: "#111111" },
+  { name: "Grau", hex: "#9CA3AF" },
+  { name: "Rot", hex: "#DC2626" },
+  { name: "Blau", hex: "#2563EB" },
+  { name: "Grün", hex: "#16A34A" },
+  { name: "Gelb", hex: "#FACC15" },
+  { name: "Orange", hex: "#F97316" },
+  { name: "Violett", hex: "#7C3AED" },
+  { name: "Pink", hex: "#EC4899" },
+  { name: "Türkis", hex: "#06B6D4" },
+  { name: "Braun", hex: "#92400E" },
+];
+
+const QUALITY_PRESETS: { key: string; label: string; infill: number; desc: string }[] = [
+  { key: "schnell", label: "Schnell", infill: 15, desc: "Schnell = leicht & günstig" },
+  { key: "standard", label: "Standard", infill: 20, desc: "Standard = ausgewogen" },
+  { key: "stark", label: "Stark", infill: 40, desc: "Stark = belastbar" },
+  { key: "massiv", label: "Massiv", infill: 80, desc: "Massiv = maximale Festigkeit" },
+];
 
 interface Part {
   id: string;
@@ -27,12 +49,51 @@ interface Part {
   color: string;
   infill: number;
   quantity: number;
-  estimatedWeight: number;
+  volumeCm3: number; // 0 wenn unbekannt
+  manualWeightG?: number; // für non-STL
+  isStl: boolean;
 }
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
 const SHIPPING_COST = 8;
+const SETUP_FEE = 20;
+
+async function calcStlVolumeCm3(file: File): Promise<number> {
+  const buffer = await file.arrayBuffer();
+  const view = new DataView(buffer);
+  let volume = 0;
+  // ASCII STL beginnt mit "solid " (s = 115)
+  const isBinary = view.byteLength < 84 ? false : view.getUint8(0) !== 115;
+  if (isBinary) {
+    const numTriangles = view.getUint32(80, true);
+    let offset = 84;
+    for (let i = 0; i < numTriangles; i++) {
+      offset += 12; // normal
+      const v1x = view.getFloat32(offset, true); const v1y = view.getFloat32(offset + 4, true); const v1z = view.getFloat32(offset + 8, true); offset += 12;
+      const v2x = view.getFloat32(offset, true); const v2y = view.getFloat32(offset + 4, true); const v2z = view.getFloat32(offset + 8, true); offset += 12;
+      const v3x = view.getFloat32(offset, true); const v3y = view.getFloat32(offset + 4, true); const v3z = view.getFloat32(offset + 8, true); offset += 12;
+      offset += 2;
+      volume += (v1x * (v2y * v3z - v2z * v3y) + v2x * (v3y * v1z - v3z * v1y) + v3x * (v1y * v2z - v1z * v2y)) / 6;
+    }
+  } else {
+    // ASCII STL parser
+    const text = new TextDecoder().decode(buffer);
+    const verts: number[] = [];
+    const re = /vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      verts.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
+    }
+    for (let i = 0; i < verts.length; i += 9) {
+      const v1x = verts[i], v1y = verts[i + 1], v1z = verts[i + 2];
+      const v2x = verts[i + 3], v2y = verts[i + 4], v2z = verts[i + 5];
+      const v3x = verts[i + 6], v3y = verts[i + 7], v3z = verts[i + 8];
+      volume += (v1x * (v2y * v3z - v2z * v3y) + v2x * (v3y * v1z - v3z * v1y) + v3x * (v1y * v2z - v1z * v2y)) / 6;
+    }
+  }
+  return Math.abs(volume) / 1000; // mm³ → cm³
+}
 
 const CalculatorOnlinePage = () => {
   const [parts, setParts] = useState<Part[]>([]);
@@ -91,10 +152,11 @@ const CalculatorOnlinePage = () => {
   }, []);
 
   const addFile = useCallback(async (file: File) => {
-    const estW = Math.max(8, Math.min(180, Math.round(file.size / 8000)));
     const id = crypto.randomUUID();
     const defaultMatId = materials[0]?.id || "";
     const defaultMatName = materials[0]?.name || "";
+    const isStl = /\.stl$/i.test(file.name);
+
     setParts((p) => [
       ...p,
       {
@@ -106,9 +168,22 @@ const CalculatorOnlinePage = () => {
         color: "Weiss",
         infill: 20,
         quantity: 1,
-        estimatedWeight: estW,
+        volumeCm3: 0,
+        manualWeightG: isStl ? undefined : undefined,
+        isStl,
       },
     ]);
+
+    // STL volume berechnen
+    if (isStl) {
+      try {
+        const vol = await calcStlVolumeCm3(file);
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, volumeCm3: vol } : x)));
+      } catch (err) {
+        console.warn("Volumen-Berechnung fehlgeschlagen", err);
+      }
+    }
+
     // Upload im Hintergrund
     try {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -117,7 +192,6 @@ const CalculatorOnlinePage = () => {
       if (error) throw error;
       setParts((p) => p.map((x) => (x.id === id ? { ...x, storagePath: path, uploading: false } : x)));
 
-      // Sofort Eintrag in calculator_uploads anlegen, damit Admin die Datei direkt sieht
       try {
         const { data: { user } } = await supabase.auth.getUser();
         await supabase.from("calculator_uploads").insert({
@@ -131,7 +205,7 @@ const CalculatorOnlinePage = () => {
           color: "Weiss",
           infill: 20,
           quantity: 1,
-          estimated_weight: estW,
+          estimated_weight: 0,
           auth_user_id: user?.id ?? null,
           customer_email: user?.email ?? null,
           session_id: id,
@@ -159,7 +233,6 @@ const CalculatorOnlinePage = () => {
 
   const update = (id: string, u: Partial<Part>) => {
     setParts((p) => p.map((x) => (x.id === id ? { ...x, ...u } : x)));
-    // Eintrag synchron aktualisieren (Material/Farbe/Menge/Infill)
     const matName = u.materialId ? materials.find((m) => m.id === u.materialId)?.name : undefined;
     const patch: any = {};
     if (u.materialId !== undefined) { patch.material_id = u.materialId || null; patch.material_name = matName || null; }
@@ -175,10 +248,17 @@ const CalculatorOnlinePage = () => {
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
     if (!mat) return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
-    const weight = p.estimatedWeight * (0.4 + (p.infill / 100) * 0.6);
+    const shellRatio = 0.25;
+    const infillRatio = p.infill / 100;
+    const fillFactor = shellRatio + (1 - shellRatio) * infillRatio;
+    let weight = 0;
+    if (p.isStl && p.volumeCm3 > 0) {
+      weight = p.volumeCm3 * mat.density * fillFactor;
+    } else if (p.manualWeightG && p.manualWeightG > 0) {
+      weight = p.manualWeightG * fillFactor;
+    }
     const matCost = weight * mat.pricePerGram;
-    const setupCost = 5;
-    const unit = matCost + setupCost;
+    const unit = matCost; // Setup-Gebühr separat unten
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
@@ -186,7 +266,9 @@ const CalculatorOnlinePage = () => {
   };
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
-  const subtotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
+  const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
+  const setupFee = parts.length > 0 ? SETUP_FEE : 0;
+  const subtotal = materialTotal + setupFee;
   const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
   const total = subtotal + shipping;
 
@@ -247,6 +329,7 @@ const CalculatorOnlinePage = () => {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="pt-12 pb-20">
       <div className="container mx-auto px-4 max-w-6xl">
         <ScrollReveal>
@@ -314,7 +397,13 @@ const CalculatorOnlinePage = () => {
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">{p.fileName}</p>
                           <p className="text-xs text-muted-foreground">
-                            ~{calc.weight.toFixed(0)}g geschätzt
+                            {p.isStl && p.volumeCm3 > 0
+                              ? <>Volumen: {p.volumeCm3.toFixed(1)} cm³ · Gewicht: ~{calc.weight.toFixed(1)}g</>
+                              : !p.isStl && p.manualWeightG
+                                ? <>Gewicht: ~{calc.weight.toFixed(1)}g</>
+                                : p.isStl
+                                  ? <>Volumen wird berechnet…</>
+                                  : <>Bitte Gewicht eintragen</>}
                             {p.uploading && <span className="ml-2 text-primary">· Datei wird hochgeladen…</span>}
                             {!p.uploading && p.storagePath && <span className="ml-2 text-success">· Datei bereit</span>}
                             {!p.uploading && !p.storagePath && (
@@ -328,7 +417,7 @@ const CalculatorOnlinePage = () => {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Material</Label>
                         <select
@@ -342,32 +431,6 @@ const CalculatorOnlinePage = () => {
                             </option>
                           ))}
                         </select>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Farbe</Label>
-                        <select
-                          value={p.color}
-                          onChange={(e) => update(p.id, { color: e.target.value })}
-                          className="mt-1 w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
-                        >
-                          {COLORS.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Fülldichte: {p.infill}%</Label>
-                        <input
-                          type="range"
-                          min={5}
-                          max={100}
-                          step={5}
-                          value={p.infill}
-                          onChange={(e) => update(p.id, { infill: Number(e.target.value) })}
-                          className="mt-3 w-full accent-primary"
-                        />
                       </div>
                       <div>
                         <Label className="text-xs">Menge</Label>
@@ -395,6 +458,81 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
 
+                    {/* Farbauswahl als Punkte */}
+                    <div className="mt-4">
+                      <Label className="text-xs">Farbe</Label>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {COLORS.map((c) => {
+                          const selected = p.color === c.name;
+                          return (
+                            <Tooltip key={c.name}>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={() => update(p.id, { color: c.name })}
+                                  className={`w-7 h-7 rounded-full border-2 transition-all ${selected ? "border-primary ring-2 ring-primary/30 scale-110" : "border-border hover:border-foreground/40"}`}
+                                  style={{ backgroundColor: c.hex }}
+                                  aria-label={c.name}
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent>{c.name}</TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Qualitätsstufen */}
+                    <div className="mt-4">
+                      <Label className="text-xs">Qualität / Festigkeit</Label>
+                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {QUALITY_PRESETS.map((q) => {
+                          const selected = p.infill === q.infill;
+                          return (
+                            <Tooltip key={q.key}>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={() => update(p.id, { infill: q.infill })}
+                                  className={`h-9 rounded-md border text-sm font-medium transition-all ${selected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background hover:bg-muted"}`}
+                                >
+                                  {q.label}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>{q.desc}</TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Manuelles Gewicht für non-STL */}
+                    {!p.isStl && (
+                      <div className="mt-4">
+                        <Label className="text-xs">Gewicht</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.1"
+                          value={p.manualWeightG ?? ""}
+                          onChange={(e) => update(p.id, { manualWeightG: e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)) })}
+                          placeholder="Gewicht in Gramm (aus Slicer)"
+                          className="mt-1"
+                        />
+                      </div>
+                    )}
+
+                    {/* Mengenrabatt-Hinweis */}
+                    {p.quantity >= 4 && p.quantity < 5 && (
+                      <p className="mt-3 text-xs text-success font-medium">Ab 5 Stück: 10% Rabatt</p>
+                    )}
+                    {p.quantity >= 5 && p.quantity < 10 && (
+                      <p className="mt-3 text-xs text-success font-medium">10% Rabatt aktiv · Ab 10 Stück: 15% Rabatt</p>
+                    )}
+                    {p.quantity >= 10 && (
+                      <p className="mt-3 text-xs text-success font-medium">15% Mengenrabatt aktiv</p>
+                    )}
+
                     <div className="mt-4 flex items-center justify-between pt-3 border-t border-border">
                       <span className="text-xs text-muted-foreground">
                         Stückpreis: {CHF(calc.unit)}
@@ -414,8 +552,12 @@ const CalculatorOnlinePage = () => {
               <h3 className="font-heading text-lg font-bold mb-4">Zusammenfassung</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Zwischensumme</span>
-                  <span className="text-foreground">{CHF(subtotal)}</span>
+                  <span>Materialkosten</span>
+                  <span className="text-foreground">{CHF(materialTotal)}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Setup-Gebühr</span>
+                  <span className="text-foreground">{CHF(setupFee)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Versand</span>
@@ -514,6 +656,7 @@ const CalculatorOnlinePage = () => {
         </Dialog>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 
