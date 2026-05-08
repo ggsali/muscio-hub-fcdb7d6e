@@ -6,9 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ModelViewer from "@/components/site/ModelViewer";
 import { toast } from "sonner";
 
 interface Spec { key: string; value: string; }
+interface Rotation { x: number; y: number; z: number }
 interface Equipment {
   id: string;
   name: string;
@@ -18,9 +22,10 @@ interface Equipment {
   vorschaubild_url: string | null;
   sort_order: number;
   aktiv: boolean;
+  model_rotation?: Rotation | null;
 }
 
-const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "" };
+const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0 } as Rotation };
 
 export default function EquipmentAdminPage() {
   const [items, setItems] = useState<Equipment[]>([]);
@@ -28,6 +33,7 @@ export default function EquipmentAdminPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [modelFile, setModelFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [calibration, setCalibration] = useState<{ url: string; rotation: Rotation } | null>(null);
 
   const load = async () => {
     const { data } = await (supabase.from as any)("equipment").select("*").order("sort_order");
@@ -42,6 +48,7 @@ export default function EquipmentAdminPage() {
       specs: Array.isArray(e.specs) ? e.specs : [],
       aktiv: e.aktiv, sort_order: e.sort_order,
       vorschaubild_url: e.vorschaubild_url || "", modell_url: e.modell_url || "",
+      model_rotation: e.model_rotation || { x: 0, y: 0, z: 0 },
     });
     setImageFile(null); setModelFile(null);
   };
@@ -59,8 +66,12 @@ export default function EquipmentAdminPage() {
     try {
       let vorschaubild_url = editing.vorschaubild_url || null;
       let modell_url = editing.modell_url || null;
+      let openCalibration: string | null = null;
       if (imageFile) vorschaubild_url = await upload("equipment-images", imageFile);
-      if (modelFile) modell_url = await upload("equipment-models", modelFile);
+      if (modelFile) {
+        modell_url = await upload("equipment-models", modelFile);
+        openCalibration = modell_url;
+      }
 
       const payload = {
         name: editing.name,
@@ -69,17 +80,34 @@ export default function EquipmentAdminPage() {
         vorschaubild_url, modell_url,
         sort_order: editing.sort_order,
         aktiv: editing.aktiv,
+        model_rotation: editing.model_rotation,
       };
       if (editing.id) {
         await (supabase.from as any)("equipment").update(payload).eq("id", editing.id);
       } else {
-        await (supabase.from as any)("equipment").insert(payload);
+        const { data } = await (supabase.from as any)("equipment").insert(payload).select().single();
+        if (data) setEditing({ ...editing, id: data.id, modell_url, vorschaubild_url: vorschaubild_url || "" });
       }
       toast.success("Gespeichert");
-      setEditing(null); load();
+      setModelFile(null); setImageFile(null);
+      load();
+      if (openCalibration) {
+        setCalibration({ url: openCalibration, rotation: { x: 0, y: 0, z: 0 } });
+      } else {
+        setEditing(null);
+      }
     } catch (e: any) {
       toast.error(e.message || "Fehler beim Speichern");
     } finally { setSaving(false); }
+  };
+
+  const saveCalibration = async () => {
+    if (!editing?.id || !calibration) return;
+    await (supabase.from as any)("equipment").update({ model_rotation: calibration.rotation }).eq("id", editing.id);
+    toast.success("Ausrichtung gespeichert");
+    setCalibration(null);
+    setEditing(null);
+    load();
   };
 
   const remove = async (id: string) => {
@@ -138,7 +166,12 @@ export default function EquipmentAdminPage() {
             <div>
               <Label>3D-Modell (.glb / .gltf)</Label>
               <Input type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" onChange={e => setModelFile(e.target.files?.[0] || null)} />
-              {editing.modell_url && !modelFile && <p className="text-xs text-muted-foreground mt-1 truncate">Aktuell: {editing.modell_url.split("/").pop()}</p>}
+              {editing.modell_url && !modelFile && (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-muted-foreground truncate flex-1">Aktuell: {editing.modell_url.split("/").pop()}</p>
+                  <Button size="sm" variant="outline" onClick={() => setCalibration({ url: editing.modell_url!, rotation: editing.model_rotation || { x: 0, y: 0, z: 0 } })}>Ausrichten</Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -166,6 +199,36 @@ export default function EquipmentAdminPage() {
         ))}
         {items.length === 0 && <p className="text-muted-foreground text-sm col-span-full">Noch keine Einträge.</p>}
       </div>
+
+      <Dialog open={!!calibration} onOpenChange={(o) => !o && setCalibration(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader><DialogTitle>3D-Modell ausrichten</DialogTitle></DialogHeader>
+          {calibration && (
+            <div className="space-y-4">
+              <div className="bg-muted rounded-lg overflow-hidden h-[400px]">
+                <ModelViewer url={calibration.url} rotation={calibration.rotation} />
+              </div>
+              {(["x", "y", "z"] as const).map(axis => (
+                <div key={axis}>
+                  <div className="flex justify-between mb-2">
+                    <Label>{axis.toUpperCase()}-Achse</Label>
+                    <span className="text-sm text-muted-foreground">{Math.round(calibration.rotation[axis])}°</span>
+                  </div>
+                  <Slider
+                    min={-180} max={180} step={1}
+                    value={[calibration.rotation[axis]]}
+                    onValueChange={([v]) => setCalibration({ ...calibration, rotation: { ...calibration.rotation, [axis]: v } })}
+                  />
+                </div>
+              ))}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setCalibration({ ...calibration, rotation: { x: 0, y: 0, z: 0 } })}>Zurücksetzen</Button>
+                <Button onClick={saveCalibration}>So ist es gut ✓</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
