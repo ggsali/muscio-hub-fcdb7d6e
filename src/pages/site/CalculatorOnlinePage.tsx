@@ -543,14 +543,14 @@ const CalculatorOnlinePage = () => {
                 {calcs.map(({ part: p, calc }) => (
                   <div key={p.id} className="bg-card rounded-2xl border border-border p-5">
                     <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-start gap-4 min-w-0 flex-1">
+                      <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                         {p.file ? (
-                          <div className="w-[150px] h-[150px] rounded-xl bg-muted overflow-hidden shrink-0">
+                          <div className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px] rounded-xl bg-muted overflow-hidden shrink-0">
                             <ModelPreview file={p.file} />
                           </div>
                         ) : (
-                          <div className="w-[150px] h-[150px] rounded-xl bg-muted flex items-center justify-center shrink-0">
-                            <FileText className="w-12 h-12 text-muted-foreground" />
+                          <div className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px] rounded-xl bg-muted flex items-center justify-center shrink-0">
+                            <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground" />
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
@@ -574,7 +574,7 @@ const CalculatorOnlinePage = () => {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Material</Label>
                         <select
@@ -611,6 +611,36 @@ const CalculatorOnlinePage = () => {
                           >
                             <Plus className="w-3 h-3" />
                           </button>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Farbe</Label>
+                        <ColorPicker
+                          farben={materials.find((m) => m.id === p.materialId)?.farben || []}
+                          selected={p.color}
+                          onSelect={(c) => update(p.id, { color: c })}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Qualität / Festigkeit</Label>
+                        <div className="mt-2 grid grid-cols-2 gap-1.5">
+                          {QUALITY_PRESETS.map((q) => {
+                            const selected = p.infill === q.infill;
+                            return (
+                              <Tooltip key={q.key}>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => update(p.id, { infill: q.infill })}
+                                    className={`h-9 rounded-md border text-xs font-medium transition-all ${selected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background hover:bg-muted"}`}
+                                  >
+                                    {q.label}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>{q.desc}</TooltipContent>
+                              </Tooltip>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
