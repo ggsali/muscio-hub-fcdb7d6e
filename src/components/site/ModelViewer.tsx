@@ -51,12 +51,19 @@ export default function ModelViewer({ url }: { url: string }) {
       url,
       (gltf) => {
         root = gltf.scene;
+        // Modell aufrecht stellen (falls auf der Seite liegend)
+        root.rotation.x = -Math.PI / 2;
+        // Bounding Box nach Rotation berechnen
         const box = new THREE.Box3().setFromObject(root);
         const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3()).length();
+        const size = box.getSize(new THREE.Vector3());
+        // Modell zentrieren
         root.position.sub(center);
         scene.add(root);
-        camera.position.set(0, 0, size * 1.4);
+        // Kamera so positionieren, dass Modell vollständig sichtbar ist
+        const maxDim = Math.max(size.x, size.y, size.z);
+        camera.position.set(0, maxDim * 0.5, maxDim * 2);
+        camera.lookAt(0, 0, 0);
         controls.target.set(0, 0, 0);
         controls.update();
       },
