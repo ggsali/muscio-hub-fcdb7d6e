@@ -229,7 +229,7 @@ export default function EinstellungenPage() {
 
       {/* ── Tab: Verrechnungssätze ── */}
       {tab === "raten" && (
-        <div className="bg-card border border-border rounded-lg p-5 max-w-lg space-y-4">
+        <div className="bg-card border border-border rounded-lg p-4 md:p-5 max-w-full md:max-w-lg space-y-4">
           {RATE_FIELDS.map(f => (
             <div key={f.key} className="flex items-center justify-between gap-4">
               <div className="flex-1">
