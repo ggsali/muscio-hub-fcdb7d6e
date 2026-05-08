@@ -203,19 +203,19 @@ export default function EinstellungenPage() {
   ];
 
   return (
-    <div className="p-6 animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Einstellungen</h1>
+    <div className="p-4 md:p-6 animate-fade-in">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold">Einstellungen</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Preise, Firmeninfos & Rechnungsdesign</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-border">
+      {/* Tabs — horizontal scrollbar auf Mobile */}
+      <div className="flex gap-1 mb-4 md:mb-6 border-b border-border overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0 scrollbar-none">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`px-3 md:px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 ${
               tab === t.key
                 ? "border-primary text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -225,6 +225,7 @@ export default function EinstellungenPage() {
           </button>
         ))}
       </div>
+
 
       {/* ── Tab: Verrechnungssätze ── */}
       {tab === "raten" && (
