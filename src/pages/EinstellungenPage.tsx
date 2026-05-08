@@ -319,7 +319,7 @@ export default function EinstellungenPage() {
                   <Input value={editingPreset.beschreibung} onChange={e => setEditingPreset({ ...editingPreset, beschreibung: e.target.value })} className="bg-input border-border h-8 text-sm" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {PRESET_RATE_FIELDS.map(f => (
                   <div key={f.key} className="flex items-center justify-between gap-2">
                     <div>
