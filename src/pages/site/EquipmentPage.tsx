@@ -75,7 +75,7 @@ export default function EquipmentPage() {
                     <div className={`md:col-span-6 ${reversed ? "md:order-2" : ""}`}>
                       <div className="rounded-xl overflow-hidden min-h-[400px] h-full flex items-center justify-center" style={{ background: "transparent" }}>
                         {it.modell_url ? (
-                          <ModelViewer url={it.modell_url} rotation={it.model_rotation || undefined} />
+                          <ModelViewer url={it.modell_url} mtlUrl={it.mtl_url} rotation={it.model_rotation || undefined} />
                         ) : it.vorschaubild_url ? (
                           <img src={it.vorschaubild_url} alt={it.name} className="w-full h-full object-cover" />
                         ) : (
