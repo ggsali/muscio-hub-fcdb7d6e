@@ -505,13 +505,11 @@ const CalculatorOnlinePage = () => {
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm truncate">{p.fileName}</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {p.isStl && p.volumeCm3 > 0
+                            {p.hasVolume && p.volumeCm3 > 0
                               ? <>Volumen: {p.volumeCm3.toFixed(1)} cm³ · Gewicht: ~{calc.weight.toFixed(1)}g</>
-                              : !p.isStl && p.manualWeightG
-                                ? <>Gewicht: ~{calc.weight.toFixed(1)}g</>
-                                : p.isStl
-                                  ? <>Volumen wird berechnet…</>
-                                  : <>Bitte Gewicht eintragen</>}
+                              : isStepFile(p.fileName)
+                                ? <>STEP-Datei · Preis auf Anfrage</>
+                                : <>Volumen wird berechnet…</>}
                             {p.uploading && <span className="ml-2 text-primary">· Datei wird hochgeladen…</span>}
                             {!p.uploading && p.storagePath && <span className="ml-2 text-success">· Datei bereit</span>}
                             {!p.uploading && !p.storagePath && (
