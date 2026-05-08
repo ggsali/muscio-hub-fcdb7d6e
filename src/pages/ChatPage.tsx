@@ -137,10 +137,10 @@ export default function ChatPage() {
   const totalUnread = sessions.reduce((sum, s) => sum + (s.unread_count || 0), 0);
 
   return (
-    <div className="p-6 animate-fade-in h-full">
-      <div className="mb-5 flex items-center justify-between">
+    <div className="p-3 md:p-6 animate-fade-in h-full">
+      <div className="mb-3 md:mb-5 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
             Live-Chat
             {totalUnread > 0 && (
               <span className="w-6 h-6 bg-primary rounded-full text-[11px] text-primary-foreground flex items-center justify-center font-bold">
@@ -148,13 +148,16 @@ export default function ChatPage() {
               </span>
             )}
           </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Website-Chat der 3D Print Studio</p>
+          <p className="text-muted-foreground text-xs md:text-sm mt-0.5">Website-Chat der 3D Print Studio</p>
         </div>
       </div>
 
-      <div className="flex bg-card border border-border rounded-xl overflow-hidden" style={{ height: "calc(100vh - 180px)" }}>
-        {/* Sidebar */}
-        <div className="w-72 border-r border-border flex flex-col flex-shrink-0">
+      <div className="flex bg-card border border-border rounded-xl overflow-hidden" style={{ height: "calc(100vh - 160px)" }}>
+        {/* Sidebar — auf Mobile nur sichtbar wenn keine Session ausgewählt */}
+        <div className={cn(
+          "border-r border-border flex-col flex-shrink-0",
+          isMobile ? (selectedSession ? "hidden" : "flex w-full") : "flex w-72"
+        )}>
           <div className="px-4 py-3 border-b border-border">
             <p className="text-xs text-muted-foreground">{sessions.length} Konversationen</p>
           </div>
