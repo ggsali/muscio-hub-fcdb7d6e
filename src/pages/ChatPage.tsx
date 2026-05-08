@@ -207,8 +207,11 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        {/* Chat Area — auf Mobile nur sichtbar wenn Session ausgewählt */}
+        <div className={cn(
+          "flex-1 flex-col min-w-0",
+          isMobile ? (selectedSession ? "flex" : "hidden") : "flex"
+        )}>
           {!selectedSession ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
@@ -220,8 +223,17 @@ export default function ChatPage() {
           ) : (
             <>
               {/* Header */}
-              <div className="px-5 py-3.5 border-b border-border bg-card/50 flex items-center gap-3 flex-shrink-0">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="px-3 md:px-5 py-3 md:py-3.5 border-b border-border bg-card/50 flex items-center gap-2 md:gap-3 flex-shrink-0">
+                {isMobile && (
+                  <button
+                    onClick={() => setSelectedSession(null)}
+                    className="p-1.5 -ml-1 rounded-lg hover:bg-muted text-muted-foreground"
+                    aria-label="Zurück"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                )}
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-primary" />
                 </div>
                 <div>
