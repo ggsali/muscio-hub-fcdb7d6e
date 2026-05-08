@@ -37,7 +37,7 @@ export default function EquipmentPage() {
           <ScrollReveal>
             <div className="max-w-xl">
               <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Unsere Technologie</p>
-              <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
+              <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
                 Unsere Maschinen.
               </h1>
               <p className="text-muted-foreground text-base leading-relaxed">
@@ -69,10 +69,10 @@ export default function EquipmentPage() {
               const reversed = i % 2 === 1;
               return (
                 <ScrollReveal key={it.id}>
-                  <div className="grid grid-cols-1 md:grid-cols-10 gap-6 md:gap-8 items-stretch border-b border-border py-12 md:py-16">
+                  <div className="grid grid-cols-1 md:grid-cols-10 gap-6 md:gap-8 items-stretch border-b border-border py-10 md:py-16">
                     {/* Viewer / Bild */}
                     <div className={`md:col-span-6 ${reversed ? "md:order-2" : ""}`}>
-                      <div className="rounded-xl overflow-hidden min-h-[400px] h-full flex items-center justify-center" style={{ background: "transparent" }}>
+                      <div className="rounded-xl overflow-hidden h-[280px] md:h-auto md:min-h-[400px] md:flex md:items-center md:justify-center" style={{ background: "transparent" }}>
                         {it.modell_url ? (
                           <ModelViewer url={it.modell_url} rotation={it.model_rotation || undefined} />
                         ) : it.vorschaubild_url ? (
@@ -84,24 +84,24 @@ export default function EquipmentPage() {
                     </div>
 
                     {/* Infos */}
-                    <div className="md:col-span-4 flex flex-col justify-center p-2 md:p-8">
-                      <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">
+                    <div className="md:col-span-4 flex flex-col justify-center p-1 md:p-8">
+                      <p className="text-xs font-medium text-primary uppercase tracking-widest mb-2 md:mb-3">
                         Maschine {String(i + 1).padStart(2, "0")}
                       </p>
-                      <h2 className="font-heading text-3xl md:text-4xl font-extrabold text-foreground tracking-tight mb-4">
+                      <h2 className="font-heading text-2xl md:text-4xl font-extrabold text-foreground tracking-tight mb-3 md:mb-4">
                         {it.name}
                       </h2>
                       {it.beschreibung && (
-                        <p className="text-muted-foreground text-base leading-relaxed mb-6 whitespace-pre-wrap">
+                        <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-4 md:mb-6 whitespace-pre-wrap">
                           {it.beschreibung}
                         </p>
                       )}
                       {Array.isArray(it.specs) && it.specs.length > 0 && (
                         <dl className="divide-y divide-border border-t border-border">
                           {it.specs.map((s, idx) => (
-                            <div key={idx} className="flex justify-between items-center py-3">
-                              <dt className="text-sm text-muted-foreground">{s.key}</dt>
-                              <dd className="text-sm font-medium text-foreground text-right">{s.value}</dd>
+                            <div key={idx} className="flex justify-between items-center py-2 md:py-3">
+                              <dt className="text-xs md:text-sm text-muted-foreground">{s.key}</dt>
+                              <dd className="text-xs md:text-sm font-medium text-foreground text-right">{s.value}</dd>
                             </div>
                           ))}
                         </dl>

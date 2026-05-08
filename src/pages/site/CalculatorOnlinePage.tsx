@@ -454,11 +454,31 @@ const CalculatorOnlinePage = () => {
   return (
     <TooltipProvider delayDuration={150}>
     <div className="pt-12 pb-20">
+      {/* Mobile sticky total bar */}
+      {parts.length > 0 && (
+        <div className="lg:hidden sticky top-16 z-30 bg-card/95 backdrop-blur border-b border-border px-4 py-2 flex items-center justify-between gap-3">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</span>
+            <span className="text-base font-bold text-primary">{CHF(total)}</span>
+          </div>
+          <Button
+            size="sm"
+            className="gap-1.5"
+            disabled={parts.length === 0 || submitting || parts.some(p => p.uploading) || parts.some(p => /\.step$|\.stp$/i.test(p.fileName))}
+            onClick={async (e) => {
+              if (isLoggedIn) await handleSend(e as unknown as React.FormEvent);
+              else setShowQuote(true);
+            }}
+          >
+            Anfragen <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
       <div className="container mx-auto px-4 max-w-6xl">
         <ScrollReveal>
           <div className="text-center mb-10">
             <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Online-Kalkulator</p>
-            <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground mb-4">
+            <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground mb-4">
               Preis sofort berechnen
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -523,14 +543,14 @@ const CalculatorOnlinePage = () => {
                 {calcs.map(({ part: p, calc }) => (
                   <div key={p.id} className="bg-card rounded-2xl border border-border p-5">
                     <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-start gap-4 min-w-0 flex-1">
+                      <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                         {p.file ? (
-                          <div className="w-[150px] h-[150px] rounded-xl bg-muted overflow-hidden shrink-0">
+                          <div className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px] rounded-xl bg-muted overflow-hidden shrink-0">
                             <ModelPreview file={p.file} />
                           </div>
                         ) : (
-                          <div className="w-[150px] h-[150px] rounded-xl bg-muted flex items-center justify-center shrink-0">
-                            <FileText className="w-12 h-12 text-muted-foreground" />
+                          <div className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px] rounded-xl bg-muted flex items-center justify-center shrink-0">
+                            <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground" />
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
@@ -554,7 +574,7 @@ const CalculatorOnlinePage = () => {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Material</Label>
                         <select
@@ -593,41 +613,39 @@ const CalculatorOnlinePage = () => {
                           </button>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Farbauswahl als Punkte (dynamisch aus Material) */}
-                    <div className="mt-4">
-                      <Label className="text-xs">Farbe</Label>
-                      <ColorPicker
-                        farben={materials.find((m) => m.id === p.materialId)?.farben || []}
-                        selected={p.color}
-                        onSelect={(c) => update(p.id, { color: c })}
-                      />
-                    </div>
-
-                    {/* Qualitätsstufen */}
-                    <div className="mt-4">
-                      <Label className="text-xs">Qualität / Festigkeit</Label>
-                      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {QUALITY_PRESETS.map((q) => {
-                          const selected = p.infill === q.infill;
-                          return (
-                            <Tooltip key={q.key}>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={() => update(p.id, { infill: q.infill })}
-                                  className={`h-9 rounded-md border text-sm font-medium transition-all ${selected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background hover:bg-muted"}`}
-                                >
-                                  {q.label}
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>{q.desc}</TooltipContent>
-                            </Tooltip>
-                          );
-                        })}
+                      <div>
+                        <Label className="text-xs">Farbe</Label>
+                        <ColorPicker
+                          farben={materials.find((m) => m.id === p.materialId)?.farben || []}
+                          selected={p.color}
+                          onSelect={(c) => update(p.id, { color: c })}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Qualität / Festigkeit</Label>
+                        <div className="mt-2 grid grid-cols-2 gap-1.5">
+                          {QUALITY_PRESETS.map((q) => {
+                            const selected = p.infill === q.infill;
+                            return (
+                              <Tooltip key={q.key}>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => update(p.id, { infill: q.infill })}
+                                    className={`h-9 rounded-md border text-xs font-medium transition-all ${selected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background hover:bg-muted"}`}
+                                  >
+                                    {q.label}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>{q.desc}</TooltipContent>
+                              </Tooltip>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
+
+
 
                     {/* STEP-Hinweis */}
                     {isStepFile(p.fileName) && (
@@ -830,7 +848,7 @@ function ColorPicker({ farben, selected, onSelect }: { farben: string[]; selecte
             title={name}
             onClick={() => onSelect(name)}
             aria-label={name}
-            className={`w-7 h-7 rounded-full border-2 transition-all ${
+            className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full border-2 transition-all ${
               sel
                 ? "border-primary ring-2 ring-primary/30 scale-110"
                 : `border-border hover:border-primary/50 ${isWeiss ? "border-gray-200" : ""}`

@@ -173,7 +173,7 @@ export function ChatWidget() {
     <>
 
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-h-[520px] flex flex-col bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
+        <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-6 z-50 w-screen sm:w-[360px] h-[100dvh] sm:h-auto sm:max-h-[520px] flex flex-col bg-card border border-border sm:rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
           <div className="px-4 py-3 bg-primary flex items-center gap-3 flex-shrink-0">
             <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center">
               <Bot className="w-4 h-4 text-primary-foreground" />

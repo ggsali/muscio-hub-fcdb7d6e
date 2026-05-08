@@ -36,7 +36,7 @@ export default function BlogPage() {
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="max-w-3xl mb-14">
           <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Blog & News</p>
-          <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground tracking-tight leading-[1.05] mb-4">
+          <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground tracking-tight leading-[1.05] mb-4">
             Wissen rund um den 3D-Druck
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed">
@@ -61,7 +61,7 @@ export default function BlogPage() {
                   to={`/blog/${p.slug}`}
                   className="group block rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/50 transition-all"
                 >
-                  <div className="aspect-[16/9] bg-muted relative">
+                  <div className="h-[160px] md:h-auto md:aspect-[16/9] bg-muted relative">
                     {p.titelbild_url ? (
                       <img src={p.titelbild_url} alt={p.titel} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     ) : (

@@ -60,7 +60,7 @@ export default function UeberUnsPage() {
             <ScrollReveal>
               <div className="max-w-xl">
                 <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Über uns</p>
-                <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
+                <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
                   Wir machen 3D-Druck<br />zugänglich.
                 </h1>
                 <p className="text-muted-foreground text-base leading-relaxed">

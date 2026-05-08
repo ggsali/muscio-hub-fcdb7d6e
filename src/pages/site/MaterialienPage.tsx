@@ -45,7 +45,7 @@ export default function MaterialienPage() {
       <section className="container mx-auto px-4 pt-12 pb-12">
         <ScrollReveal>
           <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Materialien</p>
-          <h1 className="font-heading text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
+          <h1 className="font-heading text-3xl md:text-6xl font-extrabold tracking-tight mb-4">
             Für jeden Einsatz<br /><span className="text-primary">das richtige Material.</span>
           </h1>
           <p className="text-muted-foreground max-w-2xl">
