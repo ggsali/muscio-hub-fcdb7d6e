@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
 
 interface Rotation { x: number; y: number; z: number; px?: number; py?: number; pz?: number }
 export default function ModelViewer({ url, rotation, showAxes }: { url: string; rotation?: Rotation; showAxes?: boolean }) {
@@ -69,6 +70,35 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
     const onUserInteract = () => { controls.autoRotate = false; };
     renderer.domElement.addEventListener("pointerdown", onUserInteract);
 
+    const ext = url.split('.').pop()?.toLowerCase().split('?')[0];
+
+    if (ext === '3mf') {
+      const loader = new ThreeMFLoader();
+      loader.load(url, (obj) => {
+        obj.traverse((child) => {
+          const m = child as THREE.Mesh;
+          if (m.isMesh && (!m.material || Array.isArray(m.material))) {
+            m.material = new THREE.MeshStandardMaterial({
+              color: 0xcccccc,
+              metalness: 0.1,
+              roughness: 0.7,
+            });
+          }
+        });
+        const box = new THREE.Box3().setFromObject(obj);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        obj.position.x = -center.x;
+        obj.position.z = -center.z;
+        obj.position.y = -box.min.y;
+        const maxDim = Math.max(size.x, size.y, size.z);
+        camera.position.set(maxDim * 1.2, size.y * 0.8, maxDim * 1.5);
+        camera.lookAt(0, size.y * 0.3, 0);
+        controls.target.set(0, size.y * 0.3, 0);
+        controls.update();
+        scene.add(obj);
+      });
+    } else {
     const loader = new GLTFLoader();
     loader.load(
       url,
@@ -142,6 +172,7 @@ export default function ModelViewer({ url, rotation, showAxes }: { url: string; 
       undefined,
       (err) => console.error("GLB load failed", err),
     );
+    }
 
     const animate = () => {
       if (stopped) return;
