@@ -53,8 +53,13 @@ export default function ModelViewer({ url, rotation }: { url: string; rotation?:
       url,
       (gltf) => {
         root = gltf.scene;
-        // Modell aufrecht stellen (falls auf der Seite liegend)
-        root.rotation.x = -Math.PI / 2;
+        rootRef.current = root;
+        // Rotation: custom prop oder Default (aufrecht stellen)
+        if (rotation) {
+          root.rotation.set(rotation.x * Math.PI / 180, rotation.y * Math.PI / 180, rotation.z * Math.PI / 180);
+        } else {
+          root.rotation.x = -Math.PI / 2;
+        }
         // Bounding Box nach Rotation berechnen
         const box = new THREE.Box3().setFromObject(root);
         const center = box.getCenter(new THREE.Vector3());
