@@ -195,7 +195,7 @@ export function ChatWidget() {
 
       {open && (
         <div className="fixed inset-0 sm:inset-auto sm:bottom-24 sm:right-6 z-50 w-screen sm:w-[360px] h-[100dvh] sm:h-auto sm:max-h-[520px] flex flex-col bg-card border border-border sm:rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200">
-          <div className="px-4 py-3 bg-primary flex items-center gap-3 flex-shrink-0">
+          <div className="px-4 py-2 bg-primary flex items-center gap-3 flex-shrink-0">
             <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center">
               <Bot className="w-4 h-4 text-primary-foreground" />
             </div>
@@ -233,7 +233,7 @@ export function ChatWidget() {
                     {msg.role === "admin" ? <User className="w-3.5 h-3.5 text-primary" /> : <Bot className="w-3.5 h-3.5 text-primary" />}
                   </div>
                 )}
-                <div className={cn("max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed break-words", msg.role === "user" ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted text-foreground rounded-tl-sm")}>
+                <div className={cn("max-w-[75%] rounded-2xl px-3 py-2 text-sm leading-snug break-words", msg.role === "user" ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-muted text-foreground rounded-tl-sm")}>
                   {msg.content ? (
                     <ReactMarkdown
                       components={{
@@ -274,8 +274,8 @@ export function ChatWidget() {
                           );
                         },
                         p: ({ children }) => <p className="m-0 whitespace-pre-wrap">{children}</p>,
-                        ul: ({ children }) => <ul className="list-disc pl-4 my-1 space-y-0.5">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal pl-4 my-1 space-y-0.5">{children}</ol>,
+                        ul: ({ children }) => <ul className="list-disc pl-3 my-1 space-y-0.5">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-3 my-1 space-y-0.5">{children}</ol>,
                       }}
                     >
                       {msg.content}
@@ -316,6 +316,17 @@ export function ChatWidget() {
             </div>
           )}
         </div>
+      )}
+
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform flex items-center justify-center"
+          aria-label="Chat öffnen"
+        >
+          <MessageCircle className="w-6 h-6" />
+          {hasUnread && <span className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-primary" />}
+        </button>
       )}
     </>
   );
