@@ -361,6 +361,70 @@ const CTA = () => (
   </section>
 );
 
+/* ─── SEO CONTENT ─── */
+const SEOContent = () => (
+  <section className="py-20 bg-muted/30">
+    <div className="container mx-auto px-4 max-w-4xl">
+      <ScrollReveal>
+        <div className="mb-10">
+          <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Leistungen</p>
+          <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+            Ihr professioneller 3D-Druck Partner in der Schweiz
+          </h2>
+        </div>
+      </ScrollReveal>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <ScrollReveal>
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">FDM 3D-Druck</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Unser FDM-Druckservice bietet hochwertige Bauteile aus PLA, PETG, ABS, ASA, TPU und Nylon. Ideal für Prototypen, Funktionsteile, Gehäuse und individuelle Bauteile. Dank modernster Bambu Lab Drucker erreichen wir Präzision bis 0.1mm und Druckgeschwindigkeiten von bis zu 600mm/s.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">SLA Resin-Druck</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Für höchste Detailgenauigkeit bieten wir SLA Resin-Druck an. Perfekt für Schmuck, Miniaturen, Zahntechnik und filigrane Bauteile mit glatten Oberflächen. Auflösung bis zu 0.025mm für perfekte Ergebnisse bei anspruchsvollsten Projekten.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Schnelle Lieferung in der Schweiz</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Als Schweizer Unternehmen aus Eschlikon TG liefern wir Ihre Drucke innerhalb von 48 Stunden. Kein Zoll, keine langen Wartezeiten aus dem Ausland. Versand mit Post oder DHL, kostenlos ab CHF 65 Bestellwert.
+              </p>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.1}>
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Faire Preise und Mengenrabatte</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Transparente Preise ab CHF 0.055/g für PLA-Druck. Mengenrabatte ab 5 Stück (10%) und ab 10 Stück (15%). Online-Kalkulator für sofortige Preisberechnung. Keine versteckten Kosten, verbindliches Angebot innerhalb 24 Stunden.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">B2B Fokus</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                3DMuscio ist spezialisiert auf Geschäftskunden. Wir unterstützen KMUs, Startups und Industrieunternehmen in der ganzen Schweiz mit zuverlässigen 3D-Druckdienstleistungen. Von der Einzelbestellung bis zur Serienfertigung — wir finden die optimale Lösung für Ihr Projekt.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Dateiformate und Upload</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Laden Sie Ihre 3D-Modelle einfach online hoch. Wir akzeptieren STL, OBJ und STEP Dateien bis 500MB. Unser Sofort-Kalkulator berechnet automatisch Volumen und Preis aus Ihrer STL-Datei — ohne manuelle Eingabe.
+              </p>
+            </div>
+          </div>
+        </ScrollReveal>
+      </div>
+    </div>
+  </section>
+);
+
 const Index = () => (
   <div>
     <Hero />
@@ -373,6 +437,7 @@ const Index = () => (
     <ReviewsSection />
     <FAQ />
     <CTA />
+    <SEOContent />
   </div>
 );
 
