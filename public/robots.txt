@@ -1,18 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /admin/
-Disallow: /admin/login
 Disallow: /website-admin
-Disallow: /website-admin/
 Disallow: /portal
-Disallow: /portal/
 Disallow: /anmelden
 Disallow: /registrieren
-Disallow: /login
-Disallow: /mein-konto
-Disallow: /upload/
-Disallow: /payment-success
-Disallow: /bewertung
 
 Sitemap: https://3dmuscio.com/sitemap.xml
