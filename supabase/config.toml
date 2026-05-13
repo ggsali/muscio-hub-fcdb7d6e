@@ -1,6 +1,8 @@
 project_id = "ukqtjdsjmtxgzhklvqky"
 
 [functions]
+  [functions.generate-sitemap]
+    verify_jwt = false
   [functions.inquiry-inbound]
     verify_jwt = false
   [functions.auth-email-hook]
