@@ -1709,6 +1709,27 @@ export type Database = {
     }
     Functions: {
       current_user_email: { Args: never; Returns: string }
+      get_chat_messages: {
+        Args: { p_session_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          role: string
+          session_id: string
+        }[]
+      }
+      get_referral_by_code: {
+        Args: { p_code: string }
+        Returns: {
+          created_at: string
+          id: string
+          rabatt_code: string
+          rabatt_prozent: number
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
