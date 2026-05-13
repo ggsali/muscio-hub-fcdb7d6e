@@ -67,17 +67,19 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (!sessionId) return;
-    const channel = supabase
-      .channel(`chat-${sessionId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: `session_id=eq.${sessionId}` }, (payload) => {
-        const msg = payload.new as Message;
-        if (msg.role === "admin") {
-          setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
-          if (!open) setHasUnread(true);
-        }
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    // Poll for admin replies (RLS no longer allows anon realtime on chat_messages)
+    const interval = setInterval(async () => {
+      const { data } = await supabase.rpc("get_chat_messages", { p_session_id: sessionId });
+      if (!data) return;
+      setMessages(prev => {
+        const existingIds = new Set(prev.map(m => m.id).filter(Boolean));
+        const newAdmin = (data as Message[]).filter(m => m.role === "admin" && !existingIds.has(m.id));
+        if (newAdmin.length === 0) return prev;
+        if (!open) setHasUnread(true);
+        return [...prev, ...newAdmin];
+      });
+    }, 4000);
+    return () => clearInterval(interval);
   }, [sessionId, open]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, open]);
