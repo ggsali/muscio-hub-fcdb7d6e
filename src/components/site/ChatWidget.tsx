@@ -86,7 +86,7 @@ export function ChatWidget() {
   useEffect(() => { if (open) { setHasUnread(false); setTimeout(() => inputRef.current?.focus(), 100); } }, [open]);
 
   const loadMessages = async (sid: string) => {
-    const { data } = await supabase.from("chat_messages").select("*").eq("session_id", sid).order("created_at");
+    const { data } = await supabase.rpc("get_chat_messages", { p_session_id: sid });
     if (data) setMessages(data as Message[]);
   };
 
