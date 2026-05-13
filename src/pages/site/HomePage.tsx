@@ -421,6 +421,15 @@ const SEOContent = () => (
           </div>
         </ScrollReveal>
       </div>
+
+      <ScrollReveal>
+        <div className="mt-10 pt-6 border-t border-border">
+          <h3 className="font-heading text-lg font-bold text-foreground mb-2">Warum 3DMuscio?</h3>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Als junges Schweizer Unternehmen legen wir grossen Wert auf Qualität, Zuverlässigkeit und persönlichen Service. Jeder Auftrag wird sorgfältig geprüft und mit modernster Technologie umgesetzt. Unser Ziel ist es, Ihnen den besten 3D-Druck Service in der Schweiz zu bieten — schnell, günstig und zuverlässig.
+          </p>
+        </div>
+      </ScrollReveal>
     </div>
   </section>
 );
