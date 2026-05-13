@@ -16,7 +16,9 @@ export default function ReviewsAdminPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("reviews")
+      .select("id, customer_name, customer_email, kommentar, rating, freigegeben, sichtbar_auf_website, source, created_at")
+      .order("created_at", { ascending: false });
     setReviews((data as Review[]) || []);
     setLoading(false);
   };
