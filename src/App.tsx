@@ -107,6 +107,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <SettingsProvider>
           <CompanySettingsProvider>
             <CustomerAuthProvider>
