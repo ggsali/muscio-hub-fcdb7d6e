@@ -85,18 +85,6 @@ export const CartDrawer = () => {
     }
   }, [user, items.length, handleCheckout, setIsOpen]);
 
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("Keine Checkout-URL erhalten");
-      }
-    } catch (e: any) {
-      console.error(e);
-      toast({ title: "Checkout fehlgeschlagen", description: e.message, variant: "destructive" });
-      setCheckingOut(false);
-    }
-  };
 
   return (
     <AnimatePresence>
