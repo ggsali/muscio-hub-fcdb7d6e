@@ -22,8 +22,20 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const items = (body?.items || []) as InItem[];
+    const inCustomer = (body?.customer || null) as InCustomer | null;
     if (!Array.isArray(items) || items.length === 0) throw new Error("Warenkorb leer");
     if (items.length > 50) throw new Error("Zu viele Positionen");
+
+    const countryNameToIso = (c?: string): string | undefined => {
+      if (!c) return undefined;
+      const t = c.trim().toLowerCase();
+      if (t.length === 2) return t.toUpperCase();
+      if (["schweiz", "swiss", "switzerland", "suisse", "svizzera"].includes(t)) return "CH";
+      if (["deutschland", "germany"].includes(t)) return "DE";
+      if (["österreich", "oesterreich", "austria"].includes(t)) return "AT";
+      if (["liechtenstein"].includes(t)) return "LI";
+      return undefined;
+    };
 
     // Best-effort user lookup (shop is guest-friendly)
     let userEmail: string | undefined;
