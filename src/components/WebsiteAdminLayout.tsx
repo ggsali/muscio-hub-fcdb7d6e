@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/website-admin", label: "Übersicht", icon: Globe, end: true },
+  { to: "/website-admin/shop", label: "Shop-Übersicht", icon: TrendingUp },
   { to: "/website-admin/bestellungen", label: "Shop-Bestellungen", icon: ShoppingBag },
   { to: "/website-admin/shop-produkte", label: "Shop-Produkte", icon: Package },
   { to: "/website-admin/blog", label: "Blog / News", icon: FileText },
@@ -31,7 +32,7 @@ const NAV = [
 
 const mobileBottomNav = [
   { to: "/website-admin", icon: Globe, label: "Übersicht", end: true },
-  { to: "/website-admin/bestellungen", icon: ShoppingBag, label: "Shop" },
+  { to: "/website-admin/shop", icon: ShoppingBag, label: "Shop" },
   { to: "/website-admin/chat", icon: MessageCircle, label: "Chat" },
   { to: "/website-admin/kunden", icon: Users2, label: "Kunden" },
   { to: "/website-admin/einstellungen", icon: Settings, label: "Settings" },
