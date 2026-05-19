@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CompanySettingsProvider } from "@/contexts/CompanySettingsContext";
 import { CustomerAuthProvider } from "@/contexts/CustomerAuthContext";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 import AdminGate from "@/components/AdminGate";
 import SiteLayout from "@/components/SiteLayout";
@@ -106,6 +107,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <SettingsProvider>
           <CompanySettingsProvider>
             <CustomerAuthProvider>
