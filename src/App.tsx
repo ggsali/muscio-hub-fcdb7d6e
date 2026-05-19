@@ -172,6 +172,7 @@ const App = () => (
               <Route path="/website-admin" element={<WebsiteAdminLayout />}>
                 <Route index element={<WebsiteAdminDashboardPage />} />
                 <Route path="bestellungen" element={<WebsiteBestellungenPage />} />
+                <Route path="shop" element={<ShopUebersichtAdminPage />} />
                 <Route path="shop-produkte" element={<ShopProdukteAdminPage />} />
                 <Route path="blog" element={<BlogAdminPage />} />
                 <Route path="reviews" element={<ReviewsAdminPage />} />
