@@ -69,6 +69,7 @@ import TeamAdminPage from "@/pages/website-admin/TeamAdminPage";
 import NavigationAdminPage from "@/pages/website-admin/NavigationAdminPage";
 import TimelineAdminPage from "@/pages/website-admin/TimelineAdminPage";
 import ShopProdukteAdminPage from "@/pages/website-admin/ShopProdukteAdminPage";
+import ShopUebersichtAdminPage from "@/pages/website-admin/ShopUebersichtAdminPage";
 import BlogAdminPage from "@/pages/website-admin/BlogAdminPage";
 import EquipmentAdminPage from "@/pages/website-admin/EquipmentAdminPage";
 import EquipmentPage from "@/pages/site/EquipmentPage";
