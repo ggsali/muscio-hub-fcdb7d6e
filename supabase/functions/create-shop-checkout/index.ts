@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 interface InItem { product_id: string; name: string; preis: number; quantity: number; slug: string; }
+interface InCustomer { email?: string; name?: string; phone?: string; address?: string; city?: string; postal_code?: string; country?: string; }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
