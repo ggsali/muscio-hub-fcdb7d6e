@@ -100,9 +100,40 @@ serve(async (req) => {
       }))
     );
 
+    // Stripe-Kundeneintrag mit vorausgefüllten Daten, damit der Checkout-Form vorausgefüllt ist
+    let stripeCustomerId: string | undefined;
+    const effectiveEmail = inCustomer?.email || userEmail;
+    if (effectiveEmail) {
+      const iso = countryNameToIso(inCustomer?.country);
+      const created = await stripe.customers.create({
+        email: effectiveEmail,
+        name: inCustomer?.name || undefined,
+        phone: inCustomer?.phone || undefined,
+        address: inCustomer?.address ? {
+          line1: inCustomer.address,
+          city: inCustomer.city || undefined,
+          postal_code: inCustomer.postal_code || undefined,
+          country: iso,
+        } : undefined,
+        shipping: inCustomer?.address && inCustomer?.name ? {
+          name: inCustomer.name,
+          phone: inCustomer.phone || undefined,
+          address: {
+            line1: inCustomer.address,
+            city: inCustomer.city || undefined,
+            postal_code: inCustomer.postal_code || undefined,
+            country: iso,
+          },
+        } : undefined,
+      });
+      stripeCustomerId = created.id;
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      customer_email: userEmail,
+      ...(stripeCustomerId
+        ? { customer: stripeCustomerId, customer_update: { shipping: "auto", address: "auto", name: "auto" } }
+        : { customer_email: effectiveEmail }),
       line_items: validated.map(v => ({
         quantity: v.quantity,
         price_data: {
