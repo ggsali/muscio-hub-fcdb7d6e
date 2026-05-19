@@ -1,23 +1,45 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
+
+const RESUME_CHECKOUT_KEY = "muscio_resume_checkout";
 
 export const CartDrawer = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useCustomerAuth();
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
   const [checkingOut, setCheckingOut] = useState(false);
 
-  const handleCheckout = async () => {
+  const handleCheckout = useCallback(async () => {
     if (items.length === 0) return;
+
+    // Nicht angemeldet → zur Anmeldung, Checkout nach Login fortsetzen
+    if (!user) {
+      try { sessionStorage.setItem(RESUME_CHECKOUT_KEY, "1"); } catch {}
+      setIsOpen(false);
+      toast({
+        title: "Bitte anmelden",
+        description: "Melde dich an oder registriere dich, um die Bestellung abzuschliessen.",
+      });
+      navigate("/anmelden");
+      return;
+    }
+
     setCheckingOut(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone, address, city, postal_code, country")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       const { data, error } = await supabase.functions.invoke("create-shop-checkout", {
         body: {
           items: items.map(i => ({
@@ -27,8 +49,42 @@ export const CartDrawer = () => {
             quantity: i.quantity,
             slug: i.slug,
           })),
+          customer: profile ? {
+            email: user.email,
+            name: profile.full_name || "",
+            phone: profile.phone || "",
+            address: profile.address || "",
+            city: profile.city || "",
+            postal_code: profile.postal_code || "",
+            country: profile.country || "Schweiz",
+          } : { email: user.email },
         },
       });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("Keine Checkout-URL erhalten");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: "Checkout fehlgeschlagen", description: e.message, variant: "destructive" });
+      setCheckingOut(false);
+    }
+  }, [items, user, navigate, setIsOpen, toast]);
+
+  // Nach Login automatisch Checkout fortsetzen
+  useEffect(() => {
+    if (!user) return;
+    let pending = false;
+    try { pending = sessionStorage.getItem(RESUME_CHECKOUT_KEY) === "1"; } catch {}
+    if (pending && items.length > 0) {
+      try { sessionStorage.removeItem(RESUME_CHECKOUT_KEY); } catch {}
+      setIsOpen(true);
+      handleCheckout();
+    }
+  }, [user, items.length, handleCheckout, setIsOpen]);
+
       if (error) throw error;
       if (data?.url) {
         window.location.href = data.url;
