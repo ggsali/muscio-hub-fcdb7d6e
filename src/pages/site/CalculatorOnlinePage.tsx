@@ -569,7 +569,7 @@ const CalculatorOnlinePage = () => {
                           </p>
                         </div>
                       </div>
-                      <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive">
+                      <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
