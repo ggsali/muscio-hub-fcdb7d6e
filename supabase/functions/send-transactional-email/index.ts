@@ -30,9 +30,8 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth: this function requires either a service_role JWT or an authenticated
+// admin user. The plain anon key is rejected to prevent abuse from public callers.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -42,8 +41,9 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
     console.error('Missing required environment variables')
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
@@ -53,6 +53,49 @@ Deno.serve(async (req) => {
       }
     )
   }
+
+  // Verify caller authorization: must be service_role or an admin user
+  const authHeader = req.headers.get('Authorization') || ''
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  let isAuthorized = false
+  // Service role bypass
+  if (token === supabaseServiceKey) {
+    isAuthorized = true
+  } else {
+    try {
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      })
+      const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token)
+      const userId = claimsData?.claims?.sub
+      if (!claimsError && userId) {
+        const { data: roleRow } = await authClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .eq('role', 'admin')
+          .maybeSingle()
+        if (roleRow) isAuthorized = true
+      }
+    } catch (_e) {
+      // fall through to unauthorized
+    }
+  }
+
+  if (!isAuthorized) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
 
   // Parse request body
   let templateName: string
@@ -96,7 +139,7 @@ Deno.serve(async (req) => {
     console.error('Template not found in registry', { templateName })
     return new Response(
       JSON.stringify({
-        error: `Template '${templateName}' not found. Available: ${Object.keys(TEMPLATES).join(', ')}`,
+        error: `Template '${templateName}' not found`,
       }),
       {
         status: 404,
