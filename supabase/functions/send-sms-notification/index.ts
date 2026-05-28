@@ -15,6 +15,24 @@ const isOpeningHours = (): boolean => {
   return moFr || sa;
 };
 
+const escapeHtml = (s: unknown): string =>
+  String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const clamp = (s: unknown, max: number): string => {
+  const str = typeof s === "string" ? s : "";
+  return str.length > max ? str.slice(0, max) : str;
+};
+
+// Per-IP rate limit (in-memory)
+const rateStore: Map<string, number[]> = ((globalThis as any).__smsNotifyRate ||= new Map());
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 3;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
