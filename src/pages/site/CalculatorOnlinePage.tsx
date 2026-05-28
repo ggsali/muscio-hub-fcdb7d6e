@@ -527,7 +527,7 @@ const CalculatorOnlinePage = () => {
                 onChange={handleInput}
               />
               <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h3>
+              <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
               <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
               <label htmlFor="file-input">
                 <Button asChild className="gap-2 cursor-pointer">
