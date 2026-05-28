@@ -153,9 +153,9 @@ export default function ShopPage() {
         {activeCategory === "alle" && !search && featured.length > 0 && (
           <ScrollReveal>
             <div className="mb-12">
-              <p className="text-xs font-bold text-primary uppercase tracking-widest mb-5 flex items-center gap-2">
+              <h2 className="text-xs font-bold text-primary uppercase tracking-widest mb-5 flex items-center gap-2">
                 <Star className="w-3 h-3" /> Empfohlen
-              </p>
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {featured.slice(0, 2).map((p, i) => {
                   const img = p.shop_product_images[0];
