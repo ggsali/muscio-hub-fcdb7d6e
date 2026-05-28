@@ -185,6 +185,7 @@ export default function ShopPage() {
                           </div>
                           {inStock && (
                             <button onClick={e => handleAddToCart(p, e)}
+                              aria-label={`${p.name} in den Warenkorb`}
                               className="flex-shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl p-3 transition-all shadow-lg">
                               <ShoppingCart className="w-5 h-5" />
                             </button>
