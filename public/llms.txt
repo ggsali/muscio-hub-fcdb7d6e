@@ -1,0 +1,27 @@
+# 3DMuscio
+
+> Schweizer 3D-Druck-Dienstleister aus St. Gallen: Prototypen, Kleinserien und Endprodukte aus hochwertigen Materialien wie PA12, TPU, PLA und mehr. Inklusive CAD-Optimierung, Online-Kalkulator und Shop für Fertigprodukte.
+
+## Pages
+
+- [Startseite](/): 3D-Druck-Dienstleistungen, Materialien und Prozessübersicht.
+- [Shop](/shop): Fertige Produkte und 3D-gedruckte Artikel direkt kaufen.
+- [3D-Druck-Kalkulator](/kalkulator-online): Sofortpreis für Druckaufträge berechnen.
+- [Materialien](/materialien): Übersicht der verfügbaren Druckmaterialien mit Eigenschaften.
+- [Maschinen](/maschinen): Verwendete Drucker und Ausrüstung.
+- [Projekte](/projekte): Referenzprojekte und Galerie mit realisierten Arbeiten.
+- [Blog](/blog): Neuigkeiten, Einblicke und Wissensbeiträge zum 3D-Druck.
+- [Über uns](/ueber-uns): Unternehmensgeschichte, Team und Werte.
+- [Kontakt](/kontakt): Kontaktformular und Anfahrtsinformationen.
+- [FAQ](/faq): Häufig gestellte Fragen zu Materialien, Lieferzeiten und Bestellungen.
+- [AGB](/agb): Allgemeine Geschäftsbedingungen.
+- [Datenschutz](/datenschutz): Datenschutzerklärung gemäss Schweizer Recht.
+- [Impressum](/impressum): Impressum und rechtliche Angaben.
+
+## Optional
+
+- [Projekte/Bühler Druckgussmaschine](/projekte/buehler-druckgussmaschine): Beispielprojekt – Ersatzteil in Metall.
+- [Projekte/Bühler Naparoast](/projekte/buehler-naparoast): Beispielprojekt – Bauteil in Hitzebeständigkeit.
+- [Projekte/Plissee](/projekte/plissee): Beispielprojekt – Kunststoffkomponente.
+- [Blog (Beitrag)](/blog/:slug): Einzelne Blogbeiträge zu 3D-Druck-Themen.
+- [Shop-Produkt](/shop/:slug): Einzelne Shop-Produkte mit Beschreibung und Kaufoption.
