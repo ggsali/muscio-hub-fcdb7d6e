@@ -129,6 +129,7 @@ export default function ShopPage() {
             )}
           </div>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+            aria-label="Produkte sortieren"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground">
             <option value="featured">Empfohlen</option>
             <option value="preis-asc">Preis aufsteigend</option>
