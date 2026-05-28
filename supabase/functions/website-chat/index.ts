@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       if (!m || typeof m.content !== "string" || typeof m.role !== "string") {
         return new Response(JSON.stringify({ error: "Ungültiges Nachrichtenformat." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-      if (!["user", "assistant", "system"].includes(m.role)) {
+      if (!["user", "assistant"].includes(m.role)) {
         return new Response(JSON.stringify({ error: "Ungültige Rolle." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       totalChars += m.content.length;
