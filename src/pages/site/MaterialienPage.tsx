@@ -74,7 +74,7 @@ export default function MaterialienPage() {
                     <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Layers className="w-4 h-4 text-primary" />
                     </div>
-                    <h3 className="font-heading text-xl font-bold">{m.name}</h3>
+                    <h2 className="font-heading text-xl font-bold">{m.name}</h2>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted tracking-wider">{m.tag}</span>
                 </div>
