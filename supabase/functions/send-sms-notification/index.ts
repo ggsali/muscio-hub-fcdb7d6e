@@ -39,12 +39,29 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { message, customerName, customerEmail, sessionId } = await req.json().catch(() => ({}));
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+    const now = Date.now();
+    const arr = (rateStore.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
+    if (arr.length >= RATE_MAX) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    arr.push(now);
+    rateStore.set(ip, arr);
+
+    const body = await req.json().catch(() => ({}));
+    const customerName = clamp(body.customerName, 200);
+    const customerEmail = clamp(body.customerEmail, 200);
+    const message = clamp(body.message, 2000);
+    const rawSessionId = clamp(body.sessionId, 100);
+    // Only allow safe session id chars (uuid/hex/dashes)
+    const sessionId = /^[a-zA-Z0-9-]+$/.test(rawSessionId) ? rawSessionId : "";
 
     console.log("Chat notification triggered", {
       hasResendKey: !!Deno.env.get("RESEND_API_KEY"),
       isOpeningHours: isOpeningHours(),
-      customerName,
     });
 
     if (!isOpeningHours()) {
@@ -63,12 +80,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const chatLink = `https://3dmuscio.com/admin/chat${sessionId ? `?session=${sessionId}` : ""}`;
+    const chatLink = `https://3dmuscio.com/admin/chat${sessionId ? `?session=${encodeURIComponent(sessionId)}` : ""}`;
     const html = `
       <h2>💬 Neue Chat-Anfrage auf 3dmuscio.com</h2>
-      <p><strong>Name:</strong> ${customerName || "Nicht angegeben"}</p>
-      <p><strong>E-Mail:</strong> ${customerEmail || "Nicht angegeben"}</p>
-      <p><strong>Nachricht:</strong> ${message || ""}</p>
+      <p><strong>Name:</strong> ${escapeHtml(customerName) || "Nicht angegeben"}</p>
+      <p><strong>E-Mail:</strong> ${escapeHtml(customerEmail) || "Nicht angegeben"}</p>
+      <p><strong>Nachricht:</strong> ${escapeHtml(message)}</p>
       <p><strong>Zeitpunkt:</strong> ${new Date().toLocaleString("de-CH", { timeZone: "Europe/Zurich" })}</p>
       <p><a href="${chatLink}" style="display:inline-block;padding:10px 18px;background:#FF5A00;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Zur Anfragen-Übersicht →</a></p>
     `;
@@ -83,7 +100,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: "3DMuscio Chat <noreply@3dmuscio.com>",
         to: ["anfrage@3dmuscio.com"],
-        subject: `💬 Neue Chat-Nachricht — ${customerName || "Unbekannt"}`,
+        subject: `💬 Neue Chat-Nachricht`,
         html,
       }),
     });
