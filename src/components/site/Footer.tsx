@@ -40,7 +40,7 @@ export const Footer = () => (
             <div className="relative">
               <img
                 src={logo}
-                alt="3DM Logo"
+                alt="3DMuscio 3D-Druck Schweiz"
                 className="h-10 w-10 object-contain rounded-xl shadow-md ring-1 ring-border group-hover:ring-primary/40 transition-all duration-300"
               />
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary border-2 border-background" />
