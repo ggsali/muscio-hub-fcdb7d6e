@@ -27,6 +27,22 @@ export default function FaqPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-6 py-12 md:py-16">
+      <Helmet>
+        <title>FAQ – Häufige Fragen zum 3D-Druck | 3DMuscio</title>
+        <meta name="description" content="Antworten auf häufige Fragen zu Lieferzeit, Dateiformaten, Genauigkeit und Preisen im 3D-Druck bei 3DMuscio." />
+        <meta property="og:title" content="FAQ – Häufige Fragen zum 3D-Druck | 3DMuscio" />
+        <meta property="og:description" content="Antworten auf häufige Fragen zum 3D-Druck bei 3DMuscio." />
+        <meta property="og:url" content="https://3dmuscio.com/faq" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: items.map(it => ({
+            "@type": "Question",
+            name: it.frage,
+            acceptedAnswer: { "@type": "Answer", text: it.antwort },
+          })),
+        })}</script>
+      </Helmet>
       <h1 className="text-3xl md:text-4xl font-bold mb-2">Häufige Fragen</h1>
       <p className="text-muted-foreground mb-10">Wir haben zusammengefasst, was am häufigsten gefragt wird.</p>
 
