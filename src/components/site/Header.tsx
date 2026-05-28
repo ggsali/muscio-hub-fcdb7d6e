@@ -102,7 +102,7 @@ export const Header = () => {
               <div className="absolute inset-0 rounded-lg bg-primary/40 blur-md scale-125 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
                 src={logo}
-                alt="3DM"
+                alt="3DMuscio 3D-Druck Schweiz"
                 className="relative h-8 w-8 rounded-lg object-contain ring-1 ring-white/20 group-hover:ring-primary/60 transition-all duration-300"
               />
               <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-background animate-pulse" />
