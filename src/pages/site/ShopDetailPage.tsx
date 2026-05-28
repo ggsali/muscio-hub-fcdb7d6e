@@ -98,6 +98,31 @@ export default function ShopDetailPage() {
 
   return (
     <div className="pt-12 pb-20">
+      <Helmet>
+        <title>{`${product.name} – 3DMuscio Shop`}</title>
+        <meta name="description" content={(product.kurzbeschreibung || product.beschreibung || `${product.name} – handgefertigtes 3D-Druck-Produkt von 3DMuscio.`).slice(0, 160)} />
+        <meta property="og:title" content={`${product.name} – 3DMuscio Shop`} />
+        <meta property="og:description" content={(product.kurzbeschreibung || product.beschreibung || product.name).slice(0, 160)} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={`https://3dmuscio.com/shop/${product.slug}`} />
+        {currentImage && <meta property="og:image" content={getImageUrl(currentImage.storage_path)} />}
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.kurzbeschreibung || product.beschreibung || undefined,
+          image: images.map(i => getImageUrl(i.storage_path)),
+          sku: product.id,
+          category: product.shop_categories?.name,
+          offers: {
+            "@type": "Offer",
+            url: `https://3dmuscio.com/shop/${product.slug}`,
+            price: product.preis.toFixed(2),
+            priceCurrency: "CHF",
+            availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+          },
+        })}</script>
+      </Helmet>
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-8">
           <Link to="/shop" className="hover:text-foreground transition-colors">Shop</Link>
