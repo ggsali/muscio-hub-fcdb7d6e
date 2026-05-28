@@ -102,6 +102,13 @@ export default function ShopPage() {
 
   return (
     <div className="pt-12 pb-20 min-h-screen">
+      <Helmet>
+        <title>Shop – Handgefertigte 3D-Druck Produkte | 3DMuscio</title>
+        <meta name="description" content="Einzigartige 3D-Druck-Produkte aus der Schweiz. Präzise gefertigt, langlebig, fair kalkuliert. Jetzt im 3DMuscio Shop entdecken." />
+        <meta property="og:title" content="Shop – Handgefertigte 3D-Druck Produkte | 3DMuscio" />
+        <meta property="og:description" content="Einzigartige 3D-Druck-Produkte aus der Schweiz – jetzt im Shop entdecken." />
+        <meta property="og:url" content="https://3dmuscio.com/shop" />
+      </Helmet>
       <div className="container mx-auto px-4 max-w-7xl">
         <ScrollReveal>
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-foreground via-foreground/95 to-foreground/80 text-background p-10 md:p-16 mb-12">
