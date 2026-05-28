@@ -209,9 +209,9 @@ export default function ShopPage() {
           </div>
         ) : (
           <>
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-5 flex items-center gap-2">
+            <h2 className="text-xs font-bold text-primary uppercase tracking-widest mb-5 flex items-center gap-2">
               <Package className="w-3 h-3" /> Alle Produkte
-            </p>
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
               <AnimatePresence>
                 {filtered.map((p, i) => {
