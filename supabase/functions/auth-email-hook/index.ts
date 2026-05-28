@@ -88,13 +88,49 @@ async function handleAuthHook(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Server configuration error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 
+  const hookSecret = Deno.env.get('SEND_EMAIL_HOOK_SECRET')
+  const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
+
   let payload: any
   let rawBody = ''
   try {
     rawBody = await req.text()
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Invalid body' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+
+  // Verify caller authenticity. Require ONE of:
+  //  - Standard Webhooks signature from Supabase Auth (SEND_EMAIL_HOOK_SECRET), OR
+  //  - Authorization: Bearer <LOVABLE_API_KEY> (Lovable-managed webhook path)
+  const authHeader = req.headers.get('Authorization') || ''
+  const hasLovableAuth = !!lovableApiKey && authHeader === `Bearer ${lovableApiKey}`
+  let verified = false
+
+  if (hasLovableAuth) {
+    verified = true
+  } else if (hookSecret) {
+    try {
+      const secret = hookSecret.replace(/^v1,whsec_/, '').replace(/^whsec_/, '')
+      const wh = new Webhook(secret)
+      wh.verify(rawBody, {
+        'webhook-id': req.headers.get('webhook-id') ?? '',
+        'webhook-timestamp': req.headers.get('webhook-timestamp') ?? '',
+        'webhook-signature': req.headers.get('webhook-signature') ?? '',
+      })
+      verified = true
+    } catch (err) {
+      console.error('Webhook signature verification failed', { error: err instanceof Error ? err.message : err })
+    }
+  }
+
+  if (!verified) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+
+  try {
     payload = JSON.parse(rawBody)
   } catch (e) {
-    console.error('Invalid JSON in auth hook', { rawBody: rawBody.substring(0, 500) })
+    console.error('Invalid JSON in auth hook')
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 
