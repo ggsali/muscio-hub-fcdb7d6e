@@ -26,6 +26,21 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://3dmuscio.com/projekte/buehler-druckgussmaschine</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/projekte/buehler-naparoast</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/projekte/plissee</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://3dmuscio.com/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -49,5 +64,25 @@
     <loc>https://3dmuscio.com/shop</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/shop/handy</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/agb</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/datenschutz</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/impressum</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
 </urlset>

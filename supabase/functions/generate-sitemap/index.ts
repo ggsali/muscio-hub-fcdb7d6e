@@ -19,6 +19,9 @@ const STATIC_URLS = [
   { loc: '/kontakt', changefreq: 'monthly', priority: '0.6' },
   { loc: '/faq', changefreq: 'monthly', priority: '0.5' },
   { loc: '/shop', changefreq: 'weekly', priority: '0.7' },
+  { loc: '/agb', changefreq: 'yearly', priority: '0.3' },
+  { loc: '/datenschutz', changefreq: 'yearly', priority: '0.3' },
+  { loc: '/impressum', changefreq: 'yearly', priority: '0.3' },
 ]
 
 Deno.serve(async (req) => {
@@ -30,10 +33,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    const { data: posts } = await supabase
-      .from('blog_posts')
-      .select('slug, updated_at')
-      .eq('veroeffentlicht', true)
+    const [{ data: posts }, { data: projekte }, { data: products }] = await Promise.all([
+      supabase.from('blog_posts').select('slug, updated_at').eq('veroeffentlicht', true),
+      supabase.from('projekte').select('slug, updated_at').eq('aktiv', true),
+      supabase.from('shop_products').select('slug, updated_at').eq('aktiv', true),
+    ])
 
     const staticXml = STATIC_URLS.map(u => `  <url>
     <loc>${SITE}${u.loc}</loc>
@@ -41,17 +45,20 @@ Deno.serve(async (req) => {
     <priority>${u.priority}</priority>
   </url>`).join('\n')
 
-    const blogXml = (posts || []).map((p: any) => `  <url>
-    <loc>${SITE}/blog/${p.slug}</loc>
-    <lastmod>${(p.updated_at || new Date().toISOString()).split('T')[0]}</lastmod>
+    const dyn = (rows: any[] | null, prefix: string, priority = '0.6') =>
+      (rows || []).map((r: any) => `  <url>
+    <loc>${SITE}${prefix}/${r.slug}</loc>
+    <lastmod>${(r.updated_at || new Date().toISOString()).split('T')[0]}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>${priority}</priority>
   </url>`).join('\n')
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticXml}
-${blogXml}
+${dyn(posts, '/blog')}
+${dyn(projekte, '/projekte')}
+${dyn(products, '/shop')}
 </urlset>`
 
     return new Response(xml, {
