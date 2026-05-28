@@ -54,7 +54,7 @@ const Hero = () => {
               transition={{ duration: 0.7, delay: 0.1 }}
               className="font-heading text-[clamp(2.8rem,6vw,5.5rem)] font-extrabold leading-[1.0] mb-6 text-foreground tracking-tight"
             >
-              Schicht für<br />
+              <span className="sr-only">3D-Druck Service in der Schweiz — </span>Schicht für<br />
               <span className="relative inline-block">
                 Schicht
                 <motion.span

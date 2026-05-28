@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -40,8 +41,30 @@ export default function BlogPostPage() {
   if (notFound) return <Navigate to="/blog" replace />;
   if (loading || !post) return <div className="container mx-auto px-4 py-20"><p className="text-muted-foreground">Lädt…</p></div>;
 
+  const desc = (post.zusammenfassung || post.inhalt.replace(/[#*_`>\-]/g, "").slice(0, 160)).slice(0, 160);
+  const url = `https://3dmuscio.com/blog/${post.slug}`;
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{`${post.titel} | 3DMuscio Blog`}</title>
+        <meta name="description" content={desc} />
+        <meta property="og:title" content={post.titel} />
+        <meta property="og:description" content={desc} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={url} />
+        {post.titelbild_url && <meta property="og:image" content={post.titelbild_url} />}
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: post.titel,
+          description: desc,
+          image: post.titelbild_url || undefined,
+          datePublished: post.veroeffentlicht_am || undefined,
+          author: { "@type": "Person", name: post.autor },
+          mainEntityOfPage: url,
+        })}</script>
+      </Helmet>
       <article className="container mx-auto px-4 py-12 md:py-20 max-w-3xl">
         <Link to="/blog" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="w-4 h-4" /> Zurück zum Blog

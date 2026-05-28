@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,6 +102,13 @@ export default function ShopPage() {
 
   return (
     <div className="pt-12 pb-20 min-h-screen">
+      <Helmet>
+        <title>Shop – Handgefertigte 3D-Druck Produkte | 3DMuscio</title>
+        <meta name="description" content="Einzigartige 3D-Druck-Produkte aus der Schweiz. Präzise gefertigt, langlebig, fair kalkuliert. Jetzt im 3DMuscio Shop entdecken." />
+        <meta property="og:title" content="Shop – Handgefertigte 3D-Druck Produkte | 3DMuscio" />
+        <meta property="og:description" content="Einzigartige 3D-Druck-Produkte aus der Schweiz – jetzt im Shop entdecken." />
+        <meta property="og:url" content="https://3dmuscio.com/shop" />
+      </Helmet>
       <div className="container mx-auto px-4 max-w-7xl">
         <ScrollReveal>
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-foreground via-foreground/95 to-foreground/80 text-background p-10 md:p-16 mb-12">
@@ -129,6 +137,7 @@ export default function ShopPage() {
             )}
           </div>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+            aria-label="Produkte sortieren"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground">
             <option value="featured">Empfohlen</option>
             <option value="preis-asc">Preis aufsteigend</option>
@@ -152,9 +161,9 @@ export default function ShopPage() {
         {activeCategory === "alle" && !search && featured.length > 0 && (
           <ScrollReveal>
             <div className="mb-12">
-              <p className="text-xs font-bold text-primary uppercase tracking-widest mb-5 flex items-center gap-2">
+              <h2 className="text-xs font-bold text-primary uppercase tracking-widest mb-5 flex items-center gap-2">
                 <Star className="w-3 h-3" /> Empfohlen
-              </p>
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {featured.slice(0, 2).map((p, i) => {
                   const img = p.shop_product_images[0];
@@ -184,6 +193,7 @@ export default function ShopPage() {
                           </div>
                           {inStock && (
                             <button onClick={e => handleAddToCart(p, e)}
+                              aria-label={`${p.name} in den Warenkorb`}
                               className="flex-shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl p-3 transition-all shadow-lg">
                               <ShoppingCart className="w-5 h-5" />
                             </button>
@@ -207,9 +217,9 @@ export default function ShopPage() {
           </div>
         ) : (
           <>
-            <p className="text-xs font-bold text-primary uppercase tracking-widest mb-5 flex items-center gap-2">
+            <h2 className="text-xs font-bold text-primary uppercase tracking-widest mb-5 flex items-center gap-2">
               <Package className="w-3 h-3" /> Alle Produkte
-            </p>
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
               <AnimatePresence>
                 {filtered.map((p, i) => {
@@ -244,6 +254,7 @@ export default function ShopPage() {
                               </div>
                               {inStock && (
                                 <button onClick={e => handleAddToCart(p, e)}
+                                  aria-label={`${p.name} in den Warenkorb`}
                                   className={cn("rounded-lg p-2 transition-all",
                                     wasAdded ? "bg-primary/10 text-primary" : "bg-muted hover:bg-primary hover:text-primary-foreground")}>
                                   <ShoppingCart className="w-3.5 h-3.5" />

@@ -527,7 +527,7 @@ const CalculatorOnlinePage = () => {
                 onChange={handleInput}
               />
               <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h3>
+              <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
               <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
               <label htmlFor="file-input">
                 <Button asChild className="gap-2 cursor-pointer">
@@ -569,7 +569,7 @@ const CalculatorOnlinePage = () => {
                           </p>
                         </div>
                       </div>
-                      <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive">
+                      <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -594,6 +594,7 @@ const CalculatorOnlinePage = () => {
                         <div className="mt-1 flex items-center gap-1">
                           <button
                             onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })}
+                            aria-label="Menge verringern"
                             className="w-9 h-9 rounded-md border border-input flex items-center justify-center hover:bg-muted"
                           >
                             <Minus className="w-3 h-3" />
@@ -604,9 +605,11 @@ const CalculatorOnlinePage = () => {
                             value={p.quantity}
                             onChange={(e) => update(p.id, { quantity: Math.max(1, Number(e.target.value)) })}
                             className="h-9 text-center"
+                            aria-label="Menge"
                           />
                           <button
                             onClick={() => update(p.id, { quantity: p.quantity + 1 })}
+                            aria-label="Menge erhöhen"
                             className="w-9 h-9 rounded-md border border-input flex items-center justify-center hover:bg-muted"
                           >
                             <Plus className="w-3 h-3" />
