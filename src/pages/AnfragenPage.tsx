@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft, Download, Paperclip } from "lucide-react";
+import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft, Download, Paperclip, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -201,6 +201,7 @@ export default function AnfragenPage() {
   const [notiz, setNotiz] = useState("");
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [creatingOrderFor, setCreatingOrderFor] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -232,77 +233,82 @@ export default function AnfragenPage() {
     toast({ title: "Notiz gespeichert" });
   };
 
-  const createOrder = async (inq?: Inquiry) => {
-    const inquiry = inq || selected;
-    if (!inquiry) return;
+  const createOrder = async (inquiry?: Inquiry) => {
+    const inq = inquiry || selected;
+    if (!inq) return;
 
-    // Kunde anhand E-Mail suchen
-    let customerId = inquiry.customer_id;
-    if (!customerId && inquiry.email) {
-      const { data: customer } = await supabase
-        .from("customers").select("id").eq("email", inquiry.email).maybeSingle();
-      customerId = customer?.id ?? null;
-    }
-    if (!customerId) {
-      const { data } = await supabase.from("customers")
-        .insert({ name: inquiry.name, email: inquiry.email, telefon: inquiry.telefon })
-        .select("id").single();
-      customerId = data?.id ?? null;
-    }
+    setCreatingOrderFor(inq.id);
+    try {
+      // Kunde anhand E-Mail suchen
+      let customerId = inq.customer_id;
+      if (!customerId && inq.email) {
+        const { data: customer } = await supabase
+          .from("customers").select("id").eq("email", inq.email).maybeSingle();
+        customerId = customer?.id ?? null;
+      }
+      if (!customerId) {
+        const { data } = await supabase.from("customers")
+          .insert({ name: inq.name, email: inq.email, telefon: inq.telefon })
+          .select("id").single();
+        customerId = data?.id ?? null;
+      }
 
-    const { data: order } = await supabase.from("orders").insert({
-      customer_id: customerId,
-      beschreibung: inquiry.nachricht || inquiry.betreff || "",
-      datum: new Date().toISOString().split("T")[0],
-      status: "Offen",
-      source: "anfrage",
-      name: inquiry.betreff || "Anfrage vom " + new Date().toLocaleDateString("de-CH"),
-    } as any).select().single();
-
-    if (!order) return;
-
-    const attachments = (inquiry.attachments || []) as Attachment[];
-    if (attachments.length > 0) {
-      const partsData = attachments.map(att => ({
-        order_id: order.id,
+      const { data: order } = await supabase.from("orders").insert({
         customer_id: customerId,
-        teilname: att.filename?.replace(/\.[^.]+$/, "") || "Teil",
-        material: "PLA",
-        menge: 1,
-        gewicht_g: 0,
-        druckzeit_h: 0,
-        nachbearbeitung_h: 0,
-        konstruktion_h: 0,
-        preis_pro_stueck: 0,
-        preis_total: 0,
-        status: "Ausstehend",
-        notizen: `Aus Anfrage: ${att.filename}`,
-      }));
-      await supabase.from("parts").insert(partsData);
-    } else {
-      await supabase.from("parts").insert({
-        order_id: order.id,
-        customer_id: customerId,
-        teilname: "Teil 1",
-        material: "PLA",
-        menge: 1,
-        gewicht_g: 0,
-        druckzeit_h: 0,
-        nachbearbeitung_h: 0,
-        konstruktion_h: 0,
-        preis_pro_stueck: 0,
-        preis_total: 0,
-        status: "Ausstehend",
-        notizen: "",
-      });
+        beschreibung: inq.nachricht || inq.betreff || "",
+        datum: new Date().toISOString().split("T")[0],
+        status: "Offen",
+        source: "anfrage",
+        name: inq.betreff || "Anfrage vom " + new Date().toLocaleDateString("de-CH"),
+      } as any).select().single();
+
+      if (!order) return;
+
+      const attachments = (inq.attachments || []) as Attachment[];
+      if (attachments.length > 0) {
+        const partsData = attachments.map(att => ({
+          order_id: order.id,
+          customer_id: customerId,
+          teilname: att.filename?.replace(/\.[^.]+$/, "") || "Teil",
+          material: "PLA",
+          menge: 1,
+          gewicht_g: 0,
+          druckzeit_h: 0,
+          nachbearbeitung_h: 0,
+          konstruktion_h: 0,
+          preis_pro_stueck: 0,
+          preis_total: 0,
+          status: "Ausstehend",
+          notizen: `Datei: ${att.filename}`,
+        }));
+        await supabase.from("parts").insert(partsData);
+      } else {
+        await supabase.from("parts").insert({
+          order_id: order.id,
+          customer_id: customerId,
+          teilname: "Teil 1",
+          material: "PLA",
+          menge: 1,
+          gewicht_g: 0,
+          druckzeit_h: 0,
+          nachbearbeitung_h: 0,
+          konstruktion_h: 0,
+          preis_pro_stueck: 0,
+          preis_total: 0,
+          status: "Ausstehend",
+          notizen: "",
+        });
+      }
+
+      await (supabase.from as any)("inquiries")
+        .update({ order_id: order.id, status: "In Bearbeitung" })
+        .eq("id", inq.id);
+
+      toast({ title: "Auftrag erstellt ✓", description: "Du wirst zum Auftrag weitergeleitet." });
+      navigate(`/admin/auftraege/${order.id}`);
+    } finally {
+      setCreatingOrderFor(null);
     }
-
-    await (supabase.from as any)("inquiries")
-      .update({ order_id: order.id, status: "In Bearbeitung" })
-      .eq("id", inquiry.id);
-
-    toast({ title: "Auftrag erstellt ✓", description: "Du wirst zum Auftrag weitergeleitet." });
-    navigate(`/admin/auftraege/${order.id}`);
   };
 
   const handleSelect = (inq: Inquiry) => {
@@ -406,8 +412,12 @@ export default function AnfragenPage() {
                       size="sm"
                       variant="outline"
                       className="gap-1.5 text-xs"
+                      disabled={creatingOrderFor === inq.id}
                     >
-                      <Plus className="w-3.5 h-3.5" /> Auftrag erstellen
+                      {creatingOrderFor === inq.id
+                        ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Erstellen...</>
+                        : <><Plus className="w-3.5 h-3.5" /> Auftrag erstellen</>
+                      }
                     </Button>
                   )}
                 </div>
