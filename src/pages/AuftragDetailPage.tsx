@@ -434,34 +434,32 @@ export default function AuftragDetailPage() {
 
         if (id) {
           const sentDate = `Gesendet am ${new Date().toLocaleDateString("de-CH")}`;
-          if (type === "rechnung") {
-            await supabase.from("bills" as any).insert({
-              order_id: id,
-              titel: `Rechnung per E-Mail gesendet`,
-              betrag: totalUmsatz,
-              faellig_am: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-              notiz: sentDate,
-              bezahlt: false,
-            });
-          } else if (type === "offerte") {
-            await supabase.from("bills" as any).insert({
-              order_id: id,
-              titel: `Offerte per E-Mail gesendet`,
-              betrag: totalUmsatz,
-              faellig_am: null,
-              notiz: sentDate,
-              bezahlt: false,
-            });
-          } else if (type === "auftragsbestaetigung") {
-            await supabase.from("bills" as any).insert({
-              order_id: id,
-              titel: `Auftragsbestätigung per E-Mail gesendet`,
-              betrag: 0,
-              faellig_am: null,
-              notiz: sentDate,
-              bezahlt: false,
-            });
+          const labelsMap: Record<string, string> = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung", auftragsbestaetigung: "Auftragsbestätigung", druckfertig: "Druckfertig-Info" };
+          let storedPath: string | null = null;
+          let storedFilename: string | null = null;
+          if (pdfBase64) {
+            try {
+              const pdfBlob = await fetch(`data:application/pdf;base64,${pdfBase64}`).then((r) => r.blob());
+              const pdfPath = `${id}/${type}-${Date.now()}.pdf`;
+              const { error: upErr } = await supabase.storage.from("bills").upload(pdfPath, pdfBlob, { contentType: "application/pdf", upsert: false });
+              if (!upErr) {
+                storedPath = pdfPath;
+                storedFilename = pdfFilename || `${type}-${id}.pdf`;
+              }
+            } catch {}
           }
+          const betragValue = type === "rechnung" ? totalUmsatz : type === "offerte" ? totalUmsatz : 0;
+          const faelligAm = type === "rechnung" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] : null;
+          await supabase.from("bills" as any).insert({
+            order_id: id,
+            titel: `${labelsMap[type]} per E-Mail gesendet`,
+            betrag: betragValue,
+            faellig_am: faelligAm,
+            notiz: sentDate,
+            bezahlt: false,
+            file_path: storedPath,
+            filename: storedFilename,
+          });
         }
       }
     } catch (e: any) {
