@@ -101,9 +101,11 @@ export default function BillsSection({ orderId }: Props) {
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   };
 
-  const unpaidTotal = bills.filter(b => !b.bezahlt).reduce((s, b) => s + b.betrag, 0);
-  const overdueCount = bills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 1) < 0).length;
-  const soonCount = bills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 99) >= 0 && (daysUntil(b.faellig_am) ?? 99) <= 7).length;
+  const emailBills = bills.filter(b => b.titel.includes("per E-Mail gesendet"));
+  const regularBills = bills.filter(b => !b.titel.includes("per E-Mail gesendet"));
+  const unpaidTotal = regularBills.filter(b => !b.bezahlt).reduce((s, b) => s + b.betrag, 0);
+  const overdueCount = regularBills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 1) < 0).length;
+  const soonCount = regularBills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 99) >= 0 && (daysUntil(b.faellig_am) ?? 99) <= 7).length;
 
   return (
     <div className="bg-card border border-border rounded-lg p-5 space-y-4">
