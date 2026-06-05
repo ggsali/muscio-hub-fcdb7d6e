@@ -232,12 +232,14 @@ const ContactPage = () => {
               </div>
 
               <div className="rounded-xl overflow-hidden border border-border bg-card">
-                <GoogleMap
-                  lat={47.4467}
-                  lng={8.9685}
-                  zoom={15}
-                  title="3DMuscio – Gartensiedlung 13, 8360 Eschlikon TG"
-                  className="w-full h-[260px]"
+                <iframe
+                  src="https://maps.google.com/maps?q=Gartensiedlung+13,+8360+Eschlikon+TG&z=15&output=embed"
+                  width="100%"
+                  height="260"
+                  style={{ border: 0, display: "block" }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Standort 3DMuscio – Gartensiedlung 13, 8360 Eschlikon TG"
                 />
                 <div className="p-4 flex items-center justify-between gap-3 border-t border-border">
                   <div className="flex items-center gap-3">
