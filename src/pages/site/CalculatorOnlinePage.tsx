@@ -48,6 +48,14 @@ interface Part {
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
 const SHIPPING_COST = 8;
+
+// Realistische Gewichts-Schätzung inkl. Sicherheitszuschlag (+20%)
+function estimateWeight(volumeCm3: number, density: number, infillPct: number): number {
+  const fillFactor = 0.25 + 0.75 * (infillPct / 100);
+  const baseWeight = volumeCm3 * density * fillFactor;
+  const safetyFactor = 1.20; // Support, Brim/Skirt, Messungenauigkeit, Purge Tower
+  return Math.max(1, Math.round(baseWeight * safetyFactor * 10) / 10);
+}
 const SETUP_FEE = 20;
 
 async function calcStlVolumeCm3(file: File): Promise<number> {
@@ -272,10 +280,7 @@ const CalculatorOnlinePage = () => {
 
       if (vol > 0) {
         const mat = materials[0];
-        const fillFactor = 0.25 + 0.75 * 0.20;
-        const weightG = mat
-          ? Math.max(1, Math.round(vol * mat.density * fillFactor * 10) / 10)
-          : 0;
+        const weightG = mat ? estimateWeight(vol, mat.density, 20) : 0;
         setParts((p) =>
           p.map((x) =>
             x.id === id ? { ...x, volumeCm3: vol, hasVolume: true, estimatedWeight: weightG } : x,
@@ -340,8 +345,7 @@ const CalculatorOnlinePage = () => {
       const newMatId = u.materialId ?? currentPart.materialId;
       const mat = materials.find((m) => m.id === newMatId);
       if (mat) {
-        const fillFactor = 0.25 + 0.75 * (newInfill / 100);
-        const newWeight = Math.max(1, Math.round(currentPart.volumeCm3 * mat.density * fillFactor * 10) / 10);
+        const newWeight = estimateWeight(currentPart.volumeCm3, mat.density, newInfill);
         u = { ...u, estimatedWeight: newWeight };
       }
     }
@@ -567,6 +571,11 @@ const CalculatorOnlinePage = () => {
                               <span className="ml-2 text-warning">· Datei nicht hochgeladen</span>
                             )}
                           </p>
+                          {p.hasVolume && p.volumeCm3 > 0 && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              * Geschätztes Gewicht inkl. Sicherheitszuschlag. Verbindlicher Preis nach Prüfung.
+                            </p>
+                          )}
                         </div>
                       </div>
                       <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
