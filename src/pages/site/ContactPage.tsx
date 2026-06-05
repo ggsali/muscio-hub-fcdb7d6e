@@ -230,24 +230,28 @@ const ContactPage = () => {
                 </div>
               </div>
 
-              <div className="rounded-xl overflow-hidden border border-border bg-card relative" style={{ height: 250 }}>
-                <iframe
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=8.9540%2C47.4430%2C8.9780%2C47.4570&layer=mapnik&marker=47.4500%2C8.9660"
-                  className="absolute inset-0 w-full h-full"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Standort 3DMuscio – Gartensiedlung 13, 8360 Eschlikon TG"
-                />
-                <a
-                  href="https://www.google.com/maps/search/?api=1&query=Gartensiedlung+13+8360+Eschlikon+TG"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute bottom-2 right-2 text-xs bg-background/90 border border-border rounded-md px-2 py-1 hover:bg-background"
-                >
-                  In Google Maps öffnen
-                </a>
-              </div>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Gartensiedlung+13+8360+Eschlikon+TG"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl overflow-hidden border border-border bg-card hover:border-primary transition-colors group"
+              >
+                <div className="relative h-[200px] bg-gradient-to-br from-primary/10 via-muted to-primary/5 flex items-center justify-center">
+                  <div className="absolute inset-0 opacity-30" style={{
+                    backgroundImage: "radial-gradient(circle at 30% 40%, hsl(var(--primary)/0.3), transparent 40%), radial-gradient(circle at 70% 60%, hsl(var(--primary)/0.2), transparent 40%)",
+                  }} />
+                  <div className="relative w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <MapPin className="w-7 h-7" />
+                  </div>
+                </div>
+                <div className="p-4 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-foreground text-sm">Gartensiedlung 13</p>
+                    <p className="text-muted-foreground text-xs">8360 Eschlikon TG</p>
+                  </div>
+                  <span className="text-xs text-primary font-medium whitespace-nowrap">In Google Maps öffnen →</span>
+                </div>
+              </a>
 
               <div className="bg-card rounded-2xl border border-border p-8">
                 <h3 className="font-heading text-lg font-bold text-foreground mb-4">Häufige Fragen</h3>
