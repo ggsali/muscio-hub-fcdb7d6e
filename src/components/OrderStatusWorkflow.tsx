@@ -24,12 +24,13 @@ interface Props {
   currentStatus: string;
   parts: PartSummary[];
   trackingNr?: string;
+  source?: string;
   onStatusChange: (newStatus: string) => void;
   onTrackingNrChange?: (nr: string) => void;
 }
 
 export default function OrderStatusWorkflow({
-  orderId, currentStatus, parts, trackingNr = "", onStatusChange, onTrackingNrChange
+  orderId, currentStatus, parts, trackingNr = "", source, onStatusChange, onTrackingNrChange
 }: Props) {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(true);
@@ -37,6 +38,9 @@ export default function OrderStatusWorkflow({
   const [trackingInput, setTrackingInput] = useState(trackingNr);
   const [savingTracking, setSavingTracking] = useState(false);
   const [editingTracking, setEditingTracking] = useState(false);
+
+  const isWebsiteOrder = source === 'website' || source === 'shop' || source === 'kalkulator'
+  const STATUSES = isWebsiteOrder ? STATUSES_WEBSITE : STATUSES_MANUAL
 
   const loadLog = async () => {
     const { data } = await (supabase.from as any)("order_status_log")
@@ -59,10 +63,17 @@ export default function OrderStatusWorkflow({
 
   // Automatisch abgeleiteter "vorgeschlagener" Status
   const suggestedStatus: string | null = (() => {
-    if (currentStatus === 'Offen') return 'In Bearbeitung'
-    if (currentStatus === 'In Bearbeitung' && allFertig) return 'Bezahlt'
-    if (currentStatus === 'Bezahlt') return 'Geliefert'
-    if (currentStatus === 'Geliefert') return 'Abgeschlossen'
+    if (!isWebsiteOrder) {
+      if (currentStatus === 'Offen') return 'In Bearbeitung'
+      if (currentStatus === 'In Bearbeitung' && allFertig) return 'Bezahlt'
+      if (currentStatus === 'Bezahlt') return 'Geliefert'
+      if (currentStatus === 'Geliefert') return 'Abgeschlossen'
+    } else {
+      if (currentStatus === 'Offen') return 'Bezahlt'
+      if (currentStatus === 'Bezahlt') return 'In Bearbeitung'
+      if (currentStatus === 'In Bearbeitung' && allFertig) return 'Geliefert'
+      if (currentStatus === 'Geliefert') return 'Abgeschlossen'
+    }
     return null
   })();
 
@@ -152,6 +163,17 @@ export default function OrderStatusWorkflow({
 
   const currentIdx = STATUSES.indexOf(currentStatus as OrderStatus);
 
+  const bannerText = (() => {
+    if (!isWebsiteOrder) {
+      if (suggestedStatus === 'In Bearbeitung') return 'Teile sind in Bearbeitung – Status aktualisieren?'
+      return 'Alle Teile fertig – bereit zur Lieferung!'
+    } else {
+      if (suggestedStatus === 'Bezahlt') return 'Bestellung eingegangen – Zahlung bestätigen?'
+      if (suggestedStatus === 'In Bearbeitung') return 'Zahlung bestätigt – in Produktion starten?'
+      return 'Alle Teile fertig – bereit zur Lieferung!'
+    }
+  })();
+
   return (
     <div className="bg-card border border-border rounded-lg p-5 space-y-5">
       <div className="flex items-center justify-between">
@@ -168,7 +190,7 @@ export default function OrderStatusWorkflow({
         <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
           <AlertTriangle className="w-4 h-4 text-primary shrink-0" />
           <span className="text-xs text-primary flex-1">
-            {suggestedStatus === "In Bearbeitung" ? "Teile sind in Bearbeitung – Status aktualisieren?" : "Alle Teile fertig – bereit zur Lieferung!"}
+            {bannerText}
           </span>
           <button
             onClick={() => suggestedStatus === "Geliefert" ? setShowTrackingInput(true) : commitStatus(suggestedStatus, null)}
