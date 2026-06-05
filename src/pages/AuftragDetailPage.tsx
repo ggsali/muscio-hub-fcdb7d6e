@@ -510,6 +510,15 @@ export default function AuftragDetailPage() {
           toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
         } else {
           toast({ title: "Akontorechnung gesendet ✓", description: `${akontoPercent}% (${formatCHF(akontoBetrag)}) wurde per E-Mail versandt.` });
+          if (id) {
+            await supabase.from("bills" as any).insert({
+              order_id: id,
+              titel: `Akontorechnung (${akontoPercent}%) per E-Mail gesendet`,
+              betrag: Math.round(totalUmsatz * akontoPercent) / 100,
+              notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
+              bezahlt: false,
+            });
+          }
         }
       }
       setShowAkontoDialog(false);
@@ -540,6 +549,15 @@ export default function AuftragDetailPage() {
           toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
         } else {
           toast({ title: "Schlussrechnung gesendet ✓", description: `Restbetrag ${formatCHF(restbetrag)} wurde per E-Mail versandt.` });
+          if (id) {
+            await supabase.from("bills" as any).insert({
+              order_id: id,
+              titel: `Schlussrechnung per E-Mail gesendet`,
+              betrag: totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100,
+              notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
+              bezahlt: false,
+            });
+          }
         }
       }
       setShowAkontoDialog(false);

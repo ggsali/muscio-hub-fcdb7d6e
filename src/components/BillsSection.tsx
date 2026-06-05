@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, CheckCircle2, Circle, Paperclip, AlertTriangle, X, Upload, ExternalLink } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, Circle, Paperclip, AlertTriangle, X, Upload, ExternalLink, Mail, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Bill {
@@ -101,11 +101,11 @@ export default function BillsSection({ orderId }: Props) {
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   };
 
-  const emailBills = bills.filter(b => b.titel.includes("per E-Mail gesendet"));
-  const regularBills = bills.filter(b => !b.titel.includes("per E-Mail gesendet"));
-  const unpaidTotal = regularBills.filter(b => !b.bezahlt).reduce((s, b) => s + b.betrag, 0);
-  const overdueCount = regularBills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 1) < 0).length;
-  const soonCount = regularBills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 99) >= 0 && (daysUntil(b.faellig_am) ?? 99) <= 7).length;
+  const emailBills = bills.filter(b => b.titel?.includes("per E-Mail gesendet"));
+  const rechnungBills = bills.filter(b => !b.titel?.includes("per E-Mail gesendet"));
+  const unpaidTotal = rechnungBills.filter(b => !b.bezahlt).reduce((s, b) => s + b.betrag, 0);
+  const overdueCount = rechnungBills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 1) < 0).length;
+  const soonCount = rechnungBills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 99) >= 0 && (daysUntil(b.faellig_am) ?? 99) <= 7).length;
 
   return (
     <div className="bg-card border border-border rounded-lg p-5 space-y-4">
@@ -184,12 +184,12 @@ export default function BillsSection({ orderId }: Props) {
       )}
 
       {/* Bills List */}
-      {!loading && regularBills.length === 0 && !adding && (
+      {!loading && rechnungBills.length === 0 && !adding && (
         <p className="text-xs text-muted-foreground text-center py-4">Noch keine Rechnungen erfasst.</p>
       )}
 
       <div className="space-y-2">
-        {regularBills.map(bill => {
+        {rechnungBills.map(bill => {
           const days = daysUntil(bill.faellig_am);
           const isOverdue = !bill.bezahlt && days !== null && days < 0;
           const isSoon = !bill.bezahlt && days !== null && days >= 0 && days <= 7;
@@ -303,22 +303,42 @@ export default function BillsSection({ orderId }: Props) {
       </div>
 
       {emailBills.length > 0 && (
-        <div className="border-t border-border pt-3 mt-3">
-          <p className="text-xs text-muted-foreground mb-2">E-Mail Verlauf</p>
-          {emailBills.map(bill => (
-            <div key={bill.id} className="flex items-center gap-2 py-1.5 text-xs text-muted-foreground">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-              <span>{bill.titel}</span>
-              <span className="ml-auto">{bill.notiz}</span>
-              <button
-                onClick={() => handleDelete(bill.id, bill.file_path)}
-                className="text-muted-foreground hover:text-destructive transition-colors ml-1"
-                title="Löschen"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
+        <div className="border-t border-border pt-4 mt-2">
+          <p className="text-xs font-medium text-muted-foreground mb-3">Gesendete Dokumente</p>
+          <div className="space-y-2">
+            {emailBills.map(bill => (
+              <div key={bill.id} className="flex items-center gap-3 py-2 px-3 bg-muted/20 rounded-lg">
+                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{bill.titel.replace(" per E-Mail gesendet", "")}</p>
+                  <p className="text-xs text-muted-foreground">{bill.notiz}</p>
+                </div>
+                {bill.betrag > 0 && (
+                  <span className="text-xs font-medium text-foreground flex-shrink-0">
+                    CHF {bill.betrag.toFixed(2)}
+                  </span>
+                )}
+                {bill.file_path && (
+                  <button
+                    onClick={() => getFileUrl(bill.file_path!)}
+                    className="flex items-center gap-1 text-xs text-primary hover:underline flex-shrink-0"
+                    title="PDF öffnen"
+                  >
+                    <FileDown className="w-3.5 h-3.5" />
+                    <span>PDF</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(bill.id, bill.file_path)}
+                  className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
