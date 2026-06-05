@@ -177,29 +177,28 @@ export default function PortalOrdersPage() {
                         </div>
                       )}
 
-                      {orderBills.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Rechnungen</p>
+                      <div className="pt-3 border-t border-border/50">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Dokumente</p>
+                        {orderBills.filter(b => b.file_path).length === 0 ? (
+                          <p className="text-xs text-muted-foreground italic">Noch keine Dokumente verfügbar</p>
+                        ) : (
                           <div className="space-y-1.5">
-                            {orderBills.map(b => (
-                              <div key={b.id} className="flex items-center justify-between text-sm bg-card rounded px-3 py-2 border border-border/50">
-                                <div>
-                                  <span>{b.titel}</span>
-                                  {b.bezahlt && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-success/15 text-success">bezahlt</span>}
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <span className="font-medium">{formatCHF(b.betrag)}</span>
-                                  {b.file_path && (
-                                    <button onClick={() => downloadBill(b.file_path, b.filename || "rechnung.pdf")} className="text-primary hover:underline flex items-center gap-1 text-xs">
-                                      <Download className="w-3 h-3" /> PDF
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                            {orderBills.filter(b => b.file_path).map(bill => (
+                              <button
+                                key={bill.id}
+                                onClick={() => downloadBill(bill.file_path, bill.filename || "dokument.pdf")}
+                                className="flex items-center gap-2 text-xs text-primary hover:underline"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>{(bill.titel || "").replace(" per E-Mail gesendet", "")}</span>
+                                {bill.betrag > 0 && (
+                                  <span className="text-muted-foreground">— {formatCHF(bill.betrag)}</span>
+                                )}
+                              </button>
                             ))}
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
