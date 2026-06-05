@@ -262,7 +262,7 @@ export default function AnfragenPage() {
         beschreibung: inq.nachricht || inq.betreff || "",
         datum: new Date().toISOString().split("T")[0],
         status: "Offen",
-        source: "anfrage",
+        source: "website",
         name: inq.betreff || "Anfrage vom " + new Date().toLocaleDateString("de-CH"),
       } as any).select().single();
 
