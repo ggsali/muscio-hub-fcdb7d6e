@@ -87,6 +87,7 @@ export default function AuftragDetailPage() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
+  const [partsWithFiles, setPartsWithFiles] = useState<string[]>([]);
   const [activeSettings, setActiveSettings] = useState<Settings>(settings);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
@@ -292,6 +293,23 @@ export default function AuftragDetailPage() {
   useEffect(() => {
     setParts(prev => prev.map(p => recalcPart(p)));
   }, [activeSettings, selectedPresetId]);
+
+  // Parts mit Dateien laden und ersten expandieren
+  useEffect(() => {
+    if (!isNew && id) {
+      supabase.from("part_files" as any)
+        .select("part_id")
+        .eq("order_id", id)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            const partIds = [...new Set(data.map((f: any) => f.part_id))] as string[];
+            setPartsWithFiles(partIds);
+            const partIdx = parts.findIndex(p => p.id && partIds.includes(p.id));
+            if (partIdx >= 0) setExpandedPartIdx(prev => prev ?? partIdx);
+          }
+        });
+    }
+  }, [parts.length, id, isNew]);
 
   const addPart = async () => {
     const newPart = emptyPart();
@@ -1062,8 +1080,8 @@ export default function AuftragDetailPage() {
         <div className="space-y-4 md:space-y-6">
           {source === "anfrage" && !isNew && (
             <div className="bg-muted/50 border border-border rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm text-muted-foreground">
-              <MessageSquare className="w-4 h-4" />
-              Aus Anfrage erstellt — bitte Gewicht, Druckzeit und Materialparameter ergänzen
+              <MessageSquare className="w-4 h-4 shrink-0" />
+              <span>Aus Anfrage erstellt — Dateien im Tab <strong>Teile</strong> verfügbar. Bitte Gewicht, Druckzeit und Material ergänzen.</span>
             </div>
           )}
           {!isNew && (
@@ -1268,9 +1286,12 @@ export default function AuftragDetailPage() {
                         {part.id && (
                           <button
                             onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)}
-                            className={`p-2 rounded transition-colors ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground"}`}
+                            className={`p-2 rounded transition-colors relative ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground"}`}
                           >
                             <Paperclip className="w-4 h-4" />
+                            {partsWithFiles.includes(part.id) && (
+                              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
+                            )}
                           </button>
                         )}
                         <button onClick={() => removePart(idx)} className="p-2 rounded text-muted-foreground hover:text-destructive transition-colors">
@@ -1449,8 +1470,11 @@ export default function AuftragDetailPage() {
                           <td className="px-2 py-2">
                             <div className="flex items-center gap-1">
                               {part.id && (
-                                <button onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)} className={`transition-colors p-1 ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                                <button onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)} className={`transition-colors p-1 relative ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
                                   <Paperclip className="w-3.5 h-3.5" />
+                                  {partsWithFiles.includes(part.id) && (
+                                    <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-primary" />
+                                  )}
                                 </button>
                               )}
                               <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
