@@ -17,6 +17,7 @@ import PortalLayout from "@/components/PortalLayout";
 import LoginPage from "@/pages/LoginPage";
 import KundeLogin from "@/pages/kunde/Login";
 import KundeRegister from "@/pages/kunde/Register";
+import CompleteProfile from "@/pages/kunde/CompleteProfile";
 import DashboardPage from "@/pages/DashboardPage";
 import KundenPage from "@/pages/KundenPage";
 import KundeDetailPage from "@/pages/KundeDetailPage";
@@ -136,6 +137,7 @@ const App = () => (
               <Route path="/login" element={<Navigate to="/anmelden" replace />} />
               <Route path="/anmelden" element={<KundeLogin />} />
               <Route path="/registrieren" element={<KundeRegister />} />
+              <Route path="/profil-vervollstaendigen" element={<CompleteProfile />} />
               <Route path="/admin/login" element={<LoginPage />} />
 
               {/* Public-flow pages (kein Layout) */}
