@@ -230,16 +230,23 @@ const ContactPage = () => {
                 </div>
               </div>
 
-              <div className="rounded-xl overflow-hidden border border-border bg-card">
+              <div className="rounded-xl overflow-hidden border border-border bg-card relative" style={{ height: 250 }}>
                 <iframe
-                  src="https://maps.google.com/maps?q=Gartensiedlung+13,+8360+Eschlikon+TG&output=embed"
-                  width="100%"
-                  height="250"
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=8.9540%2C47.4430%2C8.9780%2C47.4570&layer=mapnik&marker=47.4500%2C8.9660"
+                  className="absolute inset-0 w-full h-full"
                   style={{ border: 0 }}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Standort 3DMuscio"
+                  title="Standort 3DMuscio – Gartensiedlung 13, 8360 Eschlikon TG"
                 />
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=Gartensiedlung+13+8360+Eschlikon+TG"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-2 right-2 text-xs bg-background/90 border border-border rounded-md px-2 py-1 hover:bg-background"
+                >
+                  In Google Maps öffnen
+                </a>
               </div>
 
               <div className="bg-card rounded-2xl border border-border p-8">
