@@ -991,10 +991,16 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          land: string | null
+          nachname: string | null
+          ort: string | null
           phone: string | null
+          plz: string | null
           postal_code: string | null
+          strasse: string | null
           updated_at: string
           user_id: string
+          vorname: string | null
           welcome_email_sent_at: string | null
         }
         Insert: {
@@ -1004,10 +1010,16 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          land?: string | null
+          nachname?: string | null
+          ort?: string | null
           phone?: string | null
+          plz?: string | null
           postal_code?: string | null
+          strasse?: string | null
           updated_at?: string
           user_id: string
+          vorname?: string | null
           welcome_email_sent_at?: string | null
         }
         Update: {
@@ -1017,10 +1029,16 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          land?: string | null
+          nachname?: string | null
+          ort?: string | null
           phone?: string | null
+          plz?: string | null
           postal_code?: string | null
+          strasse?: string | null
           updated_at?: string
           user_id?: string
+          vorname?: string | null
           welcome_email_sent_at?: string | null
         }
         Relationships: []
