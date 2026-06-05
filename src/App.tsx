@@ -60,6 +60,7 @@ import UnsubscribePage from "@/pages/UnsubscribePage";
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
 import PortalOrdersPage from "@/pages/portal/PortalOrdersPage";
 import PortalProfilePage from "@/pages/portal/PortalProfilePage";
+import PortalDokumentePage from "@/pages/portal/PortalDokumentePage";
 
 // Website Admin
 import WebsiteAdminLayout from "@/components/WebsiteAdminLayout";
@@ -150,6 +151,7 @@ const App = () => (
               <Route path="/portal" element={<PortalLayout />}>
                 <Route index element={<PortalDashboardPage />} />
                 <Route path="bestellungen" element={<PortalOrdersPage />} />
+                <Route path="dokumente" element={<PortalDokumentePage />} />
                 <Route path="profil" element={<PortalProfilePage />} />
               </Route>
 
