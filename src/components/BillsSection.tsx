@@ -97,8 +97,23 @@ export default function BillsSection({ orderId }: Props) {
   };
 
   const getFileUrl = async (path: string) => {
-    const { data } = await supabase.storage.from("bills").createSignedUrl(path, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    try {
+      const { data, error } = await supabase.storage.from("bills").createSignedUrl(path, 300);
+      if (error || !data?.signedUrl) {
+        toast({ variant: "destructive", description: "PDF konnte nicht geöffnet werden." });
+        return;
+      }
+      const a = document.createElement("a");
+      a.href = data.signedUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.download = path.split("/").pop() || "dokument.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      toast({ variant: "destructive", description: "Fehler beim Öffnen des PDFs." });
+    }
   };
 
   const emailBills = bills.filter(b => b.titel?.includes("per E-Mail gesendet"));
