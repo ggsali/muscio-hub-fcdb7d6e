@@ -232,24 +232,77 @@ export default function AnfragenPage() {
     toast({ title: "Notiz gespeichert" });
   };
 
-  const createOrder = async () => {
-    if (!selected) return;
-    let customerId = selected.customer_id;
+  const createOrder = async (inq?: Inquiry) => {
+    const inquiry = inq || selected;
+    if (!inquiry) return;
+
+    // Kunde anhand E-Mail suchen
+    let customerId = inquiry.customer_id;
+    if (!customerId && inquiry.email) {
+      const { data: customer } = await supabase
+        .from("customers").select("id").eq("email", inquiry.email).maybeSingle();
+      customerId = customer?.id ?? null;
+    }
     if (!customerId) {
-      const { data } = await supabase.from("customers").insert({ name: selected.name, email: selected.email, telefon: selected.telefon }).select("id").single();
+      const { data } = await supabase.from("customers")
+        .insert({ name: inquiry.name, email: inquiry.email, telefon: inquiry.telefon })
+        .select("id").single();
       customerId = data?.id ?? null;
     }
+
     const { data: order } = await supabase.from("orders").insert({
       customer_id: customerId,
-      name: selected.betreff || "Anfrage von " + selected.name,
-      beschreibung: selected.nachricht,
+      beschreibung: inquiry.nachricht || inquiry.betreff || "",
+      datum: new Date().toISOString().split("T")[0],
       status: "Offen",
-    } as any).select("id").single();
-    if (order) {
-      await (supabase.from as any)("inquiries").update({ order_id: order.id, status: "In Bearbeitung" }).eq("id", selected.id);
-      toast({ title: "Auftrag erstellt" });
-      navigate(`/admin/auftraege/${order.id}`);
+      source: "anfrage",
+      name: inquiry.betreff || "Anfrage vom " + new Date().toLocaleDateString("de-CH"),
+    } as any).select().single();
+
+    if (!order) return;
+
+    const attachments = (inquiry.attachments || []) as Attachment[];
+    if (attachments.length > 0) {
+      const partsData = attachments.map(att => ({
+        order_id: order.id,
+        customer_id: customerId,
+        teilname: att.filename?.replace(/\.[^.]+$/, "") || "Teil",
+        material: "PLA",
+        menge: 1,
+        gewicht_g: 0,
+        druckzeit_h: 0,
+        nachbearbeitung_h: 0,
+        konstruktion_h: 0,
+        preis_pro_stueck: 0,
+        preis_total: 0,
+        status: "Ausstehend",
+        notizen: `Aus Anfrage: ${att.filename}`,
+      }));
+      await supabase.from("parts").insert(partsData);
+    } else {
+      await supabase.from("parts").insert({
+        order_id: order.id,
+        customer_id: customerId,
+        teilname: "Teil 1",
+        material: "PLA",
+        menge: 1,
+        gewicht_g: 0,
+        druckzeit_h: 0,
+        nachbearbeitung_h: 0,
+        konstruktion_h: 0,
+        preis_pro_stueck: 0,
+        preis_total: 0,
+        status: "Ausstehend",
+        notizen: "",
+      });
     }
+
+    await (supabase.from as any)("inquiries")
+      .update({ order_id: order.id, status: "In Bearbeitung" })
+      .eq("id", inquiry.id);
+
+    toast({ title: "Auftrag erstellt ✓", description: "Du wirst zum Auftrag weitergeleitet." });
+    navigate(`/admin/auftraege/${order.id}`);
   };
 
   const handleSelect = (inq: Inquiry) => {
