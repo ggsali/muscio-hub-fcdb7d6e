@@ -345,8 +345,7 @@ const CalculatorOnlinePage = () => {
       const newMatId = u.materialId ?? currentPart.materialId;
       const mat = materials.find((m) => m.id === newMatId);
       if (mat) {
-        const fillFactor = 0.25 + 0.75 * (newInfill / 100);
-        const newWeight = Math.max(1, Math.round(currentPart.volumeCm3 * mat.density * fillFactor * 10) / 10);
+        const newWeight = estimateWeight(currentPart.volumeCm3, mat.density, newInfill);
         u = { ...u, estimatedWeight: newWeight };
       }
     }
