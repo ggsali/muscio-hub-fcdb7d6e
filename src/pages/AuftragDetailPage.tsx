@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF, exportAuftragsbestaetiguungPDF } from "@/lib/pdfOfferExport";
@@ -1060,7 +1060,12 @@ export default function AuftragDetailPage() {
       {/* ====================== TAB: ÜBERSICHT ====================== */}
       {activeTab === "Übersicht" && (
         <div className="space-y-4 md:space-y-6">
-          {/* Metric cards (only for existing orders) */}
+          {source === "anfrage" && !isNew && (
+            <div className="bg-muted/50 border border-border rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm text-muted-foreground">
+              <MessageSquare className="w-4 h-4" />
+              Aus Anfrage erstellt — bitte Gewicht, Druckzeit und Materialparameter ergänzen
+            </div>
+          )}
           {!isNew && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-card border border-border rounded-lg p-4">
