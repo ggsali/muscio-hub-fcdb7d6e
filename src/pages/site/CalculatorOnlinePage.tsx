@@ -48,6 +48,14 @@ interface Part {
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
 const SHIPPING_COST = 8;
+
+// Realistische Gewichts-Schätzung inkl. Sicherheitszuschlag (+20%)
+function estimateWeight(volumeCm3: number, density: number, infillPct: number): number {
+  const fillFactor = 0.25 + 0.75 * (infillPct / 100);
+  const baseWeight = volumeCm3 * density * fillFactor;
+  const safetyFactor = 1.20; // Support, Brim/Skirt, Messungenauigkeit, Purge Tower
+  return Math.max(1, Math.round(baseWeight * safetyFactor * 10) / 10);
+}
 const SETUP_FEE = 20;
 
 async function calcStlVolumeCm3(file: File): Promise<number> {
