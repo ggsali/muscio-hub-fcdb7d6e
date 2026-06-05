@@ -184,7 +184,7 @@ export default function BillsSection({ orderId }: Props) {
       )}
 
       {/* Bills List */}
-      {!loading && regularBills.length === 0 && !adding && (
+      {!loading && rechnungBills.length === 0 && !adding && (
         <p className="text-xs text-muted-foreground text-center py-4">Noch keine Rechnungen erfasst.</p>
       )}
 
