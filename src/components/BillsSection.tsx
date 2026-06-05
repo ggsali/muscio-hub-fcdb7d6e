@@ -320,15 +320,17 @@ export default function BillsSection({ orderId }: Props) {
                     CHF {bill.betrag.toFixed(2)}
                   </span>
                 )}
-                {bill.file_path && (
+                {bill.file_path ? (
                   <button
                     onClick={() => getFileUrl(bill.file_path!)}
-                    className="flex items-center gap-1 text-xs text-primary hover:underline flex-shrink-0"
+                    className="flex items-center gap-1 text-xs text-primary hover:underline flex-shrink-0 border border-primary/20 px-2 py-1 rounded-md hover:bg-primary/5 transition-colors"
                     title="PDF öffnen"
                   >
                     <FileDown className="w-3.5 h-3.5" />
-                    <span>PDF</span>
+                    PDF anzeigen
                   </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground flex-shrink-0">Kein PDF</span>
                 )}
                 <button
                   onClick={() => handleDelete(bill.id, bill.file_path)}
