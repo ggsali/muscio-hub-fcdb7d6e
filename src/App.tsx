@@ -137,6 +137,7 @@ const App = () => (
               <Route path="/login" element={<Navigate to="/anmelden" replace />} />
               <Route path="/anmelden" element={<KundeLogin />} />
               <Route path="/registrieren" element={<KundeRegister />} />
+              <Route path="/profil-vervollstaendigen" element={<CompleteProfile />} />
               <Route path="/admin/login" element={<LoginPage />} />
 
               {/* Public-flow pages (kein Layout) */}
