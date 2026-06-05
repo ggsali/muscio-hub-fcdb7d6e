@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, CheckCircle2, Circle, Paperclip, AlertTriangle, X, Upload, ExternalLink } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, Circle, Paperclip, AlertTriangle, X, Upload, ExternalLink, Mail, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Bill {
