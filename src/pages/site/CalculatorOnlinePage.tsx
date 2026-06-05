@@ -280,10 +280,7 @@ const CalculatorOnlinePage = () => {
 
       if (vol > 0) {
         const mat = materials[0];
-        const fillFactor = 0.25 + 0.75 * 0.20;
-        const weightG = mat
-          ? Math.max(1, Math.round(vol * mat.density * fillFactor * 10) / 10)
-          : 0;
+        const weightG = mat ? estimateWeight(vol, mat.density, 20) : 0;
         setParts((p) =>
           p.map((x) =>
             x.id === id ? { ...x, volumeCm3: vol, hasVolume: true, estimatedWeight: weightG } : x,
