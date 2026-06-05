@@ -579,7 +579,7 @@ const CalculatorOnlinePage = () => {
                           </p>
                           {p.hasVolume && p.volumeCm3 > 0 && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              * Geschätztes Gewicht inkl. Sicherheitszuschlag. Verbindlicher Preis nach Prüfung.
+                              * Geschätztes Gewicht. Verbindlicher Preis nach Prüfung.
                             </p>
                           )}
                         </div>
