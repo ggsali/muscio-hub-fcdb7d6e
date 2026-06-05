@@ -558,12 +558,22 @@ export default function AuftragDetailPage() {
         } else {
           toast({ title: "Schlussrechnung gesendet ✓", description: `Restbetrag ${formatCHF(restbetrag)} wurde per E-Mail versandt.` });
           if (id) {
+            let storedPath: string | null = null;
+            let storedFilename: string | null = null;
+            try {
+              const pdfBlob = await fetch(`data:application/pdf;base64,${result.base64}`).then((r) => r.blob());
+              const pdfPath = `${id}/restbetrag-${Date.now()}.pdf`;
+              const { error: upErr } = await supabase.storage.from("bills").upload(pdfPath, pdfBlob, { contentType: "application/pdf", upsert: false });
+              if (!upErr) { storedPath = pdfPath; storedFilename = result.filename || `restbetrag-${id}.pdf`; }
+            } catch {}
             await supabase.from("bills" as any).insert({
               order_id: id,
               titel: `Schlussrechnung per E-Mail gesendet`,
               betrag: totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
+              file_path: storedPath,
+              filename: storedFilename,
             });
           }
         }
