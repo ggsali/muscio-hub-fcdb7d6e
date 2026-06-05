@@ -1470,8 +1470,11 @@ export default function AuftragDetailPage() {
                           <td className="px-2 py-2">
                             <div className="flex items-center gap-1">
                               {part.id && (
-                                <button onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)} className={`transition-colors p-1 ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                                <button onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)} className={`transition-colors p-1 relative ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
                                   <Paperclip className="w-3.5 h-3.5" />
+                                  {partsWithFiles.includes(part.id) && (
+                                    <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-primary" />
+                                  )}
                                 </button>
                               )}
                               <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
