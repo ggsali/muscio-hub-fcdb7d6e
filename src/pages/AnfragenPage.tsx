@@ -359,10 +359,13 @@ export default function AnfragenPage() {
         ) : (
           <div className="space-y-2">
             {filtered.map(inq => (
-              <button
+              <div
                 key={inq.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelect(inq)}
-                className={`w-full text-left bg-card border rounded-xl p-4 hover:border-primary/40 transition-all active:bg-muted/40 ${selected?.id === inq.id && !isMobile ? "border-primary/60 shadow-sm" : "border-border"}`}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSelect(inq); } }}
+                className={`w-full text-left bg-card border rounded-xl p-4 hover:border-primary/40 transition-all active:bg-muted/40 cursor-pointer ${selected?.id === inq.id && !isMobile ? "border-primary/60 shadow-sm" : "border-border"}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
