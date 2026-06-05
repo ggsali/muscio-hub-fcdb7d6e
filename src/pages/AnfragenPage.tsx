@@ -320,25 +320,43 @@ export default function AnfragenPage() {
           if (!part || !att.storage_path) continue;
 
           try {
-            const { data: fileData } = await supabase.storage
+            const { data: fileData, error: dlErr } = await supabase.storage
               .from(att.bucket || "project-uploads")
               .download(att.storage_path);
 
-            if (!fileData) continue;
+            if (dlErr || !fileData) {
+              console.error("Download fehlgeschlagen:", att.filename, dlErr);
+              continue;
+            }
 
-            const newPath = `${order.id}/${part.id}/${att.filename}`;
-            await supabase.storage
+            const ext = att.filename?.split(".").pop()?.toLowerCase() || "";
+            const mimeMap: Record<string, string> = {
+              stl: "model/stl", "3mf": "model/3mf", obj: "model/obj", step: "model/step",
+              pdf: "application/pdf", png: "image/png", jpg: "image/jpeg",
+              jpeg: "image/jpeg", webp: "image/webp",
+            };
+            const fileType = (fileData as Blob).type || mimeMap[ext] || "application/octet-stream";
+
+            const newPath = `${order.id}/${part.id}/${Date.now()}_${att.filename}`;
+            const { error: upErr } = await supabase.storage
               .from("part-files")
-              .upload(newPath, fileData, { upsert: true });
+              .upload(newPath, fileData, { upsert: true, contentType: fileType });
 
-            await supabase.from("part_files" as any).insert({
+            if (upErr) {
+              console.error("Upload fehlgeschlagen:", att.filename, upErr);
+              continue;
+            }
+
+            const { error: insErr } = await supabase.from("part_files").insert({
               part_id: part.id,
               order_id: order.id,
               customer_id: customerId,
               filename: att.filename,
               storage_path: newPath,
-              size_bytes: att.size_bytes || null,
+              file_type: fileType,
+              file_size_bytes: att.size_bytes ?? (fileData as Blob).size ?? null,
             });
+            if (insErr) console.error("part_files insert error:", insErr);
           } catch (e) {
             console.error("Datei kopieren fehlgeschlagen:", att.filename, e);
           }
