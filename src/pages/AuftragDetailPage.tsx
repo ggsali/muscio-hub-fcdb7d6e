@@ -431,6 +431,38 @@ export default function AuftragDetailPage() {
       } else {
         const labels: Record<string, string> = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung", auftragsbestaetigung: "Auftragsbestätigung", druckfertig: "Druckfertig-Info" };
         toast({ title: "E-Mail gesendet ✓", description: `${labels[type]} wurde erfolgreich versandt.` });
+
+        if (id) {
+          const sentDate = `Gesendet am ${new Date().toLocaleDateString("de-CH")}`;
+          if (type === "rechnung") {
+            await supabase.from("bills" as any).insert({
+              order_id: id,
+              titel: `Rechnung per E-Mail gesendet`,
+              betrag: totalUmsatz,
+              faellig_am: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+              notiz: sentDate,
+              bezahlt: false,
+            });
+          } else if (type === "offerte") {
+            await supabase.from("bills" as any).insert({
+              order_id: id,
+              titel: `Offerte per E-Mail gesendet`,
+              betrag: totalUmsatz,
+              faellig_am: null,
+              notiz: sentDate,
+              bezahlt: false,
+            });
+          } else if (type === "auftragsbestaetigung") {
+            await supabase.from("bills" as any).insert({
+              order_id: id,
+              titel: `Auftragsbestätigung per E-Mail gesendet`,
+              betrag: 0,
+              faellig_am: null,
+              notiz: sentDate,
+              bezahlt: false,
+            });
+          }
+        }
       }
     } catch (e: any) {
       toast({ title: "Fehler", description: e.message, variant: "destructive" });

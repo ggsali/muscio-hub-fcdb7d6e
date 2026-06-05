@@ -101,9 +101,11 @@ export default function BillsSection({ orderId }: Props) {
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   };
 
-  const unpaidTotal = bills.filter(b => !b.bezahlt).reduce((s, b) => s + b.betrag, 0);
-  const overdueCount = bills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 1) < 0).length;
-  const soonCount = bills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 99) >= 0 && (daysUntil(b.faellig_am) ?? 99) <= 7).length;
+  const emailBills = bills.filter(b => b.titel.includes("per E-Mail gesendet"));
+  const regularBills = bills.filter(b => !b.titel.includes("per E-Mail gesendet"));
+  const unpaidTotal = regularBills.filter(b => !b.bezahlt).reduce((s, b) => s + b.betrag, 0);
+  const overdueCount = regularBills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 1) < 0).length;
+  const soonCount = regularBills.filter(b => !b.bezahlt && (daysUntil(b.faellig_am) ?? 99) >= 0 && (daysUntil(b.faellig_am) ?? 99) <= 7).length;
 
   return (
     <div className="bg-card border border-border rounded-lg p-5 space-y-4">
@@ -182,12 +184,12 @@ export default function BillsSection({ orderId }: Props) {
       )}
 
       {/* Bills List */}
-      {!loading && bills.length === 0 && !adding && (
+      {!loading && regularBills.length === 0 && !adding && (
         <p className="text-xs text-muted-foreground text-center py-4">Noch keine Rechnungen erfasst.</p>
       )}
 
       <div className="space-y-2">
-        {bills.map(bill => {
+        {regularBills.map(bill => {
           const days = daysUntil(bill.faellig_am);
           const isOverdue = !bill.bezahlt && days !== null && days < 0;
           const isSoon = !bill.bezahlt && days !== null && days >= 0 && days <= 7;
@@ -299,6 +301,26 @@ export default function BillsSection({ orderId }: Props) {
           );
         })}
       </div>
+
+      {emailBills.length > 0 && (
+        <div className="border-t border-border pt-3 mt-3">
+          <p className="text-xs text-muted-foreground mb-2">E-Mail Verlauf</p>
+          {emailBills.map(bill => (
+            <div key={bill.id} className="flex items-center gap-2 py-1.5 text-xs text-muted-foreground">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+              <span>{bill.titel}</span>
+              <span className="ml-auto">{bill.notiz}</span>
+              <button
+                onClick={() => handleDelete(bill.id, bill.file_path)}
+                className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                title="Löschen"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
