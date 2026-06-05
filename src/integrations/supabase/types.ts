@@ -742,6 +742,36 @@ export type Database = {
           },
         ]
       }
+      page_views: {
+        Row: {
+          created_at: string
+          device: string | null
+          id: string
+          path: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          id?: string
+          path: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          id?: string
+          path?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       part_files: {
         Row: {
           created_at: string | null

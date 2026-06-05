@@ -8,12 +8,13 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { Session } from "@supabase/supabase-js";
 import {
   ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Settings, Globe, ArrowLeft, LogOut,
-  Handshake, UserCircle2, Navigation, Clock, Package, FileText, Cpu, Menu, X, TrendingUp,
+  Handshake, UserCircle2, Navigation, Clock, Package, FileText, Cpu, Menu, X, TrendingUp, BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/website-admin", label: "Übersicht", icon: Globe, end: true },
+  { to: "/website-admin/analyse", label: "Analyse", icon: BarChart3 },
   { to: "/website-admin/shop", label: "Shop-Übersicht", icon: TrendingUp },
   { to: "/website-admin/bestellungen", label: "Shop-Bestellungen", icon: ShoppingBag },
   { to: "/website-admin/shop-produkte", label: "Shop-Produkte", icon: Package },
