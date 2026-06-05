@@ -21,6 +21,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
+import { GoogleMap } from "@/components/site/GoogleMap";
 
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
@@ -230,28 +231,32 @@ const ContactPage = () => {
                 </div>
               </div>
 
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=Gartensiedlung+13+8360+Eschlikon+TG"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-xl overflow-hidden border border-border bg-card hover:border-primary transition-colors group"
-              >
-                <div className="relative h-[200px] bg-gradient-to-br from-primary/10 via-muted to-primary/5 flex items-center justify-center">
-                  <div className="absolute inset-0 opacity-30" style={{
-                    backgroundImage: "radial-gradient(circle at 30% 40%, hsl(var(--primary)/0.3), transparent 40%), radial-gradient(circle at 70% 60%, hsl(var(--primary)/0.2), transparent 40%)",
-                  }} />
-                  <div className="relative w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <MapPin className="w-7 h-7" />
+              <div className="rounded-xl overflow-hidden border border-border bg-card">
+                <GoogleMap
+                  lat={47.4467}
+                  lng={8.9685}
+                  zoom={15}
+                  title="3DMuscio – Gartensiedlung 13, 8360 Eschlikon TG"
+                  className="w-full h-[260px]"
+                />
+                <div className="p-4 flex items-center justify-between gap-3 border-t border-border">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <div>
+                      <p className="font-medium text-foreground text-sm">Gartensiedlung 13</p>
+                      <p className="text-muted-foreground text-xs">8360 Eschlikon TG</p>
+                    </div>
                   </div>
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=Gartensiedlung+13+8360+Eschlikon+TG"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary font-medium whitespace-nowrap hover:underline"
+                  >
+                    Route planen →
+                  </a>
                 </div>
-                <div className="p-4 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-foreground text-sm">Gartensiedlung 13</p>
-                    <p className="text-muted-foreground text-xs">8360 Eschlikon TG</p>
-                  </div>
-                  <span className="text-xs text-primary font-medium whitespace-nowrap">In Google Maps öffnen →</span>
-                </div>
-              </a>
+              </div>
 
               <div className="bg-card rounded-2xl border border-border p-8">
                 <h3 className="font-heading text-lg font-bold text-foreground mb-4">Häufige Fragen</h3>
