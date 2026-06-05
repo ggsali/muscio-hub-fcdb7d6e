@@ -387,11 +387,33 @@ export default function AnfragenPage() {
                     {isMobile && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   </div>
                 </div>
+                <div className="mt-3 pt-3 border-t border-border/50 flex justify-end" onClick={e => e.stopPropagation()}>
+                  {inq.order_id ? (
+                    <Button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/admin/auftraege/${inq.order_id}`); }}
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 text-xs"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Zum Auftrag →
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={(e) => { e.stopPropagation(); createOrder(inq); }}
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 text-xs"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Auftrag erstellen
+                    </Button>
+                  )}
+                </div>
               </button>
             ))}
           </div>
         )}
       </div>
+
 
       {/* Mobile: Sheet / Desktop: Side-Panel */}
       {isMobile ? (
