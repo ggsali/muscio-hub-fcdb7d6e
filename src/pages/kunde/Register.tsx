@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -7,13 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNoIndex } from "@/hooks/useNoIndex";
+
+const LAENDER = ["Schweiz", "Deutschland", "Österreich", "Liechtenstein", "Frankreich", "Italien"];
 
 const KundeRegister = () => {
   useNoIndex();
   const [form, setForm] = useState({
     vorname: "", nachname: "", email: "", password: "", passwordConfirm: "",
-    phone: "", strasse: "", hausnummer: "", plz: "", ort: "", land: "Schweiz",
+    telefon: "", strasse: "", hausnummer: "", plz: "", ort: "", land: "Schweiz",
   });
   const [agb, setAgb] = useState(false);
   const [error, setError] = useState("");
@@ -35,23 +39,32 @@ const KundeRegister = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!form.vorname || !form.nachname || !form.strasse || !form.plz || !form.ort || !form.land || !form.telefon) {
+      toast.error("Bitte alle Pflichtfelder ausfüllen");
+      return;
+    }
+    if (form.land === "Schweiz" && !/^\d{4}$/.test(form.plz)) {
+      toast.error("Bitte eine gültige Schweizer PLZ eingeben (4 Ziffern)");
+      return;
+    }
     if (form.password.length < 6) { setError("Passwort muss mindestens 6 Zeichen lang sein."); return; }
     if (form.password !== form.passwordConfirm) { setError("Passwörter stimmen nicht überein."); return; }
     if (!agb) { setError("Bitte akzeptiere die AGB."); return; }
 
     setLoading(true);
     const fullName = `${form.vorname.trim()} ${form.nachname.trim()}`;
+    const strasseFull = `${form.strasse} ${form.hausnummer}`.trim();
 
-    // Direkt mit allen Profile-Daten in user_metadata signUp – Trigger handle_new_user_profile übernimmt diese.
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/anmelden`,
         data: {
           full_name: fullName,
-          phone: form.phone,
-          address: `${form.strasse} ${form.hausnummer}`.trim(),
+          phone: form.telefon,
+          address: strasseFull,
           city: form.ort,
           postal_code: form.plz,
           country: form.land,
@@ -63,6 +76,25 @@ const KundeRegister = () => {
       setLoading(false);
       return;
     }
+
+    if (signUpData.user) {
+      await supabase.from("profiles").upsert({
+        user_id: signUpData.user.id,
+        full_name: fullName,
+        vorname: form.vorname,
+        nachname: form.nachname,
+        strasse: strasseFull,
+        plz: form.plz,
+        ort: form.ort,
+        land: form.land,
+        phone: form.telefon,
+        address: strasseFull,
+        city: form.ort,
+        postal_code: form.plz,
+        country: form.land,
+      } as any, { onConflict: "user_id" });
+    }
+
     setSuccess(true);
     setLoading(false);
   };
@@ -85,6 +117,8 @@ const KundeRegister = () => {
       </div>
     );
   }
+
+  const Req = () => <span className="text-destructive">*</span>;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted p-4 py-12">
@@ -113,14 +147,34 @@ const KundeRegister = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Persönliche Angaben</p>
-            <div className="grid grid-cols-2 gap-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Zugangsdaten</p>
+            <div className="space-y-3">
               <div>
-                <Label className="text-xs">Vorname *</Label>
+                <Label className="text-xs">E-Mail <Req /></Label>
+                <Input className="mt-1" type="email" placeholder="deine@email.ch" required value={form.email} onChange={set("email")} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Passwort <Req /></Label>
+                  <Input className="mt-1" type="password" placeholder="Mindestens 6 Zeichen" required value={form.password} onChange={set("password")} />
+                </div>
+                <div>
+                  <Label className="text-xs">Passwort bestätigen <Req /></Label>
+                  <Input className="mt-1" type="password" placeholder="Wiederholen" required value={form.passwordConfirm} onChange={set("passwordConfirm")} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Persönliche Angaben</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Vorname <Req /></Label>
                 <Input className="mt-1" placeholder="Max" required value={form.vorname} onChange={set("vorname")} />
               </div>
               <div>
-                <Label className="text-xs">Nachname *</Label>
+                <Label className="text-xs">Nachname <Req /></Label>
                 <Input className="mt-1" placeholder="Mustermann" required value={form.nachname} onChange={set("nachname")} />
               </div>
             </div>
@@ -129,57 +183,40 @@ const KundeRegister = () => {
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Adresse</p>
             <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
-                  <Label className="text-xs">Strasse *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+                <div>
+                  <Label className="text-xs">Strasse <Req /></Label>
                   <Input className="mt-1" placeholder="Musterstrasse" required value={form.strasse} onChange={set("strasse")} />
                 </div>
-                <div>
-                  <Label className="text-xs">Hausnummer *</Label>
+                <div className="md:w-28">
+                  <Label className="text-xs">Hausnr. <Req /></Label>
                   <Input className="mt-1" placeholder="1" required value={form.hausnummer} onChange={set("hausnummer")} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">Postleitzahl *</Label>
+                  <Label className="text-xs">PLZ <Req /></Label>
                   <Input className="mt-1" placeholder="8000" required value={form.plz} onChange={set("plz")} />
                 </div>
                 <div>
-                  <Label className="text-xs">Ort *</Label>
+                  <Label className="text-xs">Ort <Req /></Label>
                   <Input className="mt-1" placeholder="Zürich" required value={form.ort} onChange={set("ort")} />
                 </div>
               </div>
-              <div>
-                <Label className="text-xs">Land *</Label>
-                <Input className="mt-1" placeholder="Schweiz" required value={form.land} onChange={set("land")} />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Kontakt</p>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs">E-Mail *</Label>
-                <Input className="mt-1" type="email" placeholder="deine@email.ch" required value={form.email} onChange={set("email")} />
-              </div>
-              <div>
-                <Label className="text-xs">Telefon</Label>
-                <Input className="mt-1" type="tel" placeholder="+41 79 123 45 67" value={form.phone} onChange={set("phone")} />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Passwort</p>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs">Passwort *</Label>
-                <Input className="mt-1" type="password" placeholder="Mindestens 6 Zeichen" required value={form.password} onChange={set("password")} />
-              </div>
-              <div>
-                <Label className="text-xs">Passwort bestätigen *</Label>
-                <Input className="mt-1" type="password" placeholder="Passwort wiederholen" required value={form.passwordConfirm} onChange={set("passwordConfirm")} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Land <Req /></Label>
+                  <Select value={form.land} onValueChange={(v) => setForm(f => ({ ...f, land: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {LAENDER.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Telefon <Req /></Label>
+                  <Input className="mt-1" type="tel" placeholder="+41 79 123 45 67" required value={form.telefon} onChange={set("telefon")} />
+                </div>
               </div>
             </div>
           </div>
@@ -191,7 +228,7 @@ const KundeRegister = () => {
               <Link to="/agb" target="_blank" className="text-primary hover:underline font-medium">AGB</Link>{" "}
               und die{" "}
               <Link to="/datenschutz" target="_blank" className="text-primary hover:underline font-medium">Datenschutzerklärung</Link>{" "}
-              gelesen und akzeptiere diese. *
+              gelesen und akzeptiere diese. <Req />
             </label>
           </div>
 
