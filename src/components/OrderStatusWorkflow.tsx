@@ -4,7 +4,7 @@ import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const STATUSES = ["Offen", "In Bearbeitung", "Geliefert", "Bezahlt", "Abgeschlossen"] as const;
+const STATUSES = ["Offen", "In Bearbeitung", "Bezahlt", "Geliefert", "Abgeschlossen"] as const;
 type OrderStatus = typeof STATUSES[number];
 
 interface LogEntry {
