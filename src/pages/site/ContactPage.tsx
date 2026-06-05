@@ -21,6 +21,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
+import { GoogleMap } from "@/components/site/GoogleMap";
 
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
