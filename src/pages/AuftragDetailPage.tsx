@@ -956,432 +956,597 @@ export default function AuftragDetailPage() {
 
       </AlertDialog>
 
-      {/* Basic info */}
-      <div className="bg-card border border-border rounded-lg p-4 md:p-5">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-4 space-y-1.5">
-            <Label>Auftragsname <span className="text-muted-foreground font-normal text-xs">(wird als E-Mail-Betreff verwendet)</span></Label>
-            <Input
-              value={orderName}
-              onChange={e => setOrderName(e.target.value)}
-              placeholder="z.B. Halterungen für Kundenanlage, Prototyp Serie A …"
-              className="bg-input border-border"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Kunde</Label>
-            <select
-              value={customerId}
-              onChange={e => setCustomerId(e.target.value)}
-              className="w-full h-9 px-3 rounded-md bg-input border border-border text-sm text-foreground"
-            >
-              <option value="">— Kein Kunde —</option>
-              {customers.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Datum</Label>
-            <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} className="bg-input border-border" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Bearbeitung von</Label>
-            <Input type="date" value={geplantVon} onChange={e => setGeplantVon(e.target.value)} className="bg-input border-border" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Bearbeitung bis</Label>
-            <Input type="date" value={geplantBis} onChange={e => setGeplantBis(e.target.value)} className="bg-input border-border" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Status</Label>
-            <select
-              value={status}
-              onChange={e => setStatus(e.target.value)}
-              className="w-full h-9 px-3 rounded-md bg-input border border-border text-sm text-foreground"
-            >
-              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="md:col-span-4 space-y-1.5">
-            <Label className="flex items-center gap-2">
-              Beschreibung
-              {source === "website" && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website-Bestellung</span>
-              )}
-            </Label>
-            <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={2} />
-          </div>
-          <div className="md:col-span-4 space-y-1.5">
-            <Label>Interne Notizen <span className="text-muted-foreground font-normal text-xs">(nie für Kunden sichtbar)</span></Label>
-            <Textarea value={notesInternal} onChange={e => setNotesInternal(e.target.value)} className="bg-input border-border" rows={2} placeholder="Nur intern sichtbar..." />
-          </div>
-          <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-border/50">
-            <div className="space-y-1.5 md:col-span-2">
-              <Label>Express-Lieferung – Bezeichnung (optional)</Label>
-              <Input
-                value={expressLabel}
-                onChange={e => setExpressLabel(e.target.value)}
-                placeholder="z.B. Express 24h, Eilversand DHL Express"
-                className="bg-input border-border"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Express-Kosten (CHF)</Label>
-              <Input
-                type="number"
-                step="0.05"
-                min="0"
-                value={expressKosten || ""}
-                onChange={e => setExpressKosten(parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-                className="bg-input border-border"
-              />
-            </div>
-          </div>
+      {/* Sub-header: Auftrags-ID + Kunde + Datum */}
+      {!isNew && (
+        <div className="text-xs text-muted-foreground -mt-2">
+          ID: <span className="font-mono">{(id || "").slice(0, 8)}</span>
+          {customerId && customers.find(c => c.id === customerId) && (
+            <> · {customers.find(c => c.id === customerId)!.name}</>
+          )}
+          {" · "}{datum}
         </div>
+      )}
+
+      {/* Tab navigation */}
+      <div className="flex gap-0 border-b border-border overflow-x-auto">
+        {(isNew ? (["Übersicht", "Teile"] as Tab[]) : (TABS as readonly Tab[])).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              activeTab === tab
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
-      {/* Parts */}
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
-          <h2 className="font-semibold text-sm shrink-0">Teile</h2>
-          <div className="flex items-center gap-2 min-w-0">
-            {presets.length > 0 && (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Tag className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+      {/* ====================== TAB: ÜBERSICHT ====================== */}
+      {activeTab === "Übersicht" && (
+        <div className="space-y-4 md:space-y-6">
+          {/* Metric cards (only for existing orders) */}
+          {!isNew && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="text-xs text-muted-foreground mb-1">Umsatz</div>
+                <div className="text-xl font-bold text-success">{formatCHF(totalUmsatz)}</div>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="text-xs text-muted-foreground mb-1">Gewinn</div>
+                <div className="text-xl font-bold text-success">{formatCHF(totalGewinn)}</div>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="text-xs text-muted-foreground mb-1">Marge</div>
+                <div className="text-xl font-bold">{formatPct(totalMarge)}</div>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-4">
+                <div className="text-xs text-muted-foreground mb-1">Anzahl Teile</div>
+                <div className="text-xl font-bold">{parts.length}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Auftragsname (immer) */}
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+            <div className="space-y-1.5">
+              <Label>Auftragsname <span className="text-muted-foreground font-normal text-xs">(wird als E-Mail-Betreff verwendet)</span></Label>
+              <Input
+                value={orderName}
+                onChange={e => setOrderName(e.target.value)}
+                placeholder="z.B. Halterungen für Kundenanlage, Prototyp Serie A …"
+                className="bg-input border-border"
+              />
+            </div>
+          </div>
+
+          {/* 2-column grid: Auftragsinfo + Beschreibung/Notizen */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+              <h3 className="font-semibold text-sm">Auftragsinfo</h3>
+              <div className="space-y-1.5">
+                <Label>Kunde</Label>
                 <select
-                  value={selectedPresetId}
-                  onChange={e => handlePresetChange(e.target.value)}
-                  className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground max-w-[130px] md:max-w-none truncate"
+                  value={customerId}
+                  onChange={e => setCustomerId(e.target.value)}
+                  className="w-full h-9 px-3 rounded-md bg-input border border-border text-sm text-foreground"
                 >
-                  <option value="">— Standard-Sätze —</option>
-                  {presets.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}{p.rabatt_prozent > 0 ? ` (-${p.rabatt_prozent}%)` : ""}</option>
+                  <option value="">— Kein Kunde —</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
               </div>
-            )}
-            <Button onClick={addPart} variant="outline" size="sm" className="gap-1 border-border text-xs shrink-0 px-2 md:px-3">
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Teil </span>hinzufügen
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile: Card je Teil */}
-        {isMobile ? (
-          <div className="divide-y divide-border/50">
-            {parts.map((part, idx) => (
-              <div key={idx} className="p-4 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Input
-                    value={part.teilname}
-                    onChange={e => updatePart(idx, "teilname", e.target.value)}
-                    className="bg-input border-border h-9 text-sm flex-1"
-                    placeholder="Teilname"
-                  />
-                  <div className="flex gap-1 shrink-0">
-                    {part.id && (
-                      <button
-                        onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)}
-                        className={`p-2 rounded transition-colors ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground"}`}
-                      >
-                        <Paperclip className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button onClick={() => removePart(idx)} className="p-2 rounded text-muted-foreground hover:text-destructive transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Filament */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Filament / Material</label>
-                  {filaments.length > 0 ? (
+              {!isNew && (
+                <div className="space-y-1.5">
+                  <Label>Status</Label>
+                  <div className="flex items-center gap-2">
                     <select
-                      value={part.filament_id || ""}
-                      onChange={e => {
-                        const fil = filaments.find(f => f.id === e.target.value);
-                        setParts(prev => {
-                          const updated = [...prev];
-                          const p = {
-                            ...updated[idx],
-                            filament_id: e.target.value,
-                            filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
-                            filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
-                            material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
-                          };
-                          updated[idx] = recalcPart(p);
-                          return updated;
-                        });
-                      }}
-                      className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full"
+                      value={status}
+                      onChange={e => setStatus(e.target.value)}
+                      className="flex-1 h-9 px-3 rounded-md bg-input border border-border text-sm text-foreground"
                     >
-                      <option value="">Manuell eingeben…</option>
-                      {filaments.map(f => (
-                        <option key={f.id} value={f.id}>
-                          {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
-                        </option>
-                      ))}
+                      {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
-                  ) : (
-                    <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full">
-                      {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  )}
-                   {part.filament_einkauf_pro_kg != null && (
-                      <div className="text-[10px] text-muted-foreground">
-                        Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}
-                        {part.filament_verkauf_pro_g != null
-                          ? <span className="text-primary">CHF {part.filament_verkauf_pro_g.toFixed(3)}/g (manuell)</span>
-                          : `CHF ${((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g`
-                        }
-                      </div>
-                    )}
-                </div>
-
-                {/* Zahlen 2-spaltig */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {[
-                    { label: "Menge", field: "menge" as keyof PartRow, step: "1" },
-                    { label: "Gewicht (g)", field: "gewicht_g" as keyof PartRow, step: "0.1" },
-                    { label: "Druckzeit (h)", field: "druckzeit_h" as keyof PartRow, step: "0.1" },
-                    { label: "Nachbearb. (h)", field: "nachbearbeitung_h" as keyof PartRow, step: "0.1" },
-                    { label: "Konstruktion (h)", field: "konstruktion_h" as keyof PartRow, step: "0.1" },
-                  ].map(({ label, field, step }) => (
-                    <div key={field} className="space-y-1">
-                      <label className="text-xs text-muted-foreground">{label}</label>
-                      <Input
-                        type="number"
-                        value={part[field] as number}
-                        onChange={e => updatePart(idx, field, parseFloat(e.target.value) || 0)}
-                        className="bg-input border-border h-9 text-sm"
-                        step={step}
-                        inputMode="decimal"
-                      />
-                    </div>
-                  ))}
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Status</label>
-                    <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full">
-                      {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <StatusBadge status={status} />
                   </div>
                 </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Notiz</label>
-                  <Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-9 text-sm w-full" placeholder="Notiz..." />
-                </div>
-
-                {/* Preisanzeige */}
-                <div className="flex items-center justify-between bg-muted/20 rounded-lg px-3 py-2">
-                  <span className="text-xs text-muted-foreground">Preis/Stk.</span>
-                  <span className="text-sm font-semibold text-primary">{formatCHF(part.preis_pro_stueck)}</span>
-                  <span className="text-xs text-muted-foreground">Total</span>
-                  <span className="text-sm font-bold">{formatCHF(part.preis_total)}</span>
-                </div>
-
-                {expandedPartIdx === idx && part.id && (
-                  <div className="pt-2 border-t border-border/50">
-                    <PartFileUpload
-                      partId={part.id}
-                      orderId={typeof id === "string" && id !== "neu" ? id : undefined}
-                      customerId={customerId || undefined}
-                    />
-                  </div>
-                )}
+              )}
+              <div className="space-y-1.5">
+                <Label>Datum</Label>
+                <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} className="bg-input border-border" />
               </div>
-            ))}
+              {!isNew && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>Von</Label>
+                      <Input type="date" value={geplantVon} onChange={e => setGeplantVon(e.target.value)} className="bg-input border-border" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Bis</Label>
+                      <Input type="date" value={geplantBis} onChange={e => setGeplantBis(e.target.value)} className="bg-input border-border" />
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Quelle: {source === "website" ? <span className="text-primary font-medium">Website-Bestellung</span> : source}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-2">
+                  Beschreibung
+                  {source === "website" && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website</span>
+                  )}
+                </Label>
+                <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={4} />
+              </div>
+              {!isNew && (
+                <div className="space-y-1.5">
+                  <Label>Interne Notizen <span className="text-muted-foreground font-normal text-xs">(nie für Kunden sichtbar)</span></Label>
+                  <Textarea value={notesInternal} onChange={e => setNotesInternal(e.target.value)} className="bg-input border-border" rows={3} placeholder="Nur intern sichtbar..." />
+                </div>
+              )}
+            </div>
           </div>
-        ) : (
-          /* Desktop: Tabelle */
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs min-w-[900px]">
-              <thead>
-                <tr className="border-b border-border">
-                  {["Teilname", "Filament / Material", "Menge", "Gewicht(g)", "Druck(h)", "NB(h)", "Konstr(h)", "Preis/St.", "Total", "Status", "Notizen", ""].map(h => (
-                    <th key={h} className="px-3 py-2.5 text-muted-foreground font-medium text-left whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {parts.map((part, idx) => (
-                  <React.Fragment key={idx}>
-                    <tr className="border-b border-border/50 hover:bg-muted/20">
-                      <td className="px-2 py-2">
-                        <Input value={part.teilname} onChange={e => updatePart(idx, "teilname", e.target.value)} className="bg-input border-border h-7 text-xs w-28" placeholder="Name" />
-                      </td>
-                      <td className="px-2 py-2 min-w-[160px]">
-                        {filaments.length > 0 ? (
-                          <div className="space-y-0.5">
-                            <select
-                              value={part.filament_id || ""}
-                              onChange={e => {
-                                const fil = filaments.find(f => f.id === e.target.value);
-                                setParts(prev => {
-                                  const updated = [...prev];
-                                  const p = {
-                                    ...updated[idx],
-                                    filament_id: e.target.value,
-                                    filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
-                                    filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
-                                    material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
-                                  };
-                                  updated[idx] = recalcPart(p);
-                                  return updated;
-                                });
-                              }}
-                              className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
-                            >
-                              <option value="">Manuell eingeben…</option>
-                              {filaments.map(f => (
-                                <option key={f.id} value={f.id}>
-                                  {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
-                                </option>
-                              ))}
-                            </select>
-                            {part.filament_einkauf_pro_kg != null && (
-                              <div className="text-[10px] text-muted-foreground px-0.5">
-                                Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}
-                                {part.filament_verkauf_pro_g != null
-                                  ? <span className="text-primary">CHF {part.filament_verkauf_pro_g.toFixed(3)}/g (manuell)</span>
-                                  : `CHF ${((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g`
-                                }
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
-                            {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
-                          </select>
-                        )}
-                      </td>
-                      <td className="px-2 py-2"><Input type="number" value={part.menge} onChange={e => updatePart(idx, "menge", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" /></td>
-                      <td className="px-2 py-2"><Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
-                      <td className="px-2 py-2"><Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
-                      <td className="px-2 py-2"><Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
-                      <td className="px-2 py-2"><Input type="number" value={part.konstruktion_h} onChange={e => updatePart(idx, "konstruktion_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
-                      <td className="px-2 py-2 text-right font-medium text-primary whitespace-nowrap">{formatCHF(part.preis_pro_stueck)}</td>
-                      <td className="px-2 py-2 text-right font-medium whitespace-nowrap">{formatCHF(part.preis_total)}</td>
-                      <td className="px-2 py-2">
-                        <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
-                          {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </td>
-                      <td className="px-2 py-2"><Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-7 text-xs w-24" placeholder="Notiz" /></td>
-                      <td className="px-2 py-2">
-                        <div className="flex items-center gap-1">
-                          {part.id && (
-                            <button onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)} className={`transition-colors p-1 ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                              <Paperclip className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+
+          {/* Fortschrittsbalken */}
+          {!isNew && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h3 className="font-semibold text-sm mb-4">Fortschritt</h3>
+              <div className="flex items-center w-full">
+                {PROGRESS_STEPS.map((step, i) => {
+                  const done = i < progressIndex;
+                  const active = i === progressIndex;
+                  return (
+                    <div key={step} className="flex items-center flex-1 last:flex-none">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 ${
+                          active ? "bg-primary border-primary text-primary-foreground" :
+                          done ? "bg-success border-success text-white" :
+                          "bg-muted border-border text-muted-foreground"
+                        }`}>
+                          {i + 1}
                         </div>
-                      </td>
-                    </tr>
-                    {expandedPartIdx === idx && part.id && (
-                      <tr className="bg-muted/10 border-b border-border/50">
-                        <td colSpan={12} className="px-4 py-3">
-                          <PartFileUpload partId={part.id} orderId={typeof id === "string" && id !== "neu" ? id : undefined} customerId={customerId || undefined} />
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Zeit-Tracker – nur für gespeicherte Aufträge */}
-      {!isNew && (
-        <TimeTracker orderId={id!} parts={parts} />
-      )}
-
-      {/* Offertenmodus – nur für gespeicherte Aufträge */}
-      {!isNew && (
-        <OfferMode
-          orderId={id!}
-          orderName={orderName}
-          customerId={customerId}
-          datum={datum}
-          beschreibung={beschreibung}
-        />
-      )}
-
-      {/* Rechnungen & Zahlungen – nur für gespeicherte Aufträge */}
-      {!isNew && (
-        <BillsSection orderId={id!} />
-      )}
-
-      {/* Status Workflow – nur für gespeicherte Aufträge */}
-      {!isNew && (
-        <OrderStatusWorkflow
-          orderId={id!}
-          currentStatus={status}
-          parts={parts.map(p => ({ status: p.status }))}
-          trackingNr={trackingNr}
-          onStatusChange={setStatus}
-          onTrackingNrChange={setTrackingNr}
-        />
-      )}
-
-      {/* Summary */}
-      <div className="bg-card border border-border rounded-lg p-4 md:p-5 md:max-w-xs md:ml-auto">
-        <h3 className="font-semibold text-sm mb-3">Auftrags-Zusammenfassung</h3>
-        <div className="space-y-1.5 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Setup-Pauschale</span>
-            <span>{formatCHF(setupKosten)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Material</span>
-            <span>{formatCHF(matKosten)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Maschinenzeit</span>
-            <span>{formatCHF(maschKosten)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Nachbearbeitung</span>
-            <span>{formatCHF(nbKosten)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Konstruktion</span>
-            <span>{formatCHF(konstrKosten)}</span>
-          </div>
-          <div className="border-t border-border my-2" />
-          {expressBetrag > 0 && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{expressLabel?.trim() || "Express-Lieferung"}</span>
-              <span>{formatCHF(expressBetrag)}</span>
+                        <span className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-primary" : done ? "text-success" : "text-muted-foreground"}`}>{step}</span>
+                      </div>
+                      {i < PROGRESS_STEPS.length - 1 && (
+                        <div className="flex-1 h-0.5 mx-1 mb-5 bg-border relative overflow-hidden rounded">
+                          <div className={`absolute inset-y-0 left-0 transition-all ${done ? "w-full bg-success" : "w-0"}`} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
-          <div className="flex justify-between font-bold">
-            <span>Total Umsatz</span>
-            <span className="text-primary">{formatCHF(totalUmsatz)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Meine Kosten</span>
-            <span className="text-destructive">{formatCHF(totalKosten)}</span>
-          </div>
-          <div className="flex justify-between font-bold">
-            <span>Reingewinn</span>
-            <span className="text-success">{formatCHF(totalGewinn)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Marge</span>
-            <span>{formatPct(totalMarge)}</span>
-          </div>
+
+          {/* Express */}
+          {!isNew && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h3 className="font-semibold text-sm mb-3">Express-Lieferung</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1.5 md:col-span-2">
+                  <Label>Bezeichnung (optional)</Label>
+                  <Input
+                    value={expressLabel}
+                    onChange={e => setExpressLabel(e.target.value)}
+                    placeholder="z.B. Express 24h, Eilversand DHL Express"
+                    className="bg-input border-border"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Kosten (CHF)</Label>
+                  <Input
+                    type="number" step="0.05" min="0"
+                    value={expressKosten || ""}
+                    onChange={e => setExpressKosten(parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className="bg-input border-border"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Nächste Aktion */}
+          {!isNew && (() => {
+            const action = nextActionForStatus(status);
+            return (
+              <Button
+                onClick={action.onClick}
+                disabled={action.disabled}
+                className={`w-full ${action.disabled ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"}`}
+                size="lg"
+              >
+                {action.label}
+              </Button>
+            );
+          })()}
         </div>
-      </div>
+      )}
+
+      {/* ====================== TAB: TEILE ====================== */}
+      {activeTab === "Teile" && (
+        <div className="space-y-4">
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
+              <h2 className="font-semibold text-sm shrink-0">Teile</h2>
+              <div className="flex items-center gap-2 min-w-0">
+                {presets.length > 0 && (
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Tag className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <select
+                      value={selectedPresetId}
+                      onChange={e => handlePresetChange(e.target.value)}
+                      className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground max-w-[130px] md:max-w-none truncate"
+                    >
+                      <option value="">— Standard-Sätze —</option>
+                      {presets.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}{p.rabatt_prozent > 0 ? ` (-${p.rabatt_prozent}%)` : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <Button onClick={addPart} variant="outline" size="sm" className="gap-1 border-border text-xs shrink-0 px-2 md:px-3">
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Teil </span>hinzufügen
+                </Button>
+              </div>
+            </div>
+
+            {isMobile ? (
+              <div className="divide-y divide-border/50">
+                {parts.map((part, idx) => (
+                  <div key={idx} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Input
+                        value={part.teilname}
+                        onChange={e => updatePart(idx, "teilname", e.target.value)}
+                        className="bg-input border-border h-9 text-sm flex-1"
+                        placeholder="Teilname"
+                      />
+                      <div className="flex gap-1 shrink-0">
+                        {part.id && (
+                          <button
+                            onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)}
+                            className={`p-2 rounded transition-colors ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground"}`}
+                          >
+                            <Paperclip className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button onClick={() => removePart(idx)} className="p-2 rounded text-muted-foreground hover:text-destructive transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Filament / Material</label>
+                      {filaments.length > 0 ? (
+                        <select
+                          value={part.filament_id || ""}
+                          onChange={e => {
+                            const fil = filaments.find(f => f.id === e.target.value);
+                            setParts(prev => {
+                              const updated = [...prev];
+                              const p = {
+                                ...updated[idx],
+                                filament_id: e.target.value,
+                                filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                                filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
+                                material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
+                              };
+                              updated[idx] = recalcPart(p);
+                              return updated;
+                            });
+                          }}
+                          className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full"
+                        >
+                          <option value="">Manuell eingeben…</option>
+                          {filaments.map(f => (
+                            <option key={f.id} value={f.id}>
+                              {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full">
+                          {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      )}
+                      {part.filament_einkauf_pro_kg != null && (
+                        <div className="text-[10px] text-muted-foreground">
+                          Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}
+                          {part.filament_verkauf_pro_g != null
+                            ? <span className="text-primary">CHF {part.filament_verkauf_pro_g.toFixed(3)}/g (manuell)</span>
+                            : `CHF ${((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g`
+                          }
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {[
+                        { label: "Menge", field: "menge" as keyof PartRow, step: "1" },
+                        { label: "Gewicht (g)", field: "gewicht_g" as keyof PartRow, step: "0.1" },
+                        { label: "Druckzeit (h)", field: "druckzeit_h" as keyof PartRow, step: "0.1" },
+                        { label: "Nachbearb. (h)", field: "nachbearbeitung_h" as keyof PartRow, step: "0.1" },
+                        { label: "Konstruktion (h)", field: "konstruktion_h" as keyof PartRow, step: "0.1" },
+                      ].map(({ label, field, step }) => (
+                        <div key={field} className="space-y-1">
+                          <label className="text-xs text-muted-foreground">{label}</label>
+                          <Input
+                            type="number"
+                            value={part[field] as number}
+                            onChange={e => updatePart(idx, field, parseFloat(e.target.value) || 0)}
+                            className="bg-input border-border h-9 text-sm"
+                            step={step}
+                            inputMode="decimal"
+                          />
+                        </div>
+                      ))}
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Status</label>
+                        <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full">
+                          {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Notiz</label>
+                      <Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-9 text-sm w-full" placeholder="Notiz..." />
+                    </div>
+                    <div className="flex items-center justify-between bg-muted/20 rounded-lg px-3 py-2">
+                      <span className="text-xs text-muted-foreground">Preis/Stk.</span>
+                      <span className="text-sm font-semibold text-primary">{formatCHF(part.preis_pro_stueck)}</span>
+                      <span className="text-xs text-muted-foreground">Total</span>
+                      <span className="text-sm font-bold">{formatCHF(part.preis_total)}</span>
+                    </div>
+                    {expandedPartIdx === idx && part.id && (
+                      <div className="pt-2 border-t border-border/50">
+                        <PartFileUpload
+                          partId={part.id}
+                          orderId={typeof id === "string" && id !== "neu" ? id : undefined}
+                          customerId={customerId || undefined}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs min-w-[900px]">
+                  <thead>
+                    <tr className="border-b border-border">
+                      {["Teilname", "Filament / Material", "Menge", "Gewicht(g)", "Druck(h)", "NB(h)", "Konstr(h)", "Preis/St.", "Total", "Status", "Notizen", ""].map(h => (
+                        <th key={h} className="px-3 py-2.5 text-muted-foreground font-medium text-left whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {parts.map((part, idx) => (
+                      <React.Fragment key={idx}>
+                        <tr className="border-b border-border/50 hover:bg-muted/20">
+                          <td className="px-2 py-2">
+                            <Input value={part.teilname} onChange={e => updatePart(idx, "teilname", e.target.value)} className="bg-input border-border h-7 text-xs w-28" placeholder="Name" />
+                          </td>
+                          <td className="px-2 py-2 min-w-[160px]">
+                            {filaments.length > 0 ? (
+                              <div className="space-y-0.5">
+                                <select
+                                  value={part.filament_id || ""}
+                                  onChange={e => {
+                                    const fil = filaments.find(f => f.id === e.target.value);
+                                    setParts(prev => {
+                                      const updated = [...prev];
+                                      const p = {
+                                        ...updated[idx],
+                                        filament_id: e.target.value,
+                                        filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
+                                        filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
+                                        material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
+                                      };
+                                      updated[idx] = recalcPart(p);
+                                      return updated;
+                                    });
+                                  }}
+                                  className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground w-full"
+                                >
+                                  <option value="">Manuell eingeben…</option>
+                                  {filaments.map(f => (
+                                    <option key={f.id} value={f.id}>
+                                      {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
+                                    </option>
+                                  ))}
+                                </select>
+                                {part.filament_einkauf_pro_kg != null && (
+                                  <div className="text-[10px] text-muted-foreground px-0.5">
+                                    Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}
+                                    {part.filament_verkauf_pro_g != null
+                                      ? <span className="text-primary">CHF {part.filament_verkauf_pro_g.toFixed(3)}/g (manuell)</span>
+                                      : `CHF ${((part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG).toFixed(3)}/g`
+                                    }
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <select value={part.material} onChange={e => updatePart(idx, "material", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
+                                {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                            )}
+                          </td>
+                          <td className="px-2 py-2"><Input type="number" value={part.menge} onChange={e => updatePart(idx, "menge", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" /></td>
+                          <td className="px-2 py-2"><Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                          <td className="px-2 py-2"><Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                          <td className="px-2 py-2"><Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                          <td className="px-2 py-2"><Input type="number" value={part.konstruktion_h} onChange={e => updatePart(idx, "konstruktion_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                          <td className="px-2 py-2 text-right font-medium text-primary whitespace-nowrap">{formatCHF(part.preis_pro_stueck)}</td>
+                          <td className="px-2 py-2 text-right font-medium whitespace-nowrap">{formatCHF(part.preis_total)}</td>
+                          <td className="px-2 py-2">
+                            <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-7 px-2 rounded bg-input border border-border text-xs text-foreground">
+                              {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-2 py-2"><Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-7 text-xs w-24" placeholder="Notiz" /></td>
+                          <td className="px-2 py-2">
+                            <div className="flex items-center gap-1">
+                              {part.id && (
+                                <button onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)} className={`transition-colors p-1 ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                                  <Paperclip className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {expandedPartIdx === idx && part.id && (
+                          <tr className="bg-muted/10 border-b border-border/50">
+                            <td colSpan={12} className="px-4 py-3">
+                              <PartFileUpload partId={part.id} orderId={typeof id === "string" && id !== "neu" ? id : undefined} customerId={customerId || undefined} />
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Kostenaufschlüsselung kompakt */}
+          {!isNew && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h3 className="font-semibold text-sm mb-3">Kostenaufschlüsselung</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Setup</span><span>{formatCHF(setupKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Material</span><span>{formatCHF(matKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
+                <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ====================== TAB: STATUS & VERSAND ====================== */}
+      {activeTab === "Status & Versand" && !isNew && (
+        <div className="space-y-4">
+          <OrderStatusWorkflow
+            orderId={id!}
+            currentStatus={status}
+            parts={parts.map(p => ({ status: p.status }))}
+            trackingNr={trackingNr}
+            onStatusChange={setStatus}
+            onTrackingNrChange={setTrackingNr}
+          />
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+            <h3 className="font-semibold text-sm">Tracking & Termine</h3>
+            <div className="space-y-1.5">
+              <Label>Tracking-Nummer</Label>
+              <div className="flex gap-2">
+                <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value)} className="bg-input border-border" placeholder="z.B. CH123456789DE" />
+                <Button onClick={handleSave} disabled={saving} variant="outline" className="border-border gap-2">
+                  <Save className="w-4 h-4" /> Speichern
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Geplant von</Label>
+                <Input type="date" value={geplantVon} onChange={e => setGeplantVon(e.target.value)} className="bg-input border-border" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Geplant bis</Label>
+                <Input type="date" value={geplantBis} onChange={e => setGeplantBis(e.target.value)} className="bg-input border-border" />
+              </div>
+            </div>
+          </div>
+          <TimeTracker orderId={id!} parts={parts} />
+        </div>
+      )}
+
+      {/* ====================== TAB: FINANZEN ====================== */}
+      {activeTab === "Finanzen" && !isNew && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h3 className="font-semibold text-sm mb-3">Kostenaufschlüsselung</h3>
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Setup-Pauschale</span><span>{formatCHF(setupKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Material</span><span>{formatCHF(matKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
+                {expressBetrag > 0 && (
+                  <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(expressBetrag)}</span></div>
+                )}
+                <div className="border-t border-border my-2" />
+                <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(totalKosten)}</span></div>
+                <div className="flex justify-between font-bold"><span>Reingewinn</span><span className="text-success">{formatCHF(totalGewinn)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Marge</span><span>{formatPct(totalMarge)}</span></div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="gap-2 border-border w-full">
+                <FileDown className="w-4 h-4" /> Akontorechnung erstellen
+              </Button>
+              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="gap-2 border-border w-full">
+                {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Stripe Zahlungslink erstellen
+              </Button>
+            </div>
+          </div>
+          <BillsSection orderId={id!} />
+        </div>
+      )}
+
+      {/* ====================== TAB: DOKUMENTE ====================== */}
+      {activeTab === "Dokumente" && !isNew && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+              <h3 className="font-semibold text-sm mb-2">PDF herunterladen</h3>
+              <Button onClick={() => handleExportPDF(false)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung</Button>
+              <Button onClick={() => handleExportPDF(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung (mit Details)</Button>
+              <Button onClick={() => handleExportOffer(false)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte</Button>
+              <Button onClick={() => handleExportOffer(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte (mit Details)</Button>
+              <Button onClick={() => handleExportAuftragsbestaetigung()} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Auftragsbestätigung</Button>
+              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung</Button>
+            </div>
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+              <h3 className="font-semibold text-sm mb-2">E-Mail senden</h3>
+              <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung</Button>
+              <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte</Button>
+              <Button onClick={() => setConfirmEmailType("auftragsbestaetigung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Auftragsbestätigung</Button>
+              <Button onClick={() => setConfirmEmailType("druckfertig")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Druckfertig-Info</Button>
+              <Button onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Lieferbenachrichtigung</Button>
+              <Button onClick={handleSendTestEmail} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border">
+                {sendingEmail === "test" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Test-E-Mail
+              </Button>
+            </div>
+          </div>
+          <OfferMode
+            orderId={id!}
+            orderName={orderName}
+            customerId={customerId}
+            datum={datum}
+            beschreibung={beschreibung}
+          />
+        </div>
+      )}
+
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
