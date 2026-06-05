@@ -184,12 +184,12 @@ export default function BillsSection({ orderId }: Props) {
       )}
 
       {/* Bills List */}
-      {!loading && bills.length === 0 && !adding && (
+      {!loading && regularBills.length === 0 && !adding && (
         <p className="text-xs text-muted-foreground text-center py-4">Noch keine Rechnungen erfasst.</p>
       )}
 
       <div className="space-y-2">
-        {bills.map(bill => {
+        {regularBills.map(bill => {
           const days = daysUntil(bill.faellig_am);
           const isOverdue = !bill.bezahlt && days !== null && days < 0;
           const isSoon = !bill.bezahlt && days !== null && days >= 0 && days <= 7;
