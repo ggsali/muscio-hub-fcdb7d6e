@@ -411,7 +411,7 @@ export default function AnfragenPage() {
                     </Button>
                   )}
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
