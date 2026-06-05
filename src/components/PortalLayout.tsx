@@ -3,15 +3,18 @@ import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNoIndex } from "@/hooks/useNoIndex";
-import { LayoutDashboard, Package, User, LogOut, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Package, User, LogOut, ArrowLeft, FileText, Calculator, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
 import logo from "@/assets/logo.jpeg";
 
 const items = [
   { to: "/portal", label: "Übersicht", icon: LayoutDashboard, end: true },
-  { to: "/portal/bestellungen", label: "Meine Bestellungen", icon: Package },
-  { to: "/portal/profil", label: "Profil", icon: User },
+  { to: "/portal/bestellungen", label: "Bestellungen", icon: Package, badgeKey: "openOrders" as const },
+  { to: "/portal/dokumente", label: "Dokumente", icon: FileText },
+  { to: "/kalkulator-online", label: "Neue Anfrage", icon: Calculator, highlight: true },
+  { to: "/portal/profil", label: "Profil & Adresse", icon: User },
+  { to: "/portal/passwort", label: "Passwort ändern", icon: Lock },
 ];
 
 export default function PortalLayout() {
