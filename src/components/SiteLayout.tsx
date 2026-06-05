@@ -8,8 +8,10 @@ import { ShopPromoBanner } from "./site/ShopPromoBanner";
 import { ChatWidget } from "./site/ChatWidget";
 import { ChatFab } from "./site/ChatFab";
 import { CartProvider } from "@/contexts/CartContext";
+import { usePageViewTracker } from "@/hooks/usePageViewTracker";
 
 export default function SiteLayout() {
+  usePageViewTracker();
   return (
     <CartProvider>
       <div className="site-theme min-h-screen flex flex-col">
