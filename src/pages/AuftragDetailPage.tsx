@@ -114,7 +114,56 @@ export default function AuftragDetailPage() {
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const TABS = ["Übersicht", "Teile", "Status & Versand", "Finanzen", "Dokumente"] as const;
+  type Tab = typeof TABS[number];
+  const [activeTab, setActiveTab] = useState<Tab>("Übersicht");
+  const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
   const { toast } = useToast();
+
+  const handleCreatePaymentLink = async () => {
+    if (!id || totalUmsatz <= 0) return;
+    setCreatingPaymentLink(true);
+    try {
+      const { customerEmail } = await getCustomerData();
+      const { data, error } = await supabase.functions.invoke("create-stripe-payment-link", {
+        body: { orderId: id, betrag: totalUmsatz, orderName, customerEmail },
+      });
+      if (error || data?.error) {
+        toast({ title: "Stripe Fehler", description: data?.error || error?.message, variant: "destructive" });
+      } else if (data?.url) {
+        try { await navigator.clipboard.writeText(data.url); } catch {}
+        toast({ title: "Zahlungslink erstellt ✓", description: "Link in Zwischenablage kopiert." });
+      }
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    }
+    setCreatingPaymentLink(false);
+  };
+
+  const nextActionForStatus = (s: string): { label: string; onClick: () => void; disabled?: boolean } => {
+    switch (s) {
+      case "Offen": return { label: "Auftragsbestätigung senden →", onClick: () => setConfirmEmailType("auftragsbestaetigung") };
+      case "In Bearbeitung": return { label: "Als versandbereit markieren →", onClick: () => setStatus("Geliefert") };
+      case "Versandbereit": return { label: "Versandetikett erstellen →", onClick: () => window.open("https://www.post.ch/", "_blank") };
+      case "Geliefert": return { label: "Rechnung senden →", onClick: () => setConfirmEmailType("rechnung") };
+      case "Bezahlt": return { label: "Rechnung senden →", onClick: () => setConfirmEmailType("rechnung") };
+      case "Abgeschlossen": return { label: "Auftrag abgeschlossen", onClick: () => {}, disabled: true };
+      default: return { label: "Status aktualisieren →", onClick: () => {} };
+    }
+  };
+
+  const PROGRESS_STEPS = ["Bestellt", "Bezahlt", "Produktion", "Versand", "Fertig"];
+  const progressIndex = (() => {
+    switch (status) {
+      case "Offen": return 0;
+      case "Bezahlt": return 1;
+      case "In Bearbeitung": return 2;
+      case "Versandbereit": return 3;
+      case "Geliefert": return 3;
+      case "Abgeschlossen": return 4;
+      default: return 0;
+    }
+  })();
 
   useEffect(() => {
     supabase.from("customers").select("id, name").then(({ data }) => {
