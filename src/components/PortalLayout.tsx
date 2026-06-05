@@ -22,6 +22,21 @@ export default function PortalLayout() {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const role = useUserRole(session?.user.id);
+  const [openOrders, setOpenOrders] = useState<number>(0);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    (async () => {
+      const { data: cust } = await supabase.from("customers").select("id").eq("auth_user_id", session.user.id).maybeSingle();
+      if (!cust) return;
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("customer_id", cust.id)
+        .not("status", "in", "(Abgeschlossen,Storniert,Geliefert)");
+      setOpenOrders(count || 0);
+    })();
+  }, [session?.user?.id]);
 
   useEffect(() => {
     // Listener FIRST to catch SIGNED_IN from email confirmation hash tokens
