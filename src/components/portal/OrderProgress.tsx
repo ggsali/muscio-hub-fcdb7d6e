@@ -1,7 +1,15 @@
 import { motion } from "framer-motion";
 import { ClipboardList, Cog, CreditCard, Package, CheckCircle2, Check } from "lucide-react";
 
-const STEPS = [
+const STEPS_WEBSITE = [
+  { key: 'offen', label: 'Zahlung ausstehend', icon: CreditCard },
+  { key: 'bezahlt', label: 'Bezahlt', icon: CheckCircle2 },
+  { key: 'bearbeitung', label: 'In Produktion', icon: Cog },
+  { key: 'geliefert', label: 'Versandt', icon: Package },
+  { key: 'abgeschlossen', label: 'Abgeschlossen', icon: CheckCircle2 },
+] as const;
+
+const STEPS_MANUAL = [
   { key: 'offen', label: 'Bestellt', icon: ClipboardList },
   { key: 'bearbeitung', label: 'In Bearbeitung', icon: Cog },
   { key: 'bezahlt', label: 'Bezahlt', icon: CreditCard },
@@ -9,19 +17,32 @@ const STEPS = [
   { key: 'abgeschlossen', label: 'Abgeschlossen', icon: CheckCircle2 },
 ] as const;
 
-function statusToStep(status: string): number {
-  switch (status) {
-    case 'Offen': return 0
-    case 'In Bearbeitung': return 1
-    case 'Bezahlt': return 2
-    case 'Geliefert': return 3
-    case 'Abgeschlossen': return 4
-    default: return 0
+function statusToStep(status: string, isWebsite: boolean): number {
+  if (isWebsite) {
+    switch (status) {
+      case 'Offen': return 0
+      case 'Bezahlt': return 1
+      case 'In Bearbeitung': return 2
+      case 'Geliefert': return 3
+      case 'Abgeschlossen': return 4
+      default: return 0
+    }
+  } else {
+    switch (status) {
+      case 'Offen': return 0
+      case 'In Bearbeitung': return 1
+      case 'Bezahlt': return 2
+      case 'Geliefert': return 3
+      case 'Abgeschlossen': return 4
+      default: return 0
+    }
   }
 }
 
-export default function OrderProgress({ status }: { status: string }) {
-  const activeIdx = statusToStep(status);
+export default function OrderProgress({ status, source }: { status: string; source?: string }) {
+  const isWebsiteOrder = source === 'website' || source === 'shop' || source === 'kalkulator'
+  const STEPS = isWebsiteOrder ? STEPS_WEBSITE : STEPS_MANUAL
+  const activeIdx = statusToStep(status, isWebsiteOrder);
 
   return (
     <div className="w-full">

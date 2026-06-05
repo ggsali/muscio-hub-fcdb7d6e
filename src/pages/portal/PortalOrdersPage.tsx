@@ -142,7 +142,7 @@ export default function PortalOrdersPage() {
                   </button>
 
                   <div className="px-5 pb-4">
-                    <OrderProgress status={o.status} />
+                    <OrderProgress status={o.status} source={o.source || 'manual'} />
                   </div>
 
                   {isOpen && (
