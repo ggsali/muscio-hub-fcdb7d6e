@@ -73,6 +73,7 @@ import ShopProdukteAdminPage from "@/pages/website-admin/ShopProdukteAdminPage";
 import ShopUebersichtAdminPage from "@/pages/website-admin/ShopUebersichtAdminPage";
 import BlogAdminPage from "@/pages/website-admin/BlogAdminPage";
 import EquipmentAdminPage from "@/pages/website-admin/EquipmentAdminPage";
+import WebsiteAnalyticsPage from "@/pages/website-admin/WebsiteAnalyticsPage";
 import EquipmentPage from "@/pages/site/EquipmentPage";
 
 const queryClient = new QueryClient();
@@ -173,6 +174,7 @@ const App = () => (
               {/* Website Admin – separate area */}
               <Route path="/website-admin" element={<WebsiteAdminLayout />}>
                 <Route index element={<WebsiteAdminDashboardPage />} />
+                <Route path="analyse" element={<WebsiteAnalyticsPage />} />
                 <Route path="bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="shop" element={<ShopUebersichtAdminPage />} />
                 <Route path="shop-produkte" element={<ShopProdukteAdminPage />} />
