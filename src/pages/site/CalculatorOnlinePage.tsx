@@ -49,12 +49,18 @@ const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
 const SHIPPING_COST = 8;
 
-// Realistische Gewichts-Schätzung inkl. Sicherheitszuschlag (+20%)
-function estimateWeight(volumeCm3: number, density: number, infillPct: number): number {
-  const fillFactor = 0.25 + 0.75 * (infillPct / 100);
-  const baseWeight = volumeCm3 * density * fillFactor;
-  const safetyFactor = 1.20; // Support, Brim/Skirt, Messungenauigkeit, Purge Tower
-  return Math.max(1, Math.round(baseWeight * safetyFactor * 10) / 10);
+const calcWeight = (volumeCm3: number, material: Material, infill: number): number => {
+  // Shell ist immer solid — realistisch 35-40% des Volumens
+  const shellFactor = 0.40
+  const infillFactor = (1 - shellFactor) * (infill / 100)
+  const fillFactor = shellFactor + infillFactor
+
+  const baseWeight = volumeCm3 * material.density * fillFactor
+
+  // Sicherheitszuschlag +25%
+  const safetyFactor = 1.25
+
+  return Math.max(1, Math.round(baseWeight * safetyFactor * 10) / 10)
 }
 const SETUP_FEE = 20;
 
@@ -280,7 +286,7 @@ const CalculatorOnlinePage = () => {
 
       if (vol > 0) {
         const mat = materials[0];
-        const weightG = mat ? estimateWeight(vol, mat.density, 20) : 0;
+        const weightG = mat ? calcWeight(vol, mat, 20) : 0;
         setParts((p) =>
           p.map((x) =>
             x.id === id ? { ...x, volumeCm3: vol, hasVolume: true, estimatedWeight: weightG } : x,
@@ -345,7 +351,7 @@ const CalculatorOnlinePage = () => {
       const newMatId = u.materialId ?? currentPart.materialId;
       const mat = materials.find((m) => m.id === newMatId);
       if (mat) {
-        const newWeight = estimateWeight(currentPart.volumeCm3, mat.density, newInfill);
+        const newWeight = calcWeight(currentPart.volumeCm3, mat, newInfill);
         u = { ...u, estimatedWeight: newWeight };
       }
     }
