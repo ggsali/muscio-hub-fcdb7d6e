@@ -151,6 +151,7 @@ const App = () => (
               <Route path="/portal" element={<PortalLayout />}>
                 <Route index element={<PortalDashboardPage />} />
                 <Route path="bestellungen" element={<PortalOrdersPage />} />
+                <Route path="dokumente" element={<PortalDokumentePage />} />
                 <Route path="profil" element={<PortalProfilePage />} />
               </Route>
 
