@@ -437,16 +437,21 @@ export default function AuftragDetailPage() {
           const labelsMap: Record<string, string> = { rechnung: "Rechnung", offerte: "Offerte", lieferung: "Lieferbenachrichtigung", auftragsbestaetigung: "Auftragsbestätigung", druckfertig: "Druckfertig-Info" };
           let storedPath: string | null = null;
           let storedFilename: string | null = null;
+          console.log("PDF Debug:", { hasPdfBase64: !!pdfBase64, pdfBase64Length: pdfBase64?.length, type, orderId: id });
           if (pdfBase64) {
             try {
               const pdfBlob = await fetch(`data:application/pdf;base64,${pdfBase64}`).then((r) => r.blob());
               const pdfPath = `${id}/${type}-${Date.now()}.pdf`;
-              const { error: upErr } = await supabase.storage.from("bills").upload(pdfPath, pdfBlob, { contentType: "application/pdf", upsert: false });
+              console.log("Uploading to bills storage:", pdfPath);
+              const { data: uploadData, error: upErr } = await supabase.storage.from("bills").upload(pdfPath, pdfBlob, { contentType: "application/pdf", upsert: true });
+              console.log("Upload result:", { uploadData, uploadError: upErr });
               if (!upErr) {
                 storedPath = pdfPath;
                 storedFilename = pdfFilename || `${type}-${id}.pdf`;
               }
-            } catch {}
+            } catch (e) {
+              console.error("Upload catch error:", e);
+            }
           }
           const betragValue = type === "rechnung" ? totalUmsatz : type === "offerte" ? totalUmsatz : 0;
           const faelligAm = type === "rechnung" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] : null;
