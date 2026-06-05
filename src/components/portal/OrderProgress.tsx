@@ -39,8 +39,10 @@ function statusToStep(status: string, isWebsite: boolean): number {
   }
 }
 
-export default function OrderProgress({ status }: { status: string }) {
-  const activeIdx = statusToStep(status);
+export default function OrderProgress({ status, source }: { status: string; source?: string }) {
+  const isWebsiteOrder = source === 'website' || source === 'shop' || source === 'kalkulator'
+  const STEPS = isWebsiteOrder ? STEPS_WEBSITE : STEPS_MANUAL
+  const activeIdx = statusToStep(status, isWebsiteOrder);
 
   return (
     <div className="w-full">
