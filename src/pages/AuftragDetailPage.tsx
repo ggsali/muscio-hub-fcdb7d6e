@@ -1080,8 +1080,8 @@ export default function AuftragDetailPage() {
         <div className="space-y-4 md:space-y-6">
           {source === "anfrage" && !isNew && (
             <div className="bg-muted/50 border border-border rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm text-muted-foreground">
-              <MessageSquare className="w-4 h-4" />
-              Aus Anfrage erstellt — bitte Gewicht, Druckzeit und Materialparameter ergänzen
+              <MessageSquare className="w-4 h-4 shrink-0" />
+              <span>Aus Anfrage erstellt — Dateien im Tab <strong>Teile</strong> verfügbar. Bitte Gewicht, Druckzeit und Material ergänzen.</span>
             </div>
           )}
           {!isNew && (
