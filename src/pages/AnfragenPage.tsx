@@ -239,7 +239,6 @@ export default function AnfragenPage() {
 
     setCreatingOrderFor(inq.id);
     try {
-      // Kunde anhand E-Mail suchen
       let customerId = inq.customer_id;
       if (!customerId && inq.email) {
         const { data: customer } = await supabase
@@ -247,13 +246,18 @@ export default function AnfragenPage() {
         customerId = customer?.id ?? null;
       }
       if (!customerId) {
-        const { data } = await supabase.from("customers")
+        const { data, error: custErr } = await supabase.from("customers")
           .insert({ name: inq.name, email: inq.email, telefon: inq.telefon })
           .select("id").single();
+        if (custErr) {
+          console.error("Customer insert error:", custErr);
+          toast({ title: "Fehler beim Erstellen des Kunden", description: custErr.message, variant: "destructive" });
+          return;
+        }
         customerId = data?.id ?? null;
       }
 
-      const { data: order } = await supabase.from("orders").insert({
+      const { data: order, error: orderErr } = await supabase.from("orders").insert({
         customer_id: customerId,
         beschreibung: inq.nachricht || inq.betreff || "",
         datum: new Date().toISOString().split("T")[0],
@@ -262,26 +266,32 @@ export default function AnfragenPage() {
         name: inq.betreff || "Anfrage vom " + new Date().toLocaleDateString("de-CH"),
       } as any).select().single();
 
-      if (!order) return;
+      if (orderErr || !order) {
+        console.error("Order insert error:", orderErr);
+        toast({ title: "Fehler beim Erstellen des Auftrags", description: orderErr?.message || "Unbekannter Fehler", variant: "destructive" });
+        return;
+      }
 
       const attachments = (inq.attachments || []) as Attachment[];
       if (attachments.length > 0) {
-        const partsData = attachments.map(att => ({
-          order_id: order.id,
-          customer_id: customerId,
-          teilname: att.filename?.replace(/\.[^.]+$/, "") || "Teil",
-          material: "PLA",
-          menge: 1,
-          gewicht_g: 0,
-          druckzeit_h: 0,
-          nachbearbeitung_h: 0,
-          konstruktion_h: 0,
-          preis_pro_stueck: 0,
-          preis_total: 0,
-          status: "Ausstehend",
-          notizen: `Datei: ${att.filename}`,
-        }));
-        await supabase.from("parts").insert(partsData);
+        const { error: partsErr } = await supabase.from("parts").insert(
+          attachments.map(att => ({
+            order_id: order.id,
+            customer_id: customerId,
+            teilname: att.filename?.replace(/\.[^.]+$/, "") || "Teil",
+            material: "PLA",
+            menge: 1,
+            gewicht_g: 0,
+            druckzeit_h: 0,
+            nachbearbeitung_h: 0,
+            konstruktion_h: 0,
+            preis_pro_stueck: 0,
+            preis_total: 0,
+            status: "Ausstehend",
+            notizen: `Datei: ${att.filename}`,
+          }))
+        );
+        if (partsErr) console.error("Parts insert error:", partsErr);
       } else {
         await supabase.from("parts").insert({
           order_id: order.id,
@@ -304,8 +314,11 @@ export default function AnfragenPage() {
         .update({ order_id: order.id, status: "In Bearbeitung" })
         .eq("id", inq.id);
 
-      toast({ title: "Auftrag erstellt ✓", description: "Du wirst zum Auftrag weitergeleitet." });
+      toast({ title: "Auftrag erstellt ✓" });
       navigate(`/admin/auftraege/${order.id}`);
+    } catch (e: any) {
+      console.error("createOrder error:", e);
+      toast({ title: "Fehler", description: e?.message || String(e), variant: "destructive" });
     } finally {
       setCreatingOrderFor(null);
     }
