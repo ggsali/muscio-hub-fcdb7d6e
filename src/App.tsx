@@ -60,6 +60,7 @@ import UnsubscribePage from "@/pages/UnsubscribePage";
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
 import PortalOrdersPage from "@/pages/portal/PortalOrdersPage";
 import PortalProfilePage from "@/pages/portal/PortalProfilePage";
+import PortalDokumentePage from "@/pages/portal/PortalDokumentePage";
 
 // Website Admin
 import WebsiteAdminLayout from "@/components/WebsiteAdminLayout";
