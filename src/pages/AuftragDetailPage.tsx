@@ -294,6 +294,23 @@ export default function AuftragDetailPage() {
     setParts(prev => prev.map(p => recalcPart(p)));
   }, [activeSettings, selectedPresetId]);
 
+  // Parts mit Dateien laden und ersten expandieren
+  useEffect(() => {
+    if (!isNew && id) {
+      supabase.from("part_files" as any)
+        .select("part_id")
+        .eq("order_id", id)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            const partIds = [...new Set(data.map((f: any) => f.part_id))] as string[];
+            setPartsWithFiles(partIds);
+            const partIdx = parts.findIndex(p => p.id && partIds.includes(p.id));
+            if (partIdx >= 0) setExpandedPartIdx(prev => prev ?? partIdx);
+          }
+        });
+    }
+  }, [parts.length, id, isNew]);
+
   const addPart = async () => {
     const newPart = emptyPart();
     if (!isNew && id) {
