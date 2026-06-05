@@ -1286,9 +1286,12 @@ export default function AuftragDetailPage() {
                         {part.id && (
                           <button
                             onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)}
-                            className={`p-2 rounded transition-colors ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground"}`}
+                            className={`p-2 rounded transition-colors relative ${expandedPartIdx === idx ? "text-primary" : "text-muted-foreground"}`}
                           >
                             <Paperclip className="w-4 h-4" />
+                            {partsWithFiles.includes(part.id) && (
+                              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
+                            )}
                           </button>
                         )}
                         <button onClick={() => removePart(idx)} className="p-2 rounded text-muted-foreground hover:text-destructive transition-colors">
