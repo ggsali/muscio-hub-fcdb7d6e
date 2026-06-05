@@ -189,7 +189,7 @@ export default function BillsSection({ orderId }: Props) {
       )}
 
       <div className="space-y-2">
-        {regularBills.map(bill => {
+        {rechnungBills.map(bill => {
           const days = daysUntil(bill.faellig_am);
           const isOverdue = !bill.bezahlt && days !== null && days < 0;
           const isSoon = !bill.bezahlt && days !== null && days >= 0 && days <= 7;
