@@ -1551,6 +1551,7 @@ export default function AuftragDetailPage() {
             currentStatus={status}
             parts={parts.map(p => ({ status: p.status }))}
             trackingNr={trackingNr}
+            source={source}
             onStatusChange={setStatus}
             onTrackingNrChange={setTrackingNr}
           />
