@@ -571,6 +571,11 @@ const CalculatorOnlinePage = () => {
                               <span className="ml-2 text-warning">· Datei nicht hochgeladen</span>
                             )}
                           </p>
+                          {p.hasVolume && p.volumeCm3 > 0 && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              * Geschätztes Gewicht inkl. Sicherheitszuschlag. Verbindlicher Preis nach Prüfung.
+                            </p>
+                          )}
                         </div>
                       </div>
                       <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
