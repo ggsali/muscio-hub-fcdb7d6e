@@ -1,22 +1,22 @@
 import { motion } from "framer-motion";
-import { ClipboardList, Cog, Search, Package, CheckCircle2, Check } from "lucide-react";
+import { ClipboardList, Cog, CreditCard, Package, CheckCircle2, Check } from "lucide-react";
 
 const STEPS = [
-  { key: "bestellt", label: "Bestellt", icon: ClipboardList },
-  { key: "produktion", label: "In Produktion", icon: Cog },
-  { key: "qk", label: "Qualitätskontrolle", icon: Search },
-  { key: "versand", label: "Versandbereit", icon: Package },
-  { key: "abgeschlossen", label: "Abgeschlossen", icon: CheckCircle2 },
+  { key: 'offen', label: 'Bestellt', icon: ClipboardList },
+  { key: 'bearbeitung', label: 'In Bearbeitung', icon: Cog },
+  { key: 'bezahlt', label: 'Bezahlt', icon: CreditCard },
+  { key: 'geliefert', label: 'Versandt', icon: Package },
+  { key: 'abgeschlossen', label: 'Abgeschlossen', icon: CheckCircle2 },
 ] as const;
 
 function statusToStep(status: string): number {
   switch (status) {
-    case "Offen": return 0;
-    case "In Bearbeitung": return 1;
-    case "Geliefert": return 3;
-    case "Bezahlt":
-    case "Abgeschlossen": return 4;
-    default: return 0;
+    case 'Offen': return 0
+    case 'In Bearbeitung': return 1
+    case 'Bezahlt': return 2
+    case 'Geliefert': return 3
+    case 'Abgeschlossen': return 4
+    default: return 0
   }
 }
 

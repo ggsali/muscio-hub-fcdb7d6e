@@ -4,7 +4,7 @@ import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const STATUSES = ["Offen", "In Bearbeitung", "Geliefert", "Bezahlt", "Abgeschlossen"] as const;
+const STATUSES = ["Offen", "In Bearbeitung", "Bezahlt", "Geliefert", "Abgeschlossen"] as const;
 type OrderStatus = typeof STATUSES[number];
 
 interface LogEntry {
@@ -58,22 +58,22 @@ export default function OrderStatusWorkflow({
 
   // Automatisch abgeleiteter "vorgeschlagener" Status
   const suggestedStatus: string | null = (() => {
-    if (totalParts === 0) return null;
-    if (allFertig && currentStatus === "In Bearbeitung") return "Geliefert";
-    if (anyInDruck && currentStatus === "Offen") return "In Bearbeitung";
-    return null;
+    if (currentStatus === 'Offen') return 'In Bearbeitung'
+    if (currentStatus === 'In Bearbeitung' && allFertig) return 'Bezahlt'
+    if (currentStatus === 'Bezahlt') return 'Geliefert'
+    if (currentStatus === 'Geliefert') return 'Abgeschlossen'
+    return null
   })();
 
   // Welche Steps sind erlaubt (klickbar)?
   const isStepAllowed = (s: OrderStatus): boolean => {
-    const cur = STATUSES.indexOf(currentStatus as OrderStatus);
-    const target = STATUSES.indexOf(s);
-    if (s === "Geliefert") return allFertig || currentStatus === "Geliefert" || cur > 2;
-    if (s === "Abgeschlossen") return currentStatus === "Bezahlt" || currentStatus === "Geliefert";
-    if (target <= cur) return true; // zurück immer möglich
-    if (target === cur + 1) return true;
-    return false;
-  };
+    const cur = STATUSES.indexOf(currentStatus as OrderStatus)
+    const target = STATUSES.indexOf(s)
+    if (cur === -1) return false
+    if (target <= cur) return true
+    if (target === cur + 1) return true
+    return false
+  }
 
   const handleStatusClick = async (newStatus: OrderStatus) => {
     if (newStatus === currentStatus) return;
