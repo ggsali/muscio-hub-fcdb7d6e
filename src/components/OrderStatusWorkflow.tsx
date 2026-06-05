@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 
 const STATUSES_MANUAL = ["Offen", "In Bearbeitung", "Bezahlt", "Geliefert", "Abgeschlossen"] as const;
 const STATUSES_WEBSITE = ["Offen", "Bezahlt", "In Bearbeitung", "Geliefert", "Abgeschlossen"] as const;
-type OrderStatus = typeof STATUSES[number];
+type OrderStatus = typeof STATUSES_MANUAL[number];
 
 interface LogEntry {
   id: string;
