@@ -1128,33 +1128,6 @@ export default function AuftragDetailPage() {
             </div>
           )}
 
-          {/* Express */}
-          {!isNew && (
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
-              <h3 className="font-semibold text-sm mb-3">Express-Lieferung</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="space-y-1.5 md:col-span-2">
-                  <Label>Bezeichnung (optional)</Label>
-                  <Input
-                    value={expressLabel}
-                    onChange={e => setExpressLabel(e.target.value)}
-                    placeholder="z.B. Express 24h, Eilversand DHL Express"
-                    className="bg-input border-border"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Kosten (CHF)</Label>
-                  <Input
-                    type="number" step="0.05" min="0"
-                    value={expressKosten || ""}
-                    onChange={e => setExpressKosten(parseFloat(e.target.value) || 0)}
-                    placeholder="0.00"
-                    className="bg-input border-border"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Nächste Aktion */}
           {!isNew && (() => {
