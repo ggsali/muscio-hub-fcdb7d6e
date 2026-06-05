@@ -310,26 +310,37 @@ export default function AnfragenPage() {
         });
       }
 
-      // Nach dem Parts-Insert — Dateien aus project-uploads in part_files kopieren
       if (attachments.length > 0 && order) {
         const { data: freshParts } = await supabase
           .from("parts").select("id, teilname").eq("order_id", order.id);
 
-        for (const att of attachments) {
-          const part = freshParts?.find(p =>
-            p.teilname === att.filename?.replace(/\.[^.]+$/, "") || p.teilname === "Teil 1"
-          ) || freshParts?.[0];
+        for (let i = 0; i < attachments.length; i++) {
+          const att = attachments[i];
+          const part = freshParts?.[i] || freshParts?.[0];
+          if (!part || !att.storage_path) continue;
 
-          if (part && att.storage_path) {
+          try {
+            const { data: fileData } = await supabase.storage
+              .from(att.bucket || "project-uploads")
+              .download(att.storage_path);
+
+            if (!fileData) continue;
+
+            const newPath = `${order.id}/${part.id}/${att.filename}`;
+            await supabase.storage
+              .from("part-files")
+              .upload(newPath, fileData, { upsert: true });
+
             await supabase.from("part_files" as any).insert({
               part_id: part.id,
               order_id: order.id,
               customer_id: customerId,
               filename: att.filename,
-              storage_path: att.storage_path,
-              bucket: att.bucket || "project-uploads",
+              storage_path: newPath,
               size_bytes: att.size_bytes || null,
             });
+          } catch (e) {
+            console.error("Datei kopieren fehlgeschlagen:", att.filename, e);
           }
         }
       }
