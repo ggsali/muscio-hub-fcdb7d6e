@@ -53,14 +53,25 @@ Deno.serve(async (req) => {
 
     // Admin-Benachrichtigung per E-Mail (Fehler hier blockieren die Anfrage nicht)
     try {
-      await supabase.functions.invoke("send-transactional-email", {
-        body: {
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const mailRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceKey}`,
+          apikey: serviceKey,
+        },
+        body: JSON.stringify({
           templateName: "neue-anfrage-admin",
           recipientEmail: "info@3dmuscio.com",
           idempotencyKey: `inquiry-admin-${crypto.randomUUID()}`,
           templateData: { name, email, telefon: telefon || null, betreff: betreff || "Anfrage", nachricht },
-        },
+        }),
       });
+      if (!mailRes.ok) {
+        console.error("Admin-Mail Fehler:", mailRes.status, await mailRes.text());
+      }
     } catch (mailErr) {
       console.error("Admin-Mail Fehler:", mailErr);
     }
