@@ -61,6 +61,7 @@ import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
 import PortalOrdersPage from "@/pages/portal/PortalOrdersPage";
 import PortalProfilePage from "@/pages/portal/PortalProfilePage";
 import PortalDokumentePage from "@/pages/portal/PortalDokumentePage";
+import PortalPasswordPage from "@/pages/portal/PortalPasswordPage";
 
 // Website Admin
 import WebsiteAdminLayout from "@/components/WebsiteAdminLayout";
@@ -153,6 +154,7 @@ const App = () => (
                 <Route path="bestellungen" element={<PortalOrdersPage />} />
                 <Route path="dokumente" element={<PortalDokumentePage />} />
                 <Route path="profil" element={<PortalProfilePage />} />
+                <Route path="passwort" element={<PortalPasswordPage />} />
               </Route>
 
               {/* Admin dashboard – everything mounted under /admin */}
