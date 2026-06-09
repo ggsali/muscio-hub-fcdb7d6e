@@ -296,12 +296,23 @@ export default function AnfragenPage() {
       }
 
       const attachments = (inq.attachments || []) as Attachment[];
+
+      const mimeMap: Record<string, string> = {
+        stl: "model/stl", "3mf": "model/3mf", obj: "model/obj", step: "model/step",
+        pdf: "application/pdf", png: "image/png", jpg: "image/jpeg",
+        jpeg: "image/jpeg", webp: "image/webp",
+      };
+
       if (attachments.length > 0) {
-        const { error: partsErr } = await supabase.from("parts").insert(
-          attachments.map(att => ({
+        // Create each part individually so we can attach its file directly via the returned id
+        for (let i = 0; i < attachments.length; i++) {
+          const att = attachments[i];
+          const teilname = att.filename?.replace(/\.[^.]+$/, "") || `Teil ${i + 1}`;
+
+          const { data: part, error: partErr } = await supabase.from("parts").insert({
             order_id: order.id,
             customer_id: customerId,
-            teilname: att.filename?.replace(/\.[^.]+$/, "") || "Teil",
+            teilname,
             material: "PLA",
             menge: 1,
             gewicht_g: 0,
@@ -312,35 +323,13 @@ export default function AnfragenPage() {
             preis_total: 0,
             status: "Ausstehend",
             notizen: `Datei: ${att.filename}`,
-          }))
-        );
-        if (partsErr) console.error("Parts insert error:", partsErr);
-      } else {
-        await supabase.from("parts").insert({
-          order_id: order.id,
-          customer_id: customerId,
-          teilname: "Teil 1",
-          material: "PLA",
-          menge: 1,
-          gewicht_g: 0,
-          druckzeit_h: 0,
-          nachbearbeitung_h: 0,
-          konstruktion_h: 0,
-          preis_pro_stueck: 0,
-          preis_total: 0,
-          status: "Ausstehend",
-          notizen: "",
-        });
-      }
+          }).select().single();
 
-      if (attachments.length > 0 && order) {
-        const { data: freshParts } = await supabase
-          .from("parts").select("id, teilname").eq("order_id", order.id);
-
-        for (let i = 0; i < attachments.length; i++) {
-          const att = attachments[i];
-          const part = freshParts?.[i] || freshParts?.[0];
-          if (!part || !att.storage_path) continue;
+          if (partErr || !part) {
+            console.error("Part insert error:", partErr);
+            continue;
+          }
+          if (!att.storage_path) continue;
 
           try {
             const { data: fileData, error: dlErr } = await supabase.storage
@@ -353,14 +342,10 @@ export default function AnfragenPage() {
             }
 
             const ext = att.filename?.split(".").pop()?.toLowerCase() || "";
-            const mimeMap: Record<string, string> = {
-              stl: "model/stl", "3mf": "model/3mf", obj: "model/obj", step: "model/step",
-              pdf: "application/pdf", png: "image/png", jpg: "image/jpeg",
-              jpeg: "image/jpeg", webp: "image/webp",
-            };
             const fileType = (fileData as Blob).type || mimeMap[ext] || "application/octet-stream";
 
-            const newPath = `${order.id}/${part.id}/${Date.now()}_${att.filename}`;
+            const safeName = (att.filename || "datei").replace(/[^\w.\-]+/g, "_");
+            const newPath = `${order.id}/${part.id}/${Date.now()}_${safeName}`;
             const { error: upErr } = await supabase.storage
               .from("part-files")
               .upload(newPath, fileData, { upsert: true, contentType: fileType });
@@ -384,6 +369,22 @@ export default function AnfragenPage() {
             console.error("Datei kopieren fehlgeschlagen:", att.filename, e);
           }
         }
+      } else {
+        await supabase.from("parts").insert({
+          order_id: order.id,
+          customer_id: customerId,
+          teilname: "Teil 1",
+          material: "PLA",
+          menge: 1,
+          gewicht_g: 0,
+          druckzeit_h: 0,
+          nachbearbeitung_h: 0,
+          konstruktion_h: 0,
+          preis_pro_stueck: 0,
+          preis_total: 0,
+          status: "Ausstehend",
+          notizen: "",
+        });
       }
 
       await (supabase.from as any)("inquiries")
