@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
 import { toast } from "sonner";
-import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare, Send } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -128,6 +128,28 @@ export default function KundeDetailPage() {
   const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien" | "anfragen">(initialTab);
   const [loading, setLoading] = useState(!isNew);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [sendingProfileEmail, setSendingProfileEmail] = useState(false);
+
+  const addressIncomplete = !customer.strasse?.trim() || !customer.plz?.trim() || !customer.ort?.trim();
+
+  const handleSendProfileCompletion = async () => {
+    if (!customer.email) { toast.error("Kunde hat keine E-Mail-Adresse"); return; }
+    setSendingProfileEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-profile-completion", {
+        body: { customer_id: id },
+      });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || error?.message || "Fehler beim Senden");
+      } else {
+        toast.success(`E-Mail an ${customer.email} gesendet`);
+      }
+    } catch (e: any) {
+      toast.error(String(e));
+    } finally {
+      setSendingProfileEmail(false);
+    }
+  };
 
   useEffect(() => {
     if (isNew) return;
@@ -255,9 +277,17 @@ export default function KundeDetailPage() {
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuContent align="end" className="w-60">
                 <DropdownMenuItem onClick={() => setEditing(true)} className="gap-2">
                   <Edit2 className="w-4 h-4" /> Bearbeiten
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleSendProfileCompletion}
+                  disabled={sendingProfileEmail || !customer.email}
+                  className="gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  {sendingProfileEmail ? "Senden..." : "Adressdaten per E-Mail anfordern"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
