@@ -836,43 +836,58 @@ const CalculatorOnlinePage = () => {
             <DialogHeader>
               <DialogTitle>Angebot anfragen</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSend} className="space-y-4">
-              <div>
-                <Label className="text-xs">Name *</Label>
-                <Input
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="mt-1"
-                />
+            <form onSubmit={handleSend} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              <p className="text-xs text-muted-foreground">
+                Damit wir deine Anfrage bearbeiten und ggf. ein Angebot zustellen können, brauchen wir deine vollständigen Kontaktdaten.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Vorname *</Label>
+                  <Input required value={form.vorname}
+                    onChange={(e) => setForm((f) => ({ ...f, vorname: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Nachname *</Label>
+                  <Input required value={form.nachname}
+                    onChange={(e) => setForm((f) => ({ ...f, nachname: e.target.value }))} className="mt-1" />
+                </div>
               </div>
               <div>
                 <Label className="text-xs">E-Mail *</Label>
-                <Input
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className="mt-1"
-                />
+                <Input type="email" required value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs">Telefon (optional)</Label>
-                <Input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="mt-1"
-                />
+                <Label className="text-xs">Telefon *</Label>
+                <Input type="tel" required value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs">Strasse & Hausnummer *</Label>
+                <Input required value={form.strasse}
+                  onChange={(e) => setForm((f) => ({ ...f, strasse: e.target.value }))} className="mt-1" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">PLZ *</Label>
+                  <Input required value={form.plz}
+                    onChange={(e) => setForm((f) => ({ ...f, plz: e.target.value }))} className="mt-1" />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Ort *</Label>
+                  <Input required value={form.ort}
+                    onChange={(e) => setForm((f) => ({ ...f, ort: e.target.value }))} className="mt-1" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Land</Label>
+                <Input value={form.land}
+                  onChange={(e) => setForm((f) => ({ ...f, land: e.target.value }))} className="mt-1" />
               </div>
               <div>
                 <Label className="text-xs">Nachricht (optional)</Label>
-                <Textarea
-                  rows={3}
-                  value={form.message}
-                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-                  className="mt-1"
-                />
+                <Textarea rows={3} value={form.message}
+                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="mt-1" />
               </div>
               <Button type="submit" className="w-full gap-2" disabled={submitting}>
                 {submitting ? (
