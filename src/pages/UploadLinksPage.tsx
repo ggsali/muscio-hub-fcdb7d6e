@@ -13,7 +13,9 @@ import { toast } from "sonner";
 
 const NAS_URL_KEY = "nas_webdav_url";
 const NAS_USER_KEY = "nas_webdav_user";
-const NAS_PASS_KEY = "nas_webdav_pass";
+// Hinweis: Passwort wird NICHT mehr persistiert (kein localStorage/sessionStorage),
+// sondern bleibt nur im React-State dieser Sitzung. Bei Tab-Wechsel/Reload muss
+// es erneut eingegeben werden — dies verhindert XSS-Diebstahl des Passworts.
 
 const PREVIEW_ORIGIN = window.location.origin;
 
@@ -68,10 +70,11 @@ export default function UploadLinksPage() {
   const [syncingFile, setSyncingFile] = useState<string | null>(null);
   const [showNasSettings, setShowNasSettings] = useState(false);
   const [nasConfig, setNasConfig] = useState({
-    // Persist URL/user (non-secret) but keep password only in sessionStorage
+    // URL/Benutzer sind nicht-geheim und dürfen persistiert werden.
     url: localStorage.getItem(NAS_URL_KEY) || "",
     user: localStorage.getItem(NAS_USER_KEY) || "",
-    pass: sessionStorage.getItem(NAS_PASS_KEY) || "",
+    // Passwort NIE persistieren — nur im React-State dieser Sitzung.
+    pass: "",
   });
 
   const [form, setForm] = useState({
@@ -137,11 +140,12 @@ export default function UploadLinksPage() {
   const saveNasConfig = () => {
     localStorage.setItem(NAS_URL_KEY, nasConfig.url);
     localStorage.setItem(NAS_USER_KEY, nasConfig.user);
-    // Password kept only in sessionStorage (cleared when tab closes) to limit XSS exposure
-    sessionStorage.setItem(NAS_PASS_KEY, nasConfig.pass);
-    localStorage.removeItem(NAS_PASS_KEY); // remove any legacy plaintext copy
+    // Passwort wird bewusst NICHT gespeichert (weder localStorage noch sessionStorage).
+    // Eventuelle Altdaten aus früheren Versionen entfernen:
+    try { localStorage.removeItem("nas_webdav_pass"); } catch {}
+    try { sessionStorage.removeItem("nas_webdav_pass"); } catch {}
     setShowNasSettings(false);
-    toast.success("NAS-Verbindung gespeichert (Passwort gilt nur für diese Browser-Sitzung)");
+    toast.success("NAS-Verbindung gespeichert (Passwort nur für diese Sitzung im Speicher)");
   };
 
   const nasConfigured = !!(nasConfig.url && nasConfig.user && nasConfig.pass);
