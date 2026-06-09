@@ -192,7 +192,7 @@ const CalculatorOnlinePage = () => {
   const [showQuote, setShowQuote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [form, setForm] = useState({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
 
   const loadMaterials = useCallback(async () => {
     const { data, error } = await supabase
