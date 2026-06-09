@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    const completionUrl = `${SITE_URL}/profil-vervollstaendigen?token=${token}`
+    const completionUrl = `${SITE_URL}/profil-ergaenzen?token=${token}`
     const displayName = [customer.vorname, customer.name].filter(Boolean).join(' ') || customer.name || ''
 
     // Send via transactional email

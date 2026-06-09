@@ -65,7 +65,7 @@ export const template = {
   component: Email,
   subject: 'Bitte ergänze deine Adressdaten bei 3DMuscio',
   displayName: 'Profil vervollständigen (Adresse)',
-  previewData: { name: 'Max Muster', completionUrl: 'https://3dmuscio.com/profil-vervollstaendigen?token=demo' },
+  previewData: { name: 'Max Muster', completionUrl: 'https://3dmuscio.com/profil-ergaenzen?token=demo' },
 } satisfies TemplateEntry
 
 const main: React.CSSProperties = { backgroundColor: '#ffffff', fontFamily: 'Inter, Arial, sans-serif', margin: 0, padding: 0 }
