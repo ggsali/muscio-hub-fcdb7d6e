@@ -72,19 +72,26 @@ Deno.serve(async (req) => {
     const completionUrl = `${SITE_URL}/profil-ergaenzen?token=${token}`
     const displayName = [customer.vorname, customer.name].filter(Boolean).join(' ') || customer.name || ''
 
-    // Send via transactional email (use admin client so auth is handled correctly)
-    const { data: sendData, error: sendErr } = await admin.functions.invoke('send-transactional-email', {
-      body: {
+    // Forward the admin's JWT to send-transactional-email (verify_jwt=true)
+    const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'apikey': anonKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         templateName: 'profil-vervollstaendigen',
         recipientEmail: customer.email,
         idempotencyKey: `profile-completion-${token}`,
         templateData: { name: displayName, completionUrl },
-      },
+      }),
     })
 
-    if (sendErr) {
-      console.error('send-transactional-email failed:', sendErr)
-      return new Response(JSON.stringify({ error: 'E-Mail-Versand fehlgeschlagen', detail: sendErr.message }), {
+    if (!sendRes.ok) {
+      const errText = await sendRes.text()
+      console.error('send-transactional-email failed:', errText)
+      return new Response(JSON.stringify({ error: 'E-Mail-Versand fehlgeschlagen', detail: errText }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
