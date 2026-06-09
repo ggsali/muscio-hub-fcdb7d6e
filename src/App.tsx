@@ -55,6 +55,7 @@ import BewertungPage from "@/pages/site/BewertungPage";
 import BlogPage from "@/pages/site/BlogPage";
 import BlogPostPage from "@/pages/site/BlogPostPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
+import ProfilErgaenzenPage from "@/pages/site/ProfilErgaenzenPage";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
@@ -147,6 +148,7 @@ const App = () => (
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/bewertung/:token?" element={<BewertungPage />} />
               <Route path="/unsubscribe" element={<UnsubscribePage />} />
+              <Route path="/profil-ergaenzen" element={<ProfilErgaenzenPage />} />
 
               {/* Customer portal */}
               <Route path="/portal" element={<PortalLayout />}>
