@@ -428,7 +428,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   sumY += 6;
 
   // Zeilen
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0);
   const sumRows: [string, string][] = [
     ["Zwischensumme", formatCHF(partsSubtotal)],
   ];
