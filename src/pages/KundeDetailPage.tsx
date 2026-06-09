@@ -130,7 +130,7 @@ export default function KundeDetailPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [sendingProfileEmail, setSendingProfileEmail] = useState(false);
 
-  const addressIncomplete = !customer.strasse?.trim() || !customer.plz?.trim() || !customer.ort?.trim();
+  
 
   const handleSendProfileCompletion = async () => {
     if (!customer.email) { toast.error("Kunde hat keine E-Mail-Adresse"); return; }
