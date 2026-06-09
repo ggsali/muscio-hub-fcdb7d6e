@@ -218,10 +218,26 @@ export async function exportOrderPDF(data: OrderExportData) {
   // ── Positions-Tabelle ───────────────────────────────────────────
   const tableY = 118;
 
+  // Berechne den effektiven Gesamtbetrag aus den angezeigten Komponenten,
+  // damit Zwischensumme/Gesamtbetrag immer mit der Positionstabelle übereinstimmen.
+  const s = data.settings;
+  const computedPartsTotal = data.parts.reduce((sum, p) => {
+    const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
+    return sum +
+      (s.setup_pauschale > 0 ? s.setup_pauschale : 0) +
+      (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
+      (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h * p.menge : 0) +
+      (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
+      (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h * p.menge : 0);
+  }, 0);
+  const effectiveTotal = data.withDetails
+    ? computedPartsTotal + (data.expressKosten ?? 0)
+    : data.umsatz_total;
+
   if (data.withDetails) {
     // Build detail rows: main part row + per-component cost breakdown
     const detailBody: any[][] = [];
-    const s = data.settings;
+
     data.parts.forEach((p, i) => {
       const nr = String(i + 1).padStart(2, "0");
       const rowBg = i % 2 === 0 ? WHITE : XLGRAY;
@@ -412,7 +428,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   sumY += 6;
 
   // Zeilen
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0);
   const sumRows: [string, string][] = [
     ["Zwischensumme", formatCHF(partsSubtotal)],
   ];
@@ -439,7 +455,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(9.5);
   doc.setTextColor(...WHITE);
   doc.text("GESAMTBETRAG", sumX + 3, sumY + 3.5);
-  doc.text(formatCHF(data.umsatz_total), pageW - margin - 3, sumY + 3.5, { align: "right" });
+  doc.text(formatCHF(effectiveTotal), pageW - margin - 3, sumY + 3.5, { align: "right" });
 
   // Grand Total box bottom edge
   const totalBoxBottom = sumY + 8; // sumY - 4 + 12
@@ -514,7 +530,7 @@ export async function exportOrderPDF(data: OrderExportData) {
       company: data.company,
       customerName: data.customerName,
       customerAdresse: data.customerAdresse,
-      amount: data.umsatz_total,
+      amount: effectiveTotal,
       invoiceNr: rechnungsNr,
     });
   }
