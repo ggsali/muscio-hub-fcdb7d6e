@@ -140,11 +140,12 @@ export default function UploadLinksPage() {
   const saveNasConfig = () => {
     localStorage.setItem(NAS_URL_KEY, nasConfig.url);
     localStorage.setItem(NAS_USER_KEY, nasConfig.user);
-    // Password kept only in sessionStorage (cleared when tab closes) to limit XSS exposure
-    sessionStorage.setItem(NAS_PASS_KEY, nasConfig.pass);
-    localStorage.removeItem(NAS_PASS_KEY); // remove any legacy plaintext copy
+    // Passwort wird bewusst NICHT gespeichert (weder localStorage noch sessionStorage).
+    // Eventuelle Altdaten aus früheren Versionen entfernen:
+    try { localStorage.removeItem("nas_webdav_pass"); } catch {}
+    try { sessionStorage.removeItem("nas_webdav_pass"); } catch {}
     setShowNasSettings(false);
-    toast.success("NAS-Verbindung gespeichert (Passwort gilt nur für diese Browser-Sitzung)");
+    toast.success("NAS-Verbindung gespeichert (Passwort nur für diese Sitzung im Speicher)");
   };
 
   const nasConfigured = !!(nasConfig.url && nasConfig.user && nasConfig.pass);
