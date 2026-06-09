@@ -51,6 +51,20 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
+    // Admin-Benachrichtigung per E-Mail (Fehler hier blockieren die Anfrage nicht)
+    try {
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "neue-anfrage-admin",
+          recipientEmail: "info@3dmuscio.com",
+          idempotencyKey: `inquiry-admin-${crypto.randomUUID()}`,
+          templateData: { name, email, telefon: telefon || null, betreff: betreff || "Anfrage", nachricht },
+        },
+      });
+    } catch (mailErr) {
+      console.error("Admin-Mail Fehler:", mailErr);
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
