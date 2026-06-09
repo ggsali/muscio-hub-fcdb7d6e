@@ -154,6 +154,7 @@ const App = () => (
                 <Route path="bestellungen" element={<PortalOrdersPage />} />
                 <Route path="dokumente" element={<PortalDokumentePage />} />
                 <Route path="profil" element={<PortalProfilePage />} />
+                <Route path="passwort" element={<PortalPasswordPage />} />
               </Route>
 
               {/* Admin dashboard – everything mounted under /admin */}
