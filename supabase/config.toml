@@ -35,3 +35,7 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.generate-order-title]
     verify_jwt = false
+  [functions.complete-customer-profile]
+    verify_jwt = false
+  [functions.send-profile-completion]
+    verify_jwt = true
