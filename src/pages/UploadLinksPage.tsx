@@ -70,10 +70,11 @@ export default function UploadLinksPage() {
   const [syncingFile, setSyncingFile] = useState<string | null>(null);
   const [showNasSettings, setShowNasSettings] = useState(false);
   const [nasConfig, setNasConfig] = useState({
-    // Persist URL/user (non-secret) but keep password only in sessionStorage
+    // URL/Benutzer sind nicht-geheim und dürfen persistiert werden.
     url: localStorage.getItem(NAS_URL_KEY) || "",
     user: localStorage.getItem(NAS_USER_KEY) || "",
-    pass: sessionStorage.getItem(NAS_PASS_KEY) || "",
+    // Passwort NIE persistieren — nur im React-State dieser Sitzung.
+    pass: "",
   });
 
   const [form, setForm] = useState({
