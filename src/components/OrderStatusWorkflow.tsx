@@ -113,7 +113,7 @@ export default function OrderStatusWorkflow({
     if (tplKey) {
       try {
         await supabase.functions.invoke("send-email", {
-          body: { kind: "status", orderId, statusKey: tplKey },
+          body: { kind: "status", orderId, statusKey: tplKey, trackingNr: trackingInput || trackingNr || null },
         });
       } catch (e) { console.error("send-email status failed", e); }
     }
