@@ -530,7 +530,7 @@ export async function exportOrderPDF(data: OrderExportData) {
       company: data.company,
       customerName: data.customerName,
       customerAdresse: data.customerAdresse,
-      amount: data.umsatz_total,
+      amount: effectiveTotal,
       invoiceNr: rechnungsNr,
     });
   }
