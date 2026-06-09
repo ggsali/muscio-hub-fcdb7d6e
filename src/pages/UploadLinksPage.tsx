@@ -13,7 +13,9 @@ import { toast } from "sonner";
 
 const NAS_URL_KEY = "nas_webdav_url";
 const NAS_USER_KEY = "nas_webdav_user";
-const NAS_PASS_KEY = "nas_webdav_pass";
+// Hinweis: Passwort wird NICHT mehr persistiert (kein localStorage/sessionStorage),
+// sondern bleibt nur im React-State dieser Sitzung. Bei Tab-Wechsel/Reload muss
+// es erneut eingegeben werden — dies verhindert XSS-Diebstahl des Passworts.
 
 const PREVIEW_ORIGIN = window.location.origin;
 
