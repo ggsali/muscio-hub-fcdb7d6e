@@ -61,6 +61,7 @@ import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
 import PortalOrdersPage from "@/pages/portal/PortalOrdersPage";
 import PortalProfilePage from "@/pages/portal/PortalProfilePage";
 import PortalDokumentePage from "@/pages/portal/PortalDokumentePage";
+import PortalPasswordPage from "@/pages/portal/PortalPasswordPage";
 
 // Website Admin
 import WebsiteAdminLayout from "@/components/WebsiteAdminLayout";
