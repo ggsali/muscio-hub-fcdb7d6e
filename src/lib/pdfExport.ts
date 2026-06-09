@@ -225,6 +225,15 @@ export async function exportOrderPDF(data: OrderExportData) {
     data.parts.forEach((p, i) => {
       const nr = String(i + 1).padStart(2, "0");
       const rowBg = i % 2 === 0 ? WHITE : XLGRAY;
+      // Berechne Part-Total aus Komponenten, damit die Summe der Unterzeilen
+      // immer mit dem angezeigten Hauptzeilen-Total übereinstimmt.
+      const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
+      const componentTotal =
+        (s.setup_pauschale > 0 ? s.setup_pauschale : 0) +
+        (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
+        (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h * p.menge : 0) +
+        (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
+        (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h * p.menge : 0);
       // Header row for the part
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -232,7 +241,7 @@ export async function exportOrderPDF(data: OrderExportData) {
         { content: `${p.menge}×`, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
         { content: "", styles: { fillColor: BLACK } },
         { content: "", styles: { fillColor: BLACK } },
-        { content: formatCHF(p.preis_total), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(componentTotal), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
       // Cost breakdown sub-rows
       if (s.setup_pauschale > 0) {
