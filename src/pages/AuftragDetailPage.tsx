@@ -261,15 +261,13 @@ export default function AuftragDetailPage() {
   const MATERIAL_AUFSCHLAG = 3.0;
 
   const recalcPart = (part: PartRow): PartRow => {
-    // Wenn ein Preis-Preset aktiv ist → Preset-Werte 1:1 verwenden (überschreibt Filament-Verkaufspreis)
-    // Sonst: manueller Filament-Verkaufspreis → direkt; Einkaufspreis → Auto × 3; Fallback Settings
+    // Filament-Verkaufspreis hat IMMER Vorrang (auch wenn Preset aktiv ist),
+    // damit Kalkulator und PDF identische Beträge zeigen.
     let effectiveVerkaufProG = activeSettings.material_verkauf_pro_g;
-    if (!selectedPresetId) {
-      if (part.filament_verkauf_pro_g != null) {
-        effectiveVerkaufProG = part.filament_verkauf_pro_g;
-      } else if (part.filament_einkauf_pro_kg != null) {
-        effectiveVerkaufProG = (part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG;
-      }
+    if (part.filament_verkauf_pro_g != null) {
+      effectiveVerkaufProG = part.filament_verkauf_pro_g;
+    } else if (part.filament_einkauf_pro_kg != null) {
+      effectiveVerkaufProG = (part.filament_einkauf_pro_kg / 1000) * MATERIAL_AUFSCHLAG;
     }
     const settingsForPart = {
       ...activeSettings,
