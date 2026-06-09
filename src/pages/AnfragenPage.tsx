@@ -246,8 +246,17 @@ export default function AnfragenPage() {
         customerId = customer?.id ?? null;
       }
       if (!customerId) {
+        // Vor- und Nachname aus inq.name splitten
+        const nameParts = (inq.name || "").trim().split(/\s+/);
+        const vorname = nameParts[0] || "";
+        const nachname = nameParts.slice(1).join(" ") || "";
         const { data, error: custErr } = await supabase.from("customers")
-          .insert({ name: inq.name, email: inq.email, telefon: inq.telefon })
+          .insert({
+            vorname,
+            name: nachname || vorname,
+            email: inq.email,
+            telefon: inq.telefon,
+          } as any)
           .select("id").single();
         if (custErr) {
           console.error("Customer insert error:", custErr);
@@ -257,13 +266,27 @@ export default function AnfragenPage() {
         customerId = data?.id ?? null;
       }
 
+      // AI-generierter Auftragstitel
+      const attachmentsRaw = (inq.attachments || []) as Attachment[];
+      const filenames = attachmentsRaw.map(a => a.filename).filter(Boolean);
+      let aiTitle: string | null = null;
+      try {
+        const { data: titleData } = await supabase.functions.invoke("generate-order-title", {
+          body: { filenames, nachricht: inq.nachricht, betreff: inq.betreff },
+        });
+        if (titleData?.title) aiTitle = titleData.title;
+      } catch (e) {
+        console.warn("AI Titel fehlgeschlagen", e);
+      }
+      const fallbackTitle = filenames[0]?.replace(/\.[^.]+$/, "") || inq.betreff || ("Anfrage vom " + new Date().toLocaleDateString("de-CH"));
+
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         customer_id: customerId,
         beschreibung: inq.nachricht || inq.betreff || "",
         datum: new Date().toISOString().split("T")[0],
         status: "Offen",
         source: "website",
-        name: inq.betreff || "Anfrage vom " + new Date().toLocaleDateString("de-CH"),
+        name: aiTitle || fallbackTitle,
       } as any).select().single();
 
       if (orderErr || !order) {

@@ -192,7 +192,7 @@ const CalculatorOnlinePage = () => {
   const [showQuote, setShowQuote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [form, setForm] = useState({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
 
   const loadMaterials = useCallback(async () => {
     const { data, error } = await supabase
@@ -240,9 +240,14 @@ const CalculatorOnlinePage = () => {
         .select("full_name, phone")
         .eq("user_id", user.id)
         .maybeSingle();
+      const fullName = profile?.full_name || user.user_metadata?.full_name || "";
+      const parts2 = fullName.trim().split(/\s+/);
+      const vorname = parts2[0] || "";
+      const nachname = parts2.slice(1).join(" ") || "";
       setForm((f) => ({
         ...f,
-        name: profile?.full_name || user.user_metadata?.full_name || "",
+        vorname,
+        nachname,
         email: user.email || "",
         phone: profile?.phone || user.user_metadata?.phone || "",
       }));
@@ -416,19 +421,63 @@ const CalculatorOnlinePage = () => {
         data: { user },
       } = await supabase.auth.getUser();
       let customer_id: string | null = null;
-      let resolvedName = form.name;
-      let resolvedEmail = form.email;
-      let resolvedPhone = form.phone;
+      let resolvedVorname = form.vorname.trim();
+      let resolvedNachname = form.nachname.trim();
+      let resolvedEmail = form.email.trim();
+      let resolvedPhone = form.phone.trim();
       if (user) {
         const { data: cust } = await supabase.from("customers").select("id, name, vorname, telefon").eq("auth_user_id", user.id).maybeSingle();
         customer_id = cust?.id ?? null;
         if (!resolvedEmail) resolvedEmail = user.email || "";
-        if (!resolvedName) {
-          const fromCust = cust ? `${cust.vorname || ""} ${cust.name || ""}`.trim() : "";
-          resolvedName = fromCust || (user.user_metadata?.full_name as string) || user.email || "Kunde";
+        if (!resolvedVorname && !resolvedNachname) {
+          resolvedVorname = cust?.vorname || "";
+          resolvedNachname = cust?.name || "";
+          if (!resolvedVorname && !resolvedNachname) {
+            const full = (user.user_metadata?.full_name as string) || "";
+            const ps = full.trim().split(/\s+/);
+            resolvedVorname = ps[0] || user.email || "Kunde";
+            resolvedNachname = ps.slice(1).join(" ") || "";
+          }
         }
         if (!resolvedPhone) resolvedPhone = (cust?.telefon as string) || "";
+      } else {
+        // Nicht eingeloggt: Kunde mit voller Adresse anlegen oder verknüpfen
+        if (resolvedEmail) {
+          const { data: existing } = await supabase.from("customers")
+            .select("id, vorname, name, strasse, plz, ort")
+            .ilike("email", resolvedEmail).maybeSingle();
+          if (existing) {
+            customer_id = existing.id;
+            // Adresse aktualisieren falls leer
+            const updates: any = {};
+            if (!existing.strasse && form.strasse) updates.strasse = form.strasse;
+            if (!existing.plz && form.plz) updates.plz = form.plz;
+            if (!existing.ort && form.ort) updates.ort = form.ort;
+            if (!existing.vorname && resolvedVorname) updates.vorname = resolvedVorname;
+            if (!existing.name && resolvedNachname) updates.name = resolvedNachname;
+            if (Object.keys(updates).length > 0) {
+              await supabase.from("customers").update(updates).eq("id", existing.id);
+            }
+          } else {
+            const { data: created } = await supabase.from("customers").insert({
+              vorname: resolvedVorname,
+              name: resolvedNachname || resolvedVorname,
+              email: resolvedEmail,
+              telefon: resolvedPhone || null,
+              strasse: form.strasse || null,
+              plz: form.plz || null,
+              ort: form.ort || null,
+              land: form.land || "Schweiz",
+              notizen: "Über Online-Kalkulator angelegt",
+            } as any).select("id").maybeSingle();
+            customer_id = created?.id ?? null;
+          }
+        }
       }
+      const resolvedName = `${resolvedVorname} ${resolvedNachname}`.trim() || resolvedEmail || "Kunde";
+      const addressLine = !user && (form.strasse || form.plz || form.ort)
+        ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}`
+        : "";
       const attachments = parts
         .filter((p) => p.storagePath)
         .map((p) => ({
@@ -442,7 +491,7 @@ const CalculatorOnlinePage = () => {
         email: resolvedEmail,
         telefon: resolvedPhone || null,
         betreff: "Preisanfrage Kalkulator",
-        nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}\n\nNachricht: ${form.message}`,
+        nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}\n\nNachricht: ${form.message}`,
         status: "Neu",
         quelle: "kalkulator",
         customer_id,
@@ -451,7 +500,7 @@ const CalculatorOnlinePage = () => {
       if (error) throw error;
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
       setShowQuote(false);
-      setForm({ name: "", email: "", phone: "", message: "" });
+      setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setParts([]);
     } catch (err) {
       console.error(err);
@@ -787,43 +836,58 @@ const CalculatorOnlinePage = () => {
             <DialogHeader>
               <DialogTitle>Angebot anfragen</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSend} className="space-y-4">
-              <div>
-                <Label className="text-xs">Name *</Label>
-                <Input
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="mt-1"
-                />
+            <form onSubmit={handleSend} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              <p className="text-xs text-muted-foreground">
+                Damit wir deine Anfrage bearbeiten und ggf. ein Angebot zustellen können, brauchen wir deine vollständigen Kontaktdaten.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Vorname *</Label>
+                  <Input required value={form.vorname}
+                    onChange={(e) => setForm((f) => ({ ...f, vorname: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Nachname *</Label>
+                  <Input required value={form.nachname}
+                    onChange={(e) => setForm((f) => ({ ...f, nachname: e.target.value }))} className="mt-1" />
+                </div>
               </div>
               <div>
                 <Label className="text-xs">E-Mail *</Label>
-                <Input
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className="mt-1"
-                />
+                <Input type="email" required value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs">Telefon (optional)</Label>
-                <Input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="mt-1"
-                />
+                <Label className="text-xs">Telefon *</Label>
+                <Input type="tel" required value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs">Strasse & Hausnummer *</Label>
+                <Input required value={form.strasse}
+                  onChange={(e) => setForm((f) => ({ ...f, strasse: e.target.value }))} className="mt-1" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">PLZ *</Label>
+                  <Input required value={form.plz}
+                    onChange={(e) => setForm((f) => ({ ...f, plz: e.target.value }))} className="mt-1" />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">Ort *</Label>
+                  <Input required value={form.ort}
+                    onChange={(e) => setForm((f) => ({ ...f, ort: e.target.value }))} className="mt-1" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Land</Label>
+                <Input value={form.land}
+                  onChange={(e) => setForm((f) => ({ ...f, land: e.target.value }))} className="mt-1" />
               </div>
               <div>
                 <Label className="text-xs">Nachricht (optional)</Label>
-                <Textarea
-                  rows={3}
-                  value={form.message}
-                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-                  className="mt-1"
-                />
+                <Textarea rows={3} value={form.message}
+                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="mt-1" />
               </div>
               <Button type="submit" className="w-full gap-2" disabled={submitting}>
                 {submitting ? (

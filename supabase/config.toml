@@ -33,3 +33,5 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.handle-email-suppression]
     verify_jwt = false
+  [functions.generate-order-title]
+    verify_jwt = false
