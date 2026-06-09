@@ -240,9 +240,14 @@ const CalculatorOnlinePage = () => {
         .select("full_name, phone")
         .eq("user_id", user.id)
         .maybeSingle();
+      const fullName = profile?.full_name || user.user_metadata?.full_name || "";
+      const parts2 = fullName.trim().split(/\s+/);
+      const vorname = parts2[0] || "";
+      const nachname = parts2.slice(1).join(" ") || "";
       setForm((f) => ({
         ...f,
-        name: profile?.full_name || user.user_metadata?.full_name || "",
+        vorname,
+        nachname,
         email: user.email || "",
         phone: profile?.phone || user.user_metadata?.phone || "",
       }));
