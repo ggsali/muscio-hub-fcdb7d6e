@@ -421,19 +421,63 @@ const CalculatorOnlinePage = () => {
         data: { user },
       } = await supabase.auth.getUser();
       let customer_id: string | null = null;
-      let resolvedName = form.name;
-      let resolvedEmail = form.email;
-      let resolvedPhone = form.phone;
+      let resolvedVorname = form.vorname.trim();
+      let resolvedNachname = form.nachname.trim();
+      let resolvedEmail = form.email.trim();
+      let resolvedPhone = form.phone.trim();
       if (user) {
         const { data: cust } = await supabase.from("customers").select("id, name, vorname, telefon").eq("auth_user_id", user.id).maybeSingle();
         customer_id = cust?.id ?? null;
         if (!resolvedEmail) resolvedEmail = user.email || "";
-        if (!resolvedName) {
-          const fromCust = cust ? `${cust.vorname || ""} ${cust.name || ""}`.trim() : "";
-          resolvedName = fromCust || (user.user_metadata?.full_name as string) || user.email || "Kunde";
+        if (!resolvedVorname && !resolvedNachname) {
+          resolvedVorname = cust?.vorname || "";
+          resolvedNachname = cust?.name || "";
+          if (!resolvedVorname && !resolvedNachname) {
+            const full = (user.user_metadata?.full_name as string) || "";
+            const ps = full.trim().split(/\s+/);
+            resolvedVorname = ps[0] || user.email || "Kunde";
+            resolvedNachname = ps.slice(1).join(" ") || "";
+          }
         }
         if (!resolvedPhone) resolvedPhone = (cust?.telefon as string) || "";
+      } else {
+        // Nicht eingeloggt: Kunde mit voller Adresse anlegen oder verknüpfen
+        if (resolvedEmail) {
+          const { data: existing } = await supabase.from("customers")
+            .select("id, vorname, name, strasse, plz, ort")
+            .ilike("email", resolvedEmail).maybeSingle();
+          if (existing) {
+            customer_id = existing.id;
+            // Adresse aktualisieren falls leer
+            const updates: any = {};
+            if (!existing.strasse && form.strasse) updates.strasse = form.strasse;
+            if (!existing.plz && form.plz) updates.plz = form.plz;
+            if (!existing.ort && form.ort) updates.ort = form.ort;
+            if (!existing.vorname && resolvedVorname) updates.vorname = resolvedVorname;
+            if (!existing.name && resolvedNachname) updates.name = resolvedNachname;
+            if (Object.keys(updates).length > 0) {
+              await supabase.from("customers").update(updates).eq("id", existing.id);
+            }
+          } else {
+            const { data: created } = await supabase.from("customers").insert({
+              vorname: resolvedVorname,
+              name: resolvedNachname || resolvedVorname,
+              email: resolvedEmail,
+              telefon: resolvedPhone || null,
+              strasse: form.strasse || null,
+              plz: form.plz || null,
+              ort: form.ort || null,
+              land: form.land || "Schweiz",
+              notizen: "Über Online-Kalkulator angelegt",
+            } as any).select("id").maybeSingle();
+            customer_id = created?.id ?? null;
+          }
+        }
       }
+      const resolvedName = `${resolvedVorname} ${resolvedNachname}`.trim() || resolvedEmail || "Kunde";
+      const addressLine = !user && (form.strasse || form.plz || form.ort)
+        ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}`
+        : "";
       const attachments = parts
         .filter((p) => p.storagePath)
         .map((p) => ({
@@ -447,7 +491,7 @@ const CalculatorOnlinePage = () => {
         email: resolvedEmail,
         telefon: resolvedPhone || null,
         betreff: "Preisanfrage Kalkulator",
-        nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}\n\nNachricht: ${form.message}`,
+        nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}\n\nNachricht: ${form.message}`,
         status: "Neu",
         quelle: "kalkulator",
         customer_id,
@@ -456,7 +500,7 @@ const CalculatorOnlinePage = () => {
       if (error) throw error;
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
       setShowQuote(false);
-      setForm({ name: "", email: "", phone: "", message: "" });
+      setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setParts([]);
     } catch (err) {
       console.error(err);
