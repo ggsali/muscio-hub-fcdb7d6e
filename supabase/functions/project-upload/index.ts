@@ -127,10 +127,23 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Sanitize filename and validate storagePath belongs to this link (prevents path traversal & cross-link writes)
+    const safeFilename = String(filename || "").replace(/[^a-zA-Z0-9._\-]/g, "_").replace(/^\.+/, "_").slice(0, 200);
+    if (!safeFilename || safeFilename === "_") {
+      return new Response(JSON.stringify({ error: "Ungültiger Dateiname" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (typeof storagePath !== "string" || !storagePath.startsWith(`${link.id}/`) || storagePath.includes("..") || storagePath.includes("\\")) {
+      return new Response(JSON.stringify({ error: "Ungültiger Speicherpfad" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // 1. Save file record FIRST (so upload is never lost even if NAS fails)
     const { data: fileRecord, error: insertError } = await supabase.from("upload_link_files").insert({
       upload_link_id: linkId,
-      filename,
+      filename: safeFilename,
       storage_path: storagePath,
       file_type: fileType || null,
       file_size_bytes: fileSize || null,
@@ -139,6 +152,7 @@ Deno.serve(async (req) => {
       uploader_name: uploaderName || null,
       uploader_email: uploaderEmail || null,
     }).select().single();
+
 
     if (insertError) {
       console.error("Insert error:", insertError);
