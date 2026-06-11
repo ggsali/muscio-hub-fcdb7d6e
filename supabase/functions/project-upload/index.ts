@@ -51,6 +51,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Sanitize filename to prevent path traversal
+    const safeName = String(filename).replace(/[^a-zA-Z0-9._\-]/g, "_").replace(/^\.+/, "_").slice(0, 200);
+    if (!safeName || safeName === "_") {
+      return new Response(JSON.stringify({ error: "Ungültiger Dateiname" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Validate token
     const { data: link, error: linkError } = await supabase
       .from("upload_links")
@@ -71,7 +79,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const storagePath = `${link.id}/${Date.now()}_${filename}`;
+    const storagePath = `${link.id}/${Date.now()}_${safeName}`;
+
 
     // Create a presigned upload URL (valid for 1 hour)
     const { data: signedData, error: signError } = await supabase.storage
