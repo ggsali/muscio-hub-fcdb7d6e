@@ -76,10 +76,8 @@ const KundeRegister = () => {
 
     if (error) {
       console.error('SignUp error details:', error)
-      toast({
-        title: 'Fehler bei der Registrierung',
+      toast.error('Fehler bei der Registrierung', {
         description: `${error.message} (Status: ${error.status})`,
-        variant: 'destructive'
       })
       setLoading(false);
       return
