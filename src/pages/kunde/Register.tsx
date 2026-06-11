@@ -85,7 +85,7 @@ const KundeRegister = () => {
 
     if (data?.user) {
       await supabase.from("profiles").upsert({
-        user_id: signUpData.user.id,
+        user_id: data.user.id,
         full_name: fullName,
         vorname: form.vorname,
         nachname: form.nachname,
