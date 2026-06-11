@@ -56,7 +56,7 @@ const KundeRegister = () => {
     const fullName = `${form.vorname.trim()} ${form.nachname.trim()}`;
     const strasseFull = `${form.strasse} ${form.hausnummer}`.trim();
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
@@ -71,13 +71,21 @@ const KundeRegister = () => {
         },
       },
     });
-    if (signUpError) {
-      setError(signUpError.message);
+
+    console.log('SignUp result:', { data, error })
+
+    if (error) {
+      console.error('SignUp error details:', error)
+      toast({
+        title: 'Fehler bei der Registrierung',
+        description: `${error.message} (Status: ${error.status})`,
+        variant: 'destructive'
+      })
       setLoading(false);
-      return;
+      return
     }
 
-    if (signUpData.user) {
+    if (data?.user) {
       await supabase.from("profiles").upsert({
         user_id: signUpData.user.id,
         full_name: fullName,
