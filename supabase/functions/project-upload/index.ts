@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
           }).catch((e) => console.log("MKCOL (ignored):", e.message));
           clearTimeout(mkcolTimer);
 
-          nasPath = `${folderPath}${filename}`;
+          nasPath = `${folderPath}${safeFilename}`;
           console.log("Uploading to NAS path:", nasPath);
 
           const putAbort = new AbortController();
