@@ -409,13 +409,13 @@ const SEOContent = () => (
             <div>
               <h3 className="font-heading text-lg font-bold text-foreground mb-2">B2B Fokus</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                3DMuscio ist spezialisiert auf Geschäftskunden. Wir unterstützen KMUs, Startups und Industrieunternehmen in der ganzen Schweiz mit zuverlässigen 3D-Druckdienstleistungen. Von der Einzelbestellung bis zur Serienfertigung — wir finden die optimale Lösung für Ihr Projekt.
+                3DMuscio ist spezialisiert auf Geschäftskunden. Wir unterstützen KMUs, Startups und Industrieunternehmen in der ganzen Schweiz mit zuverlässigen 3D-Druckdienstleistungen. Von der Einzelbestellung bis zur Serienfertigung, wir finden die optimale Lösung für Ihr Projekt.
               </p>
             </div>
             <div>
               <h3 className="font-heading text-lg font-bold text-foreground mb-2">Dateiformate und Upload</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Laden Sie Ihre 3D-Modelle einfach online hoch. Wir akzeptieren STL, OBJ und STEP Dateien bis 500MB. Unser Sofort-Kalkulator berechnet automatisch Volumen und Preis aus Ihrer STL-Datei — ohne manuelle Eingabe.
+                Laden Sie Ihre 3D-Modelle einfach online hoch. Wir akzeptieren STL, OBJ und STEP Dateien bis 500MB. Unser Sofort-Kalkulator berechnet automatisch Volumen und Preis aus Ihrer STL-Datei, ohne manuelle Eingabe.
               </p>
             </div>
           </div>
@@ -426,7 +426,7 @@ const SEOContent = () => (
         <div className="mt-10 pt-6 border-t border-border">
           <h3 className="font-heading text-lg font-bold text-foreground mb-2">Warum 3DMuscio?</h3>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Als junges Schweizer Unternehmen legen wir grossen Wert auf Qualität, Zuverlässigkeit und persönlichen Service. Jeder Auftrag wird sorgfältig geprüft und mit modernster Technologie umgesetzt. Unser Ziel ist es, Ihnen den besten 3D-Druck Service in der Schweiz zu bieten — schnell, günstig und zuverlässig.
+            Als junges Schweizer Unternehmen legen wir grossen Wert auf Qualität, Zuverlässigkeit und persönlichen Service. Jeder Auftrag wird sorgfältig geprüft und mit modernster Technologie umgesetzt. Unser Ziel ist es, Ihnen den besten 3D-Druck Service in der Schweiz zu bieten, schnell, günstig und zuverlässig.
           </p>
         </div>
       </ScrollReveal>

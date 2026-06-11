@@ -56,7 +56,7 @@ export const Footer = () => (
           </Link>
 
           <p className="text-muted-foreground text-sm leading-relaxed mb-5">
-            Professioneller 3D-Druckservice aus der Schweiz — präzise, schnell und transparent.
+            Professioneller 3D-Druckservice aus der Schweiz, präzise, schnell und transparent.
           </p>
 
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-muted/40 text-xs text-muted-foreground">
