@@ -29,6 +29,21 @@ const quickFaqs = [
   { q: "Gibt es Mengenrabatte?", a: "Ab 5 Stück 10%, ab 10 Stück 15% Rabatt. Ab grösseren Mengen sprechen wir individuelle Konditionen ab." },
 ];
 
+type UploadedAttachment = {
+  filename: string;
+  storage_path: string;
+  bucket: "project-uploads";
+  size_bytes: number;
+};
+
+const createUploadId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+const safeUploadName = (name: string) =>
+  name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "_");
+
 const ContactPage = () => {
   const [betreff, setBetreff] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
@@ -57,8 +72,12 @@ const ContactPage = () => {
 
   const handleFiles = (fl: FileList | null) => {
     if (!fl) return;
-    const next = Array.from(fl).filter(f => !attachments.find(a => a.name === f.name));
-    setAttachments(p => [...p, ...next]);
+    setAttachments(prev => {
+      const existing = new Set(prev.map(f => `${f.name}-${f.size}-${f.lastModified}`));
+      const next = Array.from(fl).filter(f => !existing.has(`${f.name}-${f.size}-${f.lastModified}`));
+      return [...prev, ...next];
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,32 +99,30 @@ const ContactPage = () => {
         customer_id = cust?.id ?? null;
       }
 
-      // Dateien in Storage hochladen, damit sie im Admin-Panel sichtbar sind
-      const uploaded: { filename: string; storage_path: string; bucket: string; size_bytes: number; mime_type: string }[] = [];
+      // Dateien zuerst hochladen und danach exakt wie Kalkulator-Anhänge an der Anfrage speichern.
+      const inquiryId = createUploadId();
+      const uploaded: UploadedAttachment[] = [];
       if (attachments.length > 0) {
-        const folder = `inquiries/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         for (const file of attachments) {
-          const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
-          const path = `${folder}/${safeName}`;
+          const path = `inquiries/${inquiryId}/${createUploadId()}-${safeUploadName(file.name)}`;
           const { error: upErr } = await supabase.storage
             .from("project-uploads")
-            .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
+            .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || "application/octet-stream" });
           if (upErr) {
             console.error("Upload fehlgeschlagen", file.name, upErr);
-            toast.error(`Datei "${file.name}" konnte nicht hochgeladen werden.`);
-            continue;
+            throw new Error(`Datei "${file.name}" konnte nicht hochgeladen werden.`);
           }
           uploaded.push({
             filename: file.name,
             storage_path: path,
             bucket: "project-uploads",
             size_bytes: file.size,
-            mime_type: file.type || "application/octet-stream",
           });
         }
       }
 
       const { error } = await supabase.from("inquiries").insert({
+        id: inquiryId,
         name: form.name,
         email: form.email,
         telefon: form.phone || null,
