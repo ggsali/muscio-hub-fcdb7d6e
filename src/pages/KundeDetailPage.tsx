@@ -343,6 +343,26 @@ export default function KundeDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={showDeleteInquiryDialog} onOpenChange={setShowDeleteInquiryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anfrage wirklich löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dies löscht die Anfrage inklusive aller Nachrichten und Dateianhänge unwiderruflich.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeleteInquiryDialog(false)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => inquiryToDelete && handleDeleteInquiry(inquiryToDelete)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Ja, löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Tabs */}
       {!isNew && (
         <div className="flex gap-1 border-b border-border">
