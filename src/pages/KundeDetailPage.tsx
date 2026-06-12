@@ -491,6 +491,16 @@ export default function KundeDetailPage() {
                       </div>
                     </div>
                   )}
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+                      onClick={() => { setInquiryToDelete(sel); setShowDeleteInquiryDialog(true); }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Löschen
+                    </Button>
+                  </div>
                 </div>
               );
             })()}
