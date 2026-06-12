@@ -128,6 +128,8 @@ export default function KundeDetailPage() {
   const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien" | "anfragen">(initialTab);
   const [loading, setLoading] = useState(!isNew);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteInquiryDialog, setShowDeleteInquiryDialog] = useState(false);
+  const [inquiryToDelete, setInquiryToDelete] = useState<InquiryRow | null>(null);
   const [sendingProfileEmail, setSendingProfileEmail] = useState(false);
 
   
@@ -241,6 +243,30 @@ export default function KundeDetailPage() {
     navigate("/admin/kunden");
   };
 
+  const handleDeleteInquiry = async (inq: InquiryRow) => {
+    try {
+      if (inq.attachments && inq.attachments.length > 0) {
+        const paths = inq.attachments
+          .map(a => a.storage_path)
+          .filter(Boolean) as string[];
+        if (paths.length > 0) {
+          await supabase.storage.from("project-uploads").remove(paths);
+        }
+      }
+      await (supabase.from as any)("inquiry_messages").delete().eq("inquiry_id", inq.id);
+      await (supabase.from as any)("inquiries").delete().eq("id", inq.id);
+      setInquiries(prev => prev.filter(i => i.id !== inq.id));
+      if (selectedInquiryId === inq.id) setSelectedInquiryId(null);
+      toast.success("Anfrage gelöscht");
+    } catch (e: any) {
+      console.error("Delete inquiry error:", e);
+      toast.error("Fehler beim Löschen: " + (e?.message || String(e)));
+    } finally {
+      setInquiryToDelete(null);
+      setShowDeleteInquiryDialog(false);
+    }
+  };
+
   const field = (label: string, key: keyof Customer, placeholder?: string, colSpan = 1) => (
     <div className={`space-y-1.5 ${colSpan === 2 ? "col-span-2" : ""}`}>
       <Label>{label}</Label>
@@ -311,6 +337,26 @@ export default function KundeDetailPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              Ja, löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteInquiryDialog} onOpenChange={setShowDeleteInquiryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anfrage wirklich löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dies löscht die Anfrage inklusive aller Nachrichten und Dateianhänge unwiderruflich.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeleteInquiryDialog(false)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => inquiryToDelete && handleDeleteInquiry(inquiryToDelete)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Ja, löschen
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -465,6 +511,16 @@ export default function KundeDetailPage() {
                       </div>
                     </div>
                   )}
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+                      onClick={() => { setInquiryToDelete(sel); setShowDeleteInquiryDialog(true); }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Löschen
+                    </Button>
+                  </div>
                 </div>
               );
             })()}

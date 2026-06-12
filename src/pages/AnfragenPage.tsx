@@ -3,11 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft, Download, Paperclip, Loader2 } from "lucide-react";
+import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft, Download, Paperclip, Loader2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import InquiryChat from "@/components/InquiryChat";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Attachment = {
   filename: string;
@@ -66,7 +70,7 @@ const STATUSES = ["Neu", "In Bearbeitung", "Erledigt", "Geschlossen"] as const;
 
 function InquiryDetail({
   selected, notiz, setNotiz, saving,
-  onSaveNotiz, onUpdateStatus, onCreateOrder, onClose, navigate
+  onSaveNotiz, onUpdateStatus, onCreateOrder, onClose, navigate, onDelete
 }: {
   selected: Inquiry;
   notiz: string;
@@ -77,6 +81,7 @@ function InquiryDetail({
   onCreateOrder: () => void;
   onClose?: () => void;
   navigate: (path: string) => void;
+  onDelete: () => void;
 }) {
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 md:p-6 space-y-5">
@@ -188,6 +193,9 @@ function InquiryDetail({
             <User className="w-3.5 h-3.5" /> Kundenprofil öffnen
           </Button>
         )}
+        <Button size="sm" className="w-full gap-2" variant="outline" onClick={onDelete}>
+          <Trash2 className="w-3.5 h-3.5" /> Löschen
+        </Button>
       </div>
     </div>
   );
@@ -202,6 +210,8 @@ export default function AnfragenPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [creatingOrderFor, setCreatingOrderFor] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingInquiry, setDeletingInquiry] = useState<Inquiry | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -411,6 +421,35 @@ export default function AnfragenPage() {
     if (isMobile) setSheetOpen(true);
   };
 
+  const handleDeleteInquiry = async (inq: Inquiry) => {
+    setDeletingInquiry(inq);
+    try {
+      // Delete attachments from storage
+      if (inq.attachments && inq.attachments.length > 0) {
+        const paths = inq.attachments
+          .map(a => a.storage_path)
+          .filter(Boolean) as string[];
+        if (paths.length > 0) {
+          await supabase.storage.from("project-uploads").remove(paths);
+        }
+      }
+      // Delete related messages
+      await (supabase.from as any)("inquiry_messages").delete().eq("inquiry_id", inq.id);
+      // Delete inquiry
+      await (supabase.from as any)("inquiries").delete().eq("id", inq.id);
+      setInquiries(prev => prev.filter(i => i.id !== inq.id));
+      if (selected?.id === inq.id) setSelected(null);
+      setSheetOpen(false);
+      toast({ title: "Anfrage gelöscht" });
+    } catch (e: any) {
+      console.error("Delete inquiry error:", e);
+      toast({ title: "Fehler beim Löschen", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setDeletingInquiry(null);
+      setShowDeleteDialog(false);
+    }
+  };
+
   const filtered = filter === "alle" ? inquiries : inquiries.filter(i => i.status === filter);
   const newCount = inquiries.filter(i => i.status === "Neu").length;
 
@@ -531,9 +570,10 @@ export default function AnfragenPage() {
                 saving={saving}
                 onSaveNotiz={saveNotiz}
                 onUpdateStatus={updateStatus}
-                onCreateOrder={createOrder}
+                onCreateOrder={() => createOrder()}
                 onClose={() => setSheetOpen(false)}
                 navigate={navigate}
+                onDelete={() => { setShowDeleteDialog(true); }}
               />
             )}
           </SheetContent>
@@ -547,8 +587,9 @@ export default function AnfragenPage() {
             saving={saving}
             onSaveNotiz={saveNotiz}
             onUpdateStatus={updateStatus}
-            onCreateOrder={createOrder}
+            onCreateOrder={() => createOrder()}
             navigate={navigate}
+            onDelete={() => { setShowDeleteDialog(true); }}
           />
         </div>
       ) : (
@@ -559,6 +600,27 @@ export default function AnfragenPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anfrage wirklich löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dies löscht die Anfrage inklusive aller Nachrichten und Dateianhänge unwiderruflich.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => selected && handleDeleteInquiry(selected)}
+              disabled={!!deletingInquiry}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deletingInquiry ? "Löschen..." : "Ja, löschen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
