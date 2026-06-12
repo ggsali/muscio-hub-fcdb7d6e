@@ -600,6 +600,27 @@ export default function AnfragenPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anfrage wirklich löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dies löscht die Anfrage inklusive aller Nachrichten und Dateianhänge unwiderruflich.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => selected && handleDeleteInquiry(selected)}
+              disabled={!!deletingInquiry}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deletingInquiry ? "Löschen..." : "Ja, löschen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
