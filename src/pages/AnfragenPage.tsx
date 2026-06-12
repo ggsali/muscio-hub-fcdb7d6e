@@ -471,12 +471,13 @@ export default function AnfragenPage() {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 font-medium flex items-center gap-1.5">
                       {inq.betreff}
-                      {inq.attachments && inq.attachments.length > 0 && (
-                        <span className="inline-flex items-center gap-0.5 text-primary">
-                          <Paperclip className="w-3 h-3" />{inq.attachments.length}
-                        </span>
-                      )}
                     </p>
+                    {inq.attachments && inq.attachments.length > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                        <Paperclip className="w-3 h-3" />
+                        {inq.attachments.length} Datei{inq.attachments.length > 1 ? 'en' : ''}
+                      </span>
+                    )}
                     <p className="text-xs text-muted-foreground truncate mt-1">{inq.nachricht}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
