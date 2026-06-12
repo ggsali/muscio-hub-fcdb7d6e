@@ -79,6 +79,32 @@ const ContactPage = () => {
           .from("customers").select("id").eq("email", form.email).maybeSingle();
         customer_id = cust?.id ?? null;
       }
+
+      // Dateien in Storage hochladen, damit sie im Admin-Panel sichtbar sind
+      const uploaded: { filename: string; storage_path: string; bucket: string; size_bytes: number; mime_type: string }[] = [];
+      if (attachments.length > 0) {
+        const folder = `inquiries/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        for (const file of attachments) {
+          const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
+          const path = `${folder}/${safeName}`;
+          const { error: upErr } = await supabase.storage
+            .from("project-uploads")
+            .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
+          if (upErr) {
+            console.error("Upload fehlgeschlagen", file.name, upErr);
+            toast.error(`Datei "${file.name}" konnte nicht hochgeladen werden.`);
+            continue;
+          }
+          uploaded.push({
+            filename: file.name,
+            storage_path: path,
+            bucket: "project-uploads",
+            size_bytes: file.size,
+            mime_type: file.type || "application/octet-stream",
+          });
+        }
+      }
+
       const { error } = await supabase.from("inquiries").insert({
         name: form.name,
         email: form.email,
@@ -88,6 +114,7 @@ const ContactPage = () => {
         status: "Neu",
         quelle: "website",
         customer_id,
+        attachments: uploaded,
       });
       if (error) throw error;
       toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
