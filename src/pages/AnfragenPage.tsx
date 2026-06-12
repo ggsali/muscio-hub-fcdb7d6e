@@ -193,6 +193,9 @@ function InquiryDetail({
             <User className="w-3.5 h-3.5" /> Kundenprofil öffnen
           </Button>
         )}
+        <Button size="sm" className="w-full gap-2" variant="outline" onClick={onDelete}>
+          <Trash2 className="w-3.5 h-3.5" /> Löschen
+        </Button>
       </div>
     </div>
   );
