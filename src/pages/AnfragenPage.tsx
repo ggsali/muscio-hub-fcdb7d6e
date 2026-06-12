@@ -587,8 +587,9 @@ export default function AnfragenPage() {
             saving={saving}
             onSaveNotiz={saveNotiz}
             onUpdateStatus={updateStatus}
-            onCreateOrder={createOrder}
+            onCreateOrder={() => createOrder()}
             navigate={navigate}
+            onDelete={() => { setShowDeleteDialog(true); }}
           />
         </div>
       ) : (
