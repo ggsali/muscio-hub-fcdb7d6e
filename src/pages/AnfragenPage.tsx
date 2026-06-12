@@ -209,7 +209,7 @@ export default function AnfragenPage() {
   const load = async () => {
     setLoading(true);
     const { data } = await (supabase.from as any)("inquiries")
-      .select("*")
+      .select("*, attachments")
       .order("created_at", { ascending: false });
     if (data) setInquiries(data as Inquiry[]);
     setLoading(false);
