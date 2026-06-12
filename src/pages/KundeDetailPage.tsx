@@ -243,6 +243,30 @@ export default function KundeDetailPage() {
     navigate("/admin/kunden");
   };
 
+  const handleDeleteInquiry = async (inq: InquiryRow) => {
+    try {
+      if (inq.attachments && inq.attachments.length > 0) {
+        const paths = inq.attachments
+          .map(a => a.storage_path)
+          .filter(Boolean) as string[];
+        if (paths.length > 0) {
+          await supabase.storage.from("project-uploads").remove(paths);
+        }
+      }
+      await (supabase.from as any)("inquiry_messages").delete().eq("inquiry_id", inq.id);
+      await (supabase.from as any)("inquiries").delete().eq("id", inq.id);
+      setInquiries(prev => prev.filter(i => i.id !== inq.id));
+      if (selectedInquiryId === inq.id) setSelectedInquiryId(null);
+      toast.success("Anfrage gelöscht");
+    } catch (e: any) {
+      console.error("Delete inquiry error:", e);
+      toast.error("Fehler beim Löschen: " + (e?.message || String(e)));
+    } finally {
+      setInquiryToDelete(null);
+      setShowDeleteInquiryDialog(false);
+    }
+  };
+
   const field = (label: string, key: keyof Customer, placeholder?: string, colSpan = 1) => (
     <div className={`space-y-1.5 ${colSpan === 2 ? "col-span-2" : ""}`}>
       <Label>{label}</Label>
