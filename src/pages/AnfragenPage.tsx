@@ -210,6 +210,8 @@ export default function AnfragenPage() {
   const [saving, setSaving] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [creatingOrderFor, setCreatingOrderFor] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingInquiry, setDeletingInquiry] = useState<Inquiry | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
