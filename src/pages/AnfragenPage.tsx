@@ -421,6 +421,35 @@ export default function AnfragenPage() {
     if (isMobile) setSheetOpen(true);
   };
 
+  const handleDeleteInquiry = async (inq: Inquiry) => {
+    setDeletingInquiry(inq);
+    try {
+      // Delete attachments from storage
+      if (inq.attachments && inq.attachments.length > 0) {
+        const paths = inq.attachments
+          .map(a => a.storage_path)
+          .filter(Boolean) as string[];
+        if (paths.length > 0) {
+          await supabase.storage.from("project-uploads").remove(paths);
+        }
+      }
+      // Delete related messages
+      await (supabase.from as any)("inquiry_messages").delete().eq("inquiry_id", inq.id);
+      // Delete inquiry
+      await (supabase.from as any)("inquiries").delete().eq("id", inq.id);
+      setInquiries(prev => prev.filter(i => i.id !== inq.id));
+      if (selected?.id === inq.id) setSelected(null);
+      setSheetOpen(false);
+      toast({ title: "Anfrage gelöscht" });
+    } catch (e: any) {
+      console.error("Delete inquiry error:", e);
+      toast({ title: "Fehler beim Löschen", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setDeletingInquiry(null);
+      setShowDeleteDialog(false);
+    }
+  };
+
   const filtered = filter === "alle" ? inquiries : inquiries.filter(i => i.status === filter);
   const newCount = inquiries.filter(i => i.status === "Neu").length;
 
