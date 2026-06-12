@@ -128,6 +128,8 @@ export default function KundeDetailPage() {
   const [activeTab, setActiveTab] = useState<"kontakt" | "auftraege" | "teile" | "dateien" | "anfragen">(initialTab);
   const [loading, setLoading] = useState(!isNew);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeleteInquiryDialog, setShowDeleteInquiryDialog] = useState(false);
+  const [inquiryToDelete, setInquiryToDelete] = useState<InquiryRow | null>(null);
   const [sendingProfileEmail, setSendingProfileEmail] = useState(false);
 
   
