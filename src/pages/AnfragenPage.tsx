@@ -570,9 +570,10 @@ export default function AnfragenPage() {
                 saving={saving}
                 onSaveNotiz={saveNotiz}
                 onUpdateStatus={updateStatus}
-                onCreateOrder={createOrder}
+                onCreateOrder={() => createOrder()}
                 onClose={() => setSheetOpen(false)}
                 navigate={navigate}
+                onDelete={() => { setShowDeleteDialog(true); }}
               />
             )}
           </SheetContent>
