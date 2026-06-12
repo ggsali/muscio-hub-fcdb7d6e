@@ -70,7 +70,7 @@ const STATUSES = ["Neu", "In Bearbeitung", "Erledigt", "Geschlossen"] as const;
 
 function InquiryDetail({
   selected, notiz, setNotiz, saving,
-  onSaveNotiz, onUpdateStatus, onCreateOrder, onClose, navigate
+  onSaveNotiz, onUpdateStatus, onCreateOrder, onClose, navigate, onDelete
 }: {
   selected: Inquiry;
   notiz: string;
@@ -81,6 +81,7 @@ function InquiryDetail({
   onCreateOrder: () => void;
   onClose?: () => void;
   navigate: (path: string) => void;
+  onDelete: () => void;
 }) {
   return (
     <div className="flex flex-col h-full overflow-y-auto p-4 md:p-6 space-y-5">
