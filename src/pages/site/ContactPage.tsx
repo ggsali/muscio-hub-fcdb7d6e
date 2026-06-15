@@ -196,32 +196,42 @@ const ContactPage = () => {
                     value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
                 </div>
                 <div>
-                  <Label className="text-xs font-medium">Dateien anhängen (optional)</Label>
+                  <Label className="text-xs font-medium">Dateien & Bilder anhängen (optional)</Label>
                   <input
                     ref={fileInputRef} type="file" multiple
-                    accept=".stl,.3mf,.step,.obj,.pdf,.png,.jpg,.jpeg"
+                    accept=".stl,.3mf,.step,.obj,.pdf,image/*"
                     className="hidden"
                     onChange={e => handleFiles(e.target.files)}
                   />
                   <button type="button" onClick={() => fileInputRef.current?.click()}
                     className="mt-1 w-full flex items-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:bg-muted/30 transition-all">
                     <Paperclip className="w-4 h-4 shrink-0" />
-                    Dateien auswählen (STL, 3MF, STEP, OBJ, PDF…)
+                    Dateien & Bilder auswählen (STL, 3MF, STEP, OBJ, PDF, JPG, PNG …)
                   </button>
+
                   {attachments.length > 0 && (
                     <div className="mt-2 space-y-1.5">
-                      {attachments.map((f, i) => (
-                        <div key={i} className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg">
-                          <FileBox className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <span className="text-xs flex-1 truncate">{f.name}</span>
-                          <span className="text-xs text-muted-foreground">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
-                          <button type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-foreground">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
+                      {attachments.map((f, i) => {
+                        const isImage = f.type.startsWith("image/");
+                        const url = isImage ? URL.createObjectURL(f) : null;
+                        return (
+                          <div key={i} className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg">
+                            {isImage && url ? (
+                              <img src={url} alt={f.name} className="w-10 h-10 rounded object-cover shrink-0" onLoad={() => URL.revokeObjectURL(url)} />
+                            ) : (
+                              <FileBox className="w-3.5 h-3.5 text-primary shrink-0" />
+                            )}
+                            <span className="text-xs flex-1 truncate">{f.name}</span>
+                            <span className="text-xs text-muted-foreground">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                            <button type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-foreground">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
+
                 </div>
                 <Button size="lg" type="submit" className="w-full gap-2" disabled={submitting}>
                   {submitting

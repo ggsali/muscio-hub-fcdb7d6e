@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF } from "@/lib/calc";
-import { Package, Download, FileText, ShoppingBag, ChevronDown, ChevronUp } from "lucide-react";
+import { Package, Download, FileText, ShoppingBag, ChevronDown, ChevronUp, Paperclip, Image as ImageIcon } from "lucide-react";
 import OrderProgress from "@/components/portal/OrderProgress";
 
 export default function PortalOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [parts, setParts] = useState<Record<string, any[]>>({});
   const [bills, setBills] = useState<Record<string, any[]>>({});
+  const [orderFiles, setOrderFiles] = useState<Record<string, any[]>>({});
   const [statusLog, setStatusLog] = useState<Record<string, any[]>>({});
+
   const [shopOrders, setShopOrders] = useState<any[]>([]);
   const [shopItems, setShopItems] = useState<Record<string, any[]>>({});
   const [inquiries, setInquiries] = useState<any[]>([]);
@@ -32,10 +34,11 @@ export default function PortalOrdersPage() {
         setOrders(ord || []);
         if (ord?.length) {
           const ids = ord.map(o => o.id);
-          const [{ data: p }, { data: b }, { data: sl }] = await Promise.all([
+          const [{ data: p }, { data: b }, { data: sl }, { data: ul }] = await Promise.all([
             supabase.from("parts").select("*").in("order_id", ids),
             supabase.from("bills").select("*").in("order_id", ids),
             supabase.from("order_status_log").select("*").in("order_id", ids).order("created_at", { ascending: false }),
+            supabase.from("upload_links").select("id, order_id, customer_id, title").in("order_id", ids),
           ]);
           const groupBy = (rows: any[] | null, key: string) => {
             const g: Record<string, any[]> = {};
@@ -45,8 +48,33 @@ export default function PortalOrdersPage() {
           setParts(groupBy(p, "order_id"));
           setBills(groupBy(b, "order_id"));
           setStatusLog(groupBy(sl, "order_id"));
+
+          // Fetch part_files for parts in these orders
+          const partIds = (p || []).map(x => x.id);
+          const [{ data: pf }, { data: ulf }] = await Promise.all([
+            partIds.length ? supabase.from("part_files").select("*").in("part_id", partIds) : Promise.resolve({ data: [] as any[] }),
+            (ul && ul.length) ? supabase.from("upload_link_files").select("*").in("upload_link_id", ul.map(l => l.id)) : Promise.resolve({ data: [] as any[] }),
+          ]);
+          // Combine into per-order file list
+          const filesByOrder: Record<string, any[]> = {};
+          const partOrderMap: Record<string, string> = {};
+          for (const part of p || []) partOrderMap[part.id] = part.order_id;
+          for (const f of pf || []) {
+            const oid = partOrderMap[f.part_id];
+            if (!oid) continue;
+            (filesByOrder[oid] ||= []).push({ ...f, source: "part", bucket: "part-files" });
+          }
+          const linkOrderMap: Record<string, string> = {};
+          for (const l of ul || []) if (l.order_id) linkOrderMap[l.id] = l.order_id;
+          for (const f of ulf || []) {
+            const oid = linkOrderMap[f.upload_link_id];
+            if (!oid) continue;
+            (filesByOrder[oid] ||= []).push({ ...f, source: "upload-link", bucket: "project-uploads" });
+          }
+          setOrderFiles(filesByOrder);
         }
       }
+
 
       // Shop-Bestellungen
       const { data: so } = await supabase
@@ -82,6 +110,18 @@ export default function PortalOrdersPage() {
       a.click();
     }
   };
+
+  const downloadFromBucket = async (bucket: string, path: string, filename: string) => {
+    const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60);
+    if (data?.signedUrl) {
+      const a = document.createElement("a");
+      a.href = data.signedUrl;
+      a.download = filename;
+      a.target = "_blank";
+      a.click();
+    }
+  };
+
 
   const toggle = (id: string) => setExpanded(e => ({ ...e, [id]: !e[id] }));
 
@@ -122,7 +162,9 @@ export default function PortalOrdersPage() {
               const isOpen = expanded[o.id];
               const orderParts = parts[o.id] || [];
               const orderBills = bills[o.id] || [];
+              const oFiles = orderFiles[o.id] || [];
               const orderLog = statusLog[o.id] || [];
+
               return (
                 <div key={o.id} className="bg-card border border-border rounded-lg overflow-hidden">
                   <button onClick={() => toggle(o.id)} className="w-full p-5 text-left hover:bg-muted/30 transition-colors">
@@ -177,6 +219,31 @@ export default function PortalOrdersPage() {
                         </div>
                       )}
 
+                      {oFiles.length > 0 && (
+                        <div className="pt-3 border-t border-border/50">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <Paperclip className="w-3 h-3" /> Hochgeladene Dateien ({oFiles.length})
+                          </p>
+                          <div className="space-y-1.5">
+                            {oFiles.map(f => {
+                              const isImg = (f.file_type || "").startsWith("image/");
+                              return (
+                                <button
+                                  key={`${f.source}-${f.id}`}
+                                  onClick={() => downloadFromBucket(f.bucket, f.storage_path, f.filename || "datei")}
+                                  className="w-full flex items-center gap-2 text-xs bg-card rounded px-3 py-2 border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors text-left"
+                                >
+                                  {isImg ? <ImageIcon className="w-3.5 h-3.5 text-primary shrink-0" /> : <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                                  <span className="flex-1 truncate">{f.filename}</span>
+                                  {f.source === "upload-link" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Upload-Link</span>}
+                                  <Download className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="pt-3 border-t border-border/50">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Dokumente</p>
                         {orderBills.filter(b => b.file_path).length === 0 ? (
@@ -199,6 +266,7 @@ export default function PortalOrdersPage() {
                           </div>
                         )}
                       </div>
+
                     </div>
                   )}
                 </div>

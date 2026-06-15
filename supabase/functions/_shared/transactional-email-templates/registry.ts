@@ -14,6 +14,7 @@ import { template as welcome } from './welcome.tsx'
 import { template as bewertung } from './bewertung.tsx'
 import { template as neueAnfrageAdmin } from './neue-anfrage-admin.tsx'
 import { template as profilVervollstaendigen } from './profil-vervollstaendigen.tsx'
+import { template as dateiAnforderung } from './datei-anforderung.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -21,4 +22,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'bewertung': bewertung,
   'neue-anfrage-admin': neueAnfrageAdmin,
   'profil-vervollstaendigen': profilVervollstaendigen,
+  'datei-anforderung': dateiAnforderung,
 }
+
