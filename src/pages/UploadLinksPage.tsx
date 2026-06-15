@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus, Copy, Check, ExternalLink, Trash2, Link2, FileText,
-  Image, Box, Download, RefreshCw, Calendar, User, Wifi, WifiOff, Upload
+  Image, Box, Download, RefreshCw, Calendar, User, Wifi, WifiOff, Upload, Mail
 } from "lucide-react";
+
 import { toast } from "sonner";
 
 const NAS_URL_KEY = "nas_webdav_url";
@@ -45,7 +46,7 @@ interface UploadFile {
   upload_link_id: string;
 }
 
-interface Customer { id: string; name: string; vorname: string | null; firma: string | null; }
+interface Customer { id: string; name: string; vorname: string | null; firma: string | null; email?: string | null; }
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -89,7 +90,7 @@ export default function UploadLinksPage() {
     const [{ data: l }, { data: f }, { data: c }] = await Promise.all([
       supabase.from("upload_links").select("*").order("created_at", { ascending: false }),
       supabase.from("upload_link_files").select("*").order("created_at", { ascending: false }),
-      supabase.from("customers").select("id, name, vorname, firma").order("name"),
+      supabase.from("customers").select("id, name, vorname, firma, email").order("name"),
     ]);
     if (l) setLinks(l as UploadLink[]);
     if (f) setFiles(f as UploadFile[]);
@@ -131,6 +132,47 @@ export default function UploadLinksPage() {
     setTimeout(() => setCopiedToken(null), 2000);
     toast.success("Link kopiert");
   };
+
+  const sendLinkEmail = async (link: UploadLink) => {
+    const customer = customers.find(c => c.id === link.customer_id);
+    const targetEmail = customer?.email;
+    if (!targetEmail) {
+      const manual = window.prompt("Keine E-Mail beim Kunden hinterlegt. E-Mail-Adresse eingeben:");
+      if (!manual) return;
+      await actuallySendEmail(link, manual, customer);
+      return;
+    }
+    if (!confirm(`Upload-Link per E-Mail an ${targetEmail} senden?`)) return;
+    await actuallySendEmail(link, targetEmail, customer);
+  };
+
+  const actuallySendEmail = async (link: UploadLink, email: string, customer?: Customer) => {
+    const uploadUrl = `${PREVIEW_ORIGIN}/upload/${link.token}`;
+    const name = customer ? [customer.vorname, customer.name].filter(Boolean).join(" ").trim() : "";
+    const ablauf = link.expires_at ? new Date(link.expires_at).toLocaleDateString("de-CH") : "";
+    try {
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "datei-anforderung",
+          recipientEmail: email,
+          idempotencyKey: `upload-link-${link.id}-${Date.now()}`,
+          templateData: {
+            name,
+            uploadUrl,
+            titel: link.title,
+            beschreibung: link.beschreibung || "",
+            ablauf,
+          },
+        },
+      });
+      if (error) throw error;
+      toast.success(`E-Mail an ${email} gesendet`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Unbekannter Fehler";
+      toast.error(`Fehler beim Senden: ${msg}`);
+    }
+  };
+
 
   const downloadFile = async (f: UploadFile) => {
     const { data } = await supabase.storage.from("project-uploads").createSignedUrl(f.storage_path, 60);
