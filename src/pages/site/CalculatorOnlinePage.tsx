@@ -516,14 +516,26 @@ const CalculatorOnlinePage = () => {
       const addressLine = !user && (form.strasse || form.plz || form.ort)
         ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}`
         : "";
-      const attachments = parts
-        .filter((p) => p.storagePath)
-        .map((p) => ({
-          filename: p.fileName,
-          storage_path: p.storagePath,
-          size_bytes: p.file?.size ?? null,
-          bucket: "project-uploads",
-        }));
+      const attachments = [
+        ...parts
+          .filter((p) => p.storagePath)
+          .map((p) => ({
+            filename: p.fileName,
+            storage_path: p.storagePath,
+            size_bytes: p.file?.size ?? null,
+            bucket: "project-uploads",
+          })),
+        ...refImages
+          .filter(r => r.storagePath)
+          .map(r => ({
+            filename: r.file.name,
+            storage_path: r.storagePath,
+            size_bytes: r.file.size,
+            bucket: "project-uploads",
+            kind: "reference-image",
+          })),
+      ];
+
       const { error } = await supabase.from("inquiries").insert({
         name: resolvedName,
         email: resolvedEmail,
