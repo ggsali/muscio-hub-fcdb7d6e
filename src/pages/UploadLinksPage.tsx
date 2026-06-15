@@ -340,11 +340,20 @@ export default function UploadLinksPage() {
                 </button>
                 <span className="text-muted-foreground mx-1">·</span>
                 <button
+                  onClick={() => sendLinkEmail(link)}
+                  className="text-xs flex items-center gap-1 text-primary hover:underline"
+                  title="Link per E-Mail an Kunden senden"
+                >
+                  <Mail className="w-3 h-3" /> Mail
+                </button>
+                <span className="text-muted-foreground mx-1">·</span>
+                <button
                   onClick={() => window.open(`/upload/${link.token}`, "_blank")}
                   className="text-xs text-muted-foreground hover:text-foreground"
                 >
                   <ExternalLink className="w-3 h-3" />
                 </button>
+
                 <span className="text-muted-foreground mx-1">·</span>
                 <button
                   onClick={() => toggleLink(link.id, link.aktiv)}
