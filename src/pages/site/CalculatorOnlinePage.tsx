@@ -650,6 +650,58 @@ const CalculatorOnlinePage = () => {
               </label>
             </div>
 
+            {/* Referenzbilder */}
+            <div className="bg-card rounded-2xl border border-border p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="font-heading text-base font-bold text-foreground">📷 Referenzbilder (optional)</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Skizze, Foto oder Mockup — damit wir deine Vorstellung besser verstehen.
+                  </p>
+                </div>
+              </div>
+              <input
+                id="ref-image-input"
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  Array.from(e.target.files || []).forEach(addRefImage);
+                  e.target.value = "";
+                }}
+              />
+              <label htmlFor="ref-image-input">
+                <Button asChild variant="outline" size="sm" className="gap-2 cursor-pointer">
+                  <span><Upload className="w-3.5 h-3.5" /> Bilder hinzufügen</span>
+                </Button>
+              </label>
+              {refImages.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-4">
+                  {refImages.map(r => (
+                    <div key={r.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
+                      <img src={r.previewUrl} alt={r.file.name} className="w-full h-full object-cover" />
+                      {r.uploading && (
+                        <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeRefImage(r.id)}
+                        className="absolute top-1 right-1 bg-background/80 hover:bg-destructive hover:text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Bild entfernen"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+
+
             {parts.length > 0 && (
               <div className="space-y-3">
                 {calcs.map(({ part: p, calc }) => (
