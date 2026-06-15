@@ -193,6 +193,44 @@ const CalculatorOnlinePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
+  const [refImages, setRefImages] = useState<Array<{ id: string; file: File; storagePath?: string; uploading: boolean; previewUrl: string }>>([]);
+
+  const addRefImage = useCallback(async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Nur Bilddateien erlaubt");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Bild zu gross (max. 20 MB)");
+      return;
+    }
+    const id = crypto.randomUUID();
+    const previewUrl = URL.createObjectURL(file);
+    setRefImages(prev => [...prev, { id, file, uploading: true, previewUrl }]);
+    try {
+      const safe = file.name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "_");
+      const path = `reference-images/${id}/${safe}`;
+      const { error } = await supabase.storage.from("project-uploads").upload(path, file, {
+        upsert: false,
+        contentType: file.type || "image/jpeg",
+      });
+      if (error) throw error;
+      setRefImages(prev => prev.map(r => r.id === id ? { ...r, storagePath: path, uploading: false } : r));
+    } catch (e) {
+      console.error("Bild-Upload fehlgeschlagen", e);
+      toast.error("Bild-Upload fehlgeschlagen");
+      setRefImages(prev => prev.filter(r => r.id !== id));
+    }
+  }, []);
+
+  const removeRefImage = (id: string) => {
+    setRefImages(prev => {
+      const t = prev.find(r => r.id === id);
+      if (t?.previewUrl) URL.revokeObjectURL(t.previewUrl);
+      return prev.filter(r => r.id !== id);
+    });
+  };
+
 
   const loadMaterials = useCallback(async () => {
     const { data, error } = await supabase
