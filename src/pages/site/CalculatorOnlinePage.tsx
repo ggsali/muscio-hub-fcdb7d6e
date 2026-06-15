@@ -552,6 +552,9 @@ const CalculatorOnlinePage = () => {
       setShowQuote(false);
       setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setParts([]);
+      refImages.forEach(r => { if (r.previewUrl) URL.revokeObjectURL(r.previewUrl); });
+      setRefImages([]);
+
     } catch (err) {
       console.error(err);
       toast.error("Fehler beim Senden — bitte später erneut versuchen.");
