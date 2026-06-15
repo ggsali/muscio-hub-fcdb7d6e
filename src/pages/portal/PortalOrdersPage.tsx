@@ -111,6 +111,18 @@ export default function PortalOrdersPage() {
     }
   };
 
+  const downloadFromBucket = async (bucket: string, path: string, filename: string) => {
+    const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60);
+    if (data?.signedUrl) {
+      const a = document.createElement("a");
+      a.href = data.signedUrl;
+      a.download = filename;
+      a.target = "_blank";
+      a.click();
+    }
+  };
+
+
   const toggle = (id: string) => setExpanded(e => ({ ...e, [id]: !e[id] }));
 
   if (loading) return <div className="p-8 text-center text-muted-foreground text-sm">Laden...</div>;
