@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF } from "@/lib/calc";
-import { Package, Download, FileText, ShoppingBag, ChevronDown, ChevronUp } from "lucide-react";
+import { Package, Download, FileText, ShoppingBag, ChevronDown, ChevronUp, Paperclip, Image as ImageIcon } from "lucide-react";
 import OrderProgress from "@/components/portal/OrderProgress";
 
 export default function PortalOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [parts, setParts] = useState<Record<string, any[]>>({});
   const [bills, setBills] = useState<Record<string, any[]>>({});
+  const [orderFiles, setOrderFiles] = useState<Record<string, any[]>>({});
   const [statusLog, setStatusLog] = useState<Record<string, any[]>>({});
+
   const [shopOrders, setShopOrders] = useState<any[]>([]);
   const [shopItems, setShopItems] = useState<Record<string, any[]>>({});
   const [inquiries, setInquiries] = useState<any[]>([]);
@@ -32,10 +34,11 @@ export default function PortalOrdersPage() {
         setOrders(ord || []);
         if (ord?.length) {
           const ids = ord.map(o => o.id);
-          const [{ data: p }, { data: b }, { data: sl }] = await Promise.all([
+          const [{ data: p }, { data: b }, { data: sl }, { data: ul }] = await Promise.all([
             supabase.from("parts").select("*").in("order_id", ids),
             supabase.from("bills").select("*").in("order_id", ids),
             supabase.from("order_status_log").select("*").in("order_id", ids).order("created_at", { ascending: false }),
+            supabase.from("upload_links").select("id, order_id, customer_id, title").in("order_id", ids),
           ]);
           const groupBy = (rows: any[] | null, key: string) => {
             const g: Record<string, any[]> = {};
@@ -45,8 +48,33 @@ export default function PortalOrdersPage() {
           setParts(groupBy(p, "order_id"));
           setBills(groupBy(b, "order_id"));
           setStatusLog(groupBy(sl, "order_id"));
+
+          // Fetch part_files for parts in these orders
+          const partIds = (p || []).map(x => x.id);
+          const [{ data: pf }, { data: ulf }] = await Promise.all([
+            partIds.length ? supabase.from("part_files").select("*").in("part_id", partIds) : Promise.resolve({ data: [] as any[] }),
+            (ul && ul.length) ? supabase.from("upload_link_files").select("*").in("upload_link_id", ul.map(l => l.id)) : Promise.resolve({ data: [] as any[] }),
+          ]);
+          // Combine into per-order file list
+          const filesByOrder: Record<string, any[]> = {};
+          const partOrderMap: Record<string, string> = {};
+          for (const part of p || []) partOrderMap[part.id] = part.order_id;
+          for (const f of pf || []) {
+            const oid = partOrderMap[f.part_id];
+            if (!oid) continue;
+            (filesByOrder[oid] ||= []).push({ ...f, source: "part", bucket: "part-files" });
+          }
+          const linkOrderMap: Record<string, string> = {};
+          for (const l of ul || []) if (l.order_id) linkOrderMap[l.id] = l.order_id;
+          for (const f of ulf || []) {
+            const oid = linkOrderMap[f.upload_link_id];
+            if (!oid) continue;
+            (filesByOrder[oid] ||= []).push({ ...f, source: "upload-link", bucket: "project-uploads" });
+          }
+          setOrderFiles(filesByOrder);
         }
       }
+
 
       // Shop-Bestellungen
       const { data: so } = await supabase
