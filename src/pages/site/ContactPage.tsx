@@ -211,18 +211,27 @@ const ContactPage = () => {
 
                   {attachments.length > 0 && (
                     <div className="mt-2 space-y-1.5">
-                      {attachments.map((f, i) => (
-                        <div key={i} className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg">
-                          <FileBox className="w-3.5 h-3.5 text-primary shrink-0" />
-                          <span className="text-xs flex-1 truncate">{f.name}</span>
-                          <span className="text-xs text-muted-foreground">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
-                          <button type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-foreground">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
+                      {attachments.map((f, i) => {
+                        const isImage = f.type.startsWith("image/");
+                        const url = isImage ? URL.createObjectURL(f) : null;
+                        return (
+                          <div key={i} className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg">
+                            {isImage && url ? (
+                              <img src={url} alt={f.name} className="w-10 h-10 rounded object-cover shrink-0" onLoad={() => URL.revokeObjectURL(url)} />
+                            ) : (
+                              <FileBox className="w-3.5 h-3.5 text-primary shrink-0" />
+                            )}
+                            <span className="text-xs flex-1 truncate">{f.name}</span>
+                            <span className="text-xs text-muted-foreground">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                            <button type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-foreground">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
+
                 </div>
                 <Button size="lg" type="submit" className="w-full gap-2" disabled={submitting}>
                   {submitting
