@@ -162,7 +162,9 @@ export default function PortalOrdersPage() {
               const isOpen = expanded[o.id];
               const orderParts = parts[o.id] || [];
               const orderBills = bills[o.id] || [];
+              const oFiles = orderFiles[o.id] || [];
               const orderLog = statusLog[o.id] || [];
+
               return (
                 <div key={o.id} className="bg-card border border-border rounded-lg overflow-hidden">
                   <button onClick={() => toggle(o.id)} className="w-full p-5 text-left hover:bg-muted/30 transition-colors">
@@ -217,6 +219,31 @@ export default function PortalOrdersPage() {
                         </div>
                       )}
 
+                      {oFiles.length > 0 && (
+                        <div className="pt-3 border-t border-border/50">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <Paperclip className="w-3 h-3" /> Hochgeladene Dateien ({oFiles.length})
+                          </p>
+                          <div className="space-y-1.5">
+                            {oFiles.map(f => {
+                              const isImg = (f.file_type || "").startsWith("image/");
+                              return (
+                                <button
+                                  key={`${f.source}-${f.id}`}
+                                  onClick={() => downloadFromBucket(f.bucket, f.storage_path, f.filename || "datei")}
+                                  className="w-full flex items-center gap-2 text-xs bg-card rounded px-3 py-2 border border-border/50 hover:border-primary/50 hover:bg-muted/30 transition-colors text-left"
+                                >
+                                  {isImg ? <ImageIcon className="w-3.5 h-3.5 text-primary shrink-0" /> : <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                                  <span className="flex-1 truncate">{f.filename}</span>
+                                  {f.source === "upload-link" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Upload-Link</span>}
+                                  <Download className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="pt-3 border-t border-border/50">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Dokumente</p>
                         {orderBills.filter(b => b.file_path).length === 0 ? (
@@ -239,6 +266,7 @@ export default function PortalOrdersPage() {
                           </div>
                         )}
                       </div>
+
                     </div>
                   )}
                 </div>
