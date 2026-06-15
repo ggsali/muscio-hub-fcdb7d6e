@@ -699,11 +699,10 @@ export default function AuftragDetailPage() {
       orderId = data?.id;
     } else {
       await supabase.from("orders").update(orderData as any).eq("id", id!);
-      await supabase.from("parts").delete().eq("order_id", id!);
     }
 
     if (orderId) {
-      const partsData = parts.map(p => ({
+      const partPayload = (p: PartRow) => ({
         order_id: orderId,
         customer_id: customerId || null,
         teilname: p.teilname,
@@ -719,8 +718,41 @@ export default function AuftragDetailPage() {
         notizen: p.notizen,
         filament_id: p.filament_id || null,
         filament_einkauf_pro_kg: p.filament_einkauf_pro_kg ?? null,
-      }));
-      await supabase.from("parts").insert(partsData);
+      });
+
+      if (isNew) {
+        // Fresh insert for all parts of the new order
+        const partsData = parts.map(partPayload);
+        if (partsData.length > 0) {
+          await supabase.from("parts").insert(partsData);
+        }
+      } else {
+        // In-place sync: update existing parts, insert new ones, delete removed ones.
+        // This preserves part IDs so part_files (and their FK references) stay intact.
+        const { data: existing } = await supabase.from("parts").select("id").eq("order_id", orderId);
+        const existingIds = new Set((existing || []).map((r: any) => r.id));
+        const keptIds = new Set(parts.filter(p => p.id).map(p => p.id as string));
+        const toDelete = [...existingIds].filter(eid => !keptIds.has(eid));
+
+        if (toDelete.length > 0) {
+          // Remove file rows linked to deleted parts first (storage objects stay; can be cleaned up separately)
+          await supabase.from("part_files").delete().in("part_id", toDelete);
+          await supabase.from("parts").delete().in("id", toDelete);
+        }
+
+        // Update existing parts
+        for (const p of parts) {
+          if (p.id && existingIds.has(p.id)) {
+            await supabase.from("parts").update(partPayload(p)).eq("id", p.id);
+          }
+        }
+
+        // Insert new parts (no id yet)
+        const newParts = parts.filter(p => !p.id);
+        if (newParts.length > 0) {
+          await supabase.from("parts").insert(newParts.map(partPayload));
+        }
+      }
     }
 
     setSaving(false);
