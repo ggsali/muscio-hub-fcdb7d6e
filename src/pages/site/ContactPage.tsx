@@ -196,18 +196,19 @@ const ContactPage = () => {
                     value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
                 </div>
                 <div>
-                  <Label className="text-xs font-medium">Dateien anhängen (optional)</Label>
+                  <Label className="text-xs font-medium">Dateien & Bilder anhängen (optional)</Label>
                   <input
                     ref={fileInputRef} type="file" multiple
-                    accept=".stl,.3mf,.step,.obj,.pdf,.png,.jpg,.jpeg"
+                    accept=".stl,.3mf,.step,.obj,.pdf,image/*"
                     className="hidden"
                     onChange={e => handleFiles(e.target.files)}
                   />
                   <button type="button" onClick={() => fileInputRef.current?.click()}
                     className="mt-1 w-full flex items-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:bg-muted/30 transition-all">
                     <Paperclip className="w-4 h-4 shrink-0" />
-                    Dateien auswählen (STL, 3MF, STEP, OBJ, PDF…)
+                    Dateien & Bilder auswählen (STL, 3MF, STEP, OBJ, PDF, JPG, PNG …)
                   </button>
+
                   {attachments.length > 0 && (
                     <div className="mt-2 space-y-1.5">
                       {attachments.map((f, i) => (
