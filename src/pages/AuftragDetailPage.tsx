@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
-import { exportOfferPDF, exportAuftragsbestaetiguungPDF } from "@/lib/pdfOfferExport";
+import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
 import { exportAkontoPDF, exportRestbetragPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
@@ -20,6 +20,7 @@ import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 import TimeTracker from "@/components/TimeTracker";
 import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
+import OrderUploadRequests from "@/components/OrderUploadRequests";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -669,6 +670,19 @@ export default function AuftragDetailPage() {
       company,
       expressKosten: expressBetrag,
       expressLabel,
+    });
+  };
+
+  const handleExportLieferschein = async () => {
+    const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+    exportLieferscheinPDF({
+      orderId: id || "neu",
+      datum,
+      beschreibung: fullBeschreibung,
+      customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+      parts,
+      company,
+      trackingNr,
     });
   };
 
