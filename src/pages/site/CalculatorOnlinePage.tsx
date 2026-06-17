@@ -882,7 +882,53 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
 
-
+                    {/* Per-Part Bilder / Skizzen */}
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-xs font-semibold text-foreground">📷 Bilder zu diesem Teil <span className="text-muted-foreground font-normal">(optional)</span></p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">Foto, Skizze oder Referenz — hilft uns dein Teil besser zu verstehen.</p>
+                        </div>
+                        <input
+                          id={`part-img-${p.id}`}
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            Array.from(e.target.files || []).forEach(f => addPartImage(p.id, f));
+                            e.target.value = "";
+                          }}
+                        />
+                        <label htmlFor={`part-img-${p.id}`}>
+                          <Button asChild variant="outline" size="sm" className="gap-1.5 cursor-pointer h-8 text-xs">
+                            <span><Upload className="w-3 h-3" /> Bild hinzufügen</span>
+                          </Button>
+                        </label>
+                      </div>
+                      {p.images.length > 0 && (
+                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                          {p.images.map(img => (
+                            <div key={img.id} className="relative aspect-square rounded-md overflow-hidden border border-border bg-muted group">
+                              <img src={img.previewUrl} alt={img.file.name} className="w-full h-full object-cover" />
+                              {img.uploading && (
+                                <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removePartImage(p.id, img.id)}
+                                className="absolute top-0.5 right-0.5 bg-background/80 hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="Bild entfernen"
+                              >
+                                <Trash2 className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                     {/* STEP-Hinweis */}
                     {isStepFile(p.fileName) && (
