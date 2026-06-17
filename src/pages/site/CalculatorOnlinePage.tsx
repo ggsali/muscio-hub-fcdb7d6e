@@ -29,6 +29,14 @@ const QUALITY_PRESETS: { key: string; label: string; infill: number; desc: strin
   { key: "massiv", label: "Massiv", infill: 80, desc: "Massiv = maximale Festigkeit" },
 ];
 
+interface PartImage {
+  id: string;
+  file: File;
+  storagePath?: string;
+  uploading: boolean;
+  previewUrl: string;
+}
+
 interface Part {
   id: string;
   fileName: string;
@@ -43,6 +51,7 @@ interface Part {
   hasVolume: boolean;
   estimatedWeight: number;
   previewUrl?: string;
+  images: PartImage[];
 }
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
