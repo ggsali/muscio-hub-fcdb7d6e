@@ -500,3 +500,147 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   doc.save(filename);
   return null;
 }
+
+// ─── Lieferschein ────────────────────────────────────────────────────────────
+interface LieferscheinData {
+  orderId: string;
+  datum: string;
+  beschreibung: string;
+  customerName: string;
+  customerFirma?: string;
+  customerEmail?: string;
+  customerTelefon?: string;
+  customerAdresse?: string;
+  parts: PartRow[];
+  company: CompanySettings;
+  trackingNr?: string;
+  lieferAdresse?: string;
+  notiz?: string;
+  returnBase64?: boolean;
+}
+
+export async function exportLieferscheinPDF(data: LieferscheinData) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 18;
+  const colR = pageW / 2 + 4;
+
+  const ACCENT = hexToRgb(data.company.primary_color || "#FF5A00");
+
+  const datumClean = data.datum ? new Date(data.datum + "T12:00:00").toISOString().split("T")[0].replace(/-/g, "") : new Date().toISOString().split("T")[0].replace(/-/g, "");
+  const lsNr = `LS-${datumClean}-${data.orderId.slice(0, 6).toUpperCase()}`;
+
+  await drawHeader(doc, data.company, pageW, margin);
+
+  // Titel
+  doc.setFont("helvetica", "bold"); doc.setFontSize(30); doc.setTextColor(...BLACK);
+  doc.text("LIEFERSCHEIN", pageW - margin, 26, { align: "right" });
+
+  // Details rechts
+  doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...DARK);
+  doc.text("Lieferdetails", colR, 38);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...GRAY);
+  const datumFormatted = data.datum ? new Date(data.datum + "T12:00:00").toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+  doc.text(`Datum:           ${datumFormatted}`, colR, 44);
+  doc.text(`Lieferschein-Nr.: ${lsNr}`, colR, 49);
+  if (data.trackingNr) {
+    doc.text(`Tracking:        ${data.trackingNr}`, colR, 54);
+  }
+
+  drawRecipient(doc, data, "LIEFERADRESSE", margin, pageW);
+
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...GRAY);
+  doc.text("PROJEKT / BESCHREIBUNG", colR, 76);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+  const rawDesc = data.beschreibung || "—";
+  const descLines = rawDesc.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
+  doc.text(descLines.slice(0, 5), colR, 83);
+
+  // Tabelle — KEINE Preise
+  const lsBody: any[][] = data.parts.map((p, i) => [
+    String(i + 1).padStart(2, "0"),
+    p.teilname || "—",
+    p.material,
+    (p.gewicht_g ?? 0) > 0 ? `${p.gewicht_g} g` : "—",
+    `${p.menge}×`,
+  ]);
+
+  autoTable(doc, {
+    startY: 118, margin: { left: margin, right: margin },
+    head: [["Nr.", "Beschreibung", "Material", "Gewicht/St.", "Menge"]],
+    body: lsBody,
+    styles: { fontSize: 9, cellPadding: { top: 4.5, bottom: 4.5, left: 3, right: 3 }, textColor: DARK },
+    headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: "bold", fontSize: 8.5 },
+    columnStyles: {
+      0: { cellWidth: 12, halign: "center" },
+      1: { cellWidth: 75 },
+      2: { cellWidth: 45 },
+      3: { cellWidth: 25, halign: "right" },
+      4: { cellWidth: 18, halign: "center", fontStyle: "bold" },
+    },
+    alternateRowStyles: { fillColor: XLGRAY },
+    tableLineColor: LGRAY, tableLineWidth: 0.1,
+  });
+
+  const afterTable = (doc as any).lastAutoTable.finalY + 8;
+
+  // Total Box: Stückzahl + Gewicht
+  const totalStueck = data.parts.reduce((s, p) => s + (p.menge || 0), 0);
+  const totalGewicht = data.parts.reduce((s, p) => s + ((p.gewicht_g ?? 0) * (p.menge || 0)), 0);
+
+  const sumW = 70;
+  const sumX = pageW - margin - sumW;
+  doc.setDrawColor(...LGRAY); doc.setLineWidth(0.3);
+  doc.line(sumX, afterTable, pageW - margin, afterTable);
+  let sy = afterTable + 6;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...GRAY);
+  doc.text("Total Teile", sumX, sy);
+  doc.setTextColor(...DARK); doc.text(`${totalStueck} Stk.`, pageW - margin, sy, { align: "right" });
+  sy += 6;
+  if (totalGewicht > 0) {
+    doc.setTextColor(...GRAY); doc.text("Total Gewicht", sumX, sy);
+    doc.setTextColor(...DARK); doc.text(`${totalGewicht.toFixed(1)} g`, pageW - margin, sy, { align: "right" });
+    sy += 6;
+  }
+
+  sy += 2;
+  doc.setFillColor(...ACCENT);
+  doc.rect(sumX, sy - 4, sumW, 12, "F");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(...WHITE);
+  doc.text("LIEFERUNG", sumX + 3, sy + 3.5);
+  doc.text("vollständig", pageW - margin - 3, sy + 3.5, { align: "right" });
+  const totalBoxBottom = sy + 8;
+
+  // Hinweis / Notiz
+  const noteY = totalBoxBottom + 8;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); doc.setTextColor(...BLACK);
+  doc.text("HINWEIS", sumX, noteY);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...GRAY);
+  const noteText = data.notiz?.trim() || "Bitte den Erhalt der Ware mit Unterschrift bestätigen. Bei Beanstandungen innerhalb von 7 Tagen melden.";
+  doc.text(doc.splitTextToSize(noteText, pageW - sumX - margin), sumX, noteY + 6);
+
+  // Dank links
+  doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(...BLACK);
+  doc.text("Vielen Dank!", margin, afterTable + 10);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...GRAY);
+  doc.text("Wir hoffen, Sie sind mit der Lieferung zufrieden.", margin, afterTable + 16);
+
+  // Unterschrift-Bereich
+  const sigY = pageH - 40;
+  doc.setDrawColor(...LGRAY); doc.setLineWidth(0.3);
+  doc.line(margin, sigY, margin + 70, sigY);
+  doc.line(pageW - margin - 70, sigY, pageW - margin, sigY);
+  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...GRAY);
+  doc.text("Datum / Unterschrift Lieferant", margin, sigY + 4);
+  doc.text("Datum / Unterschrift Empfänger", pageW - margin - 70, sigY + 4);
+
+  drawFooter(doc, data.company, ACCENT, pageW, pageH, margin);
+
+  const safeName = data.customerName.replace(/[äöüÄÖÜß]/g, (c) => ({ä:'ae',ö:'oe',ü:'ue',Ä:'Ae',Ö:'Oe',Ü:'Ue',ß:'ss'}[c]||c)).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filename = `Lieferschein_${lsNr}_${safeName}.pdf`;
+
+  if (data.returnBase64) return { base64: doc.output("datauristring").split(",")[1], filename };
+  doc.save(filename);
+  return null;
+}
