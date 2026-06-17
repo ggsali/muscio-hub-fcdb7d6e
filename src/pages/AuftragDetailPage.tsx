@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
-import { exportOfferPDF, exportAuftragsbestaetiguungPDF } from "@/lib/pdfOfferExport";
+import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
 import { exportAkontoPDF, exportRestbetragPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
@@ -20,6 +20,7 @@ import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 import TimeTracker from "@/components/TimeTracker";
 import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
+import OrderUploadRequests from "@/components/OrderUploadRequests";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -672,6 +673,19 @@ export default function AuftragDetailPage() {
     });
   };
 
+  const handleExportLieferschein = async () => {
+    const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+    exportLieferscheinPDF({
+      orderId: id || "neu",
+      datum,
+      beschreibung: fullBeschreibung,
+      customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+      parts,
+      company,
+      trackingNr,
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const orderData: Record<string, any> = {
@@ -816,6 +830,9 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => handleExportAuftragsbestaetigung()} className="gap-2">
                     <FileDown className="w-4 h-4" /> Auftragsbestätigung PDF
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExportLieferschein()} className="gap-2">
+                    <FileDown className="w-4 h-4" /> Lieferschein PDF
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setConfirmEmailType("auftragsbestaetigung")} disabled={!!sendingEmail} className="gap-2 text-primary">
                     {sendingEmail === "auftragsbestaetigung" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Auftragsbestätigung mailen
                   </DropdownMenuItem>
@@ -865,6 +882,9 @@ export default function AuftragDetailPage() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleExportAuftragsbestaetigung()} className="gap-2">
                       <FileDown className="w-4 h-4" /> Auftragsbestätigung
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportLieferschein()} className="gap-2">
+                      <FileDown className="w-4 h-4" /> Lieferschein
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowAkontoDialog(true)} className="gap-2 text-primary">
                       <FileDown className="w-4 h-4" /> Akontorechnung
@@ -1657,6 +1677,7 @@ export default function AuftragDetailPage() {
               <Button onClick={() => handleExportOffer(false)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte</Button>
               <Button onClick={() => handleExportOffer(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte (mit Details)</Button>
               <Button onClick={() => handleExportAuftragsbestaetigung()} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Auftragsbestätigung</Button>
+              <Button onClick={() => handleExportLieferschein()} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Lieferschein</Button>
               <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung</Button>
             </div>
             <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
@@ -1671,6 +1692,10 @@ export default function AuftragDetailPage() {
               </Button>
             </div>
           </div>
+
+          {/* Datei-Anforderungen für diesen Auftrag */}
+          <OrderUploadRequests orderId={id!} customerId={customerId} orderName={orderName} />
+
           <OfferMode
             orderId={id!}
             orderName={orderName}

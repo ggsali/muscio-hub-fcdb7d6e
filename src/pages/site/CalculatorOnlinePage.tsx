@@ -29,6 +29,14 @@ const QUALITY_PRESETS: { key: string; label: string; infill: number; desc: strin
   { key: "massiv", label: "Massiv", infill: 80, desc: "Massiv = maximale Festigkeit" },
 ];
 
+interface PartImage {
+  id: string;
+  file: File;
+  storagePath?: string;
+  uploading: boolean;
+  previewUrl: string;
+}
+
 interface Part {
   id: string;
   fileName: string;
@@ -43,6 +51,7 @@ interface Part {
   hasVolume: boolean;
   estimatedWeight: number;
   previewUrl?: string;
+  images: PartImage[];
 }
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
@@ -317,6 +326,7 @@ const CalculatorOnlinePage = () => {
         hasVolume: false,
         estimatedWeight: 0,
         previewUrl,
+        images: [],
       },
     ]);
 
@@ -423,8 +433,52 @@ const CalculatorOnlinePage = () => {
   const remove = (id: string) => setParts((p) => {
     const target = p.find((x) => x.id === id);
     if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+    target?.images.forEach(img => { if (img.previewUrl) URL.revokeObjectURL(img.previewUrl); });
     return p.filter((x) => x.id !== id);
   });
+
+  const addPartImage = useCallback(async (partId: string, file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Nur Bilddateien erlaubt");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Bild zu gross (max. 20 MB)");
+      return;
+    }
+    const imgId = crypto.randomUUID();
+    const previewUrl = URL.createObjectURL(file);
+    setParts(prev => prev.map(p => p.id === partId
+      ? { ...p, images: [...p.images, { id: imgId, file, uploading: true, previewUrl }] }
+      : p));
+    try {
+      const safe = file.name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "_");
+      const path = `reference-images/${partId}/${imgId}_${safe}`;
+      const { error } = await supabase.storage.from("project-uploads").upload(path, file, {
+        upsert: false,
+        contentType: file.type || "image/jpeg",
+      });
+      if (error) throw error;
+      setParts(prev => prev.map(p => p.id === partId
+        ? { ...p, images: p.images.map(i => i.id === imgId ? { ...i, storagePath: path, uploading: false } : i) }
+        : p));
+    } catch (e) {
+      console.error("Bild-Upload fehlgeschlagen", e);
+      toast.error("Bild-Upload fehlgeschlagen");
+      setParts(prev => prev.map(p => p.id === partId
+        ? { ...p, images: p.images.filter(i => i.id !== imgId) }
+        : p));
+    }
+  }, []);
+
+  const removePartImage = (partId: string, imgId: string) => {
+    setParts(prev => prev.map(p => {
+      if (p.id !== partId) return p;
+      const img = p.images.find(i => i.id === imgId);
+      if (img?.previewUrl) URL.revokeObjectURL(img.previewUrl);
+      return { ...p, images: p.images.filter(i => i.id !== imgId) };
+    }));
+  };
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
@@ -516,6 +570,16 @@ const CalculatorOnlinePage = () => {
       const addressLine = !user && (form.strasse || form.plz || form.ort)
         ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}`
         : "";
+      const partImageAttachments = parts.flatMap(p =>
+        p.images.filter(i => i.storagePath).map(i => ({
+          filename: i.file.name,
+          storage_path: i.storagePath,
+          size_bytes: i.file.size,
+          bucket: "project-uploads",
+          kind: "part-reference-image",
+          part_label: p.fileName,
+        }))
+      );
       const attachments = [
         ...parts
           .filter((p) => p.storagePath)
@@ -525,6 +589,7 @@ const CalculatorOnlinePage = () => {
             size_bytes: p.file?.size ?? null,
             bucket: "project-uploads",
           })),
+        ...partImageAttachments,
         ...refImages
           .filter(r => r.storagePath)
           .map(r => ({
@@ -817,7 +882,53 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
 
-
+                    {/* Per-Part Bilder / Skizzen */}
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="text-xs font-semibold text-foreground">📷 Bilder zu diesem Teil <span className="text-muted-foreground font-normal">(optional)</span></p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">Foto, Skizze oder Referenz — hilft uns dein Teil besser zu verstehen.</p>
+                        </div>
+                        <input
+                          id={`part-img-${p.id}`}
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            Array.from(e.target.files || []).forEach(f => addPartImage(p.id, f));
+                            e.target.value = "";
+                          }}
+                        />
+                        <label htmlFor={`part-img-${p.id}`}>
+                          <Button asChild variant="outline" size="sm" className="gap-1.5 cursor-pointer h-8 text-xs">
+                            <span><Upload className="w-3 h-3" /> Bild hinzufügen</span>
+                          </Button>
+                        </label>
+                      </div>
+                      {p.images.length > 0 && (
+                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                          {p.images.map(img => (
+                            <div key={img.id} className="relative aspect-square rounded-md overflow-hidden border border-border bg-muted group">
+                              <img src={img.previewUrl} alt={img.file.name} className="w-full h-full object-cover" />
+                              {img.uploading && (
+                                <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removePartImage(p.id, img.id)}
+                                className="absolute top-0.5 right-0.5 bg-background/80 hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="Bild entfernen"
+                              >
+                                <Trash2 className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                     {/* STEP-Hinweis */}
                     {isStepFile(p.fileName) && (
