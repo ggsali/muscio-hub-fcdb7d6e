@@ -326,6 +326,7 @@ const CalculatorOnlinePage = () => {
         hasVolume: false,
         estimatedWeight: 0,
         previewUrl,
+        images: [],
       },
     ]);
 
