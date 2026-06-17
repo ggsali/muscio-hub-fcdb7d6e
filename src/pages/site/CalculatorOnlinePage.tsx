@@ -433,8 +433,52 @@ const CalculatorOnlinePage = () => {
   const remove = (id: string) => setParts((p) => {
     const target = p.find((x) => x.id === id);
     if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+    target?.images.forEach(img => { if (img.previewUrl) URL.revokeObjectURL(img.previewUrl); });
     return p.filter((x) => x.id !== id);
   });
+
+  const addPartImage = useCallback(async (partId: string, file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Nur Bilddateien erlaubt");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("Bild zu gross (max. 20 MB)");
+      return;
+    }
+    const imgId = crypto.randomUUID();
+    const previewUrl = URL.createObjectURL(file);
+    setParts(prev => prev.map(p => p.id === partId
+      ? { ...p, images: [...p.images, { id: imgId, file, uploading: true, previewUrl }] }
+      : p));
+    try {
+      const safe = file.name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "_");
+      const path = `reference-images/${partId}/${imgId}_${safe}`;
+      const { error } = await supabase.storage.from("project-uploads").upload(path, file, {
+        upsert: false,
+        contentType: file.type || "image/jpeg",
+      });
+      if (error) throw error;
+      setParts(prev => prev.map(p => p.id === partId
+        ? { ...p, images: p.images.map(i => i.id === imgId ? { ...i, storagePath: path, uploading: false } : i) }
+        : p));
+    } catch (e) {
+      console.error("Bild-Upload fehlgeschlagen", e);
+      toast.error("Bild-Upload fehlgeschlagen");
+      setParts(prev => prev.map(p => p.id === partId
+        ? { ...p, images: p.images.filter(i => i.id !== imgId) }
+        : p));
+    }
+  }, []);
+
+  const removePartImage = (partId: string, imgId: string) => {
+    setParts(prev => prev.map(p => {
+      if (p.id !== partId) return p;
+      const img = p.images.find(i => i.id === imgId);
+      if (img?.previewUrl) URL.revokeObjectURL(img.previewUrl);
+      return { ...p, images: p.images.filter(i => i.id !== imgId) };
+    }));
+  };
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
