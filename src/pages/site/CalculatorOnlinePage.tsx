@@ -570,6 +570,16 @@ const CalculatorOnlinePage = () => {
       const addressLine = !user && (form.strasse || form.plz || form.ort)
         ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}`
         : "";
+      const partImageAttachments = parts.flatMap(p =>
+        p.images.filter(i => i.storagePath).map(i => ({
+          filename: i.file.name,
+          storage_path: i.storagePath,
+          size_bytes: i.file.size,
+          bucket: "project-uploads",
+          kind: "part-reference-image",
+          part_label: p.fileName,
+        }))
+      );
       const attachments = [
         ...parts
           .filter((p) => p.storagePath)
@@ -579,6 +589,7 @@ const CalculatorOnlinePage = () => {
             size_bytes: p.file?.size ?? null,
             bucket: "project-uploads",
           })),
+        ...partImageAttachments,
         ...refImages
           .filter(r => r.storagePath)
           .map(r => ({
