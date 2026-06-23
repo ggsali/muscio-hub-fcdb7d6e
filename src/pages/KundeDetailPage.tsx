@@ -132,8 +132,9 @@ export default function KundeDetailPage() {
   const [showDeleteInquiryDialog, setShowDeleteInquiryDialog] = useState(false);
   const [inquiryToDelete, setInquiryToDelete] = useState<InquiryRow | null>(null);
   const [sendingProfileEmail, setSendingProfileEmail] = useState(false);
-
-  
+  const [profileLink, setProfileLink] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const handleSendProfileCompletion = async () => {
     if (!customer.email) { toast.error("Kunde hat keine E-Mail-Adresse"); return; }
@@ -151,6 +152,38 @@ export default function KundeDetailPage() {
       toast.error(String(e));
     } finally {
       setSendingProfileEmail(false);
+    }
+  };
+
+  const handleGenerateProfileLink = async () => {
+    if (!id || isNew) return;
+    setGeneratingLink(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-profile-completion", {
+        body: { customer_id: id, mode: "link" },
+      });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || error?.message || "Fehler beim Erstellen des Links");
+      } else {
+        setProfileLink((data as any).url);
+        setLinkCopied(false);
+      }
+    } catch (e: any) {
+      toast.error(String(e));
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyProfileLink = async () => {
+    if (!profileLink) return;
+    try {
+      await navigator.clipboard.writeText(profileLink);
+      setLinkCopied(true);
+      toast.success("Link kopiert");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error("Kopieren fehlgeschlagen");
     }
   };
 
