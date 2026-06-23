@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, ChevronRight, Building2, Globe, Phone, MapPin, CheckCircle2, Briefcase, RefreshCw } from "lucide-react";
+import { Plus, Search, ChevronRight, Building2, Globe, Phone, MapPin, CheckCircle2, Briefcase, RefreshCw, MoreVertical, Link2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { formatCHF } from "@/lib/calc";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface OrderLite { status: string | null; umsatz_total: number | null; }
 
