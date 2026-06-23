@@ -288,7 +288,7 @@ export type Database = {
       customer_profile_completion_tokens: {
         Row: {
           created_at: string
-          customer_id: string
+          customer_id: string | null
           expires_at: string
           id: string
           token: string
@@ -296,7 +296,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          customer_id: string
+          customer_id?: string | null
           expires_at?: string
           id?: string
           token: string
@@ -304,7 +304,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          customer_id?: string
+          customer_id?: string | null
           expires_at?: string
           id?: string
           token?: string
