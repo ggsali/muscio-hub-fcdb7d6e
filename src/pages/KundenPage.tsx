@@ -279,6 +279,30 @@ export default function KundenPage() {
           </table>
         </div>
       )}
+
+      {/* Selbstregistrierungs-Link */}
+      <Dialog open={!!profileLink} onOpenChange={(o) => !o && setProfileLink(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" /> Link für Selbstregistrierung
+            </DialogTitle>
+            <DialogDescription>
+              Sende diesen Link an den Kunden. Sobald er das Formular ausgefüllt hat, wird automatisch ein neuer Kundeneintrag erstellt. Gültig 30 Tage.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2">
+            <Input value={profileLink || ""} readOnly className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+            <Button onClick={copyProfileLink} size="sm" variant="outline" className="gap-1.5 shrink-0">
+              {linkCopied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+              {linkCopied ? "Kopiert" : "Kopieren"}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileLink(null)}>Schliessen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
