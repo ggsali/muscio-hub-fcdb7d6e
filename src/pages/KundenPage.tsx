@@ -44,6 +44,40 @@ export default function KundenPage() {
   const [tab, setTab] = useState<TabType>("aktiv");
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [profileLink, setProfileLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleGenerateNewCustomerLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-profile-completion", {
+        body: { mode: "new-customer" },
+      });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || error?.message || "Fehler beim Erstellen des Links");
+      } else {
+        setProfileLink((data as any).url);
+        setLinkCopied(false);
+      }
+    } catch (e: any) {
+      toast.error(String(e));
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyProfileLink = async () => {
+    if (!profileLink) return;
+    try {
+      await navigator.clipboard.writeText(profileLink);
+      setLinkCopied(true);
+      toast.success("Link kopiert");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error("Kopieren fehlgeschlagen");
+    }
+  };
 
   useEffect(() => { loadAll(); }, []);
 
