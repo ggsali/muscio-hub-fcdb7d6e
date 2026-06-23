@@ -73,6 +73,12 @@ Deno.serve(async (req) => {
     const completionUrl = `${SITE_URL}/profil-ergaenzen?token=${token}`
     const displayName = [customer.vorname, customer.name].filter(Boolean).join(' ') || customer.name || ''
 
+    if (linkOnly) {
+      return new Response(JSON.stringify({ ok: true, url: completionUrl, token }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Forward the admin's JWT to send-transactional-email (verify_jwt=true)
     const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
       method: 'POST',
@@ -97,7 +103,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ ok: true, email: customer.email }), {
+    return new Response(JSON.stringify({ ok: true, email: customer.email, url: completionUrl }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
