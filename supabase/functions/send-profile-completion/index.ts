@@ -38,12 +38,13 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { customer_id } = await req.json()
+    const { customer_id, mode } = await req.json()
     if (!customer_id || typeof customer_id !== 'string') {
       return new Response(JSON.stringify({ error: 'customer_id required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    const linkOnly = mode === 'link'
 
     const { data: customer, error: custErr } = await admin
       .from('customers').select('id, vorname, name, email').eq('id', customer_id).maybeSingle()
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    if (!customer.email) {
+    if (!linkOnly && !customer.email) {
       return new Response(JSON.stringify({ error: 'Kunde hat keine E-Mail-Adresse' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
