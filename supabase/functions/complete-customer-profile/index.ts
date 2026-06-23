@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       }
       const { data: tok } = await admin
         .from('customer_profile_completion_tokens')
-        .select('*, customers!inner(id, vorname, name, firma, email, telefon, strasse, hausnummer, plz, ort, land)')
+        .select('*, customers(id, vorname, name, firma, email, telefon, strasse, hausnummer, plz, ort, land)')
         .eq('token', token).maybeSingle()
       if (!tok) {
         return new Response(JSON.stringify({ error: 'invalid' }), {
@@ -42,7 +42,12 @@ Deno.serve(async (req) => {
           status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
-      return new Response(JSON.stringify({ ok: true, customer: tok.customers }), {
+      const isNewCustomer = !tok.customer_id
+      return new Response(JSON.stringify({
+        ok: true,
+        new_customer: isNewCustomer,
+        customer: tok.customers || {},
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
