@@ -38,12 +38,13 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { customer_id } = await req.json()
+    const { customer_id, mode } = await req.json()
     if (!customer_id || typeof customer_id !== 'string') {
       return new Response(JSON.stringify({ error: 'customer_id required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    const linkOnly = mode === 'link'
 
     const { data: customer, error: custErr } = await admin
       .from('customers').select('id, vorname, name, email').eq('id', customer_id).maybeSingle()
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    if (!customer.email) {
+    if (!linkOnly && !customer.email) {
       return new Response(JSON.stringify({ error: 'Kunde hat keine E-Mail-Adresse' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -71,6 +72,12 @@ Deno.serve(async (req) => {
 
     const completionUrl = `${SITE_URL}/profil-ergaenzen?token=${token}`
     const displayName = [customer.vorname, customer.name].filter(Boolean).join(' ') || customer.name || ''
+
+    if (linkOnly) {
+      return new Response(JSON.stringify({ ok: true, url: completionUrl, token }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Forward the admin's JWT to send-transactional-email (verify_jwt=true)
     const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
@@ -96,7 +103,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ ok: true, email: customer.email }), {
+    return new Response(JSON.stringify({ ok: true, email: customer.email, url: completionUrl }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {

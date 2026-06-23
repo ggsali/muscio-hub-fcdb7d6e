@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
 import { toast } from "sonner";
-import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare, Send } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare, Send, Link2, Copy, Check } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -131,8 +132,9 @@ export default function KundeDetailPage() {
   const [showDeleteInquiryDialog, setShowDeleteInquiryDialog] = useState(false);
   const [inquiryToDelete, setInquiryToDelete] = useState<InquiryRow | null>(null);
   const [sendingProfileEmail, setSendingProfileEmail] = useState(false);
-
-  
+  const [profileLink, setProfileLink] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const handleSendProfileCompletion = async () => {
     if (!customer.email) { toast.error("Kunde hat keine E-Mail-Adresse"); return; }
@@ -150,6 +152,38 @@ export default function KundeDetailPage() {
       toast.error(String(e));
     } finally {
       setSendingProfileEmail(false);
+    }
+  };
+
+  const handleGenerateProfileLink = async () => {
+    if (!id || isNew) return;
+    setGeneratingLink(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-profile-completion", {
+        body: { customer_id: id, mode: "link" },
+      });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || error?.message || "Fehler beim Erstellen des Links");
+      } else {
+        setProfileLink((data as any).url);
+        setLinkCopied(false);
+      }
+    } catch (e: any) {
+      toast.error(String(e));
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyProfileLink = async () => {
+    if (!profileLink) return;
+    try {
+      await navigator.clipboard.writeText(profileLink);
+      setLinkCopied(true);
+      toast.success("Link kopiert");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error("Kopieren fehlgeschlagen");
     }
   };
 
@@ -315,6 +349,14 @@ export default function KundeDetailPage() {
                   <Send className="w-4 h-4" />
                   {sendingProfileEmail ? "Senden..." : "Adressdaten per E-Mail anfordern"}
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleGenerateProfileLink}
+                  disabled={generatingLink}
+                  className="gap-2"
+                >
+                  <Link2 className="w-4 h-4" />
+                  {generatingLink ? "Erstellen..." : "Profil-Link erstellen & kopieren"}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
                   <Trash2 className="w-4 h-4" /> Kunde löschen
@@ -324,6 +366,30 @@ export default function KundeDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Profile completion link */}
+      <Dialog open={!!profileLink} onOpenChange={(o) => !o && setProfileLink(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" /> Profil-Link
+            </DialogTitle>
+            <DialogDescription>
+              Sende diesen Link an den Kunden, damit er seine Adressdaten selbst ergänzen kann. Der Link ist 30 Tage gültig.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2">
+            <Input value={profileLink || ""} readOnly className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+            <Button onClick={copyProfileLink} size="sm" variant="outline" className="gap-1.5 shrink-0">
+              {linkCopied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+              {linkCopied ? "Kopiert" : "Kopieren"}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileLink(null)}>Schliessen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
