@@ -12,8 +12,8 @@ const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 type State =
   | { kind: "loading" }
   | { kind: "invalid" | "expired" | "used" | "error"; message?: string }
-  | { kind: "ready"; customer: any }
-  | { kind: "done" };
+  | { kind: "ready"; customer: any; isNew: boolean }
+  | { kind: "done"; isNew: boolean };
 
 export default function ProfilErgaenzenPage() {
   const [params] = useSearchParams();
@@ -37,17 +37,20 @@ export default function ProfilErgaenzenPage() {
           setState({ kind });
           return;
         }
-        setState({ kind: "ready", customer: data.customer });
+        const c = data.customer || {};
+        const isNew = !!data.new_customer;
+        setState({ kind: "ready", customer: c, isNew });
         setForm({
-          vorname: data.customer.vorname || "",
-          name: data.customer.name || "",
-          firma: data.customer.firma || "",
-          telefon: data.customer.telefon || "",
-          strasse: data.customer.strasse || "",
-          hausnummer: data.customer.hausnummer || "",
-          plz: data.customer.plz || "",
-          ort: data.customer.ort || "",
-          land: data.customer.land || "Schweiz",
+          vorname: c.vorname || "",
+          name: c.name || "",
+          firma: c.firma || "",
+          email: c.email || "",
+          telefon: c.telefon || "",
+          strasse: c.strasse || "",
+          hausnummer: c.hausnummer || "",
+          plz: c.plz || "",
+          ort: c.ort || "",
+          land: c.land || "Schweiz",
         });
       } catch (e: any) {
         setState({ kind: "error", message: String(e) });
