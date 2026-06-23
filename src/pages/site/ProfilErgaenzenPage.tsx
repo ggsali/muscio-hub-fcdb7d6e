@@ -147,6 +147,12 @@ export default function ProfilErgaenzenPage() {
               <Label>Firma (optional)</Label>
               <Input className="mt-1" value={form.firma} onChange={e => setForm({ ...form, firma: e.target.value })} />
             </div>
+            {state.isNew && (
+              <div>
+                <Label>E-Mail *</Label>
+                <Input type="email" className="mt-1" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required placeholder="name@example.com" />
+              </div>
+            )}
             <div>
               <Label>Telefon</Label>
               <Input className="mt-1" value={form.telefon} onChange={e => setForm({ ...form, telefon: e.target.value })} placeholder="+41 79..." />
