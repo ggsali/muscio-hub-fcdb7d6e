@@ -156,6 +156,19 @@ export default function KundenPage() {
             <Plus className="w-4 h-4" />
             {isMobile ? "Neu" : "Neuer Kunde"}
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size={isMobile ? "sm" : "default"} className="px-2 border-border" title="Weitere Optionen">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem onClick={handleGenerateNewCustomerLink} disabled={generatingLink} className="gap-2">
+                <Link2 className="w-4 h-4" />
+                {generatingLink ? "Erstellen..." : "Link für Selbstregistrierung"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
