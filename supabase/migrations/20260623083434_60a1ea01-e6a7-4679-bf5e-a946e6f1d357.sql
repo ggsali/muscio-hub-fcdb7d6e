@@ -1,0 +1,1 @@
+ALTER TABLE public.customer_profile_completion_tokens ALTER COLUMN customer_id DROP NOT NULL;

@@ -12,8 +12,8 @@ const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 type State =
   | { kind: "loading" }
   | { kind: "invalid" | "expired" | "used" | "error"; message?: string }
-  | { kind: "ready"; customer: any }
-  | { kind: "done" };
+  | { kind: "ready"; customer: any; isNew: boolean }
+  | { kind: "done"; isNew: boolean };
 
 export default function ProfilErgaenzenPage() {
   const [params] = useSearchParams();
@@ -37,17 +37,20 @@ export default function ProfilErgaenzenPage() {
           setState({ kind });
           return;
         }
-        setState({ kind: "ready", customer: data.customer });
+        const c = data.customer || {};
+        const isNew = !!data.new_customer;
+        setState({ kind: "ready", customer: c, isNew });
         setForm({
-          vorname: data.customer.vorname || "",
-          name: data.customer.name || "",
-          firma: data.customer.firma || "",
-          telefon: data.customer.telefon || "",
-          strasse: data.customer.strasse || "",
-          hausnummer: data.customer.hausnummer || "",
-          plz: data.customer.plz || "",
-          ort: data.customer.ort || "",
-          land: data.customer.land || "Schweiz",
+          vorname: c.vorname || "",
+          name: c.name || "",
+          firma: c.firma || "",
+          email: c.email || "",
+          telefon: c.telefon || "",
+          strasse: c.strasse || "",
+          hausnummer: c.hausnummer || "",
+          plz: c.plz || "",
+          ort: c.ort || "",
+          land: c.land || "Schweiz",
         });
       } catch (e: any) {
         setState({ kind: "error", message: String(e) });
@@ -57,8 +60,13 @@ export default function ProfilErgaenzenPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isNew = state.kind === "ready" ? state.isNew : false;
     if (!form.vorname?.trim() || !form.name?.trim() || !form.strasse?.trim() || !form.plz?.trim() || !form.ort?.trim()) {
       toast.error("Bitte fülle alle Pflichtfelder aus.");
+      return;
+    }
+    if (isNew && (!form.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))) {
+      toast.error("Bitte eine gültige E-Mail-Adresse angeben.");
       return;
     }
     setSubmitting(true);
@@ -73,7 +81,7 @@ export default function ProfilErgaenzenPage() {
         toast.error(data?.error || "Fehler beim Speichern");
         return;
       }
-      setState({ kind: "done" });
+      setState({ kind: "done", isNew });
     } catch (e: any) {
       toast.error(String(e));
     } finally {
@@ -85,9 +93,13 @@ export default function ProfilErgaenzenPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-xl bg-card border border-border rounded-2xl p-6 md:p-8">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold">Profil vervollständigen</h1>
+          <h1 className="text-2xl font-bold">
+            {state.kind === "ready" && state.isNew ? "Daten ergänzen" : "Profil vervollständigen"}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Bitte ergänze deine Adressdaten – sie werden direkt in deinem Kundenprofil gespeichert.
+            {state.kind === "ready" && state.isNew
+              ? "Bitte fülle das Formular aus – wir legen damit dein Kundenprofil an."
+              : "Bitte ergänze deine Adressdaten – sie werden direkt in deinem Kundenprofil gespeichert."}
           </p>
         </div>
 
@@ -135,6 +147,12 @@ export default function ProfilErgaenzenPage() {
               <Label>Firma (optional)</Label>
               <Input className="mt-1" value={form.firma} onChange={e => setForm({ ...form, firma: e.target.value })} />
             </div>
+            {state.isNew && (
+              <div>
+                <Label>E-Mail *</Label>
+                <Input type="email" className="mt-1" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required placeholder="name@example.com" />
+              </div>
+            )}
             <div>
               <Label>Telefon</Label>
               <Input className="mt-1" value={form.telefon} onChange={e => setForm({ ...form, telefon: e.target.value })} placeholder="+41 79..." />

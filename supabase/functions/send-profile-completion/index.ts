@@ -39,31 +39,37 @@ Deno.serve(async (req) => {
     }
 
     const { customer_id, mode } = await req.json()
-    if (!customer_id || typeof customer_id !== 'string') {
-      return new Response(JSON.stringify({ error: 'customer_id required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
     const linkOnly = mode === 'link'
+    const newCustomerMode = mode === 'new-customer'
 
-    const { data: customer, error: custErr } = await admin
-      .from('customers').select('id, vorname, name, email').eq('id', customer_id).maybeSingle()
-    if (custErr || !customer) {
-      return new Response(JSON.stringify({ error: 'Customer not found' }), {
-        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    if (!linkOnly && !customer.email) {
-      return new Response(JSON.stringify({ error: 'Kunde hat keine E-Mail-Adresse' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    let customer: { id: string; vorname?: string | null; name?: string | null; email?: string | null } | null = null
+
+    if (!newCustomerMode) {
+      if (!customer_id || typeof customer_id !== 'string') {
+        return new Response(JSON.stringify({ error: 'customer_id required' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      const { data, error: custErr } = await admin
+        .from('customers').select('id, vorname, name, email').eq('id', customer_id).maybeSingle()
+      if (custErr || !data) {
+        return new Response(JSON.stringify({ error: 'Customer not found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      customer = data
+      if (!linkOnly && !customer.email) {
+        return new Response(JSON.stringify({ error: 'Kunde hat keine E-Mail-Adresse' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
     }
 
-    // Create token
+    // Create token (customer_id may be null for new-customer mode)
     const token = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')
     const { error: tokErr } = await admin
       .from('customer_profile_completion_tokens')
-      .insert({ customer_id, token })
+      .insert({ customer_id: customer?.id ?? null, token })
     if (tokErr) {
       return new Response(JSON.stringify({ error: tokErr.message }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -71,7 +77,14 @@ Deno.serve(async (req) => {
     }
 
     const completionUrl = `${SITE_URL}/profil-ergaenzen?token=${token}`
-    const displayName = [customer.vorname, customer.name].filter(Boolean).join(' ') || customer.name || ''
+    const displayName = customer ? ([customer.vorname, customer.name].filter(Boolean).join(' ') || customer.name || '') : ''
+
+    if (newCustomerMode) {
+      return new Response(JSON.stringify({ ok: true, url: completionUrl, token }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
 
     if (linkOnly) {
       return new Response(JSON.stringify({ ok: true, url: completionUrl, token }), {

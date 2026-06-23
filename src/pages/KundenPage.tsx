@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, ChevronRight, Building2, Globe, Phone, MapPin, CheckCircle2, Briefcase, RefreshCw } from "lucide-react";
+import { Plus, Search, ChevronRight, Building2, Globe, Phone, MapPin, CheckCircle2, Briefcase, RefreshCw, MoreVertical, Link2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { formatCHF } from "@/lib/calc";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface OrderLite { status: string | null; umsatz_total: number | null; }
 
@@ -42,6 +44,40 @@ export default function KundenPage() {
   const [tab, setTab] = useState<TabType>("aktiv");
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [profileLink, setProfileLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleGenerateNewCustomerLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-profile-completion", {
+        body: { mode: "new-customer" },
+      });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || error?.message || "Fehler beim Erstellen des Links");
+      } else {
+        setProfileLink((data as any).url);
+        setLinkCopied(false);
+      }
+    } catch (e: any) {
+      toast.error(String(e));
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyProfileLink = async () => {
+    if (!profileLink) return;
+    try {
+      await navigator.clipboard.writeText(profileLink);
+      setLinkCopied(true);
+      toast.success("Link kopiert");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error("Kopieren fehlgeschlagen");
+    }
+  };
 
   useEffect(() => { loadAll(); }, []);
 
@@ -120,6 +156,19 @@ export default function KundenPage() {
             <Plus className="w-4 h-4" />
             {isMobile ? "Neu" : "Neuer Kunde"}
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size={isMobile ? "sm" : "default"} className="px-2 border-border" title="Weitere Optionen">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuItem onClick={handleGenerateNewCustomerLink} disabled={generatingLink} className="gap-2">
+                <Link2 className="w-4 h-4" />
+                {generatingLink ? "Erstellen..." : "Link für Selbstregistrierung"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -230,6 +279,30 @@ export default function KundenPage() {
           </table>
         </div>
       )}
+
+      {/* Selbstregistrierungs-Link */}
+      <Dialog open={!!profileLink} onOpenChange={(o) => !o && setProfileLink(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" /> Link für Selbstregistrierung
+            </DialogTitle>
+            <DialogDescription>
+              Sende diesen Link an den Kunden. Sobald er das Formular ausgefüllt hat, wird automatisch ein neuer Kundeneintrag erstellt. Gültig 30 Tage.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2">
+            <Input value={profileLink || ""} readOnly className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+            <Button onClick={copyProfileLink} size="sm" variant="outline" className="gap-1.5 shrink-0">
+              {linkCopied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+              {linkCopied ? "Kopiert" : "Kopieren"}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileLink(null)}>Schliessen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
