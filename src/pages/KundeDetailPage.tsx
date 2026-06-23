@@ -349,6 +349,14 @@ export default function KundeDetailPage() {
                   <Send className="w-4 h-4" />
                   {sendingProfileEmail ? "Senden..." : "Adressdaten per E-Mail anfordern"}
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleGenerateProfileLink}
+                  disabled={generatingLink}
+                  className="gap-2"
+                >
+                  <Link2 className="w-4 h-4" />
+                  {generatingLink ? "Erstellen..." : "Profil-Link erstellen & kopieren"}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
                   <Trash2 className="w-4 h-4" /> Kunde löschen
