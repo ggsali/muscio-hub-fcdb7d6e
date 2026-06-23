@@ -93,9 +93,13 @@ export default function ProfilErgaenzenPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-xl bg-card border border-border rounded-2xl p-6 md:p-8">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold">Profil vervollständigen</h1>
+          <h1 className="text-2xl font-bold">
+            {state.kind === "ready" && state.isNew ? "Daten ergänzen" : "Profil vervollständigen"}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Bitte ergänze deine Adressdaten – sie werden direkt in deinem Kundenprofil gespeichert.
+            {state.kind === "ready" && state.isNew
+              ? "Bitte fülle das Formular aus – wir legen damit dein Kundenprofil an."
+              : "Bitte ergänze deine Adressdaten – sie werden direkt in deinem Kundenprofil gespeichert."}
           </p>
         </div>
 
