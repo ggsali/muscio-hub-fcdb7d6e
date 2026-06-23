@@ -60,8 +60,13 @@ export default function ProfilErgaenzenPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isNew = state.kind === "ready" ? state.isNew : false;
     if (!form.vorname?.trim() || !form.name?.trim() || !form.strasse?.trim() || !form.plz?.trim() || !form.ort?.trim()) {
       toast.error("Bitte fülle alle Pflichtfelder aus.");
+      return;
+    }
+    if (isNew && (!form.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))) {
+      toast.error("Bitte eine gültige E-Mail-Adresse angeben.");
       return;
     }
     setSubmitting(true);
@@ -76,7 +81,7 @@ export default function ProfilErgaenzenPage() {
         toast.error(data?.error || "Fehler beim Speichern");
         return;
       }
-      setState({ kind: "done" });
+      setState({ kind: "done", isNew });
     } catch (e: any) {
       toast.error(String(e));
     } finally {
