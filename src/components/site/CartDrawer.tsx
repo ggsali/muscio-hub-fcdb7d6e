@@ -1,12 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
-import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart, Loader2 } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 
 const RESUME_CHECKOUT_KEY = "muscio_resume_checkout";
 
@@ -15,7 +16,7 @@ export const CartDrawer = () => {
   const { toast } = useToast();
   const { user } = useCustomerAuth();
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
-  const [checkingOut, setCheckingOut] = useState(false);
+  const { openCheckout, checkoutElement } = useStripeCheckout();
 
   const handleCheckout = useCallback(async () => {
     if (items.length === 0) return;
@@ -32,24 +33,22 @@ export const CartDrawer = () => {
       return;
     }
 
-    setCheckingOut(true);
-    try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, phone, address, city, postal_code, country")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, phone, address, city, postal_code, country")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-      const { data, error } = await supabase.functions.invoke("create-shop-checkout", {
-        body: {
-          items: items.map(i => ({
-            product_id: i.productId,
-            name: i.name,
-            preis: i.preis,
-            quantity: i.quantity,
-            slug: i.slug,
-          })),
-          customer: profile ? {
+    openCheckout({
+      items: items.map((i) => ({
+        product_id: i.productId,
+        name: i.name,
+        preis: i.preis,
+        quantity: i.quantity,
+        slug: i.slug,
+      })),
+      customer: profile
+        ? {
             email: user.email,
             name: profile.full_name || "",
             phone: profile.phone || "",
@@ -57,21 +56,16 @@ export const CartDrawer = () => {
             city: profile.city || "",
             postal_code: profile.postal_code || "",
             country: profile.country || "Schweiz",
-          } : { email: user.email },
-        },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("Keine Checkout-URL erhalten");
-      }
-    } catch (e: any) {
-      console.error(e);
-      toast({ title: "Checkout fehlgeschlagen", description: e.message, variant: "destructive" });
-      setCheckingOut(false);
-    }
-  }, [items, user, navigate, setIsOpen, toast]);
+          }
+        : { email: user.email },
+      userId: user.id,
+      returnUrl: `${window.location.origin}/payment-success`,
+      onError: (message) => {
+        toast({ title: "Checkout fehlgeschlagen", description: message, variant: "destructive" });
+      },
+    });
+    setIsOpen(false);
+  }, [items, user, navigate, setIsOpen, toast, openCheckout]);
 
   // Nach Login automatisch Checkout fortsetzen
   useEffect(() => {
@@ -85,11 +79,11 @@ export const CartDrawer = () => {
     }
   }, [user, items.length, handleCheckout, setIsOpen]);
 
-
   return (
     <AnimatePresence>
       {isOpen && (
         <>
+          {checkoutElement}
           <motion.div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -176,8 +170,8 @@ export const CartDrawer = () => {
                   <span className="font-bold text-foreground text-lg">CHF {totalPrice.toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground">Versand wird im Checkout berechnet.</p>
-                <Button className="w-full gap-2" disabled={checkingOut} onClick={handleCheckout}>
-                  {checkingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                <Button className="w-full gap-2" onClick={handleCheckout}>
+                  <ShoppingCart className="w-4 h-4" />
                   Zur Kasse
                 </Button>
                 <button onClick={clearCart} className="w-full text-xs text-muted-foreground hover:text-destructive transition-colors py-1">

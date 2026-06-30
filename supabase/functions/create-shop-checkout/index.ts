@@ -1,77 +1,138 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "../_shared/stripe.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+interface InItem {
+  product_id: string;
+  name: string;
+  preis: number;
+  quantity: number;
+  slug: string;
+}
+
+interface InCustomer {
+  email?: string;
+  name?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+}
+
+const countryNameToIso = (c?: string): string | undefined => {
+  if (!c) return undefined;
+  const t = c.trim().toLowerCase();
+  if (t.length === 2) return t.toUpperCase();
+  if (["schweiz", "swiss", "switzerland", "suisse", "svizzera"].includes(t)) return "CH";
+  if (["deutschland", "germany"].includes(t)) return "DE";
+  if (["österreich", "oesterreich", "austria"].includes(t)) return "AT";
+  if (["liechtenstein"].includes(t)) return "LI";
+  return undefined;
 };
 
-interface InItem { product_id: string; name: string; preis: number; quantity: number; slug: string; }
-interface InCustomer { email?: string; name?: string; phone?: string; address?: string; city?: string; postal_code?: string; country?: string; }
+async function resolveOrCreateCustomer(
+  stripe: ReturnType<typeof createStripeClient>,
+  options: { email?: string; userId?: string }
+): Promise<string | undefined> {
+  if (!options.email && !options.userId) return undefined;
+  if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) {
+    throw new Error("Invalid userId");
+  }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (options.userId) {
+    const found = await stripe.customers.search({
+      query: `metadata['userId']:'${options.userId}'`,
+      limit: 1,
+    });
+    if (found.data.length) return found.data[0].id;
+  }
 
-  const sbAdmin = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
+  if (options.email) {
+    const existing = await stripe.customers.list({ email: options.email, limit: 1 });
+    if (existing.data.length) {
+      const customer = existing.data[0];
+      if (options.userId && customer.metadata?.userId !== options.userId) {
+        await stripe.customers.update(customer.id, {
+          metadata: { ...customer.metadata, userId: options.userId },
+        });
+      }
+      return customer.id;
+    }
+  }
+
+  if (!options.email) return undefined;
+
+  const created = await stripe.customers.create({
+    email: options.email,
+    ...(options.userId && { metadata: { userId: options.userId } }),
+  });
+  return created.id;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
   try {
     const body = await req.json();
     const items = (body?.items || []) as InItem[];
     const inCustomer = (body?.customer || null) as InCustomer | null;
+    const environment = (body?.environment || "sandbox") as StripeEnv;
+    if (!["sandbox", "live"].includes(environment)) {
+      throw new Error("Invalid environment");
+    }
+
     if (!Array.isArray(items) || items.length === 0) throw new Error("Warenkorb leer");
     if (items.length > 50) throw new Error("Zu viele Positionen");
 
-    const countryNameToIso = (c?: string): string | undefined => {
-      if (!c) return undefined;
-      const t = c.trim().toLowerCase();
-      if (t.length === 2) return t.toUpperCase();
-      if (["schweiz", "swiss", "switzerland", "suisse", "svizzera"].includes(t)) return "CH";
-      if (["deutschland", "germany"].includes(t)) return "DE";
-      if (["österreich", "oesterreich", "austria"].includes(t)) return "AT";
-      if (["liechtenstein"].includes(t)) return "LI";
-      return undefined;
-    };
-
-    // Best-effort user lookup (shop is guest-friendly)
+    const auth = req.headers.get("Authorization");
     let userEmail: string | undefined;
     let userId: string | undefined;
-    const auth = req.headers.get("Authorization");
     if (auth?.startsWith("Bearer ")) {
-      const { data } = await sbAdmin.auth.getUser(auth.replace("Bearer ", ""));
-      if (data.user) { userEmail = data.user.email ?? undefined; userId = data.user.id; }
+      const { data } = await supabase.auth.getUser(auth.replace("Bearer ", ""));
+      if (data.user) {
+        userEmail = data.user.email ?? undefined;
+        userId = data.user.id;
+      }
     }
 
-    // Re-validate prices server-side from DB to prevent tampering
-    const ids = [...new Set(items.map(i => i.product_id))];
-    const { data: products, error: prodErr } = await sbAdmin
-      .from("shop_products").select("id, name, slug, preis, aktiv, lagerbestand, unendlich_bestand").in("id", ids);
+    const ids = [...new Set(items.map((i) => i.product_id))];
+    const { data: products, error: prodErr } = await supabase
+      .from("shop_products")
+      .select("id, name, slug, preis, aktiv, lagerbestand, unendlich_bestand, stripe_price_id")
+      .in("id", ids);
     if (prodErr) throw prodErr;
-    const productMap = new Map(products?.map(p => [p.id, p]) || []);
+    const productMap = new Map(products?.map((p) => [p.id, p]) || []);
 
-    const validated = items.map(i => {
+    const validated = items.map((i) => {
       const p = productMap.get(i.product_id);
       if (!p || !p.aktiv) throw new Error(`Produkt nicht verfügbar: ${i.name}`);
       if (!p.unendlich_bestand && p.lagerbestand <= 0) throw new Error(`Ausverkauft: ${p.name}`);
       const qty = Math.max(1, Math.min(99, Math.floor(i.quantity)));
       return {
-        product_id: p.id, name: p.name, slug: p.slug,
-        preis: Number(p.preis), quantity: qty,
+        product_id: p.id,
+        name: p.name,
+        slug: p.slug,
+        preis: Number(p.preis),
+        quantity: qty,
+        stripe_price_id: p.stripe_price_id,
       };
     });
 
     const subtotal = validated.reduce((s, i) => s + i.preis * i.quantity, 0);
     if (subtotal < 0.5) throw new Error("Mindestbetrag CHF 0.50");
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2025-08-27.basil" });
-    const origin = req.headers.get("origin") || "https://3dmuscio.com";
-
-    // Pre-create shop_orders draft to track via metadata
-    const { data: draft, error: draftErr } = await sbAdmin.from("shop_orders").insert({
+    const { data: draft, error: draftErr } = await supabase.from("shop_orders").insert({
       user_id: userId ?? null,
       customer_email: userEmail || "guest@pending.local",
       customer_name: "Wird beim Checkout erfasst",
@@ -84,12 +145,13 @@ serve(async (req) => {
       mwst: 0,
       total: subtotal,
       status: "pending",
+      environment,
     }).select("id").single();
     if (draftErr) throw draftErr;
     const orderId = draft.id;
 
-    await sbAdmin.from("shop_order_items").insert(
-      validated.map(v => ({
+    await supabase.from("shop_order_items").insert(
+      validated.map((v) => ({
         order_id: orderId,
         product_id: v.product_id,
         product_slug: v.slug,
@@ -100,64 +162,99 @@ serve(async (req) => {
       }))
     );
 
-    // Stripe-Kundeneintrag mit vorausgefüllten Daten, damit der Checkout-Form vorausgefüllt ist
-    let stripeCustomerId: string | undefined;
+    const stripe = createStripeClient(environment);
+    const origin = req.headers.get("origin") || "https://3dmuscio.com";
+
     const effectiveEmail = inCustomer?.email || userEmail;
-    if (effectiveEmail) {
-      const iso = countryNameToIso(inCustomer?.country);
-      const created = await stripe.customers.create({
-        email: effectiveEmail,
-        name: inCustomer?.name || undefined,
-        phone: inCustomer?.phone || undefined,
-        address: inCustomer?.address ? {
+    const customerId = await resolveOrCreateCustomer(stripe, {
+      email: effectiveEmail,
+      userId,
+    });
+
+    const iso = countryNameToIso(inCustomer?.country);
+    if (customerId && inCustomer?.address) {
+      await stripe.customers.update(customerId, {
+        name: inCustomer.name || undefined,
+        phone: inCustomer.phone || undefined,
+        address: {
           line1: inCustomer.address,
           city: inCustomer.city || undefined,
           postal_code: inCustomer.postal_code || undefined,
           country: iso,
-        } : undefined,
-        shipping: inCustomer?.address && inCustomer?.name ? {
-          name: inCustomer.name,
-          phone: inCustomer.phone || undefined,
-          address: {
-            line1: inCustomer.address,
-            city: inCustomer.city || undefined,
-            postal_code: inCustomer.postal_code || undefined,
-            country: iso,
-          },
-        } : undefined,
+        },
+        shipping: inCustomer.name
+          ? {
+              name: inCustomer.name,
+              phone: inCustomer.phone || undefined,
+              address: {
+                line1: inCustomer.address,
+                city: inCustomer.city || undefined,
+                postal_code: inCustomer.postal_code || undefined,
+                country: iso,
+              },
+            }
+          : undefined,
       });
-      stripeCustomerId = created.id;
     }
+
+    const lineItems = await Promise.all(
+      validated.map(async (v) => {
+        if (v.stripe_price_id) {
+          const prices = await stripe.prices.list({ lookup_keys: [v.stripe_price_id], limit: 1 });
+          if (prices.data.length > 0) {
+            return { price: prices.data[0].id, quantity: v.quantity };
+          }
+        }
+        return {
+          quantity: v.quantity,
+          price_data: {
+            currency: "chf",
+            unit_amount: Math.round(v.preis * 100),
+            product_data: { name: v.name },
+          },
+        };
+      })
+    );
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      ...(stripeCustomerId
-        ? { customer: stripeCustomerId, customer_update: { shipping: "auto", address: "auto", name: "auto" } }
+      ui_mode: "embedded_page",
+      line_items: lineItems,
+      ...(customerId
+        ? {
+            customer: customerId,
+            customer_update: { shipping: "auto", address: "auto", name: "auto" },
+          }
         : { customer_email: effectiveEmail }),
-      line_items: validated.map(v => ({
-        quantity: v.quantity,
-        price_data: {
-          currency: "chf",
-          unit_amount: Math.round(v.preis * 100),
-          product_data: { name: v.name },
-        },
-      })),
       shipping_address_collection: { allowed_countries: ["CH", "LI", "DE", "AT"] },
       phone_number_collection: { enabled: true },
-      success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/shop`,
-      metadata: { shop_order_id: orderId, source: "website-shop" },
-    });
+      automatic_tax: { enabled: true },
+      return_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      metadata: {
+        shop_order_id: orderId,
+        source: "website-shop",
+        ...(userId && { userId }),
+      },
+      payment_intent_data: {
+        description: `Webshop-Bestellung #${orderId.substring(0, 8)}`,
+        metadata: {
+          shop_order_id: orderId,
+          ...(userId && { userId }),
+        },
+      },
+    } as any);
 
-    await sbAdmin.from("shop_orders").update({ stripe_session_id: session.id }).eq("id", orderId);
+    await supabase.from("shop_orders").update({ stripe_session_id: session.id }).eq("id", orderId);
 
-    return new Response(JSON.stringify({ url: session.url, order_id: orderId }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ clientSecret: session.client_secret, order_id: orderId }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e: any) {
+  } catch (e) {
     console.error("create-shop-checkout error:", e);
-    return new Response(JSON.stringify({ error: e?.message || "Unbekannter Fehler" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ error: getStripeErrorMessage(e) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
