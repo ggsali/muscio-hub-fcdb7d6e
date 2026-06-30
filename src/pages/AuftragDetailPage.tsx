@@ -1610,8 +1610,13 @@ export default function AuftragDetailPage() {
               </div>
             </div>
           )}
+
+          {!isNew && id && (
+            <PrintPlatePlanner orderId={id} parts={parts as any} />
+          )}
         </div>
       )}
+
 
       {/* ====================== TAB: STATUS & VERSAND ====================== */}
       {activeTab === "Status & Versand" && !isNew && (
