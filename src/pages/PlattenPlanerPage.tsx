@@ -708,7 +708,7 @@ export default function PlattenPlanerPage() {
                 <span className="text-primary text-sm font-medium">Hier ablegen, um auf Platte zu setzen</span>
               </div>
             )}
-            {hoverTip && !dragRef.current && (
+            {hoverTip && (
               <div
                 className="absolute pointer-events-none px-2 py-1 rounded bg-card/95 border border-border text-xs shadow"
                 style={{ left: hoverTip.x + 12, top: hoverTip.y + 12 }}
