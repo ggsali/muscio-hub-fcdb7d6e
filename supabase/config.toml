@@ -21,6 +21,8 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.shop-webhook]
     verify_jwt = false
+  [functions.payments-webhook]
+    verify_jwt = false
   [functions.submit-inquiry]
     verify_jwt = false
   [functions.notify-inquiry-admin]
