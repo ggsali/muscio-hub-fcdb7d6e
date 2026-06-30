@@ -1160,7 +1160,7 @@ export default function AuftragDetailPage() {
           )}
 
           {/* Auftragsname (immer) */}
-          <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
             <div className="space-y-1.5">
               <Label>Auftragsname <span className="text-muted-foreground font-normal text-xs">(wird als E-Mail-Betreff verwendet)</span></Label>
               <Input
@@ -1170,7 +1170,23 @@ export default function AuftragDetailPage() {
                 className="bg-input border-border"
               />
             </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Label className="shrink-0">Lieferart</Label>
+              <ToggleGroup
+                type="single"
+                value={lieferart}
+                onValueChange={(v) => v && setLieferart(v as "versand" | "abholung")}
+                className="border border-border rounded-md p-0.5"
+              >
+                <ToggleGroupItem value="versand" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">📦 Versand</ToggleGroupItem>
+                <ToggleGroupItem value="abholung" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">🏠 Abholung</ToggleGroupItem>
+              </ToggleGroup>
+              {lieferart === "abholung" && (
+                <span className="text-xs text-muted-foreground">Kunde holt persönlich ab — keine Tracking-Nummer nötig.</span>
+              )}
+            </div>
           </div>
+
 
           {/* 2-column grid: Auftragsinfo + Beschreibung/Notizen */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
