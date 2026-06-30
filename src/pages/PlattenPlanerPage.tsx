@@ -561,12 +561,15 @@ export default function PlattenPlanerPage() {
       s.transform.showX = false; s.transform.showZ = false;
       s.transform.showY = true;
     }
-    if (selectedPlacementId) {
-      const mesh = s.meshByPlacementId.get(selectedPlacementId);
-      if (mesh) s.transform.attach(mesh);
-      else s.transform.detach();
+    const mesh = selectedPlacementId ? s.meshByPlacementId.get(selectedPlacementId) : null;
+    if (mesh) {
+      s.transform.attach(mesh);
+      (s.transform as any).visible = true;
+      (s.transform as any).enabled = true;
     } else {
       s.transform.detach();
+      (s.transform as any).visible = false;
+      (s.transform as any).enabled = false;
     }
   }, [selectedPlacementId, gizmoMode, activePlacements, plateW, plateH]);
 
