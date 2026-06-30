@@ -356,6 +356,38 @@ export default function OrderStatusWorkflow({
         </div>
       )}
 
+      {/* Zahlungs-Bestätigungs-Dialog */}
+      {showPaymentDialog && (
+        <div className="bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-3">
+          <p className="text-sm font-semibold">Wie wurde diese Bestellung bezahlt?</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => handleConfirmPayment("stripe")}
+              disabled={savingPayment}
+              className="w-full text-left border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-primary/5 transition-colors disabled:opacity-50"
+            >
+              <div className="text-sm font-medium">Per Stripe (automatisch)</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">
+                Stripe-Zahlungen werden normalerweise automatisch erkannt. Nur bestätigen, falls die automatische Erkennung fehlgeschlagen ist.
+              </div>
+            </button>
+            <button
+              onClick={() => handleConfirmPayment("rechnung")}
+              disabled={savingPayment}
+              className="w-full text-left border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-primary/5 transition-colors disabled:opacity-50"
+            >
+              <div className="text-sm font-medium">Per Rechnung / Überweisung</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">
+                Markiert alle offenen Rechnungen dieses Auftrags als bezahlt.
+              </div>
+            </button>
+          </div>
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => setShowPaymentDialog(false)} disabled={savingPayment} className="border-border">Abbrechen</Button>
+          </div>
+        </div>
+      )}
+
       {/* Verlauf */}
       {!loadingLog && log.length > 0 && (
         <div className="border-t border-border pt-3 space-y-1.5">
