@@ -407,7 +407,7 @@ export default function PlattenPlanerPage() {
       renderer.dispose();
       if (renderer.domElement.parentNode === container) container.removeChild(renderer.domElement);
     };
-  }, [loading]);
+  }, [initialLoading]);
 
   // Rebuild plate visual when active plate / printer changes
   useEffect(() => {
