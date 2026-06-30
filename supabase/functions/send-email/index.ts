@@ -25,6 +25,14 @@ const STATUS_KEY_MAP: Record<string, string> = {
   geliefert: "geliefert",
 };
 
+const PICKUP_ADDRESS_HTML = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin:20px 0;">
+  <p style="margin:0 0 6px;font-size:12px;color:#16a34a;font-weight:700;text-transform:uppercase;">🏠 Abholadresse</p>
+  <p style="margin:0;font-size:15px;font-weight:600;">3DMuscio</p>
+  <p style="margin:2px 0 0;font-size:14px;">Gartensiedlung 13<br/>8360 Eschlikon TG</p>
+  <p style="margin:10px 0 0;font-size:12px;color:#15803d;"><strong>Öffnungszeiten:</strong> Nach Vereinbarung — bitte vorgängig kurz melden.</p>
+  <p style="margin:6px 0 0;font-size:12px;color:#15803d;">📞 +41 79 839 50 80 · ✉️ info@3dmuscio.com</p>
+</div>`;
+
 const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: string; emoji: string }> = {
   datei_erhalten: {
     subject: "Wir haben Ihre Datei erhalten",
@@ -54,6 +62,21 @@ const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: stri
     subject: "Ihr Auftrag wurde geliefert",
     title: "Geliefert",
     intro: "Ihr Auftrag wurde erfolgreich geliefert. Wir wünschen viel Freude!",
+    emoji: "✅",
+  },
+};
+
+const STATUS_TEXTS_PICKUP: Record<string, { subject: string; title: string; intro: string; emoji: string }> = {
+  versandt: {
+    subject: "Ihr Auftrag ist abholbereit",
+    title: "Abholbereit",
+    intro: "Ihr Auftrag ist fertig und kann bei uns abgeholt werden.",
+    emoji: "🏠",
+  },
+  geliefert: {
+    subject: "Ihr Auftrag wurde abgeholt",
+    title: "Abgeholt",
+    intro: "Vielen Dank für die Abholung Ihres Auftrags. Wir wünschen viel Freude!",
     emoji: "✅",
   },
 };
