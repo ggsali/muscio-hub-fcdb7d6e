@@ -306,7 +306,7 @@ export default function PlattenPlanerPage() {
     const transform = new TransformControls(camera, renderer.domElement);
     transform.setSize(0.8);
     transform.showY = false; // nur XZ verschieben
-    transform.visible = false;
+    (transform as any).visible = false;
     (transform as any).enabled = false;
     scene.add(transform as unknown as THREE.Object3D);
     transform.addEventListener("dragging-changed", (e: any) => {
