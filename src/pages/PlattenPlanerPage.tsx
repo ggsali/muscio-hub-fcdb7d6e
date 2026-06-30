@@ -379,14 +379,14 @@ export default function PlattenPlanerPage() {
     // Bauplatte
     const slab = new THREE.Mesh(
       new THREE.BoxGeometry(plateW, 4, plateH),
-      new THREE.MeshStandardMaterial({ color: 0x1f1f23, metalness: 0.2, roughness: 0.8 }),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.1, roughness: 0.85 }),
     );
     slab.position.y = -2;
     s.plateGroup.add(slab);
     // Grid 10mm
-    const grid = new THREE.GridHelper(Math.max(plateW, plateH), Math.round(Math.max(plateW, plateH) / 10), 0xff5a00, 0x333333);
+    const grid = new THREE.GridHelper(Math.max(plateW, plateH), Math.round(Math.max(plateW, plateH) / 10), 0xff5a00, 0xcccccc);
     (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.35;
+    (grid.material as THREE.Material).opacity = 0.5;
     grid.position.y = 0.05;
     // Clip grid visually by overlaying slab above; OK leave full grid
     s.plateGroup.add(grid);
