@@ -8,6 +8,7 @@ import { ShopPromoBanner } from "./site/ShopPromoBanner";
 import { ChatWidget } from "./site/ChatWidget";
 import { ChatFab } from "./site/ChatFab";
 import { CartProvider } from "@/contexts/CartContext";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { usePageViewTracker } from "@/hooks/usePageViewTracker";
 
 export default function SiteLayout() {
@@ -15,6 +16,7 @@ export default function SiteLayout() {
   return (
     <CartProvider>
       <div className="site-theme min-h-screen flex flex-col">
+        <PaymentTestModeBanner />
         <CursorSpotlight />
         <CanonicalTag />
         {/* Sticky stack: Banner sits above the header — they no longer overlap */}
