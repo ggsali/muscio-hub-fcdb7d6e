@@ -45,9 +45,28 @@ export default function PartFileUpload({ partId, orderId, customerId, disabled }
 
   useEffect(() => { load(); }, [load]);
 
+  const computeStlBoundingBox = async (file: File): Promise<{ x: number; y: number } | null> => {
+    if (!file.name.toLowerCase().endsWith(".stl")) return null;
+    try {
+      const { STLLoader } = await import("three/examples/jsm/loaders/STLLoader.js");
+      const THREE = await import("three");
+      const buffer = await file.arrayBuffer();
+      const loader = new STLLoader();
+      const geometry = loader.parse(buffer);
+      geometry.computeBoundingBox();
+      const bb = geometry.boundingBox;
+      if (!bb) return null;
+      const size = new THREE.Vector3();
+      bb.getSize(size);
+      return { x: Math.round(size.x * 100) / 100, y: Math.round(size.y * 100) / 100 };
+    } catch (e) {
+      console.warn("STL bounding box failed", e);
+      return null;
+    }
+  };
+
   const uploadFile = async (file: File) => {
     setUploading(true);
-    const ext = file.name.split(".").pop();
     const path = `${orderId ?? "no-order"}/${partId ?? "no-part"}/${Date.now()}_${file.name}`;
     const { error } = await supabase.storage.from("part-files").upload(path, file, { upsert: false });
     if (!error) {
@@ -60,6 +79,15 @@ export default function PartFileUpload({ partId, orderId, customerId, disabled }
         file_type: file.type,
         file_size_bytes: file.size,
       });
+      // STL → Bounding Box berechnen und in parts speichern
+      if (partId) {
+        const bbox = await computeStlBoundingBox(file);
+        if (bbox) {
+          await (supabase.from as any)("parts")
+            .update({ laenge_mm: bbox.x, breite_mm: bbox.y })
+            .eq("id", partId);
+        }
+      }
       await load();
     }
     setUploading(false);

@@ -23,9 +23,19 @@ interface Equipment {
   sort_order: number;
   aktiv: boolean;
   model_rotation?: Rotation | null;
+  ist_drucker?: boolean | null;
+  bauplatte_breite_mm?: number | null;
+  bauplatte_tiefe_mm?: number | null;
 }
 
-const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation };
+const empty = {
+  name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0,
+  vorschaubild_url: "", modell_url: "",
+  model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation,
+  ist_drucker: false,
+  bauplatte_breite_mm: null as number | null,
+  bauplatte_tiefe_mm: null as number | null,
+};
 
 export default function EquipmentAdminPage() {
   const [items, setItems] = useState<Equipment[]>([]);
@@ -49,6 +59,9 @@ export default function EquipmentAdminPage() {
       aktiv: e.aktiv, sort_order: e.sort_order,
       vorschaubild_url: e.vorschaubild_url || "", modell_url: e.modell_url || "",
       model_rotation: e.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 },
+      ist_drucker: !!e.ist_drucker,
+      bauplatte_breite_mm: e.bauplatte_breite_mm ?? null,
+      bauplatte_tiefe_mm: e.bauplatte_tiefe_mm ?? null,
     });
     setImageFile(null); setModelFile(null);
   };
@@ -81,6 +94,9 @@ export default function EquipmentAdminPage() {
         sort_order: editing.sort_order,
         aktiv: editing.aktiv,
         model_rotation: editing.model_rotation,
+        ist_drucker: !!editing.ist_drucker,
+        bauplatte_breite_mm: editing.ist_drucker ? editing.bauplatte_breite_mm : null,
+        bauplatte_tiefe_mm: editing.ist_drucker ? editing.bauplatte_tiefe_mm : null,
       };
       setModelFile(null); setImageFile(null);
       if (editing.id) {
@@ -190,6 +206,33 @@ export default function EquipmentAdminPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <Switch checked={!!editing.ist_drucker} onCheckedChange={v => setEditing({ ...editing, ist_drucker: v })} />
+              <Label>Ist ein 3D-Drucker</Label>
+            </div>
+            {editing.ist_drucker && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Bauplatte Breite (mm)</Label>
+                  <Input
+                    type="number"
+                    value={editing.bauplatte_breite_mm ?? ""}
+                    onChange={e => setEditing({ ...editing, bauplatte_breite_mm: e.target.value === "" ? null : Number(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <Label>Bauplatte Tiefe (mm)</Label>
+                  <Input
+                    type="number"
+                    value={editing.bauplatte_tiefe_mm ?? ""}
+                    onChange={e => setEditing({ ...editing, bauplatte_tiefe_mm: e.target.value === "" ? null : Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2"><Switch checked={editing.aktiv} onCheckedChange={v => setEditing({ ...editing, aktiv: v })} /><Label>Aktiv</Label></div>
