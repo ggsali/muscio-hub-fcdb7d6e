@@ -1613,7 +1613,16 @@ export default function AuftragDetailPage() {
           )}
 
           {!isNew && id && (
-            <PrintPlatePlanner orderId={id} parts={parts as any} />
+            <div className="bg-card border border-border rounded-lg p-4 flex items-center gap-3">
+              <Layers className="w-4 h-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold">Druckplatten-Planer</p>
+                <p className="text-xs text-muted-foreground">Teile auf 3D-Bauplatten anordnen, drehen und als ZIP exportieren.</p>
+              </div>
+              <Button size="sm" onClick={() => navigate(`/admin/auftraege/${id}/platten`)}>
+                Platten planen
+              </Button>
+            </div>
           )}
         </div>
       )}
