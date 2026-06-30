@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +10,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Layers, Plus, Trash2, Download, Loader2, AlertCircle, RotateCw, X,
+  Move, Maximize2,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+
+type GizmoMode = "translate" | "rotate";
 
 type Part = {
   id: string;
@@ -63,6 +67,7 @@ export default function PlattenPlanerPage() {
   const [dragOverCanvas, setDragOverCanvas] = useState(false);
   const [tabDragOverId, setTabDragOverId] = useState<string | null>(null);
   const [hoverTip, setHoverTip] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [gizmoMode, setGizmoMode] = useState<GizmoMode>("translate");
 
   // ====== DATA LOAD ======
   const loadAll = async () => {
@@ -237,6 +242,7 @@ export default function PlattenPlanerPage() {
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
+    transform: TransformControls;
     plateGroup: THREE.Group;
     partsGroup: THREE.Group;
     dropPlane: THREE.Mesh;
@@ -250,18 +256,18 @@ export default function PlattenPlanerPage() {
   useEffect(() => {
     const container = canvasContainerRef.current;
     if (!container) return;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const initW = Math.max(1, container.clientWidth);
+    const initH = Math.max(1, container.clientHeight);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0a0c);
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+    const camera = new THREE.PerspectiveCamera(45, initW / initH, 0.1, 10000);
     camera.position.set(300, 400, 300);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(width, height);
+    renderer.setSize(initW, initH);
     container.appendChild(renderer.domElement);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.55));
@@ -276,6 +282,12 @@ export default function PlattenPlanerPage() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
     controls.target.set(0, 0, 0);
+    // Linksklick = drag (eigene Logik), Rechtsklick = Kamera-Rotate, Mitte = Pan
+    controls.mouseButtons = {
+      LEFT: -1 as any,
+      MIDDLE: THREE.MOUSE.PAN,
+      RIGHT: THREE.MOUSE.ROTATE,
+    };
 
     const plateGroup = new THREE.Group();
     scene.add(plateGroup);
@@ -290,8 +302,30 @@ export default function PlattenPlanerPage() {
     dropPlane.rotation.x = -Math.PI / 2;
     scene.add(dropPlane);
 
+    // TransformControls (Gizmo)
+    const transform = new TransformControls(camera, renderer.domElement);
+    transform.setSize(0.8);
+    transform.showY = false; // nur XZ verschieben
+    scene.add(transform as unknown as THREE.Object3D);
+    transform.addEventListener("dragging-changed", (e: any) => {
+      controls.enabled = !e.value;
+      // Bei Drag-Ende: aktuelle Mesh-Pose in DB übernehmen
+      if (e.value === false) {
+        const obj = transform.object as THREE.Mesh | undefined;
+        if (!obj) return;
+        const placementId = obj.userData.placementId as string;
+        const pW = obj.userData.plateW as number;
+        const pH = obj.userData.plateH as number;
+        const px = obj.position.x + pW / 2;
+        const py = obj.position.z + pH / 2;
+        const deg = ((-obj.rotation.y * 180) / Math.PI);
+        const norm = ((deg % 360) + 360) % 360;
+        updatePlacement(placementId, { pos_x_mm: px, pos_y_mm: py, rot_deg: norm });
+      }
+    });
+
     const state = {
-      renderer, scene, camera, controls, plateGroup, partsGroup, dropPlane,
+      renderer, scene, camera, controls, transform, plateGroup, partsGroup, dropPlane,
       raycaster: new THREE.Raycaster(),
       pointer: new THREE.Vector2(),
       meshByPlacementId: new Map<string, THREE.Mesh>(),
@@ -307,17 +341,25 @@ export default function PlattenPlanerPage() {
     };
     animate();
 
-    const onResize = () => {
-      const w = container.clientWidth, h = container.clientHeight;
+    const resize = () => {
+      const w = Math.max(1, container.clientWidth);
+      const h = Math.max(1, container.clientHeight);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      renderer.setSize(w, h, false);
     };
-    window.addEventListener("resize", onResize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(container);
+    window.addEventListener("resize", resize);
+    // initial nach Layout
+    requestAnimationFrame(resize);
 
     return () => {
       state.stop = true;
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", resize);
+      ro.disconnect();
+      transform.detach();
+      (transform as any).dispose?.();
       controls.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode === container) container.removeChild(renderer.domElement);
@@ -396,6 +438,8 @@ export default function PlattenPlanerPage() {
       mesh.rotation.y = ((Number(pl.rot_deg) || 0) * Math.PI) / 180;
       mesh.userData.placementId = pl.id;
       mesh.userData.partName = part.teilname;
+      mesh.userData.plateW = plateW;
+      mesh.userData.plateH = plateH;
       // outline for selected
       if (isSelected) {
         const eg = new THREE.LineSegments(
@@ -409,12 +453,7 @@ export default function PlattenPlanerPage() {
     }
   }, [activePlacements, partsById, plateW, plateH, selectedPlacementId]);
 
-  // ====== 3D INTERACTION (pick + drag) ======
-  const dragRef = useRef<{
-    placementId: string;
-    offsetX: number; offsetZ: number;
-  } | null>(null);
-
+  // ====== 3D INTERACTION (pick only — TransformControls handles drag) ======
   const computePointer = (e: React.PointerEvent | PointerEvent) => {
     const s = sceneStateRef.current;
     if (!s) return null;
@@ -430,6 +469,8 @@ export default function PlattenPlanerPage() {
     if (e.button !== 0) return; // left only
     const s = sceneStateRef.current;
     if (!s) return;
+    // wenn Gizmo gerade greift, nichts machen
+    if ((s.transform as any).dragging) return;
     computePointer(e);
     s.raycaster.setFromCamera(s.pointer, s.camera);
     const hits = s.raycaster.intersectObjects(s.partsGroup.children, false);
@@ -437,18 +478,6 @@ export default function PlattenPlanerPage() {
       const mesh = hits[0].object as THREE.Mesh;
       const placementId = mesh.userData.placementId as string;
       setSelectedPlacementId(placementId);
-      // start drag
-      const planeHits = s.raycaster.intersectObject(s.dropPlane, false);
-      if (planeHits.length) {
-        const p = planeHits[0].point;
-        dragRef.current = {
-          placementId,
-          offsetX: p.x - mesh.position.x,
-          offsetZ: p.z - mesh.position.z,
-        };
-        s.controls.enabled = false;
-        (e.target as Element).setPointerCapture(e.pointerId);
-      }
     } else {
       setSelectedPlacementId(null);
     }
@@ -457,58 +486,50 @@ export default function PlattenPlanerPage() {
   const onCanvasPointerMove = (e: React.PointerEvent) => {
     const s = sceneStateRef.current;
     if (!s) return;
-    // hover tooltip
-    if (!dragRef.current) {
-      computePointer(e);
-      s.raycaster.setFromCamera(s.pointer, s.camera);
-      const hits = s.raycaster.intersectObjects(s.partsGroup.children, false);
-      if (hits.length) {
-        const mesh = hits[0].object as THREE.Mesh;
-        const rect = s.renderer.domElement.getBoundingClientRect();
-        setHoverTip({
-          x: e.clientX - rect.left, y: e.clientY - rect.top,
-          text: mesh.userData.partName || "",
-        });
-      } else {
-        setHoverTip(null);
-      }
-      return;
-    }
-    // dragging
+    if ((s.transform as any).dragging) { setHoverTip(null); return; }
     computePointer(e);
     s.raycaster.setFromCamera(s.pointer, s.camera);
-    const planeHits = s.raycaster.intersectObject(s.dropPlane, false);
-    if (!planeHits.length) return;
-    const p = planeHits[0].point;
-    const pl = placements.find((x) => x.id === dragRef.current!.placementId);
-    if (!pl) return;
-    const part = partsById.get(pl.part_id);
-    if (!part) return;
-    const w = Number(part.laenge_mm) || 0;
-    const d = Number(part.breite_mm) || 0;
-    // new scene x/z
-    let sx = p.x - dragRef.current.offsetX;
-    let sz = p.z - dragRef.current.offsetZ;
-    // back to plate coords (center)
-    let px = sx + plateW / 2;
-    let py = sz + plateH / 2;
-    // clamp keeping part on plate (consider rotation by using max extent)
-    const halfMax = Math.max(w, d) / 2;
-    px = Math.max(halfMax, Math.min(plateW - halfMax, px));
-    py = Math.max(halfMax, Math.min(plateH - halfMax, py));
-    // update mesh immediately
-    const mesh = s.meshByPlacementId.get(pl.id);
-    if (mesh) mesh.position.set(px - plateW / 2, PART_HEIGHT_MM / 2, py - plateH / 2);
-    updatePlacement(pl.id, { pos_x_mm: px, pos_y_mm: py });
+    const hits = s.raycaster.intersectObjects(s.partsGroup.children, false);
+    if (hits.length) {
+      const mesh = hits[0].object as THREE.Mesh;
+      const rect = s.renderer.domElement.getBoundingClientRect();
+      setHoverTip({
+        x: e.clientX - rect.left, y: e.clientY - rect.top,
+        text: mesh.userData.partName || "",
+      });
+    } else {
+      setHoverTip(null);
+    }
   };
 
-  const onCanvasPointerUp = (e: React.PointerEvent) => {
+  const onCanvasPointerUp = (_e: React.PointerEvent) => { /* noop */ };
+
+  // Attach gizmo to selected mesh + Mode setzen
+  useEffect(() => {
     const s = sceneStateRef.current;
-    if (dragRef.current && s) {
-      s.controls.enabled = true;
-      try { (e.target as Element).releasePointerCapture(e.pointerId); } catch {}
+    if (!s) return;
+    s.transform.setMode(gizmoMode);
+    s.transform.showY = false;
+    if (gizmoMode === "translate") {
+      s.transform.showX = true; s.transform.showZ = true;
+    } else {
+      // rotate: nur Y-Achse (oben/unten) — andere ausblenden
+      s.transform.showX = false; s.transform.showZ = false;
+      s.transform.showY = true;
     }
-    dragRef.current = null;
+    if (selectedPlacementId) {
+      const mesh = s.meshByPlacementId.get(selectedPlacementId);
+      if (mesh) s.transform.attach(mesh);
+      else s.transform.detach();
+    } else {
+      s.transform.detach();
+    }
+  }, [selectedPlacementId, gizmoMode, activePlacements, plateW, plateH]);
+
+  // Center selected
+  const centerSelected = () => {
+    if (!selectedPlacementId) return;
+    updatePlacement(selectedPlacementId, { pos_x_mm: plateW / 2, pos_y_mm: plateH / 2 });
   };
 
   // ====== ROTATION ======
@@ -687,7 +708,7 @@ export default function PlattenPlanerPage() {
                 <span className="text-primary text-sm font-medium">Hier ablegen, um auf Platte zu setzen</span>
               </div>
             )}
-            {hoverTip && !dragRef.current && (
+            {hoverTip && (
               <div
                 className="absolute pointer-events-none px-2 py-1 rounded bg-card/95 border border-border text-xs shadow"
                 style={{ left: hoverTip.x + 12, top: hoverTip.y + 12 }}
@@ -713,7 +734,34 @@ export default function PlattenPlanerPage() {
             {/* hint */}
             {activePlate && plateW > 0 && (
               <div className="absolute top-2 left-2 text-[10px] text-muted-foreground bg-card/80 px-2 py-1 rounded">
-                Klick = auswählen · Linksklick + Ziehen = verschieben · Rechtsklick = Kamera · Scroll = Zoom
+                Klick = auswählen · Gizmo ziehen = bewegen/drehen · Rechtsklick = Kamera · Scroll = Zoom
+              </div>
+            )}
+            {/* Gizmo-Toolbar */}
+            {activePlate && plateW > 0 && (
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-1 bg-card/90 border border-border rounded-lg p-1 shadow-lg">
+                <button
+                  title="Verschieben"
+                  onClick={() => setGizmoMode("translate")}
+                  className={`p-2 rounded transition-colors ${gizmoMode === "translate" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                >
+                  <Move className="w-4 h-4" />
+                </button>
+                <button
+                  title="Drehen"
+                  onClick={() => setGizmoMode("rotate")}
+                  className={`p-2 rounded transition-colors ${gizmoMode === "rotate" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
+                <button
+                  title="Auf Plattenmitte zentrieren"
+                  onClick={centerSelected}
+                  disabled={!selectedPlacementId}
+                  className="p-2 rounded transition-colors hover:bg-muted text-muted-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
               </div>
             )}
             {/* selected part panel */}
