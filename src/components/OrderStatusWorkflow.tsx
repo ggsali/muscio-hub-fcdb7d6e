@@ -25,6 +25,7 @@ interface Props {
   parts: PartSummary[];
   trackingNr?: string;
   source?: string;
+  lieferart?: "versand" | "abholung";
   onStatusChange: (newStatus: string) => void;
   onTrackingNrChange?: (nr: string) => void;
 }
