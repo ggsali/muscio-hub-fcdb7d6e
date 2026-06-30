@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ClipboardList, Cog, CreditCard, Package, CheckCircle2, Check } from "lucide-react";
+import { ClipboardList, Cog, CreditCard, Package, CheckCircle2, Check, Home } from "lucide-react";
 
 const STEPS_WEBSITE = [
   { key: 'offen', label: 'Zahlung ausstehend', icon: CreditCard },
