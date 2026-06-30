@@ -4,13 +4,8 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
-
-const SITE_NAME = "3DMuscio";
-const SENDER_DOMAIN = "notify.3dmuscio.com";
-const FROM_EMAIL = `${SITE_NAME} <noreply@3dmuscio.com>`;
-const REPLY_TO = "info@3dmuscio.com";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -19,171 +14,122 @@ serve(async (req) => {
 
   const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
   const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!STRIPE_SECRET_KEY) {
-    return new Response("STRIPE_SECRET_KEY not configured", { status: 500 });
+    console.error("[stripe-webhook] STRIPE_SECRET_KEY missing");
+    return new Response("STRIPE_SECRET_KEY missing", { status: 500 });
+  }
+  if (!STRIPE_WEBHOOK_SECRET) {
+    console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET missing");
+    return new Response("STRIPE_WEBHOOK_SECRET missing", { status: 500 });
+  }
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("[stripe-webhook] Supabase env missing");
+    return new Response("Supabase env missing", { status: 500 });
   }
 
   const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const body = await req.text();
+  const signature = req.headers.get("stripe-signature");
+  if (!signature) {
+    console.error("[stripe-webhook] Missing stripe-signature header");
+    return new Response("Missing stripe-signature header", { status: 400 });
+  }
+
+  let event: Stripe.Event;
+  try {
+    event = await stripe.webhooks.constructEventAsync(
+      body,
+      signature,
+      STRIPE_WEBHOOK_SECRET,
+      undefined,
+      Stripe.createSubtleCryptoProvider(),
+    );
+  } catch (err) {
+    console.error("[stripe-webhook] Signature verification failed:", err);
+    return new Response("Invalid signature", { status: 400 });
+  }
+
+  console.log(`[stripe-webhook] ✅ Event received: type=${event.type} id=${event.id}`);
 
   try {
-    const body = await req.text();
-    const signature = req.headers.get("stripe-signature");
-
-    if (!STRIPE_WEBHOOK_SECRET) {
-      console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET not configured");
-      return new Response("Webhook secret not configured", { status: 500 });
-    }
-    if (!signature) {
-      return new Response("Missing stripe-signature header", { status: 400 });
-    }
-
-    let event: Stripe.Event;
-    try {
-      event = await stripe.webhooks.constructEventAsync(
-        body,
-        signature,
-        STRIPE_WEBHOOK_SECRET,
-        undefined,
-        Stripe.createSubtleCryptoProvider()
-      );
-    } catch (err) {
-      console.error("Webhook signature verification failed:", err);
-      return new Response("Invalid signature", { status: 400 });
-    }
-
-    console.log(`[stripe-webhook] Event: ${event.type}`);
-
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const orderId = session.metadata?.order_id;
-      const amountTotal = session.amount_total; // in Rappen
+      const amountTotal = session.amount_total ?? 0;
+      const amountChf = amountTotal / 100;
 
-      console.log(`[stripe-webhook] Payment completed for orderId=${orderId}, amount=${amountTotal}`);
+      console.log(`[stripe-webhook] checkout.session.completed: orderId=${orderId} amount=CHF ${amountChf.toFixed(2)} sessionId=${session.id}`);
 
       if (!orderId) {
-        console.error("[stripe-webhook] No order_id in session metadata");
-        return new Response(JSON.stringify({ received: true, warning: "No order_id in metadata" }), {
+        console.warn("[stripe-webhook] No order_id in session metadata — skipping DB update");
+        return new Response(JSON.stringify({ received: true, warning: "no_order_id" }), {
           status: 200, headers: { "Content-Type": "application/json" },
         });
       }
 
-      // 1. Mark all unpaid bills for this order as paid
       const today = new Date().toISOString().split("T")[0];
-      await supabase
+
+      const { error: billsErr, count: billsCount } = await supabase
         .from("bills" as any)
-        .update({ bezahlt: true, bezahlt_am: today })
+        .update({ bezahlt: true, bezahlt_am: today }, { count: "exact" })
         .eq("order_id", orderId)
         .eq("bezahlt", false);
+      if (billsErr) console.error("[stripe-webhook] bills update error:", billsErr);
+      else console.log(`[stripe-webhook] bills marked paid: ${billsCount ?? 0}`);
 
-      // 2. Update order status to "Bezahlt"
-      await supabase
+      const { error: orderErr } = await supabase
         .from("orders")
         .update({ status: "Bezahlt" })
         .eq("id", orderId);
+      if (orderErr) console.error("[stripe-webhook] orders update error:", orderErr);
+      else console.log(`[stripe-webhook] order ${orderId} status -> Bezahlt`);
 
-      // 3. Log status change
-      await supabase.from("order_status_log").insert({
+      const { error: logErr } = await supabase.from("order_status_log").insert({
         order_id: orderId,
         status: "Bezahlt",
-        notiz: `Online-Zahlung via Stripe (CHF ${((amountTotal || 0) / 100).toFixed(2)})`,
+        notiz: `Online-Zahlung via Stripe (CHF ${amountChf.toFixed(2)})`,
       });
+      if (logErr) console.error("[stripe-webhook] status log error:", logErr);
 
-      // 4. Send payment confirmation email
+      // Confirmation email via send-transactional-email
       try {
-          const { data: order } = await supabase
-            .from("orders")
-            .select("*, customers(*)")
-            .eq("id", orderId)
-            .single();
+        const { data: order, error: orderFetchErr } = await supabase
+          .from("orders")
+          .select("*, customers(*)")
+          .eq("id", orderId)
+          .single();
 
-          const { data: companySettingsData } = await supabase
-            .from("company_settings")
-            .select("*");
-          const getSetting = (key: string) => companySettingsData?.find((s: any) => s.key === key)?.value ?? "";
-          const companyName = getSetting("firmenname") || "3dMuscio";
-
-          if (order && (order as any).customers?.email) {
-            const customer = (order as any).customers;
-            const customerName = [customer.vorname, customer.name].filter(Boolean).join(" ") || customer.name;
+        if (orderFetchErr || !order) {
+          console.error("[stripe-webhook] order fetch failed:", orderFetchErr);
+        } else {
+          const customer = (order as any).customers;
+          if (!customer?.email) {
+            console.warn("[stripe-webhook] customer email missing — skipping confirmation email");
+          } else {
+            const customerName = [customer.vorname, customer.name].filter(Boolean).join(" ") || customer.name || "";
             const orderNr = orderId.slice(0, 8).toUpperCase();
             const orderName = (order as any).name || (order as any).beschreibung || `Auftrag ${orderNr}`;
-            const amountFormatted = `CHF ${((amountTotal || 0) / 100).toFixed(2)}`;
+            const amountFormatted = `CHF ${amountChf.toFixed(2)}`;
 
-            const emailFooter = `
-              <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;" />
-              <div style="text-align:center;">
-                <p style="margin:0;font-size:12px;color:#9ca3af;">
-                  <a href="mailto:info@3dmuscio.com" style="color:#ea580c;text-decoration:none;">info@3dmuscio.com</a>
-                  &nbsp;·&nbsp;
-                  <span>+41 79 839 50 80</span>
-                  &nbsp;·&nbsp;
-                  <a href="https://www.3dmuscio.com" style="color:#ea580c;text-decoration:none;">www.3dmuscio.com</a>
-                </p>
-              </div>`;
-
-            const htmlBody = `
-              <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
-                <div style="background:#18181b;padding:24px 32px;border-radius:8px 8px 0 0;">
-                  <h1 style="color:#ffffff;margin:0;font-size:22px;">${companyName}</h1>
-                </div>
-                <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
-                  <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;">
-                    <span style="font-size:28px;">✅</span>
-                    <div>
-                      <p style="margin:0;font-size:15px;font-weight:700;color:#16a34a;">Zahlung erfolgreich eingegangen!</p>
-                      <p style="margin:4px 0 0;font-size:12px;color:#6b7280;">Auftrag Nr. ${orderNr}</p>
-                    </div>
-                  </div>
-                  <p>Guten Tag ${customerName},</p>
-                  <p>vielen Dank! Ihre Zahlung für den Auftrag <strong>„${orderName}"</strong> wurde erfolgreich verarbeitet.</p>
-                  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin:20px 0;">
-                    <p style="margin:0 0 4px;font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Bezahlter Betrag</p>
-                    <p style="margin:0;font-size:24px;font-weight:700;color:#16a34a;">${amountFormatted}</p>
-                  </div>
-                  <p style="color:#6b7280;font-size:13px;">Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
-                  <p>Mit freundlichen Grüssen<br><strong>${companyName}</strong></p>
-                  ${emailFooter}
-                </div>
-              </div>`;
-
-            const messageId = crypto.randomUUID();
-            await supabase.from("email_send_log").insert({
-              message_id: messageId,
-              template_name: "payment-confirmation",
-              recipient_email: customer.email,
-              status: "pending",
-            });
-
-            const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-              queue_name: "transactional_emails",
-              payload: {
-                message_id: messageId,
-                to: customer.email,
-                from: FROM_EMAIL,
-                reply_to: REPLY_TO,
-                sender_domain: SENDER_DOMAIN,
-                subject: `Zahlungsbestätigung – ${orderName} | ${companyName}`,
-                html: htmlBody,
-                purpose: "transactional",
-                label: "payment-confirmation",
-                idempotency_key: `payment-confirmation-${orderId}`,
-                queued_at: new Date().toISOString(),
+            const { error: mailErr } = await supabase.functions.invoke("send-transactional-email", {
+              body: {
+                templateName: "zahlung-bestaetigung",
+                recipientEmail: customer.email,
+                idempotencyKey: `payment-confirmation-${session.id}`,
+                templateData: { customerName, orderName, orderNr, amountFormatted },
               },
             });
-
-            if (enqueueError) throw new Error(enqueueError.message);
-
-            console.log(`[stripe-webhook] Confirmation email queued for ${customer.email}`);
+            if (mailErr) console.error("[stripe-webhook] confirmation email failed:", mailErr);
+            else console.log(`[stripe-webhook] confirmation email queued for ${customer.email}`);
           }
+        }
       } catch (emailErr) {
-        console.error("[stripe-webhook] Email sending failed:", emailErr);
-        // Don't fail the webhook because of email error
+        console.error("[stripe-webhook] confirmation email exception:", emailErr);
       }
 
       return new Response(JSON.stringify({ received: true, orderId }), {
@@ -191,13 +137,15 @@ serve(async (req) => {
       });
     }
 
+    console.log(`[stripe-webhook] Unhandled event type: ${event.type}`);
     return new Response(JSON.stringify({ received: true }), {
       status: 200, headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("[stripe-webhook] Error:", err);
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500, headers: { "Content-Type": "application/json" },
+    // Always return 200 so Stripe doesn't retry endlessly; the error is fully logged.
+    console.error("[stripe-webhook] handler error (returning 200 to avoid retry storm):", err);
+    return new Response(JSON.stringify({ received: true, error: String(err) }), {
+      status: 200, headers: { "Content-Type": "application/json" },
     });
   }
 });
