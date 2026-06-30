@@ -147,6 +147,19 @@ export default function PlattenPlanerPage() {
   };
 
   // ====== PLATE CRUD ======
+  const openNewPlateDialog = () => {
+    if (printers.length === 0) {
+      toast({
+        title: "Keine Drucker",
+        description: "In der Maschinen-Verwaltung als 3D-Drucker markieren.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setNewPlatePrinterId(printers[0].id);
+    setShowNewPlate(true);
+  };
+
   const handleCreatePlate = async () => {
     if (!newPlatePrinterId || !orderId) return;
     const nextIdx = plates.length + 1;
@@ -561,7 +574,10 @@ export default function PlattenPlanerPage() {
       s.transform.showX = false; s.transform.showZ = false;
       s.transform.showY = true;
     }
-    const mesh = selectedPlacementId ? s.meshByPlacementId.get(selectedPlacementId) : null;
+    const mesh =
+      selectedPlacementId && plateW > 0 && plateH > 0
+        ? s.meshByPlacementId.get(selectedPlacementId)
+        : null;
     if (mesh) {
       s.transform.attach(mesh);
       (s.transform as any).visible = true;
@@ -711,14 +727,7 @@ export default function PlattenPlanerPage() {
               );
             })}
             <button
-              onClick={() => {
-                if (printers.length === 0) {
-                  toast({ title: "Keine Drucker", description: "In der Maschinen-Verwaltung als 3D-Drucker markieren.", variant: "destructive" });
-                  return;
-                }
-                setNewPlatePrinterId(printers[0].id);
-                setShowNewPlate(true);
-              }}
+              onClick={openNewPlateDialog}
               className="px-3 py-1.5 rounded text-xs font-medium border border-dashed border-border hover:border-primary hover:text-primary inline-flex items-center gap-1"
             >
               <Plus className="w-3 h-3" /> Neue Platte
@@ -764,10 +773,13 @@ export default function PlattenPlanerPage() {
               </div>
             )}
             {!activePlate && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center space-y-2">
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="text-center space-y-3 bg-card/95 border border-border rounded-xl p-6 shadow-lg pointer-events-auto">
                   <Layers className="w-10 h-10 text-muted-foreground/40 mx-auto" />
-                  <p className="text-sm text-muted-foreground">Noch keine Platte angelegt</p>
+                  <p className="text-sm font-medium">Noch keine Druckplatte angelegt</p>
+                  <Button size="sm" onClick={openNewPlateDialog}>
+                    <Plus className="w-3.5 h-3.5" /> Platte anlegen
+                  </Button>
                 </div>
               </div>
             )}
