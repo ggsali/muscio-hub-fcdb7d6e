@@ -1,0 +1,1 @@
+UPDATE public.shop_products SET stripe_price_id = '3dm-handy-holder' WHERE slug = 'handy';
