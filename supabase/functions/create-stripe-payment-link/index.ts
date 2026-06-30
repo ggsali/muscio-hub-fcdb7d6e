@@ -13,10 +13,15 @@ serve(async (req) => {
   }
 
   const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
+  const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET");
   if (!STRIPE_SECRET_KEY) {
-    return new Response(JSON.stringify({ error: "STRIPE_SECRET_KEY not configured" }), {
+    console.error("[create-stripe-payment-link] STRIPE_SECRET_KEY missing");
+    return new Response(JSON.stringify({ error: "STRIPE_SECRET_KEY ist nicht konfiguriert" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+  if (!STRIPE_WEBHOOK_SECRET) {
+    console.warn("[create-stripe-payment-link] STRIPE_WEBHOOK_SECRET missing — Webhook-Bestätigung wird nicht funktionieren");
   }
 
   try {
@@ -118,7 +123,8 @@ serve(async (req) => {
       ],
       success_url: `https://3dmuscio.com/payment-success?order_id=${orderId}`,
       cancel_url: `https://3dmuscio.com/auftraege/${orderId}?payment=cancelled`,
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "twint"],
+      locale: "de",
       metadata: {
         order_id: orderId || "",
       },
