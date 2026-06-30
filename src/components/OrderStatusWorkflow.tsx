@@ -25,12 +25,13 @@ interface Props {
   parts: PartSummary[];
   trackingNr?: string;
   source?: string;
+  lieferart?: "versand" | "abholung";
   onStatusChange: (newStatus: string) => void;
   onTrackingNrChange?: (nr: string) => void;
 }
 
 export default function OrderStatusWorkflow({
-  orderId, currentStatus, parts, trackingNr = "", source, onStatusChange, onTrackingNrChange
+  orderId, currentStatus, parts, trackingNr = "", source, lieferart = "versand", onStatusChange, onTrackingNrChange
 }: Props) {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(true);
@@ -91,7 +92,7 @@ export default function OrderStatusWorkflow({
     if (newStatus === currentStatus) return;
     if (!isStepAllowed(newStatus)) return;
 
-    if (newStatus === "Geliefert") {
+    if (newStatus === "Geliefert" && lieferart === "versand") {
       setShowTrackingInput(true);
       return;
     }
@@ -113,7 +114,7 @@ export default function OrderStatusWorkflow({
     if (tplKey) {
       try {
         await supabase.functions.invoke("send-email", {
-          body: { kind: "status", orderId, statusKey: tplKey, trackingNr: trackingInput || trackingNr || null },
+          body: { kind: "status", orderId, statusKey: tplKey, trackingNr: trackingInput || trackingNr || null, lieferart },
         });
       } catch (e) { console.error("send-email status failed", e); }
     }
@@ -208,6 +209,7 @@ export default function OrderStatusWorkflow({
           const active = currentIdx === i;
           const allowed = isStepAllowed(s);
           const isLast = i === STATUSES.length - 1;
+          const displayLabel = (s === "Geliefert" && lieferart === "abholung") ? "Abgeholt" : s;
           return (
             <React.Fragment key={s}>
               <button
@@ -229,7 +231,7 @@ export default function OrderStatusWorkflow({
                    s === "Geliefert" ? <Truck className="w-4 h-4" /> :
                    <Circle className="w-4 h-4" />}
                 </div>
-                <span className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-primary" : done ? "text-success" : "text-muted-foreground"}`}>{s}</span>
+                <span className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-primary" : done ? "text-success" : "text-muted-foreground"}`}>{displayLabel}</span>
               </button>
               {!isLast && (
                 <div className={`flex-1 h-0.5 mb-5 mx-1 transition-all ${done ? "bg-success" : "bg-border"}`} />

@@ -25,6 +25,14 @@ const STATUS_KEY_MAP: Record<string, string> = {
   geliefert: "geliefert",
 };
 
+const PICKUP_ADDRESS_HTML = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin:20px 0;">
+  <p style="margin:0 0 6px;font-size:12px;color:#16a34a;font-weight:700;text-transform:uppercase;">🏠 Abholadresse</p>
+  <p style="margin:0;font-size:15px;font-weight:600;">3DMuscio</p>
+  <p style="margin:2px 0 0;font-size:14px;">Gartensiedlung 13<br/>8360 Eschlikon TG</p>
+  <p style="margin:10px 0 0;font-size:12px;color:#15803d;"><strong>Öffnungszeiten:</strong> Nach Vereinbarung — bitte vorgängig kurz melden.</p>
+  <p style="margin:6px 0 0;font-size:12px;color:#15803d;">📞 +41 79 839 50 80 · ✉️ info@3dmuscio.com</p>
+</div>`;
+
 const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: string; emoji: string }> = {
   datei_erhalten: {
     subject: "Wir haben Ihre Datei erhalten",
@@ -54,6 +62,21 @@ const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: stri
     subject: "Ihr Auftrag wurde geliefert",
     title: "Geliefert",
     intro: "Ihr Auftrag wurde erfolgreich geliefert. Wir wünschen viel Freude!",
+    emoji: "✅",
+  },
+};
+
+const STATUS_TEXTS_PICKUP: Record<string, { subject: string; title: string; intro: string; emoji: string }> = {
+  versandt: {
+    subject: "Ihr Auftrag ist abholbereit",
+    title: "Abholbereit",
+    intro: "Ihr Auftrag ist fertig und kann bei uns abgeholt werden.",
+    emoji: "🏠",
+  },
+  geliefert: {
+    subject: "Ihr Auftrag wurde abgeholt",
+    title: "Abgeholt",
+    intro: "Vielen Dank für die Abholung Ihres Auftrags. Wir wünschen viel Freude!",
     emoji: "✅",
   },
 };
@@ -94,8 +117,10 @@ function buildOrderEmail(opts: {
   akontoPercent?: number | null;
   akontoBetrag?: number | null;
   restbetrag?: number | null;
+  lieferart?: string | null;
 }): { subject: string; html: string } {
-  const { type, customerName, orderNr, orderName, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag } = opts;
+  const { type, customerName, orderNr, orderName, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag, lieferart } = opts;
+  const isPickup = lieferart === "abholung";
 
   const greet = `<p>Guten Tag ${customerName},</p>`;
 
@@ -173,6 +198,15 @@ function buildOrderEmail(opts: {
     };
   }
   if (type === "lieferung") {
+    if (isPickup) {
+      return {
+        subject: `Ihre Bestellung „${orderName}" ist abholbereit`,
+        html: emailLayout({
+          title: "🏠 Bereit zur Abholung",
+          bodyHtml: `${greet}<p>Ihre Bestellung <strong>„${orderName}"</strong> ist fertig und kann bei uns abgeholt werden.</p>${PICKUP_ADDRESS_HTML}<p style="color:#6b7280;font-size:13px;">Bitte vorgängig kurz melden, damit wir Ihre Teile bereitstellen können.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        }),
+      };
+    }
     return {
       subject: `Ihre Bestellung „${orderName}" wurde versendet`,
       html: emailLayout({
@@ -220,7 +254,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { kind, orderId, type, statusKey, trackingNr, pdfBase64, pdfFilename, paymentUrl, akontoPercent, akontoBetrag, restbetrag } = body;
+    const { kind, orderId, type, statusKey, trackingNr, pdfBase64, pdfFilename, paymentUrl, akontoPercent, akontoBetrag, restbetrag, lieferart: bodyLieferart } = body;
 
     // Auftrag + Kunde laden
     const { data: order } = await supabase
@@ -241,33 +275,42 @@ Deno.serve(async (req) => {
     const orderNr = order.id.slice(0, 8).toUpperCase();
     const orderName = (order as any).name || order.beschreibung || `Auftrag ${orderNr}`;
     const datum = order.datum ? new Date(order.datum).toLocaleDateString("de-CH") : "";
+    const effectiveLieferart = bodyLieferart || (order as any).lieferart || "versand";
+    const isPickup = effectiveLieferart === "abholung";
 
     let subject = "";
     let html = "";
 
     if (kind === "status") {
       const key = STATUS_KEY_MAP[statusKey] || statusKey;
-      const s = STATUS_TEXTS[key];
+      const s = (isPickup && STATUS_TEXTS_PICKUP[key]) ? STATUS_TEXTS_PICKUP[key] : STATUS_TEXTS[key];
       if (!s) {
         return new Response(JSON.stringify({ skipped: true, reason: "unknown-status" }), {
           status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       subject = `${s.subject} – ${orderName}`;
-      // Tracking-Nr. ergänzen bei Versand-/Liefer-Status
-      const effectiveTracking = trackingNr || (order as any).tracking_nr || null;
-      const trackingBlock = (key === "versandt" || key === "geliefert") && effectiveTracking
-        ? `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#16a34a;font-weight:700;text-transform:uppercase;">Tracking-Nummer</p><p style="margin:0;font-size:18px;font-weight:700;letter-spacing:0.1em;">${effectiveTracking}</p></div>`
-        : "";
+      let infoBlock = "";
+      if (key === "versandt" || key === "geliefert") {
+        if (isPickup) {
+          infoBlock = PICKUP_ADDRESS_HTML;
+        } else {
+          const effectiveTracking = trackingNr || (order as any).tracking_nr || null;
+          if (effectiveTracking) {
+            infoBlock = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#16a34a;font-weight:700;text-transform:uppercase;">Tracking-Nummer</p><p style="margin:0;font-size:18px;font-weight:700;letter-spacing:0.1em;">${effectiveTracking}</p></div>`;
+          }
+        }
+      }
       html = emailLayout({
         title: `${s.emoji} ${s.title}`,
-        bodyHtml: `<p>Guten Tag ${customerName},</p><p>${s.intro}</p>${trackingBlock}<p style="color:#6b7280;font-size:13px;">Auftrag Nr. ${orderNr}${datum ? ` · ${datum}` : ""}</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        bodyHtml: `<p>Guten Tag ${customerName},</p><p>${s.intro}</p>${infoBlock}<p style="color:#6b7280;font-size:13px;">Auftrag Nr. ${orderNr}${datum ? ` · ${datum}` : ""}</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       });
     } else {
       // kind === "order" / default
       const built = buildOrderEmail({
         type, customerName, orderNr, orderName, datum,
         paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag,
+        lieferart: effectiveLieferart,
       });
       subject = built.subject;
       html = built.html;

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ClipboardList, Cog, CreditCard, Package, CheckCircle2, Check } from "lucide-react";
+import { ClipboardList, Cog, CreditCard, Package, CheckCircle2, Check, Home } from "lucide-react";
 
 const STEPS_WEBSITE = [
   { key: 'offen', label: 'Zahlung ausstehend', icon: CreditCard },
@@ -39,9 +39,13 @@ function statusToStep(status: string, isWebsite: boolean): number {
   }
 }
 
-export default function OrderProgress({ status, source }: { status: string; source?: string }) {
+export default function OrderProgress({ status, source, lieferart }: { status: string; source?: string; lieferart?: string }) {
   const isWebsiteOrder = source === 'website' || source === 'shop' || source === 'kalkulator'
-  const STEPS = isWebsiteOrder ? STEPS_WEBSITE : STEPS_MANUAL
+  const isPickup = lieferart === 'abholung'
+  const baseSteps = isWebsiteOrder ? STEPS_WEBSITE : STEPS_MANUAL
+  const STEPS = baseSteps.map(s =>
+    s.key === 'geliefert' && isPickup ? { ...s, label: 'Abholbereit', icon: Home } : s
+  )
   const activeIdx = statusToStep(status, isWebsiteOrder);
 
   return (

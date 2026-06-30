@@ -22,6 +22,7 @@ import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
 import OrderUploadRequests from "@/components/OrderUploadRequests";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -97,6 +98,7 @@ export default function AuftragDetailPage() {
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
   const [trackingNr, setTrackingNr] = useState("");
+  const [lieferart, setLieferart] = useState<"versand" | "abholung">("versand");
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
   const [expressKosten, setExpressKosten] = useState<number>(0);
@@ -200,6 +202,7 @@ export default function AuftragDetailPage() {
           setDatum(o.datum);
           setStatus(o.status);
           setTrackingNr((o as any).tracking_nr || "");
+          setLieferart(((o as any).lieferart === "abholung") ? "abholung" : "versand");
           setGeplantVon((o as any).geplant_von || "");
           setGeplantBis((o as any).geplant_bis || "");
           setExpressKosten(Number((o as any).express_kosten) || 0);
@@ -441,7 +444,7 @@ export default function AuftragDetailPage() {
       }
 
       const { data, error } = await supabase.functions.invoke("send-email", {
-        body: { kind: "order", orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl },
+        body: { kind: "order", orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl, lieferart },
       });
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -704,6 +707,7 @@ export default function AuftragDetailPage() {
       express_kosten: expressBetrag,
       express_label: expressLabel || null,
       notes_internal: notesInternal || null,
+      lieferart,
     };
 
     let orderId = id === "neu" ? null : id;
@@ -1156,7 +1160,7 @@ export default function AuftragDetailPage() {
           )}
 
           {/* Auftragsname (immer) */}
-          <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
             <div className="space-y-1.5">
               <Label>Auftragsname <span className="text-muted-foreground font-normal text-xs">(wird als E-Mail-Betreff verwendet)</span></Label>
               <Input
@@ -1166,7 +1170,23 @@ export default function AuftragDetailPage() {
                 className="bg-input border-border"
               />
             </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Label className="shrink-0">Lieferart</Label>
+              <ToggleGroup
+                type="single"
+                value={lieferart}
+                onValueChange={(v) => v && setLieferart(v as "versand" | "abholung")}
+                className="border border-border rounded-md p-0.5"
+              >
+                <ToggleGroupItem value="versand" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">📦 Versand</ToggleGroupItem>
+                <ToggleGroupItem value="abholung" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">🏠 Abholung</ToggleGroupItem>
+              </ToggleGroup>
+              {lieferart === "abholung" && (
+                <span className="text-xs text-muted-foreground">Kunde holt persönlich ab — keine Tracking-Nummer nötig.</span>
+              )}
+            </div>
           </div>
+
 
           {/* 2-column grid: Auftragsinfo + Beschreibung/Notizen */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1549,7 +1569,7 @@ export default function AuftragDetailPage() {
           </div>
 
           {/* Express */}
-          {!isNew && (
+          {!isNew && lieferart === "versand" && (
             <div className="bg-card border border-border rounded-lg p-4 md:p-5">
               <h3 className="font-semibold text-sm mb-3">Express-Lieferung</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1602,20 +1622,23 @@ export default function AuftragDetailPage() {
             parts={parts.map(p => ({ status: p.status }))}
             trackingNr={trackingNr}
             source={source}
+            lieferart={lieferart}
             onStatusChange={setStatus}
             onTrackingNrChange={setTrackingNr}
           />
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
-            <h3 className="font-semibold text-sm">Tracking & Termine</h3>
-            <div className="space-y-1.5">
-              <Label>Tracking-Nummer</Label>
-              <div className="flex gap-2">
-                <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value)} className="bg-input border-border" placeholder="z.B. CH123456789DE" />
-                <Button onClick={handleSave} disabled={saving} variant="outline" className="border-border gap-2">
-                  <Save className="w-4 h-4" /> Speichern
-                </Button>
+            <h3 className="font-semibold text-sm">{lieferart === "abholung" ? "Termine" : "Tracking & Termine"}</h3>
+            {lieferart === "versand" && (
+              <div className="space-y-1.5">
+                <Label>Tracking-Nummer</Label>
+                <div className="flex gap-2">
+                  <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value)} className="bg-input border-border" placeholder="z.B. CH123456789DE" />
+                  <Button onClick={handleSave} disabled={saving} variant="outline" className="border-border gap-2">
+                    <Save className="w-4 h-4" /> Speichern
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Geplant von</Label>
@@ -1627,6 +1650,7 @@ export default function AuftragDetailPage() {
               </div>
             </div>
           </div>
+
           <TimeTracker orderId={id!} parts={parts} />
         </div>
       )}
