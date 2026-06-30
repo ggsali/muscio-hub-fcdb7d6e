@@ -75,9 +75,8 @@ serve(async (req) => {
       });
     }
 
-    const stripe = new Stripe(STRIPE_SECRET_KEY, {
-      apiVersion: "2025-08-27.basil",
-    });
+    const env: StripeEnv = (Deno.env.get("STRIPE_LIVE_API_KEY") ? "live" : "sandbox");
+    const stripe = createStripeClient(env);
 
     // Check if Stripe customer exists for this email
     let customerId: string | undefined;
