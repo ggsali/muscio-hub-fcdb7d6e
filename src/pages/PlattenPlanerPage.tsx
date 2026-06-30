@@ -453,12 +453,7 @@ export default function PlattenPlanerPage() {
     }
   }, [activePlacements, partsById, plateW, plateH, selectedPlacementId]);
 
-  // ====== 3D INTERACTION (pick + drag) ======
-  const dragRef = useRef<{
-    placementId: string;
-    offsetX: number; offsetZ: number;
-  } | null>(null);
-
+  // ====== 3D INTERACTION (pick only — TransformControls handles drag) ======
   const computePointer = (e: React.PointerEvent | PointerEvent) => {
     const s = sceneStateRef.current;
     if (!s) return null;
@@ -474,6 +469,8 @@ export default function PlattenPlanerPage() {
     if (e.button !== 0) return; // left only
     const s = sceneStateRef.current;
     if (!s) return;
+    // wenn Gizmo gerade greift, nichts machen
+    if ((s.transform as any).dragging) return;
     computePointer(e);
     s.raycaster.setFromCamera(s.pointer, s.camera);
     const hits = s.raycaster.intersectObjects(s.partsGroup.children, false);
@@ -481,18 +478,6 @@ export default function PlattenPlanerPage() {
       const mesh = hits[0].object as THREE.Mesh;
       const placementId = mesh.userData.placementId as string;
       setSelectedPlacementId(placementId);
-      // start drag
-      const planeHits = s.raycaster.intersectObject(s.dropPlane, false);
-      if (planeHits.length) {
-        const p = planeHits[0].point;
-        dragRef.current = {
-          placementId,
-          offsetX: p.x - mesh.position.x,
-          offsetZ: p.z - mesh.position.z,
-        };
-        s.controls.enabled = false;
-        (e.target as Element).setPointerCapture(e.pointerId);
-      }
     } else {
       setSelectedPlacementId(null);
     }
@@ -501,58 +486,50 @@ export default function PlattenPlanerPage() {
   const onCanvasPointerMove = (e: React.PointerEvent) => {
     const s = sceneStateRef.current;
     if (!s) return;
-    // hover tooltip
-    if (!dragRef.current) {
-      computePointer(e);
-      s.raycaster.setFromCamera(s.pointer, s.camera);
-      const hits = s.raycaster.intersectObjects(s.partsGroup.children, false);
-      if (hits.length) {
-        const mesh = hits[0].object as THREE.Mesh;
-        const rect = s.renderer.domElement.getBoundingClientRect();
-        setHoverTip({
-          x: e.clientX - rect.left, y: e.clientY - rect.top,
-          text: mesh.userData.partName || "",
-        });
-      } else {
-        setHoverTip(null);
-      }
-      return;
-    }
-    // dragging
+    if ((s.transform as any).dragging) { setHoverTip(null); return; }
     computePointer(e);
     s.raycaster.setFromCamera(s.pointer, s.camera);
-    const planeHits = s.raycaster.intersectObject(s.dropPlane, false);
-    if (!planeHits.length) return;
-    const p = planeHits[0].point;
-    const pl = placements.find((x) => x.id === dragRef.current!.placementId);
-    if (!pl) return;
-    const part = partsById.get(pl.part_id);
-    if (!part) return;
-    const w = Number(part.laenge_mm) || 0;
-    const d = Number(part.breite_mm) || 0;
-    // new scene x/z
-    let sx = p.x - dragRef.current.offsetX;
-    let sz = p.z - dragRef.current.offsetZ;
-    // back to plate coords (center)
-    let px = sx + plateW / 2;
-    let py = sz + plateH / 2;
-    // clamp keeping part on plate (consider rotation by using max extent)
-    const halfMax = Math.max(w, d) / 2;
-    px = Math.max(halfMax, Math.min(plateW - halfMax, px));
-    py = Math.max(halfMax, Math.min(plateH - halfMax, py));
-    // update mesh immediately
-    const mesh = s.meshByPlacementId.get(pl.id);
-    if (mesh) mesh.position.set(px - plateW / 2, PART_HEIGHT_MM / 2, py - plateH / 2);
-    updatePlacement(pl.id, { pos_x_mm: px, pos_y_mm: py });
+    const hits = s.raycaster.intersectObjects(s.partsGroup.children, false);
+    if (hits.length) {
+      const mesh = hits[0].object as THREE.Mesh;
+      const rect = s.renderer.domElement.getBoundingClientRect();
+      setHoverTip({
+        x: e.clientX - rect.left, y: e.clientY - rect.top,
+        text: mesh.userData.partName || "",
+      });
+    } else {
+      setHoverTip(null);
+    }
   };
 
-  const onCanvasPointerUp = (e: React.PointerEvent) => {
+  const onCanvasPointerUp = (_e: React.PointerEvent) => { /* noop */ };
+
+  // Attach gizmo to selected mesh + Mode setzen
+  useEffect(() => {
     const s = sceneStateRef.current;
-    if (dragRef.current && s) {
-      s.controls.enabled = true;
-      try { (e.target as Element).releasePointerCapture(e.pointerId); } catch {}
+    if (!s) return;
+    s.transform.setMode(gizmoMode);
+    s.transform.showY = false;
+    if (gizmoMode === "translate") {
+      s.transform.showX = true; s.transform.showZ = true;
+    } else {
+      // rotate: nur Y-Achse (oben/unten) — andere ausblenden
+      s.transform.showX = false; s.transform.showZ = false;
+      s.transform.showY = true;
     }
-    dragRef.current = null;
+    if (selectedPlacementId) {
+      const mesh = s.meshByPlacementId.get(selectedPlacementId);
+      if (mesh) s.transform.attach(mesh);
+      else s.transform.detach();
+    } else {
+      s.transform.detach();
+    }
+  }, [selectedPlacementId, gizmoMode, activePlacements, plateW, plateH]);
+
+  // Center selected
+  const centerSelected = () => {
+    if (!selectedPlacementId) return;
+    updatePlacement(selectedPlacementId, { pos_x_mm: plateW / 2, pos_y_mm: plateH / 2 });
   };
 
   // ====== ROTATION ======
