@@ -574,7 +574,10 @@ export default function PlattenPlanerPage() {
       s.transform.showX = false; s.transform.showZ = false;
       s.transform.showY = true;
     }
-    const mesh = selectedPlacementId ? s.meshByPlacementId.get(selectedPlacementId) : null;
+    const mesh =
+      selectedPlacementId && plateW > 0 && plateH > 0
+        ? s.meshByPlacementId.get(selectedPlacementId)
+        : null;
     if (mesh) {
       s.transform.attach(mesh);
       (s.transform as any).visible = true;
