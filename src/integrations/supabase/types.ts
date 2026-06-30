@@ -467,9 +467,12 @@ export type Database = {
       equipment: {
         Row: {
           aktiv: boolean
+          bauplatte_breite_mm: number | null
+          bauplatte_tiefe_mm: number | null
           beschreibung: string | null
           created_at: string
           id: string
+          ist_drucker: boolean
           model_rotation: Json
           modell_url: string | null
           name: string
@@ -479,9 +482,12 @@ export type Database = {
         }
         Insert: {
           aktiv?: boolean
+          bauplatte_breite_mm?: number | null
+          bauplatte_tiefe_mm?: number | null
           beschreibung?: string | null
           created_at?: string
           id?: string
+          ist_drucker?: boolean
           model_rotation?: Json
           modell_url?: string | null
           name: string
@@ -491,9 +497,12 @@ export type Database = {
         }
         Update: {
           aktiv?: boolean
+          bauplatte_breite_mm?: number | null
+          bauplatte_tiefe_mm?: number | null
           beschreibung?: string | null
           created_at?: string
           id?: string
+          ist_drucker?: boolean
           model_rotation?: Json
           modell_url?: string | null
           name?: string
@@ -987,6 +996,7 @@ export type Database = {
       }
       parts: {
         Row: {
+          breite_mm: number | null
           created_at: string | null
           customer_id: string | null
           druckzeit_h: number | null
@@ -995,6 +1005,7 @@ export type Database = {
           gewicht_g: number | null
           id: string
           konstruktion_h: number | null
+          laenge_mm: number | null
           material: string | null
           menge: number | null
           nachbearbeitung_h: number | null
@@ -1006,6 +1017,7 @@ export type Database = {
           teilname: string
         }
         Insert: {
+          breite_mm?: number | null
           created_at?: string | null
           customer_id?: string | null
           druckzeit_h?: number | null
@@ -1014,6 +1026,7 @@ export type Database = {
           gewicht_g?: number | null
           id?: string
           konstruktion_h?: number | null
+          laenge_mm?: number | null
           material?: string | null
           menge?: number | null
           nachbearbeitung_h?: number | null
@@ -1025,6 +1038,7 @@ export type Database = {
           teilname: string
         }
         Update: {
+          breite_mm?: number | null
           created_at?: string | null
           customer_id?: string | null
           druckzeit_h?: number | null
@@ -1033,6 +1047,7 @@ export type Database = {
           gewicht_g?: number | null
           id?: string
           konstruktion_h?: number | null
+          laenge_mm?: number | null
           material?: string | null
           menge?: number | null
           nachbearbeitung_h?: number | null
