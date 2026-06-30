@@ -198,6 +198,15 @@ function buildOrderEmail(opts: {
     };
   }
   if (type === "lieferung") {
+    if (isPickup) {
+      return {
+        subject: `Ihre Bestellung „${orderName}" ist abholbereit`,
+        html: emailLayout({
+          title: "🏠 Bereit zur Abholung",
+          bodyHtml: `${greet}<p>Ihre Bestellung <strong>„${orderName}"</strong> ist fertig und kann bei uns abgeholt werden.</p>${PICKUP_ADDRESS_HTML}<p style="color:#6b7280;font-size:13px;">Bitte vorgängig kurz melden, damit wir Ihre Teile bereitstellen können.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        }),
+      };
+    }
     return {
       subject: `Ihre Bestellung „${orderName}" wurde versendet`,
       html: emailLayout({
