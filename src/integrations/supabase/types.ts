@@ -2016,7 +2016,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_reviews: {
+        Row: {
+          created_at: string | null
+          customer_name: string | null
+          id: string | null
+          kommentar: string | null
+          rating: number | null
+          source: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_name?: string | null
+          id?: string | null
+          kommentar?: string | null
+          rating?: number | null
+          source?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_name?: string | null
+          id?: string | null
+          kommentar?: string | null
+          rating?: number | null
+          source?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       current_user_email: { Args: never; Returns: string }
