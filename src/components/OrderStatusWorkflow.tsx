@@ -39,6 +39,8 @@ export default function OrderStatusWorkflow({
   const [trackingInput, setTrackingInput] = useState(trackingNr);
   const [savingTracking, setSavingTracking] = useState(false);
   const [editingTracking, setEditingTracking] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
 
   const isWebsiteOrder = source === 'website' || source === 'shop' || source === 'kalkulator'
   const STATUSES = isWebsiteOrder ? STATUSES_WEBSITE : STATUSES_MANUAL
