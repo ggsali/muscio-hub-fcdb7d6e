@@ -208,6 +208,33 @@ export default function EquipmentAdminPage() {
             </div>
           </div>
 
+          <div className="rounded-lg border border-border p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <Switch checked={!!editing.ist_drucker} onCheckedChange={v => setEditing({ ...editing, ist_drucker: v })} />
+              <Label>Ist ein 3D-Drucker</Label>
+            </div>
+            {editing.ist_drucker && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Bauplatte Breite (mm)</Label>
+                  <Input
+                    type="number"
+                    value={editing.bauplatte_breite_mm ?? ""}
+                    onChange={e => setEditing({ ...editing, bauplatte_breite_mm: e.target.value === "" ? null : Number(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <Label>Bauplatte Tiefe (mm)</Label>
+                  <Input
+                    type="number"
+                    value={editing.bauplatte_tiefe_mm ?? ""}
+                    onChange={e => setEditing({ ...editing, bauplatte_tiefe_mm: e.target.value === "" ? null : Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2"><Switch checked={editing.aktiv} onCheckedChange={v => setEditing({ ...editing, aktiv: v })} /><Label>Aktiv</Label></div>
 
           <div className="flex justify-end gap-2">
