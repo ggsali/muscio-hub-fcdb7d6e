@@ -444,7 +444,7 @@ export default function AuftragDetailPage() {
       }
 
       const { data, error } = await supabase.functions.invoke("send-email", {
-        body: { kind: "order", orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl },
+        body: { kind: "order", orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl, lieferart },
       });
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
