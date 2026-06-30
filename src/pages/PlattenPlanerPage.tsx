@@ -309,19 +309,19 @@ export default function PlattenPlanerPage() {
     scene.add(transform as unknown as THREE.Object3D);
     transform.addEventListener("dragging-changed", (e: any) => {
       controls.enabled = !e.value;
-    });
-    transform.addEventListener("objectChange", () => {
-      const obj = transform.object as THREE.Mesh | undefined;
-      if (!obj) return;
-      const placementId = obj.userData.placementId as string;
-      // back to plate coords
-      const pW = obj.userData.plateW as number;
-      const pH = obj.userData.plateH as number;
-      const px = obj.position.x + pW / 2;
-      const py = obj.position.z + pH / 2;
-      const deg = ((-obj.rotation.y * 180) / Math.PI);
-      const norm = ((deg % 360) + 360) % 360;
-      updatePlacement(placementId, { pos_x_mm: px, pos_y_mm: py, rot_deg: norm });
+      // Bei Drag-Ende: aktuelle Mesh-Pose in DB übernehmen
+      if (e.value === false) {
+        const obj = transform.object as THREE.Mesh | undefined;
+        if (!obj) return;
+        const placementId = obj.userData.placementId as string;
+        const pW = obj.userData.plateW as number;
+        const pH = obj.userData.plateH as number;
+        const px = obj.position.x + pW / 2;
+        const py = obj.position.z + pH / 2;
+        const deg = ((-obj.rotation.y * 180) / Math.PI);
+        const norm = ((deg % 360) + 360) % 360;
+        updatePlacement(placementId, { pos_x_mm: px, pos_y_mm: py, rot_deg: norm });
+      }
     });
 
     const state = {
