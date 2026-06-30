@@ -727,14 +727,7 @@ export default function PlattenPlanerPage() {
               );
             })}
             <button
-              onClick={() => {
-                if (printers.length === 0) {
-                  toast({ title: "Keine Drucker", description: "In der Maschinen-Verwaltung als 3D-Drucker markieren.", variant: "destructive" });
-                  return;
-                }
-                setNewPlatePrinterId(printers[0].id);
-                setShowNewPlate(true);
-              }}
+              onClick={openNewPlateDialog}
               className="px-3 py-1.5 rounded text-xs font-medium border border-dashed border-border hover:border-primary hover:text-primary inline-flex items-center gap-1"
             >
               <Plus className="w-3 h-3" /> Neue Platte
