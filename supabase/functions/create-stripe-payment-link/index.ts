@@ -50,22 +50,28 @@ serve(async (req) => {
       });
     }
 
-    // Authoritative amount = order total minus already paid bills.
-    // (Bills can have duplicate "email sent" entries; summing unpaid rows
-    //  would double/triple the amount.)
+    // Authoritative amount:
+    // 1) Prefer the most recent UNPAID bill (avoids summing duplicate
+    //    "email sent" bill rows which would multiply the amount).
+    // 2) Fallback to order umsatz_total minus already paid bills.
+    // 3) Last resort: order umsatz_total.
     const { data: ord } = await admin
       .from("orders").select("umsatz_total").eq("id", orderId).maybeSingle();
     const total = Number(ord?.umsatz_total || 0);
     const { data: bills } = await admin
-      .from("bills").select("betrag, bezahlt").eq("order_id", orderId);
-    const bezahlt = (bills || [])
-      .filter((b: any) => b.bezahlt)
-      .reduce((s: number, b: any) => s + Number(b.betrag || 0), 0);
-    let betrag = Math.max(0, total - bezahlt);
-    // Fallback: if order total is missing but a single unpaid bill exists, use it.
-    if (betrag <= 0 && bills && bills.length > 0) {
-      const unpaid = bills.filter((b: any) => !b.bezahlt);
-      if (unpaid.length === 1) betrag = Number(unpaid[0].betrag || 0);
+      .from("bills").select("betrag, bezahlt, created_at")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false });
+    const unpaid = (bills || []).filter((b: any) => !b.bezahlt);
+    let betrag = 0;
+    if (unpaid.length > 0) {
+      betrag = Number(unpaid[0].betrag || 0);
+    } else if (total > 0) {
+      const bezahlt = (bills || [])
+        .filter((b: any) => b.bezahlt)
+        .reduce((s: number, b: any) => s + Number(b.betrag || 0), 0);
+      betrag = Math.max(0, total - bezahlt);
+      if (betrag <= 0) betrag = total;
     }
 
     if (!betrag || betrag <= 0) {
