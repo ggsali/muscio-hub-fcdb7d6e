@@ -170,8 +170,8 @@ export const CartDrawer = () => {
                   <span className="font-bold text-foreground text-lg">CHF {totalPrice.toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground">Versand wird im Checkout berechnet.</p>
-                <Button className="w-full gap-2" disabled={checkingOut} onClick={handleCheckout}>
-                  {checkingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                <Button className="w-full gap-2" onClick={handleCheckout}>
+                  <ShoppingCart className="w-4 h-4" />
                   Zur Kasse
                 </Button>
                 <button onClick={clearCart} className="w-full text-xs text-muted-foreground hover:text-destructive transition-colors py-1">
