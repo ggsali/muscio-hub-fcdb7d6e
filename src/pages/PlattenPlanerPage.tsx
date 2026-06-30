@@ -773,10 +773,13 @@ export default function PlattenPlanerPage() {
               </div>
             )}
             {!activePlate && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center space-y-2">
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="text-center space-y-3 bg-card/95 border border-border rounded-xl p-6 shadow-lg pointer-events-auto">
                   <Layers className="w-10 h-10 text-muted-foreground/40 mx-auto" />
-                  <p className="text-sm text-muted-foreground">Noch keine Platte angelegt</p>
+                  <p className="text-sm font-medium">Noch keine Druckplatte angelegt</p>
+                  <Button size="sm" onClick={openNewPlateDialog}>
+                    <Plus className="w-3.5 h-3.5" /> Platte anlegen
+                  </Button>
                 </div>
               </div>
             )}
