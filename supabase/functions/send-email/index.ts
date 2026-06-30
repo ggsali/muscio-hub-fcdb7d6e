@@ -117,8 +117,10 @@ function buildOrderEmail(opts: {
   akontoPercent?: number | null;
   akontoBetrag?: number | null;
   restbetrag?: number | null;
+  lieferart?: string | null;
 }): { subject: string; html: string } {
-  const { type, customerName, orderNr, orderName, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag } = opts;
+  const { type, customerName, orderNr, orderName, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag, lieferart } = opts;
+  const isPickup = lieferart === "abholung";
 
   const greet = `<p>Guten Tag ${customerName},</p>`;
 
