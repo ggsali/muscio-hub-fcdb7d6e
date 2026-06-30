@@ -260,7 +260,7 @@ export default function PlattenPlanerPage() {
     const initH = Math.max(1, container.clientHeight);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a0c);
+    scene.background = new THREE.Color(0xf5f5f7);
 
     const camera = new THREE.PerspectiveCamera(45, initW / initH, 0.1, 10000);
     camera.position.set(300, 400, 300);
