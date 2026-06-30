@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
@@ -21,7 +21,7 @@ import TimeTracker from "@/components/TimeTracker";
 import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
 import OrderUploadRequests from "@/components/OrderUploadRequests";
-import PrintPlatePlanner from "@/components/PrintPlatePlanner";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -1613,7 +1613,16 @@ export default function AuftragDetailPage() {
           )}
 
           {!isNew && id && (
-            <PrintPlatePlanner orderId={id} parts={parts as any} />
+            <div className="bg-card border border-border rounded-lg p-4 flex items-center gap-3">
+              <Layers className="w-4 h-4 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold">Druckplatten-Planer</p>
+                <p className="text-xs text-muted-foreground">Teile auf 3D-Bauplatten anordnen, drehen und als ZIP exportieren.</p>
+              </div>
+              <Button size="sm" onClick={() => navigate(`/admin/auftraege/${id}/platten`)}>
+                Platten planen
+              </Button>
+            </div>
           )}
         </div>
       )}
