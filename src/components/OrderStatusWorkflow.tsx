@@ -39,6 +39,8 @@ export default function OrderStatusWorkflow({
   const [trackingInput, setTrackingInput] = useState(trackingNr);
   const [savingTracking, setSavingTracking] = useState(false);
   const [editingTracking, setEditingTracking] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
 
   const isWebsiteOrder = source === 'website' || source === 'shop' || source === 'kalkulator'
   const STATUSES = isWebsiteOrder ? STATUSES_WEBSITE : STATUSES_MANUAL
@@ -97,7 +99,32 @@ export default function OrderStatusWorkflow({
       return;
     }
 
+    if (newStatus === "Bezahlt") {
+      setShowPaymentDialog(true);
+      return;
+    }
+
     await commitStatus(newStatus, null);
+  };
+
+  const handleConfirmPayment = async (method: "stripe" | "rechnung") => {
+    setSavingPayment(true);
+    try {
+      const notiz = method === "stripe"
+        ? "Manuell bestätigt – Zahlung via Stripe"
+        : "Manuell als bezahlt markiert – Zahlung per Rechnung/Überweisung";
+      if (method === "rechnung") {
+        const today = new Date().toISOString().slice(0, 10);
+        await (supabase.from as any)("bills")
+          .update({ bezahlt: true, bezahlt_am: today, notiz: "Bezahlt per Rechnung (manuell erfasst)" })
+          .eq("order_id", orderId)
+          .eq("bezahlt", false);
+      }
+      await commitStatus("Bezahlt", notiz);
+      setShowPaymentDialog(false);
+    } finally {
+      setSavingPayment(false);
+    }
   };
 
   const STATUS_TO_TEMPLATE: Record<string, string> = {
@@ -194,7 +221,11 @@ export default function OrderStatusWorkflow({
             {bannerText}
           </span>
           <button
-            onClick={() => suggestedStatus === "Geliefert" ? setShowTrackingInput(true) : commitStatus(suggestedStatus, null)}
+            onClick={() => {
+              if (suggestedStatus === "Geliefert") setShowTrackingInput(true);
+              else if (suggestedStatus === "Bezahlt") setShowPaymentDialog(true);
+              else commitStatus(suggestedStatus, null);
+            }}
             className="text-xs font-semibold text-primary hover:underline whitespace-nowrap"
           >
             Jetzt aktualisieren
@@ -321,6 +352,38 @@ export default function OrderStatusWorkflow({
               {savingTracking ? "Speichern..." : "Als geliefert markieren"}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setShowTrackingInput(false)} className="border-border">Abbrechen</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Zahlungs-Bestätigungs-Dialog */}
+      {showPaymentDialog && (
+        <div className="bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-3">
+          <p className="text-sm font-semibold">Wie wurde diese Bestellung bezahlt?</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => handleConfirmPayment("stripe")}
+              disabled={savingPayment}
+              className="w-full text-left border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-primary/5 transition-colors disabled:opacity-50"
+            >
+              <div className="text-sm font-medium">Per Stripe (automatisch)</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">
+                Stripe-Zahlungen werden normalerweise automatisch erkannt. Nur bestätigen, falls die automatische Erkennung fehlgeschlagen ist.
+              </div>
+            </button>
+            <button
+              onClick={() => handleConfirmPayment("rechnung")}
+              disabled={savingPayment}
+              className="w-full text-left border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-primary/5 transition-colors disabled:opacity-50"
+            >
+              <div className="text-sm font-medium">Per Rechnung / Überweisung</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">
+                Markiert alle offenen Rechnungen dieses Auftrags als bezahlt.
+              </div>
+            </button>
+          </div>
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => setShowPaymentDialog(false)} disabled={savingPayment} className="border-border">Abbrechen</Button>
           </div>
         </div>
       )}
