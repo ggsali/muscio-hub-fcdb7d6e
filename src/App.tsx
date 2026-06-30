@@ -24,6 +24,7 @@ import KundeDetailPage from "@/pages/KundeDetailPage";
 import AuftraegePage from "@/pages/AuftraegePage";
 import AuftragDetailPage from "@/pages/AuftragDetailPage";
 import DruckplattenPage from "@/pages/DruckplattenPage";
+import PlattenPlanerPage from "@/pages/PlattenPlanerPage";
 import TeileBibliothekPage from "@/pages/TeileBibliothekPage";
 import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
