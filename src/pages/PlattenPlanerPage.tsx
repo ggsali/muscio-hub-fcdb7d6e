@@ -147,6 +147,19 @@ export default function PlattenPlanerPage() {
   };
 
   // ====== PLATE CRUD ======
+  const openNewPlateDialog = () => {
+    if (printers.length === 0) {
+      toast({
+        title: "Keine Drucker",
+        description: "In der Maschinen-Verwaltung als 3D-Drucker markieren.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setNewPlatePrinterId(printers[0].id);
+    setShowNewPlate(true);
+  };
+
   const handleCreatePlate = async () => {
     if (!newPlatePrinterId || !orderId) return;
     const nextIdx = plates.length + 1;
