@@ -791,6 +791,7 @@ export type Database = {
           gewinn_total: number | null
           id: string
           kosten_total: number | null
+          lieferart: string
           marge: number | null
           name: string | null
           notes_internal: string | null
@@ -814,6 +815,7 @@ export type Database = {
           gewinn_total?: number | null
           id?: string
           kosten_total?: number | null
+          lieferart?: string
           marge?: number | null
           name?: string | null
           notes_internal?: string | null
@@ -837,6 +839,7 @@ export type Database = {
           gewinn_total?: number | null
           id?: string
           kosten_total?: number | null
+          lieferart?: string
           marge?: number | null
           name?: string | null
           notes_internal?: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS lieferart text NOT NULL DEFAULT 'versand' CHECK (lieferart IN ('versand', 'abholung'));
