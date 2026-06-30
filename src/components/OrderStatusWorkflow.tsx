@@ -31,7 +31,7 @@ interface Props {
 }
 
 export default function OrderStatusWorkflow({
-  orderId, currentStatus, parts, trackingNr = "", source, onStatusChange, onTrackingNrChange
+  orderId, currentStatus, parts, trackingNr = "", source, lieferart = "versand", onStatusChange, onTrackingNrChange
 }: Props) {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(true);
