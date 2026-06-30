@@ -202,6 +202,7 @@ export default function AuftragDetailPage() {
           setDatum(o.datum);
           setStatus(o.status);
           setTrackingNr((o as any).tracking_nr || "");
+          setLieferart(((o as any).lieferart === "abholung") ? "abholung" : "versand");
           setGeplantVon((o as any).geplant_von || "");
           setGeplantBis((o as any).geplant_bis || "");
           setExpressKosten(Number((o as any).express_kosten) || 0);
