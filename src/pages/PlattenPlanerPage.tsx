@@ -73,30 +73,37 @@ export default function PlattenPlanerPage() {
   // ====== DATA LOAD ======
   const loadAll = async () => {
     if (!orderId) return;
-    setLoading(true);
-    const [o, p, eq, pl] = await Promise.all([
-      supabase.from("orders").select("*, customers(name, vorname)").eq("id", orderId).single(),
-      supabase.from("parts").select("id, teilname, laenge_mm, breite_mm").eq("order_id", orderId).order("created_at"),
-      supabase.from("equipment").select("id, name, bauplatte_breite_mm, bauplatte_tiefe_mm").eq("ist_drucker", true),
-      supabase.from("print_plates").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
-    ]);
-    setOrder(o.data);
-    setParts((p.data as any) || []);
-    setPrinters((eq.data as any) || []);
-    setPlates((pl.data as any) || []);
-    const plateList = (pl.data as any[]) || [];
-    if (plateList.length) {
-      const { data: pp } = await supabase
-        .from("print_plate_parts").select("*").in("plate_id", plateList.map((x) => x.id));
-      setPlacements((pp as any) || []);
-      if (!activePlateId || !plateList.find((x) => x.id === activePlateId)) {
-        setActivePlateId(plateList[0].id);
+    setRefreshing(true);
+    try {
+      const [o, p, eq, pl] = await Promise.all([
+        supabase.from("orders").select("*, customers(name, vorname)").eq("id", orderId).single(),
+        supabase.from("parts").select("id, teilname, laenge_mm, breite_mm").eq("order_id", orderId).order("created_at"),
+        supabase.from("equipment").select("id, name, bauplatte_breite_mm, bauplatte_tiefe_mm").eq("ist_drucker", true),
+        supabase.from("print_plates").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
+      ]);
+      setOrder(o.data);
+      setParts((p.data as any) || []);
+      setPrinters((eq.data as any) || []);
+      setPlates((pl.data as any) || []);
+      const plateList = (pl.data as any[]) || [];
+      if (plateList.length) {
+        const { data: pp } = await supabase
+          .from("print_plate_parts").select("*").in("plate_id", plateList.map((x) => x.id));
+        setPlacements((pp as any) || []);
+        if (!activePlateId || !plateList.find((x) => x.id === activePlateId)) {
+          setActivePlateId(plateList[0].id);
+        }
+      } else {
+        setPlacements([]);
+        setActivePlateId(null);
       }
-    } else {
-      setPlacements([]);
-      setActivePlateId(null);
+    } catch (err) {
+      console.error("[PlattenPlaner] loadAll error", err);
+      toast({ title: "Fehler beim Laden der Auftragsdaten", description: String((err as any)?.message || err), variant: "destructive" });
+    } finally {
+      setRefreshing(false);
+      setInitialLoading(false);
     }
-    setLoading(false);
   };
   useEffect(() => { loadAll(); /* eslint-disable-next-line */ }, [orderId]);
 
