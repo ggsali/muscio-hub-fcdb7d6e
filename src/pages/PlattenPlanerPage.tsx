@@ -275,7 +275,7 @@ export default function PlattenPlanerPage() {
 
   // Mount once — but only after `loading` is false, weil der Container vorher gar nicht im DOM ist.
   useEffect(() => {
-    if (loading) return;
+    if (initialLoading) return;
     const container = canvasContainerRef.current;
     if (!container) {
       console.warn("[PlattenPlaner] Container ref noch nicht verfügbar");
