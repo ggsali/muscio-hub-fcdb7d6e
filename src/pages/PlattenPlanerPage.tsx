@@ -375,6 +375,7 @@ export default function PlattenPlanerPage() {
       (c as any).geometry?.dispose?.();
       (c as any).material?.dispose?.();
     }
+    console.log("[PlattenPlaner] rebuild plate", { plateW, plateH, activePrinter, activePlateId });
     if (!plateW || !plateH) return;
     // Bauplatte
     const slab = new THREE.Mesh(
@@ -388,7 +389,6 @@ export default function PlattenPlanerPage() {
     (grid.material as THREE.Material).transparent = true;
     (grid.material as THREE.Material).opacity = 0.5;
     grid.position.y = 0.05;
-    // Clip grid visually by overlaying slab above; OK leave full grid
     s.plateGroup.add(grid);
     // Plate edge outline
     const edge = new THREE.LineSegments(
@@ -397,12 +397,16 @@ export default function PlattenPlanerPage() {
     );
     edge.position.y = 0.1;
     s.plateGroup.add(edge);
-    // Camera fit
+    // Camera fit – nach jedem Platten-/Druckerwechsel neu setzen
     const diag = Math.max(plateW, plateH);
-    s.camera.position.set(diag * 0.6, diag * 0.9, diag * 0.6);
+    s.camera.position.set(diag * 0.9, diag * 1.2, diag * 0.9);
+    s.camera.near = 0.1;
+    s.camera.far = Math.max(2000, diag * 10);
+    s.camera.lookAt(0, 0, 0);
+    s.camera.updateProjectionMatrix();
     s.controls.target.set(0, 0, 0);
     s.controls.update();
-  }, [plateW, plateH, activePlateId]);
+  }, [plateW, plateH, activePlateId, activePrinter?.id]);
 
   // Rebuild part meshes when activePlacements change
   useEffect(() => {
@@ -725,9 +729,17 @@ export default function PlattenPlanerPage() {
               </div>
             )}
             {activePlate && (!plateW || !plateH) && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-xs text-amber-500 bg-card/90 border border-border rounded px-3 py-2">
-                  Drucker hat keine Bauplatten-Masse hinterlegt.
+              <div className="absolute inset-0 flex items-center justify-center p-6">
+                <div className="max-w-md text-center bg-card border border-amber-500/40 rounded-lg p-4 shadow-lg space-y-2">
+                  <AlertCircle className="w-6 h-6 text-amber-500 mx-auto" />
+                  <p className="text-sm font-medium">Für diesen Drucker sind keine Bauplatten-Masse hinterlegt.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Bitte im Maschinen-Bereich ergänzen
+                    {activePrinter?.name ? <> (Drucker: <span className="font-medium">{activePrinter.name}</span>)</> : null}.
+                  </p>
+                  <Link to="/admin/website/equipment" className="inline-block text-xs text-primary hover:underline">
+                    → Zur Maschinen-Verwaltung
+                  </Link>
                 </div>
               </div>
             )}
