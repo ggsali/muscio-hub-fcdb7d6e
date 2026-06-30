@@ -450,6 +450,8 @@ export default function PlattenPlanerPage() {
     s.plateGroup.add(grid);
 
     // Bauplatten-Umriss – deutliche helle Kontur am Plattenrand
+    const halfW = plateW / 2;
+    const halfH = plateH / 2;
     const outlinePts: number[] = [];
     const yL = 0.15;
     outlinePts.push(-halfW, yL, -halfH,  halfW, yL, -halfH);
