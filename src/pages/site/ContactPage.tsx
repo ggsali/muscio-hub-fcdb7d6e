@@ -134,6 +134,16 @@ const ContactPage = () => {
         attachments: uploaded,
       });
       if (error) throw error;
+      // Admin-Benachrichtigung (Fehler hier nicht blockierend)
+      supabase.functions.invoke("notify-inquiry-admin", {
+        body: {
+          name: form.name,
+          email: form.email,
+          telefon: form.phone || null,
+          betreff,
+          nachricht: form.message,
+        },
+      }).catch((e) => console.error("Admin-Mail Fehler:", e));
       toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
       setForm({ name: "", email: "", phone: "", message: "" });
       setBetreff("");

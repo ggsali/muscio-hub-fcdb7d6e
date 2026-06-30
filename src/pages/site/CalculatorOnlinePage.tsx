@@ -613,6 +613,16 @@ const CalculatorOnlinePage = () => {
         attachments,
       } as any);
       if (error) throw error;
+      // Admin-Benachrichtigung per E-Mail (nicht blockierend)
+      supabase.functions.invoke("notify-inquiry-admin", {
+        body: {
+          name: resolvedName,
+          email: resolvedEmail,
+          telefon: resolvedPhone || null,
+          betreff: "Preisanfrage Kalkulator",
+          nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}\n\nNachricht: ${form.message}`,
+        },
+      }).catch((e) => console.error("Admin-Mail Fehler:", e));
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
       setShowQuote(false);
       setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });

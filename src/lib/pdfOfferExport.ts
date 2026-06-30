@@ -612,13 +612,14 @@ export async function exportLieferscheinPDF(data: LieferscheinData) {
   doc.text("vollständig", pageW - margin - 3, sy + 3.5, { align: "right" });
   const totalBoxBottom = sy + 8;
 
-  // Hinweis / Notiz
-  const noteY = totalBoxBottom + 8;
-  doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); doc.setTextColor(...BLACK);
-  doc.text("HINWEIS", sumX, noteY);
-  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...GRAY);
-  const noteText = data.notiz?.trim() || "Bitte den Erhalt der Ware mit Unterschrift bestätigen. Bei Beanstandungen innerhalb von 7 Tagen melden.";
-  doc.text(doc.splitTextToSize(noteText, pageW - sumX - margin), sumX, noteY + 6);
+  // Optionale Notiz (nur wenn vom Benutzer gesetzt)
+  if (data.notiz?.trim()) {
+    const noteY = totalBoxBottom + 8;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); doc.setTextColor(...BLACK);
+    doc.text("HINWEIS", sumX, noteY);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...GRAY);
+    doc.text(doc.splitTextToSize(data.notiz.trim(), pageW - sumX - margin), sumX, noteY + 6);
+  }
 
   // Dank links
   doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(...BLACK);
@@ -626,14 +627,6 @@ export async function exportLieferscheinPDF(data: LieferscheinData) {
   doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...GRAY);
   doc.text("Wir hoffen, Sie sind mit der Lieferung zufrieden.", margin, afterTable + 16);
 
-  // Unterschrift-Bereich
-  const sigY = pageH - 40;
-  doc.setDrawColor(...LGRAY); doc.setLineWidth(0.3);
-  doc.line(margin, sigY, margin + 70, sigY);
-  doc.line(pageW - margin - 70, sigY, pageW - margin, sigY);
-  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...GRAY);
-  doc.text("Datum / Unterschrift Lieferant", margin, sigY + 4);
-  doc.text("Datum / Unterschrift Empfänger", pageW - margin - 70, sigY + 4);
 
   drawFooter(doc, data.company, ACCENT, pageW, pageH, margin);
 
