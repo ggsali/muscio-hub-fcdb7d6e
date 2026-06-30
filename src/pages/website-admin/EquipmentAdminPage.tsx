@@ -23,9 +23,19 @@ interface Equipment {
   sort_order: number;
   aktiv: boolean;
   model_rotation?: Rotation | null;
+  ist_drucker?: boolean | null;
+  bauplatte_breite_mm?: number | null;
+  bauplatte_tiefe_mm?: number | null;
 }
 
-const empty = { name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0, vorschaubild_url: "", modell_url: "", model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation };
+const empty = {
+  name: "", beschreibung: "", specs: [] as Spec[], aktiv: true, sort_order: 0,
+  vorschaubild_url: "", modell_url: "",
+  model_rotation: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 } as Rotation,
+  ist_drucker: false,
+  bauplatte_breite_mm: null as number | null,
+  bauplatte_tiefe_mm: null as number | null,
+};
 
 export default function EquipmentAdminPage() {
   const [items, setItems] = useState<Equipment[]>([]);
