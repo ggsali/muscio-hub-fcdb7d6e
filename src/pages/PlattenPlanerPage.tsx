@@ -260,7 +260,7 @@ export default function PlattenPlanerPage() {
     const initH = Math.max(1, container.clientHeight);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf5f5f7);
+    scene.background = new THREE.Color(0x16181c);
 
     const camera = new THREE.PerspectiveCamera(45, initW / initH, 0.1, 10000);
     camera.position.set(300, 400, 300);
@@ -270,12 +270,12 @@ export default function PlattenPlanerPage() {
     renderer.setSize(initW, initH);
     container.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-    const key = new THREE.DirectionalLight(0xffffff, 1.0);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    const key = new THREE.DirectionalLight(0xffffff, 0.9);
     key.position.set(200, 400, 200);
     scene.add(key);
-    const fill = new THREE.DirectionalLight(0xff7a30, 0.25);
-    fill.position.set(-150, 100, -150);
+    const fill = new THREE.DirectionalLight(0x88aaff, 0.2);
+    fill.position.set(-150, 200, -150);
     scene.add(fill);
 
     const controls = new OrbitControls(camera, renderer.domElement);
