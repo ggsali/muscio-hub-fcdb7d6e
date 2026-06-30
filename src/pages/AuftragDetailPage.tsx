@@ -707,6 +707,7 @@ export default function AuftragDetailPage() {
       express_kosten: expressBetrag,
       express_label: expressLabel || null,
       notes_internal: notesInternal || null,
+      lieferart,
     };
 
     let orderId = id === "neu" ? null : id;
