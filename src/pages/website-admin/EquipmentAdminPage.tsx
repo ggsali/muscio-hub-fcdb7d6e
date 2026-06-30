@@ -94,6 +94,9 @@ export default function EquipmentAdminPage() {
         sort_order: editing.sort_order,
         aktiv: editing.aktiv,
         model_rotation: editing.model_rotation,
+        ist_drucker: !!editing.ist_drucker,
+        bauplatte_breite_mm: editing.ist_drucker ? editing.bauplatte_breite_mm : null,
+        bauplatte_tiefe_mm: editing.ist_drucker ? editing.bauplatte_tiefe_mm : null,
       };
       setModelFile(null); setImageFile(null);
       if (editing.id) {
