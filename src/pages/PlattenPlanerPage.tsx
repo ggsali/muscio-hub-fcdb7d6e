@@ -438,6 +438,8 @@ export default function PlattenPlanerPage() {
       mesh.rotation.y = ((Number(pl.rot_deg) || 0) * Math.PI) / 180;
       mesh.userData.placementId = pl.id;
       mesh.userData.partName = part.teilname;
+      mesh.userData.plateW = plateW;
+      mesh.userData.plateH = plateH;
       // outline for selected
       if (isSelected) {
         const eg = new THREE.LineSegments(
