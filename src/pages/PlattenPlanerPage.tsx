@@ -449,13 +449,20 @@ export default function PlattenPlanerPage() {
     grid.position.y = 0.05;
     s.plateGroup.add(grid);
 
-    // Bauplatten-Kante (dünne helle Linie)
-    const edge = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(plateW, 0.1, plateH)),
-      new THREE.LineBasicMaterial({ color: 0xa0a8b5 }),
+    // Bauplatten-Umriss – deutliche helle Kontur am Plattenrand
+    const outlinePts: number[] = [];
+    const yL = 0.15;
+    outlinePts.push(-halfW, yL, -halfH,  halfW, yL, -halfH);
+    outlinePts.push( halfW, yL, -halfH,  halfW, yL,  halfH);
+    outlinePts.push( halfW, yL,  halfH, -halfW, yL,  halfH);
+    outlinePts.push(-halfW, yL,  halfH, -halfW, yL, -halfH);
+    const outlineGeom = new THREE.BufferGeometry();
+    outlineGeom.setAttribute("position", new THREE.Float32BufferAttribute(outlinePts, 3));
+    const outline = new THREE.LineSegments(
+      outlineGeom,
+      new THREE.LineBasicMaterial({ color: 0xff5a00, linewidth: 2 }),
     );
-    edge.position.y = 0.1;
-    s.plateGroup.add(edge);
+    s.plateGroup.add(outline);
 
     // Wireframe-Bauvolumen (Würfel über der Platte)
     const volGeom = new THREE.BoxGeometry(plateW, buildH, plateH);
