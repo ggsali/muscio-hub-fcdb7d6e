@@ -99,7 +99,32 @@ export default function OrderStatusWorkflow({
       return;
     }
 
+    if (newStatus === "Bezahlt") {
+      setShowPaymentDialog(true);
+      return;
+    }
+
     await commitStatus(newStatus, null);
+  };
+
+  const handleConfirmPayment = async (method: "stripe" | "rechnung") => {
+    setSavingPayment(true);
+    try {
+      const notiz = method === "stripe"
+        ? "Manuell bestätigt – Zahlung via Stripe"
+        : "Manuell als bezahlt markiert – Zahlung per Rechnung/Überweisung";
+      if (method === "rechnung") {
+        const today = new Date().toISOString().slice(0, 10);
+        await (supabase.from as any)("bills")
+          .update({ bezahlt: true, bezahlt_am: today, notiz: "Bezahlt per Rechnung (manuell erfasst)" })
+          .eq("order_id", orderId)
+          .eq("bezahlt", false);
+      }
+      await commitStatus("Bezahlt", notiz);
+      setShowPaymentDialog(false);
+    } finally {
+      setSavingPayment(false);
+    }
   };
 
   const STATUS_TO_TEMPLATE: Record<string, string> = {
