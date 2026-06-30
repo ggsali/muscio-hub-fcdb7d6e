@@ -734,7 +734,7 @@ export default function PlattenPlanerPage() {
   };
 
   // ====== RENDER ======
-  if (loading) {
+  if (initialLoading) {
     return <div className="p-8 text-sm text-muted-foreground">Laden…</div>;
   }
 
@@ -750,7 +750,10 @@ export default function PlattenPlanerPage() {
         </Link>
         <Layers className="w-5 h-5 text-primary" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-semibold truncate">Druckplatten-Planer</h1>
+          <h1 className="text-base font-semibold truncate flex items-center gap-2">
+            Druckplatten-Planer
+            {refreshing && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+          </h1>
           <p className="text-xs text-muted-foreground truncate">
             {order?.name || order?.beschreibung || "Auftrag"}
             {order?.customers?.name && ` · ${order.customers.vorname || ""} ${order.customers.name}`.trim()}
