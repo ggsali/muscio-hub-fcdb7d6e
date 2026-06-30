@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Layers, Download, Plus, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Layers, Download, Plus, Trash2, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import Plate3DView, { Plate3DPlacement } from "./Plate3DView";
 
 interface Part {
   id: string;
