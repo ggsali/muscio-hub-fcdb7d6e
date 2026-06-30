@@ -729,9 +729,17 @@ export default function PlattenPlanerPage() {
               </div>
             )}
             {activePlate && (!plateW || !plateH) && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-xs text-amber-500 bg-card/90 border border-border rounded px-3 py-2">
-                  Drucker hat keine Bauplatten-Masse hinterlegt.
+              <div className="absolute inset-0 flex items-center justify-center p-6">
+                <div className="max-w-md text-center bg-card border border-amber-500/40 rounded-lg p-4 shadow-lg space-y-2">
+                  <AlertCircle className="w-6 h-6 text-amber-500 mx-auto" />
+                  <p className="text-sm font-medium">Für diesen Drucker sind keine Bauplatten-Masse hinterlegt.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Bitte im Maschinen-Bereich ergänzen
+                    {activePrinter?.name ? <> (Drucker: <span className="font-medium">{activePrinter.name}</span>)</> : null}.
+                  </p>
+                  <Link to="/admin/website/equipment" className="inline-block text-xs text-primary hover:underline">
+                    → Zur Maschinen-Verwaltung
+                  </Link>
                 </div>
               </div>
             )}
