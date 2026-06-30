@@ -1,0 +1,4 @@
+PLACEHOLDER — bitte den Inhalt der Apple-Pay Domain-Association-Datei
+(aus dem Stripe Dashboard unter Settings → Payment methods → Apple Pay → Add new domain → Download verification file)
+hier einfügen und committen. Die Datei muss exakt unter
+/.well-known/apple-developer-merchantid-domain-association erreichbar sein.
