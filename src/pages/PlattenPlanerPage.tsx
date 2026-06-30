@@ -734,7 +734,34 @@ export default function PlattenPlanerPage() {
             {/* hint */}
             {activePlate && plateW > 0 && (
               <div className="absolute top-2 left-2 text-[10px] text-muted-foreground bg-card/80 px-2 py-1 rounded">
-                Klick = auswählen · Linksklick + Ziehen = verschieben · Rechtsklick = Kamera · Scroll = Zoom
+                Klick = auswählen · Gizmo ziehen = bewegen/drehen · Rechtsklick = Kamera · Scroll = Zoom
+              </div>
+            )}
+            {/* Gizmo-Toolbar */}
+            {activePlate && plateW > 0 && (
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-1 bg-card/90 border border-border rounded-lg p-1 shadow-lg">
+                <button
+                  title="Verschieben"
+                  onClick={() => setGizmoMode("translate")}
+                  className={`p-2 rounded transition-colors ${gizmoMode === "translate" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                >
+                  <Move className="w-4 h-4" />
+                </button>
+                <button
+                  title="Drehen"
+                  onClick={() => setGizmoMode("rotate")}
+                  className={`p-2 rounded transition-colors ${gizmoMode === "rotate" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
+                <button
+                  title="Auf Plattenmitte zentrieren"
+                  onClick={centerSelected}
+                  disabled={!selectedPlacementId}
+                  className="p-2 rounded transition-colors hover:bg-muted text-muted-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
               </div>
             )}
             {/* selected part panel */}
