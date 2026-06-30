@@ -388,36 +388,51 @@ export default function PlattenPlanerPage() {
     while (s.plateGroup.children.length) {
       const c = s.plateGroup.children.pop()!;
       (c as any).geometry?.dispose?.();
-      (c as any).material?.dispose?.();
+      if ((c as any).material) {
+        if (Array.isArray((c as any).material)) {
+          (c as any).material.forEach((m: any) => m?.dispose?.());
+        } else {
+          (c as any).material?.dispose?.();
+        }
+      }
     }
     console.log("[PlattenPlaner] rebuild plate", { plateW, plateH, activePrinter, activePlateId });
     if (!plateW || !plateH) return;
     const buildH = 300; // Standard-Bauhöhe (mm), bis bauplatte_hoehe_mm im Equipment existiert
 
-    // Bodenplatte – dunkel, leicht reflektierend
+    // Bodenplatte – sehr dunkel, spiegelnd
     const slab = new THREE.Mesh(
-      new THREE.BoxGeometry(plateW, 4, plateH),
-      new THREE.MeshStandardMaterial({ color: 0x2a2d33, metalness: 0.55, roughness: 0.35 }),
+      new THREE.BoxGeometry(plateW, 3, plateH),
+      new THREE.MeshStandardMaterial({ color: 0x1a1c20, metalness: 0.75, roughness: 0.2 }),
     );
-    slab.position.y = -2;
+    slab.position.y = -1.5;
     s.plateGroup.add(slab);
+
+    // Reflektierender Oberflächenschein
+    const slabTop = new THREE.Mesh(
+      new THREE.PlaneGeometry(plateW, plateH),
+      new THREE.MeshStandardMaterial({ color: 0x22252a, metalness: 0.85, roughness: 0.15 }),
+    );
+    slabTop.rotation.x = -Math.PI / 2;
+    slabTop.position.y = 0.02;
+    s.plateGroup.add(slabTop);
 
     // Dezenter heller Grid (10mm)
     const grid = new THREE.GridHelper(
       Math.max(plateW, plateH),
       Math.round(Math.max(plateW, plateH) / 10),
-      0x4a5060,
-      0x3a3f48,
+      0x5a6070,
+      0x353a45,
     );
     (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.45;
+    (grid.material as THREE.Material).opacity = 0.35;
     grid.position.y = 0.05;
     s.plateGroup.add(grid);
 
-    // Bauplatten-Kante
+    // Bauplatten-Kante (dünne helle Linie)
     const edge = new THREE.LineSegments(
       new THREE.EdgesGeometry(new THREE.BoxGeometry(plateW, 0.1, plateH)),
-      new THREE.LineBasicMaterial({ color: 0x9aa3b2 }),
+      new THREE.LineBasicMaterial({ color: 0xa0a8b5 }),
     );
     edge.position.y = 0.1;
     s.plateGroup.add(edge);
@@ -426,18 +441,17 @@ export default function PlattenPlanerPage() {
     const volGeom = new THREE.BoxGeometry(plateW, buildH, plateH);
     const volEdges = new THREE.LineSegments(
       new THREE.EdgesGeometry(volGeom),
-      new THREE.LineBasicMaterial({ color: 0xb8c0cc, transparent: true, opacity: 0.55 }),
+      new THREE.LineBasicMaterial({ color: 0xc8d0dc, transparent: true, opacity: 0.6 }),
     );
     volEdges.position.y = buildH / 2;
     s.plateGroup.add(volEdges);
     volGeom.dispose();
 
-    // Achsen-Ticks an den Bodenplatten-Kanten (alle 50mm)
-    const tickMat = new THREE.LineBasicMaterial({ color: 0x8892a0 });
-    const tickLen = Math.max(3, Math.min(plateW, plateH) * 0.012);
+    // Achsen-Ticks und Zahlen an den Bodenplatten-Kanten (alle 50mm)
     const tickStep = 50;
     const halfW = plateW / 2;
     const halfH = plateH / 2;
+    const tickLen = Math.max(4, Math.min(plateW, plateH) * 0.015);
     const tickPts: number[] = [];
     for (let x = -halfW; x <= halfW + 0.01; x += tickStep) {
       tickPts.push(x, 0.12, -halfH, x, 0.12, -halfH - tickLen);
@@ -449,15 +463,81 @@ export default function PlattenPlanerPage() {
     }
     const tickGeom = new THREE.BufferGeometry();
     tickGeom.setAttribute("position", new THREE.Float32BufferAttribute(tickPts, 3));
-    s.plateGroup.add(new THREE.LineSegments(tickGeom, tickMat));
+    s.plateGroup.add(new THREE.LineSegments(tickGeom, new THREE.LineBasicMaterial({ color: 0x9098a8 })));
+
+    // Zahlen-Beschriftungen an den Kanten
+    const makeTextSprite = (text: string, color: string) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      const size = 64;
+      canvas.width = size;
+      canvas.height = size;
+      ctx.font = "500 24px Inter, sans-serif";
+      ctx.fillStyle = color;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, size / 2, size / 2);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.magFilter = THREE.LinearFilter;
+      texture.minFilter = THREE.LinearFilter;
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0.85 });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(20, 20, 1);
+      return sprite;
+    };
+
+    for (let x = -halfW; x <= halfW + 0.01; x += tickStep) {
+      if (Math.abs(x) < 0.1) continue;
+      const sX = makeTextSprite(`${Math.round(x + halfW)}`, "#b0b8c8");
+      sX.position.set(x, 0.5, -halfH - tickLen - 8);
+      s.plateGroup.add(sX);
+    }
+    for (let z = -halfH; z <= halfH + 0.01; z += tickStep) {
+      if (Math.abs(z) < 0.1) continue;
+      const sZ = makeTextSprite(`${Math.round(z + halfH)}`, "#b0b8c8");
+      sZ.position.set(-halfW - tickLen - 8, 0.5, z);
+      s.plateGroup.add(sZ);
+    }
+
+    // Achsen-Pfeile am Ursprung (RGB wie im Referenzbild)
+    const arrowOrigin = new THREE.Vector3(-halfW, 0.3, -halfH);
+    const arrowLen = Math.max(25, Math.min(plateW, plateH) * 0.08);
+    const arrowHead = 6;
+    const axisColors = [0xff0000, 0x00ff00, 0x0000ff];
+    const axisDirs = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
+    for (let i = 0; i < 3; i++) {
+      const dir = axisDirs[i];
+      const shaftGeom = new THREE.CylinderGeometry(0.8, 0.8, arrowLen, 8);
+      shaftGeom.translate(0, arrowLen / 2, 0);
+      shaftGeom.rotateX(Math.PI / 2);
+      const shaft = new THREE.Mesh(
+        shaftGeom,
+        new THREE.MeshBasicMaterial({ color: axisColors[i] }),
+      );
+      shaft.lookAt(arrowOrigin.clone().add(dir));
+      shaft.position.copy(arrowOrigin);
+      s.plateGroup.add(shaft);
+
+      const headGeom = new THREE.ConeGeometry(arrowHead, arrowHead * 2, 12);
+      headGeom.translate(0, arrowHead, 0);
+      headGeom.rotateX(Math.PI / 2);
+      const head = new THREE.Mesh(
+        headGeom,
+        new THREE.MeshBasicMaterial({ color: axisColors[i] }),
+      );
+      head.lookAt(arrowOrigin.clone().add(dir));
+      head.position.copy(arrowOrigin.clone().add(dir.clone().multiplyScalar(arrowLen)));
+      s.plateGroup.add(head);
+    }
+
     // Camera fit – nach jedem Platten-/Druckerwechsel neu setzen
     const diag = Math.max(plateW, plateH);
-    s.camera.position.set(diag * 0.75, diag * 0.95, diag * 1.05);
+    s.camera.position.set(diag * 0.9, diag * 1.1, diag * 1.2);
     s.camera.near = 0.1;
     s.camera.far = Math.max(2000, diag * 10);
-    s.camera.lookAt(0, 100, 0);
+    s.camera.lookAt(0, 80, 0);
     s.camera.updateProjectionMatrix();
-    s.controls.target.set(0, 100, 0);
+    s.controls.target.set(0, 80, 0);
     s.controls.update();
   }, [plateW, plateH, activePlateId, activePrinter?.id]);
 
@@ -743,7 +823,7 @@ export default function PlattenPlanerPage() {
           </div>
 
           {/* 3D canvas + overlays */}
-          <div className="relative flex-1 min-h-0" style={{ background: "#f5f5f7" }}>
+          <div className="relative flex-1 min-h-0" style={{ background: "#16181c" }}>
             <div
               ref={canvasContainerRef}
               className="absolute inset-0"
