@@ -67,6 +67,7 @@ export default function PlattenPlanerPage() {
   const [dragOverCanvas, setDragOverCanvas] = useState(false);
   const [tabDragOverId, setTabDragOverId] = useState<string | null>(null);
   const [hoverTip, setHoverTip] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [gizmoMode, setGizmoMode] = useState<GizmoMode>("translate");
 
   // ====== DATA LOAD ======
   const loadAll = async () => {
