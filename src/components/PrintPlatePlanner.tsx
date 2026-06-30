@@ -299,25 +299,21 @@ export default function PrintPlatePlanner({ orderId, parts }: { orderId: string;
 
                 {plateW > 0 && items.length > 0 && (
                   <div className="space-y-2">
-                    <div className="text-xs text-muted-foreground">
-                      Belegt: {placements.length} / {placements.length + unplaced.length} Teile
-                      {unplaced.length > 0 && <span className="text-destructive ml-2">({unplaced.length} passen nicht)</span>}
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-muted-foreground">
+                        Belegt: {placements3D.length} / {placements3D.length + unplaced.length} Teile
+                        {unplaced.length > 0 && <span className="text-destructive ml-2">({unplaced.length} passen nicht)</span>}
+                      </div>
+                      <Button size="sm" variant="outline" onClick={handleResetLayout} className="h-7 text-xs">
+                        <RotateCcw className="w-3 h-3 mr-1" /> Auto-Layout
+                      </Button>
                     </div>
-                    <div className="border border-border rounded bg-muted/20 inline-block">
-                      <svg width={previewW} height={previewH} className="block">
-                        <rect x={0} y={0} width={previewW} height={previewH} fill="hsl(var(--muted))" opacity={0.3} />
-                        {placements.map((p, i) => (
-                          <g key={i}>
-                            <rect
-                              x={p.x * scale} y={p.y * scale}
-                              width={p.w * scale} height={p.h * scale}
-                              fill="hsl(var(--primary))" opacity={0.4}
-                              stroke="hsl(var(--primary))" strokeWidth={1}
-                            />
-                          </g>
-                        ))}
-                      </svg>
-                    </div>
+                    <Plate3DView
+                      plateW={plateW}
+                      plateH={plateH}
+                      placements={placements3D}
+                      onMove={handleMove}
+                    />
                   </div>
                 )}
 
