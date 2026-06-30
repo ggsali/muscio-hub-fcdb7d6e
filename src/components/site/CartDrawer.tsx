@@ -7,6 +7,7 @@ import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart, Loader2 } from "luci
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 
 const RESUME_CHECKOUT_KEY = "muscio_resume_checkout";
 
