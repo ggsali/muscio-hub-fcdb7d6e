@@ -22,6 +22,7 @@ import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
 import OrderUploadRequests from "@/components/OrderUploadRequests";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
