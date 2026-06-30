@@ -1123,6 +1123,105 @@ export type Database = {
         }
         Relationships: []
       }
+      print_plate_parts: {
+        Row: {
+          created_at: string
+          id: string
+          menge: number
+          part_id: string
+          plate_id: string
+          pos_x_mm: number | null
+          pos_y_mm: number | null
+          rot_deg: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menge?: number
+          part_id: string
+          plate_id: string
+          pos_x_mm?: number | null
+          pos_y_mm?: number | null
+          rot_deg?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menge?: number
+          part_id?: string
+          plate_id?: string
+          pos_x_mm?: number | null
+          pos_y_mm?: number | null
+          rot_deg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_plate_parts_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_plate_parts_plate_id_fkey"
+            columns: ["plate_id"]
+            isOneToOne: false
+            referencedRelation: "print_plates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      print_plates: {
+        Row: {
+          created_at: string
+          equipment_id: string | null
+          id: string
+          name: string
+          notiz: string | null
+          order_id: string | null
+          status: string
+          updated_at: string
+          zip_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          equipment_id?: string | null
+          id?: string
+          name?: string
+          notiz?: string | null
+          order_id?: string | null
+          status?: string
+          updated_at?: string
+          zip_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          equipment_id?: string | null
+          id?: string
+          name?: string
+          notiz?: string | null
+          order_id?: string | null
+          status?: string
+          updated_at?: string
+          zip_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_plates_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "print_plates_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
