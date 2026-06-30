@@ -478,8 +478,6 @@ export default function PlattenPlanerPage() {
 
     // Achsen-Ticks und Zahlen an den Bodenplatten-Kanten (alle 50mm)
     const tickStep = 50;
-    const halfW = plateW / 2;
-    const halfH = plateH / 2;
     const tickLen = Math.max(4, Math.min(plateW, plateH) * 0.015);
     const tickPts: number[] = [];
     for (let x = -halfW; x <= halfW + 0.01; x += tickStep) {
