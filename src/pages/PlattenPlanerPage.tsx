@@ -439,12 +439,12 @@ export default function PlattenPlanerPage() {
     s.plateGroup.add(new THREE.LineSegments(tickGeom, tickMat));
     // Camera fit – nach jedem Platten-/Druckerwechsel neu setzen
     const diag = Math.max(plateW, plateH);
-    s.camera.position.set(diag * 0.9, diag * 1.2, diag * 0.9);
+    s.camera.position.set(diag * 0.75, diag * 0.95, diag * 1.05);
     s.camera.near = 0.1;
     s.camera.far = Math.max(2000, diag * 10);
-    s.camera.lookAt(0, 0, 0);
+    s.camera.lookAt(0, 100, 0);
     s.camera.updateProjectionMatrix();
-    s.controls.target.set(0, 0, 0);
+    s.controls.target.set(0, 100, 0);
     s.controls.update();
   }, [plateW, plateH, activePlateId, activePrinter?.id]);
 
