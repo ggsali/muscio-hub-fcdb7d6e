@@ -242,6 +242,7 @@ export default function PlattenPlanerPage() {
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
+    transform: TransformControls;
     plateGroup: THREE.Group;
     partsGroup: THREE.Group;
     dropPlane: THREE.Mesh;
@@ -255,18 +256,18 @@ export default function PlattenPlanerPage() {
   useEffect(() => {
     const container = canvasContainerRef.current;
     if (!container) return;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const initW = Math.max(1, container.clientWidth);
+    const initH = Math.max(1, container.clientHeight);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0a0c);
 
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+    const camera = new THREE.PerspectiveCamera(45, initW / initH, 0.1, 10000);
     camera.position.set(300, 400, 300);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(width, height);
+    renderer.setSize(initW, initH);
     container.appendChild(renderer.domElement);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.55));
@@ -281,6 +282,12 @@ export default function PlattenPlanerPage() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
     controls.target.set(0, 0, 0);
+    // Linksklick = drag (eigene Logik), Rechtsklick = Kamera-Rotate, Mitte = Pan
+    controls.mouseButtons = {
+      LEFT: -1 as any,
+      MIDDLE: THREE.MOUSE.PAN,
+      RIGHT: THREE.MOUSE.ROTATE,
+    };
 
     const plateGroup = new THREE.Group();
     scene.add(plateGroup);
@@ -295,8 +302,30 @@ export default function PlattenPlanerPage() {
     dropPlane.rotation.x = -Math.PI / 2;
     scene.add(dropPlane);
 
+    // TransformControls (Gizmo)
+    const transform = new TransformControls(camera, renderer.domElement);
+    transform.setSize(0.8);
+    transform.showY = false; // nur XZ verschieben
+    scene.add(transform as unknown as THREE.Object3D);
+    transform.addEventListener("dragging-changed", (e: any) => {
+      controls.enabled = !e.value;
+    });
+    transform.addEventListener("objectChange", () => {
+      const obj = transform.object as THREE.Mesh | undefined;
+      if (!obj) return;
+      const placementId = obj.userData.placementId as string;
+      // back to plate coords
+      const pW = obj.userData.plateW as number;
+      const pH = obj.userData.plateH as number;
+      const px = obj.position.x + pW / 2;
+      const py = obj.position.z + pH / 2;
+      const deg = ((-obj.rotation.y * 180) / Math.PI);
+      const norm = ((deg % 360) + 360) % 360;
+      updatePlacement(placementId, { pos_x_mm: px, pos_y_mm: py, rot_deg: norm });
+    });
+
     const state = {
-      renderer, scene, camera, controls, plateGroup, partsGroup, dropPlane,
+      renderer, scene, camera, controls, transform, plateGroup, partsGroup, dropPlane,
       raycaster: new THREE.Raycaster(),
       pointer: new THREE.Vector2(),
       meshByPlacementId: new Map<string, THREE.Mesh>(),
@@ -312,17 +341,25 @@ export default function PlattenPlanerPage() {
     };
     animate();
 
-    const onResize = () => {
-      const w = container.clientWidth, h = container.clientHeight;
+    const resize = () => {
+      const w = Math.max(1, container.clientWidth);
+      const h = Math.max(1, container.clientHeight);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      renderer.setSize(w, h, false);
     };
-    window.addEventListener("resize", onResize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(container);
+    window.addEventListener("resize", resize);
+    // initial nach Layout
+    requestAnimationFrame(resize);
 
     return () => {
       state.stop = true;
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", resize);
+      ro.disconnect();
+      transform.detach();
+      (transform as any).dispose?.();
       controls.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode === container) container.removeChild(renderer.domElement);
