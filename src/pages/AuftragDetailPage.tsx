@@ -1622,20 +1622,23 @@ export default function AuftragDetailPage() {
             parts={parts.map(p => ({ status: p.status }))}
             trackingNr={trackingNr}
             source={source}
+            lieferart={lieferart}
             onStatusChange={setStatus}
             onTrackingNrChange={setTrackingNr}
           />
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
-            <h3 className="font-semibold text-sm">Tracking & Termine</h3>
-            <div className="space-y-1.5">
-              <Label>Tracking-Nummer</Label>
-              <div className="flex gap-2">
-                <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value)} className="bg-input border-border" placeholder="z.B. CH123456789DE" />
-                <Button onClick={handleSave} disabled={saving} variant="outline" className="border-border gap-2">
-                  <Save className="w-4 h-4" /> Speichern
-                </Button>
+            <h3 className="font-semibold text-sm">{lieferart === "abholung" ? "Termine" : "Tracking & Termine"}</h3>
+            {lieferart === "versand" && (
+              <div className="space-y-1.5">
+                <Label>Tracking-Nummer</Label>
+                <div className="flex gap-2">
+                  <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value)} className="bg-input border-border" placeholder="z.B. CH123456789DE" />
+                  <Button onClick={handleSave} disabled={saving} variant="outline" className="border-border gap-2">
+                    <Save className="w-4 h-4" /> Speichern
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Geplant von</Label>
@@ -1647,6 +1650,7 @@ export default function AuftragDetailPage() {
               </div>
             </div>
           </div>
+
           <TimeTracker orderId={id!} parts={parts} />
         </div>
       )}
