@@ -221,7 +221,11 @@ export default function OrderStatusWorkflow({
             {bannerText}
           </span>
           <button
-            onClick={() => suggestedStatus === "Geliefert" ? setShowTrackingInput(true) : commitStatus(suggestedStatus, null)}
+            onClick={() => {
+              if (suggestedStatus === "Geliefert") setShowTrackingInput(true);
+              else if (suggestedStatus === "Bezahlt") setShowPaymentDialog(true);
+              else commitStatus(suggestedStatus, null);
+            }}
             className="text-xs font-semibold text-primary hover:underline whitespace-nowrap"
           >
             Jetzt aktualisieren
