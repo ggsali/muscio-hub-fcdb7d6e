@@ -35,10 +35,8 @@ export function ReviewsSection() {
   const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
-    supabase.from("reviews")
+    supabase.from("public_reviews" as any)
       .select("id, customer_name, kommentar, rating, created_at")
-      .eq("freigegeben", true)
-      .eq("sichtbar_auf_website", true)
       .order("created_at", { ascending: false })
       .limit(9)
       .then(({ data }) => { if (data) setReviews(data as Review[]); });
