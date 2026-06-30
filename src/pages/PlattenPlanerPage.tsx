@@ -375,6 +375,7 @@ export default function PlattenPlanerPage() {
       (c as any).geometry?.dispose?.();
       (c as any).material?.dispose?.();
     }
+    console.log("[PlattenPlaner] rebuild plate", { plateW, plateH, activePrinter, activePlateId });
     if (!plateW || !plateH) return;
     // Bauplatte
     const slab = new THREE.Mesh(
@@ -388,7 +389,6 @@ export default function PlattenPlanerPage() {
     (grid.material as THREE.Material).transparent = true;
     (grid.material as THREE.Material).opacity = 0.5;
     grid.position.y = 0.05;
-    // Clip grid visually by overlaying slab above; OK leave full grid
     s.plateGroup.add(grid);
     // Plate edge outline
     const edge = new THREE.LineSegments(
@@ -397,12 +397,16 @@ export default function PlattenPlanerPage() {
     );
     edge.position.y = 0.1;
     s.plateGroup.add(edge);
-    // Camera fit
+    // Camera fit – nach jedem Platten-/Druckerwechsel neu setzen
     const diag = Math.max(plateW, plateH);
-    s.camera.position.set(diag * 0.6, diag * 0.9, diag * 0.6);
+    s.camera.position.set(diag * 0.9, diag * 1.2, diag * 0.9);
+    s.camera.near = 0.1;
+    s.camera.far = Math.max(2000, diag * 10);
+    s.camera.lookAt(0, 0, 0);
+    s.camera.updateProjectionMatrix();
     s.controls.target.set(0, 0, 0);
     s.controls.update();
-  }, [plateW, plateH, activePlateId]);
+  }, [plateW, plateH, activePlateId, activePrinter?.id]);
 
   // Rebuild part meshes when activePlacements change
   useEffect(() => {
