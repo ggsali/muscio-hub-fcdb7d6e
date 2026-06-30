@@ -92,7 +92,7 @@ export default function OrderStatusWorkflow({
     if (newStatus === currentStatus) return;
     if (!isStepAllowed(newStatus)) return;
 
-    if (newStatus === "Geliefert") {
+    if (newStatus === "Geliefert" && lieferart === "versand") {
       setShowTrackingInput(true);
       return;
     }
