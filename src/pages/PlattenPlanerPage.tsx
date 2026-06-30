@@ -265,12 +265,18 @@ export default function PlattenPlanerPage() {
     stop: boolean;
   } | null>(null);
 
-  // Mount once
+  // Mount once — but only after `loading` is false, weil der Container vorher gar nicht im DOM ist.
   useEffect(() => {
+    if (loading) return;
     const container = canvasContainerRef.current;
-    if (!container) return;
+    if (!container) {
+      console.warn("[PlattenPlaner] Container ref noch nicht verfügbar");
+      return;
+    }
+    // Falls der Container 0px hoch ist (z.B. wegen Layout-Flush), trotzdem mit Minimum 1 initialisieren
     const initW = Math.max(1, container.clientWidth);
     const initH = Math.max(1, container.clientHeight);
+    console.log("[PlattenPlaner] init renderer", { initW, initH });
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x16181c);
@@ -282,6 +288,14 @@ export default function PlattenPlanerPage() {
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(initW, initH);
     container.appendChild(renderer.domElement);
+
+    // WebGL-Context-Verlust loggen
+    renderer.domElement.addEventListener("webglcontextlost", (e) => {
+      console.error("[PlattenPlaner] WebGL context lost", e);
+    });
+    renderer.domElement.addEventListener("webglcontextrestored", () => {
+      console.warn("[PlattenPlaner] WebGL context restored");
+    });
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.65));
     const key = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -295,7 +309,6 @@ export default function PlattenPlanerPage() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
     controls.target.set(0, 0, 0);
-    // Linksklick = drag (eigene Logik), Rechtsklick = Kamera-Rotate, Mitte = Pan
     controls.mouseButtons = {
       LEFT: -1 as any,
       MIDDLE: THREE.MOUSE.PAN,
@@ -307,7 +320,6 @@ export default function PlattenPlanerPage() {
     const partsGroup = new THREE.Group();
     scene.add(partsGroup);
 
-    // Invisible drop plane on Y=0
     const dropPlane = new THREE.Mesh(
       new THREE.PlaneGeometry(20000, 20000),
       new THREE.MeshBasicMaterial({ visible: false }),
@@ -315,16 +327,14 @@ export default function PlattenPlanerPage() {
     dropPlane.rotation.x = -Math.PI / 2;
     scene.add(dropPlane);
 
-    // TransformControls (Gizmo)
     const transform = new TransformControls(camera, renderer.domElement);
     transform.setSize(0.8);
-    transform.showY = false; // nur XZ verschieben
+    transform.showY = false;
     (transform as any).visible = false;
     (transform as any).enabled = false;
     scene.add(transform as unknown as THREE.Object3D);
     transform.addEventListener("dragging-changed", (e: any) => {
       controls.enabled = !e.value;
-      // Bei Drag-Ende: aktuelle Mesh-Pose in DB übernehmen
       if (e.value === false) {
         const obj = transform.object as THREE.Mesh | undefined;
         if (!obj) return;
@@ -348,17 +358,27 @@ export default function PlattenPlanerPage() {
     };
     sceneStateRef.current = state;
 
+    let frame = 0;
     const animate = () => {
       if (state.stop) return;
       requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
+      try {
+        controls.update();
+        renderer.render(scene, camera);
+        frame++;
+        if (frame % 120 === 0) {
+          console.log("[PlattenPlaner] render frame", frame, "children:", scene.children.length);
+        }
+      } catch (err) {
+        console.error("[PlattenPlaner] render error", err);
+      }
     };
     animate();
 
     const resize = () => {
       const w = Math.max(1, container.clientWidth);
       const h = Math.max(1, container.clientHeight);
+      console.log("[PlattenPlaner] resize", { w, h });
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
@@ -366,11 +386,11 @@ export default function PlattenPlanerPage() {
     const ro = new ResizeObserver(resize);
     ro.observe(container);
     window.addEventListener("resize", resize);
-    // initial nach Layout
     requestAnimationFrame(resize);
 
     return () => {
       state.stop = true;
+      sceneStateRef.current = null;
       window.removeEventListener("resize", resize);
       ro.disconnect();
       transform.detach();
@@ -379,7 +399,7 @@ export default function PlattenPlanerPage() {
       renderer.dispose();
       if (renderer.domElement.parentNode === container) container.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [loading]);
 
   // Rebuild plate visual when active plate / printer changes
   useEffect(() => {
