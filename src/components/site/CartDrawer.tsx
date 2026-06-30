@@ -16,7 +16,7 @@ export const CartDrawer = () => {
   const { toast } = useToast();
   const { user } = useCustomerAuth();
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
-  const [checkingOut, setCheckingOut] = useState(false);
+  const { openCheckout, checkoutElement } = useStripeCheckout();
 
   const handleCheckout = useCallback(async () => {
     if (items.length === 0) return;
@@ -33,24 +33,22 @@ export const CartDrawer = () => {
       return;
     }
 
-    setCheckingOut(true);
-    try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, phone, address, city, postal_code, country")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, phone, address, city, postal_code, country")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-      const { data, error } = await supabase.functions.invoke("create-shop-checkout", {
-        body: {
-          items: items.map(i => ({
-            product_id: i.productId,
-            name: i.name,
-            preis: i.preis,
-            quantity: i.quantity,
-            slug: i.slug,
-          })),
-          customer: profile ? {
+    openCheckout({
+      items: items.map((i) => ({
+        product_id: i.productId,
+        name: i.name,
+        preis: i.preis,
+        quantity: i.quantity,
+        slug: i.slug,
+      })),
+      customer: profile
+        ? {
             email: user.email,
             name: profile.full_name || "",
             phone: profile.phone || "",
@@ -58,21 +56,16 @@ export const CartDrawer = () => {
             city: profile.city || "",
             postal_code: profile.postal_code || "",
             country: profile.country || "Schweiz",
-          } : { email: user.email },
-        },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("Keine Checkout-URL erhalten");
-      }
-    } catch (e: any) {
-      console.error(e);
-      toast({ title: "Checkout fehlgeschlagen", description: e.message, variant: "destructive" });
-      setCheckingOut(false);
-    }
-  }, [items, user, navigate, setIsOpen, toast]);
+          }
+        : { email: user.email },
+      userId: user.id,
+      returnUrl: `${window.location.origin}/payment-success`,
+      onError: (message) => {
+        toast({ title: "Checkout fehlgeschlagen", description: message, variant: "destructive" });
+      },
+    });
+    setIsOpen(false);
+  }, [items, user, navigate, setIsOpen, toast, openCheckout]);
 
   // Nach Login automatisch Checkout fortsetzen
   useEffect(() => {
@@ -86,11 +79,11 @@ export const CartDrawer = () => {
     }
   }, [user, items.length, handleCheckout, setIsOpen]);
 
-
   return (
     <AnimatePresence>
       {isOpen && (
         <>
+          {checkoutElement}
           <motion.div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
