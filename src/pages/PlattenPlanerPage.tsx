@@ -60,7 +60,8 @@ export default function PlattenPlanerPage() {
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [activePlateId, setActivePlateId] = useState<string | null>(null);
   const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [zipping, setZipping] = useState(false);
   const [showNewPlate, setShowNewPlate] = useState(false);
   const [newPlatePrinterId, setNewPlatePrinterId] = useState("");
@@ -72,30 +73,37 @@ export default function PlattenPlanerPage() {
   // ====== DATA LOAD ======
   const loadAll = async () => {
     if (!orderId) return;
-    setLoading(true);
-    const [o, p, eq, pl] = await Promise.all([
-      supabase.from("orders").select("*, customers(name, vorname)").eq("id", orderId).single(),
-      supabase.from("parts").select("id, teilname, laenge_mm, breite_mm").eq("order_id", orderId).order("created_at"),
-      supabase.from("equipment").select("id, name, bauplatte_breite_mm, bauplatte_tiefe_mm").eq("ist_drucker", true),
-      supabase.from("print_plates").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
-    ]);
-    setOrder(o.data);
-    setParts((p.data as any) || []);
-    setPrinters((eq.data as any) || []);
-    setPlates((pl.data as any) || []);
-    const plateList = (pl.data as any[]) || [];
-    if (plateList.length) {
-      const { data: pp } = await supabase
-        .from("print_plate_parts").select("*").in("plate_id", plateList.map((x) => x.id));
-      setPlacements((pp as any) || []);
-      if (!activePlateId || !plateList.find((x) => x.id === activePlateId)) {
-        setActivePlateId(plateList[0].id);
+    setRefreshing(true);
+    try {
+      const [o, p, eq, pl] = await Promise.all([
+        supabase.from("orders").select("*, customers(name, vorname)").eq("id", orderId).single(),
+        supabase.from("parts").select("id, teilname, laenge_mm, breite_mm").eq("order_id", orderId).order("created_at"),
+        supabase.from("equipment").select("id, name, bauplatte_breite_mm, bauplatte_tiefe_mm").eq("ist_drucker", true),
+        supabase.from("print_plates").select("*").eq("order_id", orderId).order("created_at", { ascending: true }),
+      ]);
+      setOrder(o.data);
+      setParts((p.data as any) || []);
+      setPrinters((eq.data as any) || []);
+      setPlates((pl.data as any) || []);
+      const plateList = (pl.data as any[]) || [];
+      if (plateList.length) {
+        const { data: pp } = await supabase
+          .from("print_plate_parts").select("*").in("plate_id", plateList.map((x) => x.id));
+        setPlacements((pp as any) || []);
+        if (!activePlateId || !plateList.find((x) => x.id === activePlateId)) {
+          setActivePlateId(plateList[0].id);
+        }
+      } else {
+        setPlacements([]);
+        setActivePlateId(null);
       }
-    } else {
-      setPlacements([]);
-      setActivePlateId(null);
+    } catch (err) {
+      console.error("[PlattenPlaner] loadAll error", err);
+      toast({ title: "Fehler beim Laden der Auftragsdaten", description: String((err as any)?.message || err), variant: "destructive" });
+    } finally {
+      setRefreshing(false);
+      setInitialLoading(false);
     }
-    setLoading(false);
   };
   useEffect(() => { loadAll(); /* eslint-disable-next-line */ }, [orderId]);
 
@@ -267,7 +275,7 @@ export default function PlattenPlanerPage() {
 
   // Mount once — but only after `loading` is false, weil der Container vorher gar nicht im DOM ist.
   useEffect(() => {
-    if (loading) return;
+    if (initialLoading) return;
     const container = canvasContainerRef.current;
     if (!container) {
       console.warn("[PlattenPlaner] Container ref noch nicht verfügbar");
@@ -399,7 +407,7 @@ export default function PlattenPlanerPage() {
       renderer.dispose();
       if (renderer.domElement.parentNode === container) container.removeChild(renderer.domElement);
     };
-  }, [loading]);
+  }, [initialLoading]);
 
   // Rebuild plate visual when active plate / printer changes
   useEffect(() => {
@@ -726,7 +734,7 @@ export default function PlattenPlanerPage() {
   };
 
   // ====== RENDER ======
-  if (loading) {
+  if (initialLoading) {
     return <div className="p-8 text-sm text-muted-foreground">Laden…</div>;
   }
 
@@ -742,7 +750,10 @@ export default function PlattenPlanerPage() {
         </Link>
         <Layers className="w-5 h-5 text-primary" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-semibold truncate">Druckplatten-Planer</h1>
+          <h1 className="text-base font-semibold truncate flex items-center gap-2">
+            Druckplatten-Planer
+            {refreshing && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+          </h1>
           <p className="text-xs text-muted-foreground truncate">
             {order?.name || order?.beschreibung || "Auftrag"}
             {order?.customers?.name && ` · ${order.customers.vorname || ""} ${order.customers.name}`.trim()}
