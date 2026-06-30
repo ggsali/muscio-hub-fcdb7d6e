@@ -823,7 +823,7 @@ export default function PlattenPlanerPage() {
           </div>
 
           {/* 3D canvas + overlays */}
-          <div className="relative flex-1 min-h-0" style={{ background: "#f5f5f7" }}>
+          <div className="relative flex-1 min-h-0" style={{ background: "#16181c" }}>
             <div
               ref={canvasContainerRef}
               className="absolute inset-0"
