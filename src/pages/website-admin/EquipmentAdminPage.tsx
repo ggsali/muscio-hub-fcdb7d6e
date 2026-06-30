@@ -59,6 +59,9 @@ export default function EquipmentAdminPage() {
       aktiv: e.aktiv, sort_order: e.sort_order,
       vorschaubild_url: e.vorschaubild_url || "", modell_url: e.modell_url || "",
       model_rotation: e.model_rotation || { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0 },
+      ist_drucker: !!e.ist_drucker,
+      bauplatte_breite_mm: e.bauplatte_breite_mm ?? null,
+      bauplatte_tiefe_mm: e.bauplatte_tiefe_mm ?? null,
     });
     setImageFile(null); setModelFile(null);
   };
