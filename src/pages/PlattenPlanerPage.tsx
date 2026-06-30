@@ -379,26 +379,64 @@ export default function PlattenPlanerPage() {
     }
     console.log("[PlattenPlaner] rebuild plate", { plateW, plateH, activePrinter, activePlateId });
     if (!plateW || !plateH) return;
-    // Bauplatte
+    const buildH = 300; // Standard-Bauhöhe (mm), bis bauplatte_hoehe_mm im Equipment existiert
+
+    // Bodenplatte – dunkel, leicht reflektierend
     const slab = new THREE.Mesh(
       new THREE.BoxGeometry(plateW, 4, plateH),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.1, roughness: 0.85 }),
+      new THREE.MeshStandardMaterial({ color: 0x2a2d33, metalness: 0.55, roughness: 0.35 }),
     );
     slab.position.y = -2;
     s.plateGroup.add(slab);
-    // Grid 10mm
-    const grid = new THREE.GridHelper(Math.max(plateW, plateH), Math.round(Math.max(plateW, plateH) / 10), 0xff5a00, 0xcccccc);
+
+    // Dezenter heller Grid (10mm)
+    const grid = new THREE.GridHelper(
+      Math.max(plateW, plateH),
+      Math.round(Math.max(plateW, plateH) / 10),
+      0x4a5060,
+      0x3a3f48,
+    );
     (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.5;
+    (grid.material as THREE.Material).opacity = 0.45;
     grid.position.y = 0.05;
     s.plateGroup.add(grid);
-    // Plate edge outline
+
+    // Bauplatten-Kante
     const edge = new THREE.LineSegments(
       new THREE.EdgesGeometry(new THREE.BoxGeometry(plateW, 0.1, plateH)),
-      new THREE.LineBasicMaterial({ color: 0xff7a30 }),
+      new THREE.LineBasicMaterial({ color: 0x9aa3b2 }),
     );
     edge.position.y = 0.1;
     s.plateGroup.add(edge);
+
+    // Wireframe-Bauvolumen (Würfel über der Platte)
+    const volGeom = new THREE.BoxGeometry(plateW, buildH, plateH);
+    const volEdges = new THREE.LineSegments(
+      new THREE.EdgesGeometry(volGeom),
+      new THREE.LineBasicMaterial({ color: 0xb8c0cc, transparent: true, opacity: 0.55 }),
+    );
+    volEdges.position.y = buildH / 2;
+    s.plateGroup.add(volEdges);
+    volGeom.dispose();
+
+    // Achsen-Ticks an den Bodenplatten-Kanten (alle 50mm)
+    const tickMat = new THREE.LineBasicMaterial({ color: 0x8892a0 });
+    const tickLen = Math.max(3, Math.min(plateW, plateH) * 0.012);
+    const tickStep = 50;
+    const halfW = plateW / 2;
+    const halfH = plateH / 2;
+    const tickPts: number[] = [];
+    for (let x = -halfW; x <= halfW + 0.01; x += tickStep) {
+      tickPts.push(x, 0.12, -halfH, x, 0.12, -halfH - tickLen);
+      tickPts.push(x, 0.12,  halfH, x, 0.12,  halfH + tickLen);
+    }
+    for (let z = -halfH; z <= halfH + 0.01; z += tickStep) {
+      tickPts.push(-halfW, 0.12, z, -halfW - tickLen, 0.12, z);
+      tickPts.push( halfW, 0.12, z,  halfW + tickLen, 0.12, z);
+    }
+    const tickGeom = new THREE.BufferGeometry();
+    tickGeom.setAttribute("position", new THREE.Float32BufferAttribute(tickPts, 3));
+    s.plateGroup.add(new THREE.LineSegments(tickGeom, tickMat));
     // Camera fit – nach jedem Platten-/Druckerwechsel neu setzen
     const diag = Math.max(plateW, plateH);
     s.camera.position.set(diag * 0.9, diag * 1.2, diag * 0.9);
