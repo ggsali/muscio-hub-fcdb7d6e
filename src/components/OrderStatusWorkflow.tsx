@@ -209,6 +209,7 @@ export default function OrderStatusWorkflow({
           const active = currentIdx === i;
           const allowed = isStepAllowed(s);
           const isLast = i === STATUSES.length - 1;
+          const displayLabel = (s === "Geliefert" && lieferart === "abholung") ? "Abgeholt" : s;
           return (
             <React.Fragment key={s}>
               <button
@@ -230,7 +231,7 @@ export default function OrderStatusWorkflow({
                    s === "Geliefert" ? <Truck className="w-4 h-4" /> :
                    <Circle className="w-4 h-4" />}
                 </div>
-                <span className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-primary" : done ? "text-success" : "text-muted-foreground"}`}>{s}</span>
+                <span className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-primary" : done ? "text-success" : "text-muted-foreground"}`}>{displayLabel}</span>
               </button>
               {!isLast && (
                 <div className={`flex-1 h-0.5 mb-5 mx-1 transition-all ${done ? "bg-success" : "bg-border"}`} />
