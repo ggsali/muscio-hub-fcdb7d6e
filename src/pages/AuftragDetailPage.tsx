@@ -98,6 +98,7 @@ export default function AuftragDetailPage() {
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
   const [trackingNr, setTrackingNr] = useState("");
+  const [lieferart, setLieferart] = useState<"versand" | "abholung">("versand");
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
   const [expressKosten, setExpressKosten] = useState<number>(0);
