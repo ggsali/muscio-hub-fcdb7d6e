@@ -123,7 +123,8 @@ serve(async (req) => {
       ],
       success_url: `https://3dmuscio.com/payment-success?order_id=${orderId}`,
       cancel_url: `https://3dmuscio.com/auftraege/${orderId}?payment=cancelled`,
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "twint"],
+      locale: "de",
       metadata: {
         order_id: orderId || "",
       },
