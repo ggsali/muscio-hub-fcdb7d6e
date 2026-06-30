@@ -60,7 +60,8 @@ export default function PlattenPlanerPage() {
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [activePlateId, setActivePlateId] = useState<string | null>(null);
   const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [zipping, setZipping] = useState(false);
   const [showNewPlate, setShowNewPlate] = useState(false);
   const [newPlatePrinterId, setNewPlatePrinterId] = useState("");
