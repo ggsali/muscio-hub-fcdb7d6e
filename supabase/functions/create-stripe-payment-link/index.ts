@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import type Stripe from "https://esm.sh/stripe@22.0.2";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createStripeClient, type StripeEnv } from "../_shared/stripe.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,18 +11,6 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
-  }
-
-  const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
-  const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-  if (!STRIPE_SECRET_KEY) {
-    console.error("[create-stripe-payment-link] STRIPE_SECRET_KEY missing");
-    return new Response(JSON.stringify({ error: "STRIPE_SECRET_KEY ist nicht konfiguriert" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-  if (!STRIPE_WEBHOOK_SECRET) {
-    console.warn("[create-stripe-payment-link] STRIPE_WEBHOOK_SECRET missing — Webhook-Bestätigung wird nicht funktionieren");
   }
 
   try {
