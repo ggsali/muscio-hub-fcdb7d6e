@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Layers, Download, Plus, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Layers, Download, Plus, Trash2, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import Plate3DView, { Plate3DPlacement } from "./Plate3DView";
 
 interface Part {
   id: string;
@@ -137,9 +138,42 @@ export default function PrintPlatePlanner({ orderId, parts }: { orderId: string;
       return { partId, w: part?.laenge_mm || 0, h: part?.breite_mm || 0, copies };
     });
 
-  const { placements, unplaced } = plateW && plateH
-    ? packShelf(items, plateW, plateH)
-    : { placements: [], unplaced: [] };
+  // User overrides per placement key (partId__copy)
+  const [overrides, setOverrides] = useState<Record<string, { x: number; y: number }>>({});
+
+  const autoPacked = useMemo(() => {
+    return plateW && plateH ? packShelf(items, plateW, plateH) : { placements: [], unplaced: [] };
+  }, [JSON.stringify(items), plateW, plateH]);
+
+  // Reset overrides when item set changes meaningfully
+  useEffect(() => {
+    setOverrides({});
+  }, [JSON.stringify(items.map(i => [i.partId, i.copies])), plateW, plateH]);
+
+  const placements3D: Plate3DPlacement[] = useMemo(() => {
+    return autoPacked.placements.map((p) => {
+      const key = `${p.partId}__${p.copy}`;
+      const o = overrides[key];
+      return {
+        key,
+        partId: p.partId,
+        copy: p.copy,
+        x: o?.x ?? p.x,
+        y: o?.y ?? p.y,
+        w: p.w,
+        h: p.h,
+        fits: p.fits,
+      };
+    });
+  }, [autoPacked, overrides]);
+
+  const unplaced = autoPacked.unplaced;
+
+  const handleMove = (key: string, x: number, y: number) => {
+    setOverrides((prev) => ({ ...prev, [key]: { x, y } }));
+  };
+
+  const handleResetLayout = () => setOverrides({});
 
   const handleSavePlate = async () => {
     if (!draftPrinterId || items.length === 0) {
@@ -155,13 +189,17 @@ export default function PrintPlatePlanner({ orderId, parts }: { orderId: string;
       setCreating(false);
       return;
     }
-    const rows = placements.reduce((acc: any[], p) => {
-      const ex = acc.find(r => r.part_id === p.partId);
-      if (ex) ex.menge += 1; else acc.push({ plate_id: plate.id, part_id: p.partId, menge: 1, pos_x_mm: p.x, pos_y_mm: p.y });
-      return acc;
-    }, []);
+    // One row per placement copy to preserve individual positions
+    const rows = placements3D.map((p) => ({
+      plate_id: plate.id,
+      part_id: p.partId,
+      menge: 1,
+      pos_x_mm: p.x,
+      pos_y_mm: p.y,
+    }));
     if (rows.length) await supabase.from("print_plate_parts").insert(rows);
     setDraftPartsCount({});
+    setOverrides({});
     setActivePlateId(plate.id);
     await load();
     setCreating(false);
@@ -261,25 +299,21 @@ export default function PrintPlatePlanner({ orderId, parts }: { orderId: string;
 
                 {plateW > 0 && items.length > 0 && (
                   <div className="space-y-2">
-                    <div className="text-xs text-muted-foreground">
-                      Belegt: {placements.length} / {placements.length + unplaced.length} Teile
-                      {unplaced.length > 0 && <span className="text-destructive ml-2">({unplaced.length} passen nicht)</span>}
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-muted-foreground">
+                        Belegt: {placements3D.length} / {placements3D.length + unplaced.length} Teile
+                        {unplaced.length > 0 && <span className="text-destructive ml-2">({unplaced.length} passen nicht)</span>}
+                      </div>
+                      <Button size="sm" variant="outline" onClick={handleResetLayout} className="h-7 text-xs">
+                        <RotateCcw className="w-3 h-3 mr-1" /> Auto-Layout
+                      </Button>
                     </div>
-                    <div className="border border-border rounded bg-muted/20 inline-block">
-                      <svg width={previewW} height={previewH} className="block">
-                        <rect x={0} y={0} width={previewW} height={previewH} fill="hsl(var(--muted))" opacity={0.3} />
-                        {placements.map((p, i) => (
-                          <g key={i}>
-                            <rect
-                              x={p.x * scale} y={p.y * scale}
-                              width={p.w * scale} height={p.h * scale}
-                              fill="hsl(var(--primary))" opacity={0.4}
-                              stroke="hsl(var(--primary))" strokeWidth={1}
-                            />
-                          </g>
-                        ))}
-                      </svg>
-                    </div>
+                    <Plate3DView
+                      plateW={plateW}
+                      plateH={plateH}
+                      placements={placements3D}
+                      onMove={handleMove}
+                    />
                   </div>
                 )}
 
