@@ -138,9 +138,42 @@ export default function PrintPlatePlanner({ orderId, parts }: { orderId: string;
       return { partId, w: part?.laenge_mm || 0, h: part?.breite_mm || 0, copies };
     });
 
-  const { placements, unplaced } = plateW && plateH
-    ? packShelf(items, plateW, plateH)
-    : { placements: [], unplaced: [] };
+  // User overrides per placement key (partId__copy)
+  const [overrides, setOverrides] = useState<Record<string, { x: number; y: number }>>({});
+
+  const autoPacked = useMemo(() => {
+    return plateW && plateH ? packShelf(items, plateW, plateH) : { placements: [], unplaced: [] };
+  }, [JSON.stringify(items), plateW, plateH]);
+
+  // Reset overrides when item set changes meaningfully
+  useEffect(() => {
+    setOverrides({});
+  }, [JSON.stringify(items.map(i => [i.partId, i.copies])), plateW, plateH]);
+
+  const placements3D: Plate3DPlacement[] = useMemo(() => {
+    return autoPacked.placements.map((p) => {
+      const key = `${p.partId}__${p.copy}`;
+      const o = overrides[key];
+      return {
+        key,
+        partId: p.partId,
+        copy: p.copy,
+        x: o?.x ?? p.x,
+        y: o?.y ?? p.y,
+        w: p.w,
+        h: p.h,
+        fits: p.fits,
+      };
+    });
+  }, [autoPacked, overrides]);
+
+  const unplaced = autoPacked.unplaced;
+
+  const handleMove = (key: string, x: number, y: number) => {
+    setOverrides((prev) => ({ ...prev, [key]: { x, y } }));
+  };
+
+  const handleResetLayout = () => setOverrides({});
 
   const handleSavePlate = async () => {
     if (!draftPrinterId || items.length === 0) {
@@ -156,13 +189,17 @@ export default function PrintPlatePlanner({ orderId, parts }: { orderId: string;
       setCreating(false);
       return;
     }
-    const rows = placements.reduce((acc: any[], p) => {
-      const ex = acc.find(r => r.part_id === p.partId);
-      if (ex) ex.menge += 1; else acc.push({ plate_id: plate.id, part_id: p.partId, menge: 1, pos_x_mm: p.x, pos_y_mm: p.y });
-      return acc;
-    }, []);
+    // One row per placement copy to preserve individual positions
+    const rows = placements3D.map((p) => ({
+      plate_id: plate.id,
+      part_id: p.partId,
+      menge: 1,
+      pos_x_mm: p.x,
+      pos_y_mm: p.y,
+    }));
     if (rows.length) await supabase.from("print_plate_parts").insert(rows);
     setDraftPartsCount({});
+    setOverrides({});
     setActivePlateId(plate.id);
     await load();
     setCreating(false);
