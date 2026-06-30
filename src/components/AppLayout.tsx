@@ -3,7 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle,
-  Globe, Mail
+  Globe, Mail, Layers
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ const navItems = [
   { to: "/admin/auftraege", icon: <Package className="w-[18px] h-[18px]" />, label: "Aufträge" },
   { to: "/admin/anfragen", icon: <MessageSquare className="w-[18px] h-[18px]" />, label: "Anfragen" },
   { to: "/admin/teile", icon: <Library className="w-[18px] h-[18px]" />, label: "Teile-Bibliothek" },
+  { to: "/admin/druckplatten", icon: <Layers className="w-[18px] h-[18px]" />, label: "Druckplatten" },
   { to: "/admin/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
   { to: "/admin/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
   { to: "/admin/kalender", icon: <CalendarDays className="w-[18px] h-[18px]" />, label: "Kalender" },

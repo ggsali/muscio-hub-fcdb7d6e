@@ -21,6 +21,7 @@ import TimeTracker from "@/components/TimeTracker";
 import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
 import OrderUploadRequests from "@/components/OrderUploadRequests";
+import PrintPlatePlanner from "@/components/PrintPlatePlanner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -1610,8 +1611,13 @@ export default function AuftragDetailPage() {
               </div>
             </div>
           )}
+
+          {!isNew && id && (
+            <PrintPlatePlanner orderId={id} parts={parts as any} />
+          )}
         </div>
       )}
+
 
       {/* ====================== TAB: STATUS & VERSAND ====================== */}
       {activeTab === "Status & Versand" && !isNew && (

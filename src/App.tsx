@@ -23,6 +23,7 @@ import KundenPage from "@/pages/KundenPage";
 import KundeDetailPage from "@/pages/KundeDetailPage";
 import AuftraegePage from "@/pages/AuftraegePage";
 import AuftragDetailPage from "@/pages/AuftragDetailPage";
+import DruckplattenPage from "@/pages/DruckplattenPage";
 import TeileBibliothekPage from "@/pages/TeileBibliothekPage";
 import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
@@ -166,6 +167,7 @@ const App = () => (
                 <Route path="kunden/:id" element={<KundeDetailPage />} />
                 <Route path="auftraege" element={<AuftraegePage />} />
                 <Route path="auftraege/:id" element={<AuftragDetailPage />} />
+                <Route path="druckplatten" element={<DruckplattenPage />} />
                 <Route path="teile" element={<TeileBibliothekPage />} />
                 <Route path="filamente" element={<FilamentePage />} />
                 <Route path="kalkulator" element={<KalkulatorPage />} />
