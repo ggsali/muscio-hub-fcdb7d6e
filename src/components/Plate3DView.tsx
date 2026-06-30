@@ -30,9 +30,9 @@ async function getStlUrl(partId: string): Promise<string | null> {
   if (PART_URL_CACHE.has(partId)) return PART_URL_CACHE.get(partId)!;
   const { data: files } = await supabase
     .from("part_files")
-    .select("storage_path, dateiname")
+    .select("storage_path, filename")
     .eq("part_id", partId);
-  const stl = (files || []).find((f: any) => (f.dateiname || "").toLowerCase().endsWith(".stl"));
+  const stl = (files || []).find((f: any) => (f.filename || "").toLowerCase().endsWith(".stl"));
   if (!stl) return null;
   const { data } = await supabase.storage
     .from("part-files")
