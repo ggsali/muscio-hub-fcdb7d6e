@@ -449,13 +449,22 @@ export default function PlattenPlanerPage() {
     grid.position.y = 0.05;
     s.plateGroup.add(grid);
 
-    // Bauplatten-Kante (dünne helle Linie)
-    const edge = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(plateW, 0.1, plateH)),
-      new THREE.LineBasicMaterial({ color: 0xa0a8b5 }),
+    // Bauplatten-Umriss – deutliche helle Kontur am Plattenrand
+    const halfW = plateW / 2;
+    const halfH = plateH / 2;
+    const outlinePts: number[] = [];
+    const yL = 0.15;
+    outlinePts.push(-halfW, yL, -halfH,  halfW, yL, -halfH);
+    outlinePts.push( halfW, yL, -halfH,  halfW, yL,  halfH);
+    outlinePts.push( halfW, yL,  halfH, -halfW, yL,  halfH);
+    outlinePts.push(-halfW, yL,  halfH, -halfW, yL, -halfH);
+    const outlineGeom = new THREE.BufferGeometry();
+    outlineGeom.setAttribute("position", new THREE.Float32BufferAttribute(outlinePts, 3));
+    const outline = new THREE.LineSegments(
+      outlineGeom,
+      new THREE.LineBasicMaterial({ color: 0xff5a00, linewidth: 2 }),
     );
-    edge.position.y = 0.1;
-    s.plateGroup.add(edge);
+    s.plateGroup.add(outline);
 
     // Wireframe-Bauvolumen (Würfel über der Platte)
     const volGeom = new THREE.BoxGeometry(plateW, buildH, plateH);
@@ -469,8 +478,6 @@ export default function PlattenPlanerPage() {
 
     // Achsen-Ticks und Zahlen an den Bodenplatten-Kanten (alle 50mm)
     const tickStep = 50;
-    const halfW = plateW / 2;
-    const halfH = plateH / 2;
     const tickLen = Math.max(4, Math.min(plateW, plateH) * 0.015);
     const tickPts: number[] = [];
     for (let x = -halfW; x <= halfW + 0.01; x += tickStep) {
