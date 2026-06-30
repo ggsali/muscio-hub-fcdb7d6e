@@ -1,9 +1,11 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import successImg from "@/assets/payment-success.png";
+import { Button } from "@/components/ui/button";
 
 export default function PaymentSuccessPage() {
   const [params] = useSearchParams();
   const orderNr = params.get("order_id")?.slice(0, 8).toUpperCase();
+  const sessionId = params.get("session_id")?.slice(0, 16);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -18,6 +20,9 @@ export default function PaymentSuccessPage() {
           {orderNr && (
             <p className="text-sm text-muted-foreground">Auftrag Nr. {orderNr}</p>
           )}
+          {sessionId && !orderNr && (
+            <p className="text-sm text-muted-foreground">Session: {sessionId}...</p>
+          )}
         </div>
         <div className="bg-card border border-border rounded-2xl p-6 space-y-2 shadow-sm">
           <p className="text-foreground font-medium">Vielen Dank für Ihre Zahlung!</p>
@@ -26,6 +31,14 @@ export default function PaymentSuccessPage() {
             Bei Fragen stehen wir Ihnen jederzeit gerne zur Verfügung.
           </p>
         </div>
+        <div className="flex flex-col gap-2">
+          <Button asChild>
+            <Link to="/shop">Weiter einkaufen</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/portal/bestellungen">Meine Bestellungen</Link>
+          </Button>
+        </div>
         <p className="text-xs text-muted-foreground">
           Diese Seite kann geschlossen werden.
         </p>
@@ -33,3 +46,4 @@ export default function PaymentSuccessPage() {
     </div>
   );
 }
+
