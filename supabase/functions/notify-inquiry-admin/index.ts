@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
     const { error } = await resend.emails.send({
       from: "3DMuscio <noreply@3dmuscio.com>",
-      to: ["info@3dmuscio.com"],
+      to: ["anfrage@3dmuscio.com"],
       reply_to: email || undefined,
       subject: `Neue Anfrage von ${safeName} – ${safeBetreff}`,
       html: `
