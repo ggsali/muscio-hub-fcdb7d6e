@@ -28,6 +28,8 @@ import PlattenPlanerPage from "@/pages/PlattenPlanerPage";
 import TeileBibliothekPage from "@/pages/TeileBibliothekPage";
 import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
+import FinanzenPage from "@/pages/FinanzenPage";
+import NeueRechnungPage from "@/pages/NeueRechnungPage";
 import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
 import AnfragenPage from "@/pages/AnfragenPage";
