@@ -175,6 +175,8 @@ const App = () => (
                 <Route path="teile" element={<TeileBibliothekPage />} />
                 <Route path="filamente" element={<FilamentePage />} />
                 <Route path="kalkulator" element={<KalkulatorPage />} />
+                <Route path="finanzen" element={<FinanzenPage />} />
+                <Route path="finanzen/neue-rechnung" element={<NeueRechnungPage />} />
                 <Route path="einstellungen" element={<EinstellungenPage />} />
                 <Route path="anfragen" element={<AnfragenPage />} />
                 <Route path="kalender" element={<KalenderPage />} />
