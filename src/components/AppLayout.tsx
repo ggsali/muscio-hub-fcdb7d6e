@@ -3,7 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle,
-  Globe, Mail, Layers
+  Globe, Mail, Layers, Receipt
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
