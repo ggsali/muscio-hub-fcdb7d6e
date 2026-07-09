@@ -28,6 +28,8 @@ import PlattenPlanerPage from "@/pages/PlattenPlanerPage";
 import TeileBibliothekPage from "@/pages/TeileBibliothekPage";
 import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
+import FinanzenPage from "@/pages/FinanzenPage";
+import NeueRechnungPage from "@/pages/NeueRechnungPage";
 import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
 import AnfragenPage from "@/pages/AnfragenPage";
@@ -173,6 +175,8 @@ const App = () => (
                 <Route path="teile" element={<TeileBibliothekPage />} />
                 <Route path="filamente" element={<FilamentePage />} />
                 <Route path="kalkulator" element={<KalkulatorPage />} />
+                <Route path="finanzen" element={<FinanzenPage />} />
+                <Route path="finanzen/neue-rechnung" element={<NeueRechnungPage />} />
                 <Route path="einstellungen" element={<EinstellungenPage />} />
                 <Route path="anfragen" element={<AnfragenPage />} />
                 <Route path="kalender" element={<KalenderPage />} />

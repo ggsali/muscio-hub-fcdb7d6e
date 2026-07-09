@@ -35,44 +35,112 @@ export type Database = {
         }
         Relationships: []
       }
+      bill_items: {
+        Row: {
+          beschreibung: string
+          bill_id: string
+          created_at: string
+          einheit: string
+          einzelpreis_chf: number
+          gesamtpreis_chf: number
+          id: string
+          menge: number
+          position: number
+        }
+        Insert: {
+          beschreibung?: string
+          bill_id: string
+          created_at?: string
+          einheit?: string
+          einzelpreis_chf?: number
+          gesamtpreis_chf?: number
+          id?: string
+          menge?: number
+          position?: number
+        }
+        Update: {
+          beschreibung?: string
+          bill_id?: string
+          created_at?: string
+          einheit?: string
+          einzelpreis_chf?: number
+          gesamtpreis_chf?: number
+          id?: string
+          menge?: number
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_items_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bills: {
         Row: {
           betrag: number
+          betreff: string | null
           bezahlt: boolean
           bezahlt_am: string | null
           created_at: string
+          empfaenger_adresse: string | null
+          empfaenger_email: string | null
+          empfaenger_firma: string | null
+          empfaenger_name: string | null
           faellig_am: string | null
           file_path: string | null
           filename: string | null
           id: string
+          mwst_prozent: number
           notiz: string | null
           order_id: string | null
+          rechnungs_datum: string | null
+          rechnungsnummer: string | null
           titel: string
         }
         Insert: {
           betrag?: number
+          betreff?: string | null
           bezahlt?: boolean
           bezahlt_am?: string | null
           created_at?: string
+          empfaenger_adresse?: string | null
+          empfaenger_email?: string | null
+          empfaenger_firma?: string | null
+          empfaenger_name?: string | null
           faellig_am?: string | null
           file_path?: string | null
           filename?: string | null
           id?: string
+          mwst_prozent?: number
           notiz?: string | null
           order_id?: string | null
+          rechnungs_datum?: string | null
+          rechnungsnummer?: string | null
           titel?: string
         }
         Update: {
           betrag?: number
+          betreff?: string | null
           bezahlt?: boolean
           bezahlt_am?: string | null
           created_at?: string
+          empfaenger_adresse?: string | null
+          empfaenger_email?: string | null
+          empfaenger_firma?: string | null
+          empfaenger_name?: string | null
           faellig_am?: string | null
           file_path?: string | null
           filename?: string | null
           id?: string
+          mwst_prozent?: number
           notiz?: string | null
           order_id?: string | null
+          rechnungs_datum?: string | null
+          rechnungsnummer?: string | null
           titel?: string
         }
         Relationships: [
