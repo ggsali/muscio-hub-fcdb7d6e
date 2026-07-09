@@ -57,7 +57,7 @@ async function nextRechnungsnummer(): Promise<string> {
 
 export default function NeueRechnungPage() {
   const nav = useNavigate();
-  const company = useCompanySettings();
+  const { company } = useCompanySettings();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selCustomerId, setSelCustomerId] = useState<string>("_frei");
