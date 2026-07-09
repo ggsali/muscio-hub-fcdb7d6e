@@ -21,6 +21,7 @@ const navItems = [
   { to: "/admin/druckplatten", icon: <Layers className="w-[18px] h-[18px]" />, label: "Druckplatten" },
   { to: "/admin/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
   { to: "/admin/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
+  { to: "/admin/finanzen", icon: <Receipt className="w-[18px] h-[18px]" />, label: "Finanzen" },
   { to: "/admin/kalender", icon: <CalendarDays className="w-[18px] h-[18px]" />, label: "Kalender" },
   { to: "/admin/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
   { to: "/admin/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
