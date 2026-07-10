@@ -13,8 +13,7 @@ import {
 interface Props {
   orderId: string;
   status: string;
-  customerName: string;
-  customerEmail?: string;
+  customerId: string;
 }
 
 const DEFAULT_SUBJECT = "Vielen Dank für Ihren Auftrag – kurze Bitte";
