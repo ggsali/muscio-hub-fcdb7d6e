@@ -9,31 +9,37 @@ const corsHeaders = {
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
 
+function esc(s: string) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { order_id, subject, body, customer_email, customer_name } = await req.json();
+    const { order_id, subject, body, customer_email, customer_name, review_url } = await req.json();
 
     if (!order_id || !customer_email || !body || !subject) {
       return new Response(
-        JSON.stringify({ success: false, error: "Fehlende Felder (order_id, subject, body, customer_email)" }),
+        JSON.stringify({ success: false, error: "Fehlende Felder" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Convert plain-text body to HTML (preserve line breaks, keep any embedded links)
-    const html = String(body)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      // restore anchor tags we intentionally embed as HTML from the client
-      .replace(/&lt;a /g, "<a ")
-      .replace(/&lt;\/a&gt;/g, "</a>")
-      .replace(/"&gt;/g, '">')
-      .replace(/\n/g, "<br/>");
+    // Escape user text, then linkify the [Google Rezension schreiben] placeholder
+    let html = esc(body).replace(/\n/g, "<br/>");
+    if (review_url) {
+      const safeUrl = esc(review_url);
+      html = html.replace(
+        /\[Google Rezension schreiben\]/g,
+        `<a href="${safeUrl}" style="color:#FF5A00;font-weight:600;">Google Rezension schreiben</a>`,
+      );
+    }
 
     const { error } = await resend.emails.send({
       from: "3DMuscio <noreply@3dmuscio.com>",
@@ -50,7 +56,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Log in order_status_log (service role)
+    // Log in order_status_log via service role
     try {
       const supabase = createClient(
         Deno.env.get("SUPABASE_URL")!,
