@@ -59,7 +59,16 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
       .limit(1)
       .maybeSingle()
       .then(({ data }) => setAlreadySentAt(data?.created_at || null));
-  }, [orderId, visible]);
+    if (customerId) {
+      supabase.from("customers").select("vorname, name, email").eq("id", customerId).maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setCustomerName([data.vorname, data.name].filter(Boolean).join(" ").trim() || data.name || "");
+            setCustomerEmail(data.email || "");
+          }
+        });
+    }
+  }, [orderId, visible, customerId]);
 
   const openModal = () => {
     setSubject(DEFAULT_SUBJECT);
