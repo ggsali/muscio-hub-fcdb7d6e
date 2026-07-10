@@ -81,7 +81,21 @@ export default function EinstellungenPage() {
   useEffect(() => {
     loadPresets();
     loadWebsiteSettings();
+    loadGoogleReviewUrl();
   }, []);
+
+  const loadGoogleReviewUrl = async () => {
+    const { data } = await supabase.from("settings").select("value").eq("key", "google_review_url").maybeSingle();
+    if (data?.value) setGoogleReviewUrl(data.value);
+  };
+
+  const handleSaveGoogleReviewUrl = async () => {
+    await supabase.from("settings").upsert(
+      { key: "google_review_url", value: googleReviewUrl, updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    );
+    flashSaved();
+  };
 
   const loadWebsiteSettings = async () => {
     const { data } = await supabase.from("settings").select("*").in("key", [
