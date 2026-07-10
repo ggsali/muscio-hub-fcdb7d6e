@@ -65,6 +65,7 @@ export default function EinstellungenPage() {
     bulkDiscount10: 0.10,
     mwst: 0.081,
   });
+  const [googleReviewUrl, setGoogleReviewUrl] = useState<string>("");
   const [localCompany, setLocalCompany] = useState<CompanySettings>(company);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
