@@ -1668,6 +1668,8 @@ export default function AuftragDetailPage() {
           </div>
 
           <TimeTracker orderId={id!} parts={parts} />
+
+          <ReviewRequestButton orderId={id!} status={status} customerId={customerId} />
         </div>
       )}
 
