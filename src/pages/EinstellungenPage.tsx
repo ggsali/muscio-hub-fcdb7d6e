@@ -65,6 +65,7 @@ export default function EinstellungenPage() {
     bulkDiscount10: 0.10,
     mwst: 0.081,
   });
+  const [googleReviewUrl, setGoogleReviewUrl] = useState<string>("");
   const [localCompany, setLocalCompany] = useState<CompanySettings>(company);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
@@ -80,7 +81,21 @@ export default function EinstellungenPage() {
   useEffect(() => {
     loadPresets();
     loadWebsiteSettings();
+    loadGoogleReviewUrl();
   }, []);
+
+  const loadGoogleReviewUrl = async () => {
+    const { data } = await supabase.from("settings").select("value").eq("key", "google_review_url").maybeSingle();
+    if (data?.value) setGoogleReviewUrl(data.value);
+  };
+
+  const handleSaveGoogleReviewUrl = async () => {
+    await supabase.from("settings").upsert(
+      { key: "google_review_url", value: googleReviewUrl, updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    );
+    flashSaved();
+  };
 
   const loadWebsiteSettings = async () => {
     const { data } = await supabase.from("settings").select("*").in("key", [
@@ -431,6 +446,20 @@ export default function EinstellungenPage() {
             ))}
           </div>
           <SaveButton saved={saved} onClick={handleSaveCompany} />
+
+          <div className="bg-card border border-border rounded-lg p-5 space-y-3">
+            <div>
+              <h3 className="font-semibold text-sm">Google Rezensions-Link</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Wird in Rezensions-Anfragen an Kunden verlinkt (z.B. https://g.page/r/XXXXX/review).</p>
+            </div>
+            <Input
+              value={googleReviewUrl}
+              onChange={e => setGoogleReviewUrl(e.target.value)}
+              placeholder="https://g.page/r/XXXXX/review"
+              className="bg-input border-border text-sm"
+            />
+            <SaveButton saved={saved} onClick={handleSaveGoogleReviewUrl} />
+          </div>
         </div>
       )}
 
