@@ -34,7 +34,9 @@ Jorim Moos
 3DMuscio`;
 }
 
-export default function ReviewRequestButton({ orderId, status, customerName, customerEmail }: Props) {
+export default function ReviewRequestButton({ orderId, status, customerId }: Props) {
+  const [customerName, setCustomerName] = useState<string>("");
+  const [customerEmail, setCustomerEmail] = useState<string>("");
   const { toast } = useToast();
   const [reviewUrl, setReviewUrl] = useState<string>("");
   const [alreadySentAt, setAlreadySentAt] = useState<string | null>(null);
