@@ -29,6 +29,7 @@ export default function UeberUnsPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const [storyImage, setStoryImage] = useState<string>(werkstatt);
   const location = useLocation();
 
   useEffect(() => {
@@ -38,6 +39,16 @@ export default function UeberUnsPage() {
       .eq("aktiv", true)
       .order("sort_order")
       .then(({ data }) => { if (data) setTeam(data as TeamMember[]); });
+
+    supabase
+      .from("website_settings")
+      .select("value")
+      .eq("key", "ueber_uns_bild")
+      .maybeSingle()
+      .then(({ data }) => {
+        const url = (data?.value as any)?.url;
+        if (url) setStoryImage(url);
+      });
   }, []);
 
   // Smooth scroll to hash anchors when navigating from header dropdown
