@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -16,6 +17,7 @@ interface ChatSession {
   status: string;
   created_at: string;
   updated_at: string;
+  bot_enabled?: boolean;
   last_message?: string;
   unread_count?: number;
 }
@@ -117,11 +119,21 @@ export default function ChatPage() {
       role: "admin",
       content: reply.trim(),
     });
+    // Sobald ein Mitarbeiter antwortet, den Bot für diese Konversation deaktivieren
+    await supabase.from("chat_sessions").update({ bot_enabled: false }).eq("id", selectedSession);
     setReply("");
     setSending(false);
     await loadMessages(selectedSession);
     await loadSessions();
   };
+
+  const toggleBot = async (enabled: boolean) => {
+    if (!selectedSession) return;
+    await supabase.from("chat_sessions").update({ bot_enabled: enabled }).eq("id", selectedSession);
+    setSessions(prev => prev.map(s => s.id === selectedSession ? { ...s, bot_enabled: enabled } : s));
+    toast.success(enabled ? "KI-Assistent aktiviert" : "KI-Assistent deaktiviert");
+  };
+
 
   const handleDeleteSession = async (sid: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -212,7 +224,19 @@ export default function ChatPage() {
                   <p className="text-xs text-muted-foreground truncate">{activeConv.user_email}</p>
                 )}
               </div>
+              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+                <Bot className={cn("w-4 h-4", activeConv?.bot_enabled === false ? "text-muted-foreground" : "text-primary")} />
+                <span className="text-xs text-muted-foreground hidden sm:inline">
+                  {activeConv?.bot_enabled === false ? "Bot aus" : "Bot an"}
+                </span>
+                <Switch
+                  checked={activeConv?.bot_enabled !== false}
+                  onCheckedChange={toggleBot}
+                  aria-label="KI-Assistent aktivieren"
+                />
+              </div>
             </div>
+
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map(msg => (
