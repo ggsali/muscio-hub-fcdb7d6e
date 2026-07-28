@@ -223,7 +223,19 @@ export default function ChatPage() {
                   <p className="text-xs text-muted-foreground truncate">{activeConv.user_email}</p>
                 )}
               </div>
+              <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+                <Bot className={cn("w-4 h-4", activeConv?.bot_enabled === false ? "text-muted-foreground" : "text-primary")} />
+                <span className="text-xs text-muted-foreground hidden sm:inline">
+                  {activeConv?.bot_enabled === false ? "Bot aus" : "Bot an"}
+                </span>
+                <Switch
+                  checked={activeConv?.bot_enabled !== false}
+                  onCheckedChange={toggleBot}
+                  aria-label="KI-Assistent aktivieren"
+                />
+              </div>
             </div>
+
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map(msg => (
