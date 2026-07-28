@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
