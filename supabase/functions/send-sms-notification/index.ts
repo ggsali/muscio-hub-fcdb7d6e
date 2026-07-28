@@ -1,3 +1,5 @@
+import { Resend } from "npm:resend@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -71,14 +73,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY_1") || Deno.env.get("RESEND_API_KEY");
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) {
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!RESEND_API_KEY) {
       return new Response(JSON.stringify({ error: "Email service not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const resend = new Resend(RESEND_API_KEY);
 
     const chatLink = `https://3dmuscio.com/admin/chat${sessionId ? `?session=${encodeURIComponent(sessionId)}` : ""}`;
     const html = `
@@ -90,25 +92,16 @@ Deno.serve(async (req) => {
       <p><a href="${chatLink}" style="display:inline-block;padding:10px 18px;background:#FF5A00;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Zur Anfragen-Übersicht →</a></p>
     `;
 
-    const resp = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
-      },
-      body: JSON.stringify({
-        from: "3DMuscio Chat <noreply@3dmuscio.com>",
-        to: ["anfrage@3dmuscio.com"],
-        subject: `💬 Neue Chat-Nachricht`,
-        html,
-      }),
+    const { error } = await resend.emails.send({
+      from: "3DMuscio Chat <noreply@3dmuscio.com>",
+      to: ["anfrage@3dmuscio.com"],
+      subject: "\u{1F4AC} Neue Chat-Nachricht",
+      html,
     });
 
-    if (!resp.ok) {
-      const errText = await resp.text();
-      console.error("Resend error:", errText);
-      return new Response(JSON.stringify({ error: "Email send failed", details: errText }), {
+    if (error) {
+      console.error("Resend error:", error);
+      return new Response(JSON.stringify({ error: "Email send failed", details: JSON.stringify(error) }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
