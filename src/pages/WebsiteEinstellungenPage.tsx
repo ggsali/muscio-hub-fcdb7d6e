@@ -27,6 +27,8 @@ export default function WebsiteEinstellungenPage() {
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
   const [karussel, setKarussel] = useState<{ text: string }[]>([]);
   const [savingKarussel, setSavingKarussel] = useState(false);
+  const [ueberUnsBild, setUeberUnsBild] = useState<string>("");
+  const [uploadingBild, setUploadingBild] = useState(false);
 
   const reloadMaterials = async () => {
     const { data } = await supabase.from("materials").select("*").order("sort_order");
@@ -43,6 +45,7 @@ export default function WebsiteEinstellungenPage() {
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
           if (row.key === "whatsapp") setWhatsapp({ nummer: (row.value as any)?.nummer || "" });
+          if (row.key === "ueber_uns_bild") setUeberUnsBild((row.value as any)?.url || "");
           if (row.key === "karussel") {
             const items = ((row.value as any)?.items) as { text: string }[] | undefined;
             if (items && items.length > 0) setKarussel(items);
@@ -118,6 +121,34 @@ export default function WebsiteEinstellungenPage() {
     else toast({ title: "Einstellungen gespeichert" });
   };
 
+  const uploadUeberUnsBild = async (file: File) => {
+    setUploadingBild(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `ueber-uns-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("company-assets")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const url = supabase.storage.from("company-assets").getPublicUrl(path).data.publicUrl;
+      const err = await saveOne("ueber_uns_bild", { url });
+      if (err) throw err;
+      setUeberUnsBild(url);
+      toast({ title: "Bild aktualisiert" });
+    } catch (e: any) {
+      toast({ title: "Fehler beim Hochladen", description: e.message, variant: "destructive" });
+    } finally {
+      setUploadingBild(false);
+    }
+  };
+
+  const removeUeberUnsBild = async () => {
+    const err = await saveOne("ueber_uns_bild", { url: "" });
+    if (err) { toast({ title: "Fehler", variant: "destructive" }); return; }
+    setUeberUnsBild("");
+    toast({ title: "Standardbild wird wieder verwendet" });
+  };
+
   if (loading) return <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Laden...</div>;
 
   return (
@@ -171,6 +202,36 @@ export default function WebsiteEinstellungenPage() {
           Resend Logs öffnen
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
+      </section>
+
+      {/* Über uns – Bild */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <h3 className="font-semibold">Bild „Über uns“ (Unsere Geschichte)</h3>
+        <p className="text-sm text-muted-foreground">Dieses Bild erscheint auf der Seite „Über uns“ neben dem Text „Unsere Geschichte“.</p>
+        <div className="flex flex-col sm:flex-row gap-4 items-start">
+          {ueberUnsBild ? (
+            <img src={ueberUnsBild} alt="Über uns Bild" className="w-40 aspect-[3/4] object-cover rounded-lg border border-border" />
+          ) : (
+            <div className="w-40 aspect-[3/4] rounded-lg border border-dashed border-border flex items-center justify-center text-xs text-muted-foreground text-center px-2">
+              Standardbild aktiv
+            </div>
+          )}
+          <div className="space-y-2">
+            <Input
+              type="file"
+              accept="image/*"
+              disabled={uploadingBild}
+              onChange={e => e.target.files?.[0] && uploadUeberUnsBild(e.target.files[0])}
+              className="bg-input border-border"
+            />
+            {uploadingBild && <p className="text-xs text-muted-foreground">Wird hochgeladen…</p>}
+            {ueberUnsBild && (
+              <Button variant="outline" size="sm" onClick={removeUeberUnsBild} className="gap-2">
+                <Trash2 className="w-3.5 h-3.5" /> Auf Standardbild zurücksetzen
+              </Button>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* Aufklappbare Sektionen */}

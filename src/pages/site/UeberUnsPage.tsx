@@ -29,6 +29,7 @@ export default function UeberUnsPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const [storyImage, setStoryImage] = useState<string>(werkstatt);
   const location = useLocation();
 
   useEffect(() => {
@@ -38,6 +39,16 @@ export default function UeberUnsPage() {
       .eq("aktiv", true)
       .order("sort_order")
       .then(({ data }) => { if (data) setTeam(data as TeamMember[]); });
+
+    supabase
+      .from("website_settings")
+      .select("value")
+      .eq("key", "ueber_uns_bild")
+      .maybeSingle()
+      .then(({ data }) => {
+        const url = (data?.value as any)?.url;
+        if (url) setStoryImage(url);
+      });
   }, []);
 
   // Smooth scroll to hash anchors when navigating from header dropdown
@@ -81,7 +92,7 @@ export default function UeberUnsPage() {
           <div id="geschichte" className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 md:mb-28 max-w-5xl mx-auto scroll-mt-24">
             <div className="md:col-span-5">
               <img
-                src={werkstatt}
+                src={storyImage}
                 alt="Unsere Werkstatt mit 3D-Druckern"
                 className="rounded-xl aspect-[3/4] object-cover w-full md:sticky md:top-24"
               />
