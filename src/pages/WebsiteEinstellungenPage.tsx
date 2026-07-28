@@ -45,6 +45,7 @@ export default function WebsiteEinstellungenPage() {
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
           if (row.key === "whatsapp") setWhatsapp({ nummer: (row.value as any)?.nummer || "" });
+          if (row.key === "ueber_uns_bild") setUeberUnsBild((row.value as any)?.url || "");
           if (row.key === "karussel") {
             const items = ((row.value as any)?.items) as { text: string }[] | undefined;
             if (items && items.length > 0) setKarussel(items);
