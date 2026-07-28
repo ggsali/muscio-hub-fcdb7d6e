@@ -160,8 +160,11 @@ export function ChatWidget() {
     const userMsg: Message = { role: "user", content: text };
     setMessages(prev => [...prev, userMsg]);
     await saveMessage(sid, "user", text);
-    try { await streamAI(sid, [...messages, userMsg]); }
-    catch (e: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e.message}` }]); }
+    const { data: botOn } = await supabase.rpc("get_chat_bot_enabled", { p_session_id: sid });
+    if (botOn !== false) {
+      try { await streamAI(sid, [...messages, userMsg]); }
+      catch (e: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e.message}` }]); }
+    }
     if (shouldNotify(text)) {
       supabase.functions.invoke("send-sms-notification", {
         body: {
