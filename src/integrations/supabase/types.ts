@@ -307,6 +307,7 @@ export type Database = {
       }
       chat_sessions: {
         Row: {
+          bot_enabled: boolean
           created_at: string
           id: string
           status: string
@@ -315,6 +316,7 @@ export type Database = {
           user_name: string | null
         }
         Insert: {
+          bot_enabled?: boolean
           created_at?: string
           id?: string
           status?: string
@@ -323,6 +325,7 @@ export type Database = {
           user_name?: string | null
         }
         Update: {
+          bot_enabled?: boolean
           created_at?: string
           id?: string
           status?: string
@@ -2122,6 +2125,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_chat_bot_enabled: { Args: { p_session_id: string }; Returns: boolean }
       get_chat_messages: {
         Args: { p_session_id: string }
         Returns: {
