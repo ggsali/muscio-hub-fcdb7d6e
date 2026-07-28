@@ -16,6 +16,7 @@ interface ChatSession {
   status: string;
   created_at: string;
   updated_at: string;
+  bot_enabled?: boolean;
   last_message?: string;
   unread_count?: number;
 }
