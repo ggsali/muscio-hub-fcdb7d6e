@@ -204,6 +204,36 @@ export default function WebsiteEinstellungenPage() {
         </a>
       </section>
 
+      {/* Über uns – Bild */}
+      <section className="bg-card border border-border rounded-lg p-5 space-y-3">
+        <h3 className="font-semibold">Bild „Über uns“ (Unsere Geschichte)</h3>
+        <p className="text-sm text-muted-foreground">Dieses Bild erscheint auf der Seite „Über uns“ neben dem Text „Unsere Geschichte“.</p>
+        <div className="flex flex-col sm:flex-row gap-4 items-start">
+          {ueberUnsBild ? (
+            <img src={ueberUnsBild} alt="Über uns Bild" className="w-40 aspect-[3/4] object-cover rounded-lg border border-border" />
+          ) : (
+            <div className="w-40 aspect-[3/4] rounded-lg border border-dashed border-border flex items-center justify-center text-xs text-muted-foreground text-center px-2">
+              Standardbild aktiv
+            </div>
+          )}
+          <div className="space-y-2">
+            <Input
+              type="file"
+              accept="image/*"
+              disabled={uploadingBild}
+              onChange={e => e.target.files?.[0] && uploadUeberUnsBild(e.target.files[0])}
+              className="bg-input border-border"
+            />
+            {uploadingBild && <p className="text-xs text-muted-foreground">Wird hochgeladen…</p>}
+            {ueberUnsBild && (
+              <Button variant="outline" size="sm" onClick={removeUeberUnsBild} className="gap-2">
+                <Trash2 className="w-3.5 h-3.5" /> Auf Standardbild zurücksetzen
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Aufklappbare Sektionen */}
       <Accordion type="multiple" defaultValue={["wartung"]} className="space-y-3">
 
