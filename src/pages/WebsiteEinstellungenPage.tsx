@@ -121,6 +121,34 @@ export default function WebsiteEinstellungenPage() {
     else toast({ title: "Einstellungen gespeichert" });
   };
 
+  const uploadUeberUnsBild = async (file: File) => {
+    setUploadingBild(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `ueber-uns-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("company-assets")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const url = supabase.storage.from("company-assets").getPublicUrl(path).data.publicUrl;
+      const err = await saveOne("ueber_uns_bild", { url });
+      if (err) throw err;
+      setUeberUnsBild(url);
+      toast({ title: "Bild aktualisiert" });
+    } catch (e: any) {
+      toast({ title: "Fehler beim Hochladen", description: e.message, variant: "destructive" });
+    } finally {
+      setUploadingBild(false);
+    }
+  };
+
+  const removeUeberUnsBild = async () => {
+    const err = await saveOne("ueber_uns_bild", { url: "" });
+    if (err) { toast({ title: "Fehler", variant: "destructive" }); return; }
+    setUeberUnsBild("");
+    toast({ title: "Standardbild wird wieder verwendet" });
+  };
+
   if (loading) return <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Laden...</div>;
 
   return (
