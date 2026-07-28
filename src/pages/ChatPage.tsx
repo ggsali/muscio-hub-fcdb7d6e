@@ -118,11 +118,21 @@ export default function ChatPage() {
       role: "admin",
       content: reply.trim(),
     });
+    // Sobald ein Mitarbeiter antwortet, den Bot für diese Konversation deaktivieren
+    await supabase.from("chat_sessions").update({ bot_enabled: false }).eq("id", selectedSession);
     setReply("");
     setSending(false);
     await loadMessages(selectedSession);
     await loadSessions();
   };
+
+  const toggleBot = async (enabled: boolean) => {
+    if (!selectedSession) return;
+    await supabase.from("chat_sessions").update({ bot_enabled: enabled }).eq("id", selectedSession);
+    setSessions(prev => prev.map(s => s.id === selectedSession ? { ...s, bot_enabled: enabled } : s));
+    toast.success(enabled ? "KI-Assistent aktiviert" : "KI-Assistent deaktiviert");
+  };
+
 
   const handleDeleteSession = async (sid: string, e: React.MouseEvent) => {
     e.stopPropagation();
