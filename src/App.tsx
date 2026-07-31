@@ -60,6 +60,7 @@ import BlogPage from "@/pages/site/BlogPage";
 import BlogPostPage from "@/pages/site/BlogPostPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import ProfilErgaenzenPage from "@/pages/site/ProfilErgaenzenPage";
+import OAuthConsent from "@/pages/OAuthConsent";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
