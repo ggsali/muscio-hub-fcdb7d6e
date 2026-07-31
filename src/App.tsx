@@ -154,6 +154,8 @@ const App = () => (
               <Route path="/bewertung/:token?" element={<BewertungPage />} />
               <Route path="/unsubscribe" element={<UnsubscribePage />} />
               <Route path="/profil-ergaenzen" element={<ProfilErgaenzenPage />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+
 
               {/* Customer portal */}
               <Route path="/portal" element={<PortalLayout />}>
