@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://ukqtjdsjmtxgzhklvqky.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "3dmuscio-dashboard",
+      "version": "0.1.0",
+      "title": "3dMuscio Dashboard"
+    },
+    "tools": [
+      {
+        "name": "list_orders",
+        "title": "Aufträge auflisten",
+        "description": "Listet Aufträge (orders) auf, die dem angemeldeten Benutzer zugänglich sind. Optional nach Status oder Suchbegriff filtern.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Optionaler Status-Filter, z. B. 'offen', 'in_produktion', 'geliefert'."
+            },
+            "search": {
+              "type": "string",
+              "description": "Suchbegriff für Auftragsname oder Beschreibung."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_order",
+        "title": "Auftrag im Detail",
+        "description": "Liefert einen einzelnen Auftrag inklusive Teile (parts) und Rechnungen (bills) anhand der Auftrags-ID.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "UUID des Auftrags."
+            }
+          },
+          "required": [
+            "order_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_customers",
+        "title": "Kunden suchen",
+        "description": "Sucht Kunden nach Name, Firma oder E-Mail. Nur Kunden, auf die der angemeldete Benutzer Zugriff hat.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Suchbegriff für Name, Firma oder E-Mail."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_open_bills",
+        "title": "Offene Rechnungen",
+        "description": "Listet Rechnungen (bills) auf. Standardmässig nur unbezahlte Rechnungen, sortiert nach Fälligkeitsdatum.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "include_paid": {
+              "type": "boolean",
+              "description": "Wenn true, werden auch bezahlte Rechnungen zurückgegeben."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_inquiries",
+        "title": "Anfragen auflisten",
+        "description": "Listet eingegangene Anfragen (inquiries) aus Kontaktformular, Kalkulator und Shop auf, optional nach Status gefiltert.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Optionaler Status-Filter, z. B. 'neu' oder 'erledigt'."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
