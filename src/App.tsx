@@ -60,6 +60,7 @@ import BlogPage from "@/pages/site/BlogPage";
 import BlogPostPage from "@/pages/site/BlogPostPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import ProfilErgaenzenPage from "@/pages/site/ProfilErgaenzenPage";
+import OAuthConsent from "@/pages/OAuthConsent";
 
 // Customer portal
 import PortalDashboardPage from "@/pages/portal/PortalDashboardPage";
@@ -153,6 +154,8 @@ const App = () => (
               <Route path="/bewertung/:token?" element={<BewertungPage />} />
               <Route path="/unsubscribe" element={<UnsubscribePage />} />
               <Route path="/profil-ergaenzen" element={<ProfilErgaenzenPage />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+
 
               {/* Customer portal */}
               <Route path="/portal" element={<PortalLayout />}>

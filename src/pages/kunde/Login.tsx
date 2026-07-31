@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNoIndex } from "@/hooks/useNoIndex";
 
+/** Nur same-origin relative Pfade zulassen. */
+function safeNext(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  return raw;
+}
+
 const KundeLogin = () => {
   useNoIndex();
   const [email, setEmail] = useState("");
@@ -15,13 +22,19 @@ const KundeLogin = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  
+
   const { signIn } = useCustomerAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
 
-  // Falls bereits eingeloggt -> direkt weiterleiten (Admin oder Portal)
+  // Falls bereits eingeloggt -> direkt weiterleiten (next, Admin oder Portal)
   useEffect(() => {
     const redirect = async (userId: string) => {
+      if (next) {
+        window.location.replace(next);
+        return;
+      }
       const { data: roles } = await supabase
         .from("user_roles").select("role").eq("user_id", userId);
       if (roles?.some((r: any) => r.role === "admin")) navigate("/admin", { replace: true });
@@ -34,7 +47,7 @@ const KundeLogin = () => {
       if (data.session) redirect(data.session.user.id);
     });
     return () => sub.subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, next]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,9 +61,12 @@ const KundeLogin = () => {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     setError("");
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/portal` });
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}${next ?? "/portal"}`,
+    });
     if (result.error) { setError("Google-Anmeldung fehlgeschlagen."); setGoogleLoading(false); }
   };
+
 
 
   return (
