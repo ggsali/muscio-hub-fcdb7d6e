@@ -807,7 +807,7 @@ export default function AuftragDetailPage() {
     } else {
       // Reload parts from DB to sync IDs, without losing local UI state
       const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!);
-      if (freshParts) setParts(freshParts as PartRow[]);
+      if (freshParts) setParts(applyFilamentPrices(freshParts as PartRow[]));
       toast({ title: "Gespeichert ✓" });
     }
   };
