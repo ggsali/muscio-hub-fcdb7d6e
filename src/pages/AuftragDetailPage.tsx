@@ -298,6 +298,32 @@ export default function AuftragDetailPage() {
     setParts(prev => prev.map(p => recalcPart(p)));
   }, [activeSettings, selectedPresetId]);
 
+  // Filamentpreise aus der Bibliothek übernehmen (aktuelle Werte gewinnen),
+  // damit Preisänderungen in der Filament-Bibliothek sofort im Auftrag greifen.
+  const applyFilamentPrices = (list: PartRow[]): PartRow[] =>
+    list.map(p => {
+      if (!p.filament_id) return p;
+      const fil = filaments.find(f => f.id === p.filament_id);
+      if (!fil) return p;
+      return recalcPart({
+        ...p,
+        filament_einkauf_pro_kg: fil.preis_pro_kg,
+        filament_verkauf_pro_g: fil.verkaufspreis_pro_g ?? null,
+      });
+    });
+
+  useEffect(() => {
+    if (filaments.length === 0) return;
+    setParts(prev => {
+      const next = applyFilamentPrices(prev);
+      const changed = next.some((p, i) => p !== prev[i]);
+      return changed ? next : prev;
+    });
+  }, [filaments, loading, activeSettings]);
+
+
+
+
   // Parts mit Dateien laden und ersten expandieren
   useEffect(() => {
     if (!isNew && id) {
@@ -781,7 +807,7 @@ export default function AuftragDetailPage() {
     } else {
       // Reload parts from DB to sync IDs, without losing local UI state
       const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!);
-      if (freshParts) setParts(freshParts as PartRow[]);
+      if (freshParts) setParts(applyFilamentPrices(freshParts as PartRow[]));
       toast({ title: "Gespeichert ✓" });
     }
   };
