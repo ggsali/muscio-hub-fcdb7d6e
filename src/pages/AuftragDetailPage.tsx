@@ -298,6 +298,28 @@ export default function AuftragDetailPage() {
     setParts(prev => prev.map(p => recalcPart(p)));
   }, [activeSettings, selectedPresetId]);
 
+  // Filamentpreise aus der Bibliothek synchronisieren (aktuelle Werte gewinnen),
+  // damit Preisänderungen in der Filament-Bibliothek sofort im Auftrag greifen.
+  useEffect(() => {
+    if (filaments.length === 0) return;
+    setParts(prev => {
+      let changed = false;
+      const next = prev.map(p => {
+        if (!p.filament_id) return p;
+        const fil = filaments.find(f => f.id === p.filament_id);
+        if (!fil) return p;
+        const einkauf = fil.preis_pro_kg;
+        const verkauf = fil.verkaufspreis_pro_g ?? null;
+        if (p.filament_einkauf_pro_kg === einkauf && (p.filament_verkauf_pro_g ?? null) === verkauf) return p;
+        changed = true;
+        return recalcPart({ ...p, filament_einkauf_pro_kg: einkauf, filament_verkauf_pro_g: verkauf });
+      });
+      return changed ? next : prev;
+    });
+  }, [filaments, loading, activeSettings]);
+
+
+
   // Parts mit Dateien laden und ersten expandieren
   useEffect(() => {
     if (!isNew && id) {
