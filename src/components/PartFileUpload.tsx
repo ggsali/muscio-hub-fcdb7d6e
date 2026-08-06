@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, Trash2, Download, FileText, Image, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PartFilePreview from "@/components/PartFilePreview";
 
 interface PartFile {
   id: string;
@@ -25,6 +26,19 @@ function formatBytes(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+const MODEL_EXTS = ["stl", "3mf", "obj", "step", "stp"];
+const IMAGE_EXTS = ["png", "jpg", "jpeg", "webp", "gif", "avif"];
+
+function ext(name: string) {
+  return name.split(".").pop()?.toLowerCase() ?? "";
+}
+function isModel(f: PartFile) {
+  return MODEL_EXTS.includes(ext(f.filename));
+}
+function isImage(f: PartFile) {
+  return IMAGE_EXTS.includes(ext(f.filename)) || f.file_type?.startsWith("image");
+}
+
 function fileIcon(type: string) {
   if (type?.startsWith("image")) return <Image className="w-4 h-4 text-primary" />;
   if (type?.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
@@ -33,6 +47,7 @@ function fileIcon(type: string) {
 
 export default function PartFileUpload({ partId, orderId, customerId, disabled }: Props) {
   const [files, setFiles] = useState<PartFile[]>([]);
+  const [urls, setUrls] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,10 +55,23 @@ export default function PartFileUpload({ partId, orderId, customerId, disabled }
   const load = useCallback(async () => {
     if (!partId) return;
     const { data } = await supabase.from("part_files").select("*").eq("part_id", partId).order("created_at");
-    if (data) setFiles(data as PartFile[]);
+    if (data) {
+      const list = data as PartFile[];
+      setFiles(list);
+      // Signed URLs für Vorschauen (Modelle + Bilder)
+      const previewable = list.filter(f => isModel(f) || isImage(f));
+      const entries = await Promise.all(
+        previewable.map(async f => {
+          const { data: s } = await supabase.storage.from("part-files").createSignedUrl(f.storage_path, 3600);
+          return [f.id, s?.signedUrl ?? ""] as const;
+        }),
+      );
+      setUrls(Object.fromEntries(entries.filter(([, u]) => u)));
+    }
   }, [partId]);
 
   useEffect(() => { load(); }, [load]);
+
 
   const computeStlBoundingBox = async (file: File): Promise<{ x: number; y: number } | null> => {
     if (!file.name.toLowerCase().endsWith(".stl")) return null;
@@ -130,26 +158,68 @@ export default function PartFileUpload({ partId, orderId, customerId, disabled }
         </div>
       )}
 
-      {/* File list */}
-      {files.length > 0 && (
-        <div className="space-y-1">
-          {files.map(f => (
-            <div key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-muted/30 border border-border/50 text-xs group">
-              {fileIcon(f.file_type)}
-              <span className="flex-1 truncate text-foreground font-medium">{f.filename}</span>
-              <span className="text-muted-foreground flex-shrink-0">{formatBytes(f.file_size_bytes)}</span>
-              <button onClick={() => handleDownload(f)} className="text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-                <Download className="w-3.5 h-3.5" />
-              </button>
-              {!disabled && (
-                <button onClick={() => handleDelete(f)} className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          ))}
+      {/* Modelle & Bilder mit Vorschau */}
+      {files.some(f => isModel(f) || isImage(f)) && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Modelle & Bilder</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {files.filter(f => isModel(f) || isImage(f)).map(f => (
+              <div key={f.id} className="rounded-md border border-border/50 bg-muted/20 overflow-hidden group">
+                <div className="h-24 w-full bg-background/40">
+                  {isImage(f) ? (
+                    urls[f.id] ? (
+                      <img src={urls[f.id]} alt={f.filename} className="w-full h-full object-contain" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Image className="w-6 h-6 text-muted-foreground" /></div>
+                    )
+                  ) : urls[f.id] ? (
+                    <PartFilePreview url={urls[f.id]} filename={f.filename} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><Box className="w-6 h-6 text-muted-foreground animate-pulse" /></div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 px-2 py-1.5 text-[11px]">
+                  <span className="flex-1 truncate font-medium text-foreground" title={f.filename}>{f.filename}</span>
+                  <span className="text-muted-foreground flex-shrink-0">{formatBytes(f.file_size_bytes)}</span>
+                  <button onClick={() => handleDownload(f)} className="text-muted-foreground hover:text-primary transition-colors">
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                  {!disabled && (
+                    <button onClick={() => handleDelete(f)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
+      {/* Dokumente (PDF & übrige Dateien) */}
+      {files.some(f => !isModel(f) && !isImage(f)) && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Dokumente</div>
+          <div className="space-y-1">
+            {files.filter(f => !isModel(f) && !isImage(f)).map(f => (
+              <div key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-muted/30 border border-border/50 text-xs group">
+                {fileIcon(f.file_type)}
+                <span className="flex-1 truncate text-foreground font-medium">{f.filename}</span>
+                <span className="text-muted-foreground flex-shrink-0">{formatBytes(f.file_size_bytes)}</span>
+                <button onClick={() => handleDownload(f)} className="text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+                {!disabled && (
+                  <button onClick={() => handleDelete(f)} className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
