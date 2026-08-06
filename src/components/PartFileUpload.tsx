@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, Trash2, Download, FileText, Image, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PartFilePreview from "@/components/PartFilePreview";
 
 interface PartFile {
   id: string;
@@ -25,6 +26,19 @@ function formatBytes(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+const MODEL_EXTS = ["stl", "3mf", "obj", "step", "stp"];
+const IMAGE_EXTS = ["png", "jpg", "jpeg", "webp", "gif", "avif"];
+
+function ext(name: string) {
+  return name.split(".").pop()?.toLowerCase() ?? "";
+}
+function isModel(f: PartFile) {
+  return MODEL_EXTS.includes(ext(f.filename));
+}
+function isImage(f: PartFile) {
+  return IMAGE_EXTS.includes(ext(f.filename)) || f.file_type?.startsWith("image");
+}
+
 function fileIcon(type: string) {
   if (type?.startsWith("image")) return <Image className="w-4 h-4 text-primary" />;
   if (type?.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
@@ -33,6 +47,7 @@ function fileIcon(type: string) {
 
 export default function PartFileUpload({ partId, orderId, customerId, disabled }: Props) {
   const [files, setFiles] = useState<PartFile[]>([]);
+  const [urls, setUrls] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,10 +55,23 @@ export default function PartFileUpload({ partId, orderId, customerId, disabled }
   const load = useCallback(async () => {
     if (!partId) return;
     const { data } = await supabase.from("part_files").select("*").eq("part_id", partId).order("created_at");
-    if (data) setFiles(data as PartFile[]);
+    if (data) {
+      const list = data as PartFile[];
+      setFiles(list);
+      // Signed URLs für Vorschauen (Modelle + Bilder)
+      const previewable = list.filter(f => isModel(f) || isImage(f));
+      const entries = await Promise.all(
+        previewable.map(async f => {
+          const { data: s } = await supabase.storage.from("part-files").createSignedUrl(f.storage_path, 3600);
+          return [f.id, s?.signedUrl ?? ""] as const;
+        }),
+      );
+      setUrls(Object.fromEntries(entries.filter(([, u]) => u)));
+    }
   }, [partId]);
 
   useEffect(() => { load(); }, [load]);
+
 
   const computeStlBoundingBox = async (file: File): Promise<{ x: number; y: number } | null> => {
     if (!file.name.toLowerCase().endsWith(".stl")) return null;
