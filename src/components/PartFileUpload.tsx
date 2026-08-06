@@ -158,26 +158,68 @@ export default function PartFileUpload({ partId, orderId, customerId, disabled }
         </div>
       )}
 
-      {/* File list */}
-      {files.length > 0 && (
-        <div className="space-y-1">
-          {files.map(f => (
-            <div key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-muted/30 border border-border/50 text-xs group">
-              {fileIcon(f.file_type)}
-              <span className="flex-1 truncate text-foreground font-medium">{f.filename}</span>
-              <span className="text-muted-foreground flex-shrink-0">{formatBytes(f.file_size_bytes)}</span>
-              <button onClick={() => handleDownload(f)} className="text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-                <Download className="w-3.5 h-3.5" />
-              </button>
-              {!disabled && (
-                <button onClick={() => handleDelete(f)} className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          ))}
+      {/* Modelle & Bilder mit Vorschau */}
+      {files.some(f => isModel(f) || isImage(f)) && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Modelle & Bilder</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {files.filter(f => isModel(f) || isImage(f)).map(f => (
+              <div key={f.id} className="rounded-md border border-border/50 bg-muted/20 overflow-hidden group">
+                <div className="h-24 w-full bg-background/40">
+                  {isImage(f) ? (
+                    urls[f.id] ? (
+                      <img src={urls[f.id]} alt={f.filename} className="w-full h-full object-contain" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Image className="w-6 h-6 text-muted-foreground" /></div>
+                    )
+                  ) : urls[f.id] ? (
+                    <PartFilePreview url={urls[f.id]} filename={f.filename} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><Box className="w-6 h-6 text-muted-foreground animate-pulse" /></div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 px-2 py-1.5 text-[11px]">
+                  <span className="flex-1 truncate font-medium text-foreground" title={f.filename}>{f.filename}</span>
+                  <span className="text-muted-foreground flex-shrink-0">{formatBytes(f.file_size_bytes)}</span>
+                  <button onClick={() => handleDownload(f)} className="text-muted-foreground hover:text-primary transition-colors">
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                  {!disabled && (
+                    <button onClick={() => handleDelete(f)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
+      {/* Dokumente (PDF & übrige Dateien) */}
+      {files.some(f => !isModel(f) && !isImage(f)) && (
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Dokumente</div>
+          <div className="space-y-1">
+            {files.filter(f => !isModel(f) && !isImage(f)).map(f => (
+              <div key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-muted/30 border border-border/50 text-xs group">
+                {fileIcon(f.file_type)}
+                <span className="flex-1 truncate text-foreground font-medium">{f.filename}</span>
+                <span className="text-muted-foreground flex-shrink-0">{formatBytes(f.file_size_bytes)}</span>
+                <button onClick={() => handleDownload(f)} className="text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+                {!disabled && (
+                  <button onClick={() => handleDelete(f)} className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
