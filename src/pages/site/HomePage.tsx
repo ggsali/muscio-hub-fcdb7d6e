@@ -430,6 +430,16 @@ const SEOContent = () => (
           </p>
         </div>
       </ScrollReveal>
+
+      <ScrollReveal>
+        <p className="mt-10 text-xs text-muted-foreground/80 leading-relaxed">
+          3DMuscio fertigt 3D-gedruckte Kunststoffteile für Unternehmen und Privatpersonen in der
+          ganzen Schweiz, vom einfachen Ersatzteil über individuelle Gehäuse und Halterungen bis hin
+          zu Prototypen und Kleinserien. Unser Service in Eschlikon, Thurgau, ist spezialisiert auf
+          schnelle, unkomplizierte Herstellung ohne Mindestbestellmenge. Ob FDM- oder SLA-Druck, ob
+          PLA, PETG, ABS oder Resin, wir finden die passende Lösung für Ihr Projekt.
+        </p>
+      </ScrollReveal>
     </div>
   </section>
 );
