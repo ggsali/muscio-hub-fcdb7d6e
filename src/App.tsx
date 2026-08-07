@@ -49,6 +49,7 @@ import ContactPage from "@/pages/site/ContactPage";
 import CalculatorOnlinePage from "@/pages/site/CalculatorOnlinePage";
 import MaterialienPage from "@/pages/site/MaterialienPage";
 import UeberUnsPage from "@/pages/site/UeberUnsPage";
+import UeberKiPage from "@/pages/site/UeberKiPage";
 import AGBPage from "@/pages/site/AGBPage";
 import DatenschutzPage from "@/pages/site/DatenschutzPage";
 import ImpressumPage from "@/pages/site/ImpressumPage";
@@ -130,6 +131,7 @@ const App = () => (
                 <Route path="/kalkulator-online" element={<CalculatorOnlinePage />} />
                 <Route path="/materialien" element={<MaterialienPage />} />
                 <Route path="/ueber-uns" element={<UeberUnsPage />} />
+                <Route path="/ueber-ki" element={<UeberKiPage />} />
                 <Route path="/faq" element={<FaqPage />} />
                 <Route path="/kontakt" element={<ContactPage />} />
                 <Route path="/agb" element={<AGBPage />} />

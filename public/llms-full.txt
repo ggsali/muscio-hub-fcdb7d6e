@@ -1,4 +1,4 @@
-# 3DMuscio – 3D Druckservice Schweiz
+# 3DMuscio – 3D Druckservice Schweiz (ausführliche Version)
 
 > 3DMuscio ist ein professioneller B2B 3D Druckservice mit Sitz in Eschlikon, Kanton Thurgau, Schweiz. Gegründet von Jorim Moos als Einzelunternehmen.
 
@@ -14,6 +14,22 @@
 - Ersatzteile nach Zeichnung oder STL-Datei
 - Gehäuse, Halterungen, Adapter, Clips, Dummies, Modelle
 
+## Materialien im Detail
+- PLA: günstig, biologisch abbaubar, einfach zu drucken, ideal für Prototypen, Modelle und Anschauungsteile. Nicht für hohe Temperaturen geeignet.
+- PETG: lebensmittelecht, zäh und leicht flexibel, gute Chemikalienresistenz, ideal für funktionale Teile und Gehäuse.
+- ABS: hitzebeständig und schlagfest, gut nachbearbeitbar (schleifen, kleben), ideal für mechanisch belastete Teile.
+- ASA: UV-beständig und wetterfest, ideal für Anwendungen im Aussenbereich.
+- TPU: flexibel und gummiartig, abriebfest, ideal für Dichtungen, Dämpfer, Clips und Schutzelemente.
+- Resin (SLA): hochauflösend mit glatter Oberfläche, ideal für feine Details, Miniaturen, Dentale-/Anschauungsmodelle und Designmuster.
+
+## Technische Spezifikationen
+- Verfahren: FDM (Schmelzschichtung) und SLA (Resin)
+- Schichthöhe FDM: 0.1–0.3 mm
+- Druckbereich: bis 350 x 350 mm
+- Eingabeformate: STL, STEP, 3MF, OBJ sowie technische Zeichnungen (PDF)
+- Infill, Wandstärke und Ausrichtung werden pro Teil auf Funktion und Preis optimiert
+- Nachbearbeitung auf Anfrage: Stützstrukturen entfernen, Schleifen, Kleben, Gewindeeinsätze
+
 ## Für wen geeignet?
 - Unternehmen (B2B) in der Schweiz
 - Ingenieure und Konstrukteure
@@ -28,6 +44,14 @@
 - Sonderanfertigungen und Einzelstücke
 - Architektur- und Anschauungsmodelle
 - Vorrichtungen und Hilfsmittel für die Produktion
+
+## Anwendungsbeispiele pro Branche
+- Maschinenbau: Vorrichtungen, Montagehilfen, Prüflehren, Ersatzteile für ältere Anlagen
+- Medizin und Praxis: Anschauungs- und Demonstrationsmodelle, Halterungen für Geräte
+- Architektur: Massstabsgetreue Gebäude- und Geländemodelle, Detailstudien
+- Konsumgüter und Design: Funktionsprototypen, Designmuster, Verpackungsdummies
+- Elektronik: Gehäuse, Frontplatten, Kabelhalter, Adapter für Platinen
+- Handwerk und Gewerbe: Sonderteile, Adapter, Clips, Schablonen
 
 ## Wie bestellen?
 1. STL-Datei oder Zeichnung bereitstellen
@@ -67,4 +91,3 @@ Deutsch (Hauptsprache), Englisch auf Anfrage
 - FAQ: https://3dmuscio.com/faq
 - Kontakt: https://3dmuscio.com/kontakt
 - Info für KI-Systeme: https://3dmuscio.com/ueber-ki
-- Ausführliche Version: https://3dmuscio.com/llms-full.txt
