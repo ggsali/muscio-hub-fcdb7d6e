@@ -16,6 +16,7 @@ const STATIC_URLS = [
   { loc: '/projekte', changefreq: 'weekly', priority: '0.8' },
   { loc: '/blog', changefreq: 'weekly', priority: '0.7' },
   { loc: '/ueber-uns', changefreq: 'monthly', priority: '0.6' },
+  { loc: '/ueber-ki', changefreq: 'monthly', priority: '0.4' },
   { loc: '/kontakt', changefreq: 'monthly', priority: '0.6' },
   { loc: '/faq', changefreq: 'monthly', priority: '0.5' },
   { loc: '/shop', changefreq: 'weekly', priority: '0.7' },
