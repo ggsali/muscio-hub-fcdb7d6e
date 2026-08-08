@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import ModelPreview from "@/components/site/ModelPreview";
 import { colorHex } from "@/lib/colorMap";
 import JSZip from "jszip";
+import Seo from "@/components/site/Seo";
 
 interface Material {
   id: string;
@@ -641,6 +642,11 @@ const CalculatorOnlinePage = () => {
   return (
     <TooltipProvider delayDuration={150}>
     <div className="pt-12 pb-20">
+      <Seo
+        title="3D Druck Kosten berechnen – Online-Kalkulator | 3DMuscio"
+        description="Berechnen Sie Ihren 3D Druckauftrag sofort online. Material, Menge, Lieferzeit – transparente Preise ohne Verstecktes."
+        path="/kalkulator-online"
+      />
       {/* Mobile sticky total bar */}
       {parts.length > 0 && (
         <div className="lg:hidden sticky top-16 z-30 bg-card/95 backdrop-blur border-b border-border px-4 py-2 flex items-center justify-between gap-3">

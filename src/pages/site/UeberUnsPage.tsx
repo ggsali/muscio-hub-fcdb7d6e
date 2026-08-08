@@ -6,6 +6,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Timeline } from "@/components/site/Timeline";
 import werkstatt from "@/assets/werkstatt.jpg";
+import Seo from "@/components/site/Seo";
 
 const values = [
   { icon: Shield, title: "Qualität", desc: "Jeder Druck durchläuft strenge Qualitätskontrolle. Wir liefern nur, was uns selbst überzeugt." },
@@ -64,6 +65,11 @@ export default function UeberUnsPage() {
 
   return (
     <div className="pb-16">
+      <Seo
+        title="Über uns – 3DMuscio, Ihr 3D Druck Partner in der Schweiz"
+        description="3DMuscio aus Eschlikon TG: Geschichte, Team und Standort. Ihr Partner für FDM und SLA 3D Druck, Prototypen, Kleinserien und Ersatzteile in der Schweiz."
+        path="/ueber-uns"
+      />
       <div className="container mx-auto px-4">
         {/* Hero */}
         <div ref={heroRef} className="mb-16 md:mb-24 pt-12">

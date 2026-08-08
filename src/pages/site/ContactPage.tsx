@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
 import { GoogleMap } from "@/components/site/GoogleMap";
+import Seo from "@/components/site/Seo";
 
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
@@ -159,6 +160,11 @@ const ContactPage = () => {
 
   return (
     <div className="pt-12 pb-16">
+      <Seo
+        title="Kontakt & Anfrage – 3DMuscio 3D Druckservice Schweiz"
+        description="Kontakt zu 3DMuscio in Eschlikon TG: Anfrage senden, Dateien hochladen oder direkt per E-Mail an info@3dmuscio.com. Antwort in der Regel innerhalb eines Werktags."
+        path="/kontakt"
+      />
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <div className="text-center mb-12">

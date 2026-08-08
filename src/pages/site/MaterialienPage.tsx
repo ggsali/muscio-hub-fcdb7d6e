@@ -4,6 +4,7 @@ import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Layers, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import Seo from "@/components/site/Seo";
 
 interface MaterialRow {
   id: string;
@@ -42,6 +43,11 @@ export default function MaterialienPage() {
 
   return (
     <div>
+      <Seo
+        title="Materialien für 3D Druck – PLA, PETG, ABS, ASA, TPU, Resin | 3DMuscio"
+        description="Übersicht aller Materialien für Ihren 3D Druck: PLA, PETG, ABS, ASA, TPU und SLA Resin mit Eigenschaften, Einsatzgebieten und Preis pro Gramm."
+        path="/materialien"
+      />
       <section className="container mx-auto px-4 pt-12 pb-12">
         <ScrollReveal>
           <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Materialien</p>

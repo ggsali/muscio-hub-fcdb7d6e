@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { HeroProjectsCarousel } from "@/components/site/HeroProjectsCarousel";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
 import { ProjectsGrid } from "@/components/site/ProjectsGrid";
+import Seo from "@/components/site/Seo";
 
 /* ─── HERO ─── */
 const Hero = () => {
@@ -446,6 +447,11 @@ const SEOContent = () => (
 
 const Index = () => (
   <div>
+    <Seo
+      title="3DMuscio – 3D Druckservice Schweiz | FDM & SLA Druck Ostschweiz"
+      description="Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator. Schnell, präzise, made in Switzerland."
+      path="/"
+    />
     <Hero />
     <Marquee />
     <Stats />
