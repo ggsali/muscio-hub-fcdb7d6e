@@ -174,7 +174,7 @@ export default function ShopPage() {
                       <motion.div className="group relative overflow-hidden rounded-2xl border border-border hover:border-primary/40 bg-card transition-all"
                         whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                         <div className="aspect-[4/3] overflow-hidden bg-muted">
-                          <img src={img ? getImageUrl(img.storage_path) : "/placeholder.svg"} alt={p.name}
+                          <img src={img ? getImageUrl(img.storage_path) : "/placeholder.svg"} alt={p.name} loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                         </div>
                         <div className="absolute top-3 left-3 flex gap-2">

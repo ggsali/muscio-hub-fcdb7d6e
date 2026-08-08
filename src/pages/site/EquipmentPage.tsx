@@ -82,7 +82,7 @@ export default function EquipmentPage() {
                         {it.modell_url ? (
                           <ModelViewer url={it.modell_url} rotation={it.model_rotation || undefined} />
                         ) : it.vorschaubild_url ? (
-                          <img src={it.vorschaubild_url} alt={it.name} className="w-full h-full object-cover" />
+                          <img src={it.vorschaubild_url} alt={it.name} loading="lazy" className="w-full h-full object-cover" />
                         ) : (
                           <Cpu className="w-12 h-12 text-muted-foreground" />
                         )}

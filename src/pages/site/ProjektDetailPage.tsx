@@ -70,7 +70,7 @@ export default function ProjektDetailPage() {
                         <StlViewer url={project.stl_url} />
                       </Suspense>
                     ) : current ? (
-                      <img src={current} alt={project.name} className="w-full h-full object-cover transition-opacity duration-300" />
+                      <img src={current} alt={project.name} loading="lazy" className="w-full h-full object-cover transition-opacity duration-300" />
                     ) : (
                       <ImageIcon className="w-16 h-16 text-muted-foreground/40" />
                     )}
@@ -91,7 +91,7 @@ export default function ProjektDetailPage() {
                           onClick={() => setActiveImg(i)}
                           className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${i === activeImg ? "border-primary" : "border-border hover:border-primary/50"}`}
                         >
-                          <img src={url} alt={`${project.name} ${i + 1}`} className="w-full h-full object-cover" />
+                          <img src={url} alt={`${project.name} ${i + 1}`} loading="lazy" className="w-full h-full object-cover" />
                         </button>
                       ))}
                     </div>

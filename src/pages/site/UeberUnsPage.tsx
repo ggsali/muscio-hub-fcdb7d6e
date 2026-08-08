@@ -100,6 +100,7 @@ export default function UeberUnsPage() {
               <img
                 src={storyImage}
                 alt="Unsere Werkstatt mit 3D-Druckern"
+                loading="lazy"
                 className="rounded-xl aspect-[3/4] object-cover w-full md:sticky md:top-24"
               />
             </div>
@@ -150,6 +151,7 @@ export default function UeberUnsPage() {
                         <img
                           src={photo}
                           alt={m.name}
+                          loading="lazy"
                           className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-border shadow-md"
                         />
                       ) : (

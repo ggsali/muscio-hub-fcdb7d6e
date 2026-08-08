@@ -159,7 +159,7 @@ export default function ShopDetailPage() {
                   <button key={img.id} onClick={() => setActiveImg(i)}
                     className={cn("w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all",
                       activeImg === i ? "border-primary" : "border-border hover:border-primary/50")}>
-                    <img src={getImageUrl(img.storage_path)} alt="" className="w-full h-full object-cover" />
+                    <img src={getImageUrl(img.storage_path)} alt={product?.name ?? "Produktbild"} loading="lazy" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -242,7 +242,7 @@ export default function ShopDetailPage() {
                     <Link key={r.id} to={`/shop/${r.slug}`}>
                       <motion.div className="group bg-card rounded-xl border border-border hover:border-primary/30 overflow-hidden transition-all" whileHover={{ y: -3 }}>
                         <div className="aspect-square bg-muted overflow-hidden">
-                          <img src={primaryImg ? getImageUrl(primaryImg.storage_path) : "/placeholder.svg"} alt={r.name}
+                          <img src={primaryImg ? getImageUrl(primaryImg.storage_path) : "/placeholder.svg"} alt={r.name} loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         </div>
                         <div className="p-3">
