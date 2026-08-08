@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Cpu, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import Seo from "@/components/site/Seo";
 import ModelViewer from "@/components/site/ModelViewer";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 
@@ -31,6 +32,11 @@ export default function EquipmentPage() {
 
   return (
     <div className="pb-16">
+      <Seo
+        title="Maschinen & Technologie – 3D Drucker bei 3DMuscio"
+        description="Unser Maschinenpark für FDM und SLA 3D Druck: Bauräume, Genauigkeit und Materialien der eingesetzten 3D Drucker in Eschlikon TG."
+        path="/maschinen"
+      />
       <div className="container mx-auto px-4">
         {/* Hero */}
         <div className="mb-16 md:mb-24 pt-12">
@@ -76,7 +82,7 @@ export default function EquipmentPage() {
                         {it.modell_url ? (
                           <ModelViewer url={it.modell_url} rotation={it.model_rotation || undefined} />
                         ) : it.vorschaubild_url ? (
-                          <img src={it.vorschaubild_url} alt={it.name} className="w-full h-full object-cover" />
+                          <img src={it.vorschaubild_url} alt={it.name} loading="lazy" className="w-full h-full object-cover" />
                         ) : (
                           <Cpu className="w-12 h-12 text-muted-foreground" />
                         )}

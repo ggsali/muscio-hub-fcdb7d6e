@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import Seo from "@/components/site/Seo";
 
 interface Post {
   id: string;
@@ -33,6 +34,11 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title="Blog – Wissen rund um 3D Druck | 3DMuscio"
+        description="Artikel, Tipps und Praxiswissen zum 3D Druck: Materialwahl, Konstruktion, Nachbearbeitung und Anwendungsbeispiele aus der Schweiz."
+        path="/blog"
+      />
       <div className="container mx-auto px-4 py-16 md:py-24">
         <div className="max-w-3xl mb-14">
           <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Blog & News</p>

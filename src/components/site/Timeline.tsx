@@ -145,6 +145,7 @@ function HeuteItem({ team, isLeft }: { team: TeamMini[]; isLeft: boolean }) {
                       src={url}
                       alt={m.name}
                       title={m.name}
+                      loading="lazy"
                       className="w-12 h-12 rounded-full object-cover border-2 border-card shadow-md"
                     />
                   ) : (

@@ -93,7 +93,7 @@ export default function BlogPostPage() {
         </div>
 
         {post.titelbild_url && (
-          <img src={post.titelbild_url} alt={post.titel} className="w-full rounded-2xl mb-10 border border-border" />
+          <img src={post.titelbild_url} alt={post.titel} loading="lazy" className="w-full rounded-2xl mb-10 border border-border" />
         )}
 
         <div className="prose prose-invert prose-headings:font-heading prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-a:text-primary prose-strong:text-foreground prose-li:text-muted-foreground prose-p:text-muted-foreground prose-p:leading-relaxed max-w-none">

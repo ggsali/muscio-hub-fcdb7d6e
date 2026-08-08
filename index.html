@@ -1,90 +1,117 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google-site-verification" content="viXJbv64kKqwwY_MpoGdHZU0kcvv0GVwwQKTXeIieHU" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>3DMuscio – 3D-Druck Service Schweiz</title>
-    <meta name="description" content="3DMuscio – professioneller 3D-Druck aus der Schweiz. PLA, PETG, ABS, Resin. Sofort-Kalkulator, Lieferung in 48h. Faire Preise.">
+
+    <title>3DMuscio – 3D Druckservice Schweiz | FDM &amp; SLA Druck Ostschweiz</title>
+    <meta name="description" content="Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator. Schnell, präzise, made in Switzerland." />
     <meta name="author" content="3DMuscio" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-
-    <!-- TODO: Update og:title to match your application name -->
-    
-    
+    <!-- Open Graph (Fallback für Social-Crawler; pro Route via Helmet überschrieben) -->
+    <meta property="og:site_name" content="3DMuscio" />
+    <meta property="og:locale" content="de_CH" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/HMfId6YGEQSzYkPI7XRIdUZpU013/social-images/social-1777546828436-file_1770761597489.webp">
+    <meta property="og:url" content="https://3dmuscio.com/" />
+    <meta property="og:title" content="3DMuscio – 3D Druckservice Schweiz | FDM &amp; SLA Druck Ostschweiz" />
+    <meta property="og:description" content="Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator." />
+    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/HMfId6YGEQSzYkPI7XRIdUZpU013/social-images/social-1777546828436-file_1770761597489.webp" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/HMfId6YGEQSzYkPI7XRIdUZpU013/social-images/social-1777546828436-file_1770761597489.webp">
-    
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  <!-- canonical is set per-route via CanonicalTag -->
-  <link rel="icon" type="image/x-icon" href="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <meta name="theme-color" content="#22c55e" />
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "3DMuscio",
-    "description": "Professioneller 3D-Druck Service in der Schweiz",
-    "url": "https://3dmuscio.com",
-    "telephone": "+41798395080",
-    "email": "info@3dmuscio.com",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Gartensiedlung 13",
-      "addressLocality": "Eschlikon",
-      "postalCode": "8360",
-      "addressCountry": "CH"
-    },
-    "openingHours": ["Mo-Fr 08:00-18:00", "Sa 09:00-14:00"],
-    "priceRange": "CHF"
-  }
-  </script>
-  <meta property="og:title" content="3DMuscio – 3D-Druck Service Schweiz">
-  <meta name="twitter:title" content="3DMuscio – 3D-Druck Service Schweiz">
-  <meta property="og:description" content="Professioneller 3D-Druck aus der Schweiz. PLA, PETG, ABS, Resin. Sofort-Kalkulator, Lieferung in 48h.">
-  <meta name="twitter:description" content="Professioneller 3D-Druck aus der Schweiz. PLA, PETG, ABS, Resin. Sofort-Kalkulator, Lieferung in 48h.">
-  <meta property="og:url" content="https://3dmuscio.com/">
-</head>
+    <meta name="twitter:title" content="3DMuscio – 3D Druckservice Schweiz | FDM &amp; SLA Druck Ostschweiz" />
+    <meta name="twitter:description" content="Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator." />
+    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/HMfId6YGEQSzYkPI7XRIdUZpU013/social-images/social-1777546828436-file_1770761597489.webp" />
+
+    <!-- canonical wird pro Route via CanonicalTag gesetzt -->
+
+    <!-- Performance: Verbindungen zu externen Ressourcen früh aufbauen -->
+    <link rel="preconnect" href="https://ukqtjdsjmtxgzhklvqky.supabase.co" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://storage.googleapis.com" />
+
+    <link rel="icon" type="image/x-icon" href="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#22c55e" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "3DMuscio",
+      "description": "Professioneller 3D Druckservice in der Schweiz. FDM und SLA Druck, Einzelteile, Kleinserien, Prototypen.",
+      "url": "https://3dmuscio.com",
+      "email": "info@3dmuscio.com",
+      "image": "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
+      "logo": "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Gartensiedlung 13",
+        "addressLocality": "Eschlikon",
+        "postalCode": "8360",
+        "addressRegion": "Thurgau",
+        "addressCountry": "CH"
+      },
+      "geo": { "@type": "GeoCoordinates", "latitude": 47.4833, "longitude": 8.9667 },
+      "areaServed": ["Schweiz", "Ostschweiz", "Thurgau", "Zürich", "St. Gallen", "Winterthur"],
+      "priceRange": "CHF",
+      "currenciesAccepted": "CHF",
+      "paymentAccepted": "Kreditkarte, TWINT, Banküberweisung",
+      "openingHours": "Mo-Fr 08:00-18:00",
+      "sameAs": ["https://www.instagram.com/3dmuscio"]
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "3D Druckservice Schweiz",
+      "provider": { "@type": "LocalBusiness", "name": "3DMuscio" },
+      "serviceType": "3D Druck",
+      "description": "FDM und SLA 3D Druckservice für B2B-Kunden in der Schweiz. Materialien: PLA, PETG, ABS, ASA, TPU, Resin.",
+      "areaServed": "CH",
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "3D Druckleistungen",
+        "itemListElement": [
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "FDM 3D Druck" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "SLA Resin Druck" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Prototypenentwicklung" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Kleinserienfertigung" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Ersatzteile herstellen" } }
+        ]
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Was kostet 3D Druck in der Schweiz?", "acceptedAnswer": { "@type": "Answer", "text": "Kosten variieren nach Material, Grösse und Komplexität. Online-Kalkulator auf 3dmuscio.com/kalkulator." } },
+        { "@type": "Question", "name": "Welche Materialien bietet 3DMuscio?", "acceptedAnswer": { "@type": "Answer", "text": "PLA, PETG, ABS, ASA, TPU (FDM) sowie verschiedene Resins (SLA)." } },
+        { "@type": "Question", "name": "Wie lange dauert ein 3D Druckauftrag?", "acceptedAnswer": { "@type": "Answer", "text": "2–7 Werktage je nach Komplexität. Express auf Anfrage." } },
+        { "@type": "Question", "name": "Bietet 3DMuscio B2B 3D Druck?", "acceptedAnswer": { "@type": "Answer", "text": "Ja, spezialisiert auf B2B-Kunden in der Schweiz." } },
+        { "@type": "Question", "name": "Wo kann ich ein Kunststoffteil herstellen lassen?", "acceptedAnswer": { "@type": "Answer", "text": "Bei 3DMuscio in Eschlikon TG, Lieferung schweizweit." } },
+        { "@type": "Question", "name": "Wie lasse ich einen Prototypen herstellen?", "acceptedAnswer": { "@type": "Answer", "text": "STL-Datei hochladen, Material wählen, bestellen – fertig." } },
+        { "@type": "Question", "name": "Kann 3DMuscio Ersatzteile drucken?", "acceptedAnswer": { "@type": "Answer", "text": "Ja, Ersatzteile nach Zeichnung oder STL-Datei." } },
+        { "@type": "Question", "name": "Was ist die Mindestbestellmenge bei 3DMuscio?", "acceptedAnswer": { "@type": "Answer", "text": "Keine Mindestbestellmenge, ab 1 Stück." } },
+        { "@type": "Question", "name": "Liefert 3DMuscio in die ganze Schweiz?", "acceptedAnswer": { "@type": "Answer", "text": "Ja, schweizweite Lieferung per Post." } },
+        { "@type": "Question", "name": "Kann ich kleine Stückzahlen bestellen?", "acceptedAnswer": { "@type": "Answer", "text": "Ja, Kleinserien ab 1 Stück möglich." } },
+        { "@type": "Question", "name": "Was ist Rapid Prototyping?", "acceptedAnswer": { "@type": "Answer", "text": "Schnelle Herstellung von Prototypen. Bei 3DMuscio in wenigen Tagen möglich." } },
+        { "@type": "Question", "name": "Welche Dateiformate akzeptiert 3DMuscio?", "acceptedAnswer": { "@type": "Answer", "text": "STL, STEP, OBJ und weitere CAD-Formate." } }
+      ]
+    }
+    </script>
+  </head>
 
   <body>
     <div id="root"></div>
