@@ -85,6 +85,10 @@ import BlogAdminPage from "@/pages/website-admin/BlogAdminPage";
 import EquipmentAdminPage from "@/pages/website-admin/EquipmentAdminPage";
 import WebsiteAnalyticsPage from "@/pages/website-admin/WebsiteAnalyticsPage";
 import EquipmentPage from "@/pages/site/EquipmentPage";
+import LeistungenPage from "@/pages/site/LeistungenPage";
+import ErsatzteilePage from "@/pages/site/ErsatzteilePage";
+import PrototypenPage from "@/pages/site/PrototypenPage";
+import KleinserienPage from "@/pages/site/KleinserienPage";
 
 const queryClient = new QueryClient();
 
@@ -129,6 +133,11 @@ const App = () => (
                 <Route path="/shop" element={<ShopPage />} />
                 <Route path="/shop/:slug" element={<ShopDetailPage />} />
                 <Route path="/kalkulator-online" element={<CalculatorOnlinePage />} />
+                <Route path="/kalkulator" element={<Navigate to="/kalkulator-online" replace />} />
+                <Route path="/leistungen" element={<LeistungenPage />} />
+                <Route path="/ersatzteile" element={<ErsatzteilePage />} />
+                <Route path="/prototypen" element={<PrototypenPage />} />
+                <Route path="/kleinserien" element={<KleinserienPage />} />
                 <Route path="/materialien" element={<MaterialienPage />} />
                 <Route path="/ueber-uns" element={<UeberUnsPage />} />
                 <Route path="/ueber-ki" element={<UeberKiPage />} />

@@ -16,6 +16,16 @@ const DEFAULT_NAV: NavItem[] = [
   { label: "Home", path: "/" },
   { label: "Shop", path: "/shop" },
   { label: "Kalkulator", path: "/kalkulator-online" },
+  {
+    label: "Leistungen",
+    path: "/leistungen",
+    children: [
+      { label: "Ersatzteile drucken", path: "/ersatzteile" },
+      { label: "Prototypen / Rapid Prototyping", path: "/prototypen" },
+      { label: "Kleinserien", path: "/kleinserien" },
+      { label: "Materialien", path: "/materialien" },
+    ],
+  },
   { label: "Materialien", path: "/materialien" },
   {
     label: "Über uns",
