@@ -165,7 +165,7 @@ export function ChatWidget() {
       try { await streamAI(sid, [...messages, userMsg]); }
       catch (e: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e.message}` }]); }
     }
-    if (shouldNotify(text)) {
+    if (shouldNotify(text) || botOn === false) {
       supabase.functions.invoke("send-sms-notification", {
         body: {
           message: text,
@@ -175,6 +175,7 @@ export function ChatWidget() {
         },
       }).catch(console.error);
     }
+
     setLoading(false);
   };
 

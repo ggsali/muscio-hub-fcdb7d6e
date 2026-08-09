@@ -6,16 +6,22 @@ const corsHeaders = {
 };
 
 const isOpeningHours = (): boolean => {
-  const now = new Date();
-  const swissTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Zurich" }));
-  const day = swissTime.getDay();
-  const hour = swissTime.getHours();
-  const minute = swissTime.getMinutes();
-  const time = hour * 60 + minute;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Zurich",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const day = dayMap[get("weekday")] ?? 0;
+  const time = parseInt(get("hour"), 10) * 60 + parseInt(get("minute"), 10);
   const moFr = day >= 1 && day <= 5 && time >= 8 * 60 && time < 18 * 60;
   const sa = day === 6 && time >= 9 * 60 && time < 14 * 60;
   return moFr || sa;
 };
+
 
 const escapeHtml = (s: unknown): string =>
   String(s ?? "")
@@ -61,17 +67,11 @@ Deno.serve(async (req) => {
     // Only allow safe session id chars (uuid/hex/dashes)
     const sessionId = /^[a-zA-Z0-9-]+$/.test(rawSessionId) ? rawSessionId : "";
 
+    const openNow = isOpeningHours();
     console.log("Chat notification triggered", {
       hasResendKey: !!Deno.env.get("RESEND_API_KEY"),
-      isOpeningHours: isOpeningHours(),
+      isOpeningHours: openNow,
     });
-
-    if (!isOpeningHours()) {
-      return new Response(
-        JSON.stringify({ success: true, insideOpeningHours: false, message: "Ausserhalb Öffnungszeiten" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
@@ -88,16 +88,17 @@ Deno.serve(async (req) => {
       <p><strong>Name:</strong> ${escapeHtml(customerName) || "Nicht angegeben"}</p>
       <p><strong>E-Mail:</strong> ${escapeHtml(customerEmail) || "Nicht angegeben"}</p>
       <p><strong>Nachricht:</strong> ${escapeHtml(message)}</p>
-      <p><strong>Zeitpunkt:</strong> ${new Date().toLocaleString("de-CH", { timeZone: "Europe/Zurich" })}</p>
+      <p><strong>Zeitpunkt:</strong> ${new Date().toLocaleString("de-CH", { timeZone: "Europe/Zurich" })}${openNow ? "" : " (ausserhalb Öffnungszeiten)"}</p>
       <p><a href="${chatLink}" style="display:inline-block;padding:10px 18px;background:#FF5A00;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Zur Anfragen-Übersicht →</a></p>
     `;
 
     const { error } = await resend.emails.send({
       from: "3DMuscio Chat <noreply@3dmuscio.com>",
       to: ["anfrage@3dmuscio.com"],
-      subject: "\u{1F4AC} Neue Chat-Nachricht",
+      subject: openNow ? "\u{1F4AC} Neue Chat-Nachricht" : "\u{1F4AC} Neue Chat-Nachricht (ausserhalb Öffnungszeiten)",
       html,
     });
+
 
     if (error) {
       console.error("Resend error:", error);
