@@ -67,17 +67,11 @@ Deno.serve(async (req) => {
     // Only allow safe session id chars (uuid/hex/dashes)
     const sessionId = /^[a-zA-Z0-9-]+$/.test(rawSessionId) ? rawSessionId : "";
 
+    const openNow = isOpeningHours();
     console.log("Chat notification triggered", {
       hasResendKey: !!Deno.env.get("RESEND_API_KEY"),
-      isOpeningHours: isOpeningHours(),
+      isOpeningHours: openNow,
     });
-
-    if (!isOpeningHours()) {
-      return new Response(
-        JSON.stringify({ success: true, insideOpeningHours: false, message: "Ausserhalb Öffnungszeiten" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
@@ -94,16 +88,17 @@ Deno.serve(async (req) => {
       <p><strong>Name:</strong> ${escapeHtml(customerName) || "Nicht angegeben"}</p>
       <p><strong>E-Mail:</strong> ${escapeHtml(customerEmail) || "Nicht angegeben"}</p>
       <p><strong>Nachricht:</strong> ${escapeHtml(message)}</p>
-      <p><strong>Zeitpunkt:</strong> ${new Date().toLocaleString("de-CH", { timeZone: "Europe/Zurich" })}</p>
+      <p><strong>Zeitpunkt:</strong> ${new Date().toLocaleString("de-CH", { timeZone: "Europe/Zurich" })}${openNow ? "" : " (ausserhalb Öffnungszeiten)"}</p>
       <p><a href="${chatLink}" style="display:inline-block;padding:10px 18px;background:#FF5A00;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Zur Anfragen-Übersicht →</a></p>
     `;
 
     const { error } = await resend.emails.send({
       from: "3DMuscio Chat <noreply@3dmuscio.com>",
       to: ["anfrage@3dmuscio.com"],
-      subject: "\u{1F4AC} Neue Chat-Nachricht",
+      subject: openNow ? "\u{1F4AC} Neue Chat-Nachricht" : "\u{1F4AC} Neue Chat-Nachricht (ausserhalb Öffnungszeiten)",
       html,
     });
+
 
     if (error) {
       console.error("Resend error:", error);
