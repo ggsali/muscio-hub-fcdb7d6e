@@ -6,16 +6,22 @@ const corsHeaders = {
 };
 
 const isOpeningHours = (): boolean => {
-  const now = new Date();
-  const swissTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Zurich" }));
-  const day = swissTime.getDay();
-  const hour = swissTime.getHours();
-  const minute = swissTime.getMinutes();
-  const time = hour * 60 + minute;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Zurich",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const day = dayMap[get("weekday")] ?? 0;
+  const time = parseInt(get("hour"), 10) * 60 + parseInt(get("minute"), 10);
   const moFr = day >= 1 && day <= 5 && time >= 8 * 60 && time < 18 * 60;
   const sa = day === 6 && time >= 9 * 60 && time < 14 * 60;
   return moFr || sa;
 };
+
 
 const escapeHtml = (s: unknown): string =>
   String(s ?? "")
