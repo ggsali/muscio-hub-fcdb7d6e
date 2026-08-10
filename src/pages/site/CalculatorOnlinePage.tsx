@@ -388,7 +388,18 @@ const CalculatorOnlinePage = () => {
     }
   }, [materials]);
 
+  // Dateien, die auf einer anderen Seite (Hero-Dropzone, Mobile-CTA) gewählt wurden
+  const pendingHandled = useRef(false);
+  useEffect(() => {
+    if (pendingHandled.current || materials.length === 0) return;
+    const files = takePendingUploads();
+    if (files.length === 0) return;
+    pendingHandled.current = true;
+    files.forEach(addFile);
+  }, [materials, addFile]);
+
   const handleDrop = (e: React.DragEvent) => {
+
     e.preventDefault();
     setDragOver(false);
     Array.from(e.dataTransfer.files).forEach(addFile);
