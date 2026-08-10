@@ -219,7 +219,7 @@ export const Header = () => {
               </Button>
             )}
             <Button variant="default" size="sm" asChild
-              className="rounded-full h-8 px-4 text-xs font-bold shadow-[0_0_20px_hsl(153_100%_40%/0.3)] hover:shadow-[0_0_32px_hsl(153_100%_40%/0.5)] transition-shadow">
+              className="rounded-full h-8 px-4 text-xs font-bold shadow-[0_0_20px_hsl(156_100%_40%/0.3)] hover:shadow-[0_0_32px_hsl(156_100%_40%/0.5)] transition-shadow">
               <Link to="/kalkulator-online">
                 <Printer className="w-3.5 h-3.5 mr-1.5" />
                 Preis berechnen

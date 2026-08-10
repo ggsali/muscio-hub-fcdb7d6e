@@ -31,8 +31,8 @@ export const CursorSpotlight = () => {
       className="pointer-events-none fixed z-[9999] hidden md:block"
       style={{ x: springX, y: springY, translateX: "-50%", translateY: "-50%" }}
     >
-      <div style={{ width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, hsl(153 100% 40% / 0.07) 0%, transparent 70%)", transform: "translate(-50%, -50%)", position: "absolute", top: 0, left: 0 }} />
-      <div style={{ width: 120, height: 120, borderRadius: "50%", background: "radial-gradient(circle, hsl(153 100% 40% / 0.12) 0%, transparent 70%)", transform: "translate(-50%, -50%)", position: "absolute", top: 0, left: 0 }} />
+      <div style={{ width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, hsl(156 100% 40% / 0.07) 0%, transparent 70%)", transform: "translate(-50%, -50%)", position: "absolute", top: 0, left: 0 }} />
+      <div style={{ width: 120, height: 120, borderRadius: "50%", background: "radial-gradient(circle, hsl(156 100% 40% / 0.12) 0%, transparent 70%)", transform: "translate(-50%, -50%)", position: "absolute", top: 0, left: 0 }} />
     </motion.div>
   );
 };

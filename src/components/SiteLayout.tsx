@@ -7,6 +7,7 @@ import { CartDrawer } from "./site/CartDrawer";
 import { ShopPromoBanner } from "./site/ShopPromoBanner";
 import { ChatWidget } from "./site/ChatWidget";
 import { ChatFab } from "./site/ChatFab";
+import { MobileStickyCta } from "./site/MobileStickyCta";
 import { CartProvider } from "@/contexts/CartContext";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { usePageViewTracker } from "@/hooks/usePageViewTracker";
@@ -25,13 +26,15 @@ export default function SiteLayout() {
           <Header />
         </div>
         <CartDrawer />
-        <main className="flex-1">
+        <main className="flex-1 pb-24 md:pb-0">
           <Outlet />
         </main>
         <Footer />
         <ChatWidget />
         <ChatFab />
+        <MobileStickyCta />
       </div>
     </CartProvider>
   );
 }
+
