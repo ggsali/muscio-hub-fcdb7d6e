@@ -17,7 +17,7 @@
     --popover-foreground: 0 0% 6%;
 
     /* Green accent */
-    --primary: 153 100% 40%;
+    --primary: 156 100% 40%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 18 100% 59%;
@@ -26,7 +26,7 @@
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 40%;
 
-    --accent: 153 30% 95%;
+    --accent: 156 30% 95%;
     --accent-foreground: 0 0% 6%;
 
     --destructive: 0 84% 60%;
@@ -46,19 +46,19 @@
 
     --border: 0 0% 91%;
     --input: 0 0% 91%;
-    --ring: 153 100% 40%;
+    --ring: 156 100% 40%;
 
     --radius: 0.5rem;
 
     /* Sidebar — light theme to match dashboard */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 35%;
-    --sidebar-primary: 153 100% 40%;
+    --sidebar-primary: 156 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 6%;
     --sidebar-border: 0 0% 91%;
-    --sidebar-ring: 153 100% 40%;
+    --sidebar-ring: 156 100% 40%;
   }
 
   .dark {
@@ -68,7 +68,7 @@
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 7%;
     --popover-foreground: 0 0% 95%;
-    --primary: 153 100% 45%;
+    --primary: 156 100% 45%;
     --primary-foreground: 0 0% 100%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 55%;
@@ -76,7 +76,7 @@
     --accent-foreground: 0 0% 95%;
     --border: 0 0% 16%;
     --input: 0 0% 16%;
-    --ring: 153 100% 45%;
+    --ring: 156 100% 45%;
   }
 }
 
