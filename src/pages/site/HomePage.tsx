@@ -339,11 +339,16 @@ const VolumeDiscounts = () => (
 
 /* ─── FAQ ─── */
 const faqs = [
-  { q: "Wie lange dauert die Lieferung?", a: "Standard 48 Stunden ab Auftragsbestätigung. Express auf Anfrage möglich." },
-  { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF. Bei Fragen helfen wir gerne weiter." },
-  { q: "Wie genau sind die Drucke?", a: "Toleranzen typisch ±0.1 mm bei FDM, noch feiner bei Resin/SLA." },
-  { q: "Was kostet ein Druck?", a: "Online im Preisrechner direkt kalkulieren — Material, Zeit und Nachbearbeitung sind transparent ausgewiesen." },
+  { q: "Was kostet ein 3D-Druck?", a: "Der Preis ergibt sich aus Material, Druckzeit und Nachbearbeitung. Im Online-Kalkulator sehen Sie den Preis sofort und transparent aufgeschlüsselt — ab CHF 0.055/g Material. Ab 5 Stück gibt es 10 %, ab 10 Stück 15 % Mengenrabatt." },
+  { q: "Wie lange dauert die Lieferung?", a: "Standard 48 Stunden Produktionszeit ab Auftragsbestätigung, danach Versand mit Post oder DHL innerhalb der Schweiz (1–2 Tage). Express ist auf Anfrage möglich, Abholung in Eschlikon TG jederzeit." },
+  { q: "Welche Dateiformate werden unterstützt?", a: "STL, STEP/STP, 3MF und OBJ bis 500 MB. Der Kalkulator berechnet Volumen und Gewicht automatisch aus Ihrer Datei — ohne manuelle Eingabe." },
+  { q: "Welche Materialien stehen zur Auswahl?", a: "FDM: PLA, PETG, ABS, ASA, TPU und Nylon in über 12 Farben. SLA: Resin für höchste Detailtreue. Unsicher? Wir beraten Sie kostenlos zur Materialwahl." },
+  { q: "Welche Toleranzen und Genauigkeit erreichen Sie?", a: "FDM typisch ±0.1 bis ±0.2 mm bei Schichthöhen von 0.1–0.3 mm. SLA/Resin erreicht Auflösungen bis 0.025 mm für filigrane Bauteile." },
+  { q: "Eignet sich der Service für industrielle Anwendungen?", a: "Ja. Wir fertigen Funktionsteile, Betriebsmittel, Vorrichtungen und Ersatzteile für KMU, Startups und Industriekunden — auch als Kleinserie mit reproduzierbaren Parametern." },
+  { q: "Wie erfolgt der Versand?", a: "Versand als Paket mit Schweizer Post oder DHL, ab CHF 65 Bestellwert kostenlos. Kein Zoll, keine Wartezeit aus dem Ausland. Abholung vor Ort ist ebenfalls möglich." },
+  { q: "Wie stellen Sie die Qualität sicher?", a: "Jedes Teil wird vor dem Versand visuell und dimensionell geprüft. Fehldrucke gehen nicht raus — bei Abweichungen drucken wir kostenlos nach." },
 ];
+
 
 const FAQ = () => (
   <section className="py-28 relative">
@@ -472,14 +477,23 @@ const SEOContent = () => (
 const Index = () => (
   <div>
     <Seo
-      title="3DMuscio – 3D Druckservice Schweiz | FDM & SLA Druck Ostschweiz"
-      description="Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator. Schnell, präzise, made in Switzerland."
+      title="3D Druck Schweiz – Sofortpreis & 48h Lieferung | 3DMuscio"
+      description="Datei hochladen, Sofortpreis erhalten, in 48h geliefert. Professioneller 3D-Druck aus der Schweiz für Prototypen, Ersatzteile und Kleinserien. FDM & SLA, 0.1 mm Präzision."
       path="/"
+      jsonLd={{
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqs.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      }}
     />
-    <Hero />
+    <HeroBento />
     <Marquee />
-    <Stats />
     <HowItWorks />
+
     <ProjectsGrid />
     <MaterialsTeaser />
     <VolumeDiscounts />
