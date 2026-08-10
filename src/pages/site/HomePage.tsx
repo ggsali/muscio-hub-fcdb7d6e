@@ -18,142 +18,161 @@ import { ReviewsSection } from "@/components/site/ReviewsSection";
 import { ProjectsGrid } from "@/components/site/ProjectsGrid";
 import Seo from "@/components/site/Seo";
 
-/* ─── HERO ─── */
-const Hero = () => {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 150]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const rightY = useTransform(scrollYProgress, [0, 1], [0, -60]);
-
-  return (
-    <section ref={ref} className="relative min-h-[calc(100vh-7rem)] flex items-center overflow-hidden py-12 lg:py-16">
-      <div className="absolute inset-0 bg-background" />
-      <div
-        className="absolute inset-0 opacity-[0.035]"
-        style={{
-          backgroundImage: "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }}
-      />
-      <div className="absolute top-0 right-0 w-[600px] h-[500px] bg-primary/[0.06] rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-0 right-[25%] w-px h-full bg-gradient-to-b from-transparent via-primary/20 to-transparent hidden lg:block" />
-
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center min-h-[80vh]">
-          <motion.div style={{ y, opacity }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-xs font-medium text-primary mb-8 tracking-wide uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                3D-Druck aus der Schweiz
-              </div>
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="font-heading text-[clamp(2.8rem,6vw,5.5rem)] font-extrabold leading-[1.0] mb-6 text-foreground tracking-tight"
-            >
-              <span className="sr-only">3D-Druck Service in der Schweiz — </span>Schicht für<br />
-              <span className="relative inline-block">
-                Schicht
-                <motion.span
-                  className="absolute -bottom-1 left-0 h-[3px] bg-primary rounded-full"
-                  initial={{ width: 0 }} animate={{ width: "100%" }}
-                  transition={{ delay: 0.8, duration: 0.6 }}
-                />
-              </span><br />
-              <span className="text-primary">perfekt.</span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.25 }}
-              className="text-base text-muted-foreground mb-10 leading-relaxed max-w-sm"
-            >
-              Präzisionsdruck Layer für Layer. Von der Idee zum fertigen Teil in 48h — zuverlässig, bezahlbar, aus der Schweiz.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.35 }}
-              className="flex flex-col sm:flex-row gap-3"
-            >
-              <Button variant="default" size="lg" asChild
-                className="rounded-full shadow-[0_0_30px_hsl(153_100%_40%/0.3)] hover:shadow-[0_0_40px_hsl(153_100%_40%/0.5)] transition-shadow">
-                <Link to="/kalkulator-online">Preis berechnen <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild className="rounded-full">
-                <Link to="/materialien">Materialien entdecken</Link>
-              </Button>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-              className="flex items-center gap-6 mt-12"
-            >
-              {[
-                { val: "48h", label: "Lieferzeit" },
-                { val: "0.1mm", label: "Präzision" },
-                { val: "12+", label: "Materialien" },
-              ].map((s, i) => (
-                <div key={i} className="flex flex-col">
-                  <span className="font-heading font-extrabold text-lg text-foreground leading-none">{s.val}</span>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">{s.label}</span>
-                </div>
-              ))}
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            className="flex items-center justify-center mt-8 lg:mt-0"
-            style={{ y: rightY }}
-            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.4 }}
-          >
-            <HeroProjectsCarousel />
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-/* ─── STATS ─── */
-const STATS = [
-  { icon: Clock, value: 48, suffix: "h", label: "Lieferzeit" },
-  { icon: Target, value: 0.1, suffix: "mm", label: "Präzision", decimals: 1 },
-  { icon: Layers, value: 12, suffix: "+", label: "Materialien" },
-  { icon: Users, value: 100, suffix: "%", label: "Schweizer Qualität" },
+/* ─── HERO BENTO ─── */
+const TRUST = [
+  { icon: BadgeCheck, label: "Swiss Made" },
+  { icon: Clock, label: "48h Lieferung" },
+  { icon: Target, label: "0.1 mm Präzision" },
+  { icon: Zap, label: "Sofortpreis" },
+  { icon: FileCheck, label: "Keine Anfrage nötig" },
 ];
 
-const Stats = () => (
-  <section className="py-20 overflow-hidden">
-    <div className="container mx-auto px-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-12">
-        {STATS.map((s, i) => (
-          <ScrollReveal key={i} delay={i * 0.08}>
-            <div className="relative">
-              <span className="text-[3rem] font-heading font-black text-foreground/[0.03] absolute -top-4 -left-2 leading-none select-none">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <div className="relative">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                  <s.icon className="w-4 h-4 text-primary" />
-                </div>
-                <div className="text-3xl md:text-4xl font-heading font-extrabold text-foreground tracking-tight">
-                  <CountUp end={s.value} suffix={s.suffix} decimals={s.decimals || 0} />
-                </div>
-                <p className="text-muted-foreground mt-1 text-xs uppercase tracking-widest">{s.label}</p>
+const HERO_STATS = [
+  { value: 2500, suffix: "+", label: "Teile gedruckt" },
+  { value: 150, suffix: "+", label: "Geschäftskunden" },
+  { value: 99, suffix: "%", label: "Termingerecht", accent: true },
+  { value: 48, suffix: "h", label: "Produktionszeit" },
+];
+
+const CALC_STEPS = [
+  { icon: Upload, title: "STL oder STEP hochladen", desc: "Volumen wird automatisch berechnet." },
+  { icon: Layers, title: "Material wählen", desc: "PLA, PETG, ABS, ASA, TPU oder Resin." },
+  { icon: Settings, title: "Farbe & Qualität", desc: "Schichthöhe und Fülldichte konfigurieren." },
+  { icon: Percent, title: "Sofortpreis sehen", desc: "Transparent, inklusive Mengenrabatt." },
+  { icon: ShoppingCart, title: "Bestellen", desc: "Produktion startet, Lieferung in 48h." },
+];
+
+const HeroBento = () => (
+  <section className="relative overflow-hidden pt-8 pb-6 md:pt-12">
+    <div
+      className="absolute inset-0 opacity-[0.03] pointer-events-none"
+      style={{
+        backgroundImage:
+          "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+        backgroundSize: "60px 60px",
+      }}
+    />
+    <div className="absolute top-0 right-0 w-[600px] h-[500px] bg-primary/[0.07] rounded-full blur-[120px] pointer-events-none" />
+
+    <div className="container mx-auto px-4 relative z-10 flex flex-col gap-4 md:gap-6">
+      {/* Reihe 1 — Hero + Upload */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="lg:col-span-8 bg-card border border-border rounded-3xl p-6 md:p-12 shadow-[0_4px_20px_-4px_hsl(var(--foreground)/0.05)] relative overflow-hidden"
+        >
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse mr-2" />
+            Produktion in 48h versandbereit
+          </span>
+
+          <h1 className="font-heading text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.1] tracking-tight text-foreground mb-5">
+            3D-Druck aus der Schweiz.{" "}
+            <span className="text-primary">Datei hochladen, Sofortpreis erhalten</span>, in 48h geliefert.
+          </h1>
+
+          <p className="text-base md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed">
+            Professioneller 3D-Druck für Prototypen, Ersatzteile und Kleinserien. Sofortpreis,
+            schnelle Lieferung und Schweizer Präzision.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button size="lg" asChild className="rounded-xl min-h-[52px] px-8 text-base">
+              <Link to="/kalkulator-online">Preis berechnen <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild className="rounded-xl min-h-[52px] px-8 text-base">
+              <Link to="/materialien">Materialien entdecken</Link>
+            </Button>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.12 }}
+          className="lg:col-span-4 bg-muted border border-border rounded-3xl p-4 md:p-6"
+        >
+          <UploadDropzone />
+        </motion.div>
+      </div>
+
+      {/* Reihe 2 — Kennzahlen */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+        {HERO_STATS.map((s, i) => (
+          <ScrollReveal key={s.label} delay={i * 0.06}>
+            <div className="bg-card border border-border rounded-2xl p-5 md:p-6 h-full">
+              <div
+                className={`text-2xl md:text-3xl font-heading font-bold mb-1 ${s.accent ? "text-primary" : "text-foreground"}`}
+              >
+                <CountUp end={s.value} suffix={s.suffix} />
+              </div>
+              <div className="text-[11px] md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
+                {s.label}
               </div>
             </div>
           </ScrollReveal>
         ))}
       </div>
+
+      {/* Reihe 3 — Trust-Strip */}
+      <div className="w-full bg-foreground text-background rounded-2xl px-5 md:px-8 py-5 md:py-6 grid grid-cols-2 md:flex md:flex-wrap md:justify-between items-center gap-4 md:gap-6">
+        {TRUST.map((t) => (
+          <div key={t.label} className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded bg-background/10 flex items-center justify-center text-primary flex-shrink-0">
+              <t.icon className="w-4.5 h-4.5" strokeWidth={2.5} />
+            </div>
+            <span className="font-medium text-sm">{t.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Reihe 4 — Projekte + Kalkulator-Prozess */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+        <ScrollReveal className="lg:col-span-7">
+          <div className="bg-card border border-border rounded-3xl p-4 md:p-6 h-full">
+            <p className="text-xs font-medium text-primary uppercase tracking-widest mb-4 px-1">
+              Referenzprojekte
+            </p>
+            <HeroProjectsCarousel />
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal className="lg:col-span-5" delay={0.1}>
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 h-full flex flex-col">
+            <p className="text-xs font-medium text-primary uppercase tracking-widest mb-2">Kalkulator</p>
+            <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
+              In fünf Schritten zum Preis.
+            </h2>
+            <ol className="space-y-4 flex-1">
+              {CALC_STEPS.map((s, i) => (
+                <li key={s.title} className="flex gap-4 items-start">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <s.icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[10px] font-bold text-muted-foreground tabular-nums">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className="font-heading text-sm font-semibold text-foreground">{s.title}</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <Button asChild variant="outline" className="rounded-xl mt-6 min-h-[48px]">
+              <Link to="/kalkulator-online">Jetzt kalkulieren <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
+            </Button>
+          </div>
+        </ScrollReveal>
+      </div>
     </div>
   </section>
 );
+
 
 /* ─── HOW IT WORKS ─── */
 const steps = [
