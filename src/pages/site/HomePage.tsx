@@ -383,7 +383,7 @@ const CTA = () => (
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
         <h2 className="font-heading text-3xl md:text-5xl font-extrabold mb-4 relative">Bereit, dein Teil zu drucken?</h2>
         <p className="text-background/70 mb-8 relative">Sofort Preis berechnen und in 48h dein Bauteil erhalten.</p>
-        <Button size="lg" variant="default" asChild className="rounded-full shadow-[0_0_30px_hsl(153_100%_40%/0.4)]">
+        <Button size="lg" variant="default" asChild className="rounded-full shadow-[0_0_30px_hsl(156_100%_40%/0.4)]">
           <Link to="/kalkulator-online">Jetzt starten <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
         </Button>
       </div>
