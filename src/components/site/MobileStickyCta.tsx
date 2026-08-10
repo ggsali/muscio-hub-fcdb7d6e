@@ -39,7 +39,7 @@ export const MobileStickyCta = () => {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform"
+        className="w-full min-h-[52px] rounded-xl bg-primary text-primary-foreground font-bold text-[15px] leading-tight flex items-center justify-center gap-2.5 px-3 text-center active:scale-[0.98] transition-transform"
       >
         <UploadCloud className="w-5 h-5" />
         Datei hochladen &amp; Preis berechnen
