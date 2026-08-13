@@ -12,7 +12,7 @@ import {
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
@@ -169,45 +169,98 @@ const steps = [
   { icon: Package, title: "Erhalten", desc: "Wir drucken, prüfen und liefern innerhalb von 48h." },
 ];
 
+const StepNumber = ({ value, shouldReduceMotion }: { value: number; shouldReduceMotion: boolean }) => {
+  if (shouldReduceMotion) return <span>{String(value).padStart(2, "0")}</span>;
+  return (
+    <CountUp end={value} duration={500} prefix="0" />
+  );
+};
+
 const HowItWorks = () => {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const lineHeight = useTransform(scrollYProgress, [0.1, 0.7], ["0%", "100%"]);
+  const shouldReduceMotion = useReducedMotion();
+  const containerVariants = {
+    hidden: { opacity: shouldReduceMotion ? 1 : 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.15,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: shouldReduceMotion ? 0 : 0.5, ease: "easeOut" as const },
+    },
+  };
 
   return (
-    <section ref={ref} className="py-28 relative">
+    <section className="py-20 md:py-28 bg-foreground text-background overflow-hidden">
       <div className="container mx-auto px-4">
-        <ScrollReveal>
-          <div className="mb-16 max-w-md">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+          {/* Titel links */}
+          <motion.div
+            className="lg:col-span-3"
+            initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.6 }}
+          >
             <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Prozess</p>
-            <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground tracking-tight">
-              Vier Schritte.<br />Ein Ergebnis.
+            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+              Vom Modell zum Bauteil.
             </h2>
-          </div>
-        </ScrollReveal>
+            <p className="text-background/70 mt-4 text-base">In vier Schritten.</p>
+          </motion.div>
 
-        <div className="relative max-w-3xl">
-          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border hidden md:block">
-            <motion.div className="w-full bg-primary origin-top" style={{ height: lineHeight }} />
-          </div>
+          {/* Schritte rechts */}
+          <div className="lg:col-span-9">
+            <motion.div
+              className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-4"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+            >
+              {/* Verbindungslinie */}
+              <motion.div
+                className="absolute top-[4.5rem] left-0 right-0 h-px bg-primary origin-left hidden lg:block"
+                initial={{ scaleX: shouldReduceMotion ? 1 : 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.6, delay: 0.4, ease: "easeInOut" }}
+              />
 
-          <div className="space-y-8 md:space-y-12">
-            {steps.map((step, i) => (
-              <ScrollReveal key={i} delay={i * 0.08}>
-                <motion.div className="flex gap-6 md:gap-8 items-start group" whileHover={{ x: 4 }}>
-                  <div className="flex-shrink-0 w-10 h-10 rounded-lg border border-border bg-card flex items-center justify-center relative z-10 group-hover:border-primary group-hover:bg-primary/5 transition-all duration-200">
-                    <step.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <div className="flex items-baseline gap-3 mb-1">
-                      <span className="text-[10px] font-bold text-muted-foreground tracking-widest">{String(i + 1).padStart(2, "0")}</span>
-                      <h3 className="font-heading text-lg font-bold text-foreground">{step.title}</h3>
+              {steps.map((step, i) => (
+                <motion.div
+                  key={step.title}
+                  variants={itemVariants}
+                  whileHover={shouldReduceMotion ? undefined : { scale: 1.03 }}
+                  className="relative z-10 group"
+                >
+                  <div className="bg-background/5 border border-background/10 rounded-2xl p-6 h-full backdrop-blur-sm transition-colors duration-300 group-hover:bg-background/10 group-hover:border-primary/40">
+                    <div className="text-6xl font-heading font-bold text-primary/80 mb-4 tabular-nums leading-none">
+                      <StepNumber value={i + 1} shouldReduceMotion={!!shouldReduceMotion} />
                     </div>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
+                    <div className="w-10 h-10 rounded-lg bg-background/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors duration-300">
+                      <motion.div
+                        className="text-background"
+                        whileHover={shouldReduceMotion ? undefined : { rotate: 5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <step.icon className="w-5 h-5" strokeWidth={2} />
+                      </motion.div>
+                    </div>
+                    <h3 className="font-heading text-lg font-bold text-background mb-2">{step.title}</h3>
+                    <p className="text-background/70 text-sm leading-relaxed">{step.desc}</p>
                   </div>
                 </motion.div>
-              </ScrollReveal>
-            ))}
+              ))}
+            </motion.div>
           </div>
         </div>
       </div>
