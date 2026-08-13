@@ -28,20 +28,13 @@ interface Material {
   farben: string[];
 }
 
-const QUALITY_PRESETS = [
-  { key: "schnell", label: "Schnell", infill: 15, layerHeight: 0.3, layerFactor: 1.0, desc: "Leicht & günstig", Icon: Zap },
-  { key: "standard", label: "Standard", infill: 20, layerHeight: 0.2, layerFactor: 1.15, desc: "Ausgewogen", Icon: Gauge },
-  { key: "stark", label: "Stark", infill: 40, layerHeight: 0.15, layerFactor: 1.35, desc: "Belastbar", Icon: Shield },
-  { key: "massiv", label: "Massiv", infill: 80, layerHeight: 0.1, layerFactor: 1.6, desc: "Maximale Festigkeit", Icon: Gem },
-];
-
-const presetByInfill = (infill: number) =>
-  QUALITY_PRESETS.find((q) => q.infill === infill) || QUALITY_PRESETS[1];
-
-const qualityAdminLabel = (infill: number) => {
-  const q = presetByInfill(infill);
-  return `${q.label} (${q.layerHeight}mm, ${q.infill}% Infill)`;
+const QUALITY_ICONS: Record<string, typeof Zap> = {
+  schnell: Zap,
+  standard: Gauge,
+  stark: Shield,
+  massiv: Gem,
 };
+
 
 interface PartImage {
   id: string;
