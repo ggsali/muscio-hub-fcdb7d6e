@@ -24,14 +24,6 @@ import { toast } from "sonner";
 
 
 /* ─── HERO BENTO ─── */
-const TRUST = [
-  { icon: BadgeCheck, label: "Swiss Made" },
-  { icon: Clock, label: "48h Lieferung" },
-  { icon: Target, label: "0.1 mm Präzision" },
-  { icon: Zap, label: "Sofortpreis" },
-  { icon: FileCheck, label: "Keine Anfrage nötig" },
-];
-
 const HERO_STATS = [
   { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers },
   { value: "B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2 },
@@ -165,18 +157,6 @@ const StatsTrust = () => (
         ))}
       </div>
 
-      <ScrollReveal delay={0.1}>
-        <div className="w-full bg-foreground text-background rounded-2xl px-5 md:px-8 py-5 md:py-6 grid grid-cols-2 md:flex md:flex-wrap md:justify-between items-center gap-4 md:gap-6">
-          {TRUST.map((t) => (
-            <div key={t.label} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded bg-background/10 flex items-center justify-center text-primary flex-shrink-0">
-                <t.icon className="w-4.5 h-4.5" strokeWidth={2.5} />
-              </div>
-              <span className="font-medium text-sm">{t.label}</span>
-            </div>
-          ))}
-        </div>
-      </ScrollReveal>
     </div>
   </section>
 );
