@@ -76,14 +76,24 @@ const Slot = ({
         </span>
       )}
       {shot.name && (
-        <span className="absolute bottom-3 left-3 right-3 text-xs md:text-sm font-heading font-bold text-foreground truncate">
-          {shot.name}
-        </span>
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={shot.id + step + "-label"}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.5, delay: delay + 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute bottom-3 left-3 right-3 text-xs md:text-sm font-heading font-bold text-foreground truncate"
+          >
+            {shot.name}
+          </motion.span>
+        </AnimatePresence>
       )}
     </>
   );
 
-  const base = `group relative overflow-hidden bg-muted border border-border ${className}`;
+  const base = `group relative overflow-hidden bg-muted border border-border transition-transform duration-500 hover:scale-[1.02] ${className}`;
+
 
   return shot.slug ? (
     <Link to={`/projekte/${shot.slug}`} className={base} aria-label={shot.name || "Projekt ansehen"}>
