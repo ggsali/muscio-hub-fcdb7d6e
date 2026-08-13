@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { CountUp } from "@/components/site/CountUp";
@@ -19,6 +19,8 @@ import { ReviewsSection } from "@/components/site/ReviewsSection";
 import Seo from "@/components/site/Seo";
 import { UploadDropzone } from "@/components/site/UploadDropzone";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
+import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
+import { toast } from "sonner";
 
 
 
