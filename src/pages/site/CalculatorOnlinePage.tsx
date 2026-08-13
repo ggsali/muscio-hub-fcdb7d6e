@@ -592,6 +592,26 @@ const CalculatorOnlinePage = () => {
     return job && job.key === sliceKey ? job : undefined;
   };
   const slicingActive = parts.some((p) => sliceOf(p)?.status === "running");
+  const sliceableParts = parts.filter((p) => p.file && p.fileName.split(".").pop()?.toLowerCase() === "stl");
+  const sliceProgress = sliceableParts.length
+    ? Math.round(sliceableParts.reduce((s, p) => s + (sliceOf(p)?.progress || 0), 0) / sliceableParts.length)
+    : 0;
+  const sliceError = sliceableParts.length > 0 && sliceableParts.every((p) => sliceOf(p)?.status === "error");
+  const sliceDone = sliceableParts.length > 0 && sliceableParts.every((p) => sliceOf(p)?.status === "done");
+
+  useEffect(() => {
+    if (!qualityConfirmed || !sliceDone) return;
+    if (sliceToastRef.current === sliceKey) return;
+    sliceToastRef.current = sliceKey;
+    toast.success("Analyse abgeschlossen ✓");
+  }, [qualityConfirmed, sliceDone, sliceKey]);
+
+  const confirmQuality = (key: string, infill: number) => {
+    setQualityKey(key);
+    applyAll({ infill });
+    setQualityConfirmed(true);
+  };
+
 
   const MIN_PRICE = 5;
   const FIX_COST = 3.5;
