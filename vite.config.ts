@@ -20,8 +20,12 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      // Kein Service Worker mehr: bestehende SWs + Caches werden beim Aufruf gelöscht,
+      // damit nie wieder eine alte Version der Website ausgeliefert wird.
+      selfDestroying: true,
       devOptions: { enabled: false },
       includeAssets: ["favicon.ico", "apple-touch-icon.png"],
+
       manifest: {
         name: "3DMuscio – Schweizer 3D-Druckservice",
         short_name: "3DMuscio",
