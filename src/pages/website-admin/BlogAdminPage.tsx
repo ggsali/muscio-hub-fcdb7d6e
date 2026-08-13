@@ -95,7 +95,10 @@ export default function BlogAdminPage() {
                       {p.veroeffentlicht ? "live" : "entwurf"}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{p.slug}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {p.slug}
+                    {p.veroeffentlicht_am && ` · ${new Date(p.veroeffentlicht_am).toLocaleDateString("de-CH")}`}
+                  </p>
                   {p.zusammenfassung && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{p.zusammenfassung}</p>}
                 </div>
                 <div className="flex gap-1 shrink-0">
