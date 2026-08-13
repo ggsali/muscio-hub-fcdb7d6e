@@ -19,6 +19,11 @@ import Seo from "@/components/site/Seo";
 import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
 import { useSettings } from "@/contexts/SettingsContext";
 import { buildSlicerParams, sliceFile, slicerSupported, SlicerResult } from "@/lib/slicerClient";
+import {
+  loadQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
+  type QualityPreset, type CalcParams,
+} from "@/lib/calcConfig";
+
 
 interface Material {
   id: string;
