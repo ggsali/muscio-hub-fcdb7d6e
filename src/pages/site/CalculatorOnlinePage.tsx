@@ -590,7 +590,7 @@ const CalculatorOnlinePage = () => {
           supabase
             .from("calculator_uploads")
             .update({
-              slicer_druckzeit_sekunden: Math.round(res.printTimeSeconds),
+              slicer_druckzeit_sekunden: Math.round(res.printTimeSeconds * (activeQuality?.speedFactor ?? 1)),
               slicer_filament_gramm: Math.round(res.filamentGrams * 10) / 10,
               slicer_hat_supports: res.hasSupports,
               slicer_layer_anzahl: res.layerCount,
