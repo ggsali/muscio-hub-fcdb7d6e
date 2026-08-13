@@ -5,31 +5,24 @@ import { CountUp } from "@/components/site/CountUp";
 import { Marquee } from "@/components/site/Marquee";
 import {
   Upload, Settings, ShoppingCart, Package,
-  Clock, Target, Layers, ArrowRight, ArrowUpRight,
-  BadgeCheck, Zap, FileCheck, Building2, CheckCircle,
+  Layers, ArrowRight, ArrowUpRight,
+  Zap, Building2, CheckCircle,
 } from "lucide-react";
 
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
 import Seo from "@/components/site/Seo";
 import { UploadDropzone } from "@/components/site/UploadDropzone";
-import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
 
 
 
 /* ─── HERO BENTO ─── */
-const TRUST = [
-  { icon: BadgeCheck, label: "Swiss Made" },
-  { icon: Clock, label: "48h Lieferung" },
-  { icon: Target, label: "0.1 mm Präzision" },
-  { icon: Zap, label: "Sofortpreis" },
-  { icon: FileCheck, label: "Keine Anfrage nötig" },
-];
+
 
 const HERO_STATS = [
   { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers },
