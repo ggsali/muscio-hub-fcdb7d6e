@@ -222,6 +222,9 @@ const CalculatorOnlinePage = () => {
   const [qualityKey, setQualityKey] = useState("standard");
   const [kiResult, setKiResult] = useState<KiResult | null>(null);
   const [chatKey, setChatKey] = useState(0);
+  // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
+  const [quickMode, setQuickMode] = useState(false);
+
 
   const addRefImage = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -408,7 +411,9 @@ const CalculatorOnlinePage = () => {
     const files = takePendingUploads();
     if (files.length === 0) return;
     pendingHandled.current = true;
+    setQuickMode(true);
     files.forEach(addFile);
+
   }, [materials, addFile]);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -534,13 +539,26 @@ const CalculatorOnlinePage = () => {
 
   // Schritt 1 → 2 automatisch, sobald Datei analysiert / hochgeladen
   useEffect(() => {
-    if (step !== 1 || parts.length === 0) return;
+    if (quickMode || step !== 1 || parts.length === 0) return;
     const ready = parts.every((p) => p.hasVolume || isStepFile(p.fileName));
     if (ready) {
       const t = window.setTimeout(() => setStep(2), 600);
       return () => window.clearTimeout(t);
     }
-  }, [step, parts]);
+  }, [step, parts, quickMode]);
+
+  // Schnell-Schätzung: sobald analysiert, globales Material auf Standard setzen
+  const quickReady = quickMode && parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName));
+  useEffect(() => {
+    if (!quickMode || materialId || parts.length === 0) return;
+    const fallback = parts[0].materialId || materials[0]?.id || "";
+    if (fallback) {
+      setMaterialId(fallback);
+      const mat = materials.find((m) => m.id === fallback);
+      setColor(mat?.farben?.[0] || "");
+    }
+  }, [quickMode, materialId, parts, materials]);
+
 
   const geometryText = useMemo(() => {
     const p = parts[0];
@@ -808,7 +826,78 @@ const CalculatorOnlinePage = () => {
           </div>
         ) : materialsError ? (
           <div className="text-center py-20 text-destructive">{materialsError}</div>
+        ) : quickMode ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="max-w-2xl mx-auto"
+          >
+            <div className="bg-card border border-border rounded-3xl p-6 md:p-10 text-center">
+              {!quickReady ? (
+                <div className="py-10">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+                  <p className="font-heading text-lg font-bold text-foreground">Modell wird analysiert…</p>
+                  <p className="text-sm text-muted-foreground mt-1">Wir berechnen Volumen und Gewicht deiner Datei.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Schnellschätzung</p>
+                  <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-2">
+                    {hasStep ? "Preis nach Prüfung" : "Grober Preis"}
+                  </h1>
+                  {hasStep ? (
+                    <p className="text-muted-foreground text-sm">
+                      STEP-Dateien können nicht automatisch berechnet werden. Starte die genaue Analyse für ein Angebot.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="font-heading text-4xl md:text-5xl font-extrabold text-primary tabular-nums my-4">
+                        ca. {CHF(total)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Unverbindliche Schätzung mit Standard-Material und Standard-Qualität, inkl. Setup und Versand.
+                      </p>
+                    </>
+                  )}
+
+                  <div className="mt-6 space-y-2 text-left">
+                    {parts.map((p) => (
+                      <div key={p.id} className="flex items-center justify-between gap-3 bg-muted/40 rounded-xl px-4 py-3">
+                        <span className="text-sm truncate">{p.fileName}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {p.hasVolume ? `${p.volumeCm3.toFixed(1)} cm³ · ca. ${p.estimatedWeight.toFixed(1)} g` : "Prüfung nötig"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-8">
+                    <p className="font-heading font-bold text-foreground mb-1">Möchtest du eine genauere Analyse?</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Material-Beratung mit KI, Farbe, Qualität und ein verbindliches Angebot.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button
+                        className="gap-2"
+                        onClick={() => { setQuickMode(false); setStep(2); }}
+                      >
+                        Ja, genaue Analyse starten <ArrowRight className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => { setQuickMode(false); setStep(1); }}
+                      >
+                        Nein danke, selbst konfigurieren
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
         ) : (
+
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
