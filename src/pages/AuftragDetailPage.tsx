@@ -48,6 +48,11 @@ interface PartRow {
   preis_pro_stueck: number;
   preis_total: number;
   status: "Ausstehend" | "In Druck" | "Fertig" | "Geliefert";
+  // Ergebnisse des Browser-Slicers (aus dem Online-Kalkulator)
+  slicer_druckzeit_sekunden?: number | null;
+  slicer_filament_gramm?: number | null;
+  slicer_hat_supports?: boolean | null;
+  slicer_layer_anzahl?: number | null;
   notizen: string;
 }
 
@@ -764,6 +769,10 @@ export default function AuftragDetailPage() {
         notizen: p.notizen,
         filament_id: p.filament_id || null,
         filament_einkauf_pro_kg: p.filament_einkauf_pro_kg ?? null,
+        slicer_druckzeit_sekunden: p.slicer_druckzeit_sekunden ?? null,
+        slicer_filament_gramm: p.slicer_filament_gramm ?? null,
+        slicer_hat_supports: p.slicer_hat_supports ?? null,
+        slicer_layer_anzahl: p.slicer_layer_anzahl ?? null,
       });
 
       if (isNew) {
@@ -1468,10 +1477,24 @@ export default function AuftragDetailPage() {
                         </select>
                       </div>
                     </div>
+                    {(part.slicer_druckzeit_sekunden != null || part.slicer_filament_gramm != null) && (
+                      <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 space-y-0.5">
+                        <p className="text-xs font-semibold text-primary">Slicer-Analyse (Kunde)</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {part.slicer_druckzeit_sekunden != null && (
+                            <>Druckzeit: {Math.floor(part.slicer_druckzeit_sekunden / 3600)} h {Math.round((part.slicer_druckzeit_sekunden % 3600) / 60)} min · </>
+                          )}
+                          {part.slicer_filament_gramm != null && <>Filament: {Number(part.slicer_filament_gramm).toFixed(1)} g · </>}
+                          {part.slicer_layer_anzahl != null && <>{part.slicer_layer_anzahl} Layer · </>}
+                          Stützstrukturen: {part.slicer_hat_supports ? "ja" : "nein"}
+                        </p>
+                      </div>
+                    )}
                     <div className="space-y-1">
                       <label className="text-xs text-muted-foreground">Notiz</label>
                       <Input value={part.notizen} onChange={e => updatePart(idx, "notizen", e.target.value)} className="bg-input border-border h-9 text-sm w-full" placeholder="Notiz..." />
                     </div>
+
                     <div className="flex items-center justify-between bg-muted/20 rounded-lg px-3 py-2">
                       <span className="text-xs text-muted-foreground">Preis/Stk.</span>
                       <span className="text-sm font-semibold text-primary">{formatCHF(part.preis_pro_stueck)}</span>

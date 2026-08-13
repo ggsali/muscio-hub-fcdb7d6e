@@ -17,6 +17,8 @@ import { colorHex } from "@/lib/colorMap";
 import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
 import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
+import { useSettings } from "@/contexts/SettingsContext";
+import { buildSlicerParams, sliceFile, slicerSupported, SlicerResult } from "@/lib/slicerClient";
 
 interface Material {
   id: string;
@@ -204,6 +206,14 @@ function isStepFile(name: string): boolean {
 
 const STEPS = ["Datei", "Bilder", "Material", "Farbe", "Qualität", "Übersicht"];
 
+/** Sekunden -> "2 h 15 min" */
+const formatDuration = (seconds: number): string => {
+  const total = Math.max(0, Math.round(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.round((total % 3600) / 60);
+  return h > 0 ? `${h} h ${m} min` : `${m} min`;
+};
+
 const CalculatorOnlinePage = () => {
   const [step, setStep] = useState(1);
   const [parts, setParts] = useState<Part[]>([]);
@@ -224,6 +234,20 @@ const CalculatorOnlinePage = () => {
   const [chatKey, setChatKey] = useState(0);
   // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
   const [quickMode, setQuickMode] = useState(false);
+
+  // ---------- Echter Slicer (OrcaSlicer-Kernel im Browser) ----------
+  const { settings } = useSettings();
+  const [sliceJobs, setSliceJobs] = useState<
+    Record<string, { key: string; status: "running" | "done" | "error"; progress: number; result?: SlicerResult; error?: string }>
+  >({});
+  const startedRef = useRef<Set<string>>(new Set());
+
+  const activeQuality = useMemo(
+    () => QUALITY_PRESETS.find((q) => q.key === qualityKey) || QUALITY_PRESETS[1],
+    [qualityKey],
+  );
+  const sliceKey = `${materialId}|${qualityKey}`;
+
 
 
   const addRefImage = useCallback(async (file: File) => {
@@ -511,22 +535,96 @@ const CalculatorOnlinePage = () => {
     }));
   };
 
+  // Slicing im Hintergrund starten, sobald Datei + Material + Qualität bekannt sind
+  useEffect(() => {
+    if (!materialId || !slicerSupported()) return;
+    const mat = materials.find((m) => m.id === materialId);
+    if (!mat) return;
+    const params = buildSlicerParams(
+      { name: mat.name, density: mat.density },
+      { layerHeight: activeQuality.layerHeight, infill: activeQuality.infill },
+    );
+    parts.forEach((p) => {
+      if (!p.file) return;
+      const ext = p.fileName.split(".").pop()?.toLowerCase();
+      if (ext !== "stl") return; // Der Kernel slict STL-Meshes
+      const jobKey = `${p.id}|${sliceKey}`;
+      if (startedRef.current.has(jobKey)) return;
+      startedRef.current.add(jobKey);
+      setSliceJobs((j) => ({ ...j, [p.id]: { key: sliceKey, status: "running", progress: 0 } }));
+      p.file
+        .arrayBuffer()
+        .then((buf) =>
+          sliceFile(buf, params, mat.density, (pct) =>
+            setSliceJobs((j) =>
+              j[p.id]?.key === sliceKey ? { ...j, [p.id]: { ...j[p.id], progress: pct } } : j,
+            ),
+          ),
+        )
+        .then((res) => {
+          setSliceJobs((j) => ({ ...j, [p.id]: { key: sliceKey, status: "done", progress: 100, result: res } }));
+          supabase
+            .from("calculator_uploads")
+            .update({
+              slicer_druckzeit_sekunden: Math.round(res.printTimeSeconds),
+              slicer_filament_gramm: Math.round(res.filamentGrams * 10) / 10,
+              slicer_hat_supports: res.hasSupports,
+              slicer_layer_anzahl: res.layerCount,
+            } as any)
+            .eq("id", p.id)
+            .then(() => {});
+        })
+        .catch((err) => {
+          console.warn("Slicing fehlgeschlagen — Fallback auf Schätzung", err);
+          setSliceJobs((j) => ({
+            ...j,
+            [p.id]: { key: sliceKey, status: "error", progress: 0, error: String(err?.message || err) },
+          }));
+        });
+    });
+  }, [parts, materials, materialId, sliceKey, activeQuality]);
+
+  const sliceOf = (p: Part) => {
+    const job = sliceJobs[p.id];
+    return job && job.key === sliceKey ? job : undefined;
+  };
+  const slicingActive = parts.some((p) => sliceOf(p)?.status === "running");
+
+  const MIN_PRICE = 5;
+  const FIX_COST = 3.5;
+  const SUPPORT_SURCHARGE = 2.5;
+
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
-    if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
-      return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
-    }
-    const weight = p.estimatedWeight;
-    const layerFactor = presetByInfill(p.infill).layerFactor;
-    const matCost = weight * mat.pricePerGram * layerFactor;
-    const unit = matCost;
+    if (!mat) return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
+
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
-    return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount };
+
+    const job = sliceOf(p);
+    if (job?.status === "done" && job.result) {
+      const r = job.result;
+      const weight = Math.round(r.filamentGrams * 10) / 10;
+      const hours = r.printTimeSeconds / 3600;
+      const machineCost = hours * (settings.maschinenzeit_pro_h || 0);
+      const matCost = weight * mat.pricePerGram;
+      const unit = Math.max(MIN_PRICE, matCost + machineCost + FIX_COST + (r.hasSupports ? SUPPORT_SURCHARGE : 0));
+      return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: true };
+    }
+
+    // Fallback: geometrische Schätzung (STEP/3MF/OBJ oder Slicer nicht verfügbar)
+    if (!p.hasVolume || p.estimatedWeight <= 0) {
+      return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
+    }
+    const weight = p.estimatedWeight;
+    const layerFactor = presetByInfill(p.infill).layerFactor;
+    const unit = weight * mat.pricePerGram * layerFactor;
+    return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: false };
   };
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
+
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const setupFee = parts.length > 0 ? SETUP_FEE : 0;
   const subtotal = materialTotal + setupFee;
@@ -687,12 +785,19 @@ const CalculatorOnlinePage = () => {
       const attachments = [
         ...parts
           .filter((p) => p.storagePath)
-          .map((p) => ({
-            filename: p.fileName,
-            storage_path: p.storagePath,
-            size_bytes: p.file?.size ?? null,
-            bucket: "project-uploads",
-          })),
+          .map((p) => {
+            const r = sliceOf(p)?.result;
+            return {
+              filename: p.fileName,
+              storage_path: p.storagePath,
+              size_bytes: p.file?.size ?? null,
+              bucket: "project-uploads",
+              slicer_druckzeit_sekunden: r ? Math.round(r.printTimeSeconds) : null,
+              slicer_filament_gramm: r ? Math.round(r.filamentGrams * 10) / 10 : null,
+              slicer_hat_supports: r ? r.hasSupports : null,
+              slicer_layer_anzahl: r ? r.layerCount : null,
+            };
+          }),
         ...partImageAttachments,
         ...refImages
           .filter(r => r.storagePath)
@@ -705,7 +810,17 @@ const CalculatorOnlinePage = () => {
           })),
       ];
 
-      const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}${kiBlock}\n\nNachricht: ${form.message}`;
+      const slicerLines = parts
+        .map((p) => {
+          const r = sliceOf(p)?.result;
+          if (!r) return null;
+          return `- ${p.fileName}: ${formatDuration(r.printTimeSeconds)} Druckzeit, ${r.filamentGrams.toFixed(1)} g Filament, ${r.layerCount} Layer${r.hasSupports ? ", Stützstrukturen nötig" : ""}`;
+        })
+        .filter(Boolean);
+      const slicerBlock = slicerLines.length > 0 ? `\n\n--- Slicer-Analyse (OrcaSlicer-Kernel) ---\n${slicerLines.join("\n")}` : "";
+
+      const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}${slicerBlock}${kiBlock}\n\nNachricht: ${form.message}`;
+
 
       const { error } = await supabase.from("inquiries").insert({
         name: resolvedName,
@@ -811,7 +926,11 @@ const CalculatorOnlinePage = () => {
                 priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
               }`}
             >
-              {hasStep ? "Preis nach Prüfung" : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+              {hasStep
+                ? "Preis nach Prüfung"
+                : slicingActive
+                  ? "Slicer rechnet…"
+                  : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
             </div>
           </div>
         </div>
@@ -1247,11 +1366,36 @@ const CalculatorOnlinePage = () => {
                             <p className="text-xs text-muted-foreground mt-1">
                               {materials.find((m) => m.id === p.materialId)?.name} · {p.color || "Farbe n. A."} · {presetByInfill(p.infill).label}
                             </p>
-                            {p.hasVolume && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                ~{calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)}
-                              </p>
-                            )}
+                            {(() => {
+                              const job = sliceOf(p);
+                              if (job?.status === "running") {
+                                return (
+                                  <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    Modell wird geslict… {job.progress}%
+                                  </p>
+                                );
+                              }
+                              if (job?.status === "done" && job.result) {
+                                const r = job.result;
+                                return (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    <span className="text-primary font-medium">Exakt geslict:</span>{" "}
+                                    {formatDuration(r.printTimeSeconds)} · {r.filamentGrams.toFixed(1)} g ·{" "}
+                                    {r.layerCount} Layer{r.hasSupports ? " · Stützstrukturen" : ""} · Stückpreis {CHF(calc.unit)}
+                                  </p>
+                                );
+                              }
+                              if (p.hasVolume) {
+                                return (
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    ~{calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)} (Schätzung)
+                                  </p>
+                                );
+                              }
+                              return null;
+                            })()}
+
                             <div className="mt-2 flex items-center gap-1">
                               <button onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })} aria-label="Menge verringern"
                                 className="w-8 h-8 rounded-md border border-input flex items-center justify-center hover:bg-muted">

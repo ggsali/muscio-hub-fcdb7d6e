@@ -330,21 +330,35 @@ export default function AnfragenPage() {
           const att = attachments[i];
           const teilname = att.filename?.replace(/\.[^.]+$/, "") || `Teil ${i + 1}`;
 
+          const sl = att as unknown as {
+            slicer_druckzeit_sekunden?: number | null;
+            slicer_filament_gramm?: number | null;
+            slicer_hat_supports?: boolean | null;
+            slicer_layer_anzahl?: number | null;
+          };
+          const slSeconds = sl.slicer_druckzeit_sekunden ?? null;
+          const slGrams = sl.slicer_filament_gramm ?? null;
+
           const { data: part, error: partErr } = await supabase.from("parts").insert({
             order_id: order.id,
             customer_id: customerId,
             teilname,
             material: "PLA",
             menge: 1,
-            gewicht_g: 0,
-            druckzeit_h: 0,
+            gewicht_g: slGrams ?? 0,
+            druckzeit_h: slSeconds ? Math.round((slSeconds / 3600) * 100) / 100 : 0,
             nachbearbeitung_h: 0,
             konstruktion_h: 0,
             preis_pro_stueck: 0,
             preis_total: 0,
             status: "Ausstehend",
             notizen: `Datei: ${att.filename}`,
-          }).select().single();
+            slicer_druckzeit_sekunden: slSeconds,
+            slicer_filament_gramm: slGrams,
+            slicer_hat_supports: sl.slicer_hat_supports ?? null,
+            slicer_layer_anzahl: sl.slicer_layer_anzahl ?? null,
+          } as any).select().single();
+
 
           if (partErr || !part) {
             console.error("Part insert error:", partErr);
