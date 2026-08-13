@@ -1,10 +1,8 @@
-// KI-Materialberatung für den Online-Kalkulator
+// KI-Materialberatung für den Online-Kalkulator (echter Dialog)
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Du bist ein Experte für 3D-Druck-Materialien bei 3DMuscio in der Schweiz. Du hilfst Kunden das optimale Material zu wählen. Verfügbare Materialien: PLA (Standard, günstig, Innenbereich, bis 60°C), PETG (feuchtigkeitsbeständig, lebensmittelecht, bis 80°C), ABS (schlagfest, bis 100°C, Innen), ASA (UV-beständig, Aussenbereich, bis 100°C), TPU (flexibel, gummiartig, schlagabsorbierend), Resin/SLA (hochauflösend, glatte Oberfläche, Sichtteile). Stelle immer nur EINE Frage auf einmal. Antworte auf Deutsch. Halte Antworten kurz und professionell. Nach 5 Antworten gib eine klare Materialempfehlung mit 2-3 Sätzen Begründung.`;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -17,10 +15,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { answers, fileName, geometry, availableMaterials } = await req.json();
-    if (!answers || typeof answers !== "object") {
-      return json({ error: "answers fehlt" }, 400);
-    }
+    const { messages, fileName, geometry, availableMaterials } = await req.json();
+    if (!Array.isArray(messages)) return json({ error: "messages fehlt" }, 400);
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI-Key fehlt" }, 500);
@@ -29,29 +25,36 @@ Deno.serve(async (req) => {
       ? availableMaterials.join(", ")
       : "PLA, PETG, ABS, ASA, TPU, Resin";
 
-    const userPrompt = `Kundenangaben zum Bauteil:
-Datei: ${fileName || "unbekannt"}
-Geometrie: ${geometry || "unbekannt"}
-Verwendungszweck: ${answers.zweck || "-"}
-Mechanische Belastung: ${answers.belastung || "-"}
-Einsatzort: ${answers.einsatzort || "-"}
-Temperaturanforderung: ${answers.temperatur || "-"}
-Flexibilität: ${answers.flexibilitaet || "-"}
+    const SYSTEM_PROMPT = `Du bist ein erfahrener Berater für 3D-Druck-Materialien bei 3DMuscio in der Schweiz.
 
-Wähle GENAU EIN Material aus dieser Liste (Name exakt so schreiben): ${list}
+Materialwissen: PLA (Standard, günstig, Innenbereich, bis 60°C), PETG (feuchtigkeitsbeständig, lebensmittelecht, bis 80°C), ABS (schlagfest, bis 100°C, Innen), ASA (UV-beständig, Aussenbereich, bis 100°C), TPU (flexibel, gummiartig), Resin/SLA (hochauflösend, glatte Sichtteile).
 
-Antworte ausschliesslich als JSON:
-{"material":"<Materialname aus der Liste>","begruendung":"<2-3 Sätze Begründung auf Deutsch>"}`;
+Kontext zum Bauteil des Kunden:
+- Datei: ${fileName || "unbekannt"}
+- Geometrie: ${geometry || "unbekannt"}
+- Wählbare Materialien (Name exakt so verwenden): ${list}
+
+So arbeitest du:
+- Du führst ein echtes Gespräch auf Deutsch, locker und professionell, du duzt den Kunden.
+- Stelle immer nur EINE Frage auf einmal und halte deine Antworten kurz (max. 3-4 Sätze).
+- Wichtige Punkte: Verwendungszweck, mechanische Belastung, Innen/Aussen, Temperatur, Flexibilität, Optik.
+- Der Kunde darf jederzeit Rückfragen stellen, widersprechen oder Alternativen vergleichen — antworte darauf inhaltlich und beende das Gespräch nicht.
+- Sobald du genug weisst, gib eine klare Empfehlung ab und erkläre sie kurz. Danach bleibst du weiter im Gespräch und beantwortest Rückfragen (auch mit geänderter Empfehlung, wenn neue Infos das rechtfertigen).
+
+Antworte AUSSCHLIESSLICH als JSON:
+{"antwort":"<deine Gesprächsantwort auf Deutsch>","empfehlung":"<Materialname aus der Liste oder leer, wenn noch keine Empfehlung>","begruendung":"<2-3 Sätze Begründung oder leer>"}`;
+
+    const chat = messages
+      .filter((m: any) => m && typeof m.content === "string" && m.content.trim())
+      .slice(-30)
+      .map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
 
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...chat],
         response_format: { type: "json_object" },
       }),
     });
@@ -66,7 +69,7 @@ Antworte ausschliesslich als JSON:
 
     const data = await resp.json();
     const raw = data?.choices?.[0]?.message?.content ?? "{}";
-    let parsed: { material?: string; begruendung?: string } = {};
+    let parsed: { antwort?: string; empfehlung?: string; begruendung?: string } = {};
     try {
       parsed = JSON.parse(raw);
     } catch {
@@ -75,8 +78,9 @@ Antworte ausschliesslich als JSON:
     }
 
     return json({
-      material: parsed.material || "PLA",
-      begruendung: parsed.begruendung || "Basierend auf deinen Angaben ist dieses Material die beste Wahl.",
+      antwort: parsed.antwort || String(raw),
+      empfehlung: parsed.empfehlung || null,
+      begruendung: parsed.begruendung || null,
     });
   } catch (e) {
     console.error(e);

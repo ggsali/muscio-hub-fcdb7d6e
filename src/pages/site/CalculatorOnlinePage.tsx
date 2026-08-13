@@ -16,7 +16,7 @@ import ModelPreview from "@/components/site/ModelPreview";
 import { colorHex } from "@/lib/colorMap";
 import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
-import KiMaterialChat, { KI_QUESTIONS, KiResult } from "@/components/site/KiMaterialChat";
+import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
 
 interface Material {
   id: string;
@@ -202,7 +202,7 @@ function isStepFile(name: string): boolean {
   return ext === "step" || ext === "stp";
 }
 
-const STEPS = ["Datei", "Material", "Farbe", "Qualität", "Übersicht"];
+const STEPS = ["Datei", "Bilder", "Material", "Farbe", "Qualität", "Übersicht"];
 
 const CalculatorOnlinePage = () => {
   const [step, setStep] = useState(1);
@@ -575,19 +575,22 @@ const CalculatorOnlinePage = () => {
     const p = parts[0];
     const lines = [
       `Bauteil: ${p?.fileName || "-"}${p?.hasVolume ? ` (${p.volumeCm3.toFixed(1)} cm³, ca. ${p.estimatedWeight.toFixed(1)} g)` : ""}`,
-      ...KI_QUESTIONS.map((q) => `${q.label}: ${kiResult.answers[q.key] || "-"}`),
       `Empfohlenes Material: ${kiResult.material} — ${kiResult.begruendung}`,
+      "",
+      "--- Gesprächsverlauf ---",
+      kiResult.transcript,
     ];
     return lines.join("\n");
   }, [kiResult, parts]);
 
   const canNext =
     (step === 1 && parts.length > 0) ||
-    (step === 2 && !!materialId) ||
-    (step === 3 && (!!color || availableColors.length === 0)) ||
-    step === 4;
+    step === 2 ||
+    (step === 3 && !!materialId) ||
+    (step === 4 && (!!color || availableColors.length === 0)) ||
+    step === 5;
 
-  const goNext = () => setStep((s) => Math.min(5, s + 1));
+  const goNext = () => setStep((s) => Math.min(STEPS.length, s + 1));
   const goBack = () => setStep((s) => Math.max(1, s - 1));
 
   const handleSend = async (e: React.FormEvent) => {
@@ -887,11 +890,29 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  {/* Referenzbilder */}
+                  {parts.length > 0 && (
+                    <Button className="w-full gap-2" onClick={goNext}>
+                      Weiter zu den Bildern <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* ---------- SCHRITT 2 ---------- */}
+              {step === 2 && (
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Bilder hochladen</h1>
+                    <p className="text-muted-foreground text-sm">
+                      Lade ein Bild des gesamten Modells (zusammengebaut) und/oder der einzelnen Teile hoch — Foto, Screenshot oder Skizze.
+                      So verstehen wir genau, wie das Ergebnis aussehen soll.
+                    </p>
+                  </div>
+
                   <div className="bg-card rounded-2xl border border-border p-5">
-                    <h3 className="font-heading text-base font-bold text-foreground">📷 Referenzbilder (optional)</h3>
+                    <h3 className="font-heading text-base font-bold text-foreground">📷 Gesamtmodell &amp; Einzelteile</h3>
                     <p className="text-xs text-muted-foreground mt-0.5 mb-3">
-                      Skizze, Foto oder Mockup — damit wir deine Vorstellung besser verstehen.
+                      Mehrere Bilder möglich · JPG/PNG · max. 20 MB pro Bild · optional, aber sehr hilfreich.
                     </p>
                     <input
                       id="ref-image-input" type="file" multiple accept="image/*" className="hidden"
@@ -906,7 +927,7 @@ const CalculatorOnlinePage = () => {
                       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
                         {refImages.map(r => (
                           <div key={r.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
-                            <img src={r.previewUrl} alt={r.file.name} className="w-full h-full object-cover" />
+                            <img src={r.previewUrl} alt={r.file.name} className="w-full h-full object-cover" loading="lazy" />
                             {r.uploading && (
                               <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
                                 <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -922,20 +943,19 @@ const CalculatorOnlinePage = () => {
                     )}
                   </div>
 
-                  {parts.length > 0 && (
-                    <Button className="w-full gap-2" onClick={goNext}>
-                      Weiter zur Materialwahl <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  )}
+                  <Button className="w-full gap-2" onClick={goNext}>
+                    {refImages.length > 0 ? "Weiter zur Materialwahl" : "Ohne Bilder weiter"} <ArrowRight className="w-4 h-4" />
+                  </Button>
                 </div>
               )}
 
-              {/* ---------- SCHRITT 2 ---------- */}
-              {step === 2 && (
+
+              {/* ---------- SCHRITT 3 ---------- */}
+              {step === 3 && (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Material wählen</h1>
-                    <p className="text-muted-foreground text-sm">Unsere KI hilft dir in 5 kurzen Fragen zum passenden Material.</p>
+                    <p className="text-muted-foreground text-sm">Diskutiere mit unserer KI: stelle Fragen, vergleiche Materialien und übernimm am Ende die Empfehlung — oder wähle selbst.</p>
                   </div>
 
                   <KiMaterialChat
@@ -1001,8 +1021,8 @@ const CalculatorOnlinePage = () => {
                 </div>
               )}
 
-              {/* ---------- SCHRITT 3 ---------- */}
-              {step === 3 && (
+              {/* ---------- SCHRITT 4 ---------- */}
+              {step === 4 && (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Farbe wählen</h1>
@@ -1041,8 +1061,8 @@ const CalculatorOnlinePage = () => {
                 </div>
               )}
 
-              {/* ---------- SCHRITT 4 ---------- */}
-              {step === 4 && (
+              {/* ---------- SCHRITT 5 ---------- */}
+              {step === 5 && (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Qualität wählen</h1>
@@ -1076,8 +1096,8 @@ const CalculatorOnlinePage = () => {
                 </div>
               )}
 
-              {/* ---------- SCHRITT 5 ---------- */}
-              {step === 5 && (
+              {/* ---------- SCHRITT 6 ---------- */}
+              {step === 6 && (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Übersicht & Bestellen</h1>
