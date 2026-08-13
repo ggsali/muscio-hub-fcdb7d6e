@@ -17,7 +17,6 @@ import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
 import Seo from "@/components/site/Seo";
-import { UploadDropzone } from "@/components/site/UploadDropzone";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
 import { toast } from "sonner";
