@@ -1452,12 +1452,13 @@ const CalculatorOnlinePage = () => {
                                 const r = job.result;
                                 return (
                                   <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                                    <p>⏱ Druckzeit: ca. {formatDuration(r.printTimeSeconds)}</p>
+                                    <p>⏱ Druckzeit: ca. {formatDuration(correctedPrintSeconds(p, r))}</p>
                                     <p>⚖ Filament: ca. {r.filamentGrams.toFixed(1)} g</p>
                                     <p>📐 Layer: {r.layerCount}</p>
                                     {r.hasSupports && (
-                                      <p className="text-warning">⚠ Stützstrukturen erforderlich – Nachbearbeitung +CHF 2.50</p>
+                                      <p className="text-warning">⚠ Stützstrukturen erforderlich – Nachbearbeitung +{CHF(SUPPORT_SURCHARGE)}</p>
                                     )}
+
                                     <p>Stückpreis {CHF(calc.unit)}</p>
                                   </div>
                                 );
