@@ -656,8 +656,8 @@ const CalculatorOnlinePage = () => {
     <TooltipProvider delayDuration={150}>
     <div className="pt-12 pb-20">
       <Seo
-        title="3D Druck Kosten berechnen – Online-Kalkulator | 3DMuscio"
-        description="Berechnen Sie Ihren 3D Druckauftrag sofort online. Material, Menge, Lieferzeit – transparente Preise ohne Verstecktes."
+        title="3D Druck Kosten berechnen – Sofortpreis online | 3DMuscio"
+        description="Berechnen Sie Ihren 3D Druckauftrag sofort und kostenlos. Preis in Sekunden, kein Anmelden nötig. FDM & SLA Druck | 3DMuscio Schweiz"
         path="/kalkulator-online"
       />
       {/* Mobile sticky total bar */}
