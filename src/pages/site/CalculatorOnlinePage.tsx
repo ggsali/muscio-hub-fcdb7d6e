@@ -539,13 +539,26 @@ const CalculatorOnlinePage = () => {
 
   // Schritt 1 → 2 automatisch, sobald Datei analysiert / hochgeladen
   useEffect(() => {
-    if (step !== 1 || parts.length === 0) return;
+    if (quickMode || step !== 1 || parts.length === 0) return;
     const ready = parts.every((p) => p.hasVolume || isStepFile(p.fileName));
     if (ready) {
       const t = window.setTimeout(() => setStep(2), 600);
       return () => window.clearTimeout(t);
     }
-  }, [step, parts]);
+  }, [step, parts, quickMode]);
+
+  // Schnell-Schätzung: sobald analysiert, globales Material auf Standard setzen
+  const quickReady = quickMode && parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName));
+  useEffect(() => {
+    if (!quickMode || materialId || parts.length === 0) return;
+    const fallback = parts[0].materialId || materials[0]?.id || "";
+    if (fallback) {
+      setMaterialId(fallback);
+      const mat = materials.find((m) => m.id === fallback);
+      setColor(mat?.farben?.[0] || "");
+    }
+  }, [quickMode, materialId, parts, materials]);
+
 
   const geometryText = useMemo(() => {
     const p = parts[0];
