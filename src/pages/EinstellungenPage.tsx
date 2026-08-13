@@ -386,6 +386,80 @@ export default function EinstellungenPage() {
         </div>
       )}
 
+      {/* ── Tab: Kalkulator & Qualität ── */}
+      {tab === "kalkulator" && (
+        <div className="space-y-4 max-w-full md:max-w-2xl">
+          <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground">
+            Qualitätsstufen und Kalkulationsparameter des Online-Kalkulators. Der <strong>Geschwindigkeitsfaktor</strong> korrigiert
+            die Slicer-Druckzeit (1.0 = kein Eingriff, 0.8 = 20 % schneller).
+          </div>
+
+          <div className="space-y-3">
+            {qualityPresets.map(q => (
+              <div key={q.key} className="bg-card border border-border rounded-lg p-4 space-y-3">
+                <h3 className="font-semibold text-sm uppercase tracking-wide">{q.label}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs">Schichthöhe (mm)</Label>
+                    <Input
+                      type="number" step="0.01" min="0.05"
+                      value={q.layerHeight}
+                      onChange={e => updateQuality(q.key, { layerHeight: parseFloat(e.target.value) || 0 })}
+                      className="bg-input border-border text-right tabular-nums mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Infill (%)</Label>
+                    <Input
+                      type="number" step="1" min="0" max="100"
+                      value={q.infill}
+                      onChange={e => updateQuality(q.key, { infill: parseFloat(e.target.value) || 0 })}
+                      className="bg-input border-border text-right tabular-nums mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Geschwindigkeitsfaktor</Label>
+                    <Input
+                      type="number" step="0.05" min="0.1"
+                      value={q.speedFactor}
+                      onChange={e => updateQuality(q.key, { speedFactor: parseFloat(e.target.value) || 0 })}
+                      className="bg-input border-border text-right tabular-nums mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
+            <h3 className="font-semibold text-sm">Globale Kalkulationsparameter</h3>
+            {[
+              { label: "Fixkosten pro Auftrag", unit: "CHF", step: "0.5", value: calcParams.fix_cost, set: (v: number) => setCalcParams({ ...calcParams, fix_cost: v }) },
+              { label: "Support-Aufschlag", unit: "CHF", step: "0.5", value: calcParams.support_surcharge, set: (v: number) => setCalcParams({ ...calcParams, support_surcharge: v }) },
+              { label: "Mindestpreis", unit: "CHF", step: "0.5", value: calcParams.min_price, set: (v: number) => setCalcParams({ ...calcParams, min_price: v }) },
+              { label: "Maschinenzeit", unit: "CHF / h", step: "0.5", value: localSettings.maschinenzeit_pro_h, set: (v: number) => setLocalSettings({ ...localSettings, maschinenzeit_pro_h: v }) },
+            ].map(f => (
+              <div key={f.label} className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <Label className="text-sm">{f.label}</Label>
+                  <div className="text-xs text-muted-foreground">{f.unit}</div>
+                </div>
+                <Input
+                  type="number" step={f.step}
+                  value={f.value ?? ""}
+                  onChange={e => f.set(parseFloat(e.target.value) || 0)}
+                  className="w-28 md:w-32 bg-input border-border text-right tabular-nums flex-shrink-0"
+                />
+              </div>
+            ))}
+            <div className="pt-2">
+              <SaveButton saved={saved} onClick={handleSaveQualityConfig} />
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {tab === "website" && (
         <div className="space-y-4 max-w-full md:max-w-lg">
           <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground">
