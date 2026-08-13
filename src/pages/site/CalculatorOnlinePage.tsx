@@ -1,21 +1,22 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { takePendingUploads } from "@/lib/pendingUpload";
+import { motion, AnimatePresence } from "framer-motion";
 
-import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, Trash2, Plus, Minus, Loader2, Send, Package, ArrowRight, FileText, Layers } from "lucide-react";
+import {
+  Upload, Trash2, Plus, Minus, Loader2, Send, ArrowRight, ArrowLeft, FileText,
+  Check, Zap, Gauge, Shield, Gem, Sparkles,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import ModelPreview from "@/components/site/ModelPreview";
 import { colorHex } from "@/lib/colorMap";
 import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
+import KiMaterialChat, { KI_QUESTIONS, KiResult } from "@/components/site/KiMaterialChat";
 
 interface Material {
   id: string;
@@ -25,12 +26,20 @@ interface Material {
   farben: string[];
 }
 
-const QUALITY_PRESETS: { key: string; label: string; infill: number; desc: string }[] = [
-  { key: "schnell", label: "Schnell", infill: 15, desc: "Schnell = leicht & günstig" },
-  { key: "standard", label: "Standard", infill: 20, desc: "Standard = ausgewogen" },
-  { key: "stark", label: "Stark", infill: 40, desc: "Stark = belastbar" },
-  { key: "massiv", label: "Massiv", infill: 80, desc: "Massiv = maximale Festigkeit" },
+const QUALITY_PRESETS = [
+  { key: "schnell", label: "Schnell", infill: 15, layerHeight: 0.3, layerFactor: 1.0, desc: "Leicht & günstig", Icon: Zap },
+  { key: "standard", label: "Standard", infill: 20, layerHeight: 0.2, layerFactor: 1.15, desc: "Ausgewogen", Icon: Gauge },
+  { key: "stark", label: "Stark", infill: 40, layerHeight: 0.15, layerFactor: 1.35, desc: "Belastbar", Icon: Shield },
+  { key: "massiv", label: "Massiv", infill: 80, layerHeight: 0.1, layerFactor: 1.6, desc: "Maximale Festigkeit", Icon: Gem },
 ];
+
+const presetByInfill = (infill: number) =>
+  QUALITY_PRESETS.find((q) => q.infill === infill) || QUALITY_PRESETS[1];
+
+const qualityAdminLabel = (infill: number) => {
+  const q = presetByInfill(infill);
+  return `${q.label} (${q.layerHeight}mm, ${q.infill}% Infill)`;
+};
 
 interface PartImage {
   id: string;
@@ -162,7 +171,6 @@ async function calc3mfVolumeCm3(file: File): Promise<number> {
       ])
     }
 
-    console.log('3MF: Vertices gefunden:', vertices.length)
     if (vertices.length === 0) return 0
 
     const triangleNodes = doc.getElementsByTagName('triangle')
@@ -182,7 +190,6 @@ async function calc3mfVolumeCm3(file: File): Promise<number> {
       }
     }
 
-    console.log('3MF: Volumen berechnet:', Math.abs(volume) / 1000, 'cm³')
     return Math.abs(volume) / 1000
   } catch (e) {
     console.error('3MF Volumen Fehler:', e)
@@ -195,17 +202,26 @@ function isStepFile(name: string): boolean {
   return ext === "step" || ext === "stp";
 }
 
+const STEPS = ["Datei", "Material", "Farbe", "Qualität", "Übersicht"];
+
 const CalculatorOnlinePage = () => {
+  const [step, setStep] = useState(1);
   const [parts, setParts] = useState<Part[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [materialsLoading, setMaterialsLoading] = useState(true);
   const [materialsError, setMaterialsError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [showQuote, setShowQuote] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
   const [refImages, setRefImages] = useState<Array<{ id: string; file: File; storagePath?: string; uploading: boolean; previewUrl: string }>>([]);
+
+  // Globale Auswahl (gilt für alle hochgeladenen Teile)
+  const [materialId, setMaterialId] = useState("");
+  const [color, setColor] = useState("");
+  const [qualityKey, setQualityKey] = useState("standard");
+  const [kiResult, setKiResult] = useState<KiResult | null>(null);
+  const [chatKey, setChatKey] = useState(0);
 
   const addRefImage = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -243,7 +259,6 @@ const CalculatorOnlinePage = () => {
     });
   };
 
-
   const loadMaterials = useCallback(async () => {
     const { data, error } = await supabase
       .from("materials")
@@ -280,9 +295,7 @@ const CalculatorOnlinePage = () => {
 
   useEffect(() => {
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setIsLoggedIn(true);
       const { data: profile } = await supabase
@@ -292,12 +305,10 @@ const CalculatorOnlinePage = () => {
         .maybeSingle();
       const fullName = profile?.full_name || user.user_metadata?.full_name || "";
       const parts2 = fullName.trim().split(/\s+/);
-      const vorname = parts2[0] || "";
-      const nachname = parts2.slice(1).join(" ") || "";
       setForm((f) => ({
         ...f,
-        vorname,
-        nachname,
+        vorname: parts2[0] || "",
+        nachname: parts2.slice(1).join(" ") || "",
         email: user.email || "",
         phone: profile?.phone || user.user_metadata?.phone || "",
       }));
@@ -401,7 +412,6 @@ const CalculatorOnlinePage = () => {
   }, [materials, addFile]);
 
   const handleDrop = (e: React.DragEvent) => {
-
     e.preventDefault();
     setDragOver(false);
     Array.from(e.dataTransfer.files).forEach(addFile);
@@ -418,8 +428,7 @@ const CalculatorOnlinePage = () => {
       const newMatId = u.materialId ?? currentPart.materialId;
       const mat = materials.find((m) => m.id === newMatId);
       if (mat) {
-        const newWeight = calcWeight(currentPart.volumeCm3, mat, newInfill);
-        u = { ...u, estimatedWeight: newWeight };
+        u = { ...u, estimatedWeight: calcWeight(currentPart.volumeCm3, mat, newInfill) };
       }
     }
     setParts((p) => p.map((x) => {
@@ -444,6 +453,9 @@ const CalculatorOnlinePage = () => {
       supabase.from("calculator_uploads").update(patch).eq("id", id).then(() => {});
     }
   };
+
+  const applyAll = (u: Partial<Part>) => parts.forEach((p) => update(p.id, u));
+
   const remove = (id: string) => setParts((p) => {
     const target = p.find((x) => x.id === id);
     if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
@@ -500,14 +512,14 @@ const CalculatorOnlinePage = () => {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0 };
     }
     const weight = p.estimatedWeight;
-    const matCost = weight * mat.pricePerGram;
+    const layerFactor = presetByInfill(p.infill).layerFactor;
+    const matCost = weight * mat.pricePerGram * layerFactor;
     const unit = matCost;
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount };
   };
-
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
@@ -516,16 +528,76 @@ const CalculatorOnlinePage = () => {
   const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
   const total = subtotal + shipping;
 
+  const hasStep = parts.some((p) => isStepFile(p.fileName));
+  const selectedMaterial = materials.find((m) => m.id === materialId) || null;
+  const availableColors = selectedMaterial?.farben || [];
+
+  // Schritt 1 → 2 automatisch, sobald Datei analysiert / hochgeladen
+  useEffect(() => {
+    if (step !== 1 || parts.length === 0) return;
+    const ready = parts.every((p) => p.hasVolume || isStepFile(p.fileName));
+    if (ready) {
+      const t = window.setTimeout(() => setStep(2), 600);
+      return () => window.clearTimeout(t);
+    }
+  }, [step, parts]);
+
+  const geometryText = useMemo(() => {
+    const p = parts[0];
+    if (!p) return "";
+    return p.hasVolume ? `Volumen ca. ${p.volumeCm3.toFixed(1)} cm³` : "Geometrie unbekannt";
+  }, [parts]);
+
+  const chooseMaterial = (id: string) => {
+    setMaterialId(id);
+    const mat = materials.find((m) => m.id === id);
+    const firstColor = mat?.farben?.[0] || "";
+    setColor((c) => (mat?.farben?.includes(c) ? c : firstColor));
+    applyAll({ materialId: id });
+  };
+
+  const handleKiResult = (r: KiResult) => {
+    setKiResult(r);
+    const match = materials.find((m) => m.name.toLowerCase().includes(r.material.toLowerCase()))
+      || materials.find((m) => r.material.toLowerCase().includes(m.name.toLowerCase()));
+    if (match) setKiResult({ ...r, material: match.name });
+  };
+
+  const recommendedMaterial = useMemo(() => {
+    if (!kiResult) return null;
+    return materials.find((m) => m.name.toLowerCase() === kiResult.material.toLowerCase())
+      || materials.find((m) => m.name.toLowerCase().includes(kiResult.material.toLowerCase()))
+      || null;
+  }, [kiResult, materials]);
+
+  const kiSummary = useMemo(() => {
+    if (!kiResult) return null;
+    const p = parts[0];
+    const lines = [
+      `Bauteil: ${p?.fileName || "-"}${p?.hasVolume ? ` (${p.volumeCm3.toFixed(1)} cm³, ca. ${p.estimatedWeight.toFixed(1)} g)` : ""}`,
+      ...KI_QUESTIONS.map((q) => `${q.label}: ${kiResult.answers[q.key] || "-"}`),
+      `Empfohlenes Material: ${kiResult.material} — ${kiResult.begruendung}`,
+    ];
+    return lines.join("\n");
+  }, [kiResult, parts]);
+
+  const canNext =
+    (step === 1 && parts.length > 0) ||
+    (step === 2 && !!materialId) ||
+    (step === 3 && (!!color || availableColors.length === 0)) ||
+    step === 4;
+
+  const goNext = () => setStep((s) => Math.min(5, s + 1));
+  const goBack = () => setStep((s) => Math.max(1, s - 1));
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       const summary = parts
-        .map((p) => `${p.fileName} (${p.quantity}× ${(materials.find(m=>m.id===p.materialId)?.name || p.materialId)}, ${p.color}, ${p.infill}% Infill)`)
+        .map((p) => `${p.fileName} (${p.quantity}× ${(materials.find(m => m.id === p.materialId)?.name || p.materialId)}, ${p.color}, ${qualityAdminLabel(p.infill)})`)
         .join("; ");
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       let customer_id: string | null = null;
       let resolvedVorname = form.vorname.trim();
       let resolvedNachname = form.nachname.trim();
@@ -547,14 +619,12 @@ const CalculatorOnlinePage = () => {
         }
         if (!resolvedPhone) resolvedPhone = (cust?.telefon as string) || "";
       } else {
-        // Nicht eingeloggt: Kunde mit voller Adresse anlegen oder verknüpfen
         if (resolvedEmail) {
           const { data: existing } = await supabase.from("customers")
             .select("id, vorname, name, strasse, plz, ort")
             .ilike("email", resolvedEmail).maybeSingle();
           if (existing) {
             customer_id = existing.id;
-            // Adresse aktualisieren falls leer
             const updates: any = {};
             if (!existing.strasse && form.strasse) updates.strasse = form.strasse;
             if (!existing.plz && form.plz) updates.plz = form.plz;
@@ -584,6 +654,7 @@ const CalculatorOnlinePage = () => {
       const addressLine = !user && (form.strasse || form.plz || form.ort)
         ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}`
         : "";
+      const kiBlock = kiSummary ? `\n\n--- KI-Materialberatung ---\n${kiSummary}` : "";
       const partImageAttachments = parts.flatMap(p =>
         p.images.filter(i => i.storagePath).map(i => ({
           filename: i.file.name,
@@ -615,35 +686,45 @@ const CalculatorOnlinePage = () => {
           })),
       ];
 
+      const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}${kiBlock}\n\nNachricht: ${form.message}`;
+
       const { error } = await supabase.from("inquiries").insert({
         name: resolvedName,
         email: resolvedEmail,
         telefon: resolvedPhone || null,
         betreff: "Preisanfrage Kalkulator",
-        nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}\n\nNachricht: ${form.message}`,
+        nachricht,
         status: "Neu",
         quelle: "kalkulator",
         customer_id,
         attachments,
+        ki_beratung_zusammenfassung: kiSummary,
+        ki_empfohlenes_material: kiResult?.material ?? null,
       } as any);
       if (error) throw error;
-      // Admin-Benachrichtigung per E-Mail (nicht blockierend)
+
       supabase.functions.invoke("notify-inquiry-admin", {
         body: {
           name: resolvedName,
           email: resolvedEmail,
           telefon: resolvedPhone || null,
           betreff: "Preisanfrage Kalkulator",
-          nachricht: `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}\n\nNachricht: ${form.message}`,
+          nachricht,
+          ki_beratung_zusammenfassung: kiSummary,
         },
       }).catch((e) => console.error("Admin-Mail Fehler:", e));
+
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
-      setShowQuote(false);
       setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setParts([]);
       refImages.forEach(r => { if (r.previewUrl) URL.revokeObjectURL(r.previewUrl); });
       setRefImages([]);
-
+      setKiResult(null);
+      setMaterialId("");
+      setColor("");
+      setQualityKey("standard");
+      setChatKey((k) => k + 1);
+      setStep(1);
     } catch (err) {
       console.error(err);
       toast.error("Fehler beim Senden — bitte später erneut versuchen.");
@@ -652,47 +733,72 @@ const CalculatorOnlinePage = () => {
     }
   };
 
+  const priceBadge = !materialId || parts.length === 0 || hasStep ? null : total;
+
   return (
-    <TooltipProvider delayDuration={150}>
-    <div className="pt-12 pb-20">
+    <div className="pb-20">
       <Seo
         title="3D Druck Kosten berechnen – Sofortpreis online | 3DMuscio"
         description="Berechnen Sie Ihren 3D Druckauftrag sofort und kostenlos. Preis in Sekunden, kein Anmelden nötig. FDM & SLA Druck ab CHF 5.– | 3DMuscio Schweiz"
         path="/kalkulator-online"
       />
-      {/* Mobile sticky total bar */}
-      {parts.length > 0 && (
-        <div className="lg:hidden sticky top-16 z-30 bg-card/95 backdrop-blur border-b border-border px-4 py-2 flex items-center justify-between gap-3">
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</span>
-            <span className="text-base font-bold text-primary">{CHF(total)}</span>
-          </div>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            disabled={parts.length === 0 || submitting || parts.some(p => p.uploading) || parts.some(p => /\.step$|\.stp$/i.test(p.fileName))}
-            onClick={async (e) => {
-              if (isLoggedIn) await handleSend(e as unknown as React.FormEvent);
-              else setShowQuote(true);
-            }}
-          >
-            Anfragen <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-      )}
-      <div className="container mx-auto px-4 max-w-6xl">
-        <ScrollReveal>
-          <div className="text-center mb-10">
-            <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Online-Kalkulator</p>
-            <h1 className="font-heading text-3xl md:text-5xl font-extrabold text-foreground mb-4">
-              Preis sofort berechnen
-            </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Lade deine 3D-Modelle hoch (STL, 3MF, STEP, OBJ) und erhalte eine sofortige Preisschätzung.
-            </p>
-          </div>
-        </ScrollReveal>
 
+      {/* Sticky Stepper-Header */}
+      <div className="sticky top-16 z-30 bg-background/95 backdrop-blur border-b border-border">
+        <div className="container mx-auto px-4 max-w-4xl py-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {STEPS.map((label, i) => {
+              const n = i + 1;
+              const active = n === step;
+              const doneStep = n < step;
+              return (
+                <div key={label} className="flex items-center gap-1.5 sm:gap-2 flex-1 last:flex-none">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div
+                      className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : doneStep
+                            ? "bg-primary/15 text-primary"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {doneStep ? <Check className="w-3.5 h-3.5" /> : n}
+                    </div>
+                    <span className={`hidden sm:block text-xs truncate ${active ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                      {label}
+                    </span>
+                  </div>
+                  {n < STEPS.length && (
+                    <div className={`h-px flex-1 ${doneStep ? "bg-primary/40" : "bg-border"}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={goBack}
+              disabled={step === 1}
+              className="gap-1.5 text-xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Zurück
+            </Button>
+            <div
+              className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors ${
+                priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {hasStep ? "Preis nach Prüfung" : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 max-w-4xl pt-8">
         {materialsLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -700,499 +806,457 @@ const CalculatorOnlinePage = () => {
         ) : materialsError ? (
           <div className="text-center py-20 text-destructive">{materialsError}</div>
         ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Upload + parts */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-2xl border border-border bg-primary/5 p-4 flex items-start gap-3">
-              <Layers className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-              <div>
-                <Badge className="mb-1">Mehrere Teile möglich</Badge>
-                <p className="text-sm text-muted-foreground">
-                  Lade mehrere STL-Dateien hoch — jedes Teil wird separat konfiguriert und kalkuliert.
-                </p>
-              </div>
-            </div>
-
-            <div
-              onDrop={handleDrop}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
-                dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
-              }`}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
             >
-              <input
-                id="file-input"
-                type="file"
-                multiple
-                accept=".stl,.3mf,.step,.obj"
-                className="hidden"
-                onChange={handleInput}
-              />
-              <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
-              <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
-              <label htmlFor="file-input">
-                <Button asChild className="gap-2 cursor-pointer">
-                  <span>
-                    <Upload className="w-4 h-4" /> Dateien auswählen
-                  </span>
-                </Button>
-              </label>
-            </div>
+              {/* ---------- SCHRITT 1 ---------- */}
+              {step === 1 && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h1 className="font-heading text-2xl md:text-4xl font-extrabold text-foreground mb-2">
+                      Datei hochladen
+                    </h1>
+                    <p className="text-muted-foreground">
+                      STL, 3MF, STEP oder OBJ — wir analysieren dein Modell sofort.
+                    </p>
+                  </div>
 
-            {/* Referenzbilder */}
-            <div className="bg-card rounded-2xl border border-border p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-heading text-base font-bold text-foreground">📷 Referenzbilder (optional)</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Skizze, Foto oder Mockup — damit wir deine Vorstellung besser verstehen.
-                  </p>
-                </div>
-              </div>
-              <input
-                id="ref-image-input"
-                type="file"
-                multiple
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  Array.from(e.target.files || []).forEach(addRefImage);
-                  e.target.value = "";
-                }}
-              />
-              <label htmlFor="ref-image-input">
-                <Button asChild variant="outline" size="sm" className="gap-2 cursor-pointer">
-                  <span><Upload className="w-3.5 h-3.5" /> Bilder hinzufügen</span>
-                </Button>
-              </label>
-              {refImages.length > 0 && (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-4">
-                  {refImages.map(r => (
-                    <div key={r.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
-                      <img src={r.previewUrl} alt={r.file.name} className="w-full h-full object-cover" />
-                      {r.uploading && (
-                        <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
+                      dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
+                    }`}
+                  >
+                    <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj" className="hidden" onChange={handleInput} />
+                    <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
+                    <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
+                    <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
+                    <label htmlFor="file-input">
+                      <Button asChild className="gap-2 cursor-pointer">
+                        <span><Upload className="w-4 h-4" /> Dateien auswählen</span>
+                      </Button>
+                    </label>
+                  </div>
+
+                  {parts.length > 0 && (
+                    <div className="space-y-3">
+                      {parts.map((p) => (
+                        <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
+                          {p.file ? (
+                            <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden shrink-0">
+                              <ModelPreview file={p.file} />
+                            </div>
+                          ) : (
+                            <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                              <FileText className="w-7 h-7 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">{p.fileName}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {p.hasVolume && p.volumeCm3 > 0
+                                ? `Volumen: ${p.volumeCm3.toFixed(1)} cm³`
+                                : isStepFile(p.fileName)
+                                  ? "STEP-Datei · Preis nach manueller Prüfung"
+                                  : "Volumen wird berechnet…"}
+                              {p.uploading && <span className="ml-2 text-primary">· wird hochgeladen…</span>}
+                            </p>
+                          </div>
+                          <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeRefImage(r.id)}
-                        className="absolute top-1 right-1 bg-background/80 hover:bg-destructive hover:text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        aria-label="Bild entfernen"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
+                      ))}
                     </div>
-                  ))}
+                  )}
+
+                  {hasStep && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+                      <p className="font-medium text-amber-800">⚠️ STEP-Dateien können nicht automatisch berechnet werden.</p>
+                      <p className="text-amber-700 text-xs mt-1">Der Preis folgt nach manueller Prüfung — du kannst trotzdem eine unverbindliche Anfrage senden.</p>
+                      <a href="https://convert3d.org/step-to-stl" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary font-medium mt-2 hover:underline">
+                        Kostenlos zu STL konvertieren →
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Referenzbilder */}
+                  <div className="bg-card rounded-2xl border border-border p-5">
+                    <h3 className="font-heading text-base font-bold text-foreground">📷 Referenzbilder (optional)</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+                      Skizze, Foto oder Mockup — damit wir deine Vorstellung besser verstehen.
+                    </p>
+                    <input
+                      id="ref-image-input" type="file" multiple accept="image/*" className="hidden"
+                      onChange={(e) => { Array.from(e.target.files || []).forEach(addRefImage); e.target.value = ""; }}
+                    />
+                    <label htmlFor="ref-image-input">
+                      <Button asChild variant="outline" size="sm" className="gap-2 cursor-pointer">
+                        <span><Upload className="w-3.5 h-3.5" /> Bilder hinzufügen</span>
+                      </Button>
+                    </label>
+                    {refImages.length > 0 && (
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
+                        {refImages.map(r => (
+                          <div key={r.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
+                            <img src={r.previewUrl} alt={r.file.name} className="w-full h-full object-cover" />
+                            {r.uploading && (
+                              <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                              </div>
+                            )}
+                            <button type="button" onClick={() => removeRefImage(r.id)} aria-label="Bild entfernen"
+                              className="absolute top-1 right-1 bg-background/80 hover:bg-destructive hover:text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {parts.length > 0 && (
+                    <Button className="w-full gap-2" onClick={goNext}>
+                      Weiter zur Materialwahl <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               )}
-            </div>
 
+              {/* ---------- SCHRITT 2 ---------- */}
+              {step === 2 && (
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Material wählen</h1>
+                    <p className="text-muted-foreground text-sm">Unsere KI hilft dir in 5 kurzen Fragen zum passenden Material.</p>
+                  </div>
 
+                  <KiMaterialChat
+                    key={chatKey}
+                    fileName={parts[0]?.fileName || ""}
+                    geometry={geometryText}
+                    availableMaterials={materials.map((m) => m.name)}
+                    onResult={handleKiResult}
+                  />
 
-            {parts.length > 0 && (
-              <div className="space-y-3">
-                {calcs.map(({ part: p, calc }) => (
-                  <div key={p.id} className="bg-card rounded-2xl border border-border p-5">
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
-                        {p.file ? (
-                          <div className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px] rounded-xl bg-muted overflow-hidden shrink-0">
-                            <ModelPreview file={p.file} />
-                          </div>
-                        ) : (
-                          <div className="w-[100px] h-[100px] sm:w-[150px] sm:h-[150px] rounded-xl bg-muted flex items-center justify-center shrink-0">
-                            <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{p.fileName}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {p.hasVolume && p.volumeCm3 > 0
-                              ? <>Volumen: {p.volumeCm3.toFixed(1)} cm³ · Gewicht: ~{calc.weight.toFixed(1)}g</>
-                              : isStepFile(p.fileName)
-                                ? <>STEP-Datei · Preis auf Anfrage</>
-                                : <>Volumen wird berechnet…</>}
-                            {p.uploading && <span className="ml-2 text-primary">· Datei wird hochgeladen…</span>}
-                            {!p.uploading && p.storagePath && <span className="ml-2 text-success">· Datei bereit</span>}
-                            {!p.uploading && !p.storagePath && (
-                              <span className="ml-2 text-warning">· Datei nicht hochgeladen</span>
+                  {kiResult && (
+                    <div className="rounded-2xl border-2 border-primary bg-primary/5 p-5">
+                      <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-primary mb-1">
+                        <Sparkles className="w-3.5 h-3.5" /> Empfehlung
+                      </div>
+                      <p className="font-heading text-2xl font-extrabold text-primary">{kiResult.material}</p>
+                      <p className="text-sm text-muted-foreground mt-2">{kiResult.begruendung}</p>
+                      {recommendedMaterial && (
+                        <Button
+                          className="mt-4 gap-2"
+                          onClick={() => chooseMaterial(recommendedMaterial.id)}
+                          disabled={materialId === recommendedMaterial.id}
+                        >
+                          <Check className="w-4 h-4" />
+                          {materialId === recommendedMaterial.id ? `${recommendedMaterial.name} übernommen` : `${recommendedMaterial.name} übernehmen`}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-sm font-semibold mb-2">Alle Materialien</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {materials.map((m) => {
+                        const sel = materialId === m.id;
+                        const rec = recommendedMaterial?.id === m.id;
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => chooseMaterial(m.id)}
+                            className={`relative text-left rounded-xl border-2 p-4 transition-all ${
+                              sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
+                            }`}
+                          >
+                            {rec && !sel && (
+                              <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
                             )}
-                          </p>
-                          {p.hasVolume && p.volumeCm3 > 0 && (
+                            {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
+                            <p className="font-bold text-sm">{m.name}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{m.farben.length} Farben</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {materialId && (
+                    <Button className="w-full gap-2" onClick={goNext}>
+                      Weiter zur Farbe <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* ---------- SCHRITT 3 ---------- */}
+              {step === 3 && (
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Farbe wählen</h1>
+                    <p className="text-muted-foreground text-sm">Verfügbare Farben für {selectedMaterial?.name}.</p>
+                  </div>
+
+                  {availableColors.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">Für dieses Material stimmen wir die Farbe individuell mit dir ab.</p>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                      {availableColors.map((name) => {
+                        const sel = color === name;
+                        return (
+                          <button
+                            key={name}
+                            type="button"
+                            onClick={() => { setColor(name); applyAll({ color: name }); }}
+                            className={`rounded-xl border-2 p-3 flex flex-col items-center gap-2 transition-all ${
+                              sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                            }`}
+                          >
+                            <span
+                              className="w-10 h-10 rounded-full border border-border"
+                              style={{ backgroundColor: colorHex(name) }}
+                            />
+                            <span className="text-xs font-medium text-center">{name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <Button className="w-full gap-2" onClick={goNext} disabled={availableColors.length > 0 && !color}>
+                    Weiter zur Qualität <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
+              {/* ---------- SCHRITT 4 ---------- */}
+              {step === 4 && (
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Qualität wählen</h1>
+                    <p className="text-muted-foreground text-sm">Wie belastbar soll dein Teil sein?</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {QUALITY_PRESETS.map((q) => {
+                      const sel = qualityKey === q.key;
+                      const Icon = q.Icon;
+                      return (
+                        <button
+                          key={q.key}
+                          type="button"
+                          onClick={() => { setQualityKey(q.key); applyAll({ infill: q.infill }); }}
+                          className={`rounded-2xl border-2 p-5 text-left transition-all ${
+                            sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                          }`}
+                        >
+                          <Icon className={`w-6 h-6 mb-3 ${sel ? "text-primary" : "text-muted-foreground"}`} />
+                          <p className="font-bold text-sm">{q.label}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{q.desc}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <Button className="w-full gap-2" onClick={goNext}>
+                    Weiter zur Übersicht <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
+              {/* ---------- SCHRITT 5 ---------- */}
+              {step === 5 && (
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Übersicht & Bestellen</h1>
+                    <p className="text-muted-foreground text-sm">Prüfe deine Auswahl und sende die Anfrage ab.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {calcs.map(({ part: p, calc }) => (
+                      <div key={p.id} className="bg-card rounded-2xl border border-border p-4">
+                        <div className="flex items-start gap-4">
+                          {p.file ? (
+                            <div className="w-20 h-20 rounded-xl bg-muted overflow-hidden shrink-0">
+                              <ModelPreview file={p.file} />
+                            </div>
+                          ) : (
+                            <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                              <FileText className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">{p.fileName}</p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              * Geschätztes Gewicht. Verbindlicher Preis nach Prüfung.
+                              {materials.find((m) => m.id === p.materialId)?.name} · {p.color || "Farbe n. A."} · {presetByInfill(p.infill).label}
                             </p>
+                            {p.hasVolume && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                ~{calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)}
+                              </p>
+                            )}
+                            <div className="mt-2 flex items-center gap-1">
+                              <button onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })} aria-label="Menge verringern"
+                                className="w-8 h-8 rounded-md border border-input flex items-center justify-center hover:bg-muted">
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <Input type="number" min={1} value={p.quantity}
+                                onChange={(e) => update(p.id, { quantity: Math.max(1, Number(e.target.value)) })}
+                                className="h-8 w-16 text-center" aria-label="Menge" />
+                              <button onClick={() => update(p.id, { quantity: p.quantity + 1 })} aria-label="Menge erhöhen"
+                                className="w-8 h-8 rounded-md border border-input flex items-center justify-center hover:bg-muted">
+                                <Plus className="w-3 h-3" />
+                              </button>
+                              <span className="ml-auto text-base font-bold text-primary">
+                                {isStepFile(p.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}
+                              </span>
+                            </div>
+                            {p.quantity >= 4 && p.quantity < 5 && (
+                              <p className="mt-2 text-xs text-success font-medium">Ab 5 Stück: 10% Rabatt</p>
+                            )}
+                            {p.quantity >= 5 && p.quantity < 10 && (
+                              <p className="mt-2 text-xs text-success font-medium">10% Rabatt aktiv · Ab 10 Stück: 15% Rabatt</p>
+                            )}
+                            {p.quantity >= 10 && (
+                              <p className="mt-2 text-xs text-success font-medium">15% Mengenrabatt aktiv</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Per-Part Bilder */}
+                        <div className="mt-4 pt-3 border-t border-border">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-semibold text-foreground">📷 Bilder zu diesem Teil <span className="text-muted-foreground font-normal">(optional)</span></p>
+                            <input id={`part-img-${p.id}`} type="file" multiple accept="image/*" className="hidden"
+                              onChange={(e) => { Array.from(e.target.files || []).forEach(f => addPartImage(p.id, f)); e.target.value = ""; }} />
+                            <label htmlFor={`part-img-${p.id}`}>
+                              <Button asChild variant="outline" size="sm" className="gap-1.5 cursor-pointer h-8 text-xs">
+                                <span><Upload className="w-3 h-3" /> Bild hinzufügen</span>
+                              </Button>
+                            </label>
+                          </div>
+                          {p.images.length > 0 && (
+                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                              {p.images.map(img => (
+                                <div key={img.id} className="relative aspect-square rounded-md overflow-hidden border border-border bg-muted group">
+                                  <img src={img.previewUrl} alt={img.file.name} className="w-full h-full object-cover" />
+                                  {img.uploading && (
+                                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                    </div>
+                                  )}
+                                  <button type="button" onClick={() => removePartImage(p.id, img.id)} aria-label="Bild entfernen"
+                                    className="absolute top-0.5 right-0.5 bg-background/80 hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
                           )}
                         </div>
                       </div>
-                      <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-xs">Material</Label>
-                        <select
-                          value={p.materialId}
-                          onChange={(e) => update(p.id, { materialId: e.target.value })}
-                          className="mt-1 w-full h-9 rounded-md border border-input bg-background px-2 text-sm"
-                        >
-                          {materials.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Menge</Label>
-                        <div className="mt-1 flex items-center gap-1">
-                          <button
-                            onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })}
-                            aria-label="Menge verringern"
-                            className="w-9 h-9 rounded-md border border-input flex items-center justify-center hover:bg-muted"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <Input
-                            type="number"
-                            min={1}
-                            value={p.quantity}
-                            onChange={(e) => update(p.id, { quantity: Math.max(1, Number(e.target.value)) })}
-                            className="h-9 text-center"
-                            aria-label="Menge"
-                          />
-                          <button
-                            onClick={() => update(p.id, { quantity: p.quantity + 1 })}
-                            aria-label="Menge erhöhen"
-                            className="w-9 h-9 rounded-md border border-input flex items-center justify-center hover:bg-muted"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Farbe</Label>
-                        <ColorPicker
-                          farben={materials.find((m) => m.id === p.materialId)?.farben || []}
-                          selected={p.color}
-                          onSelect={(c) => update(p.id, { color: c })}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Qualität / Festigkeit</Label>
-                        <div className="mt-2 grid grid-cols-2 gap-1.5">
-                          {QUALITY_PRESETS.map((q) => {
-                            const selected = p.infill === q.infill;
-                            return (
-                              <Tooltip key={q.key}>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={() => update(p.id, { infill: q.infill })}
-                                    className={`h-9 rounded-md border text-xs font-medium transition-all ${selected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background hover:bg-muted"}`}
-                                  >
-                                    {q.label}
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>{q.desc}</TooltipContent>
-                              </Tooltip>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Per-Part Bilder / Skizzen */}
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <p className="text-xs font-semibold text-foreground">📷 Bilder zu diesem Teil <span className="text-muted-foreground font-normal">(optional)</span></p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">Foto, Skizze oder Referenz — hilft uns dein Teil besser zu verstehen.</p>
-                        </div>
-                        <input
-                          id={`part-img-${p.id}`}
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            Array.from(e.target.files || []).forEach(f => addPartImage(p.id, f));
-                            e.target.value = "";
-                          }}
-                        />
-                        <label htmlFor={`part-img-${p.id}`}>
-                          <Button asChild variant="outline" size="sm" className="gap-1.5 cursor-pointer h-8 text-xs">
-                            <span><Upload className="w-3 h-3" /> Bild hinzufügen</span>
-                          </Button>
-                        </label>
-                      </div>
-                      {p.images.length > 0 && (
-                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-                          {p.images.map(img => (
-                            <div key={img.id} className="relative aspect-square rounded-md overflow-hidden border border-border bg-muted group">
-                              <img src={img.previewUrl} alt={img.file.name} className="w-full h-full object-cover" />
-                              {img.uploading && (
-                                <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-                                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                </div>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => removePartImage(p.id, img.id)}
-                                className="absolute top-0.5 right-0.5 bg-background/80 hover:bg-destructive hover:text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                                aria-label="Bild entfernen"
-                              >
-                                <Trash2 className="w-2.5 h-2.5" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* STEP-Hinweis */}
-                    {isStepFile(p.fileName) && (
-                      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm">
-                        <p className="font-medium text-amber-800">⚠️ STEP-Dateien können nicht automatisch berechnet werden.</p>
-                        <p className="text-amber-700 text-xs mt-1">Konvertiere deine Datei zu STL für eine automatische Preisberechnung.</p>
-                        <a
-                          href="https://convert3d.org/step-to-stl"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-primary font-medium mt-2 hover:underline"
-                        >
-                          Kostenlos zu STL konvertieren →
-                        </a>
-                      </div>
-                    )}
-
-                    {/* Mengenrabatt-Hinweis */}
-                    {p.quantity >= 4 && p.quantity < 5 && (
-                      <p className="mt-3 text-xs text-success font-medium">Ab 5 Stück: 10% Rabatt</p>
-                    )}
-                    {p.quantity >= 5 && p.quantity < 10 && (
-                      <p className="mt-3 text-xs text-success font-medium">10% Rabatt aktiv · Ab 10 Stück: 15% Rabatt</p>
-                    )}
-                    {p.quantity >= 10 && (
-                      <p className="mt-3 text-xs text-success font-medium">15% Mengenrabatt aktiv</p>
-                    )}
-
-                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-border">
-                      <span className="text-xs text-muted-foreground">
-                        {isStepFile(p.fileName) ? "Preis nach Prüfung" : <>Stückpreis: {CHF(calc.unit)}{calc.discount > 0 && ` · ${calc.discount * 100}% Rabatt`}</>}
-                      </span>
-                      <span className="text-lg font-bold text-primary">
-                        {isStepFile(p.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                <label htmlFor="file-input" className="block">
-                  <div className="rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all p-4 flex items-center justify-center gap-2 cursor-pointer text-sm text-muted-foreground">
-                    <Plus className="w-4 h-4" /> Weitere Datei hinzufügen
-                  </div>
-                </label>
-              </div>
-            )}
-          </div>
-
-          {/* Right: Summary */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 bg-card rounded-2xl border border-border p-6">
-              <h3 className="font-heading text-lg font-bold mb-4">Zusammenfassung</h3>
-              <div className="space-y-2 text-sm">
-                {calcs.length > 0 && (
-                  <div className="space-y-1.5 pb-3 mb-1 border-b border-border">
-                    {calcs.map(({ part, calc }, i) => (
-                      <div key={part.id} className="flex justify-between gap-2 text-xs text-muted-foreground">
-                        <span className="truncate">Teil {i + 1}: {part.fileName} ({part.quantity}×)</span>
-                        <span className="text-foreground shrink-0">{isStepFile(part.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}</span>
-                      </div>
                     ))}
                   </div>
-                )}
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Materialkosten</span>
-                  <span className="text-foreground">{CHF(materialTotal)}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Setup-Gebühr</span>
-                  <span className="text-foreground">{CHF(setupFee)}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Versand</span>
-                  <span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
-                </div>
-                <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
-                  <span className="font-bold">Total</span>
-                  <span className="text-xl font-bold text-primary">{CHF(total)}</span>
-                </div>
-              </div>
-              {parts.some(p => /\.step$|\.stp$/i.test(p.fileName)) && (
-                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
-                  ⚠️ Entferne alle STEP-Dateien oder konvertiere sie zu STL um eine Anfrage zu senden.
+
+                  {/* Preisübersicht */}
+                  <div className="bg-card rounded-2xl border border-border p-5 space-y-2 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Materialkosten</span><span className="text-foreground">{CHF(materialTotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Setup-Gebühr</span><span className="text-foreground">{CHF(setupFee)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Versand</span><span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
+                    </div>
+                    <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
+                      <span className="font-bold">Total</span>
+                      <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(total)}</span>
+                    </div>
+                  </div>
+
+                  {/* Kontaktformular */}
+                  <form onSubmit={handleSend} className="bg-card rounded-2xl border border-border p-5 space-y-4">
+                    <h3 className="font-heading text-lg font-bold">Deine Kontaktdaten</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Vorname *</Label>
+                        <Input required value={form.vorname} onChange={(e) => setForm((f) => ({ ...f, vorname: e.target.value }))} className="mt-1" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Nachname *</Label>
+                        <Input required value={form.nachname} onChange={(e) => setForm((f) => ({ ...f, nachname: e.target.value }))} className="mt-1" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">E-Mail *</Label>
+                        <Input type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Telefon *</Label>
+                        <Input type="tel" required value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" />
+                      </div>
+                    </div>
+                    {!isLoggedIn && (
+                      <>
+                        <div>
+                          <Label className="text-xs">Strasse & Hausnummer *</Label>
+                          <Input required value={form.strasse} onChange={(e) => setForm((f) => ({ ...f, strasse: e.target.value }))} className="mt-1" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <Label className="text-xs">PLZ *</Label>
+                            <Input required value={form.plz} onChange={(e) => setForm((f) => ({ ...f, plz: e.target.value }))} className="mt-1" />
+                          </div>
+                          <div className="col-span-2">
+                            <Label className="text-xs">Ort *</Label>
+                            <Input required value={form.ort} onChange={(e) => setForm((f) => ({ ...f, ort: e.target.value }))} className="mt-1" />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Land</Label>
+                          <Input value={form.land} onChange={(e) => setForm((f) => ({ ...f, land: e.target.value }))} className="mt-1" />
+                        </div>
+                      </>
+                    )}
+                    <div>
+                      <Label className="text-xs">Nachricht (optional)</Label>
+                      <Textarea rows={3} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="mt-1" />
+                    </div>
+                    <Button type="submit" className="w-full gap-2" disabled={submitting || parts.length === 0 || parts.some(p => p.uploading)}>
+                      {submitting ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</>
+                      ) : hasStep ? (
+                        <><Send className="w-4 h-4" /> Unverbindliche Anfrage senden</>
+                      ) : (
+                        <><Send className="w-4 h-4" /> Jetzt bestellen</>
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.
+                    </p>
+                  </form>
                 </div>
               )}
-              <Button
-                className="w-full mt-5 gap-2"
-                disabled={
-                  parts.length === 0 ||
-                  submitting ||
-                  parts.some((p) => p.uploading) ||
-                  parts.some((p) => /\.step$|\.stp$/i.test(p.fileName))
-                }
-                onClick={async (e) => {
-                  if (isLoggedIn) {
-                    await handleSend(e as unknown as React.FormEvent);
-                  } else {
-                    setShowQuote(true);
-                  }
-                }}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...
-                  </>
-                ) : (
-                  <>
-                    Angebot anfragen <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </Button>
-              <p className="text-xs text-muted-foreground mt-3 text-center">
-                Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.
-              </p>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </AnimatePresence>
         )}
-
-        <Dialog open={showQuote} onOpenChange={setShowQuote}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Angebot anfragen</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSend} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-              <p className="text-xs text-muted-foreground">
-                Damit wir deine Anfrage bearbeiten und ggf. ein Angebot zustellen können, brauchen wir deine vollständigen Kontaktdaten.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Vorname *</Label>
-                  <Input required value={form.vorname}
-                    onChange={(e) => setForm((f) => ({ ...f, vorname: e.target.value }))} className="mt-1" />
-                </div>
-                <div>
-                  <Label className="text-xs">Nachname *</Label>
-                  <Input required value={form.nachname}
-                    onChange={(e) => setForm((f) => ({ ...f, nachname: e.target.value }))} className="mt-1" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">E-Mail *</Label>
-                <Input type="email" required value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">Telefon *</Label>
-                <Input type="tel" required value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">Strasse & Hausnummer *</Label>
-                <Input required value={form.strasse}
-                  onChange={(e) => setForm((f) => ({ ...f, strasse: e.target.value }))} className="mt-1" />
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-xs">PLZ *</Label>
-                  <Input required value={form.plz}
-                    onChange={(e) => setForm((f) => ({ ...f, plz: e.target.value }))} className="mt-1" />
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-xs">Ort *</Label>
-                  <Input required value={form.ort}
-                    onChange={(e) => setForm((f) => ({ ...f, ort: e.target.value }))} className="mt-1" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">Land</Label>
-                <Input value={form.land}
-                  onChange={(e) => setForm((f) => ({ ...f, land: e.target.value }))} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">Nachricht (optional)</Label>
-                <Textarea rows={3} value={form.message}
-                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="mt-1" />
-              </div>
-              <Button type="submit" className="w-full gap-2" disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" /> Anfrage senden
-                  </>
-                )}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
-    </TooltipProvider>
   );
 };
 
 export default CalculatorOnlinePage;
-
-function ColorPicker({ farben, selected, onSelect }: { farben: string[]; selected: string; onSelect: (c: string) => void }) {
-  const [showAll, setShowAll] = useState(false);
-  if (farben.length === 0) {
-    return <p className="mt-2 text-xs text-muted-foreground italic">Farbe auf Anfrage</p>;
-  }
-  const visible = showAll ? farben : farben.slice(0, 8);
-  const hiddenCount = farben.length - visible.length;
-  return (
-    <div className="mt-2 flex flex-wrap items-center gap-2">
-      {visible.map((name) => {
-        const sel = selected === name;
-        const isWeiss = name === "Weiss";
-        return (
-          <button
-            key={name}
-            type="button"
-            title={name}
-            onClick={() => onSelect(name)}
-            aria-label={name}
-            className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full border-2 transition-all ${
-              sel
-                ? "border-primary ring-2 ring-primary/30 scale-110"
-                : `border-border hover:border-primary/50 ${isWeiss ? "border-gray-200" : ""}`
-            }`}
-            style={{ backgroundColor: colorHex(name) }}
-          />
-        );
-      })}
-      {!showAll && hiddenCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowAll(true)}
-          className="h-7 px-2 rounded-full border border-border text-xs text-muted-foreground hover:bg-muted"
-        >
-          +{hiddenCount} mehr
-        </button>
-      )}
-    </div>
-  );
-}

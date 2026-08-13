@@ -1,0 +1,2 @@
+ALTER TABLE public.inquiries ADD COLUMN IF NOT EXISTS ki_beratung_zusammenfassung text, ADD COLUMN IF NOT EXISTS ki_empfohlenes_material text;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS ki_beratung_zusammenfassung text, ADD COLUMN IF NOT EXISTS ki_empfohlenes_material text;
