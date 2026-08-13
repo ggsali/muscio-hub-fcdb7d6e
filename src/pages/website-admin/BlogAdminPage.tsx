@@ -133,9 +133,20 @@ export default function BlogAdminPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-3 border-t border-border pt-4">
-                <Switch checked={editing.veroeffentlicht} onCheckedChange={v => setEditing({ ...editing, veroeffentlicht: v })} />
-                <Label>Veröffentlicht</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t border-border pt-4">
+                <div>
+                  <Label>Veröffentlichungsdatum</Label>
+                  <Input
+                    type="datetime-local"
+                    value={toLocalInput(editing.veroeffentlicht_am)}
+                    onChange={e => setEditing({ ...editing, veroeffentlicht_am: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Leer = wird beim Veröffentlichen automatisch gesetzt.</p>
+                </div>
+                <div className="flex items-center gap-3 md:pt-6">
+                  <Switch checked={editing.veroeffentlicht} onCheckedChange={v => setEditing({ ...editing, veroeffentlicht: v })} />
+                  <Label>Veröffentlicht</Label>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
