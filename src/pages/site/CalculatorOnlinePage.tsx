@@ -537,15 +537,8 @@ const CalculatorOnlinePage = () => {
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
   const availableColors = selectedMaterial?.farben || [];
 
-  // Schritt 1 → 2 automatisch, sobald Datei analysiert / hochgeladen
-  useEffect(() => {
-    if (quickMode || step !== 1 || parts.length === 0) return;
-    const ready = parts.every((p) => p.hasVolume || isStepFile(p.fileName));
-    if (ready) {
-      const t = window.setTimeout(() => setStep(2), 600);
-      return () => window.clearTimeout(t);
-    }
-  }, [step, parts, quickMode]);
+  // Schritt 1 wechselt NICHT automatisch — der Nutzer kann beliebig viele Teile
+  // hinzufügen und klickt selbst auf "Weiter".
 
   // Schnell-Schätzung: sobald analysiert, globales Material auf Standard setzen
   const quickReady = quickMode && parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName));
