@@ -50,7 +50,7 @@ export default function BlogPostPage() {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{`${post.titel} | 3DMuscio Blog`}</title>
+        <title>{title}</title>
         <meta name="description" content={desc} />
         <meta property="og:title" content={post.titel} />
         <meta property="og:description" content={desc} />
