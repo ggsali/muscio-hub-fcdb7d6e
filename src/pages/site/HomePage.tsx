@@ -5,8 +5,8 @@ import { CountUp } from "@/components/site/CountUp";
 import { Marquee } from "@/components/site/Marquee";
 import {
   Upload, Settings, ShoppingCart, Package,
-  Clock, Target, Layers, ArrowRight, ArrowUpRight,
-  BadgeCheck, Zap, FileCheck, Building2, CheckCircle,
+  Layers, ArrowRight, ArrowUpRight,
+  Zap, Building2, CheckCircle,
 } from "lucide-react";
 
 import {
