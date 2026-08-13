@@ -955,7 +955,7 @@ const CalculatorOnlinePage = () => {
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Material wählen</h1>
-                    <p className="text-muted-foreground text-sm">Unsere KI hilft dir in 5 kurzen Fragen zum passenden Material.</p>
+                    <p className="text-muted-foreground text-sm">Diskutiere mit unserer KI: stelle Fragen, vergleiche Materialien und übernimm am Ende die Empfehlung — oder wähle selbst.</p>
                   </div>
 
                   <KiMaterialChat
