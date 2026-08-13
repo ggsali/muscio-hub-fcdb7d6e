@@ -15,6 +15,8 @@ interface Post {
   autor: string;
   veroeffentlicht_am: string | null;
   tags: string[] | null;
+  meta_title: string | null;
+  meta_description: string | null;
 }
 
 export default function BlogPostPage() {
