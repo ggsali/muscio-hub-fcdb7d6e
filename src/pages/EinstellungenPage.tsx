@@ -236,6 +236,8 @@ export default function EinstellungenPage() {
     { key: "raten", label: "Verrechnungssätze" },
     { key: "presets", label: "Preis-Presets" },
     { key: "website", label: "Website-Kalkulator" },
+    { key: "kalkulator", label: "Kalkulator & Qualität" },
+
     { key: "firma", label: "Firmenangaben" },
     { key: "rechnung", label: "Rechnungs-Design" },
     { key: "zugriff", label: "Admin-Zugriff" },
