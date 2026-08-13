@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { CountUp } from "@/components/site/CountUp";
@@ -19,6 +19,8 @@ import { ReviewsSection } from "@/components/site/ReviewsSection";
 import Seo from "@/components/site/Seo";
 import { UploadDropzone } from "@/components/site/UploadDropzone";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
+import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
+import { toast } from "sonner";
 
 
 
@@ -37,6 +39,44 @@ const HERO_STATS = [
   { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle },
   { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap },
 ];
+
+const HeroUploadButton = () => {
+  const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = (files: File[]) => {
+    const accepted = files.filter((f) => isAcceptedModel(f.name));
+    if (accepted.length === 0) {
+      toast.error("Bitte eine STL-, STEP-, 3MF- oder OBJ-Datei wählen.");
+      return;
+    }
+    setPendingUploads(accepted);
+    navigate("/kalkulator-online");
+  };
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept=".stl,.step,.stp,.3mf,.obj"
+        className="hidden"
+        onChange={(e) => {
+          handleFiles(Array.from(e.target.files || []));
+          e.target.value = "";
+        }}
+      />
+      <Button
+        size="lg"
+        className="rounded-xl min-h-[52px] px-8 text-base"
+        onClick={() => inputRef.current?.click()}
+      >
+        Preis berechnen <ArrowRight className="w-4 h-4 ml-1.5" />
+      </Button>
+    </>
+  );
+};
 
 const HeroBento = () => (
   <section className="relative overflow-hidden pt-8 pb-6 md:pt-12">
@@ -75,9 +115,7 @@ const HeroBento = () => (
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button size="lg" asChild className="rounded-xl min-h-[52px] px-8 text-base">
-              <Link to="/kalkulator-online">Preis berechnen <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
-            </Button>
+            <HeroUploadButton />
             <Button size="lg" variant="outline" asChild className="rounded-xl min-h-[52px] px-8 text-base">
               <Link to="/materialien">Materialien entdecken</Link>
             </Button>
