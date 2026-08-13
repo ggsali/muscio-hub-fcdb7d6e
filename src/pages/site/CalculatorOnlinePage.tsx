@@ -1351,7 +1351,27 @@ const CalculatorOnlinePage = () => {
                     })}
                   </div>
 
-                  <Button className="w-full gap-2" onClick={goNext}>
+                  {qualityConfirmed && sliceableParts.length > 0 && (
+                    <div className="rounded-xl border border-border bg-card p-4">
+                      {slicingActive ? (
+                        <>
+                          <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            ⚙ OrcaSlicer analysiert Bauteil… {sliceProgress}%
+                          </p>
+                          <div className="mt-2 h-2 w-full rounded-full bg-muted overflow-hidden">
+                            <div className="h-full bg-primary transition-all" style={{ width: `${sliceProgress}%` }} />
+                          </div>
+                        </>
+                      ) : sliceError ? (
+                        <p className="text-sm text-muted-foreground">Vereinfachte Schätzung wird verwendet.</p>
+                      ) : sliceDone ? (
+                        <p className="text-sm text-primary font-medium">Analyse abgeschlossen ✓</p>
+                      ) : null}
+                    </div>
+                  )}
+
+                  <Button className="w-full gap-2" onClick={goNext} disabled={slicingActive}>
                     Weiter zur Übersicht <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
