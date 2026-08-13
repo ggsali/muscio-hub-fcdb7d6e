@@ -182,23 +182,6 @@ const StatsTrust = () => (
   </section>
 );
 
-/* ─── UPLOAD CTA ─── */
-const UploadSection = () => (
-  <section className="py-16 md:py-20">
-    <div className="container mx-auto px-4">
-      <ScrollReveal>
-        <div className="bg-muted border border-border rounded-3xl p-4 md:p-8">
-          <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3 px-1">
-            Datei hochladen &amp; Sofortpreis erhalten
-          </p>
-          <UploadDropzone />
-        </div>
-      </ScrollReveal>
-    </div>
-  </section>
-);
-
-
 /* ─── HOW IT WORKS ─── */
 const steps = [
   { icon: Upload, title: "Hochladen", desc: "3D-Modell als STL, OBJ, STEP oder 3MF hochladen." },
@@ -476,7 +459,6 @@ const Index = () => (
     <Marquee />
     <StatsTrust />
     <HowItWorks />
-    <UploadSection />
     <MaterialsTeaser />
     <ReviewsSection />
     <FAQ />
