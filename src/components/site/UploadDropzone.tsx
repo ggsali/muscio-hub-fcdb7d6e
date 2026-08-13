@@ -81,10 +81,10 @@ export const UploadDropzone = ({ className, compact = false }: UploadDropzonePro
 
       {!compact && (
         <div className="w-full space-y-2">
-          <div className="text-[10px] text-left uppercase tracking-widest font-bold text-muted-foreground/70">
+          <div className="text-[10px] text-center uppercase tracking-widest font-bold text-muted-foreground/70">
             Unterstützte Formate
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             {[".stl", ".step", ".3mf", ".obj"].map((f) => (
               <span
                 key={f}
