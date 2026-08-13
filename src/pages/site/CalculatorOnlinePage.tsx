@@ -638,9 +638,9 @@ const CalculatorOnlinePage = () => {
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** Slicer-Druckzeit mit dem Geschwindigkeitsfaktor der Qualitätsstufe korrigieren */
-  const correctedPrintSeconds = (p: Part, r: SlicerResult) =>
-    r.printTimeSeconds * (presetByInfill(p.infill)?.speedFactor ?? 1);
+  /** Slicer-Druckzeit mit dem Geschwindigkeitsfaktor der aktiven Qualitätsstufe korrigieren */
+  const correctedPrintSeconds = (_p: Part, r: SlicerResult) =>
+    r.printTimeSeconds * (activeQuality?.speedFactor ?? 1);
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
@@ -665,12 +665,19 @@ const CalculatorOnlinePage = () => {
     if (!p.hasVolume || p.estimatedWeight <= 0) {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
     }
+    const q = activeQuality || qualityPresets[1];
     const weight = p.estimatedWeight;
-    const speedFactor = presetByInfill(p.infill)?.speedFactor ?? 1;
-    const unit = weight * mat.pricePerGram * speedFactor;
+    const matCost = weight * mat.pricePerGram;
+    // Durchsatz-Modell: ca. 12 cm³/h bei 0.2 mm Schichthöhe, linear mit der Schichthöhe
+    const throughputCm3PerH = 12 * ((q?.layerHeight || 0.2) / 0.2);
+    const extrudedCm3 = weight / (mat.density || 1.24);
+    const hours = (extrudedCm3 / Math.max(1, throughputCm3PerH)) * (q?.speedFactor ?? 1);
+    const machineCost = hours * (settings.maschinenzeit_pro_h || 0);
+    const unit = Math.max(MIN_PRICE, matCost + machineCost + FIX_COST);
 
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: false };
   };
+
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
 
