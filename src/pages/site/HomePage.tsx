@@ -317,44 +317,6 @@ const MaterialsTeaser = () => {
 };
 
 /* ─── VOLUME DISCOUNTS ─── */
-const discounts = [
-  { qty: "Ab 5 Stück", value: "10%", desc: "Rabatt auf den Gesamtpreis" },
-  { qty: "Ab 10 Stück", value: "15%", desc: "Rabatt auf den Gesamtpreis" },
-  { qty: "Auf Anfrage", value: "★", desc: "Individuelle Konditionen für grössere Mengen" },
-];
-
-const VolumeDiscounts = () => (
-  <section className="py-24 bg-foreground text-background overflow-hidden">
-    <div className="container mx-auto px-4">
-      <ScrollReveal>
-        <div className="mb-10 max-w-2xl">
-          <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Mengenrabatte</p>
-          <h2 className="font-heading text-3xl md:text-4xl font-bold tracking-tight">
-            Mehr drucken,<br className="hidden md:block" /> weniger zahlen.
-          </h2>
-        </div>
-      </ScrollReveal>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {discounts.map((d, i) => (
-          <ScrollReveal key={i} delay={i * 0.08}>
-            <motion.div
-              className="rounded-xl p-6 border border-background/10 hover:border-primary/40 bg-background/5 backdrop-blur-sm transition-colors h-full"
-              whileHover={{ y: -4, scale: 1.02 }}
-            >
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                <Percent className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-xs text-background/60 uppercase tracking-widest mb-2">{d.qty}</p>
-              <div className="font-heading text-4xl font-extrabold text-primary mb-2">{d.value}</div>
-              <p className="text-sm text-background/70">{d.desc}</p>
-            </motion.div>
-          </ScrollReveal>
-        ))}
-      </div>
-    </div>
-  </section>
-);
 
 /* ─── FAQ ─── */
 const faqs = [
