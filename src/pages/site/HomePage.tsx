@@ -60,13 +60,13 @@ const HeroBento = () => (
     <div className="absolute top-0 right-0 w-[600px] h-[500px] bg-primary/[0.07] rounded-full blur-[120px] pointer-events-none" />
 
     <div className="container mx-auto px-4 relative z-10 flex flex-col gap-4 md:gap-6">
-      {/* Reihe 1 — Hero + Upload */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+      {/* Reihe 1 — Hero-Text + Bild-Moodboard */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="lg:col-span-8 bg-card border border-border rounded-3xl p-6 md:p-12 shadow-[0_4px_20px_-4px_hsl(var(--foreground)/0.05)] relative overflow-hidden"
+          className="lg:col-span-7 bg-card border border-border rounded-3xl p-6 md:p-12 shadow-[0_4px_20px_-4px_hsl(var(--foreground)/0.05)] relative overflow-hidden"
         >
           <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse mr-2" />
@@ -97,17 +97,32 @@ const HeroBento = () => (
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.12 }}
-          className="lg:col-span-4 bg-muted border border-border rounded-3xl p-4 md:p-6"
+          className="lg:col-span-5 flex items-center"
         >
-          <UploadDropzone />
+          <div className="w-full md:pt-6">
+            <HeroImageMosaic />
+          </div>
         </motion.div>
       </div>
 
-      {/* Reihe 2 — Kennzahlen */}
+      {/* Reihe 2 — Upload volle Breite */}
+      <ScrollReveal>
+        <div className="bg-muted border border-border rounded-3xl p-4 md:p-6">
+          <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3 px-1">
+            Datei hochladen &amp; Sofortpreis erhalten
+          </p>
+          <UploadDropzone compact />
+        </div>
+      </ScrollReveal>
+
+      {/* Reihe 3 — Kennzahlen */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
         {HERO_STATS.map((s, i) => (
           <ScrollReveal key={s.label} delay={i * 0.06}>
             <div className="bg-card border border-border rounded-2xl p-5 md:p-6 h-full">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                <s.icon className="w-4.5 h-4.5 text-primary" strokeWidth={2.5} />
+              </div>
               <div
                 className={`text-2xl md:text-3xl font-heading font-bold mb-1 ${s.accent ? "text-primary" : "text-foreground"}`}
               >
@@ -124,6 +139,10 @@ const HeroBento = () => (
           </ScrollReveal>
         ))}
       </div>
+
+      {/* Reihe 4 — Projekte-Vorschau */}
+      <HomeProjectsPreview />
+
 
       {/* Reihe 3 — Trust-Strip */}
       <div className="w-full bg-foreground text-background rounded-2xl px-5 md:px-8 py-5 md:py-6 grid grid-cols-2 md:flex md:flex-wrap md:justify-between items-center gap-4 md:gap-6">
