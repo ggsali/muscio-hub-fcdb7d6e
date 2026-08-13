@@ -842,7 +842,7 @@ const CalculatorOnlinePage = () => {
               storage_path: p.storagePath,
               size_bytes: p.file?.size ?? null,
               bucket: "project-uploads",
-              slicer_druckzeit_sekunden: r ? Math.round(r.printTimeSeconds) : null,
+              slicer_druckzeit_sekunden: r ? Math.round(correctedPrintSeconds(p, r)) : null,
               slicer_filament_gramm: r ? Math.round(r.filamentGrams * 10) / 10 : null,
               slicer_hat_supports: r ? r.hasSupports : null,
               slicer_layer_anzahl: r ? r.layerCount : null,
