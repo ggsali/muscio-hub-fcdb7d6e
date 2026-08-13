@@ -3,7 +3,9 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowUpRight, ImageIcon, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import Seo from "@/components/site/Seo";
 
 const StlViewer = lazy(() => import("@/components/site/StlViewer"));
 
@@ -14,6 +16,11 @@ type Project = {
   toleranz: string | null; lieferzeit: string | null;
   gallery_paths: string[] | null;
   stl_url: string | null;
+  kurzbeschreibung?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  tags?: string[] | null;
+  json_ld?: Record<string, unknown> | null;
 };
 
 export default function ProjektDetailPage() {
@@ -30,7 +37,7 @@ export default function ProjektDetailPage() {
     (async () => {
       const { data } = await supabase
         .from("projekte")
-        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths, stl_url")
+        .select("id, slug, name, kategorie, beschreibung, kurzbeschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths, stl_url, seo_title, seo_description, tags, json_ld")
         .eq("slug", slug).eq("aktiv", true).maybeSingle();
       if (!data) { setNotFound(true); setLoading(false); return; }
       setProject(data as Project);
@@ -49,8 +56,20 @@ export default function ProjektDetailPage() {
     return <div className="min-h-screen container mx-auto px-4 py-20"><p className="text-muted-foreground">Lädt…</p></div>;
   }
 
+  const pageTitle = project.seo_title || project.name;
+  const pageDescription = project.seo_description || project.kurzbeschreibung || "";
+  const pagePath = `/projekte/${slug}`;
+  const jsonLd = project.json_ld || undefined;
+
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title={pageTitle}
+        description={pageDescription}
+        path={pagePath}
+        type="article"
+        jsonLd={jsonLd}
+      />
       <div className="container mx-auto px-4 py-12 md:py-20">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="w-4 h-4" /> Zurück zur Startseite
@@ -110,7 +129,17 @@ export default function ProjektDetailPage() {
             )}
             <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground tracking-tight mb-6 leading-[1.05]">{project.name}</h1>
             {project.beschreibung && (
-              <p className="text-base text-muted-foreground leading-relaxed mb-10 whitespace-pre-line">{project.beschreibung}</p>
+              <p className="text-base text-muted-foreground leading-relaxed mb-6 whitespace-pre-line">{project.beschreibung}</p>
+            )}
+
+            {project.tags && project.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8">
+                {project.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="rounded-full text-xs font-medium">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
             )}
 
             {(project.verfahren || project.material || project.toleranz || project.lieferzeit) && (
@@ -139,6 +168,24 @@ export default function ProjektDetailPage() {
             </div>
           </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mt-20 rounded-2xl border border-border bg-card/50 p-8 md:p-12 text-center"
+        >
+          <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-4">
+            Auch ein Modell oder Prototyp für Ihr Unternehmen?
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+            Wir beraten Sie gerne persönlich und erstellen Ihnen ein massgeschneidertes Angebot für Ihr nächstes 3D-Druck-Projekt.
+          </p>
+          <Button asChild size="lg" className="rounded-full">
+            <Link to="/kontakt">Jetzt Anfrage stellen <ArrowUpRight className="w-4 h-4 ml-1.5" /></Link>
+          </Button>
+        </motion.div>
 
         {others.length > 0 && (
           <div className="mt-24">
