@@ -235,10 +235,33 @@ const CalculatorOnlinePage = () => {
   >({});
   const startedRef = useRef<Set<string>>(new Set());
 
-  const activeQuality = useMemo(
-    () => QUALITY_PRESETS.find((q) => q.key === qualityKey) || QUALITY_PRESETS[1],
-    [qualityKey],
+  // Qualitäts-Presets & Kalkulationsparameter aus den Einstellungen (Fallback: Hardcode)
+  const [qualityPresets, setQualityPresets] = useState<QualityPreset[]>(DEFAULT_QUALITY_PRESETS);
+  const [calcParams, setCalcParams] = useState<CalcParams>(DEFAULT_CALC_PARAMS);
+  useEffect(() => {
+    loadQualityConfig().then(({ presets, params }) => {
+      setQualityPresets(presets);
+      setCalcParams(params);
+    });
+  }, []);
+
+  const presetByInfill = useCallback(
+    (infill: number) => qualityPresets.find((q) => q.infill === infill) || qualityPresets[1],
+    [qualityPresets],
   );
+  const qualityAdminLabel = useCallback(
+    (infill: number) => {
+      const q = presetByInfill(infill);
+      return `${q.label} (${q.layerHeight}mm, ${q.infill}% Infill)`;
+    },
+    [presetByInfill],
+  );
+
+  const activeQuality = useMemo(
+    () => qualityPresets.find((q) => q.key === qualityKey) || qualityPresets[1],
+    [qualityKey, qualityPresets],
+  );
+
   const sliceKey = `${materialId}|${qualityKey}`;
   // Slicing startet erst, wenn die Qualität in Schritt 5 bestätigt wurde
   const [qualityConfirmed, setQualityConfirmed] = useState(false);
