@@ -17,11 +17,9 @@ import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HeroProjectsCarousel } from "@/components/site/HeroProjectsCarousel";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
-import { ProjectsGrid } from "@/components/site/ProjectsGrid";
 import Seo from "@/components/site/Seo";
 import { UploadDropzone } from "@/components/site/UploadDropzone";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
-import { HomeProjectsPreview } from "@/components/site/HomeProjectsPreview";
 
 
 
@@ -141,10 +139,6 @@ const HeroBento = () => (
           </ScrollReveal>
         ))}
       </div>
-
-      {/* Reihe 4 — Projekte-Vorschau */}
-      <HomeProjectsPreview />
-
 
       {/* Reihe 3 — Trust-Strip */}
       <div className="w-full bg-foreground text-background rounded-2xl px-5 md:px-8 py-5 md:py-6 grid grid-cols-2 md:flex md:flex-wrap md:justify-between items-center gap-4 md:gap-6">
@@ -519,7 +513,6 @@ const Index = () => (
     <Marquee />
     <HowItWorks />
 
-    <ProjectsGrid />
     <MaterialsTeaser />
     <VolumeDiscounts />
     <ReviewsSection />
