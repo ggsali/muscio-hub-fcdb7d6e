@@ -686,6 +686,7 @@ const CalculatorOnlinePage = () => {
   }, [parts]);
 
   const chooseMaterial = (id: string) => {
+    setQualityConfirmed(false); // neue Parameter -> Slicing erst nach erneuter Qualitätsbestätigung
     setMaterialId(id);
     const mat = materials.find((m) => m.id === id);
     const firstColor = mat?.farben?.[0] || "";
