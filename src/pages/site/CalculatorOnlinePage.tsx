@@ -726,7 +726,7 @@ const CalculatorOnlinePage = () => {
     step === 2 ||
     (step === 3 && !!materialId) ||
     (step === 4 && (!!color || availableColors.length === 0)) ||
-    step === 5;
+    (step === 5 && !slicingActive);
 
   const goNext = () => setStep((s) => Math.min(STEPS.length, s + 1));
   const goBack = () => setStep((s) => Math.max(1, s - 1));
