@@ -6,7 +6,7 @@ import { Marquee } from "@/components/site/Marquee";
 import {
   Upload, Settings, ShoppingCart, Package,
   Clock, Target, Layers, Users, ArrowRight, ArrowUpRight, Percent,
-  BadgeCheck, Zap, FileCheck,
+  BadgeCheck, Zap, FileCheck, Building2, CheckCircle,
 } from "lucide-react";
 
 import {
