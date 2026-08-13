@@ -247,6 +247,9 @@ const CalculatorOnlinePage = () => {
     [qualityKey],
   );
   const sliceKey = `${materialId}|${qualityKey}`;
+  // Slicing startet erst, wenn die Qualität in Schritt 5 bestätigt wurde
+  const [qualityConfirmed, setQualityConfirmed] = useState(false);
+  const sliceToastRef = useRef<string>("");
 
 
 
