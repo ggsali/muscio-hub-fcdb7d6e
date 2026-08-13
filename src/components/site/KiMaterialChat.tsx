@@ -2,56 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Send, Sparkles } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface KiQuestion {
-  key: "zweck" | "belastung" | "einsatzort" | "temperatur" | "flexibilitaet";
-  label: string;
-  question: string;
-  options: string[];
-}
-
-export const KI_QUESTIONS: KiQuestion[] = [
-  {
-    key: "zweck",
-    label: "Verwendungszweck",
-    question: "Wofür wird dieses Bauteil verwendet?",
-    options: ["Halterung", "Gehäuse", "Prototyp", "Ersatzteil", "Dekoration", "Anderes"],
-  },
-  {
-    key: "belastung",
-    label: "Belastung",
-    question: "Wird das Teil mechanisch belastet?",
-    options: ["Ja, stark", "Leicht", "Nein, kaum"],
-  },
-  {
-    key: "einsatzort",
-    label: "Einsatzort",
-    question: "Innen- oder Aussenbereich?",
-    options: ["Innen", "Aussen", "Beides"],
-  },
-  {
-    key: "temperatur",
-    label: "Temperatur",
-    question: "Temperaturanforderungen?",
-    options: ["Normal bis 60°C", "Erhöht bis 100°C", "Hoch über 100°C"],
-  },
-  {
-    key: "flexibilitaet",
-    label: "Flexibilität",
-    question: "Flexibel oder starr?",
-    options: ["Flexibel/gummiartig", "Starr"],
-  },
-];
-
-type ChatMsg = { id: string; role: "ai" | "user"; text: string };
+type ChatMsg = { id: string; role: "assistant" | "user"; text: string };
 
 export interface KiResult {
   material: string;
   begruendung: string;
-  answers: Record<string, string>;
+  transcript: string;
 }
+
+const START_TEXT =
+  "Hallo! Ich bin die Material-Beratung von 3DMuscio. Erzähl mir kurz: wofür wird dein Bauteil verwendet? Du kannst mir jederzeit Rückfragen stellen oder Materialien vergleichen lassen.";
+
+const QUICK_REPLIES = ["Halterung", "Gehäuse", "Prototyp", "Ersatzteil", "Dekoration", "Sichtteil"];
 
 const Avatar = () => (
   <div className="w-8 h-8 shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
@@ -82,98 +47,84 @@ export default function KiMaterialChat({
   availableMaterials: string[];
   onResult: (r: KiResult) => void;
 }) {
-  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    { id: "start", role: "assistant", text: START_TEXT },
+  ]);
   const [typing, setTyping] = useState(false);
-  const [index, setIndex] = useState(-1);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [freeText, setFreeText] = useState("");
-  const [done, setDone] = useState(false);
+  const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
-  const started = useRef(false);
-
-  const push = (role: "ai" | "user", text: string) =>
-    setMessages((m) => [...m, { id: crypto.randomUUID(), role, text }]);
-
-  const askAi = (text: string, delay = 700) => {
-    setTyping(true);
-    window.setTimeout(() => {
-      setTyping(false);
-      push("ai", text);
-    }, delay);
-  };
-
-  useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    askAi("Hallo! Ich helfe dir in 5 kurzen Fragen das passende Material zu finden.", 500);
-    window.setTimeout(() => {
-      askAi(KI_QUESTIONS[0].question, 600);
-      setIndex(0);
-    }, 900);
-  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, typing]);
 
-  const finish = async (all: Record<string, string>) => {
-    setDone(true);
+  const send = async (text: string) => {
+    const value = text.trim();
+    if (!value || typing) return;
+    setInput("");
+    const history: ChatMsg[] = [
+      ...messages,
+      { id: crypto.randomUUID(), role: "user", text: value },
+    ];
+    setMessages(history);
     setTyping(true);
     try {
       const { data, error } = await supabase.functions.invoke("ki-materialberatung", {
-        body: { answers: all, fileName, geometry, availableMaterials },
+        body: {
+          messages: history.map((m) => ({ role: m.role, content: m.text })),
+          fileName,
+          geometry,
+          availableMaterials,
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
+
+      const antwort = (data as any).antwort as string;
+      const empfehlung = (data as any).empfehlung as string | null;
+      const begruendung = ((data as any).begruendung as string | null) || "";
+
       setTyping(false);
-      const material = (data as any).material as string;
-      const begruendung = (data as any).begruendung as string;
-      push("ai", `Empfehlung: ${material}\n\n${begruendung}`);
-      onResult({ material, begruendung, answers: all });
+      const withReply: ChatMsg[] = [
+        ...history,
+        { id: crypto.randomUUID(), role: "assistant", text: antwort },
+      ];
+      setMessages(withReply);
+
+      if (empfehlung) {
+        onResult({
+          material: empfehlung,
+          begruendung: begruendung || antwort,
+          transcript: withReply
+            .map((m) => `${m.role === "user" ? "Kunde" : "KI"}: ${m.text}`)
+            .join("\n"),
+        });
+      }
     } catch (e) {
       console.error(e);
       setTyping(false);
-      const fallback = availableMaterials[0] || "PLA";
-      push("ai", `Empfehlung: ${fallback}\n\nIch konnte gerade keine detaillierte Analyse durchführen – ${fallback} ist für die meisten Anwendungen eine solide Wahl. Du kannst unten jederzeit manuell ein anderes Material wählen.`);
-      onResult({
-        material: fallback,
-        begruendung: "Automatische Empfehlung (KI nicht verfügbar).",
-        answers: all,
-      });
+      setMessages((m) => [
+        ...m,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          text: "Entschuldige, ich konnte gerade nicht antworten. Versuch es bitte nochmals — oder wähle das Material unten direkt selbst aus.",
+        },
+      ]);
     }
   };
 
-  const answer = (value: string) => {
-    if (index < 0 || index >= KI_QUESTIONS.length || typing) return;
-    const q = KI_QUESTIONS[index];
-    push("user", value);
-    const next = { ...answers, [q.key]: value };
-    setAnswers(next);
-    setFreeText("");
-    const nextIndex = index + 1;
-    setIndex(nextIndex);
-    if (nextIndex < KI_QUESTIONS.length) {
-      askAi(KI_QUESTIONS[nextIndex].question, 700);
-    } else {
-      window.setTimeout(() => finish(next), 500);
-    }
-  };
-
-  const current = index >= 0 && index < KI_QUESTIONS.length ? KI_QUESTIONS[index] : null;
+  const showQuick = messages.length === 1 && !typing;
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
       <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-muted/30">
         <Sparkles className="w-4 h-4 text-primary" />
         <span className="text-sm font-semibold">Material-Beratung</span>
-        {!done && (
-          <span className="ml-auto text-xs text-muted-foreground">
-            Frage {Math.min(Math.max(index + 1, 1), KI_QUESTIONS.length)} von {KI_QUESTIONS.length}
-          </span>
-        )}
+        <span className="ml-auto text-xs text-muted-foreground">Frag alles, was du wissen willst</span>
       </div>
 
-      <div className="max-h-[360px] overflow-y-auto p-4 space-y-3">
+      <div className="max-h-[420px] min-h-[260px] overflow-y-auto p-4 space-y-3">
         <AnimatePresence initial={false}>
           {messages.map((m) => (
             <motion.div
@@ -183,7 +134,7 @@ export default function KiMaterialChat({
               transition={{ duration: 0.25 }}
               className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {m.role === "ai" && <Avatar />}
+              {m.role === "assistant" && <Avatar />}
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap ${
                   m.role === "user"
@@ -207,50 +158,39 @@ export default function KiMaterialChat({
         <div ref={endRef} />
       </div>
 
-      {current && !typing && (
-        <div className="border-t border-border p-3 space-y-2">
+      <div className="border-t border-border p-3 space-y-2">
+        {showQuick && (
           <div className="flex flex-wrap gap-2">
-            {current.options.map((o) => (
+            {QUICK_REPLIES.map((o) => (
               <button
                 key={o}
                 type="button"
-                onClick={() => answer(o)}
+                onClick={() => send(o)}
                 className="px-3 py-1.5 rounded-full border border-border bg-background text-xs font-medium hover:border-primary hover:bg-primary/5 transition-colors"
               >
                 {o}
               </button>
             ))}
           </div>
-          <div className="flex gap-2">
-            <Input
-              value={freeText}
-              onChange={(e) => setFreeText(e.target.value)}
-              placeholder="Oder frei antworten…"
-              className="h-9 text-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && freeText.trim()) {
-                  e.preventDefault();
-                  answer(freeText.trim());
-                }
-              }}
-            />
-            <Button
-              size="sm"
-              className="h-9"
-              disabled={!freeText.trim()}
-              onClick={() => answer(freeText.trim())}
-            >
-              <Send className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+        )}
+        <div className="flex gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Nachricht schreiben oder Frage stellen…"
+            className="h-9 text-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && input.trim()) {
+                e.preventDefault();
+                send(input);
+              }
+            }}
+          />
+          <Button size="sm" className="h-9" disabled={!input.trim() || typing} onClick={() => send(input)}>
+            <Send className="w-3.5 h-3.5" />
+          </Button>
         </div>
-      )}
-
-      {done && !typing && (
-        <div className="border-t border-border px-4 py-2.5 text-xs text-muted-foreground flex items-center gap-1.5">
-          <Check className="w-3.5 h-3.5 text-primary" /> Beratung abgeschlossen — du kannst das Material unten auch manuell ändern.
-        </div>
-      )}
+      </div>
     </div>
   );
 }
