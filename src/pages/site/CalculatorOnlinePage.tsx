@@ -585,7 +585,7 @@ const CalculatorOnlinePage = () => {
           }));
         });
     });
-  }, [parts, materials, materialId, sliceKey, activeQuality]);
+  }, [parts, materials, materialId, sliceKey, activeQuality, qualityConfirmed]);
 
   const sliceOf = (p: Part) => {
     const job = sliceJobs[p.id];
