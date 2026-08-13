@@ -111,7 +111,11 @@ const HeroBento = () => (
               <div
                 className={`text-2xl md:text-3xl font-heading font-bold mb-1 ${s.accent ? "text-primary" : "text-foreground"}`}
               >
-                <CountUp end={s.value} suffix={s.suffix} />
+                {typeof s.value === "string" ? (
+                  s.value
+                ) : (
+                  <CountUp end={s.value} suffix={s.suffix} />
+                )}
               </div>
               <div className="text-[11px] md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
                 {s.label}
