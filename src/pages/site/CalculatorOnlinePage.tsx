@@ -634,9 +634,13 @@ const CalculatorOnlinePage = () => {
   };
 
 
-  const MIN_PRICE = 5;
-  const FIX_COST = 3.5;
-  const SUPPORT_SURCHARGE = 2.5;
+  const MIN_PRICE = calcParams.min_price;
+  const FIX_COST = calcParams.fix_cost;
+  const SUPPORT_SURCHARGE = calcParams.support_surcharge;
+
+  /** Slicer-Druckzeit mit dem Geschwindigkeitsfaktor der Qualitätsstufe korrigieren */
+  const correctedPrintSeconds = (p: Part, r: SlicerResult) =>
+    r.printTimeSeconds * (presetByInfill(p.infill)?.speedFactor ?? 1);
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
@@ -650,7 +654,7 @@ const CalculatorOnlinePage = () => {
     if (job?.status === "done" && job.result) {
       const r = job.result;
       const weight = Math.round(r.filamentGrams * 10) / 10;
-      const hours = r.printTimeSeconds / 3600;
+      const hours = correctedPrintSeconds(p, r) / 3600;
       const machineCost = hours * (settings.maschinenzeit_pro_h || 0);
       const matCost = weight * mat.pricePerGram;
       const unit = Math.max(MIN_PRICE, matCost + machineCost + FIX_COST + (r.hasSupports ? SUPPORT_SURCHARGE : 0));
@@ -662,8 +666,9 @@ const CalculatorOnlinePage = () => {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
     }
     const weight = p.estimatedWeight;
-    const layerFactor = presetByInfill(p.infill).layerFactor;
-    const unit = weight * mat.pricePerGram * layerFactor;
+    const speedFactor = presetByInfill(p.infill)?.speedFactor ?? 1;
+    const unit = weight * mat.pricePerGram * speedFactor;
+
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: false };
   };
 
