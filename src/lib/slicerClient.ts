@@ -37,7 +37,17 @@ export function buildSlicerParams(material: SlicerMaterialInput, quality: Slicer
   const type = filamentType(material.name);
   const nozzleTemp = type === "PLA" ? 220 : type === "PETG" ? 240 : 250;
   const bedTemp = type === "PLA" ? 65 : 85;
+
+  // Plausible Grenzen: max. 70 % des Düsendurchmessers (0.4 mm), min. 0.06 mm
+  const NOZZLE = 0.4;
+  const layerHeight = Math.min(NOZZLE * 0.7, Math.max(0.06, Number(quality.layerHeight) || 0.2));
+  const infill = Math.min(100, Math.max(0, Number(quality.infill) || 0));
+  // Konstante Schalendicke -> Qualitätsstufen unterscheiden sich physikalisch korrekt
+  const topLayers = Math.max(2, Math.ceil(0.8 / layerHeight));
+  const bottomLayers = Math.max(2, Math.ceil(0.6 / layerHeight));
+
   return {
+
     // Drucker-Profil (Bambu Lab H2C)
     bed_width: 330,
     bed_depth: 320,
@@ -68,14 +78,16 @@ export function buildSlicerParams(material: SlicerMaterialInput, quality: Slicer
     z_hop: 0.4,
 
     // Qualität
-    layer_height: quality.layerHeight,
-    first_layer_height: Math.max(quality.layerHeight, 0.2),
+    layer_height: layerHeight,
+    first_layer_height: Math.min(0.3, Math.max(layerHeight, 0.2)),
     line_width: 0.42,
-    wall_loops: 2,
-    infill_density: quality.infill / 100,
-    top_shell_layers: 4,
-    bottom_shell_layers: 3,
+    wall_loops: infill >= 60 ? 3 : 2,
+    infill_density: infill / 100,
+    sparse_infill_pattern: "grid",
+    top_shell_layers: topLayers,
+    bottom_shell_layers: bottomLayers,
     skirt_loops: 1,
+
 
     // Material
     nozzle_temp: nozzleTemp,
