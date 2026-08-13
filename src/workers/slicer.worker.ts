@@ -18,7 +18,7 @@ self.onmessage = async (e: MessageEvent) => {
       onProgress: (done: number, total: number) =>
         (self as any).postMessage({ id, type: "progress", done, total }),
       onLayer: ({ gcode }: { gcode: string }) => {
-        if (!hasSupports && gcode && /support/i.test(gcode)) hasSupports = true;
+        if (!hasSupports && gcode && /;\s*TYPE:\s*Support/i.test(gcode)) hasSupports = true;
       },
     });
 
