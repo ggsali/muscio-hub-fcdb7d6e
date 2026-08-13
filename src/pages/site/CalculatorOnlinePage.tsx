@@ -890,11 +890,29 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  {/* Referenzbilder */}
+                  {parts.length > 0 && (
+                    <Button className="w-full gap-2" onClick={goNext}>
+                      Weiter zu den Bildern <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* ---------- SCHRITT 2 ---------- */}
+              {step === 2 && (
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Bilder hochladen</h1>
+                    <p className="text-muted-foreground text-sm">
+                      Lade ein Bild des gesamten Modells (zusammengebaut) und/oder der einzelnen Teile hoch — Foto, Screenshot oder Skizze.
+                      So verstehen wir genau, wie das Ergebnis aussehen soll.
+                    </p>
+                  </div>
+
                   <div className="bg-card rounded-2xl border border-border p-5">
-                    <h3 className="font-heading text-base font-bold text-foreground">📷 Referenzbilder (optional)</h3>
+                    <h3 className="font-heading text-base font-bold text-foreground">📷 Gesamtmodell &amp; Einzelteile</h3>
                     <p className="text-xs text-muted-foreground mt-0.5 mb-3">
-                      Skizze, Foto oder Mockup — damit wir deine Vorstellung besser verstehen.
+                      Mehrere Bilder möglich · JPG/PNG · max. 20 MB pro Bild · optional, aber sehr hilfreich.
                     </p>
                     <input
                       id="ref-image-input" type="file" multiple accept="image/*" className="hidden"
@@ -909,7 +927,7 @@ const CalculatorOnlinePage = () => {
                       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
                         {refImages.map(r => (
                           <div key={r.id} className="relative aspect-square rounded-lg overflow-hidden border border-border bg-muted group">
-                            <img src={r.previewUrl} alt={r.file.name} className="w-full h-full object-cover" />
+                            <img src={r.previewUrl} alt={r.file.name} className="w-full h-full object-cover" loading="lazy" />
                             {r.uploading && (
                               <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
                                 <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -925,13 +943,12 @@ const CalculatorOnlinePage = () => {
                     )}
                   </div>
 
-                  {parts.length > 0 && (
-                    <Button className="w-full gap-2" onClick={goNext}>
-                      Weiter zur Materialwahl <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  )}
+                  <Button className="w-full gap-2" onClick={goNext}>
+                    {refImages.length > 0 ? "Weiter zur Materialwahl" : "Ohne Bilder weiter"} <ArrowRight className="w-4 h-4" />
+                  </Button>
                 </div>
               )}
+
 
               {/* ---------- SCHRITT 3 ---------- */}
               {step === 3 && (
