@@ -80,6 +80,10 @@ export default function EinstellungenPage() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const qrInputRef = useRef<HTMLInputElement>(null);
 
+  // Kalkulator & Qualität
+  const [qualityPresets, setQualityPresets] = useState<QualityPreset[]>(DEFAULT_QUALITY_PRESETS);
+  const [calcParams, setCalcParams] = useState<CalcParams>(DEFAULT_CALC_PARAMS);
+
   useEffect(() => { setLocalSettings(settings); }, [settings]);
   useEffect(() => { setLocalCompany(company); }, [company]);
 
@@ -87,7 +91,22 @@ export default function EinstellungenPage() {
     loadPresets();
     loadWebsiteSettings();
     loadGoogleReviewUrl();
+    loadQualityConfig().then(({ presets, params }) => {
+      setQualityPresets(presets);
+      setCalcParams(params);
+    });
   }, []);
+
+  const updateQuality = (key: string, patch: Partial<QualityPreset>) =>
+    setQualityPresets(qs => qs.map(q => (q.key === key ? { ...q, ...patch } : q)));
+
+  const handleSaveQualityConfig = async () => {
+    await saveQualityConfig(qualityPresets, calcParams);
+    await saveSettings(localSettings);
+    await reloadSettings();
+    flashSaved();
+  };
+
 
   const loadGoogleReviewUrl = async () => {
     const { data } = await supabase.from("settings").select("value").eq("key", "google_review_url").maybeSingle();
