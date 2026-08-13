@@ -247,6 +247,9 @@ const CalculatorOnlinePage = () => {
     [qualityKey],
   );
   const sliceKey = `${materialId}|${qualityKey}`;
+  // Slicing startet erst, wenn die Qualität in Schritt 5 bestätigt wurde
+  const [qualityConfirmed, setQualityConfirmed] = useState(false);
+  const sliceToastRef = useRef<string>("");
 
 
 
@@ -535,9 +538,9 @@ const CalculatorOnlinePage = () => {
     }));
   };
 
-  // Slicing im Hintergrund starten, sobald Datei + Material + Qualität bekannt sind
+  // Slicing im Hintergrund starten — erst nach Bestätigung der Qualität (Schritt 5)
   useEffect(() => {
-    if (!materialId || !slicerSupported()) return;
+    if (!materialId || !slicerSupported() || !qualityConfirmed) return;
     const mat = materials.find((m) => m.id === materialId);
     if (!mat) return;
     const params = buildSlicerParams(
@@ -582,13 +585,33 @@ const CalculatorOnlinePage = () => {
           }));
         });
     });
-  }, [parts, materials, materialId, sliceKey, activeQuality]);
+  }, [parts, materials, materialId, sliceKey, activeQuality, qualityConfirmed]);
 
   const sliceOf = (p: Part) => {
     const job = sliceJobs[p.id];
     return job && job.key === sliceKey ? job : undefined;
   };
   const slicingActive = parts.some((p) => sliceOf(p)?.status === "running");
+  const sliceableParts = parts.filter((p) => p.file && p.fileName.split(".").pop()?.toLowerCase() === "stl");
+  const sliceProgress = sliceableParts.length
+    ? Math.round(sliceableParts.reduce((s, p) => s + (sliceOf(p)?.progress || 0), 0) / sliceableParts.length)
+    : 0;
+  const sliceError = sliceableParts.length > 0 && sliceableParts.every((p) => sliceOf(p)?.status === "error");
+  const sliceDone = sliceableParts.length > 0 && sliceableParts.every((p) => sliceOf(p)?.status === "done");
+
+  useEffect(() => {
+    if (!qualityConfirmed || !sliceDone) return;
+    if (sliceToastRef.current === sliceKey) return;
+    sliceToastRef.current = sliceKey;
+    toast.success("Analyse abgeschlossen ✓");
+  }, [qualityConfirmed, sliceDone, sliceKey]);
+
+  const confirmQuality = (key: string, infill: number) => {
+    setQualityKey(key);
+    applyAll({ infill });
+    setQualityConfirmed(true);
+  };
+
 
   const MIN_PRICE = 5;
   const FIX_COST = 3.5;
@@ -663,6 +686,7 @@ const CalculatorOnlinePage = () => {
   }, [parts]);
 
   const chooseMaterial = (id: string) => {
+    setQualityConfirmed(false); // neue Parameter -> Slicing erst nach erneuter Qualitätsbestätigung
     setMaterialId(id);
     const mat = materials.find((m) => m.id === id);
     const firstColor = mat?.farben?.[0] || "";
@@ -702,7 +726,7 @@ const CalculatorOnlinePage = () => {
     step === 2 ||
     (step === 3 && !!materialId) ||
     (step === 4 && (!!color || availableColors.length === 0)) ||
-    step === 5;
+    (step === 5 && !slicingActive);
 
   const goNext = () => setStep((s) => Math.min(STEPS.length, s + 1));
   const goBack = () => setStep((s) => Math.max(1, s - 1));
@@ -857,6 +881,7 @@ const CalculatorOnlinePage = () => {
       setMaterialId("");
       setColor("");
       setQualityKey("standard");
+      setQualityConfirmed(false);
       setChatKey((k) => k + 1);
       setStep(1);
     } catch (err) {
@@ -1313,7 +1338,7 @@ const CalculatorOnlinePage = () => {
                         <button
                           key={q.key}
                           type="button"
-                          onClick={() => { setQualityKey(q.key); applyAll({ infill: q.infill }); }}
+                          onClick={() => confirmQuality(q.key, q.infill)}
                           className={`rounded-2xl border-2 p-5 text-left transition-all ${
                             sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
                           }`}
@@ -1326,7 +1351,27 @@ const CalculatorOnlinePage = () => {
                     })}
                   </div>
 
-                  <Button className="w-full gap-2" onClick={goNext}>
+                  {qualityConfirmed && sliceableParts.length > 0 && (
+                    <div className="rounded-xl border border-border bg-card p-4">
+                      {slicingActive ? (
+                        <>
+                          <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            ⚙ OrcaSlicer analysiert Bauteil… {sliceProgress}%
+                          </p>
+                          <div className="mt-2 h-2 w-full rounded-full bg-muted overflow-hidden">
+                            <div className="h-full bg-primary transition-all" style={{ width: `${sliceProgress}%` }} />
+                          </div>
+                        </>
+                      ) : sliceError ? (
+                        <p className="text-sm text-muted-foreground">Vereinfachte Schätzung wird verwendet.</p>
+                      ) : sliceDone ? (
+                        <p className="text-sm text-primary font-medium">Analyse abgeschlossen ✓</p>
+                      ) : null}
+                    </div>
+                  )}
+
+                  <Button className="w-full gap-2" onClick={goNext} disabled={slicingActive}>
                     Weiter zur Übersicht <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -1379,17 +1424,21 @@ const CalculatorOnlinePage = () => {
                               if (job?.status === "done" && job.result) {
                                 const r = job.result;
                                 return (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    <span className="text-primary font-medium">Exakt geslict:</span>{" "}
-                                    {formatDuration(r.printTimeSeconds)} · {r.filamentGrams.toFixed(1)} g ·{" "}
-                                    {r.layerCount} Layer{r.hasSupports ? " · Stützstrukturen" : ""} · Stückpreis {CHF(calc.unit)}
-                                  </p>
+                                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                    <p>⏱ Druckzeit: ca. {formatDuration(r.printTimeSeconds)}</p>
+                                    <p>⚖ Filament: ca. {r.filamentGrams.toFixed(1)} g</p>
+                                    <p>📐 Layer: {r.layerCount}</p>
+                                    {r.hasSupports && (
+                                      <p className="text-warning">⚠ Stützstrukturen erforderlich – Nachbearbeitung +CHF 2.50</p>
+                                    )}
+                                    <p>Stückpreis {CHF(calc.unit)}</p>
+                                  </div>
                                 );
                               }
                               if (p.hasVolume) {
                                 return (
                                   <p className="text-xs text-muted-foreground mt-0.5">
-                                    ~{calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)} (Schätzung)
+                                    ~ Geschätzter Preis (STEP-Datei oder Slicer nicht verfügbar) · {calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)}
                                   </p>
                                 );
                               }
