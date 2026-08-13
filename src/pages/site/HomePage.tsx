@@ -20,6 +20,8 @@ import { ReviewsSection } from "@/components/site/ReviewsSection";
 import { ProjectsGrid } from "@/components/site/ProjectsGrid";
 import Seo from "@/components/site/Seo";
 import { UploadDropzone } from "@/components/site/UploadDropzone";
+import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
+import { HomeProjectsPreview } from "@/components/site/HomeProjectsPreview";
 
 
 
