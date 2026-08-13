@@ -14,7 +14,6 @@ import AdminAllowlistManager from "@/components/AdminAllowlistManager";
 const RATE_FIELDS: { key: keyof Settings; label: string; unit: string; step: string }[] = [
   { key: "setup_pauschale", label: "Setup-Pauschale", unit: "CHF", step: "0.5" },
   { key: "material_verkauf_pro_g", label: "Material-Preis (Verkauf)", unit: "CHF / g", step: "0.001" },
-  { key: "maschinenzeit_pro_h", label: "Maschinenzeit", unit: "CHF / h", step: "0.5" },
   { key: "nachbearbeitung_pro_h", label: "Nachbearbeitung", unit: "CHF / h", step: "1" },
   { key: "konstruktion_pro_h", label: "Konstruktion", unit: "CHF / h", step: "1" },
   { key: "material_einkauf_pro_kg", label: "Material-Einkauf", unit: "CHF / kg", step: "0.5" },
@@ -22,6 +21,7 @@ const RATE_FIELDS: { key: keyof Settings; label: string; unit: string; step: str
   { key: "skalierungsziel", label: "Skalierungsziel", unit: "CHF", step: "100" },
   { key: "investitions_fonds_prozent", label: "Investitions-Fonds", unit: "%", step: "1" },
 ];
+
 
 interface Preset {
   id?: string;
