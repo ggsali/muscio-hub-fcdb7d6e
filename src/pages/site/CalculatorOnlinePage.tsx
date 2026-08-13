@@ -16,7 +16,7 @@ import ModelPreview from "@/components/site/ModelPreview";
 import { colorHex } from "@/lib/colorMap";
 import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
-import KiMaterialChat, { KI_QUESTIONS, KiResult } from "@/components/site/KiMaterialChat";
+import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
 
 interface Material {
   id: string;
@@ -202,7 +202,7 @@ function isStepFile(name: string): boolean {
   return ext === "step" || ext === "stp";
 }
 
-const STEPS = ["Datei", "Material", "Farbe", "Qualität", "Übersicht"];
+const STEPS = ["Datei", "Bilder", "Material", "Farbe", "Qualität", "Übersicht"];
 
 const CalculatorOnlinePage = () => {
   const [step, setStep] = useState(1);
@@ -575,19 +575,22 @@ const CalculatorOnlinePage = () => {
     const p = parts[0];
     const lines = [
       `Bauteil: ${p?.fileName || "-"}${p?.hasVolume ? ` (${p.volumeCm3.toFixed(1)} cm³, ca. ${p.estimatedWeight.toFixed(1)} g)` : ""}`,
-      ...KI_QUESTIONS.map((q) => `${q.label}: ${kiResult.answers[q.key] || "-"}`),
       `Empfohlenes Material: ${kiResult.material} — ${kiResult.begruendung}`,
+      "",
+      "--- Gesprächsverlauf ---",
+      kiResult.transcript,
     ];
     return lines.join("\n");
   }, [kiResult, parts]);
 
   const canNext =
     (step === 1 && parts.length > 0) ||
-    (step === 2 && !!materialId) ||
-    (step === 3 && (!!color || availableColors.length === 0)) ||
-    step === 4;
+    step === 2 ||
+    (step === 3 && !!materialId) ||
+    (step === 4 && (!!color || availableColors.length === 0)) ||
+    step === 5;
 
-  const goNext = () => setStep((s) => Math.min(5, s + 1));
+  const goNext = () => setStep((s) => Math.min(STEPS.length, s + 1));
   const goBack = () => setStep((s) => Math.max(1, s - 1));
 
   const handleSend = async (e: React.FormEvent) => {
@@ -930,8 +933,8 @@ const CalculatorOnlinePage = () => {
                 </div>
               )}
 
-              {/* ---------- SCHRITT 2 ---------- */}
-              {step === 2 && (
+              {/* ---------- SCHRITT 3 ---------- */}
+              {step === 3 && (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Material wählen</h1>
@@ -1001,8 +1004,8 @@ const CalculatorOnlinePage = () => {
                 </div>
               )}
 
-              {/* ---------- SCHRITT 3 ---------- */}
-              {step === 3 && (
+              {/* ---------- SCHRITT 4 ---------- */}
+              {step === 4 && (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Farbe wählen</h1>
@@ -1041,8 +1044,8 @@ const CalculatorOnlinePage = () => {
                 </div>
               )}
 
-              {/* ---------- SCHRITT 4 ---------- */}
-              {step === 4 && (
+              {/* ---------- SCHRITT 5 ---------- */}
+              {step === 5 && (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Qualität wählen</h1>
@@ -1076,8 +1079,8 @@ const CalculatorOnlinePage = () => {
                 </div>
               )}
 
-              {/* ---------- SCHRITT 5 ---------- */}
-              {step === 5 && (
+              {/* ---------- SCHRITT 6 ---------- */}
+              {step === 6 && (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Übersicht & Bestellen</h1>
