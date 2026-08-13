@@ -19,6 +19,11 @@ import Seo from "@/components/site/Seo";
 import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
 import { useSettings } from "@/contexts/SettingsContext";
 import { buildSlicerParams, sliceFile, slicerSupported, SlicerResult } from "@/lib/slicerClient";
+import {
+  loadQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
+  type QualityPreset, type CalcParams,
+} from "@/lib/calcConfig";
+
 
 interface Material {
   id: string;
@@ -28,20 +33,13 @@ interface Material {
   farben: string[];
 }
 
-const QUALITY_PRESETS = [
-  { key: "schnell", label: "Schnell", infill: 15, layerHeight: 0.3, layerFactor: 1.0, desc: "Leicht & günstig", Icon: Zap },
-  { key: "standard", label: "Standard", infill: 20, layerHeight: 0.2, layerFactor: 1.15, desc: "Ausgewogen", Icon: Gauge },
-  { key: "stark", label: "Stark", infill: 40, layerHeight: 0.15, layerFactor: 1.35, desc: "Belastbar", Icon: Shield },
-  { key: "massiv", label: "Massiv", infill: 80, layerHeight: 0.1, layerFactor: 1.6, desc: "Maximale Festigkeit", Icon: Gem },
-];
-
-const presetByInfill = (infill: number) =>
-  QUALITY_PRESETS.find((q) => q.infill === infill) || QUALITY_PRESETS[1];
-
-const qualityAdminLabel = (infill: number) => {
-  const q = presetByInfill(infill);
-  return `${q.label} (${q.layerHeight}mm, ${q.infill}% Infill)`;
+const QUALITY_ICONS: Record<string, typeof Zap> = {
+  schnell: Zap,
+  standard: Gauge,
+  stark: Shield,
+  massiv: Gem,
 };
+
 
 interface PartImage {
   id: string;
@@ -242,10 +240,33 @@ const CalculatorOnlinePage = () => {
   >({});
   const startedRef = useRef<Set<string>>(new Set());
 
-  const activeQuality = useMemo(
-    () => QUALITY_PRESETS.find((q) => q.key === qualityKey) || QUALITY_PRESETS[1],
-    [qualityKey],
+  // Qualitäts-Presets & Kalkulationsparameter aus den Einstellungen (Fallback: Hardcode)
+  const [qualityPresets, setQualityPresets] = useState<QualityPreset[]>(DEFAULT_QUALITY_PRESETS);
+  const [calcParams, setCalcParams] = useState<CalcParams>(DEFAULT_CALC_PARAMS);
+  useEffect(() => {
+    loadQualityConfig().then(({ presets, params }) => {
+      setQualityPresets(presets);
+      setCalcParams(params);
+    });
+  }, []);
+
+  const presetByInfill = useCallback(
+    (infill: number) => qualityPresets.find((q) => q.infill === infill) || qualityPresets[1],
+    [qualityPresets],
   );
+  const qualityAdminLabel = useCallback(
+    (infill: number) => {
+      const q = presetByInfill(infill);
+      return `${q.label} (${q.layerHeight}mm, ${q.infill}% Infill)`;
+    },
+    [presetByInfill],
+  );
+
+  const activeQuality = useMemo(
+    () => qualityPresets.find((q) => q.key === qualityKey) || qualityPresets[1],
+    [qualityKey, qualityPresets],
+  );
+
   const sliceKey = `${materialId}|${qualityKey}`;
   // Slicing startet erst, wenn die Qualität in Schritt 5 bestätigt wurde
   const [qualityConfirmed, setQualityConfirmed] = useState(false);
@@ -569,7 +590,7 @@ const CalculatorOnlinePage = () => {
           supabase
             .from("calculator_uploads")
             .update({
-              slicer_druckzeit_sekunden: Math.round(res.printTimeSeconds),
+              slicer_druckzeit_sekunden: Math.round(res.printTimeSeconds * (activeQuality?.speedFactor ?? 1)),
               slicer_filament_gramm: Math.round(res.filamentGrams * 10) / 10,
               slicer_hat_supports: res.hasSupports,
               slicer_layer_anzahl: res.layerCount,
@@ -613,9 +634,13 @@ const CalculatorOnlinePage = () => {
   };
 
 
-  const MIN_PRICE = 5;
-  const FIX_COST = 3.5;
-  const SUPPORT_SURCHARGE = 2.5;
+  const MIN_PRICE = calcParams.min_price;
+  const FIX_COST = calcParams.fix_cost;
+  const SUPPORT_SURCHARGE = calcParams.support_surcharge;
+
+  /** Slicer-Druckzeit mit dem Geschwindigkeitsfaktor der Qualitätsstufe korrigieren */
+  const correctedPrintSeconds = (p: Part, r: SlicerResult) =>
+    r.printTimeSeconds * (presetByInfill(p.infill)?.speedFactor ?? 1);
 
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
@@ -629,7 +654,7 @@ const CalculatorOnlinePage = () => {
     if (job?.status === "done" && job.result) {
       const r = job.result;
       const weight = Math.round(r.filamentGrams * 10) / 10;
-      const hours = r.printTimeSeconds / 3600;
+      const hours = correctedPrintSeconds(p, r) / 3600;
       const machineCost = hours * (settings.maschinenzeit_pro_h || 0);
       const matCost = weight * mat.pricePerGram;
       const unit = Math.max(MIN_PRICE, matCost + machineCost + FIX_COST + (r.hasSupports ? SUPPORT_SURCHARGE : 0));
@@ -641,8 +666,9 @@ const CalculatorOnlinePage = () => {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
     }
     const weight = p.estimatedWeight;
-    const layerFactor = presetByInfill(p.infill).layerFactor;
-    const unit = weight * mat.pricePerGram * layerFactor;
+    const speedFactor = presetByInfill(p.infill)?.speedFactor ?? 1;
+    const unit = weight * mat.pricePerGram * speedFactor;
+
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: false };
   };
 
@@ -816,7 +842,7 @@ const CalculatorOnlinePage = () => {
               storage_path: p.storagePath,
               size_bytes: p.file?.size ?? null,
               bucket: "project-uploads",
-              slicer_druckzeit_sekunden: r ? Math.round(r.printTimeSeconds) : null,
+              slicer_druckzeit_sekunden: r ? Math.round(correctedPrintSeconds(p, r)) : null,
               slicer_filament_gramm: r ? Math.round(r.filamentGrams * 10) / 10 : null,
               slicer_hat_supports: r ? r.hasSupports : null,
               slicer_layer_anzahl: r ? r.layerCount : null,
@@ -838,7 +864,7 @@ const CalculatorOnlinePage = () => {
         .map((p) => {
           const r = sliceOf(p)?.result;
           if (!r) return null;
-          return `- ${p.fileName}: ${formatDuration(r.printTimeSeconds)} Druckzeit, ${r.filamentGrams.toFixed(1)} g Filament, ${r.layerCount} Layer${r.hasSupports ? ", Stützstrukturen nötig" : ""}`;
+          return `- ${p.fileName}: ${formatDuration(correctedPrintSeconds(p, r))} Druckzeit, ${r.filamentGrams.toFixed(1)} g Filament, ${r.layerCount} Layer${r.hasSupports ? ", Stützstrukturen nötig" : ""}`;
         })
         .filter(Boolean);
       const slicerBlock = slicerLines.length > 0 ? `\n\n--- Slicer-Analyse (OrcaSlicer-Kernel) ---\n${slicerLines.join("\n")}` : "";
@@ -1331,9 +1357,10 @@ const CalculatorOnlinePage = () => {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {QUALITY_PRESETS.map((q) => {
+                    {qualityPresets.map((q) => {
                       const sel = qualityKey === q.key;
-                      const Icon = q.Icon;
+                      const Icon = QUALITY_ICONS[q.key] || Gauge;
+
                       return (
                         <button
                           key={q.key}
@@ -1425,12 +1452,13 @@ const CalculatorOnlinePage = () => {
                                 const r = job.result;
                                 return (
                                   <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                                    <p>⏱ Druckzeit: ca. {formatDuration(r.printTimeSeconds)}</p>
+                                    <p>⏱ Druckzeit: ca. {formatDuration(correctedPrintSeconds(p, r))}</p>
                                     <p>⚖ Filament: ca. {r.filamentGrams.toFixed(1)} g</p>
                                     <p>📐 Layer: {r.layerCount}</p>
                                     {r.hasSupports && (
-                                      <p className="text-warning">⚠ Stützstrukturen erforderlich – Nachbearbeitung +CHF 2.50</p>
+                                      <p className="text-warning">⚠ Stützstrukturen erforderlich – Nachbearbeitung +{CHF(SUPPORT_SURCHARGE)}</p>
                                     )}
+
                                     <p>Stückpreis {CHF(calc.unit)}</p>
                                   </div>
                                 );
