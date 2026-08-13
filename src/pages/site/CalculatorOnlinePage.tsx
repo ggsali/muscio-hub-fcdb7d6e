@@ -411,7 +411,9 @@ const CalculatorOnlinePage = () => {
     const files = takePendingUploads();
     if (files.length === 0) return;
     pendingHandled.current = true;
+    setQuickMode(true);
     files.forEach(addFile);
+
   }, [materials, addFile]);
 
   const handleDrop = (e: React.DragEvent) => {
