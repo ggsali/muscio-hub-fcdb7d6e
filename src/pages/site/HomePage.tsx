@@ -194,7 +194,7 @@ const HowItWorks = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: shouldReduceMotion ? 0 : 0.5, ease: "easeOut" },
+      transition: { duration: shouldReduceMotion ? 0 : 0.5, ease: "easeOut" as const },
     },
   };
 
