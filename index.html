@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google-site-verification" content="viXJbv64kKqwwY_MpoGdHZU0kcvv0GVwwQKTXeIieHU" />
 
+    <!-- Domain-Vereinheitlichung: www -> non-www und http -> https (Client-Fallback) -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        if (h === "www.3dmuscio.com" || (h === "3dmuscio.com" && location.protocol === "http:")) {
+          location.replace("https://3dmuscio.com" + location.pathname + location.search + location.hash);
+        }
+      })();
+    </script>
+
+
     <title>3DMuscio – 3D Druckservice Schweiz | FDM &amp; SLA Druck Ostschweiz</title>
     <meta name="description" content="Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator. Schnell, präzise, made in Switzerland." />
     <meta name="author" content="3DMuscio" />
