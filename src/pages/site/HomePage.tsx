@@ -26,7 +26,7 @@ import { toast } from "sonner";
 /* ─── HERO BENTO ─── */
 const HERO_STATS = [
   { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers },
-  { value: "B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2 },
+  { value: "AUCH B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2 },
   { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle },
   { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap },
 ];
