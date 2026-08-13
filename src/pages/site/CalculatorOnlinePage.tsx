@@ -865,12 +865,27 @@ const CalculatorOnlinePage = () => {
                     {parts.map((p) => (
                       <div key={p.id} className="flex items-center justify-between gap-3 bg-muted/40 rounded-xl px-4 py-3">
                         <span className="text-sm truncate">{p.fileName}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {p.hasVolume ? `${p.volumeCm3.toFixed(1)} cm³ · ca. ${p.estimatedWeight.toFixed(1)} g` : "Prüfung nötig"}
-                        </span>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs text-muted-foreground">
+                            {p.hasVolume ? `${p.volumeCm3.toFixed(1)} cm³ · ca. ${p.estimatedWeight.toFixed(1)} g` : "Prüfung nötig"}
+                          </span>
+                          <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
+
+                  <div className="mt-4">
+                    <input id="quick-file-input" type="file" multiple accept=".stl,.3mf,.step,.obj" className="hidden" onChange={handleInput} />
+                    <label htmlFor="quick-file-input">
+                      <Button asChild variant="outline" size="sm" className="gap-2 cursor-pointer">
+                        <span><Plus className="w-4 h-4" /> Weitere Teile hinzufügen</span>
+                      </Button>
+                    </label>
+                  </div>
+
 
                   <div className="mt-8">
                     <p className="font-heading font-bold text-foreground mb-1">Möchtest du eine genauere Analyse?</p>
