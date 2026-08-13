@@ -222,6 +222,9 @@ const CalculatorOnlinePage = () => {
   const [qualityKey, setQualityKey] = useState("standard");
   const [kiResult, setKiResult] = useState<KiResult | null>(null);
   const [chatKey, setChatKey] = useState(0);
+  // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
+  const [quickMode, setQuickMode] = useState(false);
+
 
   const addRefImage = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
