@@ -43,7 +43,8 @@ export default function BlogPostPage() {
   if (notFound) return <Navigate to="/blog" replace />;
   if (loading || !post) return <div className="container mx-auto px-4 py-20"><p className="text-muted-foreground">Lädt…</p></div>;
 
-  const desc = (post.zusammenfassung || post.inhalt.replace(/[#*_`>\-]/g, "").slice(0, 160)).slice(0, 160);
+  const title = post.meta_title || `${post.titel} | 3DMuscio Blog`;
+  const desc = (post.meta_description || post.zusammenfassung || post.inhalt.replace(/[#*_`>\-]/g, "").slice(0, 160)).slice(0, 160);
   const url = `https://3dmuscio.com/blog/${post.slug}`;
 
   return (
