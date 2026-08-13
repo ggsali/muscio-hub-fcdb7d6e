@@ -34,7 +34,10 @@ type Inquiry = {
   notiz: string | null;
   created_at: string;
   attachments?: Attachment[] | null;
+  ki_beratung_zusammenfassung?: string | null;
+  ki_empfohlenes_material?: string | null;
 };
+
 
 const formatBytes = (n?: number | null) => {
   if (!n) return "";
