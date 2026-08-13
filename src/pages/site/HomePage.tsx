@@ -511,10 +511,10 @@ const Index = () => (
     />
     <HeroBento />
     <Marquee />
+    <StatsTrust />
     <HowItWorks />
-
+    <UploadSection />
     <MaterialsTeaser />
-    <VolumeDiscounts />
     <ReviewsSection />
     <FAQ />
     <CTA />
