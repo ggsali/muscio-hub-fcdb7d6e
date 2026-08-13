@@ -32,6 +32,8 @@ const Slot = ({
   className,
   eager,
   badge,
+  delay = 0,
+  direction = 1,
 }: {
   shots: Shot[];
   offset: number;
@@ -39,25 +41,34 @@ const Slot = ({
   className: string;
   eager?: boolean;
   badge?: boolean;
+  delay?: number;
+  direction?: number;
 }) => {
   const shot = shots[(offset + step * 1) % shots.length] ?? shots[0];
   if (!shot) return null;
 
   const inner = (
     <>
-      <AnimatePresence mode="wait">
+      {/* Layered Crossfade: neues Bild schiebt sich weich über das alte */}
+      <AnimatePresence initial={false}>
         <motion.img
           key={shot.id + step}
           src={shot.url}
           alt={shot.alt}
           loading={eager ? "eager" : "lazy"}
-          initial={{ opacity: 0, scale: 1.04 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.02 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          initial={{ opacity: 0, scale: 1.12, x: direction * 24, filter: "blur(10px)" }}
+          animate={{ opacity: 1, scale: 1, x: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, scale: 1.06, x: direction * -18, filter: "blur(6px)" }}
+          transition={{
+            duration: 1.1,
+            delay,
+            ease: [0.16, 1, 0.3, 1],
+            opacity: { duration: 0.9, delay },
+          }}
+          className="absolute inset-0 w-full h-full object-cover will-change-transform"
         />
       </AnimatePresence>
+
       <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
       {badge && (
         <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur border border-border/60 text-[10px] font-semibold uppercase tracking-widest text-foreground">
@@ -65,14 +76,24 @@ const Slot = ({
         </span>
       )}
       {shot.name && (
-        <span className="absolute bottom-3 left-3 right-3 text-xs md:text-sm font-heading font-bold text-foreground truncate">
-          {shot.name}
-        </span>
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={shot.id + step + "-label"}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.5, delay: delay + 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute bottom-3 left-3 right-3 text-xs md:text-sm font-heading font-bold text-foreground truncate"
+          >
+            {shot.name}
+          </motion.span>
+        </AnimatePresence>
       )}
     </>
   );
 
-  const base = `group relative overflow-hidden bg-muted border border-border ${className}`;
+  const base = `group relative overflow-hidden bg-muted border border-border transition-transform duration-500 hover:scale-[1.02] ${className}`;
+
 
   return shot.slug ? (
     <Link to={`/projekte/${shot.slug}`} className={base} aria-label={shot.name || "Projekt ansehen"}>
@@ -128,10 +149,12 @@ export const HeroImageMosaic = () => {
         step={step}
         eager
         badge
+        direction={1}
         className="col-span-2 rounded-3xl aspect-[16/11]"
       />
-      <Slot shots={shots} offset={1} step={step} className="rounded-2xl aspect-square md:-mt-6" />
-      <Slot shots={shots} offset={2} step={step} className="rounded-2xl aspect-square md:mt-4" />
+      <Slot shots={shots} offset={1} step={step} delay={0.12} direction={-1} className="rounded-2xl aspect-square md:-mt-6" />
+      <Slot shots={shots} offset={2} step={step} delay={0.24} direction={1} className="rounded-2xl aspect-square md:mt-4" />
+
     </div>
   );
 };
