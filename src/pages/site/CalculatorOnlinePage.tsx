@@ -1424,17 +1424,21 @@ const CalculatorOnlinePage = () => {
                               if (job?.status === "done" && job.result) {
                                 const r = job.result;
                                 return (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    <span className="text-primary font-medium">Exakt geslict:</span>{" "}
-                                    {formatDuration(r.printTimeSeconds)} · {r.filamentGrams.toFixed(1)} g ·{" "}
-                                    {r.layerCount} Layer{r.hasSupports ? " · Stützstrukturen" : ""} · Stückpreis {CHF(calc.unit)}
-                                  </p>
+                                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                    <p>⏱ Druckzeit: ca. {formatDuration(r.printTimeSeconds)}</p>
+                                    <p>⚖ Filament: ca. {r.filamentGrams.toFixed(1)} g</p>
+                                    <p>📐 Layer: {r.layerCount}</p>
+                                    {r.hasSupports && (
+                                      <p className="text-warning">⚠ Stützstrukturen erforderlich – Nachbearbeitung +CHF 2.50</p>
+                                    )}
+                                    <p>Stückpreis {CHF(calc.unit)}</p>
+                                  </div>
                                 );
                               }
                               if (p.hasVolume) {
                                 return (
                                   <p className="text-xs text-muted-foreground mt-0.5">
-                                    ~{calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)} (Schätzung)
+                                    ~ Geschätzter Preis (STEP-Datei oder Slicer nicht verfügbar) · {calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)}
                                   </p>
                                 );
                               }
