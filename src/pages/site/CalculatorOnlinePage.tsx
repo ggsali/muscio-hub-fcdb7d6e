@@ -1294,6 +1294,17 @@ const CalculatorOnlinePage = () => {
                     ))}
                   </div>
 
+                  <div>
+                    <input id="overview-file-input" type="file" multiple accept=".stl,.3mf,.step,.obj" className="hidden" onChange={handleInput} />
+                    <label htmlFor="overview-file-input">
+                      <Button asChild variant="outline" className="gap-2 cursor-pointer w-full">
+                        <span><Plus className="w-4 h-4" /> Weiteres Teil hinzufügen</span>
+                      </Button>
+                    </label>
+                  </div>
+
+
+
                   {/* Preisübersicht */}
                   <div className="bg-card rounded-2xl border border-border p-5 space-y-2 text-sm">
                     <div className="flex justify-between text-muted-foreground">
