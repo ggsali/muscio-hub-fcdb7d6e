@@ -595,9 +595,9 @@ const CalculatorOnlinePage = () => {
 
   const kiSummary = useMemo(() => {
     if (!kiResult) return null;
-    const p = parts[0];
     const lines = [
-      `Bauteil: ${p?.fileName || "-"}${p?.hasVolume ? ` (${p.volumeCm3.toFixed(1)} cm³, ca. ${p.estimatedWeight.toFixed(1)} g)` : ""}`,
+      `Bauteile (${parts.length}):`,
+      ...parts.map((p) => `- ${p.fileName}${p.hasVolume ? ` (${p.volumeCm3.toFixed(1)} cm³, ca. ${p.estimatedWeight.toFixed(1)} g)` : ""}`),
       `Empfohlenes Material: ${kiResult.material} — ${kiResult.begruendung}`,
       "",
       "--- Gesprächsverlauf ---",
