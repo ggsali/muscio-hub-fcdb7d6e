@@ -77,9 +77,7 @@ const HeroBento = () => (
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button size="lg" asChild className="rounded-xl min-h-[52px] px-8 text-base">
-              <Link to="/kalkulator-online">Preis berechnen <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
-            </Button>
+            <HeroUploadButton />
             <Button size="lg" variant="outline" asChild className="rounded-xl min-h-[52px] px-8 text-base">
               <Link to="/materialien">Materialien entdecken</Link>
             </Button>
