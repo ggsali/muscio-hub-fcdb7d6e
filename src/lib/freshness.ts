@@ -26,8 +26,8 @@ const check = async () => {
       sessionStorage.removeItem(RELOAD_FLAG);
       return;
     }
-    if (sessionStorage.getItem(RELOAD_FLAG)) return; // Reload-Loop verhindern
-    sessionStorage.setItem(RELOAD_FLAG, "1");
+    if (sessionStorage.getItem(RELOAD_FLAG) === remote) return; // Reload-Loop verhindern
+    sessionStorage.setItem(RELOAD_FLAG, remote);
 
     if ("serviceWorker" in navigator) {
       const regs = await navigator.serviceWorker.getRegistrations().catch(() => []);
@@ -37,11 +37,15 @@ const check = async () => {
       const keys = await caches.keys().catch(() => [] as string[]);
       await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
     }
-    location.replace(location.pathname + location.search + location.hash);
+    // Cache-Buster im Query erzwingt ein frisches index.html vom Server
+    const params = new URLSearchParams(location.search);
+    params.set("_v", Date.now().toString(36));
+    location.replace(`${location.pathname}?${params.toString()}${location.hash}`);
   } catch {
     // Netzwerkfehler ignorieren
   }
 };
+
 
 export const startFreshnessWatcher = () => {
   if (import.meta.env.DEV) return;
