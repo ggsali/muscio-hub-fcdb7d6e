@@ -1357,9 +1357,10 @@ const CalculatorOnlinePage = () => {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {QUALITY_PRESETS.map((q) => {
+                    {qualityPresets.map((q) => {
                       const sel = qualityKey === q.key;
-                      const Icon = q.Icon;
+                      const Icon = QUALITY_ICONS[q.key] || Gauge;
+
                       return (
                         <button
                           key={q.key}
