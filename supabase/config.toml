@@ -43,3 +43,5 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.send-profile-completion]
     verify_jwt = true
+  [functions.ki-materialberatung]
+    verify_jwt = false

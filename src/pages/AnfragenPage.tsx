@@ -34,7 +34,10 @@ type Inquiry = {
   notiz: string | null;
   created_at: string;
   attachments?: Attachment[] | null;
+  ki_beratung_zusammenfassung?: string | null;
+  ki_empfohlenes_material?: string | null;
 };
+
 
 const formatBytes = (n?: number | null) => {
   if (!n) return "";
@@ -125,7 +128,15 @@ function InquiryDetail({
         initialAt={selected.created_at}
       />
 
+      {selected.ki_beratung_zusammenfassung && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">KI-Materialberatung</p>
+          <pre className="text-xs whitespace-pre-wrap font-sans text-foreground">{selected.ki_beratung_zusammenfassung}</pre>
+        </div>
+      )}
+
       {selected.attachments && selected.attachments.length > 0 && (
+
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
             <Paperclip className="w-3.5 h-3.5" /> Anhänge ({selected.attachments.length})

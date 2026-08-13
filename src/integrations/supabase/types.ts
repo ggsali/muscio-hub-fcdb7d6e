@@ -639,6 +639,8 @@ export type Database = {
           customer_id: string | null
           email: string
           id: string
+          ki_beratung_zusammenfassung: string | null
+          ki_empfohlenes_material: string | null
           nachricht: string
           name: string
           notiz: string | null
@@ -655,6 +657,8 @@ export type Database = {
           customer_id?: string | null
           email: string
           id?: string
+          ki_beratung_zusammenfassung?: string | null
+          ki_empfohlenes_material?: string | null
           nachricht: string
           name: string
           notiz?: string | null
@@ -671,6 +675,8 @@ export type Database = {
           customer_id?: string | null
           email?: string
           id?: string
+          ki_beratung_zusammenfassung?: string | null
+          ki_empfohlenes_material?: string | null
           nachricht?: string
           name?: string
           notiz?: string | null
@@ -876,6 +882,8 @@ export type Database = {
           geplant_von: string | null
           gewinn_total: number | null
           id: string
+          ki_beratung_zusammenfassung: string | null
+          ki_empfohlenes_material: string | null
           kosten_total: number | null
           lieferart: string
           marge: number | null
@@ -900,6 +908,8 @@ export type Database = {
           geplant_von?: string | null
           gewinn_total?: number | null
           id?: string
+          ki_beratung_zusammenfassung?: string | null
+          ki_empfohlenes_material?: string | null
           kosten_total?: number | null
           lieferart?: string
           marge?: number | null
@@ -924,6 +934,8 @@ export type Database = {
           geplant_von?: string | null
           gewinn_total?: number | null
           id?: string
+          ki_beratung_zusammenfassung?: string | null
+          ki_empfohlenes_material?: string | null
           kosten_total?: number | null
           lieferart?: string
           marge?: number | null
