@@ -78,14 +78,16 @@ export function buildSlicerParams(material: SlicerMaterialInput, quality: Slicer
     z_hop: 0.4,
 
     // Qualität
-    layer_height: quality.layerHeight,
-    first_layer_height: Math.max(quality.layerHeight, 0.2),
+    layer_height: layerHeight,
+    first_layer_height: Math.min(0.3, Math.max(layerHeight, 0.2)),
     line_width: 0.42,
-    wall_loops: 2,
-    infill_density: quality.infill / 100,
-    top_shell_layers: 4,
-    bottom_shell_layers: 3,
+    wall_loops: infill >= 60 ? 3 : 2,
+    infill_density: infill / 100,
+    sparse_infill_pattern: "grid",
+    top_shell_layers: topLayers,
+    bottom_shell_layers: bottomLayers,
     skirt_loops: 1,
+
 
     // Material
     nozzle_temp: nozzleTemp,
