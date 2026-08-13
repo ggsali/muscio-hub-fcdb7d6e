@@ -12,8 +12,7 @@ self.onmessage = async (e: MessageEvent) => {
     const slicer = await slicerPromise;
 
     let hasSupports = false;
-    // onLayer = Streaming-Modus: jede Schicht wird sofort freigegeben (kein RAM-Peak),
-    // gleichzeitig prüfen wir den G-Code-Chunk auf Stützstrukturen.
+
     const result = slicer.slice(new Uint8Array(stl), params, {
       onProgress: (done: number, total: number) =>
         (self as any).postMessage({ id, type: "progress", done, total }),
@@ -22,17 +21,52 @@ self.onmessage = async (e: MessageEvent) => {
       },
     });
 
+    // VOLLSTÄNDIGER DEBUG LOG – damit wir alle Feldnamen sehen
+    console.log("[Slicer Worker] Raw result:", JSON.stringify(result));
+    console.log("[Slicer Worker] result.stats:", JSON.stringify(result?.stats));
+    console.log("[Slicer Worker] Stats keys:", Object.keys(result?.stats || {}));
+
     if (!result || result.error) throw new Error(result?.error || "Slicing fehlgeschlagen");
-    const stats = result.stats || {};
+
+    const stats = result.stats || result.metadata || result || {};
+
+    const printTimeSeconds =
+      Number(stats.time_estimate) ||
+      Number(stats.printTime) ||
+      Number(stats.print_time) ||
+      Number(stats.estimatedTime) ||
+      Number(stats.estimated_time) ||
+      Number(stats.time) ||
+      Number(result.time_estimate) ||
+      Number(result.printTime) ||
+      0;
+
+    const filamentMm =
+      Number(stats.filament_mm) ||
+      Number(stats.filamentLength) ||
+      Number(stats.filament_length) ||
+      Number(stats.extruded_mm) ||
+      Number(result.filament_mm) ||
+      0;
+
+    const layers =
+      Number(stats.layers) ||
+      Number(stats.layer_count) ||
+      Number(stats.layerCount) ||
+      0;
+
+    console.log("[Slicer Worker] Parsed:", { printTimeSeconds, filamentMm, layers, hasSupports });
+
     (self as any).postMessage({
       id,
       type: "done",
       hasSupports,
-      layers: Number(stats.layers) || 0,
-      filamentMm: Number(stats.filament_mm) || 0,
-      printTimeSeconds: Number(stats.time_estimate) || 0,
+      layers,
+      filamentMm,
+      printTimeSeconds,
     });
   } catch (err: any) {
+    console.error("[Slicer Worker] Error:", err);
     (self as any).postMessage({ id, type: "error", error: String(err?.message || err) });
   }
 };
