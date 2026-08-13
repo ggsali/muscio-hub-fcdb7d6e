@@ -33,7 +33,7 @@ const TRUST = [
 ];
 
 const HERO_STATS = [
-  { value: 2500, suffix: "+", label: "Teile gedruckt" },
+  { value: 500, suffix: "+", label: "Teile gedruckt" },
   { value: "B2B", label: "FÜR GESCHÄFTSKUNDEN" },
   { value: 99, suffix: "%", label: "Termingerecht", accent: true },
   { value: 48, suffix: "h", label: "Produktionszeit" },
