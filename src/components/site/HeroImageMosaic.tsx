@@ -149,10 +149,12 @@ export const HeroImageMosaic = () => {
         step={step}
         eager
         badge
+        direction={1}
         className="col-span-2 rounded-3xl aspect-[16/11]"
       />
-      <Slot shots={shots} offset={1} step={step} className="rounded-2xl aspect-square md:-mt-6" />
-      <Slot shots={shots} offset={2} step={step} className="rounded-2xl aspect-square md:mt-4" />
+      <Slot shots={shots} offset={1} step={step} delay={0.12} direction={-1} className="rounded-2xl aspect-square md:-mt-6" />
+      <Slot shots={shots} offset={2} step={step} delay={0.24} direction={1} className="rounded-2xl aspect-square md:mt-4" />
+
     </div>
   );
 };
