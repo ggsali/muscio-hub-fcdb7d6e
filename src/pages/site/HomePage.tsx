@@ -105,18 +105,15 @@ const HeroBento = () => (
         </motion.div>
       </div>
 
-      {/* Reihe 2 — Upload volle Breite */}
-      <ScrollReveal>
-        <div className="bg-muted border border-border rounded-3xl p-4 md:p-6">
-          <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3 px-1">
-            Datei hochladen &amp; Sofortpreis erhalten
-          </p>
-          <UploadDropzone compact />
-        </div>
-      </ScrollReveal>
+    </div>
+  </section>
+);
 
-      {/* Reihe 3 — Kennzahlen */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+/* ─── STATS + TRUST (kompakt) ─── */
+const StatsTrust = () => (
+  <section className="py-10 md:py-14">
+    <div className="container mx-auto px-4 flex flex-col gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {HERO_STATS.map((s, i) => (
           <ScrollReveal key={s.label} delay={i * 0.06}>
             <div className="bg-card border border-border rounded-2xl p-5 md:p-6 h-full">
@@ -140,59 +137,34 @@ const HeroBento = () => (
         ))}
       </div>
 
-      {/* Reihe 3 — Trust-Strip */}
-      <div className="w-full bg-foreground text-background rounded-2xl px-5 md:px-8 py-5 md:py-6 grid grid-cols-2 md:flex md:flex-wrap md:justify-between items-center gap-4 md:gap-6">
-        {TRUST.map((t) => (
-          <div key={t.label} className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-background/10 flex items-center justify-center text-primary flex-shrink-0">
-              <t.icon className="w-4.5 h-4.5" strokeWidth={2.5} />
+      <ScrollReveal delay={0.1}>
+        <div className="w-full bg-foreground text-background rounded-2xl px-5 md:px-8 py-5 md:py-6 grid grid-cols-2 md:flex md:flex-wrap md:justify-between items-center gap-4 md:gap-6">
+          {TRUST.map((t) => (
+            <div key={t.label} className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded bg-background/10 flex items-center justify-center text-primary flex-shrink-0">
+                <t.icon className="w-4.5 h-4.5" strokeWidth={2.5} />
+              </div>
+              <span className="font-medium text-sm">{t.label}</span>
             </div>
-            <span className="font-medium text-sm">{t.label}</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </ScrollReveal>
+    </div>
+  </section>
+);
 
-      {/* Reihe 4 — Projekte + Kalkulator-Prozess */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-        <ScrollReveal className="lg:col-span-7">
-          <div className="bg-card border border-border rounded-3xl p-4 md:p-6 h-full">
-            <p className="text-xs font-medium text-primary uppercase tracking-widest mb-4 px-1">
-              Referenzprojekte
-            </p>
-            <HeroProjectsCarousel />
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal className="lg:col-span-5" delay={0.1}>
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 h-full flex flex-col">
-            <p className="text-xs font-medium text-primary uppercase tracking-widest mb-2">Kalkulator</p>
-            <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
-              In fünf Schritten zum Preis.
-            </h2>
-            <ol className="space-y-4 flex-1">
-              {CALC_STEPS.map((s, i) => (
-                <li key={s.title} className="flex gap-4 items-start">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <s.icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-[10px] font-bold text-muted-foreground tabular-nums">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <h3 className="font-heading text-sm font-semibold text-foreground">{s.title}</h3>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <Button asChild variant="outline" className="rounded-xl mt-6 min-h-[48px]">
-              <Link to="/kalkulator-online">Jetzt kalkulieren <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
-            </Button>
-          </div>
-        </ScrollReveal>
-      </div>
+/* ─── UPLOAD CTA ─── */
+const UploadSection = () => (
+  <section className="py-16 md:py-20">
+    <div className="container mx-auto px-4">
+      <ScrollReveal>
+        <div className="bg-muted border border-border rounded-3xl p-4 md:p-8">
+          <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3 px-1">
+            Datei hochladen &amp; Sofortpreis erhalten
+          </p>
+          <UploadDropzone />
+        </div>
+      </ScrollReveal>
     </div>
   </section>
 );
