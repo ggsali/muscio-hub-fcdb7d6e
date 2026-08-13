@@ -538,9 +538,9 @@ const CalculatorOnlinePage = () => {
     }));
   };
 
-  // Slicing im Hintergrund starten, sobald Datei + Material + Qualität bekannt sind
+  // Slicing im Hintergrund starten — erst nach Bestätigung der Qualität (Schritt 5)
   useEffect(() => {
-    if (!materialId || !slicerSupported()) return;
+    if (!materialId || !slicerSupported() || !qualityConfirmed) return;
     const mat = materials.find((m) => m.id === materialId);
     if (!mat) return;
     const params = buildSlicerParams(
