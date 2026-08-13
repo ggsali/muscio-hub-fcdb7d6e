@@ -438,7 +438,7 @@ const Index = () => (
     <Marquee />
     <StatsTrust />
     <HowItWorks />
-    <UploadSection />
+
     <MaterialsTeaser />
     <ReviewsSection />
     <FAQ />
