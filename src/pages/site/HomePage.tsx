@@ -33,10 +33,10 @@ const TRUST = [
 ];
 
 const HERO_STATS = [
-  { value: 500, suffix: "+", label: "Teile gedruckt" },
-  { value: "B2B", label: "FÜR GESCHÄFTSKUNDEN" },
-  { value: 99, suffix: "%", label: "Termingerecht", accent: true },
-  { value: 48, suffix: "h", label: "Produktionszeit" },
+  { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers },
+  { value: "B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2 },
+  { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle },
+  { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap },
 ];
 
 const CALC_STEPS = [
