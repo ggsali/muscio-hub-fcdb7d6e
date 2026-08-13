@@ -5,7 +5,7 @@ import { CountUp } from "@/components/site/CountUp";
 import { Marquee } from "@/components/site/Marquee";
 import {
   Upload, Settings, ShoppingCart, Package,
-  Clock, Target, Layers, Users, ArrowRight, ArrowUpRight, Percent,
+  Clock, Target, Layers, Users, ArrowRight, ArrowUpRight,
   BadgeCheck, Zap, FileCheck, Building2, CheckCircle,
 } from "lucide-react";
 
@@ -15,7 +15,6 @@ import {
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { HeroProjectsCarousel } from "@/components/site/HeroProjectsCarousel";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
 import Seo from "@/components/site/Seo";
 import { UploadDropzone } from "@/components/site/UploadDropzone";
@@ -37,14 +36,6 @@ const HERO_STATS = [
   { value: "B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2 },
   { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle },
   { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap },
-];
-
-const CALC_STEPS = [
-  { icon: Upload, title: "STL oder STEP hochladen", desc: "Volumen wird automatisch berechnet." },
-  { icon: Layers, title: "Material wählen", desc: "PLA, PETG, ABS, ASA, TPU oder Resin." },
-  { icon: Settings, title: "Farbe & Qualität", desc: "Schichthöhe und Fülldichte konfigurieren." },
-  { icon: Percent, title: "Sofortpreis sehen", desc: "Transparent, inklusive Mengenrabatt." },
-  { icon: ShoppingCart, title: "Bestellen", desc: "Produktion startet, Lieferung in 48h." },
 ];
 
 const HeroBento = () => (
