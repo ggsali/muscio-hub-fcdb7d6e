@@ -561,9 +561,14 @@ const CalculatorOnlinePage = () => {
 
 
   const geometryText = useMemo(() => {
-    const p = parts[0];
-    if (!p) return "";
-    return p.hasVolume ? `Volumen ca. ${p.volumeCm3.toFixed(1)} cm³` : "Geometrie unbekannt";
+    if (parts.length === 0) return "";
+    if (parts.length === 1) {
+      const p = parts[0];
+      return p.hasVolume ? `Volumen ca. ${p.volumeCm3.toFixed(1)} cm³` : "Geometrie unbekannt";
+    }
+    return parts
+      .map((p) => `${p.fileName}: ${p.hasVolume ? `ca. ${p.volumeCm3.toFixed(1)} cm³` : "Geometrie unbekannt"}`)
+      .join(" | ");
   }, [parts]);
 
   const chooseMaterial = (id: string) => {
@@ -590,9 +595,9 @@ const CalculatorOnlinePage = () => {
 
   const kiSummary = useMemo(() => {
     if (!kiResult) return null;
-    const p = parts[0];
     const lines = [
-      `Bauteil: ${p?.fileName || "-"}${p?.hasVolume ? ` (${p.volumeCm3.toFixed(1)} cm³, ca. ${p.estimatedWeight.toFixed(1)} g)` : ""}`,
+      `Bauteile (${parts.length}):`,
+      ...parts.map((p) => `- ${p.fileName}${p.hasVolume ? ` (${p.volumeCm3.toFixed(1)} cm³, ca. ${p.estimatedWeight.toFixed(1)} g)` : ""}`),
       `Empfohlenes Material: ${kiResult.material} — ${kiResult.begruendung}`,
       "",
       "--- Gesprächsverlauf ---",
@@ -929,7 +934,7 @@ const CalculatorOnlinePage = () => {
                       Datei hochladen
                     </h1>
                     <p className="text-muted-foreground">
-                      STL, 3MF, STEP oder OBJ — wir analysieren dein Modell sofort.
+                      STL, 3MF, STEP oder OBJ — mehrere Teile auf einmal möglich. Wir analysieren alles sofort.
                     </p>
                   </div>
 
@@ -981,6 +986,20 @@ const CalculatorOnlinePage = () => {
                           </button>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {parts.length > 0 && (
+                    <div>
+                      <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj" className="hidden" onChange={handleInput} />
+                      <label htmlFor="step1-add-file">
+                        <Button asChild variant="outline" className="w-full gap-2 cursor-pointer">
+                          <span><Plus className="w-4 h-4" /> Weiteres Teil hinzufügen</span>
+                        </Button>
+                      </label>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        Du kannst mehrere Teile gleichzeitig kalkulieren — die KI-Beratung berücksichtigt alle Teile.
+                      </p>
                     </div>
                   )}
 
@@ -1064,9 +1083,10 @@ const CalculatorOnlinePage = () => {
 
                   <KiMaterialChat
                     key={chatKey}
-                    fileName={parts[0]?.fileName || ""}
+                    fileName={parts.map((p) => p.fileName).join(", ")}
                     geometry={geometryText}
                     availableMaterials={materials.map((m) => m.name)}
+                    partNames={parts.map((p) => p.fileName)}
                     onResult={handleKiResult}
                   />
 

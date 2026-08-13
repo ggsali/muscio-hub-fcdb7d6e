@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, fileName, geometry, availableMaterials } = await req.json();
+    const { messages, fileName, geometry, availableMaterials, partNames } = await req.json();
     if (!Array.isArray(messages)) return json({ error: "messages fehlt" }, 400);
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -24,6 +24,17 @@ Deno.serve(async (req) => {
     const list = Array.isArray(availableMaterials) && availableMaterials.length > 0
       ? availableMaterials.join(", ")
       : "PLA, PETG, ABS, ASA, TPU, Resin";
+
+    const partList: string[] = Array.isArray(partNames) ? partNames.filter((n: unknown) => typeof n === "string" && n) : [];
+    const multiPart = partList.length > 1;
+    const MULTI_BLOCK = multiPart
+      ? `
+
+WICHTIG - Der Kunde hat ${partList.length} Teile hochgeladen: ${partList.join(", ")}.
+- Kläre ZUERST, ob alle Teile zum gleichen Bauteil/zur gleichen Baugruppe gehören oder ob jedes Teil eine eigene Funktion hat.
+- Gehören sie zusammen: ein gemeinsames Material empfehlen (ausser ein Teil braucht z. B. Flexibilität).
+- Haben die Teile unterschiedliche Funktionen: frage die Funktionen der Reihe nach ab und empfehle pro Teil ein Material. Nenne die Empfehlungen im Text klar pro Teilname und schreibe in "empfehlung" das Material, das für die meisten Teile passt (Hauptmaterial).`
+      : "";
 
     const SYSTEM_PROMPT = `Du bist ein erfahrener Berater für 3D-Druck-Materialien bei 3DMuscio in der Schweiz.
 
@@ -42,7 +53,7 @@ So arbeitest du:
 - Sobald du genug weisst, gib eine klare Empfehlung ab und erkläre sie kurz. Danach bleibst du weiter im Gespräch und beantwortest Rückfragen (auch mit geänderter Empfehlung, wenn neue Infos das rechtfertigen).
 
 Antworte AUSSCHLIESSLICH als JSON:
-{"antwort":"<deine Gesprächsantwort auf Deutsch>","empfehlung":"<Materialname aus der Liste oder leer, wenn noch keine Empfehlung>","begruendung":"<2-3 Sätze Begründung oder leer>"}`;
+{"antwort":"<deine Gesprächsantwort auf Deutsch>","empfehlung":"<Materialname aus der Liste oder leer, wenn noch keine Empfehlung>","begruendung":"<2-3 Sätze Begründung oder leer>"}${MULTI_BLOCK}`;
 
     const chat = messages
       .filter((m: any) => m && typeof m.content === "string" && m.content.trim())

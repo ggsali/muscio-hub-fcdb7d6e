@@ -16,6 +16,13 @@ export interface KiResult {
 const START_TEXT =
   "Hallo! Ich bin die Material-Beratung von 3DMuscio. Erzähl mir kurz: wofür wird dein Bauteil verwendet? Du kannst mir jederzeit Rückfragen stellen oder Materialien vergleichen lassen.";
 
+const startTextFor = (partNames: string[]) => {
+  if (partNames.length > 1) {
+    return `Hallo! Ich bin die Material-Beratung von 3DMuscio. Du hast ${partNames.length} Teile hochgeladen (${partNames.join(", ")}).\n\nGehören die Teile alle zum gleichen Bauteil bzw. zur gleichen Baugruppe, oder hat jedes Teil eine eigene Funktion? Bei unterschiedlichen Funktionen empfehle ich dir pro Teil ein passendes Material.`;
+  }
+  return START_TEXT;
+};
+
 const QUICK_REPLIES = ["Halterung", "Gehäuse", "Prototyp", "Ersatzteil", "Dekoration", "Sichtteil"];
 
 const Avatar = () => (
@@ -40,15 +47,17 @@ export default function KiMaterialChat({
   fileName,
   geometry,
   availableMaterials,
+  partNames = [],
   onResult,
 }: {
   fileName: string;
   geometry: string;
   availableMaterials: string[];
+  partNames?: string[];
   onResult: (r: KiResult) => void;
 }) {
   const [messages, setMessages] = useState<ChatMsg[]>([
-    { id: "start", role: "assistant", text: START_TEXT },
+    { id: "start", role: "assistant", text: startTextFor(partNames) },
   ]);
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState("");
@@ -75,6 +84,7 @@ export default function KiMaterialChat({
           fileName,
           geometry,
           availableMaterials,
+          partNames,
         },
       });
       if (error) throw error;
@@ -115,6 +125,9 @@ export default function KiMaterialChat({
   };
 
   const showQuick = messages.length === 1 && !typing;
+  const quickOptions = partNames.length > 1
+    ? ["Alle Teile gehören zusammen", "Jedes Teil hat eine eigene Funktion"]
+    : QUICK_REPLIES;
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -161,7 +174,7 @@ export default function KiMaterialChat({
       <div className="border-t border-border p-3 space-y-2">
         {showQuick && (
           <div className="flex flex-wrap gap-2">
-            {QUICK_REPLIES.map((o) => (
+            {quickOptions.map((o) => (
               <button
                 key={o}
                 type="button"
