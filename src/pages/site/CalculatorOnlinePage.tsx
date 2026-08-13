@@ -1223,8 +1223,16 @@ const CalculatorOnlinePage = () => {
 
                   <div className="space-y-3">
                     {calcs.map(({ part: p, calc }) => (
-                      <div key={p.id} className="bg-card rounded-2xl border border-border p-4">
-                        <div className="flex items-start gap-4">
+                      <div key={p.id} className="bg-card rounded-2xl border border-border p-4 relative">
+                        <button
+                          type="button"
+                          onClick={() => remove(p.id)}
+                          aria-label="Bauteil entfernen"
+                          className="absolute top-2 right-2 z-10 bg-background/80 hover:bg-destructive hover:text-destructive-foreground rounded-full p-1.5 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="flex items-start gap-4 pr-8">
                           {p.file ? (
                             <div className="w-20 h-20 rounded-xl bg-muted overflow-hidden shrink-0">
                               <ModelPreview file={p.file} />
