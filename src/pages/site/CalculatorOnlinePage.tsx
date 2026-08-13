@@ -1338,7 +1338,7 @@ const CalculatorOnlinePage = () => {
                         <button
                           key={q.key}
                           type="button"
-                          onClick={() => { setQualityKey(q.key); applyAll({ infill: q.infill }); }}
+                          onClick={() => confirmQuality(q.key, q.infill)}
                           className={`rounded-2xl border-2 p-5 text-left transition-all ${
                             sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
                           }`}
