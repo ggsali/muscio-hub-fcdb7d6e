@@ -864,7 +864,7 @@ const CalculatorOnlinePage = () => {
         .map((p) => {
           const r = sliceOf(p)?.result;
           if (!r) return null;
-          return `- ${p.fileName}: ${formatDuration(r.printTimeSeconds)} Druckzeit, ${r.filamentGrams.toFixed(1)} g Filament, ${r.layerCount} Layer${r.hasSupports ? ", Stützstrukturen nötig" : ""}`;
+          return `- ${p.fileName}: ${formatDuration(correctedPrintSeconds(p, r))} Druckzeit, ${r.filamentGrams.toFixed(1)} g Filament, ${r.layerCount} Layer${r.hasSupports ? ", Stützstrukturen nötig" : ""}`;
         })
         .filter(Boolean);
       const slicerBlock = slicerLines.length > 0 ? `\n\n--- Slicer-Analyse (OrcaSlicer-Kernel) ---\n${slicerLines.join("\n")}` : "";
