@@ -657,7 +657,7 @@ const CalculatorOnlinePage = () => {
     <div className="pt-12 pb-20">
       <Seo
         title="3D Druck Kosten berechnen – Sofortpreis online | 3DMuscio"
-        description="Berechnen Sie Ihren 3D Druckauftrag sofort und kostenlos. Preis in Sekunden, kein Anmelden nötig. FDM & SLA Druck | 3DMuscio Schweiz"
+        description="Berechnen Sie Ihren 3D Druckauftrag sofort und kostenlos. Preis in Sekunden, kein Anmelden nötig. FDM & SLA Druck ab CHF 20.– | 3DMuscio Schweiz"
         path="/kalkulator-online"
       />
       {/* Mobile sticky total bar */}
