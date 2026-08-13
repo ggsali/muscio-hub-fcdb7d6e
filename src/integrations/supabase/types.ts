@@ -1363,14 +1363,18 @@ export type Database = {
           gallery_paths: string[] | null
           hero_image_path: string | null
           id: string
+          json_ld: Json | null
           kategorie: string | null
           kurzbeschreibung: string | null
           lieferzeit: string | null
           material: string | null
           name: string
+          seo_description: string | null
+          seo_title: string | null
           slug: string
           sort_order: number
           stl_url: string | null
+          tags: string[] | null
           toleranz: string | null
           updated_at: string
           verfahren: string | null
@@ -1384,14 +1388,18 @@ export type Database = {
           gallery_paths?: string[] | null
           hero_image_path?: string | null
           id?: string
+          json_ld?: Json | null
           kategorie?: string | null
           kurzbeschreibung?: string | null
           lieferzeit?: string | null
           material?: string | null
           name: string
+          seo_description?: string | null
+          seo_title?: string | null
           slug: string
           sort_order?: number
           stl_url?: string | null
+          tags?: string[] | null
           toleranz?: string | null
           updated_at?: string
           verfahren?: string | null
@@ -1405,14 +1413,18 @@ export type Database = {
           gallery_paths?: string[] | null
           hero_image_path?: string | null
           id?: string
+          json_ld?: Json | null
           kategorie?: string | null
           kurzbeschreibung?: string | null
           lieferzeit?: string | null
           material?: string | null
           name?: string
+          seo_description?: string | null
+          seo_title?: string | null
           slug?: string
           sort_order?: number
           stl_url?: string | null
+          tags?: string[] | null
           toleranz?: string | null
           updated_at?: string
           verfahren?: string | null
