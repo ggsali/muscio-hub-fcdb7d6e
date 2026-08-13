@@ -38,79 +38,40 @@ export function buildSlicerParams(material: SlicerMaterialInput, quality: Slicer
   const nozzleTemp = type === "PLA" ? 220 : type === "PETG" ? 240 : 250;
   const bedTemp = type === "PLA" ? 65 : 85;
 
-  // Plausible Grenzen: max. 70 % des Düsendurchmessers (0.4 mm), min. 0.06 mm
-  const NOZZLE = 0.4;
-  const layerHeight = Math.min(NOZZLE * 0.7, Math.max(0.06, Number(quality.layerHeight) || 0.2));
-  const infill = Math.min(100, Math.max(0, Number(quality.infill) || 0));
-  // Konstante Schalendicke -> Qualitätsstufen unterscheiden sich physikalisch korrekt
-  const topLayers = Math.max(2, Math.ceil(0.8 / layerHeight));
-  const bottomLayers = Math.max(2, Math.ceil(0.6 / layerHeight));
-
   return {
-
-    // Drucker-Profil (Bambu Lab H2C)
+    // Bauvolumen Bambu H2C
     bed_width: 330,
     bed_depth: 320,
-    bed_height: 300,
+    bed_height: 325,
     nozzle_diameter: 0.4,
     filament_diameter: FILAMENT_DIAMETER,
-    printer_structure: "corexy",
-    machine_max_speed_x: 1000,
-    machine_max_speed_y: 1000,
-    machine_max_speed_z: 30,
-    machine_max_speed_e: 50,
-    machine_max_acceleration_x: 20000,
-    machine_max_acceleration_y: 20000,
-    machine_max_acceleration_z: 500,
-    machine_max_acceleration_e: 5000,
-    machine_max_acceleration_extruding: 20000,
-    machine_max_acceleration_retracting: 5000,
-    machine_max_acceleration_travel: 9000,
-    machine_max_jerk_x: 9,
-    machine_max_jerk_y: 9,
-    machine_max_jerk_z: 3,
-    machine_max_jerk_e: 2.5,
-    max_accel_e: 5000,
-    retraction_length: 0.8,
-    retraction_speed: 30,
-    deretraction_speed: 30,
-    retraction_minimum_travel: 1,
-    z_hop: 0.4,
 
-    // Qualität
-    layer_height: layerHeight,
-    first_layer_height: Math.min(0.3, Math.max(layerHeight, 0.2)),
-    line_width: 0.42,
-    wall_loops: infill >= 60 ? 3 : 2,
-    infill_density: infill / 100,
-    sparse_infill_pattern: "grid",
-    top_shell_layers: topLayers,
-    bottom_shell_layers: bottomLayers,
-    skirt_loops: 1,
+    // Qualität (aus QUALITY_PRESETS)
+    layer_height: quality.layerHeight,
+    first_layer_height: 0.2,
+    infill_density: quality.infill / 100,
+    wall_loops: 3,
+    top_shell_layers: 4,
+    bottom_shell_layers: 3,
 
+    // Temperaturen
+    nozzle_temperature: nozzleTemp,
+    bed_temperature: bedTemp,
 
-    // Material
-    nozzle_temp: nozzleTemp,
-    bed_temp: bedTemp,
-
-    // Supports automatisch (offizielle OrcaSlicer-Werte)
+    // Support – Slicer entscheidet selbst ob nötig
     enable_support: true,
-    support_type: "normal(auto)",
     support_threshold_angle: 45,
-    support_on_build_plate_only: false,
-    support_top_z_distance: 0.2,
-    support_bottom_z_distance: 0.2,
-    support_interface_top_layers: 2,
-    support_interface_bottom_layers: 2,
-    support_interface_spacing: 0.5,
-    support_base_pattern: "rectilinear",
-    support_base_pattern_spacing: 2.5,
-    support_infill_angle: 0,
 
-    // Geschwindigkeiten (echte Druckerwerte)
-    print_speed: 150,
-    first_layer_speed: 30,
+    // Geschwindigkeiten Bambu H2C
+    outer_wall_speed: 150,
+    inner_wall_speed: 200,
+    infill_speed: 300,
     travel_speed: 500,
+    initial_layer_speed: 50,
+
+    // Beschleunigung CoreXY
+    default_acceleration: 10000,
+    travel_acceleration: 10000,
   };
 }
 
