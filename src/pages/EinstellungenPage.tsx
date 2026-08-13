@@ -49,7 +49,7 @@ const PRESET_RATE_FIELDS: { key: keyof Omit<Preset, "id" | "name" | "beschreibun
   { key: "rabatt_prozent", label: "Rabatt", unit: "%", step: "1" },
 ];
 
-type Tab = "raten" | "presets" | "firma" | "rechnung" | "website" | "zugriff";
+type Tab = "raten" | "presets" | "firma" | "rechnung" | "website" | "kalkulator" | "zugriff";
 
 export default function EinstellungenPage() {
   const { settings, reload: reloadSettings } = useSettings();
