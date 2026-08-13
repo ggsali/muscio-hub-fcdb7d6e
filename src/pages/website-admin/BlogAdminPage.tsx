@@ -17,6 +17,14 @@ interface Post {
   tags: string[] | null;
 }
 
+const toLocalInput = (iso: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 export default function BlogAdminPage() {
@@ -87,7 +95,10 @@ export default function BlogAdminPage() {
                       {p.veroeffentlicht ? "live" : "entwurf"}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{p.slug}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {p.slug}
+                    {p.veroeffentlicht_am && ` · ${new Date(p.veroeffentlicht_am).toLocaleDateString("de-CH")}`}
+                  </p>
                   {p.zusammenfassung && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{p.zusammenfassung}</p>}
                 </div>
                 <div className="flex gap-1 shrink-0">
@@ -133,9 +144,20 @@ export default function BlogAdminPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-3 border-t border-border pt-4">
-                <Switch checked={editing.veroeffentlicht} onCheckedChange={v => setEditing({ ...editing, veroeffentlicht: v })} />
-                <Label>Veröffentlicht</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t border-border pt-4">
+                <div>
+                  <Label>Veröffentlichungsdatum</Label>
+                  <Input
+                    type="datetime-local"
+                    value={toLocalInput(editing.veroeffentlicht_am)}
+                    onChange={e => setEditing({ ...editing, veroeffentlicht_am: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Leer = wird beim Veröffentlichen automatisch gesetzt.</p>
+                </div>
+                <div className="flex items-center gap-3 md:pt-6">
+                  <Switch checked={editing.veroeffentlicht} onCheckedChange={v => setEditing({ ...editing, veroeffentlicht: v })} />
+                  <Label>Veröffentlicht</Label>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
