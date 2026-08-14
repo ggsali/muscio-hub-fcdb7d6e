@@ -3,11 +3,12 @@ import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle,
-  Globe, Mail, Layers, Receipt
+  Globe, Mail, Layers, Receipt, Smartphone
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAdminPwaInstall } from "@/hooks/useAdminPwaInstall";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
