@@ -50,6 +50,7 @@ interface OrderExportData {
   withDetails?: boolean;
   expressKosten?: number;
   expressLabel?: string;
+  rabattProzent?: number;
 }
 
 const BLACK = [30, 30, 30] as [number, number, number];
@@ -233,6 +234,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   const effectiveTotal = data.withDetails
     ? computedPartsTotal + (data.expressKosten ?? 0)
     : data.umsatz_total;
+  const rabattProzent = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
+  const rabattBetrag = effectiveTotal * (rabattProzent / 100);
+  const netTotal = effectiveTotal - rabattBetrag;
 
   if (data.withDetails) {
     // Build detail rows: main part row + per-component cost breakdown
