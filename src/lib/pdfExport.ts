@@ -50,6 +50,7 @@ interface OrderExportData {
   withDetails?: boolean;
   expressKosten?: number;
   expressLabel?: string;
+  rabattProzent?: number;
 }
 
 const BLACK = [30, 30, 30] as [number, number, number];
@@ -233,6 +234,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   const effectiveTotal = data.withDetails
     ? computedPartsTotal + (data.expressKosten ?? 0)
     : data.umsatz_total;
+  const rabattProzent = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
+  const rabattBetrag = effectiveTotal * (rabattProzent / 100);
+  const netTotal = effectiveTotal - rabattBetrag;
 
   if (data.withDetails) {
     // Build detail rows: main part row + per-component cost breakdown
@@ -435,6 +439,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   if ((data.expressKosten ?? 0) > 0) {
     sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
   }
+  if (rabattBetrag > 0) {
+    sumRows.push([`Rabatt (${rabattProzent}%)`, `- ${formatCHF(rabattBetrag)}`]);
+  }
   sumRows.push(["MwSt. (0%)", "CHF 0.00"]);
 
   doc.setFont("helvetica", "normal");
@@ -455,7 +462,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(9.5);
   doc.setTextColor(...WHITE);
   doc.text("GESAMTBETRAG", sumX + 3, sumY + 3.5);
-  doc.text(formatCHF(effectiveTotal), pageW - margin - 3, sumY + 3.5, { align: "right" });
+  doc.text(formatCHF(netTotal), pageW - margin - 3, sumY + 3.5, { align: "right" });
 
   // Grand Total box bottom edge
   const totalBoxBottom = sumY + 8; // sumY - 4 + 12
@@ -530,7 +537,7 @@ export async function exportOrderPDF(data: OrderExportData) {
       company: data.company,
       customerName: data.customerName,
       customerAdresse: data.customerAdresse,
-      amount: effectiveTotal,
+      amount: netTotal,
       invoiceNr: rechnungsNr,
     });
   }

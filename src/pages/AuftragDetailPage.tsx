@@ -110,6 +110,7 @@ export default function AuftragDetailPage() {
   const [geplantBis, setGeplantBis] = useState("");
   const [expressKosten, setExpressKosten] = useState<number>(0);
   const [expressLabel, setExpressLabel] = useState<string>("");
+  const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
   const [notesInternal, setNotesInternal] = useState<string>("");
   const [pendingStatusEmail, setPendingStatusEmail] = useState<string | null>(null);
