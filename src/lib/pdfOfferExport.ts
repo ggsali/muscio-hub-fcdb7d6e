@@ -353,12 +353,17 @@ export async function exportOfferPDF(data: OfferExportData) {
   if ((data.expressKosten ?? 0) > 0) {
     offerSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
   }
+  const offerRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
+  const offerRabatt = data.umsatz_total * (offerRabattPct / 100);
+  if (offerRabatt > 0) {
+    offerSumRows.push([`Rabatt (${offerRabattPct}%)`, `- ${formatCHF(offerRabatt)}`]);
+  }
   offerSumRows.push(["MwSt. (0%)", "CHF 0.00"]);
 
   const totalBoxBottom = drawSummary(
     doc,
     offerSumRows,
-    "ANGEBOTSSUMME", formatCHF(data.umsatz_total),
+    "ANGEBOTSSUMME", formatCHF(data.umsatz_total - offerRabatt),
     ACCENT, sumX, afterTable, pageW, margin,
   );
 
