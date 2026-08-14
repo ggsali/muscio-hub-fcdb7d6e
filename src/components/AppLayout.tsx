@@ -3,11 +3,12 @@ import { Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle,
-  Globe, Mail, Layers, Receipt
+  Globe, Mail, Layers, Receipt, Smartphone
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAdminPwaInstall } from "@/hooks/useAdminPwaInstall";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,7 @@ const mobileBottomNav = [
   { to: "/admin/kalkulator", icon: Calculator, label: "Kalkulator" },
 ];
 
-function MobileLayout() {
+function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -122,7 +123,16 @@ function MobileLayout() {
                   ))}
                 </div>
               </nav>
-              <div className="px-2 py-3 border-t border-sidebar-border">
+              <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
+                {canInstall && (
+                  <button
+                    onClick={() => { setMenuOpen(false); onInstall(); }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-primary hover:bg-sidebar-accent transition-colors w-full"
+                  >
+                    <Smartphone className="w-[18px] h-[18px] flex-shrink-0" />
+                    <span>Als App installieren</span>
+                  </button>
+                )}
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full"
@@ -165,7 +175,7 @@ function MobileLayout() {
   );
 }
 
-function DesktopLayout() {
+function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
@@ -215,6 +225,16 @@ function DesktopLayout() {
           </div>
         </nav>
         <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
+          {canInstall && (
+            <button
+              onClick={onInstall}
+              title="Als App installieren"
+              className={`flex items-center gap-3 rounded-lg text-[13px] text-primary hover:bg-sidebar-accent transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
+            >
+              <Smartphone className="w-[18px] h-[18px] flex-shrink-0" />
+              {!collapsed && <span>Als App installieren</span>}
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className={`flex items-center gap-3 rounded-lg text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
@@ -240,5 +260,9 @@ function DesktopLayout() {
 
 export default function AppLayout() {
   const isMobile = useIsMobile();
-  return isMobile ? <MobileLayout /> : <DesktopLayout />;
+  // AppLayout wird nur für eingeloggte Admins gerendert (AdminGate)
+  const { canInstall, install } = useAdminPwaInstall(true);
+  return isMobile
+    ? <MobileLayout canInstall={canInstall} onInstall={install} />
+    : <DesktopLayout canInstall={canInstall} onInstall={install} />;
 }
