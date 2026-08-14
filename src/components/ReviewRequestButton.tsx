@@ -40,8 +40,11 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
   const { toast } = useToast();
   const [reviewUrl, setReviewUrl] = useState<string>("");
   const [alreadySentAt, setAlreadySentAt] = useState<string | null>(null);
+  const [logStatus, setLogStatus] = useState<string | null>(null);
+  const [logNote, setLogNote] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
+  const [tplBody, setTplBody] = useState<string>("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -49,32 +52,33 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
 
   useEffect(() => {
     if (!visible) return;
-    supabase.from("settings").select("value").eq("key", "google_review_url").maybeSingle()
-      .then(({ data }) => setReviewUrl(data?.value || ""));
-    supabase.from("order_status_log")
-      .select("created_at")
-      .eq("order_id", orderId)
-      .eq("status", "review_request")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => setAlreadySentAt(data?.created_at || null));
+    loadReviewMailSettings().then(s => {
+      setReviewUrl(s.reviewUrl);
+      setSubject(s.subject);
+      setTplBody(s.bodyTemplate);
+    });
+    getReviewRequestLog(orderId).then(log => {
+      setAlreadySentAt(log?.created_at || null);
+      setLogStatus(log?.status || null);
+      setLogNote(log?.notiz || null);
+    });
     if (customerId) {
-      supabase.from("customers").select("vorname, name, email").eq("id", customerId).maybeSingle()
+      supabase.from("customers").select("vorname, name, firma, email").eq("id", customerId).maybeSingle()
         .then(({ data }) => {
           if (data) {
             setCustomerName([data.vorname, data.name].filter(Boolean).join(" ").trim() || data.name || "");
             setCustomerEmail(data.email || "");
+            setCustomerFirma((data as any).firma || "");
           }
         });
     }
   }, [orderId, visible, customerId]);
 
   const openModal = () => {
-    setSubject(DEFAULT_SUBJECT);
-    setBody(buildDefaultBody(customerName));
+    setBody(fillReviewTemplate(tplBody || buildDefaultBody(customerName), { name: customerName, firma: customerFirma }));
     setOpen(true);
   };
+
 
   const send = async () => {
     if (!customerEmail) {
