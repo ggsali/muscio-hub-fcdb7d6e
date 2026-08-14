@@ -229,6 +229,7 @@ const CalculatorOnlinePage = () => {
   const [color, setColor] = useState("");
   const [qualityKey, setQualityKey] = useState("standard");
   const [kiResult, setKiResult] = useState<KiResult | null>(null);
+  const [materialMode, setMaterialMode] = useState<null | "ki" | "manual">(null);
   const [chatKey, setChatKey] = useState(0);
   // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
   const [quickMode, setQuickMode] = useState(false);
