@@ -39,7 +39,7 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
   const [customerEmail, setCustomerEmail] = useState<string>("");
   const [customerFirma, setCustomerFirma] = useState<string>("");
 
-  const [reviewUrl, setReviewUrl] = useState<string>("");
+  const { toast } = useToast();
   const [alreadySentAt, setAlreadySentAt] = useState<string | null>(null);
   const [logStatus, setLogStatus] = useState<string | null>(null);
   const [logNote, setLogNote] = useState<string | null>(null);
