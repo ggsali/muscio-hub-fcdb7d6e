@@ -216,6 +216,16 @@ function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInsta
           </div>
         </nav>
         <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
+          {canInstall && (
+            <button
+              onClick={onInstall}
+              title="Als App installieren"
+              className={`flex items-center gap-3 rounded-lg text-[13px] text-primary hover:bg-sidebar-accent transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
+            >
+              <Smartphone className="w-[18px] h-[18px] flex-shrink-0" />
+              {!collapsed && <span>Als App installieren</span>}
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className={`flex items-center gap-3 rounded-lg text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
