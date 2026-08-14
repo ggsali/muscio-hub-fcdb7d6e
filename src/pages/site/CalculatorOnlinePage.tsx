@@ -1329,38 +1329,43 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  <div>
-                    <p className="text-sm font-semibold mb-2">Alle Materialien</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {materials.map((m) => {
-                        const sel = materialId === m.id;
-                        const rec = recommendedMaterial?.id === m.id;
-                        return (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => chooseMaterial(m.id)}
-                            className={`relative text-left rounded-xl border-2 p-4 transition-all ${
-                              sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
-                            }`}
-                          >
-                            {rec && !sel && (
-                              <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
-                            )}
-                            {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                            <p className="font-bold text-sm">{m.name}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{m.farben.length} Farben</p>
-                          </button>
-                        );
-                      })}
+                  {materialMode !== null && (
+                    <div>
+                      <p className="text-sm font-semibold mb-2">
+                        {materialMode === "manual" ? "Material direkt wählen" : "Alle Materialien"}
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {materials.map((m) => {
+                          const sel = materialId === m.id;
+                          const rec = recommendedMaterial?.id === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => chooseMaterial(m.id)}
+                              className={`relative text-left rounded-xl border-2 p-4 transition-all ${
+                                sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
+                              }`}
+                            >
+                              {rec && !sel && (
+                                <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
+                              )}
+                              {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
+                              <p className="font-bold text-sm">{m.name}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{m.farben.length} Farben</p>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {materialId && (
+                  {materialMode !== null && materialId && (
                     <Button className="w-full gap-2" onClick={goNext}>
                       Weiter zur Farbe <ArrowRight className="w-4 h-4" />
                     </Button>
                   )}
+
                 </div>
               )}
 
