@@ -1,4 +1,6 @@
 // Sends a Google review request email to a customer directly via Resend.
+// Uses the same branded layout as all other 3DMuscio e-mails
+// (logo header, heading, green CTA button, divider + footer).
 import { Resend } from "npm:resend@2";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -7,13 +9,80 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const SITE_NAME = "3DMuscio";
+const SITE_URL = "https://3dmuscio.com";
+const LOGO_URL =
+  "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg";
+
 const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
 
 function esc(s: string) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+const BUTTON_PLACEHOLDER = /\[Google Rezension schreiben\]/g;
+
+/** Wraps the editable body text in the shared brand layout. */
+function renderEmail(opts: { bodyText: string; reviewUrl: string; heading: string }) {
+  const { bodyText, reviewUrl, heading } = opts;
+
+  // Split editable text into paragraphs; the button placeholder becomes a real CTA.
+  const blocks = bodyText.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const parts: string[] = [];
+
+  for (const block of blocks) {
+    if (BUTTON_PLACEHOLDER.test(block)) {
+      BUTTON_PLACEHOLDER.lastIndex = 0;
+      const rest = block.replace(BUTTON_PLACEHOLDER, "").replace(/^[\s👉>-]+/u, "").trim();
+      if (reviewUrl) {
+        parts.push(
+          `<div style="margin:28px 0;text-align:center;"><a href="${esc(reviewUrl)}" style="background-color:#22c55e;color:#ffffff;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">⭐ Google Rezension schreiben</a></div>`,
+        );
+      }
+      if (rest) {
+        parts.push(
+          `<p style="font-size:14px;line-height:1.6;color:#3f3f46;margin:0 0 14px;">${esc(rest).replace(/\n/g, "<br/>")}</p>`,
+        );
+      }
+      continue;
+    }
+    parts.push(
+      `<p style="font-size:14px;line-height:1.6;color:#3f3f46;margin:0 0 14px;">${esc(block).replace(/\n/g, "<br/>")}</p>`,
+    );
+  }
+
+  return `<!DOCTYPE html>
+<html lang="de" dir="ltr">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
+  <body style="background-color:#ffffff;font-family:Inter,Arial,sans-serif;margin:0;padding:0;">
+    <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;margin-bottom:24px;">
+        <tr>
+          <td width="48" style="vertical-align:middle;padding-right:12px;">
+            <img src="${LOGO_URL}" alt="${SITE_NAME}" width="48" height="48" style="border-radius:8px;" />
+          </td>
+          <td style="vertical-align:middle;font-size:20px;font-weight:700;color:#22c55e;line-height:48px;">${SITE_NAME}</td>
+        </tr>
+      </table>
+
+      <h1 style="font-size:24px;font-weight:700;color:#18181b;margin:0 0 16px;">${esc(heading)}</h1>
+
+      ${parts.join("\n      ")}
+
+      <hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0 16px;" />
+      <p style="font-size:12px;color:#71717a;margin:0;">
+        Bei Fragen erreichst du uns unter
+        <a href="mailto:info@3dmuscio.com" style="color:#22c55e;text-decoration:none;">info@3dmuscio.com</a>
+        ·
+        <a href="${SITE_URL}" style="color:#22c55e;text-decoration:none;">3dmuscio.com</a>
+      </p>
+    </div>
+  </body>
+</html>`;
 }
 
 Deno.serve(async (req) => {
@@ -31,21 +100,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Escape user text, then linkify the [Google Rezension schreiben] placeholder
-    let html = esc(body).replace(/\n/g, "<br/>");
-    if (review_url) {
-      const safeUrl = esc(review_url);
-      html = html.replace(
-        /\[Google Rezension schreiben\]/g,
-        `<a href="${safeUrl}" style="color:#FF5A00;font-weight:600;">Google Rezension schreiben</a>`,
-      );
-    }
+    const html = renderEmail({
+      bodyText: String(body),
+      reviewUrl: String(review_url || ""),
+      heading: "Wie war dein 3D-Druck Erlebnis? ⭐",
+    });
 
     const { error } = await resend.emails.send({
       from: "3DMuscio <noreply@3dmuscio.com>",
       to: [customer_email],
       subject,
-      html: `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">${html}</div>`,
+      html,
     });
 
     if (error) {
