@@ -25,6 +25,22 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
+    <!-- Alte Service Worker / PWA-Caches sofort entfernen (vor dem App-Bundle) -->
+    <script>
+      (function () {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function (rs) {
+            rs.forEach(function (r) { r.unregister(); });
+          });
+        }
+        if (window.caches) {
+          caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+        }
+      })();
+    </script>
+
+
+
     <!-- Open Graph (Fallback für Social-Crawler; pro Route via Helmet überschrieben) -->
     <meta property="og:site_name" content="3DMuscio" />
     <meta property="og:locale" content="de_CH" />
