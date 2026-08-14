@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, CheckCircle, Upload, Plus, Trash2, Star } from "lucide-react";
 import AdminAllowlistManager from "@/components/AdminAllowlistManager";
+import { toast } from "sonner";
 import {
   loadQualityConfig, saveQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
   type QualityPreset, type CalcParams,
@@ -105,6 +106,7 @@ export default function EinstellungenPage() {
     await saveSettings(localSettings);
     await reloadSettings();
     flashSaved();
+    toast.success("✓ Gespeichert – Änderungen sind im Kalkulator nach einem Seiten-Reload sichtbar.");
   };
 
 
