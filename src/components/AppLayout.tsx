@@ -166,7 +166,7 @@ function MobileLayout() {
   );
 }
 
-function DesktopLayout() {
+function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
