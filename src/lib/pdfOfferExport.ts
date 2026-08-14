@@ -474,12 +474,17 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   if ((data.expressKosten ?? 0) > 0) {
     abSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
   }
+  const abRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
+  const abRabatt = data.umsatz_total * (abRabattPct / 100);
+  if (abRabatt > 0) {
+    abSumRows.push([`Rabatt (${abRabattPct}%)`, `- ${formatCHF(abRabatt)}`]);
+  }
   abSumRows.push(["MwSt. (0%)", "CHF 0.00"]);
 
   const totalBoxBottom = drawSummary(
     doc,
     abSumRows,
-    "AUFTRAGSSUMME", formatCHF(data.umsatz_total),
+    "AUFTRAGSSUMME", formatCHF(data.umsatz_total - abRabatt),
     GREEN, sumX, afterTable, pageW, margin,
   );
 
