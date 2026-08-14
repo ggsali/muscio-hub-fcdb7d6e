@@ -215,6 +215,7 @@ export default function AuftragDetailPage() {
           setGeplantBis((o as any).geplant_bis || "");
           setExpressKosten(Number((o as any).express_kosten) || 0);
           setExpressLabel((o as any).express_label || "");
+          setRabattProzent(Number((o as any).rabatt_prozent) || 0);
           setSource((o as any).source || "manual");
           setNotesInternal((o as any).notes_internal || "");
           // Restore preset if saved
@@ -390,7 +391,10 @@ export default function AuftragDetailPage() {
   // Totals
   const partsUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
   const expressBetrag = Math.max(0, Number(expressKosten) || 0);
-  const totalUmsatz = partsUmsatz + expressBetrag;
+  const bruttoUmsatz = partsUmsatz + expressBetrag;
+  const rabattPct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
+  const rabattBetrag = bruttoUmsatz * (rabattPct / 100);
+  const totalUmsatz = bruttoUmsatz - rabattBetrag;
   const totalKosten = parts.reduce((s, p) => {
     const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
     const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
@@ -657,7 +661,7 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts,
-      umsatz_total: totalUmsatz,
+      umsatz_total: bruttoUmsatz,
       kosten_total: totalKosten,
       gewinn_total: totalGewinn,
       marge: totalMarge,
@@ -666,6 +670,7 @@ export default function AuftragDetailPage() {
       withDetails: details,
       expressKosten: expressBetrag,
       expressLabel,
+      rabattProzent: rabattPct,
     });
   };
 
@@ -681,12 +686,13 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts,
-      umsatz_total: totalUmsatz,
+      umsatz_total: bruttoUmsatz,
       settings: activeSettings,
       company,
       withDetails: details,
       expressKosten: expressBetrag,
       expressLabel,
+      rabattProzent: rabattPct,
     });
   };
 
@@ -702,11 +708,12 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts,
-      umsatz_total: totalUmsatz,
+      umsatz_total: bruttoUmsatz,
       settings: activeSettings,
       company,
       expressKosten: expressBetrag,
       expressLabel,
+      rabattProzent: rabattPct,
     });
   };
 
@@ -740,6 +747,7 @@ export default function AuftragDetailPage() {
       preset_id: selectedPresetId || null,
       express_kosten: expressBetrag,
       express_label: expressLabel || null,
+      rabatt_prozent: rabattPct,
       notes_internal: notesInternal || null,
       lieferart,
     };
@@ -1648,6 +1656,30 @@ export default function AuftragDetailPage() {
             </div>
           )}
 
+          {/* Rabatt */}
+          {!isNew && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h3 className="font-semibold text-sm mb-3">Rabatt</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div className="space-y-1.5">
+                  <Label>Rabatt (%)</Label>
+                  <Input
+                    type="number" step="0.5" min="0" max="100"
+                    value={rabattProzent || ""}
+                    onChange={e => setRabattProzent(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                    placeholder="0"
+                    className="bg-input border-border"
+                  />
+                </div>
+                <div className="md:col-span-2 text-sm space-y-1">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{formatCHF(bruttoUmsatz)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt {rabattPct > 0 ? `(${rabattPct}%)` : ""}</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
+                  <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Kostenaufschlüsselung kompakt */}
           {!isNew && (
             <div className="bg-card border border-border rounded-lg p-4 md:p-5">
@@ -1662,6 +1694,7 @@ export default function AuftragDetailPage() {
               </div>
             </div>
           )}
+
 
           {!isNew && id && (
             <div className="bg-card border border-border rounded-lg p-4 flex items-center gap-3">
@@ -1737,6 +1770,9 @@ export default function AuftragDetailPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
                 {expressBetrag > 0 && (
                   <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(expressBetrag)}</span></div>
+                )}
+                {rabattBetrag > 0 && (
+                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
                 )}
                 <div className="border-t border-border my-2" />
                 <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
