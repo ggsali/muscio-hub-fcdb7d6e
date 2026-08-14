@@ -462,7 +462,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFontSize(9.5);
   doc.setTextColor(...WHITE);
   doc.text("GESAMTBETRAG", sumX + 3, sumY + 3.5);
-  doc.text(formatCHF(effectiveTotal), pageW - margin - 3, sumY + 3.5, { align: "right" });
+  doc.text(formatCHF(netTotal), pageW - margin - 3, sumY + 3.5, { align: "right" });
 
   // Grand Total box bottom edge
   const totalBoxBottom = sumY + 8; // sumY - 4 + 12
