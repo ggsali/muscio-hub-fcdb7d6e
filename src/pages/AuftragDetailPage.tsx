@@ -661,7 +661,7 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts,
-      umsatz_total: totalUmsatz,
+      umsatz_total: bruttoUmsatz,
       kosten_total: totalKosten,
       gewinn_total: totalGewinn,
       marge: totalMarge,
@@ -670,6 +670,7 @@ export default function AuftragDetailPage() {
       withDetails: details,
       expressKosten: expressBetrag,
       expressLabel,
+      rabattProzent: rabattPct,
     });
   };
 
@@ -685,12 +686,13 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts,
-      umsatz_total: totalUmsatz,
+      umsatz_total: bruttoUmsatz,
       settings: activeSettings,
       company,
       withDetails: details,
       expressKosten: expressBetrag,
       expressLabel,
+      rabattProzent: rabattPct,
     });
   };
 
@@ -706,11 +708,12 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts,
-      umsatz_total: totalUmsatz,
+      umsatz_total: bruttoUmsatz,
       settings: activeSettings,
       company,
       expressKosten: expressBetrag,
       expressLabel,
+      rabattProzent: rabattPct,
     });
   };
 
@@ -744,6 +747,7 @@ export default function AuftragDetailPage() {
       preset_id: selectedPresetId || null,
       express_kosten: expressBetrag,
       express_label: expressLabel || null,
+      rabatt_prozent: rabattPct,
       notes_internal: notesInternal || null,
       lieferart,
     };
