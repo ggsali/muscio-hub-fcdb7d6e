@@ -401,8 +401,8 @@ export default function AuftragDetailPage() {
   // Auftragsname immer in der Beschreibung voranstellen
   const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
 
-  // Setup-Pauschale wird pro Teil berechnet (siehe calcUmsatz), daher × Anzahl Teile
-  const setupKosten = activeSettings.setup_pauschale * parts.length;
+  // Setup-Pauschale wird pro Stück berechnet (siehe calcUmsatz), daher × Gesamtstückzahl
+  const setupKosten = parts.reduce((s, p) => s + activeSettings.setup_pauschale * p.menge, 0);
   const matKosten = parts.reduce((s, p) => {
     const verkaufPreis = p.filament_verkauf_pro_g ?? activeSettings.material_verkauf_pro_g;
     return s + p.gewicht_g * verkaufPreis * p.menge;
