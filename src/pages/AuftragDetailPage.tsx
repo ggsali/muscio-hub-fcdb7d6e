@@ -1771,6 +1771,9 @@ export default function AuftragDetailPage() {
                 {expressBetrag > 0 && (
                   <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(expressBetrag)}</span></div>
                 )}
+                {rabattBetrag > 0 && (
+                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
+                )}
                 <div className="border-t border-border my-2" />
                 <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(totalKosten)}</span></div>
