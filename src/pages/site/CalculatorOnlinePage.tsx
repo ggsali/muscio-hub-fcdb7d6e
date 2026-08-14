@@ -1248,17 +1248,65 @@ const CalculatorOnlinePage = () => {
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Material wählen</h1>
-                    <p className="text-muted-foreground text-sm">Diskutiere mit unserer KI: stelle Fragen, vergleiche Materialien und übernimm am Ende die Empfehlung — oder wähle selbst.</p>
+                    <p className="text-muted-foreground text-sm">
+                      {materialMode === null
+                        ? "Möchtest du eine kurze KI-Materialberatung — oder wählst du dein Material direkt selbst?"
+                        : materialMode === "ki"
+                          ? "Diskutiere mit unserer KI: stelle Fragen, vergleiche Materialien und übernimm am Ende die Empfehlung — oder wähle selbst."
+                          : "Wähle dein Material direkt aus der Liste."}
+                    </p>
                   </div>
 
-                  <KiMaterialChat
-                    key={chatKey}
-                    fileName={parts.map((p) => p.fileName).join(", ")}
-                    geometry={geometryText}
-                    availableMaterials={materials.map((m) => m.name)}
-                    partNames={parts.map((p) => p.fileName)}
-                    onResult={handleKiResult}
-                  />
+                  {materialMode === null && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setMaterialMode("ki")}
+                        className="text-left rounded-2xl border-2 border-primary bg-primary/5 p-5 hover:bg-primary/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 text-primary font-bold">
+                          <Sparkles className="w-4 h-4" /> Ja, KI-Beratung
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Ein paar kurze Fragen zur Anwendung — wir empfehlen dir das passende Material. Dauert ca. 1 Minute.
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMaterialMode("manual")}
+                        className="text-left rounded-2xl border-2 border-border bg-card p-5 hover:border-primary/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 font-bold text-foreground">
+                          <Check className="w-4 h-4" /> Nein, selbst wählen
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Ich weiss schon, was ich brauche — Material direkt aus der Liste auswählen.
+                        </p>
+                      </button>
+                    </div>
+                  )}
+
+                  {materialMode !== null && (
+                    <button
+                      type="button"
+                      onClick={() => setMaterialMode(null)}
+                      className="text-xs text-muted-foreground hover:text-primary underline"
+                    >
+                      ← Auswahl ändern (KI-Beratung / selbst wählen)
+                    </button>
+                  )}
+
+                  {materialMode === "ki" && (
+                    <KiMaterialChat
+                      key={chatKey}
+                      fileName={parts.map((p) => p.fileName).join(", ")}
+                      geometry={geometryText}
+                      availableMaterials={materials.map((m) => m.name)}
+                      partNames={parts.map((p) => p.fileName)}
+                      onResult={handleKiResult}
+                    />
+                  )}
+
 
                   {kiResult && (
                     <div className="rounded-2xl border-2 border-primary bg-primary/5 p-5">
