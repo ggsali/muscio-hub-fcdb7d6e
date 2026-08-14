@@ -32,6 +32,33 @@ export default function BlogAdminPage() {
   const [editing, setEditing] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [uploading, setUploading] = useState<"cover" | "inline" | null>(null);
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `blog/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("projekte").upload(path, file, { upsert: false });
+    if (error) { toast.error(error.message); return null; }
+    return supabase.storage.from("projekte").getPublicUrl(path).data.publicUrl;
+  };
+
+  const handleCoverUpload = async (file: File) => {
+    setUploading("cover");
+    const url = await uploadImage(file);
+    setUploading(null);
+    if (url && editing) { setEditing({ ...editing, titelbild_url: url }); toast.success("Titelbild hochgeladen"); }
+  };
+
+  const handleInlineUpload = async (file: File) => {
+    setUploading("inline");
+    const url = await uploadImage(file);
+    setUploading(null);
+    if (url && editing) {
+      setEditing({ ...editing, inhalt: `${editing.inhalt}\n\n![Bild](${url})\n` });
+      toast.success("Bild in den Text eingefügt");
+    }
+  };
+
 
   const load = async () => {
     setLoading(true);
