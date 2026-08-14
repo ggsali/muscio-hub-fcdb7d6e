@@ -902,6 +902,7 @@ export type Database = {
           name: string | null
           notes_internal: string | null
           preset_id: string | null
+          rabatt_prozent: number
           source: string
           status: string | null
           tracking_nr: string | null
@@ -928,6 +929,7 @@ export type Database = {
           name?: string | null
           notes_internal?: string | null
           preset_id?: string | null
+          rabatt_prozent?: number
           source?: string
           status?: string | null
           tracking_nr?: string | null
@@ -954,6 +956,7 @@ export type Database = {
           name?: string | null
           notes_internal?: string | null
           preset_id?: string | null
+          rabatt_prozent?: number
           source?: string
           status?: string | null
           tracking_nr?: string | null
