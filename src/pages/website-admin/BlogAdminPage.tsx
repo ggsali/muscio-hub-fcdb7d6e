@@ -154,14 +154,37 @@ export default function BlogAdminPage() {
                 <div><Label>Slug</Label><Input value={editing.slug} onChange={e => setEditing({ ...editing, slug: slugify(e.target.value) })} /></div>
               </div>
               <div><Label>Zusammenfassung</Label><Textarea rows={2} value={editing.zusammenfassung || ""} onChange={e => setEditing({ ...editing, zusammenfassung: e.target.value })} /></div>
-              <div><Label>Titelbild URL</Label><Input value={editing.titelbild_url || ""} onChange={e => setEditing({ ...editing, titelbild_url: e.target.value })} placeholder="https://..." /></div>
+              <div>
+                <Label>Titelbild</Label>
+                <div className="flex flex-col sm:flex-row gap-2 items-start">
+                  <Input value={editing.titelbild_url || ""} onChange={e => setEditing({ ...editing, titelbild_url: e.target.value })} placeholder="https://... oder Bild hochladen" />
+                  <label className="shrink-0">
+                    <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); e.target.value = ""; }} />
+                    <span className="inline-flex items-center gap-1 h-10 px-3 rounded-md border border-border bg-background text-sm cursor-pointer hover:bg-muted">
+                      <ImagePlus className="w-4 h-4" /> {uploading === "cover" ? "Lädt…" : "Bild hochladen"}
+                    </span>
+                  </label>
+                </div>
+                {editing.titelbild_url && (
+                  <img src={editing.titelbild_url} alt="Titelbild Vorschau" className="mt-2 h-32 rounded-lg border border-border object-cover" />
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><Label>Autor</Label><Input value={editing.autor} onChange={e => setEditing({ ...editing, autor: e.target.value })} /></div>
                 <div><Label>Tags (Komma getrennt)</Label><Input value={(editing.tags || []).join(", ")} onChange={e => setEditing({ ...editing, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })} /></div>
               </div>
 
               <div>
-                <Label>Inhalt (Markdown)</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Inhalt (Markdown)</Label>
+                  <label>
+                    <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleInlineUpload(f); e.target.value = ""; }} />
+                    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border cursor-pointer hover:bg-muted">
+                      <ImagePlus className="w-3.5 h-3.5" /> {uploading === "inline" ? "Lädt…" : "Bild in Text einfügen"}
+                    </span>
+                  </label>
+                </div>
+
                 {showPreview ? (
                   <div className="border border-border rounded-lg p-4 min-h-[400px] bg-background prose prose-invert max-w-none prose-headings:font-heading prose-a:text-primary">
                     <ReactMarkdown>{editing.inhalt}</ReactMarkdown>
