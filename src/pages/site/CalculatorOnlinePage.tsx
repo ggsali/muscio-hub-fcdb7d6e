@@ -18,7 +18,7 @@ import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
 import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
 import { useSettings } from "@/contexts/SettingsContext";
-import { buildSlicerParams, sliceFile, slicerSupported, SlicerResult } from "@/lib/slicerClient";
+
 import {
   loadQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
   type QualityPreset, type CalcParams,
@@ -234,12 +234,7 @@ const CalculatorOnlinePage = () => {
   // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
   const [quickMode, setQuickMode] = useState(false);
 
-  // ---------- Echter Slicer (OrcaSlicer-Kernel im Browser) ----------
   const { settings } = useSettings();
-  const [sliceJobs, setSliceJobs] = useState<
-    Record<string, { key: string; status: "running" | "done" | "error"; progress: number; result?: SlicerResult; error?: string }>
-  >({});
-  const startedRef = useRef<Set<string>>(new Set());
 
   // Qualitäts-Presets & Kalkulationsparameter aus den Einstellungen (Fallback: Hardcode)
   const [qualityPresets, setQualityPresets] = useState<QualityPreset[]>(DEFAULT_QUALITY_PRESETS);
@@ -273,10 +268,6 @@ const CalculatorOnlinePage = () => {
     [qualityKey, qualityPresets],
   );
 
-  const sliceKey = `${materialId}|${qualityKey}`;
-  // Slicing startet erst, wenn die Qualität in Schritt 5 bestätigt wurde
-  const [qualityConfirmed, setQualityConfirmed] = useState(false);
-  const sliceToastRef = useRef<string>("");
 
 
 
@@ -565,89 +556,16 @@ const CalculatorOnlinePage = () => {
     }));
   };
 
-  // Slicing im Hintergrund starten — erst nach Bestätigung der Qualität (Schritt 5)
-  useEffect(() => {
-    if (!materialId || !slicerSupported() || !qualityConfirmed) return;
-    const mat = materials.find((m) => m.id === materialId);
-    if (!mat) return;
-    const params = buildSlicerParams(
-      { name: mat.name, density: mat.density },
-      { layerHeight: activeQuality.layerHeight, infill: activeQuality.infill },
-    );
-    parts.forEach((p) => {
-      if (!p.file) return;
-      const ext = p.fileName.split(".").pop()?.toLowerCase();
-      if (ext !== "stl") return; // Der Kernel slict STL-Meshes
-      const jobKey = `${p.id}|${sliceKey}`;
-      if (startedRef.current.has(jobKey)) return;
-      startedRef.current.add(jobKey);
-      setSliceJobs((j) => ({ ...j, [p.id]: { key: sliceKey, status: "running", progress: 0 } }));
-      p.file
-        .arrayBuffer()
-        .then((buf) =>
-          sliceFile(buf, params, mat.density, (pct) =>
-            setSliceJobs((j) =>
-              j[p.id]?.key === sliceKey ? { ...j, [p.id]: { ...j[p.id], progress: pct } } : j,
-            ),
-          ),
-        )
-        .then((res) => {
-          setSliceJobs((j) => ({ ...j, [p.id]: { key: sliceKey, status: "done", progress: 100, result: res } }));
-          supabase
-            .from("calculator_uploads")
-            .update({
-              slicer_druckzeit_sekunden: Math.round(res.printTimeSeconds * (activeQuality?.speedFactor ?? 1)),
-              slicer_filament_gramm: Math.round(res.filamentGrams * 10) / 10,
-              slicer_hat_supports: res.hasSupports,
-              slicer_layer_anzahl: res.layerCount,
-            } as any)
-            .eq("id", p.id)
-            .then(() => {});
-        })
-        .catch((err) => {
-          console.warn("Slicing fehlgeschlagen — Fallback auf Schätzung", err);
-          setSliceJobs((j) => ({
-            ...j,
-            [p.id]: { key: sliceKey, status: "error", progress: 0, error: String(err?.message || err) },
-          }));
-        });
-    });
-  }, [parts, materials, materialId, sliceKey, activeQuality, qualityConfirmed]);
-
-  const sliceOf = (p: Part) => {
-    const job = sliceJobs[p.id];
-    return job && job.key === sliceKey ? job : undefined;
-  };
-  const slicingActive = parts.some((p) => sliceOf(p)?.status === "running");
-  const sliceableParts = parts.filter((p) => p.file && p.fileName.split(".").pop()?.toLowerCase() === "stl");
-  const sliceProgress = sliceableParts.length
-    ? Math.round(sliceableParts.reduce((s, p) => s + (sliceOf(p)?.progress || 0), 0) / sliceableParts.length)
-    : 0;
-  const sliceError = sliceableParts.length > 0 && sliceableParts.every((p) => sliceOf(p)?.status === "error");
-  const sliceDone = sliceableParts.length > 0 && sliceableParts.every((p) => sliceOf(p)?.status === "done");
-
-  useEffect(() => {
-    if (!qualityConfirmed || !sliceDone) return;
-    if (sliceToastRef.current === sliceKey) return;
-    sliceToastRef.current = sliceKey;
-    toast.success("Analyse abgeschlossen ✓");
-  }, [qualityConfirmed, sliceDone, sliceKey]);
-
   const confirmQuality = (key: string, infill: number) => {
     setQualityKey(key);
     applyAll({ infill });
-    setQualityConfirmed(true);
   };
-
 
   const MIN_PRICE = calcParams.min_price;
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** Slicer-Druckzeit mit dem Geschwindigkeitsfaktor der aktiven Qualitätsstufe korrigieren */
-  const correctedPrintSeconds = (_p: Part, r: SlicerResult) =>
-    r.printTimeSeconds * (activeQuality?.speedFactor ?? 1);
-
+  /** Geometrische Schätzung: Volumen -> Gewicht -> Material- und Maschinenkosten */
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
     if (!mat) return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
@@ -656,30 +574,19 @@ const CalculatorOnlinePage = () => {
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
 
-    const job = sliceOf(p);
-    if (job?.status === "done" && job.result) {
-      const r = job.result;
-      const weight = Math.round(r.filamentGrams * 10) / 10;
-      const hours = correctedPrintSeconds(p, r) / 3600;
-      const machineCost = hours * (settings.maschinenzeit_pro_h || 0);
-      const matCost = weight * mat.pricePerGram;
-      const unit = Math.max(MIN_PRICE, matCost + machineCost + FIX_COST + (r.hasSupports ? SUPPORT_SURCHARGE : 0));
-      return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: true };
-    }
-
-    // Fallback: geometrische Schätzung (STEP/3MF/OBJ oder Slicer nicht verfügbar)
     if (!p.hasVolume || p.estimatedWeight <= 0) {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
     }
+
     const q = activeQuality || qualityPresets[1];
     const weight = p.estimatedWeight;
-    const matCost = weight * mat.pricePerGram;
-    // Durchsatz-Modell: ca. 12 cm³/h bei 0.2 mm Schichthöhe, linear mit der Schichthöhe
-    const throughputCm3PerH = 12 * ((q?.layerHeight || 0.2) / 0.2);
-    const extrudedCm3 = weight / (mat.density || 1.24);
-    const hours = (extrudedCm3 / Math.max(1, throughputCm3PerH)) * (q?.speedFactor ?? 1);
-    const machineCost = hours * (settings.maschinenzeit_pro_h || 0);
-    const unit = Math.max(MIN_PRICE, matCost + machineCost + FIX_COST);
+    const materialCost = weight * mat.pricePerGram;
+    const rate = settings.maschinenzeit_pro_h || 0;
+    const estimatedHours = rate > 0
+      ? ((weight / (mat.density || 1.24)) * (q?.speedFactor ?? 1)) / rate * 2.5
+      : 0;
+    const machineCost = estimatedHours * rate;
+    const unit = Math.max(MIN_PRICE, materialCost + machineCost + FIX_COST);
 
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: false };
   };
@@ -725,7 +632,7 @@ const CalculatorOnlinePage = () => {
   }, [parts]);
 
   const chooseMaterial = (id: string) => {
-    setQualityConfirmed(false); // neue Parameter -> Slicing erst nach erneuter Qualitätsbestätigung
+    
     setMaterialId(id);
     const mat = materials.find((m) => m.id === id);
     const firstColor = mat?.farben?.[0] || "";
@@ -765,7 +672,7 @@ const CalculatorOnlinePage = () => {
     step === 2 ||
     (step === 3 && !!materialId) ||
     (step === 4 && (!!color || availableColors.length === 0)) ||
-    (step === 5 && !slicingActive);
+    step === 5;
 
   const goNext = () => setStep((s) => Math.min(STEPS.length, s + 1));
   const goBack = () => setStep((s) => Math.max(1, s - 1));
@@ -848,19 +755,12 @@ const CalculatorOnlinePage = () => {
       const attachments = [
         ...parts
           .filter((p) => p.storagePath)
-          .map((p) => {
-            const r = sliceOf(p)?.result;
-            return {
-              filename: p.fileName,
-              storage_path: p.storagePath,
-              size_bytes: p.file?.size ?? null,
-              bucket: "project-uploads",
-              slicer_druckzeit_sekunden: r ? Math.round(correctedPrintSeconds(p, r)) : null,
-              slicer_filament_gramm: r ? Math.round(r.filamentGrams * 10) / 10 : null,
-              slicer_hat_supports: r ? r.hasSupports : null,
-              slicer_layer_anzahl: r ? r.layerCount : null,
-            };
-          }),
+          .map((p) => ({
+            filename: p.fileName,
+            storage_path: p.storagePath,
+            size_bytes: p.file?.size ?? null,
+            bucket: "project-uploads",
+          })),
         ...partImageAttachments,
         ...refImages
           .filter(r => r.storagePath)
@@ -873,16 +773,7 @@ const CalculatorOnlinePage = () => {
           })),
       ];
 
-      const slicerLines = parts
-        .map((p) => {
-          const r = sliceOf(p)?.result;
-          if (!r) return null;
-          return `- ${p.fileName}: ${formatDuration(correctedPrintSeconds(p, r))} Druckzeit, ${r.filamentGrams.toFixed(1)} g Filament, ${r.layerCount} Layer${r.hasSupports ? ", Stützstrukturen nötig" : ""}`;
-        })
-        .filter(Boolean);
-      const slicerBlock = slicerLines.length > 0 ? `\n\n--- Slicer-Analyse (OrcaSlicer-Kernel) ---\n${slicerLines.join("\n")}` : "";
-
-      const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}${slicerBlock}${kiBlock}\n\nNachricht: ${form.message}`;
+      const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}${kiBlock}\n\nNachricht: ${form.message}`;
 
 
       const { error } = await supabase.from("inquiries").insert({
@@ -992,9 +883,7 @@ const CalculatorOnlinePage = () => {
             >
               {hasStep
                 ? "Preis nach Prüfung"
-                : slicingActive
-                  ? "Slicer rechnet…"
-                  : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+                : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
             </div>
           </div>
         </div>
@@ -1444,27 +1333,7 @@ const CalculatorOnlinePage = () => {
                     })}
                   </div>
 
-                  {qualityConfirmed && sliceableParts.length > 0 && (
-                    <div className="rounded-xl border border-border bg-card p-4">
-                      {slicingActive ? (
-                        <>
-                          <p className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                            ⚙ OrcaSlicer analysiert Bauteil… {sliceProgress}%
-                          </p>
-                          <div className="mt-2 h-2 w-full rounded-full bg-muted overflow-hidden">
-                            <div className="h-full bg-primary transition-all" style={{ width: `${sliceProgress}%` }} />
-                          </div>
-                        </>
-                      ) : sliceError ? (
-                        <p className="text-sm text-muted-foreground">Vereinfachte Schätzung wird verwendet.</p>
-                      ) : sliceDone ? (
-                        <p className="text-sm text-primary font-medium">Analyse abgeschlossen ✓</p>
-                      ) : null}
-                    </div>
-                  )}
-
-                  <Button className="w-full gap-2" onClick={goNext} disabled={slicingActive}>
+                  <Button className="w-full gap-2" onClick={goNext}>
                     Weiter zur Übersicht <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -1504,40 +1373,11 @@ const CalculatorOnlinePage = () => {
                             <p className="text-xs text-muted-foreground mt-1">
                               {materials.find((m) => m.id === p.materialId)?.name} · {p.color || "Farbe n. A."} · {presetByInfill(p.infill).label}
                             </p>
-                            {(() => {
-                              const job = sliceOf(p);
-                              if (job?.status === "running") {
-                                return (
-                                  <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                    Modell wird geslict… {job.progress}%
-                                  </p>
-                                );
-                              }
-                              if (job?.status === "done" && job.result) {
-                                const r = job.result;
-                                return (
-                                  <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                                    <p>⏱ Druckzeit: ca. {formatDuration(correctedPrintSeconds(p, r))}</p>
-                                    <p>⚖ Filament: ca. {r.filamentGrams.toFixed(1)} g</p>
-                                    <p>📐 Layer: {r.layerCount}</p>
-                                    {r.hasSupports && (
-                                      <p className="text-warning">⚠ Stützstrukturen erforderlich – Nachbearbeitung +{CHF(SUPPORT_SURCHARGE)}</p>
-                                    )}
-
-                                    <p>Stückpreis {CHF(calc.unit)}</p>
-                                  </div>
-                                );
-                              }
-                              if (p.hasVolume) {
-                                return (
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    ~ Geschätzter Preis (STEP-Datei oder Slicer nicht verfügbar) · {calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)}
-                                  </p>
-                                );
-                              }
-                              return null;
-                            })()}
+                            {p.hasVolume && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                ~ Geschätzter Preis – finale Prüfung durch 3DMuscio · {calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)}
+                              </p>
+                            )}
 
                             <div className="mt-2 flex items-center gap-1">
                               <button onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })} aria-label="Menge verringern"
