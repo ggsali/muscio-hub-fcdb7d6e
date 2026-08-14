@@ -391,7 +391,10 @@ export default function AuftragDetailPage() {
   // Totals
   const partsUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
   const expressBetrag = Math.max(0, Number(expressKosten) || 0);
-  const totalUmsatz = partsUmsatz + expressBetrag;
+  const bruttoUmsatz = partsUmsatz + expressBetrag;
+  const rabattPct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
+  const rabattBetrag = bruttoUmsatz * (rabattPct / 100);
+  const totalUmsatz = bruttoUmsatz - rabattBetrag;
   const totalKosten = parts.reduce((s, p) => {
     const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
     const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
