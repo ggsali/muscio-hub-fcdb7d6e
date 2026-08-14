@@ -128,14 +128,25 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
             <Star className="w-4 h-4 text-primary" /> Google-Rezension
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Kunden manuell um eine Google-Bewertung bitten.
+            Wird beim Abschluss automatisch gesendet – hier auch manuell möglich.
           </p>
-          {alreadySentAt && (
+          {alreadySentAt && logStatus === "review_request" && (
             <p className="text-xs text-success mt-1 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
-              Bereits angefragt am {new Date(alreadySentAt).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              Versendet am {new Date(alreadySentAt).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
             </p>
           )}
+          {alreadySentAt && logStatus === "review_request_failed" && (
+            <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3 shrink-0" />
+              Fehlgeschlagen am {new Date(alreadySentAt).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              {logNote ? ` – ${logNote}` : ""}
+            </p>
+          )}
+          {!alreadySentAt && (
+            <p className="text-xs text-muted-foreground mt-1">Noch nicht versendet</p>
+          )}
+
         </div>
         <Button onClick={openModal} variant="outline" className="gap-2 border-border">
           <Star className="w-4 h-4" /> Rezension anfragen
