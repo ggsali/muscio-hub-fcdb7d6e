@@ -110,6 +110,9 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
       } else {
         toast({ title: "Rezensions-Anfrage gesendet ✓" });
         setAlreadySentAt(new Date().toISOString());
+        setLogStatus("review_request");
+        setLogNote(null);
+
         setOpen(false);
       }
     } catch (e: any) {
