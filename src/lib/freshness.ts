@@ -29,14 +29,6 @@ const check = async () => {
     if (sessionStorage.getItem(RELOAD_FLAG) === remote) return; // Reload-Loop verhindern
     sessionStorage.setItem(RELOAD_FLAG, remote);
 
-    if ("serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations().catch(() => []);
-      await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
-    }
-    if ("caches" in window) {
-      const keys = await caches.keys().catch(() => [] as string[]);
-      await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
-    }
     // Cache-Buster im Query erzwingt ein frisches index.html vom Server
     const params = new URLSearchParams(location.search);
     params.set("_v", Date.now().toString(36));

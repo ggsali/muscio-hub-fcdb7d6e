@@ -25,34 +25,6 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <!-- Alte Version verhindern: Service Worker + Caches entfernen und EINMAL neu laden -->
-    <script>
-      (function () {
-        try {
-          var hadSw = "serviceWorker" in navigator && navigator.serviceWorker.controller;
-          var jobs = [];
-          if ("serviceWorker" in navigator) {
-            jobs.push(
-              navigator.serviceWorker.getRegistrations().then(function (regs) {
-                return Promise.all(regs.map(function (r) { return r.unregister(); }));
-              }).catch(function () {})
-            );
-          }
-          if ("caches" in window) {
-            jobs.push(
-              caches.keys().then(function (keys) {
-                return Promise.all(keys.map(function (k) { return caches.delete(k); }));
-              }).catch(function () {})
-            );
-          }
-          if (hadSw && !sessionStorage.getItem("sw-purged")) {
-            sessionStorage.setItem("sw-purged", "1");
-            Promise.all(jobs).then(function () { location.reload(); });
-          }
-        } catch (e) {}
-      })();
-    </script>
-
     <!-- Open Graph (Fallback für Social-Crawler; pro Route via Helmet überschrieben) -->
     <meta property="og:site_name" content="3DMuscio" />
     <meta property="og:locale" content="de_CH" />
