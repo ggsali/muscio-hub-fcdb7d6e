@@ -245,7 +245,7 @@ export async function exportOrderPDF(data: OrderExportData) {
       // immer mit dem angezeigten Hauptzeilen-Total übereinstimmt.
       const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
       const componentTotal =
-        (s.setup_pauschale > 0 ? s.setup_pauschale : 0) +
+        (s.setup_pauschale > 0 ? s.setup_pauschale * p.menge : 0) +
         (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
         (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h * p.menge : 0) +
         (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
