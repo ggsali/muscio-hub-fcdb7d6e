@@ -215,6 +215,7 @@ export default function AuftragDetailPage() {
           setGeplantBis((o as any).geplant_bis || "");
           setExpressKosten(Number((o as any).express_kosten) || 0);
           setExpressLabel((o as any).express_label || "");
+          setRabattProzent(Number((o as any).rabatt_prozent) || 0);
           setSource((o as any).source || "manual");
           setNotesInternal((o as any).notes_internal || "");
           // Restore preset if saved
