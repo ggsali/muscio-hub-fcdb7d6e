@@ -565,28 +565,20 @@ const CalculatorOnlinePage = () => {
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** Geometrische Schätzung: Volumen -> Gewicht -> Material- und Maschinenkosten */
+  /** Geometrische Schätzung wie auf der bisherigen Website:
+   *  Gewicht (Shell + Infill + Sicherheitszuschlag) × Materialpreis × Qualitätsfaktor */
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
-    if (!mat) return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
+    if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
+      return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
+    }
+    const weight = p.estimatedWeight;
+    const layerFactor = presetByInfill(p.infill).speedFactor;
+    const unit = weight * mat.pricePerGram * layerFactor;
 
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
-
-    if (!p.hasVolume || p.estimatedWeight <= 0) {
-      return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
-    }
-
-    const q = activeQuality || qualityPresets[1];
-    const weight = p.estimatedWeight;
-    const materialCost = weight * mat.pricePerGram;
-    const rate = settings.maschinenzeit_pro_h || 0;
-    const estimatedHours = rate > 0
-      ? ((weight / (mat.density || 1.24)) * (q?.speedFactor ?? 1)) / rate * 2.5
-      : 0;
-    const machineCost = estimatedHours * rate;
-    const unit = Math.max(MIN_PRICE, materialCost + machineCost + FIX_COST);
 
     return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: false };
   };
