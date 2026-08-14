@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, Loader2, CheckCircle2 } from "lucide-react";
+import { Star, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { loadReviewMailSettings, getReviewRequestLog, fillReviewTemplate } from "@/lib/reviewEmail";
+
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
@@ -37,11 +39,16 @@ Jorim Moos
 export default function ReviewRequestButton({ orderId, status, customerId }: Props) {
   const [customerName, setCustomerName] = useState<string>("");
   const [customerEmail, setCustomerEmail] = useState<string>("");
-  const { toast } = useToast();
+  const [customerFirma, setCustomerFirma] = useState<string>("");
   const [reviewUrl, setReviewUrl] = useState<string>("");
+  const { toast } = useToast();
+
   const [alreadySentAt, setAlreadySentAt] = useState<string | null>(null);
+  const [logStatus, setLogStatus] = useState<string | null>(null);
+  const [logNote, setLogNote] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
+  const [tplBody, setTplBody] = useState<string>("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -49,32 +56,33 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
 
   useEffect(() => {
     if (!visible) return;
-    supabase.from("settings").select("value").eq("key", "google_review_url").maybeSingle()
-      .then(({ data }) => setReviewUrl(data?.value || ""));
-    supabase.from("order_status_log")
-      .select("created_at")
-      .eq("order_id", orderId)
-      .eq("status", "review_request")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => setAlreadySentAt(data?.created_at || null));
+    loadReviewMailSettings().then(s => {
+      setReviewUrl(s.reviewUrl);
+      setSubject(s.subject);
+      setTplBody(s.bodyTemplate);
+    });
+    getReviewRequestLog(orderId).then(log => {
+      setAlreadySentAt(log?.created_at || null);
+      setLogStatus(log?.status || null);
+      setLogNote(log?.notiz || null);
+    });
     if (customerId) {
-      supabase.from("customers").select("vorname, name, email").eq("id", customerId).maybeSingle()
+      supabase.from("customers").select("vorname, name, firma, email").eq("id", customerId).maybeSingle()
         .then(({ data }) => {
           if (data) {
             setCustomerName([data.vorname, data.name].filter(Boolean).join(" ").trim() || data.name || "");
             setCustomerEmail(data.email || "");
+            setCustomerFirma((data as any).firma || "");
           }
         });
     }
   }, [orderId, visible, customerId]);
 
   const openModal = () => {
-    setSubject(DEFAULT_SUBJECT);
-    setBody(buildDefaultBody(customerName));
+    setBody(fillReviewTemplate(tplBody || buildDefaultBody(customerName), { name: customerName, firma: customerFirma }));
     setOpen(true);
   };
+
 
   const send = async () => {
     if (!customerEmail) {
@@ -102,6 +110,9 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
       } else {
         toast({ title: "Rezensions-Anfrage gesendet ✓" });
         setAlreadySentAt(new Date().toISOString());
+        setLogStatus("review_request");
+        setLogNote(null);
+
         setOpen(false);
       }
     } catch (e: any) {
@@ -120,14 +131,25 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
             <Star className="w-4 h-4 text-primary" /> Google-Rezension
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Kunden manuell um eine Google-Bewertung bitten.
+            Wird beim Abschluss automatisch gesendet – hier auch manuell möglich.
           </p>
-          {alreadySentAt && (
+          {alreadySentAt && logStatus === "review_request" && (
             <p className="text-xs text-success mt-1 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
-              Bereits angefragt am {new Date(alreadySentAt).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              Versendet am {new Date(alreadySentAt).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
             </p>
           )}
+          {alreadySentAt && logStatus === "review_request_failed" && (
+            <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3 shrink-0" />
+              Fehlgeschlagen am {new Date(alreadySentAt).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              {logNote ? ` – ${logNote}` : ""}
+            </p>
+          )}
+          {!alreadySentAt && (
+            <p className="text-xs text-muted-foreground mt-1">Noch nicht versendet</p>
+          )}
+
         </div>
         <Button onClick={openModal} variant="outline" className="gap-2 border-border">
           <Star className="w-4 h-4" /> Rezension anfragen

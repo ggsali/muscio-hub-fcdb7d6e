@@ -22,6 +22,8 @@ import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
 import OrderUploadRequests from "@/components/OrderUploadRequests";
 import ReviewRequestButton from "@/components/ReviewRequestButton";
+import { sendReviewRequestForOrder } from "@/lib/reviewEmail";
+
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -819,6 +821,19 @@ export default function AuftragDetailPage() {
       }
     }
 
+    // Auto: Dankes-/Rezensions-Mail beim Abschluss des Auftrags (einmal pro Auftrag)
+    let reviewInfo: string | null = null;
+    if (orderId && status === "Abgeschlossen") {
+      try {
+        const res = await sendReviewRequestForOrder(orderId, customerId || null, { auto: true });
+        if (res.sent) reviewInfo = "Rezensions-Anfrage per E-Mail versendet";
+        else if (res.reason === "no_email") reviewInfo = "Rezensions-Mail nicht möglich: keine Kunden-E-Mail";
+        else if (res.reason === "error") reviewInfo = "Rezensions-Mail fehlgeschlagen – siehe Verlauf";
+      } catch (e) {
+        console.error("Auto review mail failed", e);
+      }
+    }
+
     setSaving(false);
     if (isNew) {
       navigate(`/admin/auftraege/${orderId}`, { replace: true });
@@ -826,9 +841,10 @@ export default function AuftragDetailPage() {
       // Reload parts from DB to sync IDs, without losing local UI state
       const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!);
       if (freshParts) setParts(applyFilamentPrices(freshParts as PartRow[]));
-      toast({ title: "Gespeichert ✓" });
+      toast({ title: "Gespeichert ✓", description: reviewInfo || undefined });
     }
   };
+
 
   if (loading) return <div className="p-4 md:p-8 text-muted-foreground">Laden...</div>;
 

@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Save, CheckCircle, Upload, Plus, Trash2, Star } from "lucide-react";
 import AdminAllowlistManager from "@/components/AdminAllowlistManager";
 import { toast } from "sonner";
+import { loadReviewMailSettings, REVIEW_DEFAULT_SUBJECT, buildReviewBody } from "@/lib/reviewEmail";
+
 import {
   loadQualityConfig, saveQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
   type QualityPreset, type CalcParams,
@@ -72,6 +74,10 @@ export default function EinstellungenPage() {
     mwst: 0.081,
   });
   const [googleReviewUrl, setGoogleReviewUrl] = useState<string>("");
+  const [reviewSubject, setReviewSubject] = useState<string>(REVIEW_DEFAULT_SUBJECT);
+  const [reviewBody, setReviewBody] = useState<string>(buildReviewBody("{{name}}"));
+  const [reviewAutoSend, setReviewAutoSend] = useState<boolean>(true);
+
   const [localCompany, setLocalCompany] = useState<CompanySettings>(company);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
@@ -111,17 +117,27 @@ export default function EinstellungenPage() {
 
 
   const loadGoogleReviewUrl = async () => {
-    const { data } = await supabase.from("settings").select("value").eq("key", "google_review_url").maybeSingle();
-    if (data?.value) setGoogleReviewUrl(data.value);
+    const s = await loadReviewMailSettings();
+    setGoogleReviewUrl(s.reviewUrl);
+    setReviewSubject(s.subject);
+    setReviewBody(s.bodyTemplate);
+    setReviewAutoSend(s.autoSend);
   };
 
   const handleSaveGoogleReviewUrl = async () => {
+    const now = new Date().toISOString();
     await supabase.from("settings").upsert(
-      { key: "google_review_url", value: googleReviewUrl, updated_at: new Date().toISOString() },
+      [
+        { key: "google_review_url", value: googleReviewUrl, updated_at: now },
+        { key: "review_email_subject", value: reviewSubject, updated_at: now },
+        { key: "review_email_body", value: reviewBody, updated_at: now },
+        { key: "review_auto_send", value: reviewAutoSend ? "true" : "false", updated_at: now },
+      ],
       { onConflict: "key" },
     );
     flashSaved();
   };
+
 
   const loadWebsiteSettings = async () => {
     const { data } = await supabase.from("settings").select("*").in("key", [
@@ -560,8 +576,46 @@ export default function EinstellungenPage() {
               placeholder="https://g.page/r/XXXXX/review"
               className="bg-input border-border text-sm"
             />
+
+            <div className="pt-2 border-t border-border space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-semibold text-sm">Automatischer Versand</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Sendet die Dankes-/Rezensions-Mail automatisch, sobald ein Auftrag als «Abgeschlossen» gespeichert wird (einmal pro Auftrag).
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={reviewAutoSend}
+                  onChange={e => setReviewAutoSend(e.target.checked)}
+                  className="mt-1 h-4 w-4 accent-primary"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Betreff</Label>
+                <Input
+                  value={reviewSubject}
+                  onChange={e => setReviewSubject(e.target.value)}
+                  className="bg-input border-border text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">
+                  E-Mail-Text — Platzhalter: {"{{name}}"}, {"{{firma}}"} und [Google Rezension schreiben] (wird verlinkt)
+                </Label>
+                <Textarea
+                  value={reviewBody}
+                  onChange={e => setReviewBody(e.target.value)}
+                  rows={14}
+                  className="bg-input border-border text-sm font-mono"
+                />
+              </div>
+            </div>
+
             <SaveButton saved={saved} onClick={handleSaveGoogleReviewUrl} />
           </div>
+
         </div>
       )}
 
