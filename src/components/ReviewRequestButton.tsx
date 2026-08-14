@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, Loader2, CheckCircle2 } from "lucide-react";
+import { Star, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { loadReviewMailSettings, getReviewRequestLog, fillReviewTemplate } from "@/lib/reviewEmail";
 
