@@ -41,7 +41,7 @@ const mobileBottomNav = [
   { to: "/admin/kalkulator", icon: Calculator, label: "Kalkulator" },
 ];
 
-function MobileLayout() {
+function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
