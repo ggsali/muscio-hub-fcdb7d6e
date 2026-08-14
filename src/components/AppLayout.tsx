@@ -241,5 +241,9 @@ function DesktopLayout() {
 
 export default function AppLayout() {
   const isMobile = useIsMobile();
-  return isMobile ? <MobileLayout /> : <DesktopLayout />;
+  // AppLayout wird nur für eingeloggte Admins gerendert (AdminGate)
+  const { canInstall, install } = useAdminPwaInstall(true);
+  return isMobile
+    ? <MobileLayout canInstall={canInstall} onInstall={install} />
+    : <DesktopLayout canInstall={canInstall} onInstall={install} />;
 }
