@@ -811,7 +811,7 @@ const CalculatorOnlinePage = () => {
       setMaterialId("");
       setColor("");
       setQualityKey("standard");
-      setQualityConfirmed(false);
+      
       setChatKey((k) => k + 1);
       setStep(1);
     } catch (err) {
