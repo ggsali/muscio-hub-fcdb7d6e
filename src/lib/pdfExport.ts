@@ -439,6 +439,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   if ((data.expressKosten ?? 0) > 0) {
     sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
   }
+  if (rabattBetrag > 0) {
+    sumRows.push([`Rabatt (${rabattProzent}%)`, `- ${formatCHF(rabattBetrag)}`]);
+  }
   sumRows.push(["MwSt. (0%)", "CHF 0.00"]);
 
   doc.setFont("helvetica", "normal");
