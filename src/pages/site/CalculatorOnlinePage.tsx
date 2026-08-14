@@ -248,8 +248,13 @@ const CalculatorOnlinePage = () => {
     loadQualityConfig().then(({ presets, params }) => {
       setQualityPresets(presets);
       setCalcParams(params);
+      console.log("Geladene Qualitäts-Presets:", presets, "Kalkulationsparameter:", params);
     });
   }, []);
+
+  useEffect(() => {
+    console.log("Maschinenzeit:", settings.maschinenzeit_pro_h);
+  }, [settings.maschinenzeit_pro_h]);
 
   const presetByInfill = useCallback(
     (infill: number) => qualityPresets.find((q) => q.infill === infill) || qualityPresets[1],
