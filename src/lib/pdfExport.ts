@@ -467,8 +467,32 @@ export async function exportOrderPDF(data: OrderExportData) {
   // Grand Total box bottom edge
   const totalBoxBottom = sumY + 8; // sumY - 4 + 12
 
-  // ── Zahlungsbedingungen unter Gesamtbetrag ──────────────────────
-  const termsY = totalBoxBottom + 8;
+  // ── Dankeszeile links und Zahlungsbedingungen rechts ────────────
+  // Beide Blöcke starten auf derselben Höhe und dürfen den Footer nicht überlagern.
+  const thanksY = afterTable + 10;
+  const termsY = afterTable + 10;
+  const footerY = pageH - 14;
+  const maxTermsY = footerY - 5;
+
+  // Links: Dankeszeile
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...BLACK);
+  doc.text("Vielen Dank!", margin, thanksY);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text("Wir schätzen Ihr Vertrauen.", margin, thanksY + 6);
+
+  // UID
+  if (data.company.uid_nummer) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GRAY);
+    doc.text(`UID: ${data.company.uid_nummer}`, margin, thanksY + 12);
+  }
+
+  // Rechts: Zahlungsbedingungen
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(...BLACK);
@@ -480,35 +504,26 @@ export async function exportOrderPDF(data: OrderExportData) {
     data.company.zahlungsbedingungen ||
     "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.";
   const termsLines = doc.splitTextToSize(termsText, pageW - sumX - margin);
-  doc.text(termsLines, sumX, termsY + 6);
-
-  // ── Dankeszeile links ───────────────────────────────────────────
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...BLACK);
-  doc.text("Vielen Dank!", margin, afterTable + 10);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(...GRAY);
-  doc.text("Wir schätzen Ihr Vertrauen.", margin, afterTable + 16);
-
-  // UID
-  if (data.company.uid_nummer) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...GRAY);
-    doc.text(`UID: ${data.company.uid_nummer}`, margin, afterTable + 22);
+  const termsHeight = termsLines.length * 4;
+  if (termsY + 6 + termsHeight < maxTermsY) {
+    doc.text(termsLines, sumX, termsY + 6);
+  } else {
+    const maxLines = Math.max(0, Math.floor((maxTermsY - termsY - 6) / 4));
+    doc.text(termsLines.slice(0, maxLines), sumX, termsY + 6);
   }
 
   // ── Fusszeile ───────────────────────────────────────────────────
   doc.setFillColor(...BLACK);
-  doc.rect(0, pageH - 14, pageW, 14, "F");
+  doc.rect(0, footerY, pageW, 14, "F");
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(160, 160, 160);
   const footParts = [firmenname, data.company.adresse, data.company.email, data.company.website].filter(Boolean);
-  doc.text(footParts.join("  |  "), margin, pageH - 5.5);
+  const footText = footParts.join("  |  ");
+  const maxFootWidth = pageW - margin * 2 - 40;
+  const footLines = doc.splitTextToSize(footText, maxFootWidth);
+  doc.text(footLines[0], margin, pageH - 5.5);
   doc.text(
     `Erstellt: ${new Date().toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}`,
     pageW - margin,
