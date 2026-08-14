@@ -36,12 +36,17 @@ export const Marquee = () => {
   return (
     <div className="relative overflow-hidden py-4 border-y border-border bg-muted/50">
       <div className="marquee-track flex gap-8 w-max">
-        {[...items, ...items].map((item, i) => (
-          <span key={i} className="text-sm font-medium text-muted-foreground whitespace-nowrap flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-            {item}
-          </span>
-        ))}
+        {Array.from({ length: 8 }).flatMap((_, copyIndex) =>
+          items.map((item, i) => (
+            <span
+              key={`${copyIndex}-${i}`}
+              className="text-sm font-medium text-muted-foreground whitespace-nowrap flex items-center gap-2"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              {item}
+            </span>
+          ))
+        )}
       </div>
     </div>
   );
