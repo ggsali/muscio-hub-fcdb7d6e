@@ -44,6 +44,7 @@ interface OfferExportData {
   withDetails?: boolean;
   expressKosten?: number;
   expressLabel?: string;
+  rabattProzent?: number;
 }
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
