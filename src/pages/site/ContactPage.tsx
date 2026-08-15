@@ -195,6 +195,28 @@ const ContactPage = () => {
                     value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                 </div>
                 <div>
+                  <Label className="text-xs font-medium">Strasse & Hausnummer</Label>
+                  <Input className="mt-1" placeholder="Musterstrasse 12"
+                    value={form.strasse} onChange={e => setForm(f => ({ ...f, strasse: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs font-medium">PLZ</Label>
+                    <Input className="mt-1" placeholder="8000"
+                      value={form.plz} onChange={e => setForm(f => ({ ...f, plz: e.target.value }))} />
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-xs font-medium">Ort</Label>
+                    <Input className="mt-1" placeholder="Zürich"
+                      value={form.ort} onChange={e => setForm(f => ({ ...f, ort: e.target.value }))} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-medium">Land</Label>
+                  <Input className="mt-1" placeholder="Schweiz"
+                    value={form.land} onChange={e => setForm(f => ({ ...f, land: e.target.value }))} />
+                </div>
+                <div>
                   <Label className="text-xs font-medium">Betreff *</Label>
                   <Select value={betreff} onValueChange={setBetreff}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Bitte wählen" /></SelectTrigger>
