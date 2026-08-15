@@ -4,10 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-import architektur from "@/assets/project-architektur.jpg";
-import buehler from "@/assets/project-buehler.jpg";
-import universitaet from "@/assets/project-universitaet.jpg";
-
 type HeroProject = {
   id: string;
   slug: string;
@@ -17,11 +13,7 @@ type HeroProject = {
   bild_url: string;
 };
 
-const fallback: HeroProject[] = [
-  { id: "1", slug: "architektur", name: "Architekturmodell", kategorie: "Architektur", beschreibung: "Skalierbares Gebäudemodell für Präsentationen.", bild_url: architektur },
-  { id: "2", slug: "buehler", name: "Bühler Industrieteil", kategorie: "Industrie", beschreibung: "Funktionsteil aus Hochleistungs-Polymer.", bild_url: buehler },
-  { id: "3", slug: "universitaet", name: "Universitäts-Prototyp", kategorie: "Forschung", beschreibung: "Komplexer Prototyp für Forschungsprojekt.", bild_url: universitaet },
-];
+const fallback: HeroProject[] = [];
 
 const resolveImage = (p: any): string => {
   if (p.bild_url) return p.bild_url;
@@ -35,7 +27,7 @@ const resolveImage = (p: any): string => {
 };
 
 export const HeroProjectsCarousel = () => {
-  const [projects, setProjects] = useState<HeroProject[]>(fallback);
+  const [projects, setProjects] = useState<HeroProject[]>([]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
 
