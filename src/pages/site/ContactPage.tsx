@@ -47,7 +47,7 @@ const safeUploadName = (name: string) =>
 
 const ContactPage = () => {
   const [betreff, setBetreff] = useState("");
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
