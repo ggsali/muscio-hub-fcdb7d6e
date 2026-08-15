@@ -11,7 +11,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { name, email, telefon, betreff, nachricht } = await req.json();
+    const {
+      name, email, telefon, betreff, nachricht,
+      strasse, plz, ort, land,
+      attachments,
+      ki_beratung_zusammenfassung,
+      ki_empfohlenes_material,
+    } = await req.json();
 
     if (!name || !email || !nachricht) {
       return new Response(JSON.stringify({ error: "Name, E-Mail und Nachricht sind erforderlich." }), {
@@ -28,14 +34,42 @@ Deno.serve(async (req) => {
     // Prüfen ob Kunde bereits existiert
     const { data: existingCustomer } = await supabase
       .from("customers")
-      .select("id")
+      .select("id, strasse, plz, ort")
       .eq("email", email)
       .maybeSingle();
 
     let customerId: string | null = existingCustomer?.id ?? null;
 
-    // Neuen Kunden NICHT automatisch anlegen — nur verknüpfen falls vorhanden.
-    // (Konto-Erstellung wird auf der Website angeboten.)
+    if (!customerId && strasse && plz && ort) {
+      // Neuen Kunden anlegen
+      const nameParts = name.trim().split(" ");
+      const vorname = nameParts[0] || "";
+      const nachname = nameParts.slice(1).join(" ") || vorname;
+
+      const { data: newCustomer } = await supabase.from("customers").insert({
+        name: nachname,
+        vorname,
+        email,
+        telefon: telefon || null,
+        strasse: strasse || null,
+        plz: plz || null,
+        ort: ort || null,
+        land: land || "Schweiz",
+        notizen: "Automatisch aus Anfrage erstellt",
+      }).select("id").single();
+
+      if (newCustomer) customerId = newCustomer.id;
+    } else if (customerId && (strasse || plz || ort)) {
+      // Adresse im bestehenden Kundenprofil ergänzen falls noch leer
+      if (!existingCustomer?.strasse && strasse) {
+        await supabase.from("customers").update({
+          strasse: strasse || null,
+          plz: plz || null,
+          ort: ort || null,
+          land: land || "Schweiz",
+        }).eq("id", customerId);
+      }
+    }
 
     // Anfrage speichern
     const { error } = await supabase.from("inquiries").insert({
@@ -47,42 +81,34 @@ Deno.serve(async (req) => {
       quelle: "website",
       customer_id: customerId,
       status: "Neu",
+      attachments: attachments || null,
+      ki_beratung_zusammenfassung: ki_beratung_zusammenfassung || null,
+      ki_empfohlenes_material: ki_empfohlenes_material || null,
     });
 
     if (error) throw error;
 
-    // Admin-Benachrichtigung per E-Mail (Fehler hier blockieren die Anfrage nicht)
+    // Admin-Benachrichtigung per E-Mail (Fehler hier nicht blockierend)
     try {
-      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const mailRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${serviceKey}`,
-          apikey: serviceKey,
-        },
-        body: JSON.stringify({
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
           templateName: "neue-anfrage-admin",
-          recipientEmail: "info@3dmuscio.com",
+          recipientEmail: "anfrage@3dmuscio.com",
           idempotencyKey: `inquiry-admin-${crypto.randomUUID()}`,
           templateData: { name, email, telefon: telefon || null, betreff: betreff || "Anfrage", nachricht },
-        }),
+        },
       });
-      if (!mailRes.ok) {
-        console.error("Admin-Mail Fehler:", mailRes.status, await mailRes.text());
-      }
     } catch (mailErr) {
       console.error("Admin-Mail Fehler:", mailErr);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, customerId }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: "Interner Fehler." }), {
+    return new Response(JSON.stringify({ error: "Interner Fehler.", detail: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -677,56 +677,17 @@ const CalculatorOnlinePage = () => {
         .map((p) => `${p.fileName} (${p.quantity}× ${(materials.find(m => m.id === p.materialId)?.name || p.materialId)}, ${p.color}, ${qualityAdminLabel(p.infill)})`)
         .join("; ");
       const { data: { user } } = await supabase.auth.getUser();
-      let customer_id: string | null = null;
       let resolvedVorname = form.vorname.trim();
       let resolvedNachname = form.nachname.trim();
       let resolvedEmail = form.email.trim();
       let resolvedPhone = form.phone.trim();
       if (user) {
-        const { data: cust } = await supabase.from("customers").select("id, name, vorname, telefon").eq("auth_user_id", user.id).maybeSingle();
-        customer_id = cust?.id ?? null;
         if (!resolvedEmail) resolvedEmail = user.email || "";
         if (!resolvedVorname && !resolvedNachname) {
-          resolvedVorname = cust?.vorname || "";
-          resolvedNachname = cust?.name || "";
-          if (!resolvedVorname && !resolvedNachname) {
-            const full = (user.user_metadata?.full_name as string) || "";
-            const ps = full.trim().split(/\s+/);
-            resolvedVorname = ps[0] || user.email || "Kunde";
-            resolvedNachname = ps.slice(1).join(" ") || "";
-          }
-        }
-        if (!resolvedPhone) resolvedPhone = (cust?.telefon as string) || "";
-      } else {
-        if (resolvedEmail) {
-          const { data: existing } = await supabase.from("customers")
-            .select("id, vorname, name, strasse, plz, ort")
-            .ilike("email", resolvedEmail).maybeSingle();
-          if (existing) {
-            customer_id = existing.id;
-            const updates: any = {};
-            if (!existing.strasse && form.strasse) updates.strasse = form.strasse;
-            if (!existing.plz && form.plz) updates.plz = form.plz;
-            if (!existing.ort && form.ort) updates.ort = form.ort;
-            if (!existing.vorname && resolvedVorname) updates.vorname = resolvedVorname;
-            if (!existing.name && resolvedNachname) updates.name = resolvedNachname;
-            if (Object.keys(updates).length > 0) {
-              await supabase.from("customers").update(updates).eq("id", existing.id);
-            }
-          } else {
-            const { data: created } = await supabase.from("customers").insert({
-              vorname: resolvedVorname,
-              name: resolvedNachname || resolvedVorname,
-              email: resolvedEmail,
-              telefon: resolvedPhone || null,
-              strasse: form.strasse || null,
-              plz: form.plz || null,
-              ort: form.ort || null,
-              land: form.land || "Schweiz",
-              notizen: "Über Online-Kalkulator angelegt",
-            } as any).select("id").maybeSingle();
-            customer_id = created?.id ?? null;
-          }
+          const full = (user.user_metadata?.full_name as string) || "";
+          const ps = full.trim().split(/\s+/);
+          resolvedVorname = ps[0] || user.email || "Kunde";
+          resolvedNachname = ps.slice(1).join(" ") || "";
         }
       }
       const resolvedName = `${resolvedVorname} ${resolvedNachname}`.trim() || resolvedEmail || "Kunde";
@@ -767,32 +728,23 @@ const CalculatorOnlinePage = () => {
 
       const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}${kiBlock}\n\nNachricht: ${form.message}`;
 
-
-      const { error } = await supabase.from("inquiries").insert({
-        name: resolvedName,
-        email: resolvedEmail,
-        telefon: resolvedPhone || null,
-        betreff: "Preisanfrage Kalkulator",
-        nachricht,
-        status: "Neu",
-        quelle: "kalkulator",
-        customer_id,
-        attachments,
-        ki_beratung_zusammenfassung: kiSummary,
-        ki_empfohlenes_material: kiResult?.material ?? null,
-      } as any);
-      if (error) throw error;
-
-      supabase.functions.invoke("notify-inquiry-admin", {
+      const { data, error } = await supabase.functions.invoke("submit-inquiry", {
         body: {
           name: resolvedName,
           email: resolvedEmail,
           telefon: resolvedPhone || null,
           betreff: "Preisanfrage Kalkulator",
           nachricht,
+          strasse: form.strasse || null,
+          plz: form.plz || null,
+          ort: form.ort || null,
+          land: form.land || "Schweiz",
+          attachments,
           ki_beratung_zusammenfassung: kiSummary,
+          ki_empfohlenes_material: kiResult?.material ?? null,
         },
-      }).catch((e) => console.error("Admin-Mail Fehler:", e));
+      });
+      if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
 
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
       setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
@@ -803,7 +755,7 @@ const CalculatorOnlinePage = () => {
       setMaterialId("");
       setColor("");
       setQualityKey("standard");
-      
+
       setChatKey((k) => k + 1);
       setStep(1);
     } catch (err) {

@@ -47,7 +47,7 @@ const safeUploadName = (name: string) =>
 
 const ContactPage = () => {
   const [betreff, setBetreff] = useState("");
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -86,21 +86,7 @@ const ContactPage = () => {
     if (!betreff) { toast.error("Bitte wähle einen Betreff aus."); return; }
     setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      let customer_id: string | null = null;
-      if (user) {
-        const { data: cust } = await supabase
-          .from("customers").select("id").eq("auth_user_id", user.id).maybeSingle();
-        customer_id = cust?.id ?? null;
-      }
-      // Fallback: gleichen Kunden über E-Mail finden (auch für nicht-eingeloggte)
-      if (!customer_id && form.email) {
-        const { data: cust } = await supabase
-          .from("customers").select("id").eq("email", form.email).maybeSingle();
-        customer_id = cust?.id ?? null;
-      }
-
-      // Dateien zuerst hochladen und danach exakt wie Kalkulator-Anhänge an der Anfrage speichern.
+      // Dateien zuerst hochladen
       const inquiryId = createUploadId();
       const uploaded: UploadedAttachment[] = [];
       if (attachments.length > 0) {
@@ -122,33 +108,27 @@ const ContactPage = () => {
         }
       }
 
-      const { error } = await supabase.from("inquiries").insert({
-        id: inquiryId,
-        name: form.name,
-        email: form.email,
-        telefon: form.phone || null,
-        betreff,
-        nachricht: form.message,
-        status: "Neu",
-        quelle: "website",
-        customer_id,
-        attachments: uploaded,
-      });
-      if (error) throw error;
-      // Admin-Benachrichtigung (Fehler hier nicht blockierend)
-      supabase.functions.invoke("notify-inquiry-admin", {
+      const { data, error } = await supabase.functions.invoke("submit-inquiry", {
         body: {
           name: form.name,
           email: form.email,
           telefon: form.phone || null,
           betreff,
           nachricht: form.message,
+          strasse: form.strasse || null,
+          plz: form.plz || null,
+          ort: form.ort || null,
+          land: form.land || "Schweiz",
+          attachments: uploaded,
         },
-      }).catch((e) => console.error("Admin-Mail Fehler:", e));
+      });
+      if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
+
       toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
-      setForm({ name: "", email: "", phone: "", message: "" });
+      setForm({ name: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setBetreff("");
       setAttachments([]);
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) setShowAccountDialog(true);
     } catch (err) {
       console.error(err);
@@ -193,6 +173,28 @@ const ContactPage = () => {
                   <Label className="text-xs font-medium">Telefon (optional)</Label>
                   <Input type="tel" className="mt-1" placeholder="+41 79..."
                     value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs font-medium">Strasse & Hausnummer</Label>
+                  <Input className="mt-1" placeholder="Musterstrasse 12"
+                    value={form.strasse} onChange={e => setForm(f => ({ ...f, strasse: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs font-medium">PLZ</Label>
+                    <Input className="mt-1" placeholder="8000"
+                      value={form.plz} onChange={e => setForm(f => ({ ...f, plz: e.target.value }))} />
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-xs font-medium">Ort</Label>
+                    <Input className="mt-1" placeholder="Zürich"
+                      value={form.ort} onChange={e => setForm(f => ({ ...f, ort: e.target.value }))} />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-medium">Land</Label>
+                  <Input className="mt-1" placeholder="Schweiz"
+                    value={form.land} onChange={e => setForm(f => ({ ...f, land: e.target.value }))} />
                 </div>
                 <div>
                   <Label className="text-xs font-medium">Betreff *</Label>
