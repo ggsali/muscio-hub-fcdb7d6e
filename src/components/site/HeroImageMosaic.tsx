@@ -3,17 +3,9 @@ import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 
-import architektur from "@/assets/project-architektur.jpg";
-import buehler from "@/assets/project-buehler.jpg";
-import universitaet from "@/assets/project-universitaet.jpg";
-
 type Shot = { id: string; url: string; alt: string; slug?: string; name?: string; kategorie?: string };
 
-const fallback: Shot[] = [
-  { id: "f1", url: buehler, alt: "3D-gedrucktes Industrieteil aus Hochleistungs-Polymer", slug: "buehler", name: "Bühler Industrieteil" },
-  { id: "f2", url: architektur, alt: "3D-gedrucktes Architekturmodell", slug: "architektur", name: "Architekturmodell" },
-  { id: "f3", url: universitaet, alt: "3D-gedruckter Prototyp für ein Forschungsprojekt", slug: "universitaet", name: "Universitäts-Prototyp" },
-];
+const fallback: Shot[] = [];
 
 const resolve = (p: any): string => {
   if (p.bild_url) return p.bild_url;
@@ -135,7 +127,7 @@ const Slot = ({
  * automatisch durch die Projekte rotiert und aufs Projekt verlinkt.
  */
 export const HeroImageMosaic = () => {
-  const [shots, setShots] = useState<Shot[]>(fallback);
+  const [shots, setShots] = useState<Shot[]>([]);
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState(0);
 
@@ -186,25 +178,8 @@ export const HeroImageMosaic = () => {
     return () => clearInterval(id);
   }, [shots.length]);
 
-  // Während des Ladens: statisches Fallback-Grid ohne jede Animation
-  if (!ready) {
-    return (
-      <div className="grid grid-cols-2 gap-3 md:gap-4">
-        <Slot
-          shots={fallback}
-          offset={0}
-          step={0}
-          eager
-          badge
-          direction={1}
-          animate={false}
-          className="col-span-2 rounded-3xl aspect-[16/11]"
-        />
-        <Slot shots={fallback} offset={1} step={0} delay={0.12} direction={-1} animate={false} className="rounded-2xl aspect-square md:-mt-6" />
-        <Slot shots={fallback} offset={2} step={0} delay={0.24} direction={1} animate={false} className="rounded-2xl aspect-square md:mt-4" />
-      </div>
-    );
-  }
+  // Keine Projektbilder verfügbar: Bereich komplett ausblenden
+  if (!ready || shots.length === 0) return null;
 
   return (
     <motion.div
