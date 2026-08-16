@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
 
     let customerId: string | null = existingCustomer?.id ?? null;
 
-    if (!customerId && strasse && plz && ort) {
+    if (!customerId && name && email) {
       // Neuen Kunden anlegen
       const nameParts = name.trim().split(" ");
       const vorname = nameParts[0] || "";
