@@ -119,6 +119,10 @@ function InquiryDetail({
           <Clock className="w-3.5 h-3.5 shrink-0" />
           <span>{new Date(selected.created_at).toLocaleString("de-CH")}</span>
         </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          <span>Herkunft: {selected.herkunft || "–"}</span>
+        </div>
       </div>
 
       <InquiryChat
