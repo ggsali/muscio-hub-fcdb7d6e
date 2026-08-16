@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     }
 
     // Anfrage speichern
-    const { error } = await supabase.from("inquiries").insert({
+    const { data: inserted, error } = await supabase.from("inquiries").insert({
       name,
       email,
       telefon: telefon || null,
