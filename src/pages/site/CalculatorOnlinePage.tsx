@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ModelPreview from "@/components/site/ModelPreview";
+import HerkunftBanner from "@/components/site/HerkunftBanner";
 import { colorHex } from "@/lib/colorMap";
 import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
