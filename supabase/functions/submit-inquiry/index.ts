@@ -72,19 +72,23 @@ Deno.serve(async (req) => {
     }
 
     // Anfrage speichern
-    const { data: inserted, error } = await supabase.from("inquiries").insert({
-      name,
-      email,
-      telefon: telefon || null,
-      betreff: betreff || "Anfrage",
-      nachricht,
-      quelle: "website",
-      customer_id: customerId,
-      status: "Neu",
-      attachments: attachments || null,
-      ki_beratung_zusammenfassung: ki_beratung_zusammenfassung || null,
-      ki_empfohlenes_material: ki_empfohlenes_material || null,
-    }).select("id").single();
+    const { data: insertedInquiry, error } = await supabase
+      .from("inquiries")
+      .insert({
+        name,
+        email,
+        telefon: telefon || null,
+        betreff: betreff || "Anfrage",
+        nachricht,
+        quelle: "website",
+        customer_id: customerId,
+        status: "Neu",
+        attachments: attachments || null,
+        ki_beratung_zusammenfassung: ki_beratung_zusammenfassung || null,
+        ki_empfohlenes_material: ki_empfohlenes_material || null,
+      })
+      .select("id")
+      .single();
 
     if (error) throw error;
 
@@ -102,10 +106,16 @@ Deno.serve(async (req) => {
       console.error("Admin-Mail Fehler:", mailErr);
     }
 
-    return new Response(JSON.stringify({ success: true, customerId, inquiry_id: inserted?.id ?? null }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        inquiry_id: insertedInquiry?.id ?? null,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (err) {
     console.error("Error:", err);
     return new Response(JSON.stringify({ error: "Interner Fehler.", detail: String(err) }), {
