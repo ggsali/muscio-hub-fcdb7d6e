@@ -770,12 +770,12 @@ const CalculatorOnlinePage = () => {
 
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
 
-      // Dezente Herkunfts-Frage (nur einmal pro Sitzung)
+      // Herkunfts-Frage vorbereiten (nur einmal pro Sitzung)
       if (data?.inquiry_id && sessionStorage.getItem("herkunft_gefragt") !== "true") {
-        sessionStorage.setItem("herkunft_gefragt", "true");
-        setHerkunftDanke(false);
         setHerkunftInquiryId(data.inquiry_id as string);
       }
+
+      setSubmitted(true);
 
       setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setParts([]);
@@ -787,7 +787,6 @@ const CalculatorOnlinePage = () => {
       setQualityKey("standard");
 
       setChatKey((k) => k + 1);
-      setStep(1);
     } catch (err) {
       console.error(err);
       toast.error("Fehler beim Senden — bitte später erneut versuchen.");
