@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       console.error("Admin-Mail Fehler:", mailErr);
     }
 
-    return new Response(JSON.stringify({ success: true, customerId }), {
+    return new Response(JSON.stringify({ success: true, customerId, inquiry_id: inserted?.id ?? null }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
