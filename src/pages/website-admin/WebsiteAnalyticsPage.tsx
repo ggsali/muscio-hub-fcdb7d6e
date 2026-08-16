@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet, TrendingUp, RefreshCw,
+  BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet, TrendingUp, RefreshCw, MapPin,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
