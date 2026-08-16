@@ -766,6 +766,8 @@ const CalculatorOnlinePage = () => {
       });
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
 
+      trackCalc("schritt_5_bestellung_abgesendet", { teile: parts.length });
+
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
 
       // Dezente Herkunfts-Frage (nur einmal pro Sitzung)
