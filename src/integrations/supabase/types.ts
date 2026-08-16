@@ -2232,6 +2232,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      set_inquiry_herkunft: {
+        Args: { p_herkunft: string; p_inquiry_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "customer"
