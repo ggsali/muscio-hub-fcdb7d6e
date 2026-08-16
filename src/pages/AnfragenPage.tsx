@@ -509,6 +509,26 @@ export default function AnfragenPage() {
           </button>
         </div>
 
+        {herkunftTotal >= 3 && (
+          <div className="flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground">
+            <MapPin className="w-3.5 h-3.5" />
+            {herkunftCounts.map(([h, n]) => (
+              <button
+                key={h}
+                onClick={() => setHerkunftFilter(herkunftFilter === h ? null : h)}
+                className={`px-2 py-0.5 rounded-full border transition-all ${herkunftFilter === h ? "bg-muted text-foreground border-border" : "border-transparent bg-muted/50 hover:border-border"}`}
+              >
+                {h} ({n})
+              </button>
+            ))}
+            {herkunftFilter && (
+              <button onClick={() => setHerkunftFilter(null)} className="underline">
+                Filter zurücksetzen
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-1.5 flex-wrap">
           {["alle", ...STATUSES].map(s => (
             <button
