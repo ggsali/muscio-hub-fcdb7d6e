@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       attachments: attachments || null,
       ki_beratung_zusammenfassung: ki_beratung_zusammenfassung || null,
       ki_empfohlenes_material: ki_empfohlenes_material || null,
-    });
+    }).select("id").single();
 
     if (error) throw error;
 
