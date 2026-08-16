@@ -221,6 +221,7 @@ export default function AnfragenPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("alle");
+  const [herkunftFilter, setHerkunftFilter] = useState<string | null>(null);
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [notiz, setNotiz] = useState("");
   const [saving, setSaving] = useState(false);
