@@ -220,6 +220,8 @@ const CalculatorOnlinePage = () => {
   const [materialsError, setMaterialsError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [herkunftInquiryId, setHerkunftInquiryId] = useState<string | null>(null);
+  const [herkunftDanke, setHerkunftDanke] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
   const [refImages, setRefImages] = useState<Array<{ id: string; file: File; storagePath?: string; uploading: boolean; previewUrl: string }>>([]);
