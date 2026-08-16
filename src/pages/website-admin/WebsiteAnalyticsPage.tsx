@@ -43,6 +43,7 @@ export default function WebsiteAnalyticsPage() {
   const [views, setViews] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
   const [herkunft, setHerkunft] = useState<[string, number][]>([]);
+  const [calcCounts, setCalcCounts] = useState<Record<string, number>>({});
 
   const range = RANGES.find(r => r.key === rangeKey)!;
 
