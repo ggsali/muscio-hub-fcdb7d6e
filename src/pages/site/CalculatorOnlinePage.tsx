@@ -805,62 +805,64 @@ const CalculatorOnlinePage = () => {
         path="/kalkulator-online"
       />
 
-      {/* Sticky Stepper-Header */}
-      <div className="sticky top-16 z-30 bg-background/95 backdrop-blur border-b border-border">
-        <div className="container mx-auto px-4 max-w-4xl py-3">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {STEPS.map((label, i) => {
-              const n = i + 1;
-              const active = n === step;
-              const doneStep = n < step;
-              return (
-                <div key={label} className="flex items-center gap-1.5 sm:gap-2 flex-1 last:flex-none">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <div
-                      className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                        active
-                          ? "bg-primary text-primary-foreground"
-                          : doneStep
-                            ? "bg-primary/15 text-primary"
-                            : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {doneStep ? <Check className="w-3.5 h-3.5" /> : n}
+      {!submitted && (
+        /* Sticky Stepper-Header */
+        <div className="sticky top-16 z-30 bg-background/95 backdrop-blur border-b border-border">
+          <div className="container mx-auto px-4 max-w-4xl py-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {STEPS.map((label, i) => {
+                const n = i + 1;
+                const active = n === step;
+                const doneStep = n < step;
+                return (
+                  <div key={label} className="flex items-center gap-1.5 sm:gap-2 flex-1 last:flex-none">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div
+                        className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : doneStep
+                              ? "bg-primary/15 text-primary"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {doneStep ? <Check className="w-3.5 h-3.5" /> : n}
+                      </div>
+                      <span className={`hidden sm:block text-xs truncate ${active ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                        {label}
+                      </span>
                     </div>
-                    <span className={`hidden sm:block text-xs truncate ${active ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
-                      {label}
-                    </span>
+                    {n < STEPS.length && (
+                      <div className={`h-px flex-1 ${doneStep ? "bg-primary/40" : "bg-border"}`} />
+                    )}
                   </div>
-                  {n < STEPS.length && (
-                    <div className={`h-px flex-1 ${doneStep ? "bg-primary/40" : "bg-border"}`} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
 
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goBack}
-              disabled={step === 1}
-              className="gap-1.5 text-xs"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Zurück
-            </Button>
-            <div
-              className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors ${
-                priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {hasStep
-                ? "Preis nach Prüfung"
-                : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goBack}
+                disabled={step === 1}
+                className="gap-1.5 text-xs"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Zurück
+              </Button>
+              <div
+                className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors ${
+                  priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {hasStep
+                  ? "Preis nach Prüfung"
+                  : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="container mx-auto px-4 max-w-4xl pt-8">
         <AnimatePresence>
