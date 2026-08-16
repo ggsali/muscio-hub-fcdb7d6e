@@ -480,8 +480,17 @@ export default function AnfragenPage() {
     }
   };
 
-  const filtered = filter === "alle" ? inquiries : inquiries.filter(i => i.status === filter);
+  const byStatus = filter === "alle" ? inquiries : inquiries.filter(i => i.status === filter);
+  const filtered = herkunftFilter ? byStatus.filter(i => i.herkunft === herkunftFilter) : byStatus;
   const newCount = inquiries.filter(i => i.status === "Neu").length;
+
+  const herkunftCounts = Object.entries(
+    inquiries.reduce<Record<string, number>>((acc, i) => {
+      if (i.herkunft) acc[i.herkunft] = (acc[i.herkunft] || 0) + 1;
+      return acc;
+    }, {})
+  ).sort((a, b) => b[1] - a[1]);
+  const herkunftTotal = herkunftCounts.reduce((s, [, n]) => s + n, 0);
 
   return (
     <div className={`${isMobile ? "flex flex-col h-full" : "flex h-full gap-0"}`}>
