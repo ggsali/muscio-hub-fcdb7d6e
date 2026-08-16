@@ -232,8 +232,8 @@ const CalculatorOnlinePage = () => {
   const [materialsError, setMaterialsError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [herkunftInquiryId, setHerkunftInquiryId] = useState<string | null>(null);
-  const [herkunftDanke, setHerkunftDanke] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
   const [refImages, setRefImages] = useState<Array<{ id: string; file: File; storagePath?: string; uploading: boolean; previewUrl: string }>>([]);
@@ -770,12 +770,12 @@ const CalculatorOnlinePage = () => {
 
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
 
-      // Dezente Herkunfts-Frage (nur einmal pro Sitzung)
+      // Herkunfts-Frage vorbereiten (nur einmal pro Sitzung)
       if (data?.inquiry_id && sessionStorage.getItem("herkunft_gefragt") !== "true") {
-        sessionStorage.setItem("herkunft_gefragt", "true");
-        setHerkunftDanke(false);
         setHerkunftInquiryId(data.inquiry_id as string);
       }
+
+      setSubmitted(true);
 
       setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setParts([]);
@@ -787,7 +787,6 @@ const CalculatorOnlinePage = () => {
       setQualityKey("standard");
 
       setChatKey((k) => k + 1);
-      setStep(1);
     } catch (err) {
       console.error(err);
       toast.error("Fehler beim Senden — bitte später erneut versuchen.");
@@ -806,87 +805,72 @@ const CalculatorOnlinePage = () => {
         path="/kalkulator-online"
       />
 
-      {/* Sticky Stepper-Header */}
-      <div className="sticky top-16 z-30 bg-background/95 backdrop-blur border-b border-border">
-        <div className="container mx-auto px-4 max-w-4xl py-3">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {STEPS.map((label, i) => {
-              const n = i + 1;
-              const active = n === step;
-              const doneStep = n < step;
-              return (
-                <div key={label} className="flex items-center gap-1.5 sm:gap-2 flex-1 last:flex-none">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <div
-                      className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                        active
-                          ? "bg-primary text-primary-foreground"
-                          : doneStep
-                            ? "bg-primary/15 text-primary"
-                            : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {doneStep ? <Check className="w-3.5 h-3.5" /> : n}
+      {!submitted && (
+        /* Sticky Stepper-Header */
+        <div className="sticky top-16 z-30 bg-background/95 backdrop-blur border-b border-border">
+          <div className="container mx-auto px-4 max-w-4xl py-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {STEPS.map((label, i) => {
+                const n = i + 1;
+                const active = n === step;
+                const doneStep = n < step;
+                return (
+                  <div key={label} className="flex items-center gap-1.5 sm:gap-2 flex-1 last:flex-none">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div
+                        className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : doneStep
+                              ? "bg-primary/15 text-primary"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {doneStep ? <Check className="w-3.5 h-3.5" /> : n}
+                      </div>
+                      <span className={`hidden sm:block text-xs truncate ${active ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                        {label}
+                      </span>
                     </div>
-                    <span className={`hidden sm:block text-xs truncate ${active ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
-                      {label}
-                    </span>
+                    {n < STEPS.length && (
+                      <div className={`h-px flex-1 ${doneStep ? "bg-primary/40" : "bg-border"}`} />
+                    )}
                   </div>
-                  {n < STEPS.length && (
-                    <div className={`h-px flex-1 ${doneStep ? "bg-primary/40" : "bg-border"}`} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
 
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goBack}
-              disabled={step === 1}
-              className="gap-1.5 text-xs"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Zurück
-            </Button>
-            <div
-              className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors ${
-                priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {hasStep
-                ? "Preis nach Prüfung"
-                : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goBack}
+                disabled={step === 1}
+                className="gap-1.5 text-xs"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Zurück
+              </Button>
+              <div
+                className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors ${
+                  priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {hasStep
+                  ? "Preis nach Prüfung"
+                  : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="container mx-auto px-4 max-w-4xl pt-8">
-        <AnimatePresence>
-          {herkunftInquiryId && (
-            <HerkunftCard
-              key="herkunft"
-              danke={herkunftDanke}
-              onSelect={async (wert) => {
-                setHerkunftDanke(true);
-                try {
-                  await supabase.rpc("set_inquiry_herkunft", {
-                    p_inquiry_id: herkunftInquiryId,
-                    p_herkunft: wert,
-                  });
-                } catch (e) {
-                  console.error(e);
-                }
-                setTimeout(() => setHerkunftInquiryId(null), 2200);
-              }}
-              onTimeout={() => setHerkunftInquiryId(null)}
-            />
-          )}
-        </AnimatePresence>
-
-        {materialsLoading ? (
+        {submitted ? (
+          <SuccessView
+            inquiryId={herkunftInquiryId}
+            onHerkunftSaved={() => setHerkunftInquiryId(null)}
+          />
+        ) : materialsLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
@@ -1542,56 +1526,143 @@ const CalculatorOnlinePage = () => {
   );
 };
 
-const HERKUNFT_OPTIONEN = ["Google", "Empfehlung", "LinkedIn", "Instagram", "KI / ChatGPT", "Anderes"];
+const HERKUNFT_OPTIONEN = [
+  { value: "Google", label: "Google", emoji: "🔍" },
+  { value: "Empfehlung", label: "Empfehlung", emoji: "👥" },
+  { value: "LinkedIn", label: "LinkedIn", emoji: "💼" },
+  { value: "Instagram", label: "Instagram", emoji: "📸" },
+  { value: "KI / ChatGPT", label: "KI / ChatGPT", emoji: "🤖" },
+  { value: "Anderes", label: "Anderes", emoji: "✏️" },
+];
 
-const HerkunftCard = ({
-  danke,
-  onSelect,
-  onTimeout,
+const SuccessView = ({
+  inquiryId,
+  onHerkunftSaved,
 }: {
-  danke: boolean;
-  onSelect: (wert: string) => void;
-  onTimeout: () => void;
+  inquiryId: string | null;
+  onHerkunftSaved: () => void;
 }) => {
-  const [gewaehlt, setGewaehlt] = useState<string | null>(null);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="max-w-2xl mx-auto space-y-6"
+    >
+      <div className="bg-card border border-border rounded-3xl p-8 md:p-12 text-center">
+        <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-5">
+          <Check className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-2">
+          ✓ Bestellung erhalten! Wir melden uns bald.
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Vielen Dank für deine Anfrage. Wir prüfen deine Dateien und melden uns innerhalb von 24 Stunden bei dir.
+        </p>
+      </div>
+
+      <AnimatePresence>
+        {inquiryId && (
+          <motion.div
+            key="herkunft"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <HerkunftBanner inquiryId={inquiryId} onSaved={onHerkunftSaved} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+const HerkunftBanner = ({
+  inquiryId,
+  onSaved,
+}: {
+  inquiryId: string;
+  onSaved: () => void;
+}) => {
+  const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    if (gewaehlt) return;
-    const t = setTimeout(onTimeout, 10000);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gewaehlt]);
+    sessionStorage.setItem("herkunft_gefragt", "true");
+  }, []);
+
+  const handleSelect = async (value: string) => {
+    if (selected) return;
+    setSelected(value);
+    try {
+      await supabase.rpc("set_inquiry_herkunft", {
+        p_inquiry_id: inquiryId,
+        p_herkunft: value,
+      });
+      setTimeout(() => {
+        onSaved();
+        toast.success("Danke für Ihr Feedback! 🙏");
+      }, 800);
+    } catch (e) {
+      console.error(e);
+      setTimeout(() => {
+        onSaved();
+        toast.error("Feedback konnte nicht gespeichert werden.");
+      }, 800);
+    }
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="mb-6 rounded-2xl border border-border bg-card/60 px-4 py-4 md:px-6"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+      className="w-full rounded-2xl border border-primary/30 bg-primary/10 p-5 md:p-6"
     >
-      {danke ? (
-        <p className="text-sm text-muted-foreground">Danke für Ihr Feedback! 🙏</p>
-      ) : (
-        <>
-          <p className="text-sm text-muted-foreground">Kurze Frage – wie haben Sie uns gefunden?</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {HERKUNFT_OPTIONEN.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => {
-                  setGewaehlt(opt);
-                  onSelect(opt);
-                }}
-                className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+      <div className="flex items-start gap-3">
+        <span className="text-xl leading-none">🙏</span>
+        <div className="flex-1">
+          <h3 className="font-heading text-base font-bold text-foreground">
+            Kurze Frage – wie haben Sie uns gefunden?
+          </h3>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Ihr Feedback hilft uns zu wachsen. Nur ein Klick, kein Muss.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {HERKUNFT_OPTIONEN.map((opt) => {
+          const isSelected = selected === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              disabled={!!selected}
+              onClick={() => handleSelect(opt.value)}
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                isSelected
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background border-border text-foreground hover:border-primary hover:bg-primary/5"
+              } ${selected && !isSelected ? "opacity-50" : ""}`}
+            >
+              <span className="mr-1.5">{opt.emoji}</span>
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <button
+          type="button"
+          onClick={onSaved}
+          className="text-xs text-muted-foreground underline hover:text-foreground"
+        >
+          Überspringen
+        </button>
+      </div>
     </motion.div>
   );
 };
