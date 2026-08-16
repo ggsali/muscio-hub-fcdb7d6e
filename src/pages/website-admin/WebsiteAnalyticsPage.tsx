@@ -42,6 +42,7 @@ export default function WebsiteAnalyticsPage() {
   const [rangeKey, setRangeKey] = useState("30");
   const [views, setViews] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [herkunft, setHerkunft] = useState<[string, number][]>([]);
 
   const range = RANGES.find(r => r.key === rangeKey)!;
 
@@ -57,6 +58,24 @@ export default function WebsiteAnalyticsPage() {
     setViews((data as PageView[]) || []);
     setLoading(false);
   }
+
+  async function loadHerkunft() {
+    const since90 = subDays(new Date(), 90).toISOString();
+    const { data } = await supabase
+      .from("inquiries")
+      .select("herkunft")
+      .not("herkunft", "is", null)
+      .gte("created_at", since90);
+    const counts: Record<string, number> = {};
+    ((data as { herkunft: string | null }[]) || []).forEach(r => {
+      if (r.herkunft) counts[r.herkunft] = (counts[r.herkunft] || 0) + 1;
+    });
+    setHerkunft(Object.entries(counts).sort((a, b) => b[1] - a[1]));
+  }
+
+  useEffect(() => { loadHerkunft(); }, []);
+
+  const herkunftTotal = herkunft.reduce((s, [, n]) => s + n, 0);
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [rangeKey]);
 
