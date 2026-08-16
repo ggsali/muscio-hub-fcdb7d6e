@@ -33,6 +33,7 @@ type Inquiry = {
   order_id: string | null;
   notiz: string | null;
   created_at: string;
+  herkunft?: string | null;
   attachments?: Attachment[] | null;
   ki_beratung_zusammenfassung?: string | null;
   ki_empfohlenes_material?: string | null;
