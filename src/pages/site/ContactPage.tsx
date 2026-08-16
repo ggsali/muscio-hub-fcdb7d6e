@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import {
-  MapPin, Mail, Clock, MessageCircle, ChevronRight, Loader2, Send, Paperclip, X, FileBox
+  MapPin, Mail, Clock, MessageCircle, ChevronRight, Loader2, Send, Paperclip, X, FileBox, Check
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -23,6 +24,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { GoogleMap } from "@/components/site/GoogleMap";
 import Seo from "@/components/site/Seo";
+import HerkunftBanner from "@/components/site/HerkunftBanner";
 
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
