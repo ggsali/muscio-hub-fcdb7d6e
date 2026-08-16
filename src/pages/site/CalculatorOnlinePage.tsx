@@ -1526,56 +1526,143 @@ const CalculatorOnlinePage = () => {
   );
 };
 
-const HERKUNFT_OPTIONEN = ["Google", "Empfehlung", "LinkedIn", "Instagram", "KI / ChatGPT", "Anderes"];
+const HERKUNFT_OPTIONEN = [
+  { value: "Google", label: "Google", emoji: "🔍" },
+  { value: "Empfehlung", label: "Empfehlung", emoji: "👥" },
+  { value: "LinkedIn", label: "LinkedIn", emoji: "💼" },
+  { value: "Instagram", label: "Instagram", emoji: "📸" },
+  { value: "KI / ChatGPT", label: "KI / ChatGPT", emoji: "🤖" },
+  { value: "Anderes", label: "Anderes", emoji: "✏️" },
+];
 
-const HerkunftCard = ({
-  danke,
-  onSelect,
-  onTimeout,
+const SuccessView = ({
+  inquiryId,
+  onHerkunftSaved,
 }: {
-  danke: boolean;
-  onSelect: (wert: string) => void;
-  onTimeout: () => void;
+  inquiryId: string | null;
+  onHerkunftSaved: () => void;
 }) => {
-  const [gewaehlt, setGewaehlt] = useState<string | null>(null);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="max-w-2xl mx-auto space-y-6"
+    >
+      <div className="bg-card border border-border rounded-3xl p-8 md:p-12 text-center">
+        <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-5">
+          <Check className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-2">
+          ✓ Bestellung erhalten! Wir melden uns bald.
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Vielen Dank für deine Anfrage. Wir prüfen deine Dateien und melden uns innerhalb von 24 Stunden bei dir.
+        </p>
+      </div>
+
+      <AnimatePresence>
+        {inquiryId && (
+          <motion.div
+            key="herkunft"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <HerkunftBanner inquiryId={inquiryId} onSaved={onHerkunftSaved} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+const HerkunftBanner = ({
+  inquiryId,
+  onSaved,
+}: {
+  inquiryId: string;
+  onSaved: () => void;
+}) => {
+  const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    if (gewaehlt) return;
-    const t = setTimeout(onTimeout, 10000);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gewaehlt]);
+    sessionStorage.setItem("herkunft_gefragt", "true");
+  }, []);
+
+  const handleSelect = async (value: string) => {
+    if (selected) return;
+    setSelected(value);
+    try {
+      await supabase.rpc("set_inquiry_herkunft", {
+        p_inquiry_id: inquiryId,
+        p_herkunft: value,
+      });
+      setTimeout(() => {
+        onSaved();
+        toast.success("Danke für Ihr Feedback! 🙏");
+      }, 800);
+    } catch (e) {
+      console.error(e);
+      setTimeout(() => {
+        onSaved();
+        toast.error("Feedback konnte nicht gespeichert werden.");
+      }, 800);
+    }
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="mb-6 rounded-2xl border border-border bg-card/60 px-4 py-4 md:px-6"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+      className="w-full rounded-2xl border border-primary/30 bg-primary/10 p-5 md:p-6"
     >
-      {danke ? (
-        <p className="text-sm text-muted-foreground">Danke für Ihr Feedback! 🙏</p>
-      ) : (
-        <>
-          <p className="text-sm text-muted-foreground">Kurze Frage – wie haben Sie uns gefunden?</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {HERKUNFT_OPTIONEN.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => {
-                  setGewaehlt(opt);
-                  onSelect(opt);
-                }}
-                className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+      <div className="flex items-start gap-3">
+        <span className="text-xl leading-none">🙏</span>
+        <div className="flex-1">
+          <h3 className="font-heading text-base font-bold text-foreground">
+            Kurze Frage – wie haben Sie uns gefunden?
+          </h3>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Ihr Feedback hilft uns zu wachsen. Nur ein Klick, kein Muss.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {HERKUNFT_OPTIONEN.map((opt) => {
+          const isSelected = selected === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              disabled={!!selected}
+              onClick={() => handleSelect(opt.value)}
+              className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                isSelected
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background border-border text-foreground hover:border-primary hover:bg-primary/5"
+              } ${selected && !isSelected ? "opacity-50" : ""}`}
+            >
+              <span className="mr-1.5">{opt.emoji}</span>
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <button
+          type="button"
+          onClick={onSaved}
+          className="text-xs text-muted-foreground underline hover:text-foreground"
+        >
+          Überspringen
+        </button>
+      </div>
     </motion.div>
   );
 };
