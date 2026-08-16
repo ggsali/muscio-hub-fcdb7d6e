@@ -165,106 +165,143 @@ const ContactPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 max-w-5xl mx-auto">
           <ScrollReveal className="lg:col-span-3">
             <div className="bg-card rounded-2xl border border-border p-8">
-              <h2 className="font-heading text-xl font-bold text-foreground mb-6">Schreib uns</h2>
-              <form className="space-y-5" onSubmit={handleSubmit}>
-                <div>
-                  <Label className="text-xs font-medium">Name *</Label>
-                  <Input required className="mt-1" placeholder="Dein Name"
-                    value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-xs font-medium">E-Mail *</Label>
-                  <Input type="email" required className="mt-1" placeholder="name@beispiel.ch"
-                    value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-xs font-medium">Telefon (optional)</Label>
-                  <Input type="tel" className="mt-1" placeholder="+41 79..."
-                    value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-xs font-medium">Strasse & Hausnummer</Label>
-                  <Input className="mt-1" placeholder="Musterstrasse 12"
-                    value={form.strasse} onChange={e => setForm(f => ({ ...f, strasse: e.target.value }))} />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs font-medium">PLZ</Label>
-                    <Input className="mt-1" placeholder="8000"
-                      value={form.plz} onChange={e => setForm(f => ({ ...f, plz: e.target.value }))} />
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-xs font-medium">Ort</Label>
-                    <Input className="mt-1" placeholder="Zürich"
-                      value={form.ort} onChange={e => setForm(f => ({ ...f, ort: e.target.value }))} />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs font-medium">Land</Label>
-                  <Input className="mt-1" placeholder="Schweiz"
-                    value={form.land} onChange={e => setForm(f => ({ ...f, land: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-xs font-medium">Betreff *</Label>
-                  <Select value={betreff} onValueChange={setBetreff}>
-                    <SelectTrigger className="mt-1"><SelectValue placeholder="Bitte wählen" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Anfrage">Anfrage</SelectItem>
-                      <SelectItem value="Support">Support</SelectItem>
-                      <SelectItem value="Angebot">Angebot</SelectItem>
-                      <SelectItem value="Sonstiges">Sonstiges</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs font-medium">Nachricht *</Label>
-                  <Textarea rows={5} required className="mt-1" placeholder="Deine Nachricht..."
-                    value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-xs font-medium">Dateien & Bilder anhängen (optional)</Label>
-                  <input
-                    ref={fileInputRef} type="file" multiple
-                    accept=".stl,.3mf,.step,.obj,.pdf,image/*"
-                    className="hidden"
-                    onChange={e => handleFiles(e.target.files)}
-                  />
-                  <button type="button" onClick={() => fileInputRef.current?.click()}
-                    className="mt-1 w-full flex items-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:bg-muted/30 transition-all">
-                    <Paperclip className="w-4 h-4 shrink-0" />
-                    Dateien & Bilder auswählen (STL, 3MF, STEP, OBJ, PDF, JPG, PNG …)
-                  </button>
-
-                  {attachments.length > 0 && (
-                    <div className="mt-2 space-y-1.5">
-                      {attachments.map((f, i) => {
-                        const isImage = f.type.startsWith("image/");
-                        const url = isImage ? URL.createObjectURL(f) : null;
-                        return (
-                          <div key={i} className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg">
-                            {isImage && url ? (
-                              <img src={url} alt={f.name} className="w-10 h-10 rounded object-cover shrink-0" onLoad={() => URL.revokeObjectURL(url)} />
-                            ) : (
-                              <FileBox className="w-3.5 h-3.5 text-primary shrink-0" />
-                            )}
-                            <span className="text-xs flex-1 truncate">{f.name}</span>
-                            <span className="text-xs text-muted-foreground">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
-                            <button type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-foreground">
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        );
-                      })}
+              {sent ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="space-y-6"
+                >
+                  <div className="text-center">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-5">
+                      <Check className="w-8 h-8 text-primary" />
                     </div>
-                  )}
+                    <h2 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-2">
+                      ✓ Nachricht erhalten! Wir melden uns bald.
+                    </h2>
+                    <p className="text-muted-foreground text-sm">
+                      Vielen Dank für deine Anfrage. Wir antworten in der Regel innerhalb eines Werktags.
+                    </p>
+                  </div>
 
-                </div>
-                <Button size="lg" type="submit" className="w-full gap-2" disabled={submitting}>
-                  {submitting
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</>
-                    : <><Send className="w-4 h-4" /> Nachricht senden</>}
-                </Button>
-              </form>
+                  <AnimatePresence>
+                    {herkunftInquiryId && (
+                      <motion.div
+                        key="herkunft"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <HerkunftBanner inquiryId={herkunftInquiryId} onSaved={() => setHerkunftInquiryId(null)} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ) : (
+                <>
+                  <h2 className="font-heading text-xl font-bold text-foreground mb-6">Schreib uns</h2>
+                  <form className="space-y-5" onSubmit={handleSubmit}>
+                    <div>
+                      <Label className="text-xs font-medium">Name *</Label>
+                      <Input required className="mt-1" placeholder="Dein Name"
+                        value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium">E-Mail *</Label>
+                      <Input type="email" required className="mt-1" placeholder="name@beispiel.ch"
+                        value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium">Telefon (optional)</Label>
+                      <Input type="tel" className="mt-1" placeholder="+41 79..."
+                        value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium">Strasse & Hausnummer</Label>
+                      <Input className="mt-1" placeholder="Musterstrasse 12"
+                        value={form.strasse} onChange={e => setForm(f => ({ ...f, strasse: e.target.value }))} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-xs font-medium">PLZ</Label>
+                        <Input className="mt-1" placeholder="8000"
+                          value={form.plz} onChange={e => setForm(f => ({ ...f, plz: e.target.value }))} />
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs font-medium">Ort</Label>
+                        <Input className="mt-1" placeholder="Zürich"
+                          value={form.ort} onChange={e => setForm(f => ({ ...f, ort: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium">Land</Label>
+                      <Input className="mt-1" placeholder="Schweiz"
+                        value={form.land} onChange={e => setForm(f => ({ ...f, land: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium">Betreff *</Label>
+                      <Select value={betreff} onValueChange={setBetreff}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Bitte wählen" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Anfrage">Anfrage</SelectItem>
+                          <SelectItem value="Support">Support</SelectItem>
+                          <SelectItem value="Angebot">Angebot</SelectItem>
+                          <SelectItem value="Sonstiges">Sonstiges</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium">Nachricht *</Label>
+                      <Textarea rows={5} required className="mt-1" placeholder="Deine Nachricht..."
+                        value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium">Dateien & Bilder anhängen (optional)</Label>
+                      <input
+                        ref={fileInputRef} type="file" multiple
+                        accept=".stl,.3mf,.step,.obj,.pdf,image/*"
+                        className="hidden"
+                        onChange={e => handleFiles(e.target.files)}
+                      />
+                      <button type="button" onClick={() => fileInputRef.current?.click()}
+                        className="mt-1 w-full flex items-center gap-2 px-4 py-3 border border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary/50 hover:bg-muted/30 transition-all">
+                        <Paperclip className="w-4 h-4 shrink-0" />
+                        Dateien & Bilder auswählen (STL, 3MF, STEP, OBJ, PDF, JPG, PNG …)
+                      </button>
+
+                      {attachments.length > 0 && (
+                        <div className="mt-2 space-y-1.5">
+                          {attachments.map((f, i) => {
+                            const isImage = f.type.startsWith("image/");
+                            const url = isImage ? URL.createObjectURL(f) : null;
+                            return (
+                              <div key={i} className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg">
+                                {isImage && url ? (
+                                  <img src={url} alt={f.name} className="w-10 h-10 rounded object-cover shrink-0" onLoad={() => URL.revokeObjectURL(url)} />
+                                ) : (
+                                  <FileBox className="w-3.5 h-3.5 text-primary shrink-0" />
+                                )}
+                                <span className="text-xs flex-1 truncate">{f.name}</span>
+                                <span className="text-xs text-muted-foreground">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                                <button type="button" onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-foreground">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                    </div>
+                    <Button size="lg" type="submit" className="w-full gap-2" disabled={submitting}>
+                      {submitting
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</>
+                        : <><Send className="w-4 h-4" /> Nachricht senden</>}
+                    </Button>
+                  </form>
+                </>
+              )}
             </div>
           </ScrollReveal>
 
