@@ -844,6 +844,28 @@ const CalculatorOnlinePage = () => {
       </div>
 
       <div className="container mx-auto px-4 max-w-4xl pt-8">
+        <AnimatePresence>
+          {herkunftInquiryId && (
+            <HerkunftCard
+              key="herkunft"
+              danke={herkunftDanke}
+              onSelect={async (wert) => {
+                setHerkunftDanke(true);
+                try {
+                  await supabase.rpc("set_inquiry_herkunft", {
+                    p_inquiry_id: herkunftInquiryId,
+                    p_herkunft: wert,
+                  });
+                } catch (e) {
+                  console.error(e);
+                }
+                setTimeout(() => setHerkunftInquiryId(null), 2200);
+              }}
+              onTimeout={() => setHerkunftInquiryId(null)}
+            />
+          )}
+        </AnimatePresence>
+
         {materialsLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
