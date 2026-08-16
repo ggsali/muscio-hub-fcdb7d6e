@@ -129,6 +129,10 @@ const ContactPage = () => {
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
 
       toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
+      setSent(true);
+      if (data?.inquiry_id && sessionStorage.getItem("herkunft_gefragt") !== "true") {
+        setHerkunftInquiryId(data.inquiry_id as string);
+      }
       setForm({ name: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setBetreff("");
       setAttachments([]);
