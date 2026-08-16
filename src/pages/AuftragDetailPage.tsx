@@ -135,6 +135,19 @@ export default function AuftragDetailPage() {
   const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (!id || isNew) { setInquiryHerkunft(null); return; }
+    supabase
+      .from("inquiries")
+      .select("herkunft")
+      .eq("order_id", id)
+      .not("herkunft", "is", null)
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setInquiryHerkunft((data as any)?.herkunft ?? null));
+  }, [id, isNew]);
+
+
   const handleCreatePaymentLink = async () => {
     if (!id || totalUmsatz <= 0) return;
     setCreatingPaymentLink(true);
