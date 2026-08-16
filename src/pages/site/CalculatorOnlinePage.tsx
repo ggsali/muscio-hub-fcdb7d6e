@@ -1526,8 +1526,6 @@ const CalculatorOnlinePage = () => {
   );
 };
 
-import HerkunftBanner from "@/components/site/HerkunftBanner";
-
 const SuccessView = ({
   inquiryId,
   onHerkunftSaved,
