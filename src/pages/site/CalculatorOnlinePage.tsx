@@ -213,8 +213,7 @@ const trackCalc = (event: string, meta?: Record<string, unknown>) => {
   supabase
     .from("calc_events")
     .insert({ session_id: sid, event, meta: meta || {} } as any)
-    .then(() => {})
-    .catch?.(() => {});
+    .then(() => {}, () => {});
 };
 
 /** Sekunden -> "2 h 15 min" */
