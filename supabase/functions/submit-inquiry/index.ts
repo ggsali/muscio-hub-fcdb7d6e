@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
 
     let customerId: string | null = existingCustomer?.id ?? null;
 
-    if (!customerId && strasse && plz && ort) {
+    if (!customerId && name && email) {
       // Neuen Kunden anlegen
       const nameParts = name.trim().split(" ");
       const vorname = nameParts[0] || "";
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     }
 
     // Anfrage speichern
-    const { error } = await supabase.from("inquiries").insert({
+    const { data: inserted, error } = await supabase.from("inquiries").insert({
       name,
       email,
       telefon: telefon || null,
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       attachments: attachments || null,
       ki_beratung_zusammenfassung: ki_beratung_zusammenfassung || null,
       ki_empfohlenes_material: ki_empfohlenes_material || null,
-    });
+    }).select("id").single();
 
     if (error) throw error;
 
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       console.error("Admin-Mail Fehler:", mailErr);
     }
 
-    return new Response(JSON.stringify({ success: true, customerId }), {
+    return new Response(JSON.stringify({ success: true, customerId, inquiry_id: inserted?.id ?? null }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

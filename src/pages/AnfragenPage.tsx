@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft, Download, Paperclip, Loader2, Trash2 } from "lucide-react";
+import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft, Download, Paperclip, Loader2, Trash2, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -33,6 +33,7 @@ type Inquiry = {
   order_id: string | null;
   notiz: string | null;
   created_at: string;
+  herkunft?: string | null;
   attachments?: Attachment[] | null;
   ki_beratung_zusammenfassung?: string | null;
   ki_empfohlenes_material?: string | null;
@@ -117,6 +118,10 @@ function InquiryDetail({
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="w-3.5 h-3.5 shrink-0" />
           <span>{new Date(selected.created_at).toLocaleString("de-CH")}</span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          <span>Herkunft: {selected.herkunft || "–"}</span>
         </div>
       </div>
 
@@ -216,6 +221,7 @@ export default function AnfragenPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("alle");
+  const [herkunftFilter, setHerkunftFilter] = useState<string | null>(null);
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [notiz, setNotiz] = useState("");
   const [saving, setSaving] = useState(false);
@@ -475,8 +481,17 @@ export default function AnfragenPage() {
     }
   };
 
-  const filtered = filter === "alle" ? inquiries : inquiries.filter(i => i.status === filter);
+  const byStatus = filter === "alle" ? inquiries : inquiries.filter(i => i.status === filter);
+  const filtered = herkunftFilter ? byStatus.filter(i => i.herkunft === herkunftFilter) : byStatus;
   const newCount = inquiries.filter(i => i.status === "Neu").length;
+
+  const herkunftCounts = Object.entries(
+    inquiries.reduce<Record<string, number>>((acc, i) => {
+      if (i.herkunft) acc[i.herkunft] = (acc[i.herkunft] || 0) + 1;
+      return acc;
+    }, {})
+  ).sort((a, b) => b[1] - a[1]);
+  const herkunftTotal = herkunftCounts.reduce((s, [, n]) => s + n, 0);
 
   return (
     <div className={`${isMobile ? "flex flex-col h-full" : "flex h-full gap-0"}`}>
@@ -493,6 +508,26 @@ export default function AnfragenPage() {
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
+
+        {herkunftTotal >= 3 && (
+          <div className="flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground">
+            <MapPin className="w-3.5 h-3.5" />
+            {herkunftCounts.map(([h, n]) => (
+              <button
+                key={h}
+                onClick={() => setHerkunftFilter(herkunftFilter === h ? null : h)}
+                className={`px-2 py-0.5 rounded-full border transition-all ${herkunftFilter === h ? "bg-muted text-foreground border-border" : "border-transparent bg-muted/50 hover:border-border"}`}
+              >
+                {h} ({n})
+              </button>
+            ))}
+            {herkunftFilter && (
+              <button onClick={() => setHerkunftFilter(null)} className="underline">
+                Filter zurücksetzen
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-1.5 flex-wrap">
           {["alle", ...STATUSES].map(s => (

@@ -650,6 +650,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           email: string
+          herkunft: string | null
           id: string
           ki_beratung_zusammenfassung: string | null
           ki_empfohlenes_material: string | null
@@ -668,6 +669,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           email: string
+          herkunft?: string | null
           id?: string
           ki_beratung_zusammenfassung?: string | null
           ki_empfohlenes_material?: string | null
@@ -686,6 +688,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           email?: string
+          herkunft?: string | null
           id?: string
           ki_beratung_zusammenfassung?: string | null
           ki_empfohlenes_material?: string | null
@@ -2228,6 +2231,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      set_inquiry_herkunft: {
+        Args: { p_herkunft: string; p_inquiry_id: string }
+        Returns: boolean
       }
     }
     Enums: {

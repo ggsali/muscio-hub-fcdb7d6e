@@ -220,6 +220,8 @@ const CalculatorOnlinePage = () => {
   const [materialsError, setMaterialsError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [herkunftInquiryId, setHerkunftInquiryId] = useState<string | null>(null);
+  const [herkunftDanke, setHerkunftDanke] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
   const [refImages, setRefImages] = useState<Array<{ id: string; file: File; storagePath?: string; uploading: boolean; previewUrl: string }>>([]);
@@ -747,6 +749,14 @@ const CalculatorOnlinePage = () => {
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
 
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
+
+      // Dezente Herkunfts-Frage (nur einmal pro Sitzung)
+      if (data?.inquiry_id && sessionStorage.getItem("herkunft_gefragt") !== "true") {
+        sessionStorage.setItem("herkunft_gefragt", "true");
+        setHerkunftDanke(false);
+        setHerkunftInquiryId(data.inquiry_id as string);
+      }
+
       setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setParts([]);
       refImages.forEach(r => { if (r.previewUrl) URL.revokeObjectURL(r.previewUrl); });
@@ -834,6 +844,28 @@ const CalculatorOnlinePage = () => {
       </div>
 
       <div className="container mx-auto px-4 max-w-4xl pt-8">
+        <AnimatePresence>
+          {herkunftInquiryId && (
+            <HerkunftCard
+              key="herkunft"
+              danke={herkunftDanke}
+              onSelect={async (wert) => {
+                setHerkunftDanke(true);
+                try {
+                  await supabase.rpc("set_inquiry_herkunft", {
+                    p_inquiry_id: herkunftInquiryId,
+                    p_herkunft: wert,
+                  });
+                } catch (e) {
+                  console.error(e);
+                }
+                setTimeout(() => setHerkunftInquiryId(null), 2200);
+              }}
+              onTimeout={() => setHerkunftInquiryId(null)}
+            />
+          )}
+        </AnimatePresence>
+
         {materialsLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -1483,6 +1515,60 @@ const CalculatorOnlinePage = () => {
         )}
       </div>
     </div>
+  );
+};
+
+const HERKUNFT_OPTIONEN = ["Google", "Empfehlung", "LinkedIn", "Instagram", "KI / ChatGPT", "Anderes"];
+
+const HerkunftCard = ({
+  danke,
+  onSelect,
+  onTimeout,
+}: {
+  danke: boolean;
+  onSelect: (wert: string) => void;
+  onTimeout: () => void;
+}) => {
+  const [gewaehlt, setGewaehlt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (gewaehlt) return;
+    const t = setTimeout(onTimeout, 10000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gewaehlt]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="mb-6 rounded-2xl border border-border bg-card/60 px-4 py-4 md:px-6"
+    >
+      {danke ? (
+        <p className="text-sm text-muted-foreground">Danke für Ihr Feedback! 🙏</p>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">Kurze Frage – wie haben Sie uns gefunden?</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {HERKUNFT_OPTIONEN.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  setGewaehlt(opt);
+                  onSelect(opt);
+                }}
+                className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </motion.div>
   );
 };
 

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet, TrendingUp, RefreshCw,
+  BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet, TrendingUp, RefreshCw, MapPin,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -42,6 +42,7 @@ export default function WebsiteAnalyticsPage() {
   const [rangeKey, setRangeKey] = useState("30");
   const [views, setViews] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [herkunft, setHerkunft] = useState<[string, number][]>([]);
 
   const range = RANGES.find(r => r.key === rangeKey)!;
 
@@ -57,6 +58,24 @@ export default function WebsiteAnalyticsPage() {
     setViews((data as PageView[]) || []);
     setLoading(false);
   }
+
+  async function loadHerkunft() {
+    const since90 = subDays(new Date(), 90).toISOString();
+    const { data } = await supabase
+      .from("inquiries")
+      .select("herkunft")
+      .not("herkunft", "is", null)
+      .gte("created_at", since90);
+    const counts: Record<string, number> = {};
+    ((data as { herkunft: string | null }[]) || []).forEach(r => {
+      if (r.herkunft) counts[r.herkunft] = (counts[r.herkunft] || 0) + 1;
+    });
+    setHerkunft(Object.entries(counts).sort((a, b) => b[1] - a[1]));
+  }
+
+  useEffect(() => { loadHerkunft(); }, []);
+
+  const herkunftTotal = herkunft.reduce((s, [, n]) => s + n, 0);
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [rangeKey]);
 
@@ -153,6 +172,33 @@ export default function WebsiteAnalyticsPage() {
         <StatCard icon={TrendingUp} label="Heute" value={stats.todayCount} hint="Aufrufe" />
         <StatCard icon={BarChart3} label="Ø pro Tag" value={stats.avgPerDay} hint={`${range.label}`} />
       </div>
+
+      <Card className="p-4 md:p-6">
+        <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-primary" /> Herkunft der Anfragen
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Letzte 90 Tage</p>
+        {herkunftTotal < 3 ? (
+          <p className="text-sm text-muted-foreground">
+            Noch zu wenig Daten – wird nach den ersten Kalkulator-Abschlüssen erfasst
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {herkunft.map(([label, count]) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className="text-sm text-foreground w-28 shrink-0 truncate">{label}</span>
+                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full"
+                    style={{ width: `${(count / herkunft[0][1]) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm text-muted-foreground tabular-nums w-8 text-right">{count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       <Card className="p-4 md:p-6">
         <h2 className="font-heading text-lg font-bold mb-4">Verlauf</h2>

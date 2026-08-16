@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
@@ -103,6 +103,7 @@ export default function AuftragDetailPage() {
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
   const [orderName, setOrderName] = useState("");
+  const [inquiryHerkunft, setInquiryHerkunft] = useState<string | null>(null);
   const [beschreibung, setBeschreibung] = useState("");
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
@@ -133,6 +134,19 @@ export default function AuftragDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>("Übersicht");
   const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!id || isNew) { setInquiryHerkunft(null); return; }
+    supabase
+      .from("inquiries")
+      .select("herkunft")
+      .eq("order_id", id)
+      .not("herkunft", "is", null)
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setInquiryHerkunft((data as any)?.herkunft ?? null));
+  }, [id, isNew]);
+
 
   const handleCreatePaymentLink = async () => {
     if (!id || totalUmsatz <= 0) return;
@@ -1198,6 +1212,12 @@ export default function AuftragDetailPage() {
             <div className="bg-muted/50 border border-border rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm text-muted-foreground">
               <MessageSquare className="w-4 h-4 shrink-0" />
               <span>Aus Anfrage erstellt — Dateien im Tab <strong>Teile</strong> verfügbar. Bitte Gewicht, Druckzeit und Material ergänzen.</span>
+            </div>
+          )}
+          {!isNew && inquiryHerkunft && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>Herkunft: {inquiryHerkunft}</span>
             </div>
           )}
           {!isNew && (
