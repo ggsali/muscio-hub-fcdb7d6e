@@ -204,6 +204,19 @@ function isStepFile(name: string): boolean {
 
 const STEPS = ["Datei", "Bilder", "Material", "Farbe", "Qualität", "Übersicht"];
 
+/** Anonymes Funnel-Tracking für den Kalkulator */
+const trackCalc = (event: string, meta?: Record<string, unknown>) => {
+  const sid =
+    sessionStorage.getItem("_pv_session") ||
+    sessionStorage.getItem("session_id") ||
+    "unknown";
+  supabase
+    .from("calc_events")
+    .insert({ session_id: sid, event, meta: meta || {} } as any)
+    .then(() => {})
+    .catch?.(() => {});
+};
+
 /** Sekunden -> "2 h 15 min" */
 const formatDuration = (seconds: number): string => {
   const total = Math.max(0, Math.round(seconds));
