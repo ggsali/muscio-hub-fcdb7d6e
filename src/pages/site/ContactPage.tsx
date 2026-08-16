@@ -55,6 +55,8 @@ const ContactPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showAccountDialog, setShowAccountDialog] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [herkunftInquiryId, setHerkunftInquiryId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
