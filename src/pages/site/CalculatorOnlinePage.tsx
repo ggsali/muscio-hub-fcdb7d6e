@@ -1518,4 +1518,58 @@ const CalculatorOnlinePage = () => {
   );
 };
 
+const HERKUNFT_OPTIONEN = ["Google", "Empfehlung", "LinkedIn", "Instagram", "KI / ChatGPT", "Anderes"];
+
+const HerkunftCard = ({
+  danke,
+  onSelect,
+  onTimeout,
+}: {
+  danke: boolean;
+  onSelect: (wert: string) => void;
+  onTimeout: () => void;
+}) => {
+  const [gewaehlt, setGewaehlt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (gewaehlt) return;
+    const t = setTimeout(onTimeout, 10000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gewaehlt]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className="mb-6 rounded-2xl border border-border bg-card/60 px-4 py-4 md:px-6"
+    >
+      {danke ? (
+        <p className="text-sm text-muted-foreground">Danke für Ihr Feedback! 🙏</p>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">Kurze Frage – wie haben Sie uns gefunden?</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {HERKUNFT_OPTIONEN.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  setGewaehlt(opt);
+                  onSelect(opt);
+                }}
+                className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </motion.div>
+  );
+};
+
 export default CalculatorOnlinePage;
