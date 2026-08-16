@@ -204,6 +204,30 @@ export type Database = {
         }
         Relationships: []
       }
+      calc_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          meta: Json | null
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          meta?: Json | null
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          meta?: Json | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
       calculator_uploads: {
         Row: {
           auth_user_id: string | null

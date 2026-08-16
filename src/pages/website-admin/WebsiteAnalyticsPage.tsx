@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet, TrendingUp, RefreshCw, MapPin,
+  BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet, TrendingUp, RefreshCw, MapPin, Filter,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -43,6 +43,7 @@ export default function WebsiteAnalyticsPage() {
   const [views, setViews] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
   const [herkunft, setHerkunft] = useState<[string, number][]>([]);
+  const [calcCounts, setCalcCounts] = useState<Record<string, number>>({});
 
   const range = RANGES.find(r => r.key === rangeKey)!;
 
@@ -73,9 +74,47 @@ export default function WebsiteAnalyticsPage() {
     setHerkunft(Object.entries(counts).sort((a, b) => b[1] - a[1]));
   }
 
-  useEffect(() => { loadHerkunft(); }, []);
+  async function loadCalcEvents() {
+    const since30 = subDays(new Date(), 30).toISOString();
+    const { data } = await supabase
+      .from("calc_events")
+      .select("event")
+      .gte("created_at", since30)
+      .limit(20000);
+    const counts: Record<string, number> = {};
+    ((data as { event: string }[]) || []).forEach(r => {
+      counts[r.event] = (counts[r.event] || 0) + 1;
+    });
+    setCalcCounts(counts);
+  }
+
+  useEffect(() => { loadHerkunft(); loadCalcEvents(); }, []);
 
   const herkunftTotal = herkunft.reduce((s, [, n]) => s + n, 0);
+
+  const funnel = useMemo(() => {
+    const c = calcCounts;
+    const materialGewaehlt =
+      (c["schritt_2_ki_empfehlung_uebernommen"] || 0) + (c["schritt_2_material_manuell_gewaehlt"] || 0);
+    const steps = [
+      { label: "Datei hochgeladen", count: c["schritt_1_datei_hochgeladen"] || 0 },
+      { label: "KI-Chat gestartet", count: c["schritt_2_ki_chat_gestartet"] || 0 },
+      { label: "Material gewählt", count: materialGewaehlt },
+      { label: "Farbe gewählt", count: c["schritt_3_farbe_gewaehlt"] || 0 },
+      { label: "Qualität gewählt", count: c["schritt_4_qualitaet_gewaehlt"] || 0 },
+      { label: "Bestellung abgesendet", count: c["schritt_5_bestellung_abgesendet"] || 0 },
+    ];
+    const uploads = steps[0].count;
+    const orders = steps[5].count;
+    const total = Object.values(c).reduce((s, n) => s + n, 0);
+    return {
+      steps,
+      max: Math.max(...steps.map(s => s.count), 1),
+      total,
+      conversion: uploads > 0 ? (orders / uploads) * 100 : 0,
+      kiUsage: uploads > 0 ? ((c["schritt_2_ki_chat_gestartet"] || 0) / uploads) * 100 : 0,
+    };
+  }, [calcCounts]);
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [rangeKey]);
 
@@ -172,6 +211,40 @@ export default function WebsiteAnalyticsPage() {
         <StatCard icon={TrendingUp} label="Heute" value={stats.todayCount} hint="Aufrufe" />
         <StatCard icon={BarChart3} label="Ø pro Tag" value={stats.avgPerDay} hint={`${range.label}`} />
       </div>
+
+      <Card className="p-4 md:p-6">
+        <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+          <Filter className="w-4 h-4 text-primary" /> Kalkulator Funnel
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Letzte 30 Tage</p>
+        {funnel.total < 10 ? (
+          <p className="text-sm text-muted-foreground">Noch zu wenig Daten</p>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {funnel.steps.map(s => (
+                <div key={s.label} className="flex items-center gap-3">
+                  <span className="text-sm text-foreground w-36 shrink-0 truncate">{s.label}</span>
+                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: `${(s.count / funnel.max) * 100}%` }} />
+                  </div>
+                  <span className="text-sm text-muted-foreground tabular-nums w-10 text-right">{s.count}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Konversionsrate</p>
+                <p className="text-lg font-bold text-foreground tabular-nums">{funnel.conversion.toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">KI-Chat Nutzung</p>
+                <p className="text-lg font-bold text-foreground tabular-nums">{funnel.kiUsage.toFixed(0)}%</p>
+              </div>
+            </div>
+          </>
+        )}
+      </Card>
 
       <Card className="p-4 md:p-6">
         <h2 className="font-heading text-lg font-bold flex items-center gap-2">

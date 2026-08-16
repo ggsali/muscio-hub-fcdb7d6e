@@ -204,6 +204,18 @@ function isStepFile(name: string): boolean {
 
 const STEPS = ["Datei", "Bilder", "Material", "Farbe", "Qualität", "Übersicht"];
 
+/** Anonymes Funnel-Tracking für den Kalkulator */
+const trackCalc = (event: string, meta?: Record<string, unknown>) => {
+  const sid =
+    sessionStorage.getItem("_pv_session") ||
+    sessionStorage.getItem("session_id") ||
+    "unknown";
+  supabase
+    .from("calc_events")
+    .insert({ session_id: sid, event, meta: meta || {} } as any)
+    .then(() => {}, () => {});
+};
+
 /** Sekunden -> "2 h 15 min" */
 const formatDuration = (seconds: number): string => {
   const total = Math.max(0, Math.round(seconds));
@@ -421,6 +433,7 @@ const CalculatorOnlinePage = () => {
       const { error } = await supabase.storage.from("project-uploads").upload(path, file, { upsert: false });
       if (error) throw error;
       setParts((p) => p.map((x) => (x.id === id ? { ...x, storagePath: path, uploading: false } : x)));
+      trackCalc("schritt_1_datei_hochgeladen", { fileName: file.name, ext });
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -559,6 +572,7 @@ const CalculatorOnlinePage = () => {
   };
 
   const confirmQuality = (key: string, infill: number) => {
+    trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
     setQualityKey(key);
     applyAll({ infill });
   };
@@ -625,8 +639,9 @@ const CalculatorOnlinePage = () => {
       .join(" | ");
   }, [parts]);
 
-  const chooseMaterial = (id: string) => {
-    
+  const chooseMaterial = (id: string, fromKi = false) => {
+    const matName = materials.find((m) => m.id === id)?.name || id;
+    trackCalc(fromKi ? "schritt_2_ki_empfehlung_uebernommen" : "schritt_2_material_manuell_gewaehlt", { material: matName });
     setMaterialId(id);
     const mat = materials.find((m) => m.id === id);
     const firstColor = mat?.farben?.[0] || "";
@@ -669,7 +684,10 @@ const CalculatorOnlinePage = () => {
     step === 5;
 
   const goNext = () => setStep((s) => Math.min(STEPS.length, s + 1));
-  const goBack = () => setStep((s) => Math.max(1, s - 1));
+  const goBack = () => setStep((s) => {
+    if (s === STEPS.length) trackCalc("schritt_5_abgebrochen");
+    return Math.max(1, s - 1);
+  });
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -747,6 +765,8 @@ const CalculatorOnlinePage = () => {
         },
       });
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
+
+      trackCalc("schritt_5_bestellung_abgesendet", { teile: parts.length });
 
       toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
 
@@ -1132,7 +1152,7 @@ const CalculatorOnlinePage = () => {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <button
                         type="button"
-                        onClick={() => setMaterialMode("ki")}
+                        onClick={() => { trackCalc("schritt_2_ki_chat_gestartet"); setMaterialMode("ki"); }}
                         className="text-left rounded-2xl border-2 border-primary bg-primary/5 p-5 hover:bg-primary/10 transition-colors"
                       >
                         <div className="flex items-center gap-2 text-primary font-bold">
@@ -1189,7 +1209,7 @@ const CalculatorOnlinePage = () => {
                       {recommendedMaterial && (
                         <Button
                           className="mt-4 gap-2"
-                          onClick={() => chooseMaterial(recommendedMaterial.id)}
+                          onClick={() => chooseMaterial(recommendedMaterial.id, true)}
                           disabled={materialId === recommendedMaterial.id}
                         >
                           <Check className="w-4 h-4" />
@@ -1273,7 +1293,11 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  <Button className="w-full gap-2" onClick={goNext} disabled={availableColors.length > 0 && !color}>
+                  <Button
+                    className="w-full gap-2"
+                    onClick={() => { trackCalc("schritt_3_farbe_gewaehlt", { farbe: color || null }); goNext(); }}
+                    disabled={availableColors.length > 0 && !color}
+                  >
                     Weiter zur Qualität <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
