@@ -1200,6 +1200,12 @@ export default function AuftragDetailPage() {
               <span>Aus Anfrage erstellt — Dateien im Tab <strong>Teile</strong> verfügbar. Bitte Gewicht, Druckzeit und Material ergänzen.</span>
             </div>
           )}
+          {!isNew && inquiryHerkunft && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>Herkunft: {inquiryHerkunft}</span>
+            </div>
+          )}
           {!isNew && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-card border border-border rounded-lg p-4">
