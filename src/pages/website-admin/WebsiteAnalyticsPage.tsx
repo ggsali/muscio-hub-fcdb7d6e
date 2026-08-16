@@ -73,9 +73,47 @@ export default function WebsiteAnalyticsPage() {
     setHerkunft(Object.entries(counts).sort((a, b) => b[1] - a[1]));
   }
 
-  useEffect(() => { loadHerkunft(); }, []);
+  async function loadCalcEvents() {
+    const since30 = subDays(new Date(), 30).toISOString();
+    const { data } = await supabase
+      .from("calc_events")
+      .select("event")
+      .gte("created_at", since30)
+      .limit(20000);
+    const counts: Record<string, number> = {};
+    ((data as { event: string }[]) || []).forEach(r => {
+      counts[r.event] = (counts[r.event] || 0) + 1;
+    });
+    setCalcCounts(counts);
+  }
+
+  useEffect(() => { loadHerkunft(); loadCalcEvents(); }, []);
 
   const herkunftTotal = herkunft.reduce((s, [, n]) => s + n, 0);
+
+  const funnel = useMemo(() => {
+    const c = calcCounts;
+    const materialGewaehlt =
+      (c["schritt_2_ki_empfehlung_uebernommen"] || 0) + (c["schritt_2_material_manuell_gewaehlt"] || 0);
+    const steps = [
+      { label: "Datei hochgeladen", count: c["schritt_1_datei_hochgeladen"] || 0 },
+      { label: "KI-Chat gestartet", count: c["schritt_2_ki_chat_gestartet"] || 0 },
+      { label: "Material gewählt", count: materialGewaehlt },
+      { label: "Farbe gewählt", count: c["schritt_3_farbe_gewaehlt"] || 0 },
+      { label: "Qualität gewählt", count: c["schritt_4_qualitaet_gewaehlt"] || 0 },
+      { label: "Bestellung abgesendet", count: c["schritt_5_bestellung_abgesendet"] || 0 },
+    ];
+    const uploads = steps[0].count;
+    const orders = steps[5].count;
+    const total = Object.values(c).reduce((s, n) => s + n, 0);
+    return {
+      steps,
+      max: Math.max(...steps.map(s => s.count), 1),
+      total,
+      conversion: uploads > 0 ? (orders / uploads) * 100 : 0,
+      kiUsage: uploads > 0 ? ((c["schritt_2_ki_chat_gestartet"] || 0) / uploads) * 100 : 0,
+    };
+  }, [calcCounts]);
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [rangeKey]);
 
