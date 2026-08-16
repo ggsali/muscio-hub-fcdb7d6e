@@ -155,6 +155,33 @@ export default function WebsiteAnalyticsPage() {
       </div>
 
       <Card className="p-4 md:p-6">
+        <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-primary" /> Herkunft der Anfragen
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Letzte 90 Tage</p>
+        {herkunftTotal < 3 ? (
+          <p className="text-sm text-muted-foreground">
+            Noch zu wenig Daten – wird nach den ersten Kalkulator-Abschlüssen erfasst
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {herkunft.map(([label, count]) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className="text-sm text-foreground w-28 shrink-0 truncate">{label}</span>
+                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full"
+                    style={{ width: `${(count / herkunft[0][1]) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm text-muted-foreground tabular-nums w-8 text-right">{count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-4 md:p-6">
         <h2 className="font-heading text-lg font-bold mb-4">Verlauf</h2>
         <div className="h-[280px] w-full">
           <ResponsiveContainer width="100%" height="100%">
