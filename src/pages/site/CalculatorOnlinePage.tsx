@@ -1526,14 +1526,7 @@ const CalculatorOnlinePage = () => {
   );
 };
 
-const HERKUNFT_OPTIONEN = [
-  { value: "Google", label: "Google", emoji: "🔍" },
-  { value: "Empfehlung", label: "Empfehlung", emoji: "👥" },
-  { value: "LinkedIn", label: "LinkedIn", emoji: "💼" },
-  { value: "Instagram", label: "Instagram", emoji: "📸" },
-  { value: "KI / ChatGPT", label: "KI / ChatGPT", emoji: "🤖" },
-  { value: "Anderes", label: "Anderes", emoji: "✏️" },
-];
+import HerkunftBanner from "@/components/site/HerkunftBanner";
 
 const SuccessView = ({
   inquiryId,
