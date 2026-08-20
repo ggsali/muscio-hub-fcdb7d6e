@@ -83,7 +83,7 @@ const HeroUploadButton = () => {
         className="rounded-xl min-h-[52px] px-8 text-base min-w-[210px]"
         onClick={() => inputRef.current?.click()}
       >
-        <span className="relative flex items-center justify-center gap-1.5 h-6 overflow-hidden">
+        <span className="relative flex items-center justify-center h-6 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.span
               key={current.text}
@@ -94,9 +94,9 @@ const HeroUploadButton = () => {
               className="flex items-center gap-1.5"
             >
               {current.text}
+              <Icon className="w-4 h-4 shrink-0" />
             </motion.span>
           </AnimatePresence>
-          <Icon className="w-4 h-4 shrink-0" />
         </span>
       </Button>
     </>
