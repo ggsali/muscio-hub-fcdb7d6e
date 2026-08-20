@@ -81,6 +81,12 @@ export default function KiMaterialChat({
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, typing]);
 
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch {}
+  }, [messages]);
+
   const send = async (text: string) => {
     const value = text.trim();
     if (!value || typing) return;
