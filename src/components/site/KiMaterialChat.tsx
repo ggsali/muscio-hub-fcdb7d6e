@@ -64,9 +64,15 @@ export default function KiMaterialChat({
   onAcceptRecommendation?: () => void;
   recommendedMaterialName?: string;
 }) {
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    { id: "start", role: "assistant", text: startTextFor(partNames) },
-  ]);
+  const STORAGE_KEY = "ki_chat_messages";
+
+  const [messages, setMessages] = useState<ChatMsg[]>(() => {
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [{ id: "start", role: "assistant", text: startTextFor(partNames) }];
+  });
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
