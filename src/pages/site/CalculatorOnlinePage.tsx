@@ -19,6 +19,7 @@ import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
 import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import {
   loadQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
