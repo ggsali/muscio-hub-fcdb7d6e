@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type ChatMsg = { id: string; role: "assistant" | "user"; text: string };
@@ -49,12 +49,20 @@ export default function KiMaterialChat({
   availableMaterials,
   partNames = [],
   onResult,
+  mobileFullscreen,
+  onClose,
+  onAcceptRecommendation,
+  recommendedMaterialName,
 }: {
   fileName: string;
   geometry: string;
   availableMaterials: string[];
   partNames?: string[];
   onResult: (r: KiResult) => void;
+  mobileFullscreen?: boolean;
+  onClose?: () => void;
+  onAcceptRecommendation?: () => void;
+  recommendedMaterialName?: string;
 }) {
   const [messages, setMessages] = useState<ChatMsg[]>([
     { id: "start", role: "assistant", text: startTextFor(partNames) },
@@ -129,15 +137,50 @@ export default function KiMaterialChat({
     ? ["Alle Teile gehören zusammen", "Jedes Teil hat eine eigene Funktion"]
     : QUICK_REPLIES;
 
+  const showAccept = mobileFullscreen && recommendedMaterialName && onAcceptRecommendation;
+
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden">
-      <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-muted/30">
-        <Sparkles className="w-4 h-4 text-primary" />
-        <span className="text-sm font-semibold">Material-Beratung</span>
-        <span className="ml-auto text-xs text-muted-foreground">Frag alles, was du wissen willst</span>
+    <div
+      className={
+        mobileFullscreen
+          ? "fixed inset-0 z-50 bg-background flex flex-col"
+          : "rounded-2xl border border-border bg-card overflow-hidden"
+      }
+    >
+      <div
+        className={
+          mobileFullscreen
+            ? "px-4 py-3 border-b border-border flex items-center justify-between bg-muted/30 shrink-0"
+            : "px-4 py-3 border-b border-border flex items-center gap-2 bg-muted/30"
+        }
+      >
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <span className="text-sm font-semibold">
+            {mobileFullscreen ? "KI-Materialberatung" : "Material-Beratung"}
+          </span>
+        </div>
+        {mobileFullscreen ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Schliessen"
+            className="p-1.5 rounded-full hover:bg-muted transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        ) : (
+          <span className="ml-auto text-xs text-muted-foreground">Frag alles, was du wissen willst</span>
+        )}
       </div>
 
-      <div className="max-h-[420px] min-h-[260px] overflow-y-auto p-4 space-y-3">
+      <div
+        className={
+          mobileFullscreen
+            ? "flex-1 overflow-y-auto p-4 space-y-3"
+            : "max-h-[420px] min-h-[260px] overflow-y-auto p-4 space-y-3"
+        }
+      >
         <AnimatePresence initial={false}>
           {messages.map((m) => (
             <motion.div
@@ -171,7 +214,25 @@ export default function KiMaterialChat({
         <div ref={endRef} />
       </div>
 
-      <div className="border-t border-border p-3 space-y-2">
+      {showAccept && (
+        <div className="border-t border-primary/30 bg-primary/10 p-4">
+          <p className="text-sm font-semibold text-foreground">
+            Empfohlen: <span className="text-primary">{recommendedMaterialName}</span>
+          </p>
+          <Button className="w-full mt-3 gap-2" onClick={onAcceptRecommendation}>
+            <Check className="w-4 h-4" />
+            Material übernehmen
+          </Button>
+        </div>
+      )}
+
+      <div
+        className={
+          mobileFullscreen
+            ? "sticky bottom-0 border-t border-border bg-background p-3 space-y-2 pb-[env(safe-area-inset-bottom)]"
+            : "border-t border-border p-3 space-y-2"
+        }
+      >
         {showQuick && (
           <div className="flex flex-wrap gap-2">
             {quickOptions.map((o) => (
@@ -191,7 +252,8 @@ export default function KiMaterialChat({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Nachricht schreiben oder Frage stellen…"
-            className="h-9 text-sm"
+            className="h-9 text-base"
+            style={{ fontSize: "16px" }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && input.trim()) {
                 e.preventDefault();

@@ -19,6 +19,7 @@ import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
 import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import {
   loadQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
@@ -245,9 +246,12 @@ const CalculatorOnlinePage = () => {
   const [qualityKey, setQualityKey] = useState("standard");
   const [kiResult, setKiResult] = useState<KiResult | null>(null);
   const [materialMode, setMaterialMode] = useState<null | "ki" | "manual">(null);
+  const [kiChatOpen, setKiChatOpen] = useState(true);
   const [chatKey, setChatKey] = useState(0);
   // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
   const [quickMode, setQuickMode] = useState(false);
+
+  const isMobile = useIsMobile();
 
   const { settings } = useSettings();
 
@@ -1137,7 +1141,7 @@ const CalculatorOnlinePage = () => {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <button
                         type="button"
-                        onClick={() => { trackCalc("schritt_2_ki_chat_gestartet"); setMaterialMode("ki"); }}
+                        onClick={() => { trackCalc("schritt_2_ki_chat_gestartet"); setMaterialMode("ki"); setKiChatOpen(true); }}
                         className="text-left rounded-2xl border-2 border-primary bg-primary/5 p-5 hover:bg-primary/10 transition-colors"
                       >
                         <div className="flex items-center gap-2 text-primary font-bold">
@@ -1165,14 +1169,14 @@ const CalculatorOnlinePage = () => {
                   {materialMode !== null && (
                     <button
                       type="button"
-                      onClick={() => setMaterialMode(null)}
+                      onClick={() => { setMaterialMode(null); setKiChatOpen(true); }}
                       className="text-xs text-muted-foreground hover:text-primary underline"
                     >
                       ← Auswahl ändern (KI-Beratung / selbst wählen)
                     </button>
                   )}
 
-                  {materialMode === "ki" && (
+                  {materialMode === "ki" && (!isMobile || kiChatOpen) && (
                     <KiMaterialChat
                       key={chatKey}
                       fileName={parts.map((p) => p.fileName).join(", ")}
@@ -1180,11 +1184,22 @@ const CalculatorOnlinePage = () => {
                       availableMaterials={materials.map((m) => m.name)}
                       partNames={parts.map((p) => p.fileName)}
                       onResult={handleKiResult}
+                      mobileFullscreen={isMobile}
+                      onClose={() => setKiChatOpen(false)}
+                      onAcceptRecommendation={
+                        recommendedMaterial
+                          ? () => {
+                              chooseMaterial(recommendedMaterial.id, true);
+                              setKiChatOpen(false);
+                            }
+                          : undefined
+                      }
+                      recommendedMaterialName={recommendedMaterial?.name}
                     />
                   )}
 
 
-                  {kiResult && (
+                  {kiResult && (!isMobile || !kiChatOpen) && (
                     <div className="rounded-2xl border-2 border-primary bg-primary/5 p-5">
                       <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-primary mb-1">
                         <Sparkles className="w-3.5 h-3.5" /> Empfehlung
@@ -1204,7 +1219,7 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  {materialMode !== null && (
+                  {materialMode !== null && (!isMobile || !kiChatOpen) && (
                     <div>
                       <p className="text-sm font-semibold mb-2">
                         {materialMode === "manual" ? "Material direkt wählen" : "Alle Materialien"}
@@ -1235,7 +1250,7 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  {materialMode !== null && materialId && (
+                  {materialMode !== null && materialId && (!isMobile || !kiChatOpen) && (
                     <Button className="w-full gap-2" onClick={goNext}>
                       Weiter zur Farbe <ArrowRight className="w-4 h-4" />
                     </Button>
