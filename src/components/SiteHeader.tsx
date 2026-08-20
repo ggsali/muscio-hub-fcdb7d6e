@@ -48,9 +48,11 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-40 bg-background/85 backdrop-blur border-b border-border">
       <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-            <Box className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <img
+            src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg"
+            alt="3DMuscio"
+            className="w-9 h-9 rounded-lg object-contain"
+          />
           <div className="leading-tight">
             <div className="font-bold tracking-tight">3DMuscio</div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">3D-Druck Schweiz</div>
