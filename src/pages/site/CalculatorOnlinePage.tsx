@@ -791,6 +791,7 @@ const CalculatorOnlinePage = () => {
       setColor("");
       setQualityKey("standard");
 
+      sessionStorage.removeItem("ki_chat_messages");
       setChatKey((k) => k + 1);
     } catch (err) {
       console.error(err);
