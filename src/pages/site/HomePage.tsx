@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { CountUp } from "@/components/site/CountUp";
 import { Marquee } from "@/components/site/Marquee";
+import { FormatCarousel } from "@/components/site/FormatCarousel";
 import {
   Upload, Settings, ShoppingCart, Package,
   Layers, ArrowRight, ArrowUpRight,
@@ -104,6 +105,8 @@ const HeroBento = () => (
             Professioneller 3D-Druck für Prototypen, Ersatzteile und Kleinserien. Sofortpreis,
             schnelle Lieferung und Schweizer Präzision.
           </p>
+
+          <FormatCarousel />
 
           <div className="flex flex-col sm:flex-row gap-3">
             <HeroUploadButton />
