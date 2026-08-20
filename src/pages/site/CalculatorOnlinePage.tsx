@@ -1176,7 +1176,7 @@ const CalculatorOnlinePage = () => {
                     </button>
                   )}
 
-                  {materialMode === "ki" && (
+                  {materialMode === "ki" && (!isMobile || kiChatOpen) && (
                     <KiMaterialChat
                       key={chatKey}
                       fileName={parts.map((p) => p.fileName).join(", ")}
@@ -1184,6 +1184,17 @@ const CalculatorOnlinePage = () => {
                       availableMaterials={materials.map((m) => m.name)}
                       partNames={parts.map((p) => p.fileName)}
                       onResult={handleKiResult}
+                      mobileFullscreen={isMobile}
+                      onClose={() => setKiChatOpen(false)}
+                      onAcceptRecommendation={
+                        recommendedMaterial
+                          ? () => {
+                              chooseMaterial(recommendedMaterial.id, true);
+                              setKiChatOpen(false);
+                            }
+                          : undefined
+                      }
+                      recommendedMaterialName={recommendedMaterial?.name}
                     />
                   )}
 
