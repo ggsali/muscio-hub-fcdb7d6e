@@ -34,6 +34,23 @@ const HERO_STATS = [
 const HeroUploadButton = () => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [textIndex, setTextIndex] = useState(0);
+
+  const buttonTexts = [
+    { text: "Preis berechnen", icon: ArrowRight },
+    { text: "STL hochladen", icon: ArrowRight },
+    { text: "STEP hochladen", icon: ArrowRight },
+    { text: "3MF hochladen", icon: ArrowRight },
+    { text: "OBJ hochladen", icon: ArrowRight },
+  ];
+
+  useEffect(() => {
+    const delay = textIndex === 0 ? 4000 : 2500;
+    const timeout = setTimeout(() => {
+      setTextIndex((i) => (i + 1) % buttonTexts.length);
+    }, delay);
+    return () => clearTimeout(timeout);
+  }, [textIndex]);
 
   const handleFiles = (files: File[]) => {
     const accepted = files.filter((f) => isAcceptedModel(f.name));
@@ -44,6 +61,9 @@ const HeroUploadButton = () => {
     setPendingUploads(accepted);
     navigate("/kalkulator-online");
   };
+
+  const current = buttonTexts[textIndex];
+  const Icon = current.icon;
 
   return (
     <>
@@ -60,10 +80,24 @@ const HeroUploadButton = () => {
       />
       <Button
         size="lg"
-        className="rounded-xl min-h-[52px] px-8 text-base"
+        className="rounded-xl min-h-[52px] px-8 text-base min-w-[210px]"
         onClick={() => inputRef.current?.click()}
       >
-        Preis berechnen <ArrowRight className="w-4 h-4 ml-1.5" />
+        <span className="relative flex items-center justify-center gap-1.5 h-6 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={current.text}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="flex items-center gap-1.5"
+            >
+              {current.text}
+            </motion.span>
+          </AnimatePresence>
+          <Icon className="w-4 h-4 shrink-0" />
+        </span>
       </Button>
     </>
   );
