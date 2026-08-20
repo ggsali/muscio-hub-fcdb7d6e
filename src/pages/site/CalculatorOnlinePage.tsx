@@ -1141,7 +1141,7 @@ const CalculatorOnlinePage = () => {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <button
                         type="button"
-                        onClick={() => { trackCalc("schritt_2_ki_chat_gestartet"); setMaterialMode("ki"); }}
+                        onClick={() => { trackCalc("schritt_2_ki_chat_gestartet"); setMaterialMode("ki"); setKiChatOpen(true); }}
                         className="text-left rounded-2xl border-2 border-primary bg-primary/5 p-5 hover:bg-primary/10 transition-colors"
                       >
                         <div className="flex items-center gap-2 text-primary font-bold">
