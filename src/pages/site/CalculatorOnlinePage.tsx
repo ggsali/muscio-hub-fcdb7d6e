@@ -1198,6 +1198,21 @@ const CalculatorOnlinePage = () => {
                     />
                   )}
 
+                  {isMobile && materialMode === "ki" && !kiChatOpen && (
+                    <button
+                      onClick={() => setKiChatOpen(true)}
+                      className="w-full flex items-center justify-center gap-2 rounded-2xl border border-primary/40 bg-primary/5 text-primary font-medium py-3 text-sm mb-4"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      KI-Beratung wieder öffnen
+                    </button>
+                  )}
+
+                  {isMobile && materialMode === "ki" && !kiChatOpen && !kiResult && (
+                    <p className="text-xs text-muted-foreground text-center mb-4">
+                      Kein Material empfohlen – bitte manuell wählen oder Chat öffnen
+                    </p>
+                  )}
 
                   {kiResult && (!isMobile || !kiChatOpen) && (
                     <div className="rounded-2xl border-2 border-primary bg-primary/5 p-5">
