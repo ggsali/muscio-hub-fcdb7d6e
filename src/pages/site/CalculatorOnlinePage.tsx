@@ -1199,7 +1199,7 @@ const CalculatorOnlinePage = () => {
                   )}
 
 
-                  {kiResult && (
+                  {kiResult && (!isMobile || !kiChatOpen) && (
                     <div className="rounded-2xl border-2 border-primary bg-primary/5 p-5">
                       <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-primary mb-1">
                         <Sparkles className="w-3.5 h-3.5" /> Empfehlung
