@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { CountUp } from "@/components/site/CountUp";
 import { Marquee } from "@/components/site/Marquee";
-import { FormatCarousel } from "@/components/site/FormatCarousel";
 import {
   Upload, Settings, ShoppingCart, Package,
   Layers, ArrowRight, ArrowUpRight,
