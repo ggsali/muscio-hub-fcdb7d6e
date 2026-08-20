@@ -1169,7 +1169,7 @@ const CalculatorOnlinePage = () => {
                   {materialMode !== null && (
                     <button
                       type="button"
-                      onClick={() => setMaterialMode(null)}
+                      onClick={() => { setMaterialMode(null); setKiChatOpen(true); }}
                       className="text-xs text-muted-foreground hover:text-primary underline"
                     >
                       ← Auswahl ändern (KI-Beratung / selbst wählen)
