@@ -106,6 +106,8 @@ const HeroBento = () => (
             schnelle Lieferung und Schweizer Präzision.
           </p>
 
+          <FormatCarousel />
+
           <div className="flex flex-col sm:flex-row gap-3">
             <HeroUploadButton />
             <Button size="lg" variant="outline" asChild className="rounded-xl min-h-[52px] px-8 text-base">
