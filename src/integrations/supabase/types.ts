@@ -2258,7 +2258,7 @@ export type Database = {
       }
       set_inquiry_herkunft: {
         Args: { p_herkunft: string; p_inquiry_id: string }
-        Returns: boolean
+        Returns: undefined
       }
     }
     Enums: {
