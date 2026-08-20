@@ -160,13 +160,20 @@ export default function OrderStatusWorkflow({
           await supabase.from("orders").update({ bewertungs_token: token } as any).eq("id", orderId);
         }
         const cust = (order as any)?.customers;
-        const kundenEmail = cust?.email;
+        const customerEmail = cust?.email;
         const kundenName = [cust?.vorname, cust?.name].filter(Boolean).join(" ").trim() || "Kunde";
-        if (kundenEmail) {
+        if (!customerEmail) {
+          await (supabase.from as any)("order_status_log").insert({
+            order_id: orderId,
+            status: "Abgeschlossen",
+            notiz: "⚠️ Keine E-Mail-Adresse hinterlegt – Bewertungsanfrage nicht gesendet",
+            created_at: new Date().toISOString(),
+          });
+        } else {
           await supabase.functions.invoke("send-transactional-email", {
             body: {
               templateName: "bewertung",
-              recipientEmail: kundenEmail,
+              recipientEmail: customerEmail,
               idempotencyKey: `bewertung-${orderId}`,
               templateData: {
                 name: kundenName,
@@ -174,8 +181,22 @@ export default function OrderStatusWorkflow({
               },
             },
           });
+          await (supabase.from as any)("order_status_log").insert({
+            order_id: orderId,
+            status: "Abgeschlossen",
+            notiz: "✉️ Bewertungsanfrage automatisch gesendet an " + customerEmail,
+            created_at: new Date().toISOString(),
+          });
         }
-      } catch (e) { console.error("bewertung email failed", e); }
+      } catch (e) {
+        console.error("bewertung email failed", e);
+        await (supabase.from as any)("order_status_log").insert({
+          order_id: orderId,
+          status: "Abgeschlossen",
+          notiz: "⚠️ Bewertungsanfrage konnte nicht gesendet werden – bitte manuell nachfassen",
+          created_at: new Date().toISOString(),
+        });
+      }
     }
   };
 
