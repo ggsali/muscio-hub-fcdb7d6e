@@ -1219,7 +1219,7 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  {materialMode !== null && (
+                  {materialMode !== null && (!isMobile || !kiChatOpen) && (
                     <div>
                       <p className="text-sm font-semibold mb-2">
                         {materialMode === "manual" ? "Material direkt wählen" : "Alle Materialien"}
