@@ -37,15 +37,15 @@ const HeroUploadButton = () => {
   const [textIndex, setTextIndex] = useState(0);
 
   const buttonTexts = [
-    { text: "Preis berechnen", icon: ArrowRight },
     { text: "STL hochladen", icon: ArrowRight },
     { text: "STEP hochladen", icon: ArrowRight },
     { text: "3MF hochladen", icon: ArrowRight },
     { text: "OBJ hochladen", icon: ArrowRight },
+    { text: "Preis berechnen", icon: ArrowRight },
   ];
 
   useEffect(() => {
-    const delay = textIndex === 0 ? 4000 : 2500;
+    const delay = textIndex === buttonTexts.length - 1 ? 4000 : 2500;
     const timeout = setTimeout(() => {
       setTextIndex((i) => (i + 1) % buttonTexts.length);
     }, delay);
