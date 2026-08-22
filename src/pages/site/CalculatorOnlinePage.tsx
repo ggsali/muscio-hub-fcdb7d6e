@@ -768,7 +768,7 @@ const CalculatorOnlinePage = () => {
           ort: form.ort || null,
           land: form.land || "Schweiz",
           attachments,
-          ki_beratung_zusammenfassung: kiSummary,
+          ki_beratung_zusammenfassung: kiSummaryText,
           ki_empfohlenes_material: kiResult?.material ?? null,
         },
       });
