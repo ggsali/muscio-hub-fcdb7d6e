@@ -950,7 +950,7 @@ export default function NewsletterPage() {
                   <p className="text-xs text-muted-foreground mt-1">Platzhalter <code>[Kundenname]</code> wird ersetzt.</p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 items-center">
                   <Button onClick={() => saveAutomation(a)}><Save className="w-4 h-4 mr-2" />Speichern</Button>
                   <Button variant="outline" disabled={autoKiLoading === a.id} onClick={() => generateAutomationText(a)}>
                     {autoKiLoading === a.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
@@ -960,13 +960,25 @@ export default function NewsletterPage() {
                     {runningAuto === a.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
                     Jetzt manuell ausführen
                   </Button>
+                  <Button variant="outline" onClick={() => openAutoPreview(a)}>
+                    <Users className="w-4 h-4 mr-2" />Betroffene Kunden anzeigen
+                  </Button>
                 </div>
+
+                {(() => {
+                  const n = autoCounts.get(a.id);
+                  if (n === undefined) return <p className="text-xs text-muted-foreground">Kunden werden geprüft…</p>;
+                  return n > 0
+                    ? <Badge className="bg-success/15 text-success border-success/30">{n} Kunden warten</Badge>
+                    : <Badge variant="secondary">Keine Kunden</Badge>;
+                })()}
               </section>
             );
           })}
           {automations.length === 0 && (
             <p className="px-4 py-10 text-sm text-muted-foreground text-center">Keine Automationen vorhanden</p>
           )}
+
         </TabsContent>
       </Tabs>
 
