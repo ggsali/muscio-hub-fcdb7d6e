@@ -1240,6 +1240,34 @@ export default function AuftragDetailPage() {
               <span>Herkunft: {inquiryHerkunft}</span>
             </div>
           )}
+          {!isNew && kiBeratung && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Bot className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold">KI-Materialberatung</h3>
+              </div>
+              <dl className="space-y-1.5">
+                {kiBeratung.zusammenfassung
+                  .split("\n")
+                  .map((line) => line.trim())
+                  .filter(Boolean)
+                  .map((line, i) => {
+                    const idx = line.indexOf(":");
+                    const label = idx > 0 ? line.slice(0, idx).trim() : "";
+                    const value = idx > 0 ? line.slice(idx + 1).trim() : line;
+                    const isMaterial = /material/i.test(label);
+                    return (
+                      <div key={i} className="grid grid-cols-[9rem_1fr] gap-2 text-sm">
+                        <dt className="text-muted-foreground">{label || "—"}</dt>
+                        <dd className={isMaterial ? "font-semibold text-primary" : "text-foreground"}>
+                          {value}{isMaterial ? " ✓" : ""}
+                        </dd>
+                      </div>
+                    );
+                  })}
+              </dl>
+            </div>
+          )}
           {!isNew && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-card border border-border rounded-lg p-4">
