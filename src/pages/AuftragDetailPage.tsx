@@ -147,6 +147,25 @@ export default function AuftragDetailPage() {
       .then(({ data }) => setInquiryHerkunft((data as any)?.herkunft ?? null));
   }, [id, isNew]);
 
+  useEffect(() => {
+    if (!id || isNew) { setKiBeratung(null); return; }
+    supabase
+      .from("inquiries")
+      .select("ki_beratung_zusammenfassung, ki_empfohlenes_material")
+      .eq("order_id", id)
+      .not("ki_beratung_zusammenfassung", "is", null)
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setKiBeratung(
+        (data as any)?.ki_beratung_zusammenfassung
+          ? {
+              zusammenfassung: (data as any).ki_beratung_zusammenfassung as string,
+              material: ((data as any).ki_empfohlenes_material as string) ?? null,
+            }
+          : null
+      ));
+  }, [id, isNew]);
+
 
   const handleCreatePaymentLink = async () => {
     if (!id || totalUmsatz <= 0) return;
