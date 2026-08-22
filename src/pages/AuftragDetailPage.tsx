@@ -104,6 +104,7 @@ export default function AuftragDetailPage() {
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
   const [orderName, setOrderName] = useState("");
   const [inquiryHerkunft, setInquiryHerkunft] = useState<string | null>(null);
+  const [kiBeratung, setKiBeratung] = useState<{ zusammenfassung: string; material: string | null } | null>(null);
   const [beschreibung, setBeschreibung] = useState("");
   const [datum, setDatum] = useState(new Date().toISOString().split("T")[0]);
   const [status, setStatus] = useState("Offen");
