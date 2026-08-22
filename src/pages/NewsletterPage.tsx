@@ -982,8 +982,51 @@ export default function NewsletterPage() {
         </TabsContent>
       </Tabs>
 
+      {/* Betroffene Kunden pro Automation */}
+      <Dialog open={!!autoPreview} onOpenChange={(o) => !o && setAutoPreview(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Kunden für Automation: {autoPreview ? (AUTOMATION_LABELS[autoPreview.automation.typ]?.titel ?? autoPreview.automation.typ) : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Diese Kunden würden beim nächsten Ausführen eine Mail erhalten</p>
+          {autoPreview?.loading ? (
+            <p className="py-8 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Laden…
+            </p>
+          ) : (autoPreview?.rows.length ?? 0) === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Keine Kunden erfüllen aktuell die Kriterien</p>
+          ) : (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-muted-foreground">
+                    <th className="px-3 py-2 text-left font-medium">Name</th>
+                    <th className="px-3 py-2 text-left font-medium">E-Mail</th>
+                    <th className="px-3 py-2 text-left font-medium">Letzter abgeschl. Auftrag</th>
+                    <th className="px-3 py-2 text-right font-medium">Abgeschl. Aufträge</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {autoPreview?.rows.map((r) => (
+                    <tr key={r.id} className="border-b border-border/50 last:border-0">
+                      <td className="px-3 py-2">{r.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{r.email}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{r.lastCompleted}</td>
+                      <td className="px-3 py-2 text-right">{r.completedCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Vorschau */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Vorschau</DialogTitle></DialogHeader>
           <NewsletterPreview betreff={betreff} inhalt={inhalt} bildUrl={bildUrl} blogUrl={blogUrl} blogTitel={blogTitel} />
