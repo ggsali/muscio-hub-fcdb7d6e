@@ -832,11 +832,79 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_automation_log: {
+        Row: {
+          automation_id: string | null
+          customer_id: string | null
+          gesendet_am: string
+          id: string
+        }
+        Insert: {
+          automation_id?: string | null
+          customer_id?: string | null
+          gesendet_am?: string
+          id?: string
+        }
+        Update: {
+          automation_id?: string | null
+          customer_id?: string | null
+          gesendet_am?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_automation_log_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_automationen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_automation_log_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_automationen: {
+        Row: {
+          aktiv: boolean
+          betreff_vorlage: string | null
+          erstellt_am: string
+          id: string
+          inhalt_vorlage: string | null
+          tage_verzoegerung: number
+          typ: string
+        }
+        Insert: {
+          aktiv?: boolean
+          betreff_vorlage?: string | null
+          erstellt_am?: string
+          id?: string
+          inhalt_vorlage?: string | null
+          tage_verzoegerung?: number
+          typ: string
+        }
+        Update: {
+          aktiv?: boolean
+          betreff_vorlage?: string | null
+          erstellt_am?: string
+          id?: string
+          inhalt_vorlage?: string | null
+          tage_verzoegerung?: number
+          typ?: string
+        }
+        Relationships: []
+      }
       newsletter_empfaenger: {
         Row: {
           created_at: string
           customer_id: string | null
           email: string
+          geoeffnet: boolean
+          geoeffnet_am: string | null
           gesendet: boolean
           gesendet_am: string | null
           id: string
@@ -847,6 +915,8 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           email: string
+          geoeffnet?: boolean
+          geoeffnet_am?: string | null
           gesendet?: boolean
           gesendet_am?: string | null
           id?: string
@@ -857,6 +927,8 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           email?: string
+          geoeffnet?: boolean
+          geoeffnet_am?: string | null
           gesendet?: boolean
           gesendet_am?: string | null
           id?: string
@@ -880,44 +952,119 @@ export type Database = {
           },
         ]
       }
+      newsletter_klicks: {
+        Row: {
+          geklickt_am: string
+          id: string
+          newsletter_empfaenger_id: string | null
+          newsletter_id: string | null
+          url: string
+        }
+        Insert: {
+          geklickt_am?: string
+          id?: string
+          newsletter_empfaenger_id?: string | null
+          newsletter_id?: string | null
+          url: string
+        }
+        Update: {
+          geklickt_am?: string
+          id?: string
+          newsletter_empfaenger_id?: string | null
+          newsletter_id?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_klicks_newsletter_empfaenger_id_fkey"
+            columns: ["newsletter_empfaenger_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_empfaenger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_klicks_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_segmente: {
+        Row: {
+          erstellt_am: string
+          filter_json: Json
+          id: string
+          name: string
+        }
+        Insert: {
+          erstellt_am?: string
+          filter_json: Json
+          id?: string
+          name: string
+        }
+        Update: {
+          erstellt_am?: string
+          filter_json?: Json
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       newsletters: {
         Row: {
+          ab_gruppe_id: string | null
+          ab_variante: string | null
+          automation_id: string | null
           betreff: string
           bild_url: string | null
           blog_link_titel: string | null
           blog_link_url: string | null
           empfaenger_anzahl: number
           erstellt_am: string
+          geoeffnet_anzahl: number
           gesendet_am: string | null
           id: string
           inhalt_html: string | null
           inhalt_text: string
+          ist_ab_test: boolean
           status: string
         }
         Insert: {
+          ab_gruppe_id?: string | null
+          ab_variante?: string | null
+          automation_id?: string | null
           betreff: string
           bild_url?: string | null
           blog_link_titel?: string | null
           blog_link_url?: string | null
           empfaenger_anzahl?: number
           erstellt_am?: string
+          geoeffnet_anzahl?: number
           gesendet_am?: string | null
           id?: string
           inhalt_html?: string | null
           inhalt_text: string
+          ist_ab_test?: boolean
           status?: string
         }
         Update: {
+          ab_gruppe_id?: string | null
+          ab_variante?: string | null
+          automation_id?: string | null
           betreff?: string
           bild_url?: string | null
           blog_link_titel?: string | null
           blog_link_url?: string | null
           empfaenger_anzahl?: number
           erstellt_am?: string
+          geoeffnet_anzahl?: number
           gesendet_am?: string | null
           id?: string
           inhalt_html?: string | null
           inhalt_text?: string
+          ist_ab_test?: boolean
           status?: string
         }
         Relationships: []

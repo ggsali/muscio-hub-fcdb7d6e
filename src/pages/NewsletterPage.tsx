@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -7,26 +7,71 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Mail, Sparkles, Eye, Send, ImagePlus, BookOpen, Loader2, Users } from "lucide-react";
+import {
+  Mail, Sparkles, Eye, Send, ImagePlus, BookOpen, Loader2, Users, Filter as FilterIcon,
+  MousePointerClick, Trophy, Zap, Save, Play, Trash2,
+} from "lucide-react";
 
-type Customer = { id: string; name: string | null; vorname: string | null; email: string | null };
+type Customer = {
+  id: string; name: string | null; vorname: string | null; email: string | null; ort: string | null;
+};
 type Newsletter = {
   id: string; betreff: string; inhalt_text: string; bild_url: string | null;
   blog_link_url: string | null; blog_link_titel: string | null; status: string;
   empfaenger_anzahl: number; erstellt_am: string; gesendet_am: string | null;
+  geoeffnet_anzahl: number | null; ist_ab_test: boolean | null;
+  ab_variante: string | null; ab_gruppe_id: string | null; automation_id: string | null;
 };
 type BlogPost = { id: string; titel: string; slug: string; veroeffentlicht_am: string | null };
 type Recipient = { email: string; name: string; customer_id: string };
+type Automation = {
+  id: string; typ: string; aktiv: boolean; tage_verzoegerung: number;
+  betreff_vorlage: string | null; inhalt_vorlage: string | null;
+};
+type SegmentFilter = {
+  letzterAuftragOp: "" | "vor" | "innerhalb";
+  letzterAuftragTage: number;
+  umsatzOp: "" | "ueber" | "unter";
+  umsatzChf: number;
+  material: string;
+  anzahlOp: "" | "mehr" | "weniger";
+  anzahlAuftraege: number;
+  ort: string;
+};
+type Segment = { id: string; name: string; filter_json: SegmentFilter };
 
 const SITE_URL = "https://3dmuscio.com";
+const MATERIALS = ["PLA", "PETG", "ABS", "ASA", "TPU", "Resin"];
+
+const EMPTY_FILTER: SegmentFilter = {
+  letzterAuftragOp: "", letzterAuftragTage: 90,
+  umsatzOp: "", umsatzChf: 500,
+  material: "",
+  anzahlOp: "", anzahlAuftraege: 3,
+  ort: "",
+};
+
+const QUICK_SEGMENTS: { label: string; filter: SegmentFilter }[] = [
+  { label: "Inaktive Kunden (90+ Tage)", filter: { ...EMPTY_FILTER, letzterAuftragOp: "vor", letzterAuftragTage: 90 } },
+  { label: "Top-Kunden (3+ Aufträge)", filter: { ...EMPTY_FILTER, anzahlOp: "mehr", anzahlAuftraege: 2 } },
+  { label: "ABS/ASA Nutzer (Outdoor)", filter: { ...EMPTY_FILTER, material: "ABS" } },
+  { label: "Neukunden (1 Auftrag, < 60 Tage)", filter: { ...EMPTY_FILTER, anzahlOp: "weniger", anzahlAuftraege: 2, letzterAuftragOp: "innerhalb", letzterAuftragTage: 60 } },
+];
+
+const AUTOMATION_LABELS: Record<string, { titel: string; hinweis: string }> = {
+  reaktivierung: { titel: "Reaktivierung", hinweis: "Kunden ohne Auftrag in den letzten X Tagen" },
+  nach_erstem_auftrag: { titel: "Nach erstem Auftrag", hinweis: "Kunden mit genau einem Auftrag, X Tage danach" },
+};
 
 function customerName(c: Customer) {
   return [c.vorname, c.name].filter(Boolean).join(" ").trim() || c.email || "Kunde";
@@ -90,6 +135,8 @@ export default function NewsletterPage() {
   const [thema, setThema] = useState("");
   const [kiLoading, setKiLoading] = useState(false);
   const [betreff, setBetreff] = useState("");
+  const [betreffB, setBetreffB] = useState("");
+  const [abTest, setAbTest] = useState(false);
   const [inhalt, setInhalt] = useState("");
   const [bildUrl, setBildUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -99,11 +146,18 @@ export default function NewsletterPage() {
   const [blogModalOpen, setBlogModalOpen] = useState(false);
 
   // Empfänger
-  const [mode, setMode] = useState<"alle" | "mit_auftrag" | "manuell">("alle");
+  const [mode, setMode] = useState<"alle" | "mit_auftrag" | "segment" | "manuell">("alle");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [withOrders, setWithOrders] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+
+  // Segmentierung
+  const [filter, setFilter] = useState<SegmentFilter>(EMPTY_FILTER);
+  const [orderStats, setOrderStats] = useState<Map<string, { count: number; umsatz: number; last: number | null }>>(new Map());
+  const [materialsByCustomer, setMaterialsByCustomer] = useState<Map<string, Set<string>>>(new Map());
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [segmentName, setSegmentName] = useState("");
 
   // Versand
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -113,25 +167,76 @@ export default function NewsletterPage() {
   // Verlauf
   const [history, setHistory] = useState<Newsletter[]>([]);
   const [detail, setDetail] = useState<Newsletter | null>(null);
-  const [detailRecipients, setDetailRecipients] = useState<{ email: string; name: string | null; gesendet: boolean }[]>([]);
+  const [detailRecipients, setDetailRecipients] = useState<{ email: string; name: string | null; gesendet: boolean; geoeffnet: boolean }[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [klicks, setKlicks] = useState<Map<string, number>>(new Map());
+
+  // Automationen
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [autoLog7d, setAutoLog7d] = useState(0);
+  const [runningAuto, setRunningAuto] = useState<string | null>(null);
+  const [autoKiLoading, setAutoKiLoading] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const [{ data: cs }, { data: os }] = await Promise.all([
-        supabase.from("customers").select("id,name,vorname,email").eq("newsletter_aktiv", true).not("email", "is", null),
-        supabase.from("orders").select("customer_id"),
+      const [{ data: cs }, { data: os }, { data: ps }, { data: segs }] = await Promise.all([
+        supabase.from("customers").select("id,name,vorname,email,ort").eq("newsletter_aktiv", true).not("email", "is", null),
+        supabase.from("orders").select("customer_id,created_at,umsatz_total"),
+        supabase.from("parts").select("customer_id,material"),
+        supabase.from("newsletter_segmente").select("*").order("erstellt_am", { ascending: false }),
       ]);
       setCustomers((cs ?? []).filter((c) => !!c.email) as Customer[]);
       setWithOrders(new Set((os ?? []).map((o) => o.customer_id).filter(Boolean) as string[]));
+
+      const stats = new Map<string, { count: number; umsatz: number; last: number | null }>();
+      for (const o of os ?? []) {
+        if (!o.customer_id) continue;
+        const cur = stats.get(o.customer_id) ?? { count: 0, umsatz: 0, last: null };
+        cur.count += 1;
+        cur.umsatz += Number(o.umsatz_total ?? 0);
+        const t = o.created_at ? new Date(o.created_at as string).getTime() : null;
+        if (t && (!cur.last || t > cur.last)) cur.last = t;
+        stats.set(o.customer_id, cur);
+      }
+      setOrderStats(stats);
+
+      const mats = new Map<string, Set<string>>();
+      for (const p of ps ?? []) {
+        if (!p.customer_id || !p.material) continue;
+        const set = mats.get(p.customer_id) ?? new Set<string>();
+        set.add(String(p.material).toUpperCase());
+        mats.set(p.customer_id, set);
+      }
+      setMaterialsByCustomer(mats);
+      setSegments((segs ?? []) as unknown as Segment[]);
     })();
     loadHistory();
+    loadAutomations();
   }, []);
 
-  async function loadHistory() {
-    const { data } = await supabase.from("newsletters").select("*").order("erstellt_am", { ascending: false });
-    setHistory((data ?? []) as Newsletter[]);
-  }
+  const loadHistory = useCallback(async () => {
+    const [{ data }, { data: ks }] = await Promise.all([
+      supabase.from("newsletters").select("*").order("erstellt_am", { ascending: false }),
+      supabase.from("newsletter_klicks").select("newsletter_id"),
+    ]);
+    setHistory((data ?? []) as unknown as Newsletter[]);
+    const m = new Map<string, number>();
+    for (const k of ks ?? []) {
+      if (!k.newsletter_id) continue;
+      m.set(k.newsletter_id, (m.get(k.newsletter_id) ?? 0) + 1);
+    }
+    setKlicks(m);
+  }, []);
+
+  const loadAutomations = useCallback(async () => {
+    const since = new Date(Date.now() - 7 * 86400_000).toISOString();
+    const [{ data: as }, { count }] = await Promise.all([
+      supabase.from("newsletter_automationen").select("*").order("typ"),
+      supabase.from("newsletter_automation_log").select("id", { count: "exact", head: true }).gte("gesendet_am", since),
+    ]);
+    setAutomations((as ?? []) as unknown as Automation[]);
+    setAutoLog7d(count ?? 0);
+  }, []);
 
   async function openBlogModal() {
     setBlogModalOpen(true);
@@ -141,14 +246,44 @@ export default function NewsletterPage() {
     setBlogPosts((data ?? []) as BlogPost[]);
   }
 
+  const segmentCustomers = useMemo(() => {
+    const now = Date.now();
+    return customers.filter((c) => {
+      const s = orderStats.get(c.id) ?? { count: 0, umsatz: 0, last: null };
+
+      if (filter.letzterAuftragOp === "vor") {
+        if (!s.last) return true; // nie bestellt = länger her
+        if (s.last > now - filter.letzterAuftragTage * 86400_000) return false;
+      }
+      if (filter.letzterAuftragOp === "innerhalb") {
+        if (!s.last) return false;
+        if (s.last < now - filter.letzterAuftragTage * 86400_000) return false;
+      }
+      if (filter.umsatzOp === "ueber" && s.umsatz <= filter.umsatzChf) return false;
+      if (filter.umsatzOp === "unter" && s.umsatz >= filter.umsatzChf) return false;
+      if (filter.anzahlOp === "mehr" && s.count <= filter.anzahlAuftraege) return false;
+      if (filter.anzahlOp === "weniger" && s.count >= filter.anzahlAuftraege) return false;
+      if (filter.material) {
+        const set = materialsByCustomer.get(c.id);
+        if (!set || ![...set].some((m) => m.includes(filter.material.toUpperCase()))) return false;
+      }
+      if (filter.ort.trim()) {
+        if (!(c.ort ?? "").toLowerCase().includes(filter.ort.trim().toLowerCase())) return false;
+      }
+      return true;
+    });
+  }, [customers, orderStats, materialsByCustomer, filter]);
+
   const recipients: Recipient[] = useMemo(() => {
     const base = mode === "mit_auftrag"
       ? customers.filter((c) => withOrders.has(c.id))
       : mode === "manuell"
         ? customers.filter((c) => selected.has(c.id))
-        : customers;
+        : mode === "segment"
+          ? segmentCustomers
+          : customers;
     return base.map((c) => ({ email: c.email!, name: customerName(c), customer_id: c.id }));
-  }, [mode, customers, withOrders, selected]);
+  }, [mode, customers, withOrders, selected, segmentCustomers]);
 
   const filteredCustomers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -190,30 +325,79 @@ export default function NewsletterPage() {
     }
   }
 
+  async function saveSegment() {
+    if (!segmentName.trim()) { toast.error("Bitte einen Namen für das Segment angeben"); return; }
+    const { data, error } = await supabase.from("newsletter_segmente")
+      .insert({ name: segmentName.trim(), filter_json: filter as any }).select("*").single();
+    if (error) { toast.error(error.message); return; }
+    setSegments((prev) => [data as unknown as Segment, ...prev]);
+    setSegmentName("");
+    toast.success("Segment gespeichert");
+  }
+
+  async function deleteSegment(id: string) {
+    const { error } = await supabase.from("newsletter_segmente").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setSegments((prev) => prev.filter((s) => s.id !== id));
+  }
+
   async function send() {
     setSending(true);
-    setProgress(15);
+    setProgress(10);
     try {
-      const { data: nl, error: insErr } = await supabase.from("newsletters").insert({
-        betreff: betreff.trim(),
+      const base = {
         inhalt_text: inhalt,
         bild_url: bildUrl || null,
         blog_link_url: blogUrl || null,
         blog_link_titel: blogTitel || null,
         status: "entwurf",
-      }).select("id").single();
-      if (insErr) throw insErr;
+      };
 
-      setProgress(40);
-      const { data, error } = await supabase.functions.invoke("send-newsletter", {
-        body: { newsletter_id: nl.id, empfaenger: recipients },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      if (abTest) {
+        const gruppe = crypto.randomUUID();
+        const shuffled = [...recipients].sort(() => Math.random() - 0.5);
+        const half = Math.ceil(shuffled.length / 2);
+        const groups: [string, Recipient[]][] = [
+          [betreff.trim(), shuffled.slice(0, half)],
+          [betreffB.trim(), shuffled.slice(half)],
+        ];
 
-      setProgress(100);
-      toast.success(`Newsletter erfolgreich an ${(data as any).sent} Empfänger gesendet ✓`);
-      setThema(""); setBetreff(""); setInhalt(""); setBildUrl(""); setBlogUrl(""); setBlogTitel("");
+        let totalSent = 0;
+        for (let i = 0; i < groups.length; i++) {
+          const [subject, list] = groups[i];
+          if (list.length === 0) continue;
+          const { data: nl, error: insErr } = await supabase.from("newsletters").insert({
+            ...base, betreff: subject, ist_ab_test: true,
+            ab_variante: i === 0 ? "A" : "B", ab_gruppe_id: gruppe,
+          }).select("id").single();
+          if (insErr) throw insErr;
+          setProgress(30 + i * 30);
+          const { data, error } = await supabase.functions.invoke("send-newsletter", {
+            body: { newsletter_id: nl.id, empfaenger: list },
+          });
+          if (error) throw error;
+          if ((data as any)?.error) throw new Error((data as any).error);
+          totalSent += (data as any).sent ?? 0;
+        }
+        setProgress(100);
+        toast.success(`A/B-Test gesendet an ${totalSent} Empfänger ✓`);
+      } else {
+        const { data: nl, error: insErr } = await supabase.from("newsletters")
+          .insert({ ...base, betreff: betreff.trim() }).select("id").single();
+        if (insErr) throw insErr;
+
+        setProgress(40);
+        const { data, error } = await supabase.functions.invoke("send-newsletter", {
+          body: { newsletter_id: nl.id, empfaenger: recipients },
+        });
+        if (error) throw error;
+        if ((data as any)?.error) throw new Error((data as any).error);
+        setProgress(100);
+        toast.success(`Newsletter erfolgreich an ${(data as any).sent} Empfänger gesendet ✓`);
+      }
+
+      setThema(""); setBetreff(""); setBetreffB(""); setAbTest(false);
+      setInhalt(""); setBildUrl(""); setBlogUrl(""); setBlogTitel("");
       await loadHistory();
       setTab("verlauf");
     } catch (e: any) {
@@ -227,12 +411,77 @@ export default function NewsletterPage() {
   async function openDetail(nl: Newsletter) {
     setDetail(nl);
     const { data } = await supabase
-      .from("newsletter_empfaenger").select("email,name,gesendet")
+      .from("newsletter_empfaenger").select("email,name,gesendet,geoeffnet")
       .eq("newsletter_id", nl.id).order("email");
     setDetailRecipients((data ?? []) as any);
   }
 
-  const canSend = betreff.trim().length > 0 && inhalt.trim().length > 0 && recipients.length > 0;
+  async function saveAutomation(a: Automation) {
+    const { error } = await supabase.from("newsletter_automationen").update({
+      aktiv: a.aktiv, tage_verzoegerung: a.tage_verzoegerung,
+      betreff_vorlage: a.betreff_vorlage, inhalt_vorlage: a.inhalt_vorlage,
+    }).eq("id", a.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Automation gespeichert");
+  }
+
+  async function runAutomation(a: Automation) {
+    setRunningAuto(a.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("check-newsletter-automationen", {
+        body: { automation_id: a.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const res = (data as any).results?.[a.typ];
+      toast.success(`Automation ausgeführt: ${res?.sent ?? 0} Mails gesendet`);
+      await loadAutomations();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Ausführung fehlgeschlagen");
+    } finally {
+      setRunningAuto(null);
+    }
+  }
+
+  async function generateAutomationText(a: Automation) {
+    setAutoKiLoading(a.id);
+    try {
+      const thema = a.typ === "reaktivierung"
+        ? `Reaktivierungs-Mail an Kunden, die seit ${a.tage_verzoegerung} Tagen keinen Auftrag mehr erteilt haben.`
+        : `Follow-up-Mail ${a.tage_verzoegerung} Tage nach dem ersten Auftrag: Erfahrung erfragen und zum nächsten Auftrag einladen.`;
+      const { data, error } = await supabase.functions.invoke("generate-newsletter", { body: { thema } });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setAutomations((prev) => prev.map((x) => x.id === a.id
+        ? { ...x, betreff_vorlage: (data as any).betreff ?? x.betreff_vorlage, inhalt_vorlage: (data as any).inhalt ?? x.inhalt_vorlage }
+        : x));
+      toast.success("KI-Vorlage erstellt – noch speichern");
+    } catch (e: any) {
+      toast.error(e?.message ?? "KI-Entwurf fehlgeschlagen");
+    } finally {
+      setAutoKiLoading(null);
+    }
+  }
+
+  /** A/B-Gruppen für die Verlaufsanzeige. */
+  const abResults = useMemo(() => {
+    const groups = new Map<string, Newsletter[]>();
+    for (const nl of history) {
+      if (nl.ist_ab_test && nl.ab_gruppe_id) {
+        groups.set(nl.ab_gruppe_id, [...(groups.get(nl.ab_gruppe_id) ?? []), nl]);
+      }
+    }
+    const winners = new Map<string, string>();
+    for (const [gid, list] of groups) {
+      const rate = (n: Newsletter) => (n.empfaenger_anzahl > 0 ? (n.geoeffnet_anzahl ?? 0) / n.empfaenger_anzahl : 0);
+      const best = [...list].sort((a, b) => rate(b) - rate(a))[0];
+      if (best && list.length > 1) winners.set(gid, best.id);
+    }
+    return { groups, winners };
+  }, [history]);
+
+  const canSend = betreff.trim().length > 0 && inhalt.trim().length > 0 && recipients.length > 0
+    && (!abTest || betreffB.trim().length > 0);
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto">
@@ -250,6 +499,7 @@ export default function NewsletterPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="neu">Neuer Newsletter</TabsTrigger>
           <TabsTrigger value="verlauf">Verlauf</TabsTrigger>
+          <TabsTrigger value="automationen">Automationen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="neu" className="space-y-6">
@@ -272,10 +522,26 @@ export default function NewsletterPage() {
           {/* Editor */}
           <section className="bg-card border border-border rounded-xl p-5 space-y-4">
             <h2 className="font-semibold text-foreground">Inhalt</h2>
+
+            <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">A/B-Test aktivieren</p>
+                <p className="text-xs text-muted-foreground">Zwei Betreffzeilen, Empfänger werden 50/50 zufällig aufgeteilt.</p>
+              </div>
+              <Switch checked={abTest} onCheckedChange={setAbTest} />
+            </div>
+
             <div>
-              <Label htmlFor="betreff" className="text-sm">Betreff *</Label>
+              <Label htmlFor="betreff" className="text-sm">{abTest ? "Betreff Version A *" : "Betreff *"}</Label>
               <Input id="betreff" value={betreff} onChange={(e) => setBetreff(e.target.value)} className="mt-2" placeholder="Betreff des Newsletters" />
             </div>
+            {abTest && (
+              <div>
+                <Label htmlFor="betreffB" className="text-sm">Betreff Version B *</Label>
+                <Input id="betreffB" value={betreffB} onChange={(e) => setBetreffB(e.target.value)} className="mt-2" placeholder="Alternative Betreffzeile" />
+              </div>
+            )}
+
             <div>
               <Label htmlFor="inhalt" className="text-sm">Inhalt *</Label>
               <Textarea id="inhalt" value={inhalt} onChange={(e) => setInhalt(e.target.value)} rows={14} className="mt-2 font-mono text-[13px]" placeholder="Guten Tag [Kundenname], ..." />
@@ -334,10 +600,120 @@ export default function NewsletterPage() {
                 <Label htmlFor="m-auftrag" className="text-sm font-normal">Kunden mit Aufträgen</Label>
               </div>
               <div className="flex items-center gap-2">
+                <RadioGroupItem value="segment" id="m-segment" />
+                <Label htmlFor="m-segment" className="text-sm font-normal">Segment erstellen</Label>
+              </div>
+              <div className="flex items-center gap-2">
                 <RadioGroupItem value="manuell" id="m-manuell" />
                 <Label htmlFor="m-manuell" className="text-sm font-normal">Manuelle Auswahl</Label>
               </div>
             </RadioGroup>
+
+            {mode === "segment" && (
+              <div className="border border-border rounded-lg p-4 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {QUICK_SEGMENTS.map((q) => (
+                    <Button key={q.label} variant="outline" size="sm" onClick={() => setFilter(q.filter)}>
+                      {q.label}
+                    </Button>
+                  ))}
+                  <Button variant="ghost" size="sm" onClick={() => setFilter(EMPTY_FILTER)}>Zurücksetzen</Button>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <Label className="text-sm">Letzter Auftrag</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Select value={filter.letzterAuftragOp || "egal"} onValueChange={(v) => setFilter((f) => ({ ...f, letzterAuftragOp: v === "egal" ? "" : v as any }))}>
+                        <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="egal">Egal</SelectItem>
+                          <SelectItem value="vor">Vor mehr als … Tagen</SelectItem>
+                          <SelectItem value="innerhalb">Innerhalb der letzten … Tage</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="number" className="w-24" value={filter.letzterAuftragTage}
+                        onChange={(e) => setFilter((f) => ({ ...f, letzterAuftragTage: Number(e.target.value) || 0 }))} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm">Auftragsvolumen (CHF)</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Select value={filter.umsatzOp || "egal"} onValueChange={(v) => setFilter((f) => ({ ...f, umsatzOp: v === "egal" ? "" : v as any }))}>
+                        <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="egal">Egal</SelectItem>
+                          <SelectItem value="ueber">Über</SelectItem>
+                          <SelectItem value="unter">Unter</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="number" className="w-28" value={filter.umsatzChf}
+                        onChange={(e) => setFilter((f) => ({ ...f, umsatzChf: Number(e.target.value) || 0 }))} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm">Anzahl Aufträge</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Select value={filter.anzahlOp || "egal"} onValueChange={(v) => setFilter((f) => ({ ...f, anzahlOp: v === "egal" ? "" : v as any }))}>
+                        <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="egal">Egal</SelectItem>
+                          <SelectItem value="mehr">Mehr als</SelectItem>
+                          <SelectItem value="weniger">Weniger als</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="number" className="w-24" value={filter.anzahlAuftraege}
+                        onChange={(e) => setFilter((f) => ({ ...f, anzahlAuftraege: Number(e.target.value) || 0 }))} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm">Material verwendet</Label>
+                    <Select value={filter.material || "egal"} onValueChange={(v) => setFilter((f) => ({ ...f, material: v === "egal" ? "" : v }))}>
+                      <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="egal">Egal</SelectItem>
+                        {MATERIALS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label className="text-sm">Region / Ort</Label>
+                    <Input className="mt-2" value={filter.ort} placeholder="z.B. Zürich"
+                      onChange={(e) => setFilter((f) => ({ ...f, ort: e.target.value }))} />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm">
+                  <FilterIcon className="w-4 h-4 text-primary" />
+                  <span className="font-medium text-foreground">Dieses Segment: {segmentCustomers.length} Kunden</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <Input value={segmentName} onChange={(e) => setSegmentName(e.target.value)} placeholder="Segment-Name zum Speichern" />
+                  <Button variant="outline" onClick={saveSegment}><Save className="w-4 h-4 mr-2" />Speichern</Button>
+                </div>
+
+                {segments.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Gespeicherte Segmente</p>
+                    {segments.map((s) => (
+                      <div key={s.id} className="flex items-center gap-2 text-sm">
+                        <button className="flex-1 text-left hover:underline" onClick={() => setFilter({ ...EMPTY_FILTER, ...s.filter_json })}>
+                          {s.name}
+                        </button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteSegment(s.id)}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {mode === "manuell" && (
               <div className="border border-border rounded-lg overflow-hidden">
@@ -384,23 +760,128 @@ export default function NewsletterPage() {
 
         <TabsContent value="verlauf">
           <div className="bg-card border border-border rounded-xl divide-y divide-border">
-            {history.map((nl) => (
-              <button key={nl.id} onClick={() => openDetail(nl)} className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{nl.betreff}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {nl.status === "gesendet" ? `Gesendet am ${fmt(nl.gesendet_am)}` : `Erstellt am ${fmt(nl.erstellt_am)}`} · {nl.empfaenger_anzahl} Empfänger
-                  </p>
-                </div>
-                <Badge variant={nl.status === "gesendet" ? "default" : "secondary"}>
-                  {nl.status === "gesendet" ? "Gesendet" : "Entwurf"}
-                </Badge>
-              </button>
-            ))}
+            {history.map((nl) => {
+              const opened = nl.geoeffnet_anzahl ?? 0;
+              const rate = nl.empfaenger_anzahl > 0 ? Math.round((opened / nl.empfaenger_anzahl) * 100) : 0;
+              const clicks = klicks.get(nl.id) ?? 0;
+              const isWinner = nl.ab_gruppe_id ? abResults.winners.get(nl.ab_gruppe_id) === nl.id : false;
+              return (
+                <button key={nl.id} onClick={() => openDetail(nl)} className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {nl.betreff}
+                      {nl.ist_ab_test && <span className="ml-2 text-xs text-muted-foreground">Version {nl.ab_variante}</span>}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {nl.status === "gesendet" ? `Gesendet am ${fmt(nl.gesendet_am)}` : `Erstellt am ${fmt(nl.erstellt_am)}`} · Gesendet an {nl.empfaenger_anzahl} Empfänger
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span>Geöffnet: {opened} / {nl.empfaenger_anzahl} ({rate}%)</span>
+                      <span className="inline-flex items-center gap-1">
+                        <MousePointerClick className="w-3 h-3" /> Klicks auf CTA: {clicks}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge variant={nl.status === "gesendet" ? "default" : "secondary"}>
+                      {nl.status === "gesendet" ? "Gesendet" : "Entwurf"}
+                    </Badge>
+                    {nl.automation_id && <Badge variant="outline">Automatisch</Badge>}
+                    {isWinner && (
+                      <Badge className="bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                        <Trophy className="w-3 h-3 mr-1" /> Gewinner
+                      </Badge>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
             {history.length === 0 && (
               <p className="px-4 py-10 text-sm text-muted-foreground text-center">Noch keine Newsletter vorhanden</p>
             )}
           </div>
+
+          {/* A/B-Test Ergebnisse */}
+          {[...abResults.groups.entries()].filter(([, l]) => l.length > 1).map(([gid, list]) => {
+            const sorted = [...list].sort((a, b) => (a.ab_variante ?? "").localeCompare(b.ab_variante ?? ""));
+            const rate = (n: Newsletter) => (n.empfaenger_anzahl > 0 ? Math.round(((n.geoeffnet_anzahl ?? 0) / n.empfaenger_anzahl) * 100) : 0);
+            const winnerId = abResults.winners.get(gid);
+            const winner = sorted.find((n) => n.id === winnerId);
+            return (
+              <div key={gid} className="mt-4 bg-card border border-border rounded-xl p-5">
+                <h3 className="font-semibold text-foreground mb-3">A/B Test Ergebnis</h3>
+                {sorted.map((n) => (
+                  <div key={n.id} className="flex items-center justify-between text-sm py-1">
+                    <span className="truncate mr-3">Version {n.ab_variante}: «{n.betreff}»</span>
+                    <span className="font-medium whitespace-nowrap">
+                      {rate(n)}% Öffnungsrate {n.id === winnerId && "🏆"}
+                    </span>
+                  </div>
+                ))}
+                <p className="text-sm text-muted-foreground mt-3">
+                  Gewinner: Version {winner?.ab_variante ?? "–"}
+                </p>
+              </div>
+            );
+          })}
+        </TabsContent>
+
+        <TabsContent value="automationen" className="space-y-4">
+          <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+            <Zap className="w-4 h-4 text-primary" />
+            <p className="text-sm text-foreground">Letzte 7 Tage: <strong>{autoLog7d}</strong> Mails automatisch gesendet</p>
+          </div>
+
+          {automations.map((a) => {
+            const meta = AUTOMATION_LABELS[a.typ] ?? { titel: a.typ, hinweis: "" };
+            return (
+              <section key={a.id} className="bg-card border border-border rounded-xl p-5 space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-foreground">{meta.titel}</h3>
+                    <p className="text-xs text-muted-foreground">{meta.hinweis}</p>
+                  </div>
+                  <Switch checked={a.aktiv}
+                    onCheckedChange={(v) => setAutomations((prev) => prev.map((x) => x.id === a.id ? { ...x, aktiv: v } : x))} />
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-[160px_1fr]">
+                  <div>
+                    <Label className="text-sm">Verzögerung (Tage)</Label>
+                    <Input type="number" className="mt-2" value={a.tage_verzoegerung}
+                      onChange={(e) => setAutomations((prev) => prev.map((x) => x.id === a.id ? { ...x, tage_verzoegerung: Number(e.target.value) || 0 } : x))} />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Betreff-Vorlage</Label>
+                    <Input className="mt-2" value={a.betreff_vorlage ?? ""}
+                      onChange={(e) => setAutomations((prev) => prev.map((x) => x.id === a.id ? { ...x, betreff_vorlage: e.target.value } : x))} />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm">Inhalt-Vorlage</Label>
+                  <Textarea rows={10} className="mt-2 font-mono text-[13px]" value={a.inhalt_vorlage ?? ""}
+                    onChange={(e) => setAutomations((prev) => prev.map((x) => x.id === a.id ? { ...x, inhalt_vorlage: e.target.value } : x))} />
+                  <p className="text-xs text-muted-foreground mt-1">Platzhalter <code>[Kundenname]</code> wird ersetzt.</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => saveAutomation(a)}><Save className="w-4 h-4 mr-2" />Speichern</Button>
+                  <Button variant="outline" disabled={autoKiLoading === a.id} onClick={() => generateAutomationText(a)}>
+                    {autoKiLoading === a.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                    KI-Vorlage
+                  </Button>
+                  <Button variant="secondary" disabled={runningAuto === a.id} onClick={() => runAutomation(a)}>
+                    {runningAuto === a.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
+                    Jetzt manuell ausführen
+                  </Button>
+                </div>
+              </section>
+            );
+          })}
+          {automations.length === 0 && (
+            <p className="px-4 py-10 text-sm text-muted-foreground text-center">Keine Automationen vorhanden</p>
+          )}
         </TabsContent>
       </Tabs>
 
@@ -453,6 +934,7 @@ export default function NewsletterPage() {
                     <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm">
                       <span className="flex-1 truncate">{r.name || "–"}</span>
                       <span className="text-muted-foreground truncate">{r.email}</span>
+                      {r.geoeffnet && <Badge variant="outline">Geöffnet</Badge>}
                       <Badge variant={r.gesendet ? "default" : "destructive"}>{r.gesendet ? "OK" : "Fehler"}</Badge>
                     </div>
                   ))}
@@ -472,7 +954,9 @@ export default function NewsletterPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Newsletter jetzt senden?</AlertDialogTitle>
             <AlertDialogDescription>
-              Der Newsletter «{betreff}» wird an {recipients.length} Empfänger gesendet. Dies kann nicht widerrufen werden.
+              {abTest
+                ? `Der A/B-Test wird an ${recipients.length} Empfänger gesendet (50% Version A, 50% Version B). Dies kann nicht widerrufen werden.`
+                : `Der Newsletter «${betreff}» wird an ${recipients.length} Empfänger gesendet. Dies kann nicht widerrufen werden.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
