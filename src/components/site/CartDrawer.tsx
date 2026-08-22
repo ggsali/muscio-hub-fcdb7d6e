@@ -80,10 +80,13 @@ export const CartDrawer = () => {
   }, [user, items.length, handleCheckout, setIsOpen]);
 
   return (
-    <AnimatePresence>
+    <>
+      {/* Checkout-Modal ausserhalb des Drawers rendern, damit es beim Schliessen
+          des Warenkorbs nicht sofort wieder unmountet wird. */}
+      {checkoutElement}
+      <AnimatePresence>
       {isOpen && (
         <>
-          {checkoutElement}
           <motion.div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
