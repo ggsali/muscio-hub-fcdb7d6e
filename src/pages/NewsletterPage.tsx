@@ -827,10 +827,16 @@ export default function NewsletterPage() {
         </TabsContent>
 
         <TabsContent value="automationen" className="space-y-4">
+          <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-center gap-3">
+            <Clock className="w-4 h-4 text-primary" />
+            <p className="text-sm text-foreground">⏰ Automationen laufen täglich um 09:00 Uhr automatisch</p>
+          </div>
+
           <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
             <Zap className="w-4 h-4 text-primary" />
             <p className="text-sm text-foreground">Letzte 7 Tage: <strong>{autoLog7d}</strong> Mails automatisch gesendet</p>
           </div>
+
 
           {automations.map((a) => {
             const meta = AUTOMATION_LABELS[a.typ] ?? { titel: a.typ, hinweis: "" };
