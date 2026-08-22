@@ -39,6 +39,9 @@ import ChatPage from "@/pages/ChatPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 import WebsiteBestellungenPage from "@/pages/WebsiteBestellungenPage";
 import WebsiteKundenAdminPage from "@/pages/WebsiteKundenAdminPage";
+import NewsletterPage from "@/pages/NewsletterPage";
+import NewsletterAbmeldenPage from "@/pages/site/NewsletterAbmeldenPage";
+
 
 import WebsiteEinstellungenPage from "@/pages/WebsiteEinstellungenPage";
 
