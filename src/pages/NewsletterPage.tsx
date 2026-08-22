@@ -38,6 +38,9 @@ type Automation = {
   id: string; typ: string; aktiv: boolean; tage_verzoegerung: number;
   betreff_vorlage: string | null; inhalt_vorlage: string | null;
 };
+type AutoCandidate = {
+  id: string; name: string; email: string; lastCompleted: string; completedCount: number;
+};
 type SegmentFilter = {
   letzterAuftragOp: "" | "vor" | "innerhalb";
   letzterAuftragTage: number;
@@ -177,6 +180,8 @@ export default function NewsletterPage() {
   const [autoLog7d, setAutoLog7d] = useState(0);
   const [runningAuto, setRunningAuto] = useState<string | null>(null);
   const [autoKiLoading, setAutoKiLoading] = useState<string | null>(null);
+  const [autoCounts, setAutoCounts] = useState<Map<string, number>>(new Map());
+  const [autoPreview, setAutoPreview] = useState<{ automation: Automation; loading: boolean; rows: AutoCandidate[] } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -238,6 +243,70 @@ export default function NewsletterPage() {
     setAutomations((as ?? []) as unknown as Automation[]);
     setAutoLog7d(count ?? 0);
   }, []);
+
+  /** Vorschau: welche Kunden würde diese Automation beim nächsten Lauf treffen? */
+  const computeAutomationCandidates = useCallback(async (a: Automation): Promise<AutoCandidate[]> => {
+    const [{ data: cs }, { data: logs }] = await Promise.all([
+      supabase
+        .from("customers")
+        .select("id, name, vorname, email, orders(id, status, updated_at, created_at)")
+        .eq("newsletter_aktiv", true)
+        .not("email", "is", null),
+      supabase.from("newsletter_automation_log").select("customer_id").eq("automation_id", a.id),
+    ]);
+    const sentTo = new Set((logs ?? []).map((l: any) => l.customer_id));
+    const days = Math.max(1, a.tage_verzoegerung || 1);
+    const now = Date.now();
+    const out: AutoCandidate[] = [];
+
+    for (const c of (cs ?? []) as any[]) {
+      if (!c.email || sentTo.has(c.id)) continue;
+      const done = (c.orders ?? []).filter((o: any) => o.status === "Abgeschlossen");
+      if (done.length === 0) continue;
+      const times = done.map((o: any) => new Date(o.updated_at ?? o.created_at).getTime()).filter((t: number) => !isNaN(t));
+      const last = times.length ? Math.max(...times) : 0;
+
+      if (a.typ === "reaktivierung") {
+        if (last > now - days * 86400_000) continue;
+      } else if (a.typ === "nach_erstem_auftrag") {
+        if (done.length !== 1) continue;
+        const lower = now - (days + 2) * 86400_000;
+        const upper = now - (days - 2) * 86400_000;
+        if (!(last >= lower && last <= upper)) continue;
+      } else {
+        continue;
+      }
+
+      out.push({
+        id: c.id,
+        name: [c.vorname, c.name].filter(Boolean).join(" ") || "—",
+        email: c.email,
+        lastCompleted: last ? new Date(last).toLocaleDateString("de-CH") : "—",
+        completedCount: done.length,
+      });
+    }
+    return out.sort((x, y) => x.name.localeCompare(y.name));
+  }, []);
+
+  // Live-Zähler pro Automation
+  useEffect(() => {
+    if (automations.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        automations.map(async (a) => [a.id, (await computeAutomationCandidates(a)).length] as const),
+      );
+      if (!cancelled) setAutoCounts(new Map(entries));
+    })();
+    return () => { cancelled = true; };
+  }, [automations.map((a) => `${a.id}:${a.tage_verzoegerung}:${a.typ}`).join(","), computeAutomationCandidates]);
+
+  async function openAutoPreview(a: Automation) {
+    setAutoPreview({ automation: a, loading: true, rows: [] });
+    const rows = await computeAutomationCandidates(a);
+    setAutoPreview({ automation: a, loading: false, rows });
+  }
+
 
   async function openBlogModal() {
     setBlogModalOpen(true);
@@ -881,7 +950,7 @@ export default function NewsletterPage() {
                   <p className="text-xs text-muted-foreground mt-1">Platzhalter <code>[Kundenname]</code> wird ersetzt.</p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 items-center">
                   <Button onClick={() => saveAutomation(a)}><Save className="w-4 h-4 mr-2" />Speichern</Button>
                   <Button variant="outline" disabled={autoKiLoading === a.id} onClick={() => generateAutomationText(a)}>
                     {autoKiLoading === a.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
@@ -891,18 +960,73 @@ export default function NewsletterPage() {
                     {runningAuto === a.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
                     Jetzt manuell ausführen
                   </Button>
+                  <Button variant="outline" onClick={() => openAutoPreview(a)}>
+                    <Users className="w-4 h-4 mr-2" />Betroffene Kunden anzeigen
+                  </Button>
                 </div>
+
+                {(() => {
+                  const n = autoCounts.get(a.id);
+                  if (n === undefined) return <p className="text-xs text-muted-foreground">Kunden werden geprüft…</p>;
+                  return n > 0
+                    ? <Badge className="bg-success/15 text-success border-success/30">{n} Kunden warten</Badge>
+                    : <Badge variant="secondary">Keine Kunden</Badge>;
+                })()}
               </section>
             );
           })}
           {automations.length === 0 && (
             <p className="px-4 py-10 text-sm text-muted-foreground text-center">Keine Automationen vorhanden</p>
           )}
+
         </TabsContent>
       </Tabs>
 
+      {/* Betroffene Kunden pro Automation */}
+      <Dialog open={!!autoPreview} onOpenChange={(o) => !o && setAutoPreview(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Kunden für Automation: {autoPreview ? (AUTOMATION_LABELS[autoPreview.automation.typ]?.titel ?? autoPreview.automation.typ) : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Diese Kunden würden beim nächsten Ausführen eine Mail erhalten</p>
+          {autoPreview?.loading ? (
+            <p className="py-8 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Laden…
+            </p>
+          ) : (autoPreview?.rows.length ?? 0) === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Keine Kunden erfüllen aktuell die Kriterien</p>
+          ) : (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-muted-foreground">
+                    <th className="px-3 py-2 text-left font-medium">Name</th>
+                    <th className="px-3 py-2 text-left font-medium">E-Mail</th>
+                    <th className="px-3 py-2 text-left font-medium">Letzter abgeschl. Auftrag</th>
+                    <th className="px-3 py-2 text-right font-medium">Abgeschl. Aufträge</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {autoPreview?.rows.map((r) => (
+                    <tr key={r.id} className="border-b border-border/50 last:border-0">
+                      <td className="px-3 py-2">{r.name}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{r.email}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{r.lastCompleted}</td>
+                      <td className="px-3 py-2 text-right">{r.completedCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Vorschau */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Vorschau</DialogTitle></DialogHeader>
           <NewsletterPreview betreff={betreff} inhalt={inhalt} bildUrl={bildUrl} blogUrl={blogUrl} blogTitel={blogTitel} />
