@@ -1,3 +1,4 @@
+// Cron: täglich um 09:00 Uhr Schweizer Zeit (08:00 UTC)
 // Prüft Newsletter-Automationen und versendet fällige Mails (Reaktivierung / Follow-up).
 // Aufruf: manuell aus dem Admin-Bereich (Admin-JWT) oder per Cron mit Header x-automation-key.
 import { Resend } from "npm:resend@2";
