@@ -38,6 +38,9 @@ type Automation = {
   id: string; typ: string; aktiv: boolean; tage_verzoegerung: number;
   betreff_vorlage: string | null; inhalt_vorlage: string | null;
 };
+type AutoCandidate = {
+  id: string; name: string; email: string; lastCompleted: string; completedCount: number;
+};
 type SegmentFilter = {
   letzterAuftragOp: "" | "vor" | "innerhalb";
   letzterAuftragTage: number;
