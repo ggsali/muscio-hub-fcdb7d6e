@@ -202,6 +202,8 @@ const App = () => (
                 <Route path="chat" element={<ChatPage />} />
                 <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />
+                <Route path="newsletter" element={<NewsletterPage />} />
+
                 
                 <Route path="website/einstellungen" element={<WebsiteEinstellungenPage />} />
               </Route>
