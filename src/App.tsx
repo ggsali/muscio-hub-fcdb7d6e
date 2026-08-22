@@ -153,7 +153,9 @@ const App = () => (
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/maschinen" element={<EquipmentPage />} />
+                <Route path="/newsletter/abmelden" element={<NewsletterAbmeldenPage />} />
               </Route>
+
 
               {/* Auth */}
               <Route path="/login" element={<Navigate to="/anmelden" replace />} />
