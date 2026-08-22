@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
 
 interface UploadDropzoneProps {
@@ -18,6 +19,7 @@ interface UploadDropzoneProps {
 export const UploadDropzone = ({ className, compact = false }: UploadDropzoneProps) => {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
   const [over, setOver] = useState(false);
 
   const handleFiles = (files: File[]) => {
@@ -60,7 +62,7 @@ export const UploadDropzone = ({ className, compact = false }: UploadDropzonePro
         ref={inputRef}
         type="file"
         multiple
-        accept=".stl,.step,.stp,.3mf,.obj"
+        accept=".stl,.step,.stp,.3mf,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*"
         className="hidden"
         onChange={(e) => {
           handleFiles(Array.from(e.target.files || []));
@@ -95,6 +97,12 @@ export const UploadDropzone = ({ className, compact = false }: UploadDropzonePro
             ))}
           </div>
         </div>
+      )}
+
+      {isMobile && (
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          📱 iPhone/iPad: Dateien-App öffnen → Datei gedrückt halten → Teilen → In Browser hochladen, falls Datei ausgegraut erscheint.
+        </p>
       )}
     </div>
   );

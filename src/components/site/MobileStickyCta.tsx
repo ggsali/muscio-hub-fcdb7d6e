@@ -23,7 +23,7 @@ export const MobileStickyCta = () => {
         ref={inputRef}
         type="file"
         multiple
-        accept=".stl,.step,.stp,.3mf,.obj"
+        accept=".stl,.step,.stp,.3mf,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*"
         className="hidden"
         onChange={(e) => {
           const accepted = Array.from(e.target.files || []).filter((f) => isAcceptedModel(f.name));
