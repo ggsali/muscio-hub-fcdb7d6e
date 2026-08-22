@@ -185,6 +185,7 @@ export const CartDrawer = () => {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 };
