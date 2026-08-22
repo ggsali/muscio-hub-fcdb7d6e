@@ -239,6 +239,70 @@ export default function NewsletterPage() {
     setAutoLog7d(count ?? 0);
   }, []);
 
+  /** Vorschau: welche Kunden würde diese Automation beim nächsten Lauf treffen? */
+  const computeAutomationCandidates = useCallback(async (a: Automation): Promise<AutoCandidate[]> => {
+    const [{ data: cs }, { data: logs }] = await Promise.all([
+      supabase
+        .from("customers")
+        .select("id, name, vorname, email, orders(id, status, updated_at, created_at)")
+        .eq("newsletter_aktiv", true)
+        .not("email", "is", null),
+      supabase.from("newsletter_automation_log").select("customer_id").eq("automation_id", a.id),
+    ]);
+    const sentTo = new Set((logs ?? []).map((l: any) => l.customer_id));
+    const days = Math.max(1, a.tage_verzoegerung || 1);
+    const now = Date.now();
+    const out: AutoCandidate[] = [];
+
+    for (const c of (cs ?? []) as any[]) {
+      if (!c.email || sentTo.has(c.id)) continue;
+      const done = (c.orders ?? []).filter((o: any) => o.status === "Abgeschlossen");
+      if (done.length === 0) continue;
+      const times = done.map((o: any) => new Date(o.updated_at ?? o.created_at).getTime()).filter((t: number) => !isNaN(t));
+      const last = times.length ? Math.max(...times) : 0;
+
+      if (a.typ === "reaktivierung") {
+        if (last > now - days * 86400_000) continue;
+      } else if (a.typ === "nach_erstem_auftrag") {
+        if (done.length !== 1) continue;
+        const lower = now - (days + 2) * 86400_000;
+        const upper = now - (days - 2) * 86400_000;
+        if (!(last >= lower && last <= upper)) continue;
+      } else {
+        continue;
+      }
+
+      out.push({
+        id: c.id,
+        name: [c.vorname, c.name].filter(Boolean).join(" ") || "—",
+        email: c.email,
+        lastCompleted: last ? new Date(last).toLocaleDateString("de-CH") : "—",
+        completedCount: done.length,
+      });
+    }
+    return out.sort((x, y) => x.name.localeCompare(y.name));
+  }, []);
+
+  // Live-Zähler pro Automation
+  useEffect(() => {
+    if (automations.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        automations.map(async (a) => [a.id, (await computeAutomationCandidates(a)).length] as const),
+      );
+      if (!cancelled) setAutoCounts(new Map(entries));
+    })();
+    return () => { cancelled = true; };
+  }, [automations.map((a) => `${a.id}:${a.tage_verzoegerung}:${a.typ}`).join(","), computeAutomationCandidates]);
+
+  async function openAutoPreview(a: Automation) {
+    setAutoPreview({ automation: a, loading: true, rows: [] });
+    const rows = await computeAutomationCandidates(a);
+    setAutoPreview({ automation: a, loading: false, rows });
+  }
+
+
   async function openBlogModal() {
     setBlogModalOpen(true);
     const { data } = await supabase
