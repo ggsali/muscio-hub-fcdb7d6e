@@ -76,16 +76,20 @@ Deno.serve(async (req) => {
       .eq("newsletter_aktiv", true)
       .not("email", "is", null);
 
-    const { data: orders } = await admin.from("orders").select("customer_id,created_at");
+    const { data: orders } = await admin.from("orders").select("customer_id,created_at,updated_at,status");
     const { data: logs } = await admin
       .from("newsletter_automation_log")
       .select("automation_id,customer_id,gesendet_am");
 
-    const ordersByCustomer = new Map<string, string[]>();
+    const ordersByCustomer = new Map<string, { createdAt: number; updatedAt: number; status: string }[]>();
     for (const o of orders ?? []) {
       if (!o.customer_id) continue;
       const arr = ordersByCustomer.get(o.customer_id) ?? [];
-      arr.push(o.created_at as string);
+      arr.push({
+        createdAt: new Date(o.created_at as string).getTime(),
+        updatedAt: new Date(o.updated_at as string).getTime(),
+        status: String(o.status ?? ""),
+      });
       ordersByCustomer.set(o.customer_id, arr);
     }
 
@@ -101,15 +105,24 @@ Deno.serve(async (req) => {
         const email = String(c.email ?? "").toLowerCase();
         if (!email || blocked.has(email)) return false;
 
-        const dates = (ordersByCustomer.get(c.id) ?? []).map((d) => new Date(d).getTime()).sort((x, y) => x - y);
+        const customerOrders = ordersByCustomer.get(c.id) ?? [];
+        const completedOrders = customerOrders.filter((o) => o.status === "Abgeschlossen");
 
         if (a.typ === "reaktivierung") {
-          // Kein Auftrag in den letzten X Tagen
-          if (dates.some((d) => d > cutoff)) return false;
+          // Nur Kunden mit mind. 1 abgeschlossenem Auftrag
+          if (completedOrders.length === 0) return false;
+          // Letzter abgeschlossener Auftrag muss mindestens X Tage her sein
+          const lastCompletedAt = Math.max(...completedOrders.map((o) => o.createdAt));
+          if (lastCompletedAt > cutoff) return false;
         } else if (a.typ === "nach_erstem_auftrag") {
-          // Genau ein Auftrag, älter als X Tage
-          if (dates.length !== 1) return false;
-          if (dates[0] > cutoff) return false;
+          // Genau ein abgeschlossener Auftrag
+          if (completedOrders.length !== 1) return false;
+          // updated_at liegt im Fenster [tage+2, tage-2]
+          const days = Math.max(1, a.tage_verzoegerung ?? 30);
+          const lower = Date.now() - (days + 2) * 86400_000;
+          const upper = Date.now() - (days - 2) * 86400_000;
+          const withinWindow = completedOrders.some((o) => o.updatedAt >= lower && o.updatedAt <= upper);
+          if (!withinWindow) return false;
         } else {
           return false;
         }
