@@ -445,6 +445,7 @@ export type Database = {
           id: string
           land: string | null
           name: string
+          newsletter_aktiv: boolean
           notizen: string | null
           ort: string | null
           plz: string | null
@@ -463,6 +464,7 @@ export type Database = {
           id?: string
           land?: string | null
           name: string
+          newsletter_aktiv?: boolean
           notizen?: string | null
           ort?: string | null
           plz?: string | null
@@ -481,6 +483,7 @@ export type Database = {
           id?: string
           land?: string | null
           name?: string
+          newsletter_aktiv?: boolean
           notizen?: string | null
           ort?: string | null
           plz?: string | null
@@ -826,6 +829,96 @@ export type Database = {
           sort_order?: number
           tag?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_empfaenger: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          email: string
+          gesendet: boolean
+          gesendet_am: string | null
+          id: string
+          name: string | null
+          newsletter_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          email: string
+          gesendet?: boolean
+          gesendet_am?: string | null
+          id?: string
+          name?: string | null
+          newsletter_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string
+          gesendet?: boolean
+          gesendet_am?: string | null
+          id?: string
+          name?: string | null
+          newsletter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_empfaenger_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_empfaenger_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletters: {
+        Row: {
+          betreff: string
+          bild_url: string | null
+          blog_link_titel: string | null
+          blog_link_url: string | null
+          empfaenger_anzahl: number
+          erstellt_am: string
+          gesendet_am: string | null
+          id: string
+          inhalt_html: string | null
+          inhalt_text: string
+          status: string
+        }
+        Insert: {
+          betreff: string
+          bild_url?: string | null
+          blog_link_titel?: string | null
+          blog_link_url?: string | null
+          empfaenger_anzahl?: number
+          erstellt_am?: string
+          gesendet_am?: string | null
+          id?: string
+          inhalt_html?: string | null
+          inhalt_text: string
+          status?: string
+        }
+        Update: {
+          betreff?: string
+          bild_url?: string | null
+          blog_link_titel?: string | null
+          blog_link_url?: string | null
+          empfaenger_anzahl?: number
+          erstellt_am?: string
+          gesendet_am?: string | null
+          id?: string
+          inhalt_html?: string | null
+          inhalt_text?: string
+          status?: string
         }
         Relationships: []
       }
