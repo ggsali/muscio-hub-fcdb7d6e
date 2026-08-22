@@ -249,9 +249,13 @@ export default function NewsletterPage() {
     const [{ data: cs }, { data: logs }] = await Promise.all([
       supabase
         .from("customers")
-        .select("id, name, vorname, email, orders(id, status, updated_at, created_at)")
-        .eq("newsletter_aktiv", true)
-        .not("email", "is", null),
+        .select(`
+          id, name, vorname, email,
+          orders!inner(id, status, updated_at, created_at)
+        `)
+        .or("newsletter_aktiv.eq.true,newsletter_aktiv.is.null")
+        .not("email", "is", null)
+        .eq("orders.status", "Abgeschlossen"),
       supabase.from("newsletter_automation_log").select("customer_id").eq("automation_id", a.id),
     ]);
     const sentTo = new Set((logs ?? []).map((l: any) => l.customer_id));
@@ -261,18 +265,26 @@ export default function NewsletterPage() {
 
     for (const c of (cs ?? []) as any[]) {
       if (!c.email || sentTo.has(c.id)) continue;
-      const done = (c.orders ?? []).filter((o: any) => o.status === "Abgeschlossen");
-      if (done.length === 0) continue;
-      const times = done.map((o: any) => new Date(o.updated_at ?? o.created_at).getTime()).filter((t: number) => !isNaN(t));
-      const last = times.length ? Math.max(...times) : 0;
+      const abgeschlosseneOrders = (c.orders as any[]).filter((o: any) => o.status === "Abgeschlossen");
+      if (abgeschlosseneOrders.length === 0) continue;
+
+      const hatAbgeschlossen = abgeschlosseneOrders.length > 0;
+      const letzterAbgeschlossen = abgeschlosseneOrders
+        .map((o: any) => new Date(o.updated_at || o.created_at).getTime())
+        .sort((x: number, y: number) => y - x)[0] ?? null;
 
       if (a.typ === "reaktivierung") {
-        if (last > now - days * 86400_000) continue;
+        const inaktivGenug = letzterAbgeschlossen
+          ? (now - letzterAbgeschlossen) > days * 86400_000
+          : false;
+        if (!hatAbgeschlossen || !inaktivGenug) continue;
       } else if (a.typ === "nach_erstem_auftrag") {
-        if (done.length !== 1) continue;
-        const lower = now - (days + 2) * 86400_000;
-        const upper = now - (days - 2) * 86400_000;
-        if (!(last >= lower && last <= upper)) continue;
+        const hatGenauEinen = abgeschlosseneOrders.length === 1;
+        const ersterAbgeschlossen = abgeschlosseneOrders[0];
+        const alterMs = now - new Date(ersterAbgeschlossen.updated_at || ersterAbgeschlossen.created_at).getTime();
+        const alterTage = alterMs / 86400_000;
+        const imFenster = Math.abs(alterTage - days) <= 2;
+        if (!hatGenauEinen || !imFenster) continue;
       } else {
         continue;
       }
@@ -281,8 +293,10 @@ export default function NewsletterPage() {
         id: c.id,
         name: [c.vorname, c.name].filter(Boolean).join(" ") || "—",
         email: c.email,
-        lastCompleted: last ? new Date(last).toLocaleDateString("de-CH") : "—",
-        completedCount: done.length,
+        lastCompleted: letzterAbgeschlossen
+          ? new Date(letzterAbgeschlossen).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })
+          : "—",
+        completedCount: abgeschlosseneOrders.length,
       });
     }
     return out.sort((x, y) => x.name.localeCompare(y.name));
