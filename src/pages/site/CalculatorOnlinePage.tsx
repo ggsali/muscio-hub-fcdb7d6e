@@ -721,7 +721,8 @@ const CalculatorOnlinePage = () => {
       const addressLine = !user && (form.strasse || form.plz || form.ort)
         ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}`
         : "";
-      const kiBlock = kiSummary ? `\n\n--- KI-Materialberatung ---\n${kiSummary}` : "";
+      const kiSummaryText = await buildKiSummary();
+      const kiBlock = kiSummaryText ? `\n\n--- KI-Materialberatung ---\n${kiSummaryText}` : "";
       const partImageAttachments = parts.flatMap(p =>
         p.images.filter(i => i.storagePath).map(i => ({
           filename: i.file.name,
