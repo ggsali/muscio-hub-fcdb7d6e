@@ -76,16 +76,20 @@ Deno.serve(async (req) => {
       .eq("newsletter_aktiv", true)
       .not("email", "is", null);
 
-    const { data: orders } = await admin.from("orders").select("customer_id,created_at");
+    const { data: orders } = await admin.from("orders").select("customer_id,created_at,updated_at,status");
     const { data: logs } = await admin
       .from("newsletter_automation_log")
       .select("automation_id,customer_id,gesendet_am");
 
-    const ordersByCustomer = new Map<string, string[]>();
+    const ordersByCustomer = new Map<string, { createdAt: number; updatedAt: number; status: string }[]>();
     for (const o of orders ?? []) {
       if (!o.customer_id) continue;
       const arr = ordersByCustomer.get(o.customer_id) ?? [];
-      arr.push(o.created_at as string);
+      arr.push({
+        createdAt: new Date(o.created_at as string).getTime(),
+        updatedAt: new Date(o.updated_at as string).getTime(),
+        status: String(o.status ?? ""),
+      });
       ordersByCustomer.set(o.customer_id, arr);
     }
 
