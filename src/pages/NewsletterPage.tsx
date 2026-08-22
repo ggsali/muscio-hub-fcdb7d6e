@@ -411,10 +411,19 @@ export default function NewsletterPage() {
 
   async function openDetail(nl: Newsletter) {
     setDetail(nl);
+    setDetailKlicks([]);
     const { data } = await supabase
       .from("newsletter_empfaenger").select("email,name,gesendet,geoeffnet")
       .eq("newsletter_id", nl.id).order("email");
     setDetailRecipients((data ?? []) as any);
+
+    const { data: kl } = await supabase
+      .from("newsletter_klicks").select("url").eq("newsletter_id", nl.id);
+    const counts = new Map<string, number>();
+    (kl ?? []).forEach((k: any) => counts.set(k.url, (counts.get(k.url) ?? 0) + 1));
+    setDetailKlicks([...counts.entries()]
+      .map(([url, klicks]) => ({ url, klicks }))
+      .sort((a, b) => b.klicks - a.klicks));
   }
 
   async function saveAutomation(a: Automation) {
