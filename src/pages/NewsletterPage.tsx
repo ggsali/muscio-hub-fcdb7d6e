@@ -168,6 +168,7 @@ export default function NewsletterPage() {
   const [history, setHistory] = useState<Newsletter[]>([]);
   const [detail, setDetail] = useState<Newsletter | null>(null);
   const [detailRecipients, setDetailRecipients] = useState<{ email: string; name: string | null; gesendet: boolean; geoeffnet: boolean }[]>([]);
+  const [detailKlicks, setDetailKlicks] = useState<{ url: string; klicks: number }[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [klicks, setKlicks] = useState<Map<string, number>>(new Map());
 
