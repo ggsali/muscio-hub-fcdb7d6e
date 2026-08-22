@@ -180,6 +180,8 @@ export default function NewsletterPage() {
   const [autoLog7d, setAutoLog7d] = useState(0);
   const [runningAuto, setRunningAuto] = useState<string | null>(null);
   const [autoKiLoading, setAutoKiLoading] = useState<string | null>(null);
+  const [autoCounts, setAutoCounts] = useState<Map<string, number>>(new Map());
+  const [autoPreview, setAutoPreview] = useState<{ automation: Automation; loading: boolean; rows: AutoCandidate[] } | null>(null);
 
   useEffect(() => {
     (async () => {
