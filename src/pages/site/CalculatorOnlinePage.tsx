@@ -1238,11 +1238,34 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  {materialMode !== null && (!isMobile || !kiChatOpen) && (
-                    <div>
-                      <p className="text-sm font-semibold mb-2">
-                        {materialMode === "manual" ? "Material direkt wählen" : "Alle Materialien"}
-                      </p>
+                  {materialMode === "manual" && (
+                    <div className="px-1">
+                      <p className="text-sm font-semibold mb-2">Material direkt wählen</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {materials.map((m) => {
+                          const sel = materialId === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => chooseMaterial(m.id)}
+                              className={`relative text-left rounded-xl border-2 p-4 transition-all ${
+                                sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                              }`}
+                            >
+                              {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
+                              <p className="font-bold text-sm">{m.name}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{m.farben.length} Farben</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {materialMode === "ki" && (!isMobile || !kiChatOpen) && (
+                    <div className="px-1">
+                      <p className="text-sm font-semibold mb-2">Alle Materialien</p>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {materials.map((m) => {
                           const sel = materialId === m.id;
@@ -1269,7 +1292,13 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  {materialMode !== null && materialId && (!isMobile || !kiChatOpen) && (
+                  {materialMode === "manual" && materialId && (
+                    <Button className="w-full gap-2" onClick={goNext}>
+                      Weiter zur Farbe <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {materialMode === "ki" && materialId && (!isMobile || !kiChatOpen) && (
                     <Button className="w-full gap-2" onClick={goNext}>
                       Weiter zur Farbe <ArrowRight className="w-4 h-4" />
                     </Button>
