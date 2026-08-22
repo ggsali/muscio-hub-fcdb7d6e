@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Mail, Sparkles, Eye, Send, ImagePlus, BookOpen, Loader2, Users, Filter as FilterIcon,
-  MousePointerClick, Trophy, Zap, Save, Play, Trash2,
+  MousePointerClick, Trophy, Zap, Save, Play, Trash2, Clock,
 } from "lucide-react";
 
 type Customer = {
@@ -168,6 +168,7 @@ export default function NewsletterPage() {
   const [history, setHistory] = useState<Newsletter[]>([]);
   const [detail, setDetail] = useState<Newsletter | null>(null);
   const [detailRecipients, setDetailRecipients] = useState<{ email: string; name: string | null; gesendet: boolean; geoeffnet: boolean }[]>([]);
+  const [detailKlicks, setDetailKlicks] = useState<{ url: string; klicks: number }[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [klicks, setKlicks] = useState<Map<string, number>>(new Map());
 
@@ -410,10 +411,19 @@ export default function NewsletterPage() {
 
   async function openDetail(nl: Newsletter) {
     setDetail(nl);
+    setDetailKlicks([]);
     const { data } = await supabase
       .from("newsletter_empfaenger").select("email,name,gesendet,geoeffnet")
       .eq("newsletter_id", nl.id).order("email");
     setDetailRecipients((data ?? []) as any);
+
+    const { data: kl } = await supabase
+      .from("newsletter_klicks").select("url").eq("newsletter_id", nl.id);
+    const counts = new Map<string, number>();
+    (kl ?? []).forEach((k: any) => counts.set(k.url, (counts.get(k.url) ?? 0) + 1));
+    setDetailKlicks([...counts.entries()]
+      .map(([url, klicks]) => ({ url, klicks }))
+      .sort((a, b) => b.klicks - a.klicks));
   }
 
   async function saveAutomation(a: Automation) {
@@ -827,10 +837,16 @@ export default function NewsletterPage() {
         </TabsContent>
 
         <TabsContent value="automationen" className="space-y-4">
+          <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-center gap-3">
+            <Clock className="w-4 h-4 text-primary" />
+            <p className="text-sm text-foreground">⏰ Automationen laufen täglich um 09:00 Uhr automatisch</p>
+          </div>
+
           <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
             <Zap className="w-4 h-4 text-primary" />
             <p className="text-sm text-foreground">Letzte 7 Tage: <strong>{autoLog7d}</strong> Mails automatisch gesendet</p>
           </div>
+
 
           {automations.map((a) => {
             const meta = AUTOMATION_LABELS[a.typ] ?? { titel: a.typ, hinweis: "" };
@@ -927,6 +943,34 @@ export default function NewsletterPage() {
                 betreff={detail.betreff} inhalt={detail.inhalt_text}
                 bildUrl={detail.bild_url ?? ""} blogUrl={detail.blog_link_url ?? ""} blogTitel={detail.blog_link_titel ?? ""}
               />
+              {detailKlicks.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <MousePointerClick className="w-4 h-4 text-primary" />
+                    Klicks nach Link ({detailKlicks.reduce((s, k) => s + k.klicks, 0)})
+                  </h3>
+                  <div className="border border-border rounded-lg p-3 space-y-2">
+                    {detailKlicks.map((k) => {
+                      const max = detailKlicks[0].klicks || 1;
+                      return (
+                        <div key={k.url} className="space-y-1">
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <span className="truncate text-muted-foreground" title={k.url}>
+                              {k.url.replace(/^https?:\/\//, "").slice(0, 50)}
+                            </span>
+                            <span className="font-semibold text-foreground shrink-0">{k.klicks}</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all"
+                              style={{ width: `${Math.round((k.klicks / max) * 100)}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-2">Empfänger ({detailRecipients.length})</h3>
                 <div className="border border-border rounded-lg max-h-56 overflow-y-auto divide-y divide-border">

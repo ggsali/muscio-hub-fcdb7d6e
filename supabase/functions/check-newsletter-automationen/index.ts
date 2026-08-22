@@ -1,3 +1,4 @@
+// Cron: täglich um 09:00 Uhr Schweizer Zeit (08:00 UTC)
 // Prüft Newsletter-Automationen und versendet fällige Mails (Reaktivierung / Follow-up).
 // Aufruf: manuell aus dem Admin-Bereich (Admin-JWT) oder per Cron mit Header x-automation-key.
 import { Resend } from "npm:resend@2";
@@ -24,9 +25,22 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
     const cronKey = req.headers.get("x-automation-key") ?? "";
-    const expectedKey = Deno.env.get("SEND_EMAIL_HOOK_SECRET") ?? "";
-    let authorized = expectedKey.length > 0 && cronKey === expectedKey;
+    let authorized = false;
+    if (cronKey.length > 0) {
+      const envKey = Deno.env.get("SEND_EMAIL_HOOK_SECRET") ?? "";
+      if (envKey.length > 0 && cronKey === envKey) authorized = true;
+      if (!authorized) {
+        const { data: setting } = await admin
+          .from("settings").select("value").eq("key", "newsletter_cron_key").maybeSingle();
+        if (setting?.value && setting.value === cronKey) authorized = true;
+      }
+    }
 
     if (!authorized) {
       const authHeader = req.headers.get("Authorization") ?? "";
@@ -44,10 +58,6 @@ Deno.serve(async (req) => {
       authorized = true;
     }
 
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
 
     const body = await req.json().catch(() => ({}));
     const onlyId = typeof body?.automation_id === "string" ? body.automation_id : null;
