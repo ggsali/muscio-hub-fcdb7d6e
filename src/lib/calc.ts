@@ -45,9 +45,9 @@ export async function saveSettings(settings: Settings): Promise<void> {
     .filter(([key, value]) => key in DEFAULT_SETTINGS && typeof value === "number" && !Number.isNaN(value))
     .map(([key, value]) => ({
       key,
-    value: String(value),
-    updated_at: new Date().toISOString(),
-  }));
+      value: String(value),
+      updated_at: new Date().toISOString(),
+    }));
   for (const entry of entries) {
     await supabase.from("settings").upsert(entry, { onConflict: "key" });
   }
