@@ -943,6 +943,34 @@ export default function NewsletterPage() {
                 betreff={detail.betreff} inhalt={detail.inhalt_text}
                 bildUrl={detail.bild_url ?? ""} blogUrl={detail.blog_link_url ?? ""} blogTitel={detail.blog_link_titel ?? ""}
               />
+              {detailKlicks.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <MousePointerClick className="w-4 h-4 text-primary" />
+                    Klicks nach Link ({detailKlicks.reduce((s, k) => s + k.klicks, 0)})
+                  </h3>
+                  <div className="border border-border rounded-lg p-3 space-y-2">
+                    {detailKlicks.map((k) => {
+                      const max = detailKlicks[0].klicks || 1;
+                      return (
+                        <div key={k.url} className="space-y-1">
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <span className="truncate text-muted-foreground" title={k.url}>
+                              {k.url.replace(/^https?:\/\//, "").slice(0, 50)}
+                            </span>
+                            <span className="font-semibold text-foreground shrink-0">{k.klicks}</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all"
+                              style={{ width: `${Math.round((k.klicks / max) * 100)}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-2">Empfänger ({detailRecipients.length})</h3>
                 <div className="border border-border rounded-lg max-h-56 overflow-y-auto divide-y divide-border">
