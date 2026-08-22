@@ -154,7 +154,7 @@ export default function PartFileUpload({ partId, orderId, customerId, disabled }
           <span className="text-muted-foreground">
             {uploading ? "Hochladen..." : "Dateien hier ablegen oder klicken"}
           </span>
-          <input ref={inputRef} type="file" multiple className="hidden" accept=".stl,.3mf,.pdf,.png,.jpg,.jpeg,.webp,.step,.obj" onChange={e => handleFiles(e.target.files)} />
+          <input ref={inputRef} type="file" multiple className="hidden" accept=".stl,.3mf,.pdf,.png,.jpg,.jpeg,.webp,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" onChange={e => handleFiles(e.target.files)} />
         </div>
       )}
 

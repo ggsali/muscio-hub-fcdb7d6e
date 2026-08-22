@@ -260,7 +260,7 @@ const ContactPage = () => {
                       <Label className="text-xs font-medium">Dateien & Bilder anhängen (optional)</Label>
                       <input
                         ref={fileInputRef} type="file" multiple
-                        accept=".stl,.3mf,.step,.obj,.pdf,image/*"
+                        accept=".stl,.3mf,.step,.obj,.pdf,image/*,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*"
                         className="hidden"
                         onChange={e => handleFiles(e.target.files)}
                       />

@@ -223,7 +223,7 @@ export default function ProjekteAdminPage() {
                 ) : (
                   <input
                     type="file"
-                    accept=".stl"
+                    accept=".stl,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*"
                     disabled={uploading}
                     onChange={e => e.target.files?.[0] && onUploadStl(e.target.files[0])}
                   />

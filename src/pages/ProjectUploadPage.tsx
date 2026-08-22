@@ -221,7 +221,7 @@ export default function ProjectUploadPage() {
             type="file"
             multiple
             className="hidden"
-            accept=".stl,.3mf,.step,.obj,.pdf,.png,.jpg,.jpeg,.webp,.zip,.rar,.7z"
+            accept=".stl,.3mf,.step,.obj,.pdf,.png,.jpg,.jpeg,.webp,.zip,.rar,.7z,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*"
             onChange={e => handleFiles(e.target.files)}
           />
         </div>

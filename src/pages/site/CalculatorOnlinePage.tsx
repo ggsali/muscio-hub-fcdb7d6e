@@ -934,7 +934,7 @@ const CalculatorOnlinePage = () => {
                   </div>
 
                   <div className="mt-4">
-                    <input id="quick-file-input" type="file" multiple accept=".stl,.3mf,.step,.obj" className="hidden" onChange={handleInput} />
+                    <input id="quick-file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
                     <label htmlFor="quick-file-input">
                       <Button asChild variant="outline" size="sm" className="gap-2 cursor-pointer">
                         <span><Plus className="w-4 h-4" /> Weitere Teile hinzufügen</span>
@@ -997,7 +997,7 @@ const CalculatorOnlinePage = () => {
                       dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
                     }`}
                   >
-                    <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj" className="hidden" onChange={handleInput} />
+                    <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
                     <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
                     <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
                     <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
@@ -1041,8 +1041,8 @@ const CalculatorOnlinePage = () => {
                   )}
 
                   {parts.length > 0 && (
-                    <div>
-                      <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj" className="hidden" onChange={handleInput} />
+                  <div>
+                    <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
                       <label htmlFor="step1-add-file">
                         <Button asChild variant="outline" className="w-full gap-2 cursor-pointer">
                           <span><Plus className="w-4 h-4" /> Weiteres Teil hinzufügen</span>
@@ -1459,7 +1459,7 @@ const CalculatorOnlinePage = () => {
                   </div>
 
                   <div>
-                    <input id="overview-file-input" type="file" multiple accept=".stl,.3mf,.step,.obj" className="hidden" onChange={handleInput} />
+                    <input id="overview-file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
                     <label htmlFor="overview-file-input">
                       <Button asChild variant="outline" className="gap-2 cursor-pointer w-full">
                         <span><Plus className="w-4 h-4" /> Weiteres Teil hinzufügen</span>
