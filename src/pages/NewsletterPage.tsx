@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Mail, Sparkles, Eye, Send, ImagePlus, BookOpen, Loader2, Users, Filter as FilterIcon,
-  MousePointerClick, Trophy, Zap, Save, Play, Trash2,
+  MousePointerClick, Trophy, Zap, Save, Play, Trash2, Clock,
 } from "lucide-react";
 
 type Customer = {
