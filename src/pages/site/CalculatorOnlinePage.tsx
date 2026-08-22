@@ -360,6 +360,13 @@ const CalculatorOnlinePage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [loadMaterials]);
 
+  // TEMP Logging zur Diagnose
+  useEffect(() => {
+    console.log("Materialien geladen:", materials?.length, materials);
+    console.log("materialMode:", materialMode);
+    console.log("kiChatOpen:", kiChatOpen);
+  }, [materials, materialMode, kiChatOpen]);
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
