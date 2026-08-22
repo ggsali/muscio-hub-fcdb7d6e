@@ -249,7 +249,7 @@ export async function exportOrderPDF(data: OrderExportData) {
       // immer mit dem angezeigten Hauptzeilen-Total übereinstimmt.
       const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
       const componentTotal =
-        (s.setup_pauschale > 0 ? s.setup_pauschale : 0) +
+        (s.setup_pauschale > 0 ? s.setup_pauschale * p.menge : 0) +
         (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
         (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h * p.menge : 0) +
         (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
@@ -268,10 +268,10 @@ export async function exportOrderPDF(data: OrderExportData) {
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
           { content: "Setup-Pauschale", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
-          { content: "1×", styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: `${p.menge}×`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
           { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
-          { content: "", styles: { fillColor: rowBg } },
-          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+          { content: `×${p.menge}`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: formatCHF(s.setup_pauschale * p.menge), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
         ]);
       }
       if (p.gewicht_g > 0) {

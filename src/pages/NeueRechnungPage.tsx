@@ -166,6 +166,38 @@ export default function NeueRechnungPage() {
         if (iErr) throw iErr;
       }
 
+      // PDF erzeugen und im Storage ablegen, damit die Rechnung später
+      // in der Finanzen-Liste heruntergeladen werden kann.
+      try {
+        const dataUri = (await exportManualBillPDF({
+          rechnungsnummer,
+          rechnungs_datum: rechnungsDatum,
+          faellig_am: faelligAm,
+          betreff,
+          empfaenger_name: name,
+          empfaenger_firma: firma,
+          empfaenger_adresse: adresse,
+          empfaenger_email: email,
+          items,
+          mwst_prozent: mwst,
+          company,
+          returnBase64: true,
+        })) as string;
+        const base64 = dataUri.split(",")[1];
+        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const filename = `Rechnung_${rechnungsnummer.replace(/[^\w.-]+/g, "_")}.pdf`;
+        const filePath = `manuell/${billId}/${filename}`;
+        const { error: upErr } = await supabase.storage
+          .from("bills")
+          .upload(filePath, new Blob([bytes], { type: "application/pdf" }), {
+            contentType: "application/pdf",
+            upsert: true,
+          });
+        if (!upErr) {
+          await (supabase.from as any)("bills").update({ file_path: filePath, filename }).eq("id", billId);
+        }
+      } catch { /* PDF-Ablage optional – Rechnung ist gespeichert */ }
+
       setSavedBillId(billId);
       toast({ description: "Rechnung gespeichert." });
       return billId;

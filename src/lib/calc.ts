@@ -28,18 +28,26 @@ export async function loadSettings(): Promise<Settings> {
   const { data } = await supabase.from("settings").select("*");
   if (!data || data.length === 0) return DEFAULT_SETTINGS;
   const s: Partial<Settings> = {};
+  const numericKeys = new Set(Object.keys(DEFAULT_SETTINGS));
   for (const row of data) {
-    (s as Record<string, number>)[row.key] = parseFloat(row.value);
+    // Nur bekannte numerische Settings übernehmen – sonst würden andere
+    // Einträge (z. B. google_review_url) zu NaN und beim Speichern überschrieben.
+    if (!numericKeys.has(row.key)) continue;
+    const num = parseFloat(row.value);
+    if (Number.isNaN(num)) continue;
+    (s as Record<string, number>)[row.key] = num;
   }
   return { ...DEFAULT_SETTINGS, ...s };
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
-  const entries = Object.entries(settings).map(([key, value]) => ({
-    key,
-    value: String(value),
-    updated_at: new Date().toISOString(),
-  }));
+  const entries = Object.entries(settings)
+    .filter(([key, value]) => key in DEFAULT_SETTINGS && typeof value === "number" && !Number.isNaN(value))
+    .map(([key, value]) => ({
+      key,
+      value: String(value),
+      updated_at: new Date().toISOString(),
+    }));
   for (const entry of entries) {
     await supabase.from("settings").upsert(entry, { onConflict: "key" });
   }
