@@ -39,6 +39,9 @@ import ChatPage from "@/pages/ChatPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 import WebsiteBestellungenPage from "@/pages/WebsiteBestellungenPage";
 import WebsiteKundenAdminPage from "@/pages/WebsiteKundenAdminPage";
+import NewsletterPage from "@/pages/NewsletterPage";
+import NewsletterAbmeldenPage from "@/pages/site/NewsletterAbmeldenPage";
+
 
 import WebsiteEinstellungenPage from "@/pages/WebsiteEinstellungenPage";
 
@@ -150,7 +153,9 @@ const App = () => (
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/maschinen" element={<EquipmentPage />} />
+                <Route path="/newsletter/abmelden" element={<NewsletterAbmeldenPage />} />
               </Route>
+
 
               {/* Auth */}
               <Route path="/login" element={<Navigate to="/anmelden" replace />} />
@@ -197,6 +202,8 @@ const App = () => (
                 <Route path="chat" element={<ChatPage />} />
                 <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
                 <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />
+                <Route path="newsletter" element={<NewsletterPage />} />
+
                 
                 <Route path="website/einstellungen" element={<WebsiteEinstellungenPage />} />
               </Route>
