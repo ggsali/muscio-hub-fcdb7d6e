@@ -668,18 +668,20 @@ const CalculatorOnlinePage = () => {
       || null;
   }, [kiResult, materials]);
 
-  const kiSummary = useMemo(() => {
+  // Kompakte Admin-Zusammenfassung per KI erzeugen (kein Gesprächsverlauf)
+  const buildKiSummary = async (): Promise<string | null> => {
     if (!kiResult) return null;
-    const lines = [
-      `Bauteile (${parts.length}):`,
-      ...parts.map((p) => `- ${p.fileName}${p.hasVolume ? ` (${p.volumeCm3.toFixed(1)} cm³, ca. ${p.estimatedWeight.toFixed(1)} g)` : ""}`),
-      `Empfohlenes Material: ${kiResult.material} — ${kiResult.begruendung}`,
-      "",
-      "--- Gesprächsverlauf ---",
-      kiResult.transcript,
-    ];
-    return lines.join("\n");
-  }, [kiResult, parts]);
+    const fallback = `Empfohlenes Material: ${kiResult.material}\nGrund: ${kiResult.begruendung}`;
+    try {
+      const { data, error } = await supabase.functions.invoke("ki-materialberatung", {
+        body: { mode: "summary", transcript: kiResult.transcript },
+      });
+      if (error || !data?.zusammenfassung) return fallback;
+      return String(data.zusammenfassung).trim();
+    } catch {
+      return fallback;
+    }
+  };
 
   const canNext =
     (step === 1 && parts.length > 0) ||
@@ -719,7 +721,8 @@ const CalculatorOnlinePage = () => {
       const addressLine = !user && (form.strasse || form.plz || form.ort)
         ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}`
         : "";
-      const kiBlock = kiSummary ? `\n\n--- KI-Materialberatung ---\n${kiSummary}` : "";
+      const kiSummaryText = await buildKiSummary();
+      const kiBlock = kiSummaryText ? `\n\n--- KI-Materialberatung ---\n${kiSummaryText}` : "";
       const partImageAttachments = parts.flatMap(p =>
         p.images.filter(i => i.storagePath).map(i => ({
           filename: i.file.name,
@@ -765,7 +768,7 @@ const CalculatorOnlinePage = () => {
           ort: form.ort || null,
           land: form.land || "Schweiz",
           attachments,
-          ki_beratung_zusammenfassung: kiSummary,
+          ki_beratung_zusammenfassung: kiSummaryText,
           ki_empfohlenes_material: kiResult?.material ?? null,
         },
       });

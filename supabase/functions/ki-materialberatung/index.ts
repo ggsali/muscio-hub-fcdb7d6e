@@ -15,11 +15,55 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, fileName, geometry, availableMaterials, partNames } = await req.json();
-    if (!Array.isArray(messages)) return json({ error: "messages fehlt" }, 400);
+    const body = await req.json();
+    const { messages, fileName, geometry, availableMaterials, partNames, mode, transcript } = body;
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI-Key fehlt" }, 500);
+
+    // ── Modus "summary": kompakte Admin-Zusammenfassung nach Abschluss des Chats ──
+    if (mode === "summary") {
+      const konversation = typeof transcript === "string" && transcript.trim()
+        ? transcript
+        : Array.isArray(messages)
+          ? messages.map((m: any) => `${m.role === "assistant" ? "Berater" : "Kunde"}: ${m.content}`).join("\n")
+          : "";
+      if (!konversation.trim()) return json({ error: "Keine Konversation übergeben" }, 400);
+
+      const SUMMARY_PROMPT = `Basierend auf dieser Konversation erstelle eine kompakte Admin-Zusammenfassung auf Deutsch. Nur die relevanten Fakten, keine Erklärungen. Format exakt so:
+
+Verwendungszweck: [1 Satz]
+Belastung: [keine / leicht / stark]
+Einsatzort: [Innen / Aussen / Beides]
+Temperatur: [normal / erhöht / hoch]
+Flexibilität: [starr / flexibel]
+Empfohlenes Material: [Material]
+Grund: [1 kurzer Satz]`;
+
+      const sumResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: SUMMARY_PROMPT },
+            { role: "user", content: konversation },
+          ],
+        }),
+      });
+
+      if (sumResp.status === 429) return json({ error: "Zu viele Anfragen, bitte kurz warten." }, 429);
+      if (sumResp.status === 402) return json({ error: "AI-Guthaben aufgebraucht." }, 402);
+      if (!sumResp.ok) {
+        console.error("AI-Fehler (summary)", await sumResp.text());
+        return json({ error: "AI-Fehler" }, 500);
+      }
+      const sumData = await sumResp.json();
+      const zusammenfassung = String(sumData?.choices?.[0]?.message?.content ?? "").trim();
+      return json({ zusammenfassung });
+    }
+
+    if (!Array.isArray(messages)) return json({ error: "messages fehlt" }, 400);
 
     const list = Array.isArray(availableMaterials) && availableMaterials.length > 0
       ? availableMaterials.join(", ")
