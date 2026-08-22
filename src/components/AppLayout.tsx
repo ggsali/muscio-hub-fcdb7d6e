@@ -25,6 +25,8 @@ const navItems = [
   { to: "/admin/finanzen", icon: <Receipt className="w-[18px] h-[18px]" />, label: "Finanzen" },
   { to: "/admin/kalender", icon: <CalendarDays className="w-[18px] h-[18px]" />, label: "Kalender" },
   { to: "/admin/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
+  { to: "/admin/newsletter", icon: <Mail className="w-[18px] h-[18px]" />, label: "Newsletter" },
+
   { to: "/admin/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
 ];
 
