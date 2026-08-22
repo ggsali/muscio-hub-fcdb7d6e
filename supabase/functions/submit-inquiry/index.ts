@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,15 +93,35 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    // Admin-Benachrichtigung per E-Mail (Fehler hier nicht blockierend)
+    // Admin-Benachrichtigung per E-Mail direkt via Resend (Fehler hier nicht blockierend)
     try {
-      await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "neue-anfrage-admin",
-          recipientEmail: "anfrage@3dmuscio.com",
-          idempotencyKey: `inquiry-admin-${crypto.randomUUID()}`,
-          templateData: { name, email, telefon: telefon || null, betreff: betreff || "Anfrage", nachricht },
-        },
+      const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
+      await resend.emails.send({
+        from: "3DMuscio <noreply@3dmuscio.com>",
+        to: ["anfrage@3dmuscio.com"],
+        subject: `🔔 Neue Anfrage von ${name}${betreff ? ` – ${betreff}` : ""}`,
+        html: `
+          <div style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; color: #111827; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            <div style="background: #FF5A00; padding: 24px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600;">🔔 Neue Anfrage eingegangen</h1>
+            </div>
+            <div style="padding: 24px;">
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; width: 120px;">Name</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${name || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">E-Mail</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${email || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Telefon</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${telefon || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Betreff</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${betreff || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Nachricht</td><td style="padding: 8px 0;">${nachricht || "–"}</td></tr>
+              </table>
+              <div style="text-align: center;">
+                <a href="https://muscio-hub.lovable.app/admin/anfragen" style="display: inline-block; background: #FF5A00; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 500;">Anfrage im Admin öffnen →</a>
+              </div>
+            </div>
+            <div style="background: #f3f4f6; padding: 16px 24px; text-align: center; font-size: 12px; color: #6b7280;">
+              3DMuscio · Eschlikon TG · anfrage@3dmuscio.com
+            </div>
+          </div>
+        `,
       });
     } catch (mailErr) {
       console.error("Admin-Mail Fehler:", mailErr);
