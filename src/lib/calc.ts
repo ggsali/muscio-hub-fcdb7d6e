@@ -28,6 +28,7 @@ export async function loadSettings(): Promise<Settings> {
   const { data } = await supabase.from("settings").select("*");
   if (!data || data.length === 0) return DEFAULT_SETTINGS;
   const s: Partial<Settings> = {};
+  const numericKeys = new Set(Object.keys(DEFAULT_SETTINGS));
   for (const row of data) {
     (s as Record<string, number>)[row.key] = parseFloat(row.value);
   }
