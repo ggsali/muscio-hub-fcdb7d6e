@@ -1299,7 +1299,13 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
-                  {materialMode !== null && materialId && (!isMobile || !kiChatOpen) && (
+                  {materialMode === "manual" && materialId && (
+                    <Button className="w-full gap-2" onClick={goNext}>
+                      Weiter zur Farbe <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {materialMode === "ki" && materialId && (!isMobile || !kiChatOpen) && (
                     <Button className="w-full gap-2" onClick={goNext}>
                       Weiter zur Farbe <ArrowRight className="w-4 h-4" />
                     </Button>
