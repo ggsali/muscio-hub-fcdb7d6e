@@ -586,32 +586,41 @@ const CalculatorOnlinePage = () => {
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** Geometrische Schätzung wie auf der bisherigen Website:
-   *  Gewicht (Shell + Infill + Sicherheitszuschlag) × Materialpreis × Qualitätsfaktor */
+  /** Geometrische Schätzung: Materialkosten + Maschinenzeit, Setup separat 1× pro Bestellung */
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
     if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
     }
+
     const weight = p.estimatedWeight;
-    const layerFactor = presetByInfill(p.infill).speedFactor;
-    const unit = weight * mat.pricePerGram * layerFactor;
+    const quality = presetByInfill(p.infill);
+
+    // Materialkosten (aus filaments.verkaufspreis_pro_g)
+    const materialCost = weight * mat.pricePerGram;
+
+    // Maschinenzeit schätzen
+    const baseHours = (weight / 10) * quality.speedFactor;
+    const machineCost = baseHours * (settings.maschinenzeit_pro_h || 3.0);
+
+    const unit = materialCost + machineCost;
 
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
 
-    return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: false };
+    const subtotal = Math.max(unit * p.quantity * (1 - discount), 0);
+    return { weight, unit, subtotal, discount, exact: false };
   };
 
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
-  const setupFee = parts.length > 0 ? SETUP_FEE : 0;
+  const setupFee = parts.length > 0 ? (FIX_COST || 20) : 0;
   const subtotal = materialTotal + setupFee;
   const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
-  const total = subtotal + shipping;
+  const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
 
   const hasStep = parts.some((p) => isStepFile(p.fileName));
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
