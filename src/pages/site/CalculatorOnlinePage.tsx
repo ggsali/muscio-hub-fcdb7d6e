@@ -327,22 +327,42 @@ const CalculatorOnlinePage = () => {
   };
 
   const loadMaterials = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("materials")
-      .select("*")
-      .eq("aktiv", true)
-      .order("sort_order");
+    const [{ data: mats, error }, { data: fils }] = await Promise.all([
+      supabase.from("materials").select("*").eq("aktiv", true).order("sort_order"),
+      supabase.from("filaments").select("material, verkaufspreis_pro_g, preis_pro_kg, aktiv").eq("aktiv", true),
+    ]);
+
+    // Verkaufspreis pro Material aus Filamenten:
+    const filamentPreise = new Map<string, number>();
+    for (const f of fils ?? []) {
+      if (!f.material) continue;
+      const key = f.material.toUpperCase();
+      // verkaufspreis_pro_g bevorzugen, sonst preis_pro_kg / 1000 als Fallback
+      const preis = f.verkaufspreis_pro_g
+        ? Number(f.verkaufspreis_pro_g)
+        : Number(f.preis_pro_kg) / 1000;
+      if (!filamentPreise.has(key)) {
+        filamentPreise.set(key, preis);
+      }
+    }
+
     if (error) {
       setMaterialsError("Materialien konnten nicht geladen werden.");
-    } else if (data) {
+    } else if (mats) {
       setMaterials(
-        data.map((m: any) => ({
-          id: m.id,
-          name: m.name,
-          pricePerGram: Number(m.price_per_gram),
-          density: Number(m.density),
-          farben: Array.isArray(m.farben) ? m.farben : [],
-        })),
+        (mats ?? []).map((m: any) => {
+          const key = m.name.toUpperCase();
+          const filPreis = filamentPreise.get(key)
+            ?? filamentPreise.get(m.name.split(" ")[0].toUpperCase())
+            ?? Number(m.price_per_gram); // letzter Fallback
+          return {
+            id: m.id,
+            name: m.name,
+            pricePerGram: filPreis,
+            density: Number(m.density),
+            farben: Array.isArray(m.farben) ? m.farben : [],
+          };
+        }),
       );
     }
     setMaterialsLoading(false);
