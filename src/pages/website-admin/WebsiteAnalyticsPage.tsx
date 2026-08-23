@@ -44,6 +44,7 @@ export default function WebsiteAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [herkunft, setHerkunft] = useState<[string, number][]>([]);
   const [calcCounts, setCalcCounts] = useState<Record<string, number>>({});
+  const [calcRows, setCalcRows] = useState<{ event: string; created_at: string }[]>([]);
 
   const range = RANGES.find(r => r.key === rangeKey)!;
 
