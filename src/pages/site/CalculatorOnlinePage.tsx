@@ -85,7 +85,7 @@ const calcWeight = (volumeCm3: number, material: Material, infill: number): numb
 
   return Math.max(1, Math.round(baseWeight * safetyFactor * 10) / 10)
 }
-const SETUP_FEE = 20;
+
 
 async function calcStlVolumeCm3(file: File): Promise<number> {
   const buffer = await file.arrayBuffer();
@@ -586,32 +586,41 @@ const CalculatorOnlinePage = () => {
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** Geometrische Schätzung wie auf der bisherigen Website:
-   *  Gewicht (Shell + Infill + Sicherheitszuschlag) × Materialpreis × Qualitätsfaktor */
+  /** Geometrische Schätzung: Materialkosten + Maschinenzeit, Setup separat 1× pro Bestellung */
   const calcPart = (p: Part) => {
     const mat = materials.find((m) => m.id === p.materialId);
     if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
     }
+
     const weight = p.estimatedWeight;
-    const layerFactor = presetByInfill(p.infill).speedFactor;
-    const unit = weight * mat.pricePerGram * layerFactor;
+    const quality = presetByInfill(p.infill);
+
+    // Materialkosten (aus filaments.verkaufspreis_pro_g)
+    const materialCost = weight * mat.pricePerGram;
+
+    // Maschinenzeit schätzen
+    const baseHours = (weight / 10) * quality.speedFactor;
+    const machineCost = baseHours * (settings.maschinenzeit_pro_h || 3.0);
+
+    const unit = materialCost + machineCost;
 
     let discount = 0;
     if (p.quantity >= 10) discount = 0.15;
     else if (p.quantity >= 5) discount = 0.1;
 
-    return { weight, unit, subtotal: unit * p.quantity * (1 - discount), discount, exact: false };
+    const subtotal = Math.max(unit * p.quantity * (1 - discount), 0);
+    return { weight, unit, subtotal, discount, exact: false };
   };
 
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
-  const setupFee = parts.length > 0 ? SETUP_FEE : 0;
+  const setupFee = parts.length > 0 ? (FIX_COST || 20) : 0;
   const subtotal = materialTotal + setupFee;
   const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
-  const total = subtotal + shipping;
+  const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
 
   const hasStep = parts.some((p) => isStepFile(p.fileName));
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
@@ -1503,14 +1512,22 @@ const CalculatorOnlinePage = () => {
 
                   {/* Preisübersicht */}
                   <div className="bg-card rounded-2xl border border-border p-5 space-y-2 text-sm">
+                    {calcs.map(({ part: p, calc }) => (
+                      <div key={p.id} className="flex justify-between text-muted-foreground">
+                        <span className="truncate pr-2">{p.fileName}</span>
+                        <span className="text-foreground tabular-nums shrink-0">
+                          {isStepFile(p.fileName) ? "Auf Anfrage" : `${CHF(calc.unit)} × ${p.quantity}`}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="border-t border-border pt-2 mt-2" />
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Materialkosten</span><span className="text-foreground">{CHF(materialTotal)}</span>
+                      <span>Setup-Pauschale <span className="text-xs text-muted-foreground/70">(1× pro Bestellung)</span></span>
+                      <span className="text-foreground tabular-nums">{CHF(setupFee)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Setup-Gebühr</span><span className="text-foreground">{CHF(setupFee)}</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Versand</span><span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
+                      <span>Versand</span>
+                      <span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
                     </div>
                     <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
                       <span className="font-bold">Total</span>
