@@ -6,7 +6,7 @@ import {
   BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet, TrendingUp, RefreshCw, MapPin, Filter,
 } from "lucide-react";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from "recharts";
 import { format, subDays, startOfDay } from "date-fns";
 import { de } from "date-fns/locale";
@@ -44,6 +44,7 @@ export default function WebsiteAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [herkunft, setHerkunft] = useState<[string, number][]>([]);
   const [calcCounts, setCalcCounts] = useState<Record<string, number>>({});
+  const [calcRows, setCalcRows] = useState<{ event: string; created_at: string }[]>([]);
 
   const range = RANGES.find(r => r.key === rangeKey)!;
 
@@ -78,17 +79,46 @@ export default function WebsiteAnalyticsPage() {
     const since30 = subDays(new Date(), 30).toISOString();
     const { data } = await supabase
       .from("calc_events")
-      .select("event")
+      .select("event, created_at")
       .gte("created_at", since30)
       .limit(20000);
+    const rows = (data as { event: string; created_at: string }[]) || [];
     const counts: Record<string, number> = {};
-    ((data as { event: string }[]) || []).forEach(r => {
+    rows.forEach(r => {
       counts[r.event] = (counts[r.event] || 0) + 1;
     });
     setCalcCounts(counts);
+    setCalcRows(rows);
   }
 
   useEffect(() => { loadHerkunft(); loadCalcEvents(); }, []);
+
+  const funnelPerDay = useMemo(() => {
+    const buckets: Record<string, any> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = startOfDay(subDays(new Date(), i));
+      buckets[format(d, "yyyy-MM-dd")] = {
+        date: format(d, "dd.MM", { locale: de }),
+        Uploads: 0,
+        "KI-Chat": 0,
+        Material: 0,
+        Bestellungen: 0,
+      };
+    }
+    for (const r of calcRows) {
+      const key = format(startOfDay(new Date(r.created_at)), "yyyy-MM-dd");
+      const b = buckets[key];
+      if (!b) continue;
+      if (r.event === "schritt_1_datei_hochgeladen") b.Uploads += 1;
+      else if (r.event === "schritt_2_ki_chat_gestartet") b["KI-Chat"] += 1;
+      else if (
+        r.event === "schritt_2_ki_empfehlung_uebernommen" ||
+        r.event === "schritt_2_material_manuell_gewaehlt"
+      ) b.Material += 1;
+      else if (r.event === "schritt_5_bestellung_abgesendet") b.Bestellungen += 1;
+    }
+    return Object.values(buckets);
+  }, [calcRows]);
 
   const herkunftTotal = herkunft.reduce((s, [, n]) => s + n, 0);
 
@@ -244,6 +274,35 @@ export default function WebsiteAnalyticsPage() {
             </div>
           </>
         )}
+      </Card>
+
+      <Card className="p-4 md:p-6">
+        <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+          <Filter className="w-4 h-4 text-primary" /> Kalkulator Funnel pro Tag
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Letzte 30 Tage</p>
+        <div className="h-[280px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={funnelPerDay}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Area type="monotone" dataKey="Uploads" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} />
+              <Area type="monotone" dataKey="KI-Chat" stroke="hsl(var(--foreground))" fill="hsl(var(--foreground))" fillOpacity={0.08} strokeWidth={2} />
+              <Area type="monotone" dataKey="Material" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.08} strokeWidth={2} />
+              <Area type="monotone" dataKey="Bestellungen" stroke="hsl(var(--success))" fill="hsl(var(--success))" fillOpacity={0.15} strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
 
       <Card className="p-4 md:p-6">
