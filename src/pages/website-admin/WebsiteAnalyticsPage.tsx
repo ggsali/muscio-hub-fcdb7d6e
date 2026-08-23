@@ -6,7 +6,7 @@ import {
   BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet, TrendingUp, RefreshCw, MapPin, Filter,
 } from "lucide-react";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from "recharts";
 import { format, subDays, startOfDay } from "date-fns";
 import { de } from "date-fns/locale";
