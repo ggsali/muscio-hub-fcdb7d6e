@@ -278,6 +278,35 @@ export default function WebsiteAnalyticsPage() {
 
       <Card className="p-4 md:p-6">
         <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+          <Filter className="w-4 h-4 text-primary" /> Kalkulator Funnel pro Tag
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">Letzte 30 Tage</p>
+        <div className="h-[280px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={funnelPerDay}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Area type="monotone" dataKey="Uploads" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} />
+              <Area type="monotone" dataKey="KI-Chat" stroke="hsl(var(--foreground))" fill="hsl(var(--foreground))" fillOpacity={0.08} strokeWidth={2} />
+              <Area type="monotone" dataKey="Material" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.08} strokeWidth={2} />
+              <Area type="monotone" dataKey="Bestellungen" stroke="hsl(var(--success))" fill="hsl(var(--success))" fillOpacity={0.15} strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <Card className="p-4 md:p-6">
+        <h2 className="font-heading text-lg font-bold flex items-center gap-2">
           <MapPin className="w-4 h-4 text-primary" /> Herkunft der Anfragen
         </h2>
         <p className="text-xs text-muted-foreground mb-4">Letzte 90 Tage</p>
