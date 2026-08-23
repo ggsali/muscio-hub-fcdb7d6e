@@ -78,17 +78,46 @@ export default function WebsiteAnalyticsPage() {
     const since30 = subDays(new Date(), 30).toISOString();
     const { data } = await supabase
       .from("calc_events")
-      .select("event")
+      .select("event, created_at")
       .gte("created_at", since30)
       .limit(20000);
+    const rows = (data as { event: string; created_at: string }[]) || [];
     const counts: Record<string, number> = {};
-    ((data as { event: string }[]) || []).forEach(r => {
+    rows.forEach(r => {
       counts[r.event] = (counts[r.event] || 0) + 1;
     });
     setCalcCounts(counts);
+    setCalcRows(rows);
   }
 
   useEffect(() => { loadHerkunft(); loadCalcEvents(); }, []);
+
+  const funnelPerDay = useMemo(() => {
+    const buckets: Record<string, any> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = startOfDay(subDays(new Date(), i));
+      buckets[format(d, "yyyy-MM-dd")] = {
+        date: format(d, "dd.MM", { locale: de }),
+        Uploads: 0,
+        "KI-Chat": 0,
+        Material: 0,
+        Bestellungen: 0,
+      };
+    }
+    for (const r of calcRows) {
+      const key = format(startOfDay(new Date(r.created_at)), "yyyy-MM-dd");
+      const b = buckets[key];
+      if (!b) continue;
+      if (r.event === "schritt_1_datei_hochgeladen") b.Uploads += 1;
+      else if (r.event === "schritt_2_ki_chat_gestartet") b["KI-Chat"] += 1;
+      else if (
+        r.event === "schritt_2_ki_empfehlung_uebernommen" ||
+        r.event === "schritt_2_material_manuell_gewaehlt"
+      ) b.Material += 1;
+      else if (r.event === "schritt_5_bestellung_abgesendet") b.Bestellungen += 1;
+    }
+    return Object.values(buckets);
+  }, [calcRows]);
 
   const herkunftTotal = herkunft.reduce((s, [, n]) => s + n, 0);
 
