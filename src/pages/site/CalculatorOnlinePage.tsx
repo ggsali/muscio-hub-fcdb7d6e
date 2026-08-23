@@ -85,7 +85,7 @@ const calcWeight = (volumeCm3: number, material: Material, infill: number): numb
 
   return Math.max(1, Math.round(baseWeight * safetyFactor * 10) / 10)
 }
-const SETUP_FEE = 20;
+
 
 async function calcStlVolumeCm3(file: File): Promise<number> {
   const buffer = await file.arrayBuffer();
