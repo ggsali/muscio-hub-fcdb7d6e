@@ -1512,14 +1512,22 @@ const CalculatorOnlinePage = () => {
 
                   {/* Preisübersicht */}
                   <div className="bg-card rounded-2xl border border-border p-5 space-y-2 text-sm">
+                    {calcs.map(({ part: p, calc }) => (
+                      <div key={p.id} className="flex justify-between text-muted-foreground">
+                        <span className="truncate pr-2">{p.fileName}</span>
+                        <span className="text-foreground tabular-nums shrink-0">
+                          {isStepFile(p.fileName) ? "Auf Anfrage" : `${CHF(calc.unit)} × ${p.quantity}`}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="border-t border-border pt-2 mt-2" />
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Materialkosten</span><span className="text-foreground">{CHF(materialTotal)}</span>
+                      <span>Setup-Pauschale <span className="text-xs text-muted-foreground/70">(1× pro Bestellung)</span></span>
+                      <span className="text-foreground tabular-nums">{CHF(setupFee)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Setup-Gebühr</span><span className="text-foreground">{CHF(setupFee)}</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Versand</span><span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
+                      <span>Versand</span>
+                      <span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
                     </div>
                     <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
                       <span className="font-bold">Total</span>
