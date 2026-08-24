@@ -110,7 +110,9 @@ function overhangShare(tris: Tri[], up: [number, number, number], thresholdDeg: 
   for (const t of tris) {
     const dot = t.nx * up[0] + t.ny * up[1] + t.nz * up[2];
     total += t.area;
-    if (dot < limit) over += t.area;
+    // Flächen, die praktisch flach auf der Druckplatte liegen (dot ≈ -1), brauchen keinen Support
+    if (dot < limit && dot > -0.98) over += t.area;
+
   }
   return total > 0 ? (over / total) * 100 : 0;
 }
