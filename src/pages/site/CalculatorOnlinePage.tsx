@@ -619,13 +619,23 @@ const CalculatorOnlinePage = () => {
   // Dateien, die auf einer anderen Seite (Hero-Dropzone, Mobile-CTA) gewählt wurden
   const pendingHandled = useRef(false);
   useEffect(() => {
-    if (pendingHandled.current || materials.length === 0) return;
-    const files = takePendingUploads();
-    if (files.length === 0) return;
-    pendingHandled.current = true;
-    setQuickMode(true);
-    files.forEach(addFile);
+    if (pendingHandled.current) return;
 
+    const handle = () => {
+      const files = takePendingUploads();
+      if (files.length === 0) return;
+      pendingHandled.current = true;
+      setQuickMode(true);
+      files.forEach(addFile);
+    };
+
+    if (materials.length > 0) {
+      handle();
+      return;
+    }
+
+    const timeout = setTimeout(handle, 3000);
+    return () => clearTimeout(timeout);
   }, [materials, addFile]);
 
   const handleDrop = (e: React.DragEvent) => {
