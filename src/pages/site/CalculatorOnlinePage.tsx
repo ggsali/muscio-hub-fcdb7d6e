@@ -1021,14 +1021,19 @@ const CalculatorOnlinePage = () => {
                 <ArrowLeft className="w-3.5 h-3.5" /> Zurück
               </Button>
               <div
-                className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors ${
-                  priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors flex items-center gap-1.5 ${
+                  kiLoading || priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                 }`}
               >
-                {hasStep
+                {kiLoading ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 🤖 Analysiert…</>
+                ) : hasStep
                   ? "Preis nach Prüfung"
-                  : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+                  : priceBadge !== null
+                    ? (hasKiAnalysis ? `ca. ${CHF(totalMin)} – ${CHF(totalMax)}` : `Aktueller Preis: ${CHF(priceBadge)}`)
+                    : "Aktueller Preis: CHF –.–"}
               </div>
+
             </div>
           </div>
         </div>
