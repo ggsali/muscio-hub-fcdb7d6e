@@ -1547,9 +1547,12 @@ const CalculatorOnlinePage = () => {
                     })}
                   </div>
 
-                  <Button className="w-full gap-2" onClick={goNext}>
-                    Weiter zur Übersicht <ArrowRight className="w-4 h-4" />
+                  <Button className="w-full gap-2" onClick={goNext} disabled={kiLoading}>
+                    {kiLoading
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> 🤖 Analyse läuft…</>
+                      : <>Weiter zur Übersicht <ArrowRight className="w-4 h-4" /></>}
                   </Button>
+
                 </div>
               )}
 
