@@ -362,6 +362,7 @@ const CalculatorOnlinePage = () => {
       .order("material", { ascending: true });
 
     console.log("[Kalkulator] Filamente geladen:", filaments?.length, filaments);
+    console.log("[Filamente]", filaments?.map((f: any) => ({ id: f.id, name: f.name, material: f.material })));
 
     if (error || !filaments || filaments.length === 0) {
       console.warn("[Kalkulator] Keine Filamente – Fallback auf materials-Tabelle");
@@ -1491,9 +1492,9 @@ const CalculatorOnlinePage = () => {
                                         }}
                                       />
                                     )}
-                                    <p className="font-bold text-sm leading-tight">{m.materialType || m.name}</p>
+                                    <p className="font-bold text-sm leading-tight">{m.name}</p>
                                   </div>
-                                  {m.farbe && (
+                                  {m.farbe && !m.farbe.startsWith("#") && (
                                     <p className="text-xs text-muted-foreground">{m.farbe}</p>
                                   )}
                                 </button>
@@ -1541,9 +1542,9 @@ const CalculatorOnlinePage = () => {
                                         }}
                                       />
                                     )}
-                                    <p className="font-bold text-sm leading-tight">{m.materialType || m.name}</p>
+                                    <p className="font-bold text-sm leading-tight">{m.name}</p>
                                   </div>
-                                  {m.farbe && (
+                                  {m.farbe && !m.farbe.startsWith("#") && (
                                     <p className="text-xs text-muted-foreground">{m.farbe}</p>
                                   )}
                                 </button>
