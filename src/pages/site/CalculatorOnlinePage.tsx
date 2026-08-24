@@ -1708,13 +1708,26 @@ const CalculatorOnlinePage = () => {
                   {/* Preisübersicht */}
                   <div className="bg-card rounded-2xl border border-border p-5 space-y-2 text-sm">
                     {calcs.map(({ part: p, calc }) => (
-                      <div key={p.id} className="flex justify-between text-muted-foreground">
-                        <span className="truncate pr-2">{p.fileName}</span>
-                        <span className="text-foreground tabular-nums shrink-0">
-                          {isStepFile(p.fileName) ? "Auf Anfrage" : `${CHF(calc.unit)} × ${p.quantity}`}
-                        </span>
+                      <div key={p.id} className="space-y-1">
+                        <div className="flex justify-between text-muted-foreground">
+                          <span className="truncate pr-2">{p.fileName}</span>
+                          <span className="text-foreground tabular-nums shrink-0">
+                            {isStepFile(p.fileName) ? "Auf Anfrage" : `${CHF(calc.unit)} × ${p.quantity}`}
+                          </span>
+                        </div>
+                        {p.kiAnalysis && !p.kiAnalysisLoading && (
+                          <div className="ml-3 pl-3 border-l border-border space-y-0.5 text-xs text-muted-foreground">
+                            <div className="flex justify-between"><span>Materialkosten</span><span className="tabular-nums">{CHF(p.kiAnalysis.materialkosten)}</span></div>
+                            <div className="flex justify-between"><span>Maschinenzeit ({p.kiAnalysis.druckzeit_minuten} min)</span><span className="tabular-nums">{CHF(p.kiAnalysis.maschinenkosten)}</span></div>
+                            {p.kiAnalysis.support_nachbearbeitung > 0 && (
+                              <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(p.kiAnalysis.support_nachbearbeitung)}</span></div>
+                            )}
+                            <div className="flex justify-between"><span>× {p.quantity} Stück{calc.discount > 0 ? ` (−${Math.round(calc.discount * 100)}%)` : ""}</span><span className="tabular-nums text-foreground">{CHF(calc.subtotal)}</span></div>
+                          </div>
+                        )}
                       </div>
                     ))}
+
                     <div className="border-t border-border pt-2 mt-2" />
                     <div className="flex justify-between text-muted-foreground">
                       <span>Setup-Pauschale <span className="text-xs text-muted-foreground/70">(1× pro Bestellung)</span></span>
