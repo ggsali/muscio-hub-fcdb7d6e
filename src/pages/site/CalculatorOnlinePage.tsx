@@ -51,6 +51,26 @@ interface PartImage {
   previewUrl: string;
 }
 
+export interface KiAnalysis {
+  volumeCm3?: number;
+  weightG?: number;
+  druckzeit_minuten: number;
+  materialkosten: number;
+  maschinenkosten: number;
+  support_nachbearbeitung: number;
+  preis_pro_stueck: number;
+  gesamtpreis: number;
+  gesamtpreis_min: number;
+  gesamtpreis_max: number;
+  versand: number;
+  hat_support: boolean;
+  orientierung: string;
+  orientierung_original_ueberhang: number;
+  orientierung_beste_ueberhang: number;
+  begruendung: string;
+  hinweis_fuer_kunden: string;
+}
+
 interface Part {
   id: string;
   fileName: string;
@@ -66,7 +86,12 @@ interface Part {
   estimatedWeight: number;
   previewUrl?: string;
   images: PartImage[];
+  stlBase64: string | null;
+  kiAnalysis: KiAnalysis | null;
+  kiAnalysisLoading: boolean;
+  kiAnalysisError: string | null;
 }
+
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
