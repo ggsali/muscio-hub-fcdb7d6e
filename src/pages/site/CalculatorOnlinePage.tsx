@@ -408,9 +408,7 @@ const CalculatorOnlinePage = () => {
     setMaterials(
       validFilaments.map((f: any) => ({
         id: f.id,
-        name: f.material + (f.farbe && f.farbe !== "#ffffff" && f.farbe !== "#000000"
-          ? " – " + f.farbe
-          : ""),
+        name: f.name,
         materialType: f.material,
         pricePerGram: f.verkaufspreis_pro_g
           ? Number(f.verkaufspreis_pro_g)
