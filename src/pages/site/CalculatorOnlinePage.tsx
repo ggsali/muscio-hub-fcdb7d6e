@@ -51,6 +51,26 @@ interface PartImage {
   previewUrl: string;
 }
 
+export interface KiAnalysis {
+  volumeCm3?: number;
+  weightG?: number;
+  druckzeit_minuten: number;
+  materialkosten: number;
+  maschinenkosten: number;
+  support_nachbearbeitung: number;
+  preis_pro_stueck: number;
+  gesamtpreis: number;
+  gesamtpreis_min: number;
+  gesamtpreis_max: number;
+  versand: number;
+  hat_support: boolean;
+  orientierung: string;
+  orientierung_original_ueberhang: number;
+  orientierung_beste_ueberhang: number;
+  begruendung: string;
+  hinweis_fuer_kunden: string;
+}
+
 interface Part {
   id: string;
   fileName: string;
@@ -66,7 +86,12 @@ interface Part {
   estimatedWeight: number;
   previewUrl?: string;
   images: PartImage[];
+  stlBase64: string | null;
+  kiAnalysis: KiAnalysis | null;
+  kiAnalysisLoading: boolean;
+  kiAnalysisError: string | null;
 }
+
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
@@ -402,6 +427,66 @@ const CalculatorOnlinePage = () => {
     })();
   }, []);
 
+  /** KI-/Slicer-Analyse für ein Teil (Edge Function analyze-stl) */
+  const runKiAnalysisNow = useCallback(async (partId: string) => {
+    const part = parts.find((p) => p.id === partId);
+    if (!part?.stlBase64 || isStepFile(part.fileName)) return;
+    const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
+    if (!mat) return;
+    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+
+    setParts((prev) => prev.map((p) => p.id === partId
+      ? { ...p, kiAnalysisLoading: true, kiAnalysisError: null }
+      : p));
+
+    const { data, error } = await supabase.functions.invoke("analyze-stl", {
+      body: {
+        stlBase64: part.stlBase64,
+        fileName: part.fileName || "teil.stl",
+        material: mat.name,
+        pricePerGram: mat.pricePerGram,
+        qualityKey: quality.key,
+        layerHeight: quality.layerHeight,
+        infill: quality.infill,
+        speedFactor: quality.speedFactor,
+        quantity: part.quantity,
+        maschinenzeit: settings.maschinenzeit_pro_h || 3,
+        setupFee: calcParams.fix_cost || 20,
+        minPrice: calcParams.min_price || 5,
+        minuten_pro_gramm: 2.5,
+        overhang_schwellwert: 30,
+        komplexitaets_aufschlag: 20,
+        versandkosten: SHIPPING_COST,
+        versandkostenfrei_ab: SHIPPING_FREE_FROM,
+      },
+    });
+
+    if (error || !data || (data as any).error) {
+      console.warn("KI-Analyse fehlgeschlagen", error || (data as any)?.error);
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, kiAnalysisLoading: false, kiAnalysisError: "Analyse fehlgeschlagen – vereinfachte Schätzung wird verwendet" }
+        : p));
+    } else {
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, kiAnalysis: data as KiAnalysis, kiAnalysisLoading: false, kiAnalysisError: null }
+        : p));
+    }
+  }, [parts, materials, qualityPresets, qualityKey, settings.maschinenzeit_pro_h, calcParams]);
+
+  const kiFnRef = useRef(runKiAnalysisNow);
+  useEffect(() => { kiFnRef.current = runKiAnalysisNow; }, [runKiAnalysisNow]);
+  const kiTimers = useRef<Record<string, number>>({});
+
+  /** 300 ms Debounce pro Teil */
+  const runKiAnalysis = useCallback((partId: string) => {
+    window.clearTimeout(kiTimers.current[partId]);
+    kiTimers.current[partId] = window.setTimeout(() => { void kiFnRef.current(partId); }, 300);
+  }, []);
+
+  const runKiAnalysisAll = useCallback(() => {
+    parts.forEach((p) => { if (p.stlBase64) runKiAnalysis(p.id); });
+  }, [parts, runKiAnalysis]);
+
   const addFile = useCallback(async (file: File) => {
     const id = crypto.randomUUID();
     const defaultMat = materials[0];
@@ -428,8 +513,30 @@ const CalculatorOnlinePage = () => {
         estimatedWeight: 0,
         previewUrl,
         images: [],
+        stlBase64: null,
+        kiAnalysis: null,
+        kiAnalysisLoading: ext === "stl",
+        kiAnalysisError: null,
       },
     ]);
+
+    // STL zusätzlich als Base64 für die KI-Analyse speichern
+    if (ext === "stl") {
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, stlBase64: base64 } : x)));
+        runKiAnalysis(id);
+      } catch (e) {
+        console.warn("Base64-Kodierung fehlgeschlagen", e);
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, kiAnalysisLoading: false } : x)));
+      }
+    }
+
 
     // Volumen berechnen
     try {
@@ -487,7 +594,7 @@ const CalculatorOnlinePage = () => {
       setParts((p) => p.map((x) => (x.id === id ? { ...x, uploading: false } : x)));
       toast.error(`Upload von ${file.name} fehlgeschlagen — wir bitten dich, die Datei per Mail zu schicken.`);
     }
-  }, [materials]);
+  }, [materials, runKiAnalysis]);
 
   // Dateien, die auf einer anderen Seite (Hero-Dropzone, Mobile-CTA) gewählt wurden
   const pendingHandled = useRef(false);
@@ -600,14 +707,31 @@ const CalculatorOnlinePage = () => {
     trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
     setQualityKey(key);
     applyAll({ infill });
+    runKiAnalysisAll();
   };
 
   const MIN_PRICE = calcParams.min_price;
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** Geometrische Schätzung: Materialkosten + Maschinenzeit, Setup separat 1× pro Bestellung */
+  /** KI-Analyse bevorzugt, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
   const calcPart = (p: Part) => {
+    if (p.kiAnalysis && !p.kiAnalysisLoading) {
+      let discount = 0;
+      if (p.quantity >= 10) discount = 0.15;
+      else if (p.quantity >= 5) discount = 0.1;
+      const unit = p.kiAnalysis.preis_pro_stueck;
+      return {
+        weight: p.kiAnalysis.weightG ?? p.estimatedWeight,
+        unit,
+        subtotal: Math.max(unit * p.quantity * (1 - discount), 0),
+        discount,
+        exact: true,
+        kiMin: p.kiAnalysis.gesamtpreis_min,
+        kiMax: p.kiAnalysis.gesamtpreis_max,
+      };
+    }
+
     const mat = materials.find((m) => m.id === p.materialId);
     if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
@@ -636,11 +760,17 @@ const CalculatorOnlinePage = () => {
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
 
+  const kiLoading = parts.some((p) => p.kiAnalysisLoading);
+
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const setupFee = parts.length > 0 ? (FIX_COST || 20) : 0;
   const subtotal = materialTotal + setupFee;
   const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
   const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
+  const totalMin = Math.round(total * 0.9 * 100) / 100;
+  const totalMax = Math.round(total * 1.15 * 100) / 100;
+  const hasKiAnalysis = parts.some((p) => p.kiAnalysis);
+
 
   const hasStep = parts.some((p) => isStepFile(p.fileName));
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
@@ -650,7 +780,9 @@ const CalculatorOnlinePage = () => {
   // hinzufügen und klickt selbst auf "Weiter".
 
   // Schnell-Schätzung: sobald analysiert, globales Material auf Standard setzen
-  const quickReady = quickMode && parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName));
+  const quickReady = quickMode && parts.length > 0 && !kiLoading
+    && parts.every((p) => p.hasVolume || isStepFile(p.fileName));
+
   useEffect(() => {
     if (!quickMode || materialId || parts.length === 0) return;
     const fallback = parts[0].materialId || materials[0]?.id || "";
@@ -681,7 +813,9 @@ const CalculatorOnlinePage = () => {
     const firstColor = mat?.farben?.[0] || "";
     setColor((c) => (mat?.farben?.includes(c) ? c : firstColor));
     applyAll({ materialId: id });
+    runKiAnalysisAll();
   };
+
 
   const handleKiResult = (r: KiResult) => {
     setKiResult(r);
@@ -889,14 +1023,19 @@ const CalculatorOnlinePage = () => {
                 <ArrowLeft className="w-3.5 h-3.5" /> Zurück
               </Button>
               <div
-                className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors ${
-                  priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors flex items-center gap-1.5 ${
+                  kiLoading || priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                 }`}
               >
-                {hasStep
+                {kiLoading ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 🤖 Analysiert…</>
+                ) : hasStep
                   ? "Preis nach Prüfung"
-                  : priceBadge !== null ? `Aktueller Preis: ${CHF(priceBadge)}` : "Aktueller Preis: CHF –.–"}
+                  : priceBadge !== null
+                    ? (hasKiAnalysis ? `ca. ${CHF(totalMin)} – ${CHF(totalMax)}` : `Aktueller Preis: ${CHF(priceBadge)}`)
+                    : "Aktueller Preis: CHF –.–"}
               </div>
+
             </div>
           </div>
         </div>
@@ -940,9 +1079,10 @@ const CalculatorOnlinePage = () => {
                     </p>
                   ) : (
                     <>
-                      <div className="font-heading text-4xl md:text-5xl font-extrabold text-primary tabular-nums my-4">
-                        ca. {CHF(total)}
+                      <div className="font-heading text-3xl md:text-4xl font-extrabold text-primary tabular-nums my-4">
+                        {hasKiAnalysis ? `ca. ${CHF(totalMin)} – ${CHF(totalMax)}` : `ca. ${CHF(total)}`}
                       </div>
+
                       <p className="text-sm text-muted-foreground">
                         Unverbindliche Schätzung mit Standard-Material und Standard-Qualität, inkl. Setup und Versand.
                       </p>
@@ -1410,9 +1550,12 @@ const CalculatorOnlinePage = () => {
                     })}
                   </div>
 
-                  <Button className="w-full gap-2" onClick={goNext}>
-                    Weiter zur Übersicht <ArrowRight className="w-4 h-4" />
+                  <Button className="w-full gap-2" onClick={goNext} disabled={kiLoading}>
+                    {kiLoading
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> 🤖 Analyse läuft…</>
+                      : <>Weiter zur Übersicht <ArrowRight className="w-4 h-4" /></>}
                   </Button>
+
                 </div>
               )}
 
@@ -1455,6 +1598,41 @@ const CalculatorOnlinePage = () => {
                                 ~ Geschätzter Preis – finale Prüfung durch 3DMuscio · {calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)}
                               </p>
                             )}
+
+                            {p.kiAnalysisLoading && (
+                              <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+                                <Loader2 className="w-3 h-3 animate-spin" /> 🤖 Modell wird analysiert…
+                              </p>
+                            )}
+                            {p.kiAnalysisError && (
+                              <p className="text-xs text-muted-foreground mt-1">{p.kiAnalysisError}</p>
+                            )}
+                            {p.kiAnalysis && !p.kiAnalysisLoading && (
+                              <div className="mt-1 space-y-0.5">
+                                {p.kiAnalysis.orientierung !== "Original (Z oben)" && (
+                                  <p className="text-xs text-primary">
+                                    🔄 {p.kiAnalysis.orientierung} – Support {p.kiAnalysis.orientierung_original_ueberhang}% → {p.kiAnalysis.orientierung_beste_ueberhang}%
+                                  </p>
+                                )}
+                                {p.kiAnalysis.hat_support ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    ⚠️ Support nötig – Nachbearbeitung {CHF(p.kiAnalysis.support_nachbearbeitung)}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-success">✅ Kein Support nötig</p>
+                                )}
+                                <details className="mt-1">
+                                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                                    ℹ️ Wie wird der Preis berechnet?
+                                  </summary>
+                                  <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+                                    <p>{p.kiAnalysis.begruendung}</p>
+                                    <p>{p.kiAnalysis.hinweis_fuer_kunden}</p>
+                                  </div>
+                                </details>
+                              </div>
+                            )}
+
 
                             <div className="mt-2 flex items-center gap-1">
                               <button onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })} aria-label="Menge verringern"
@@ -1533,13 +1711,26 @@ const CalculatorOnlinePage = () => {
                   {/* Preisübersicht */}
                   <div className="bg-card rounded-2xl border border-border p-5 space-y-2 text-sm">
                     {calcs.map(({ part: p, calc }) => (
-                      <div key={p.id} className="flex justify-between text-muted-foreground">
-                        <span className="truncate pr-2">{p.fileName}</span>
-                        <span className="text-foreground tabular-nums shrink-0">
-                          {isStepFile(p.fileName) ? "Auf Anfrage" : `${CHF(calc.unit)} × ${p.quantity}`}
-                        </span>
+                      <div key={p.id} className="space-y-1">
+                        <div className="flex justify-between text-muted-foreground">
+                          <span className="truncate pr-2">{p.fileName}</span>
+                          <span className="text-foreground tabular-nums shrink-0">
+                            {isStepFile(p.fileName) ? "Auf Anfrage" : `${CHF(calc.unit)} × ${p.quantity}`}
+                          </span>
+                        </div>
+                        {p.kiAnalysis && !p.kiAnalysisLoading && (
+                          <div className="ml-3 pl-3 border-l border-border space-y-0.5 text-xs text-muted-foreground">
+                            <div className="flex justify-between"><span>Materialkosten</span><span className="tabular-nums">{CHF(p.kiAnalysis.materialkosten)}</span></div>
+                            <div className="flex justify-between"><span>Maschinenzeit ({p.kiAnalysis.druckzeit_minuten} min)</span><span className="tabular-nums">{CHF(p.kiAnalysis.maschinenkosten)}</span></div>
+                            {p.kiAnalysis.support_nachbearbeitung > 0 && (
+                              <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(p.kiAnalysis.support_nachbearbeitung)}</span></div>
+                            )}
+                            <div className="flex justify-between"><span>× {p.quantity} Stück{calc.discount > 0 ? ` (−${Math.round(calc.discount * 100)}%)` : ""}</span><span className="tabular-nums text-foreground">{CHF(calc.subtotal)}</span></div>
+                          </div>
+                        )}
                       </div>
                     ))}
+
                     <div className="border-t border-border pt-2 mt-2" />
                     <div className="flex justify-between text-muted-foreground">
                       <span>Setup-Pauschale <span className="text-xs text-muted-foreground/70">(1× pro Bestellung)</span></span>

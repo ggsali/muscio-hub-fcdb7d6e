@@ -47,4 +47,7 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.newsletter-track]
     verify_jwt = false
+  [functions.analyze-stl]
+    verify_jwt = false
+
 
