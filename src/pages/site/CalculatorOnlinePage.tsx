@@ -361,32 +361,17 @@ const CalculatorOnlinePage = () => {
       .eq("aktiv", true)
       .order("material", { ascending: true });
 
-    if (error) {
-      console.error("[Kalkulator] Filament-Query fehlgeschlagen:", error);
-    }
+    console.log("[Kalkulator] Filamente geladen:", filaments?.length, filaments);
 
-    let mapped: Material[] = (filaments ?? []).map((f: any) => ({
-      id: f.id,
-      name: f.material + (f.farbe ? " – " + f.farbe : ""),
-      materialType: f.material,
-      pricePerGram: f.verkaufspreis_pro_g
-        ? Number(f.verkaufspreis_pro_g)
-        : Number(f.preis_pro_kg) / 1000,
-      density: Number(f.dichte_g_cm3) || 1.24,
-      farbe: f.farbe,
-      hersteller: f.hersteller,
-      farben: [f.farbe].filter(Boolean) as string[],
-    }));
-
-    if (mapped.length === 0) {
-      console.warn("[Kalkulator] Keine Filamente gefunden, Fallback auf materials-Tabelle");
-      const { data: mats, error: matsError } = await supabase
+    if (error || !filaments || filaments.length === 0) {
+      console.warn("[Kalkulator] Keine Filamente – Fallback auf materials-Tabelle");
+      const { data: mats } = await supabase
         .from("materials")
         .select("*")
         .eq("aktiv", true)
-        .order("sort_order", { ascending: true });
-      if (matsError) console.error("[Kalkulator] materials-Fallback fehlgeschlagen:", matsError);
-      mapped = (mats ?? []).map((m: any) => ({
+        .order("sort_order");
+
+      const fallback: Material[] = (mats ?? []).map((m: any) => ({
         id: m.id,
         name: m.name,
         materialType: m.tag || m.name,
@@ -394,20 +379,49 @@ const CalculatorOnlinePage = () => {
         density: Number(m.density) || 1.24,
         farbe: null,
         hersteller: null,
-        farben: (m.farben ?? []) as string[],
+        farben: Array.isArray(m.farben) ? m.farben : [],
       }));
+
+      if (fallback.length === 0) {
+        setMaterialsError("Materialien konnten nicht geladen werden.");
+        toast.warning("Keine aktiven Filamente in der Bibliothek gefunden – bitte im Admin unter Filamente prüfen.");
+      } else {
+        setMaterialsError(null);
+      }
+
+      setMaterials(fallback);
+      setMaterialsLoading(false);
+      return;
     }
 
-    console.log("[Kalkulator] Filamente geladen:", mapped.length, mapped);
+    // Filamente mit Preis 0 oder fehlendem Preis filtern
+    const validFilaments = filaments.filter((f: any) => {
+      const preis = f.verkaufspreis_pro_g
+        ? Number(f.verkaufspreis_pro_g)
+        : f.preis_pro_kg
+          ? (Number(f.preis_pro_kg) / 1000) * 2.5
+          : 0;
+      return preis > 0;
+    });
 
-    if (mapped.length === 0) {
-      setMaterialsError("Materialien konnten nicht geladen werden.");
-      toast.warning("Keine aktiven Filamente in der Bibliothek gefunden – bitte im Admin unter Filamente prüfen.");
-    } else {
-      setMaterialsError(null);
-    }
+    setMaterialsError(null);
+    setMaterials(
+      validFilaments.map((f: any) => ({
+        id: f.id,
+        name: f.material + (f.farbe && f.farbe !== "#ffffff" && f.farbe !== "#000000"
+          ? " – " + f.farbe
+          : ""),
+        materialType: f.material,
+        pricePerGram: f.verkaufspreis_pro_g
+          ? Number(f.verkaufspreis_pro_g)
+          : (Number(f.preis_pro_kg) / 1000) * 2.5,
+        density: Number(f.dichte_g_cm3) || 1.24,
+        farbe: f.farbe,
+        hersteller: f.hersteller,
+        farben: [f.farbe].filter(Boolean) as string[],
+      })),
+    );
 
-    setMaterials(mapped);
     setMaterialsLoading(false);
   }, []);
 
@@ -1466,8 +1480,27 @@ const CalculatorOnlinePage = () => {
                                   }`}
                                 >
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                                  <p className="font-bold text-sm">{m.name}</p>
-                                  {m.hersteller && <p className="text-xs text-muted-foreground mt-0.5">{m.hersteller}</p>}
+                                  <div className="flex items-center gap-2 mb-1">
+                                    {m.farbe && (
+                                      <div
+                                        style={{
+                                          width: 14,
+                                          height: 14,
+                                          borderRadius: "50%",
+                                          backgroundColor: m.farbe,
+                                          border: "1px solid rgba(0,0,0,0.15)",
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                    )}
+                                    <p className="font-bold text-sm leading-tight">{m.materialType || m.name}</p>
+                                  </div>
+                                  {m.hersteller && (
+                                    <p className="text-xs text-muted-foreground">{m.hersteller}</p>
+                                  )}
+                                  {m.farbe && (
+                                    <p className="text-xs text-muted-foreground">{m.farbe}</p>
+                                  )}
                                 </button>
                               );
                             })}
@@ -1500,8 +1533,27 @@ const CalculatorOnlinePage = () => {
                                     <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
                                   )}
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                                  <p className="font-bold text-sm">{m.name}</p>
-                                  {m.hersteller && <p className="text-xs text-muted-foreground mt-0.5">{m.hersteller}</p>}
+                                  <div className="flex items-center gap-2 mb-1">
+                                    {m.farbe && (
+                                      <div
+                                        style={{
+                                          width: 14,
+                                          height: 14,
+                                          borderRadius: "50%",
+                                          backgroundColor: m.farbe,
+                                          border: "1px solid rgba(0,0,0,0.15)",
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                    )}
+                                    <p className="font-bold text-sm leading-tight">{m.materialType || m.name}</p>
+                                  </div>
+                                  {m.hersteller && (
+                                    <p className="text-xs text-muted-foreground">{m.hersteller}</p>
+                                  )}
+                                  {m.farbe && (
+                                    <p className="text-xs text-muted-foreground">{m.farbe}</p>
+                                  )}
                                 </button>
                               );
                             })}
