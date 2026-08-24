@@ -355,42 +355,28 @@ const CalculatorOnlinePage = () => {
   };
 
   const loadMaterials = useCallback(async () => {
-    const [{ data: mats, error }, { data: fils }] = await Promise.all([
-      supabase.from("materials").select("*").eq("aktiv", true).order("sort_order"),
-      supabase.from("filaments").select("material, verkaufspreis_pro_g, preis_pro_kg, aktiv").eq("aktiv", true),
-    ]);
-
-    // Verkaufspreis pro Material aus Filamenten:
-    const filamentPreise = new Map<string, number>();
-    for (const f of fils ?? []) {
-      if (!f.material) continue;
-      const key = f.material.toUpperCase();
-      // verkaufspreis_pro_g bevorzugen, sonst preis_pro_kg / 1000 als Fallback
-      const preis = f.verkaufspreis_pro_g
-        ? Number(f.verkaufspreis_pro_g)
-        : Number(f.preis_pro_kg) / 1000;
-      if (!filamentPreise.has(key)) {
-        filamentPreise.set(key, preis);
-      }
-    }
+    const { data: filaments, error } = await supabase
+      .from("filaments")
+      .select("id, name, material, farbe, hersteller, verkaufspreis_pro_g, preis_pro_kg, dichte_g_cm3, aktiv")
+      .eq("aktiv", true)
+      .order("material", { ascending: true });
 
     if (error) {
       setMaterialsError("Materialien konnten nicht geladen werden.");
-    } else if (mats) {
+    } else {
       setMaterials(
-        (mats ?? []).map((m: any) => {
-          const key = m.name.toUpperCase();
-          const filPreis = filamentPreise.get(key)
-            ?? filamentPreise.get(m.name.split(" ")[0].toUpperCase())
-            ?? Number(m.price_per_gram); // letzter Fallback
-          return {
-            id: m.id,
-            name: m.name,
-            pricePerGram: filPreis,
-            density: Number(m.density),
-            farben: Array.isArray(m.farben) ? m.farben : [],
-          };
-        }),
+        (filaments ?? []).map((f: any) => ({
+          id: f.id,
+          name: f.material + (f.farbe ? " – " + f.farbe : ""),
+          materialType: f.material,
+          pricePerGram: f.verkaufspreis_pro_g
+            ? Number(f.verkaufspreis_pro_g)
+            : Number(f.preis_pro_kg) / 1000,
+          density: Number(f.dichte_g_cm3) || 1.24,
+          farbe: f.farbe,
+          hersteller: f.hersteller,
+          farben: [f.farbe].filter(Boolean) as string[],
+        })),
       );
     }
     setMaterialsLoading(false);
@@ -400,13 +386,14 @@ const CalculatorOnlinePage = () => {
     setMaterialsLoading(true);
     loadMaterials();
     const channel = supabase
-      .channel("materials-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "materials" }, () => {
+      .channel("filaments-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "filaments" }, () => {
         loadMaterials();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadMaterials]);
+
 
   useEffect(() => {
     (async () => {
