@@ -30,8 +30,11 @@ import {
 interface Material {
   id: string;
   name: string;
+  materialType?: string;
   pricePerGram: number;
   density: number;
+  farbe?: string | null;
+  hersteller?: string | null;
   farben: string[];
 }
 
