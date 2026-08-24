@@ -1495,9 +1495,6 @@ const CalculatorOnlinePage = () => {
                                     )}
                                     <p className="font-bold text-sm leading-tight">{m.materialType || m.name}</p>
                                   </div>
-                                  {m.hersteller && (
-                                    <p className="text-xs text-muted-foreground">{m.hersteller}</p>
-                                  )}
                                   {m.farbe && (
                                     <p className="text-xs text-muted-foreground">{m.farbe}</p>
                                   )}
@@ -1548,9 +1545,6 @@ const CalculatorOnlinePage = () => {
                                     )}
                                     <p className="font-bold text-sm leading-tight">{m.materialType || m.name}</p>
                                   </div>
-                                  {m.hersteller && (
-                                    <p className="text-xs text-muted-foreground">{m.hersteller}</p>
-                                  )}
                                   {m.farbe && (
                                     <p className="text-xs text-muted-foreground">{m.farbe}</p>
                                   )}
@@ -1824,7 +1818,7 @@ const CalculatorOnlinePage = () => {
                         {p.kiAnalysis && !p.kiAnalysisLoading && (
                           <div className="ml-3 pl-3 border-l border-border space-y-0.5 text-xs text-muted-foreground">
                             <div className="flex justify-between"><span>Materialkosten</span><span className="tabular-nums">{CHF(p.kiAnalysis.materialkosten)}</span></div>
-                            <div className="flex justify-between"><span>Maschinenzeit ({p.kiAnalysis.druckzeit_minuten} min)</span><span className="tabular-nums">{CHF(p.kiAnalysis.maschinenkosten)}</span></div>
+                            <div className="flex justify-between"><span>Maschinenzeit</span><span className="tabular-nums">{CHF(p.kiAnalysis.maschinenkosten)}</span></div>
                             {p.kiAnalysis.support_nachbearbeitung > 0 && (
                               <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(p.kiAnalysis.support_nachbearbeitung)}</span></div>
                             )}
