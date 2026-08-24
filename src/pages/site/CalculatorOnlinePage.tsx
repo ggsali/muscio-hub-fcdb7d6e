@@ -30,8 +30,11 @@ import {
 interface Material {
   id: string;
   name: string;
+  materialType?: string;
   pricePerGram: number;
   density: number;
+  farbe?: string | null;
+  hersteller?: string | null;
   farben: string[];
 }
 
@@ -352,42 +355,28 @@ const CalculatorOnlinePage = () => {
   };
 
   const loadMaterials = useCallback(async () => {
-    const [{ data: mats, error }, { data: fils }] = await Promise.all([
-      supabase.from("materials").select("*").eq("aktiv", true).order("sort_order"),
-      supabase.from("filaments").select("material, verkaufspreis_pro_g, preis_pro_kg, aktiv").eq("aktiv", true),
-    ]);
-
-    // Verkaufspreis pro Material aus Filamenten:
-    const filamentPreise = new Map<string, number>();
-    for (const f of fils ?? []) {
-      if (!f.material) continue;
-      const key = f.material.toUpperCase();
-      // verkaufspreis_pro_g bevorzugen, sonst preis_pro_kg / 1000 als Fallback
-      const preis = f.verkaufspreis_pro_g
-        ? Number(f.verkaufspreis_pro_g)
-        : Number(f.preis_pro_kg) / 1000;
-      if (!filamentPreise.has(key)) {
-        filamentPreise.set(key, preis);
-      }
-    }
+    const { data: filaments, error } = await supabase
+      .from("filaments")
+      .select("id, name, material, farbe, hersteller, verkaufspreis_pro_g, preis_pro_kg, dichte_g_cm3, aktiv")
+      .eq("aktiv", true)
+      .order("material", { ascending: true });
 
     if (error) {
       setMaterialsError("Materialien konnten nicht geladen werden.");
-    } else if (mats) {
+    } else {
       setMaterials(
-        (mats ?? []).map((m: any) => {
-          const key = m.name.toUpperCase();
-          const filPreis = filamentPreise.get(key)
-            ?? filamentPreise.get(m.name.split(" ")[0].toUpperCase())
-            ?? Number(m.price_per_gram); // letzter Fallback
-          return {
-            id: m.id,
-            name: m.name,
-            pricePerGram: filPreis,
-            density: Number(m.density),
-            farben: Array.isArray(m.farben) ? m.farben : [],
-          };
-        }),
+        (filaments ?? []).map((f: any) => ({
+          id: f.id,
+          name: f.material + (f.farbe ? " – " + f.farbe : ""),
+          materialType: f.material,
+          pricePerGram: f.verkaufspreis_pro_g
+            ? Number(f.verkaufspreis_pro_g)
+            : Number(f.preis_pro_kg) / 1000,
+          density: Number(f.dichte_g_cm3) || 1.24,
+          farbe: f.farbe,
+          hersteller: f.hersteller,
+          farben: [f.farbe].filter(Boolean) as string[],
+        })),
       );
     }
     setMaterialsLoading(false);
@@ -397,13 +386,14 @@ const CalculatorOnlinePage = () => {
     setMaterialsLoading(true);
     loadMaterials();
     const channel = supabase
-      .channel("materials-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "materials" }, () => {
+      .channel("filaments-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "filaments" }, () => {
         loadMaterials();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [loadMaterials]);
+
 
   useEffect(() => {
     (async () => {
@@ -443,7 +433,7 @@ const CalculatorOnlinePage = () => {
       body: {
         stlBase64: part.stlBase64,
         fileName: part.fileName || "teil.stl",
-        material: mat.name,
+        material: mat.materialType || mat.name.split(" ")[0],
         pricePerGram: mat.pricePerGram,
         qualityKey: quality.key,
         layerHeight: quality.layerHeight,
@@ -775,6 +765,16 @@ const CalculatorOnlinePage = () => {
   const hasStep = parts.some((p) => isStepFile(p.fileName));
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
   const availableColors = selectedMaterial?.farben || [];
+  const groupedMaterials = useMemo(
+    () =>
+      materials.reduce((acc, m) => {
+        const key = m.materialType || m.name.split(" ")[0];
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(m);
+        return acc;
+      }, {} as Record<string, Material[]>),
+    [materials],
+  );
 
   // Schritt 1 wechselt NICHT automatisch — der Nutzer kann beliebig viele Teile
   // hinzufügen und klickt selbst auf "Weiter".
@@ -1408,58 +1408,69 @@ const CalculatorOnlinePage = () => {
                   )}
 
                   {materialMode === "manual" && (
-                    <div className="px-1">
-                      <p className="text-sm font-semibold mb-2">Material direkt wählen</p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {materials.map((m) => {
-                          const sel = materialId === m.id;
-                          return (
-                            <button
-                              key={m.id}
-                              type="button"
-                              onClick={() => chooseMaterial(m.id)}
-                              className={`relative text-left rounded-xl border-2 p-4 transition-all ${
-                                sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
-                              }`}
-                            >
-                              {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                              <p className="font-bold text-sm">{m.name}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{m.farben.length} Farben</p>
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <div className="px-1 space-y-4">
+                      <p className="text-sm font-semibold">Material direkt wählen</p>
+                      {Object.entries(groupedMaterials).map(([typ, items]) => (
+                        <div key={typ}>
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {items.map((m) => {
+                              const sel = materialId === m.id;
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => chooseMaterial(m.id)}
+                                  className={`relative text-left rounded-xl border-2 p-4 transition-all ${
+                                    sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                                  }`}
+                                >
+                                  {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
+                                  <p className="font-bold text-sm">{m.name}</p>
+                                  {m.hersteller && <p className="text-xs text-muted-foreground mt-0.5">{m.hersteller}</p>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
 
                   {materialMode === "ki" && (!isMobile || !kiChatOpen) && (
-                    <div className="px-1">
-                      <p className="text-sm font-semibold mb-2">Alle Materialien</p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {materials.map((m) => {
-                          const sel = materialId === m.id;
-                          const rec = recommendedMaterial?.id === m.id;
-                          return (
-                            <button
-                              key={m.id}
-                              type="button"
-                              onClick={() => chooseMaterial(m.id)}
-                              className={`relative text-left rounded-xl border-2 p-4 transition-all ${
-                                sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
-                              }`}
-                            >
-                              {rec && !sel && (
-                                <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
-                              )}
-                              {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                              <p className="font-bold text-sm">{m.name}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{m.farben.length} Farben</p>
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <div className="px-1 space-y-4">
+                      <p className="text-sm font-semibold">Alle Materialien</p>
+                      {Object.entries(groupedMaterials).map(([typ, items]) => (
+                        <div key={typ}>
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {items.map((m) => {
+                              const sel = materialId === m.id;
+                              const rec = recommendedMaterial?.id === m.id;
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => chooseMaterial(m.id)}
+                                  className={`relative text-left rounded-xl border-2 p-4 transition-all ${
+                                    sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
+                                  }`}
+                                >
+                                  {rec && !sel && (
+                                    <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
+                                  )}
+                                  {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
+                                  <p className="font-bold text-sm">{m.name}</p>
+                                  {m.hersteller && <p className="text-xs text-muted-foreground mt-0.5">{m.hersteller}</p>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
+
 
                   {materialMode === "manual" && materialId && (
                     <Button className="w-full gap-2" onClick={goNext}>
