@@ -594,7 +594,7 @@ const CalculatorOnlinePage = () => {
       setParts((p) => p.map((x) => (x.id === id ? { ...x, uploading: false } : x)));
       toast.error(`Upload von ${file.name} fehlgeschlagen — wir bitten dich, die Datei per Mail zu schicken.`);
     }
-  }, [materials]);
+  }, [materials, runKiAnalysis]);
 
   // Dateien, die auf einer anderen Seite (Hero-Dropzone, Mobile-CTA) gewählt wurden
   const pendingHandled = useRef(false);
