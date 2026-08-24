@@ -765,6 +765,16 @@ const CalculatorOnlinePage = () => {
   const hasStep = parts.some((p) => isStepFile(p.fileName));
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
   const availableColors = selectedMaterial?.farben || [];
+  const groupedMaterials = useMemo(
+    () =>
+      materials.reduce((acc, m) => {
+        const key = m.materialType || m.name.split(" ")[0];
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(m);
+        return acc;
+      }, {} as Record<string, Material[]>),
+    [materials],
+  );
 
   // Schritt 1 wechselt NICHT automatisch — der Nutzer kann beliebig viele Teile
   // hinzufügen und klickt selbst auf "Weiter".
