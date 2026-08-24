@@ -362,25 +362,55 @@ const CalculatorOnlinePage = () => {
       .order("material", { ascending: true });
 
     if (error) {
-      setMaterialsError("Materialien konnten nicht geladen werden.");
-    } else {
-      setMaterials(
-        (filaments ?? []).map((f: any) => ({
-          id: f.id,
-          name: f.material + (f.farbe ? " – " + f.farbe : ""),
-          materialType: f.material,
-          pricePerGram: f.verkaufspreis_pro_g
-            ? Number(f.verkaufspreis_pro_g)
-            : Number(f.preis_pro_kg) / 1000,
-          density: Number(f.dichte_g_cm3) || 1.24,
-          farbe: f.farbe,
-          hersteller: f.hersteller,
-          farben: [f.farbe].filter(Boolean) as string[],
-        })),
-      );
+      console.error("[Kalkulator] Filament-Query fehlgeschlagen:", error);
     }
+
+    let mapped: Material[] = (filaments ?? []).map((f: any) => ({
+      id: f.id,
+      name: f.material + (f.farbe ? " – " + f.farbe : ""),
+      materialType: f.material,
+      pricePerGram: f.verkaufspreis_pro_g
+        ? Number(f.verkaufspreis_pro_g)
+        : Number(f.preis_pro_kg) / 1000,
+      density: Number(f.dichte_g_cm3) || 1.24,
+      farbe: f.farbe,
+      hersteller: f.hersteller,
+      farben: [f.farbe].filter(Boolean) as string[],
+    }));
+
+    if (mapped.length === 0) {
+      console.warn("[Kalkulator] Keine Filamente gefunden, Fallback auf materials-Tabelle");
+      const { data: mats, error: matsError } = await supabase
+        .from("materials")
+        .select("*")
+        .eq("aktiv", true)
+        .order("sort_order", { ascending: true });
+      if (matsError) console.error("[Kalkulator] materials-Fallback fehlgeschlagen:", matsError);
+      mapped = (mats ?? []).map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        materialType: m.tag || m.name,
+        pricePerGram: Number(m.price_per_gram),
+        density: Number(m.density) || 1.24,
+        farbe: null,
+        hersteller: null,
+        farben: (m.farben ?? []) as string[],
+      }));
+    }
+
+    console.log("[Kalkulator] Filamente geladen:", mapped.length, mapped);
+
+    if (mapped.length === 0) {
+      setMaterialsError("Materialien konnten nicht geladen werden.");
+      toast.warning("Keine aktiven Filamente in der Bibliothek gefunden – bitte im Admin unter Filamente prüfen.");
+    } else {
+      setMaterialsError(null);
+    }
+
+    setMaterials(mapped);
     setMaterialsLoading(false);
   }, []);
+
 
   useEffect(() => {
     setMaterialsLoading(true);
