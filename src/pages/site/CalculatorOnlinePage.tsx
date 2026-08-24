@@ -707,14 +707,31 @@ const CalculatorOnlinePage = () => {
     trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
     setQualityKey(key);
     applyAll({ infill });
+    runKiAnalysisAll();
   };
 
   const MIN_PRICE = calcParams.min_price;
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** Geometrische Schätzung: Materialkosten + Maschinenzeit, Setup separat 1× pro Bestellung */
+  /** KI-Analyse bevorzugt, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
   const calcPart = (p: Part) => {
+    if (p.kiAnalysis && !p.kiAnalysisLoading) {
+      let discount = 0;
+      if (p.quantity >= 10) discount = 0.15;
+      else if (p.quantity >= 5) discount = 0.1;
+      const unit = p.kiAnalysis.preis_pro_stueck;
+      return {
+        weight: p.kiAnalysis.weightG ?? p.estimatedWeight,
+        unit,
+        subtotal: Math.max(unit * p.quantity * (1 - discount), 0),
+        discount,
+        exact: true,
+        kiMin: p.kiAnalysis.gesamtpreis_min,
+        kiMax: p.kiAnalysis.gesamtpreis_max,
+      };
+    }
+
     const mat = materials.find((m) => m.id === p.materialId);
     if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
@@ -743,11 +760,17 @@ const CalculatorOnlinePage = () => {
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
 
+  const kiLoading = parts.some((p) => p.kiAnalysisLoading);
+
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const setupFee = parts.length > 0 ? (FIX_COST || 20) : 0;
   const subtotal = materialTotal + setupFee;
   const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
   const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
+  const totalMin = Math.round(total * 0.9 * 100) / 100;
+  const totalMax = Math.round(total * 1.15 * 100) / 100;
+  const hasKiAnalysis = parts.some((p) => p.kiAnalysis);
+
 
   const hasStep = parts.some((p) => isStepFile(p.fileName));
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
