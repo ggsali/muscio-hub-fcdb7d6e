@@ -1,4 +1,5 @@
 import { Resend } from "npm:resend@4.0.1";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,9 +10,37 @@ const FROM_EMAIL = "3DMuscio <noreply@3dmuscio.com>";
 const REPLY_TO = "info@3dmuscio.com";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+
+/** Verifies the caller is an authenticated admin. Returns null when allowed, else a Response. */
+async function requireAdmin(req: Request, corsHeaders: Record<string, string>): Promise<Response | null> {
+  const authHeader = req.headers.get("Authorization") || "";
+  const client = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
+  if (!roles?.some((r: any) => r.role === "admin")) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const denied = await requireAdmin(req, corsHeaders);
+    if (denied) return denied;
+
     const { to, rechnungsnummer, empfaenger_name, betreff, pdfBase64, pdfFilename } = await req.json();
     if (!to || !pdfBase64 || !rechnungsnummer) {
       return new Response(JSON.stringify({ error: "missing fields" }), {
