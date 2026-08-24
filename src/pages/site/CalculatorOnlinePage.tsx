@@ -780,7 +780,9 @@ const CalculatorOnlinePage = () => {
   // hinzufügen und klickt selbst auf "Weiter".
 
   // Schnell-Schätzung: sobald analysiert, globales Material auf Standard setzen
-  const quickReady = quickMode && parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName));
+  const quickReady = quickMode && parts.length > 0 && !kiLoading
+    && parts.every((p) => p.hasVolume || isStepFile(p.fileName));
+
   useEffect(() => {
     if (!quickMode || materialId || parts.length === 0) return;
     const fallback = parts[0].materialId || materials[0]?.id || "";
