@@ -811,7 +811,9 @@ const CalculatorOnlinePage = () => {
     const firstColor = mat?.farben?.[0] || "";
     setColor((c) => (mat?.farben?.includes(c) ? c : firstColor));
     applyAll({ materialId: id });
+    runKiAnalysisAll();
   };
+
 
   const handleKiResult = (r: KiResult) => {
     setKiResult(r);
