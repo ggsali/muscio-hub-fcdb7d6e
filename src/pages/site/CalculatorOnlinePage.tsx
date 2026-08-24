@@ -1079,9 +1079,10 @@ const CalculatorOnlinePage = () => {
                     </p>
                   ) : (
                     <>
-                      <div className="font-heading text-4xl md:text-5xl font-extrabold text-primary tabular-nums my-4">
-                        ca. {CHF(total)}
+                      <div className="font-heading text-3xl md:text-4xl font-extrabold text-primary tabular-nums my-4">
+                        {hasKiAnalysis ? `ca. ${CHF(totalMin)} – ${CHF(totalMax)}` : `ca. ${CHF(total)}`}
                       </div>
+
                       <p className="text-sm text-muted-foreground">
                         Unverbindliche Schätzung mit Standard-Material und Standard-Qualität, inkl. Setup und Versand.
                       </p>
