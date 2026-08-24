@@ -1,0 +1,1 @@
+GRANT SELECT (freigegeben, sichtbar_auf_website) ON public.reviews TO anon, authenticated;
