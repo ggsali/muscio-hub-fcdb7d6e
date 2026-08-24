@@ -1408,58 +1408,69 @@ const CalculatorOnlinePage = () => {
                   )}
 
                   {materialMode === "manual" && (
-                    <div className="px-1">
-                      <p className="text-sm font-semibold mb-2">Material direkt wählen</p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {materials.map((m) => {
-                          const sel = materialId === m.id;
-                          return (
-                            <button
-                              key={m.id}
-                              type="button"
-                              onClick={() => chooseMaterial(m.id)}
-                              className={`relative text-left rounded-xl border-2 p-4 transition-all ${
-                                sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
-                              }`}
-                            >
-                              {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                              <p className="font-bold text-sm">{m.name}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{m.farben.length} Farben</p>
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <div className="px-1 space-y-4">
+                      <p className="text-sm font-semibold">Material direkt wählen</p>
+                      {Object.entries(groupedMaterials).map(([typ, items]) => (
+                        <div key={typ}>
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {items.map((m) => {
+                              const sel = materialId === m.id;
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => chooseMaterial(m.id)}
+                                  className={`relative text-left rounded-xl border-2 p-4 transition-all ${
+                                    sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                                  }`}
+                                >
+                                  {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
+                                  <p className="font-bold text-sm">{m.name}</p>
+                                  {m.hersteller && <p className="text-xs text-muted-foreground mt-0.5">{m.hersteller}</p>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
 
                   {materialMode === "ki" && (!isMobile || !kiChatOpen) && (
-                    <div className="px-1">
-                      <p className="text-sm font-semibold mb-2">Alle Materialien</p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {materials.map((m) => {
-                          const sel = materialId === m.id;
-                          const rec = recommendedMaterial?.id === m.id;
-                          return (
-                            <button
-                              key={m.id}
-                              type="button"
-                              onClick={() => chooseMaterial(m.id)}
-                              className={`relative text-left rounded-xl border-2 p-4 transition-all ${
-                                sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
-                              }`}
-                            >
-                              {rec && !sel && (
-                                <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
-                              )}
-                              {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                              <p className="font-bold text-sm">{m.name}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{m.farben.length} Farben</p>
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <div className="px-1 space-y-4">
+                      <p className="text-sm font-semibold">Alle Materialien</p>
+                      {Object.entries(groupedMaterials).map(([typ, items]) => (
+                        <div key={typ}>
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {items.map((m) => {
+                              const sel = materialId === m.id;
+                              const rec = recommendedMaterial?.id === m.id;
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => chooseMaterial(m.id)}
+                                  className={`relative text-left rounded-xl border-2 p-4 transition-all ${
+                                    sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
+                                  }`}
+                                >
+                                  {rec && !sel && (
+                                    <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
+                                  )}
+                                  {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
+                                  <p className="font-bold text-sm">{m.name}</p>
+                                  {m.hersteller && <p className="text-xs text-muted-foreground mt-0.5">{m.hersteller}</p>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
+
 
                   {materialMode === "manual" && materialId && (
                     <Button className="w-full gap-2" onClick={goNext}>
