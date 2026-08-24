@@ -427,6 +427,66 @@ const CalculatorOnlinePage = () => {
     })();
   }, []);
 
+  /** KI-/Slicer-Analyse für ein Teil (Edge Function analyze-stl) */
+  const runKiAnalysisNow = useCallback(async (partId: string) => {
+    const part = parts.find((p) => p.id === partId);
+    if (!part?.stlBase64 || isStepFile(part.fileName)) return;
+    const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
+    if (!mat) return;
+    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+
+    setParts((prev) => prev.map((p) => p.id === partId
+      ? { ...p, kiAnalysisLoading: true, kiAnalysisError: null }
+      : p));
+
+    const { data, error } = await supabase.functions.invoke("analyze-stl", {
+      body: {
+        stlBase64: part.stlBase64,
+        fileName: part.fileName || "teil.stl",
+        material: mat.name,
+        pricePerGram: mat.pricePerGram,
+        qualityKey: quality.key,
+        layerHeight: quality.layerHeight,
+        infill: quality.infill,
+        speedFactor: quality.speedFactor,
+        quantity: part.quantity,
+        maschinenzeit: settings.maschinenzeit_pro_h || 3,
+        setupFee: calcParams.fix_cost || 20,
+        minPrice: calcParams.min_price || 5,
+        minuten_pro_gramm: 2.5,
+        overhang_schwellwert: 30,
+        komplexitaets_aufschlag: 20,
+        versandkosten: SHIPPING_COST,
+        versandkostenfrei_ab: SHIPPING_FREE_FROM,
+      },
+    });
+
+    if (error || !data || (data as any).error) {
+      console.warn("KI-Analyse fehlgeschlagen", error || (data as any)?.error);
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, kiAnalysisLoading: false, kiAnalysisError: "Analyse fehlgeschlagen – vereinfachte Schätzung wird verwendet" }
+        : p));
+    } else {
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, kiAnalysis: data as KiAnalysis, kiAnalysisLoading: false, kiAnalysisError: null }
+        : p));
+    }
+  }, [parts, materials, qualityPresets, qualityKey, settings.maschinenzeit_pro_h, calcParams]);
+
+  const kiFnRef = useRef(runKiAnalysisNow);
+  useEffect(() => { kiFnRef.current = runKiAnalysisNow; }, [runKiAnalysisNow]);
+  const kiTimers = useRef<Record<string, number>>({});
+
+  /** 300 ms Debounce pro Teil */
+  const runKiAnalysis = useCallback((partId: string) => {
+    window.clearTimeout(kiTimers.current[partId]);
+    kiTimers.current[partId] = window.setTimeout(() => { void kiFnRef.current(partId); }, 300);
+  }, []);
+
+  const runKiAnalysisAll = useCallback(() => {
+    parts.forEach((p) => { if (p.stlBase64) runKiAnalysis(p.id); });
+  }, [parts, runKiAnalysis]);
+
   const addFile = useCallback(async (file: File) => {
     const id = crypto.randomUUID();
     const defaultMat = materials[0];
@@ -453,8 +513,30 @@ const CalculatorOnlinePage = () => {
         estimatedWeight: 0,
         previewUrl,
         images: [],
+        stlBase64: null,
+        kiAnalysis: null,
+        kiAnalysisLoading: ext === "stl",
+        kiAnalysisError: null,
       },
     ]);
+
+    // STL zusätzlich als Base64 für die KI-Analyse speichern
+    if (ext === "stl") {
+      try {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, stlBase64: base64 } : x)));
+        runKiAnalysis(id);
+      } catch (e) {
+        console.warn("Base64-Kodierung fehlgeschlagen", e);
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, kiAnalysisLoading: false } : x)));
+      }
+    }
+
 
     // Volumen berechnen
     try {
