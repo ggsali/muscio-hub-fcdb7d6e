@@ -1596,6 +1596,41 @@ const CalculatorOnlinePage = () => {
                               </p>
                             )}
 
+                            {p.kiAnalysisLoading && (
+                              <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+                                <Loader2 className="w-3 h-3 animate-spin" /> 🤖 Modell wird analysiert…
+                              </p>
+                            )}
+                            {p.kiAnalysisError && (
+                              <p className="text-xs text-muted-foreground mt-1">{p.kiAnalysisError}</p>
+                            )}
+                            {p.kiAnalysis && !p.kiAnalysisLoading && (
+                              <div className="mt-1 space-y-0.5">
+                                {p.kiAnalysis.orientierung !== "Original (Z oben)" && (
+                                  <p className="text-xs text-primary">
+                                    🔄 {p.kiAnalysis.orientierung} – Support {p.kiAnalysis.orientierung_original_ueberhang}% → {p.kiAnalysis.orientierung_beste_ueberhang}%
+                                  </p>
+                                )}
+                                {p.kiAnalysis.hat_support ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    ⚠️ Support nötig – Nachbearbeitung {CHF(p.kiAnalysis.support_nachbearbeitung)}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-success">✅ Kein Support nötig</p>
+                                )}
+                                <details className="mt-1">
+                                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                                    ℹ️ Wie wird der Preis berechnet?
+                                  </summary>
+                                  <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+                                    <p>{p.kiAnalysis.begruendung}</p>
+                                    <p>{p.kiAnalysis.hinweis_fuer_kunden}</p>
+                                  </div>
+                                </details>
+                              </div>
+                            )}
+
+
                             <div className="mt-2 flex items-center gap-1">
                               <button onClick={() => update(p.id, { quantity: Math.max(1, p.quantity - 1) })} aria-label="Menge verringern"
                                 className="w-8 h-8 rounded-md border border-input flex items-center justify-center hover:bg-muted">
