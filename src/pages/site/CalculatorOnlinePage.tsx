@@ -433,7 +433,7 @@ const CalculatorOnlinePage = () => {
       body: {
         stlBase64: part.stlBase64,
         fileName: part.fileName || "teil.stl",
-        material: mat.name,
+        material: mat.materialType || mat.name.split(" ")[0],
         pricePerGram: mat.pricePerGram,
         qualityKey: quality.key,
         layerHeight: quality.layerHeight,
