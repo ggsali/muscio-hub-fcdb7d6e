@@ -463,6 +463,67 @@ export default function WebsiteAnalyticsPage() {
       </div>
 
       <Card className="p-4 md:p-6">
+        <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+          <Globe className="w-4 h-4 text-primary" /> Besucher nach Land &amp; Region
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">{range.label}</p>
+        {geoStats.countries.length === 0 && geoStats.cities.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Geodaten werden ab sofort erfasst – in 24h erscheinen hier die ersten Daten
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm font-semibold text-foreground mb-3">Top Länder</p>
+              {geoStats.countries.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Noch keine Daten.</p>
+              ) : (
+                <div className="space-y-2">
+                  {geoStats.countries.map(c => (
+                    <div key={c.label} className="flex items-center gap-3">
+                      <span className="text-sm text-foreground w-32 shrink-0 truncate">
+                        <span className="mr-1.5">{flagEmoji(c.code)}</span>
+                        {c.label}
+                      </span>
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary rounded-full"
+                          style={{ width: `${(c.count / geoStats.countries[0].count) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm text-muted-foreground tabular-nums w-10 text-right">{c.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground mb-3">Top Städte</p>
+              {geoStats.cities.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Noch keine Daten.</p>
+              ) : (
+                <div className="space-y-2">
+                  {geoStats.cities.map(c => (
+                    <div key={c.label} className="flex items-center gap-3">
+                      <span className="text-sm text-foreground w-32 shrink-0 truncate">{c.label}</span>
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary/70 rounded-full"
+                          style={{ width: `${(c.count / geoStats.cities[0].count) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm text-muted-foreground tabular-nums w-10 text-right">{c.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </Card>
+
+
+      <Card className="p-4 md:p-6">
         <h2 className="font-heading text-lg font-bold mb-4">Geräte</h2>
         <div className="grid grid-cols-3 gap-3 md:gap-4">
           {deviceStats.map(d => (
