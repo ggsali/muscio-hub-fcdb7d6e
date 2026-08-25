@@ -1249,29 +1249,41 @@ export type Database = {
       }
       page_views: {
         Row: {
+          city: string | null
+          country: string | null
+          country_code: string | null
           created_at: string
           device: string | null
           id: string
           path: string
           referrer: string | null
+          region: string | null
           session_id: string | null
           user_agent: string | null
         }
         Insert: {
+          city?: string | null
+          country?: string | null
+          country_code?: string | null
           created_at?: string
           device?: string | null
           id?: string
           path: string
           referrer?: string | null
+          region?: string | null
           session_id?: string | null
           user_agent?: string | null
         }
         Update: {
+          city?: string | null
+          country?: string | null
+          country_code?: string | null
           created_at?: string
           device?: string | null
           id?: string
           path?: string
           referrer?: string | null
+          region?: string | null
           session_id?: string | null
           user_agent?: string | null
         }
