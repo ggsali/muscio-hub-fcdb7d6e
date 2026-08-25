@@ -19,7 +19,21 @@ type PageView = {
   device: string | null;
   session_id: string | null;
   created_at: string;
+  country: string | null;
+  country_code: string | null;
+  region: string | null;
+  city: string | null;
 };
+
+function flagEmoji(code: string | null): string {
+  if (!code || code.length !== 2) return "🌍";
+  return code
+    .toUpperCase()
+    .split("")
+    .map(c => String.fromCodePoint(c.charCodeAt(0) + 127397))
+    .join("");
+}
+
 
 const RANGES = [
   { key: "7", label: "7 Tage", days: 7 },
