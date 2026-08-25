@@ -221,6 +221,35 @@ export default function WebsiteAnalyticsPage() {
     ];
   }, [views]);
 
+  const geoStats = useMemo(() => {
+    const countries: Record<string, { label: string; code: string | null; sessions: Set<string> }> = {};
+    const cities: Record<string, Set<string>> = {};
+    views.forEach(v => {
+      const sid = v.session_id || v.id;
+      if (v.country) {
+        const key = v.country;
+        if (!countries[key]) countries[key] = { label: v.country, code: v.country_code, sessions: new Set() };
+        if (!countries[key].code && v.country_code) countries[key].code = v.country_code;
+        countries[key].sessions.add(sid);
+      }
+      if (v.city) {
+        if (!cities[v.city]) cities[v.city] = new Set();
+        cities[v.city].add(sid);
+      }
+    });
+    return {
+      countries: Object.values(countries)
+        .map(c => ({ label: c.label, code: c.code, count: c.sessions.size }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10),
+      cities: Object.entries(cities)
+        .map(([label, s]) => ({ label, count: s.size }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10),
+    };
+  }, [views]);
+
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
