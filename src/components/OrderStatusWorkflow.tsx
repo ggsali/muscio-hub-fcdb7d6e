@@ -152,7 +152,49 @@ export default function OrderStatusWorkflow({
     }
 
     if (newStatus === "Abgeschlossen") {
-      setShowReviewModal(true);
+      try {
+        const { data: order } = await supabase
+          .from("orders")
+          .select("bewertungs_token, customer_id, customers:customer_id(email, vorname, name)")
+          .eq("id", orderId)
+          .single();
+        let token = (order as any)?.bewertungs_token as string | null;
+        if (!token) {
+          token = crypto.randomUUID();
+          await supabase.from("orders").update({ bewertungs_token: token } as any).eq("id", orderId);
+        }
+        const customer = (order as any)?.customers;
+        const customerEmail = customer?.email;
+        const customerName = `${customer?.vorname || ""} ${customer?.name || ""}`.trim();
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "bewertung",
+            recipientEmail: customerEmail,
+            recipientName: customerName,
+            idempotencyKey: `bewertung-${orderId}`,
+            templateData: {
+              name: customerName,
+              bewertungsLink: `https://3dmuscio.com/bewertung/${token}`,
+            },
+          },
+        });
+        await (supabase.from as any)("order_status_log").insert({
+          order_id: orderId,
+          status: "Abgeschlossen",
+          notiz: `✉️ Bewertungsanfrage automatisch gesendet an ${customerEmail}`,
+          created_at: new Date().toISOString(),
+        });
+        loadLog?.();
+      } catch (e) {
+        console.error("bewertung email failed", e);
+        await (supabase.from as any)("order_status_log").insert({
+          order_id: orderId,
+          status: "Abgeschlossen",
+          notiz: "⚠️ Bewertungsanfrage konnte nicht gesendet werden",
+          created_at: new Date().toISOString(),
+        });
+        loadLog?.();
+      }
     }
 
   };
