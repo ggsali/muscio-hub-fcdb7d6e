@@ -58,6 +58,7 @@ self.onmessage = async (e: MessageEvent) => {
           ) / 10
         : 0);
 
+    console.log("RAW", JSON.stringify(stats));
     const layers = Number(stats.layers) || 0;
     const hasSupport = (Number(stats.t_support_ms) || 0) > 100;
 
