@@ -1101,28 +1101,29 @@ const CalculatorOnlinePage = () => {
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Zurück
               </Button>
-              <div className="flex flex-col items-end gap-0.5">
+              <div className="flex flex-col items-end gap-1.5">
                 <div
-                  className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors flex items-center gap-1.5 ${
-                    kiLoading || priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                  className={`px-5 py-2.5 rounded-2xl font-bold text-lg sm:text-xl tabular-nums shadow-sm flex items-center gap-2 ${
+                    kiLoading || priceBadge !== null ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {kiLoading ? (
-                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 🤖 Analysiert…</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Analysiert…</>
                   ) : hasStep
                     ? "Preis nach Prüfung"
                     : priceBadge !== null
                       ? (hasKiAnalysis ? `ab ${CHF(totalMin)}` : `ab ${CHF(priceBadge)}`)
-                      : "Preis: CHF –.–"}
+                      : "CHF –.–"}
                 </div>
-                {!kiLoading && !hasStep && priceBadge !== null && (
-                  <>
-                    <p className="text-[10px] text-muted-foreground leading-tight">Einmalige Anfertigung</p>
-                    <p className="text-[10px] text-muted-foreground leading-tight hidden sm:block">
-                      Keine Mindestmenge · Kein Abo · Keine versteckten Kosten
-                    </p>
-                  </>
-                )}
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground flex-wrap justify-end">
+                  <span>🇨🇭 Swiss Made</span>
+                  <span>·</span>
+                  <span>⚡ 48h Lieferung</span>
+                  <span className="hidden sm:inline">·</span>
+                  <span className="hidden sm:inline">✓ Ab 1 Stück</span>
+                  <span className="hidden md:inline">·</span>
+                  <span className="hidden md:inline">↩️ Nachbesserung inklusive</span>
+                </div>
               </div>
 
 
