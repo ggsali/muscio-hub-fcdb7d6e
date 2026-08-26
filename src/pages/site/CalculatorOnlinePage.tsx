@@ -92,9 +92,14 @@ interface Part {
   previewUrl?: string;
   images: PartImage[];
   stlBase64: string | null;
+  stlArrayBuffer: ArrayBuffer | null;
+  slicerResult: SlicerResult | null;
+  slicerLoading: boolean;
+  slicerError: string | null;
   kiAnalysis: KiAnalysis | null;
   kiAnalysisLoading: boolean;
   kiAnalysisError: string | null;
+
 }
 
 
