@@ -1274,7 +1274,7 @@ const CalculatorOnlinePage = () => {
         </div>
       )}
 
-      <div className="container mx-auto px-4 max-w-4xl pt-8">
+      <div className="container mx-auto px-4 max-w-4xl pt-8 pb-24 lg:pb-0">
         {submitted ? (
           <SuccessView
             inquiryId={herkunftInquiryId}
