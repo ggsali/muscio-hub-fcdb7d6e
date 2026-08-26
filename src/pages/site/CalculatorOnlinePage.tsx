@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, Trash2, Plus, Minus, Loader2, Send, ArrowRight, ArrowLeft, FileText,
   Check, Zap, Gauge, Shield, Gem, Sparkles, MessageCircle,
+  Lock as LockIcon, RotateCcw, Star, ChevronDown, Package, Lightbulb,
+
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -278,6 +280,21 @@ const CalculatorOnlinePage = () => {
   const [chatKey, setChatKey] = useState(0);
   // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
   const [quickMode, setQuickMode] = useState(false);
+  // Wert-Kommunikation & Social Proof
+  const [valueInfoOpen, setValueInfoOpen] = useState(false);
+  const [calcReviews, setCalcReviews] = useState<Array<{ id: string; customer_name: string; kommentar: string | null; rating: number }>>([]);
+  useEffect(() => {
+    supabase.from("public_reviews")
+      .select("id, customer_name, kommentar, rating")
+      .eq("rating", 5)
+      .limit(12)
+      .then(({ data }) => {
+        if (!data) return;
+        const withText = (data as typeof calcReviews).filter((r) => r.kommentar && r.kommentar.trim().length > 10);
+        setCalcReviews([...withText].sort(() => Math.random() - 0.5).slice(0, 3));
+      });
+  }, []);
+
 
   const isMobile = useIsMobile();
 
@@ -814,6 +831,15 @@ const CalculatorOnlinePage = () => {
   const totalMax = Math.round(total * 1.15 * 100) / 100;
   const hasKiAnalysis = parts.some((p) => p.kiAnalysis);
 
+  // Aggregierte Werte für die Wert-Kommunikation (nur Anzeige)
+  const totalGrams = calcs.reduce((s, { part, calc }) => s + calc.weight * part.quantity, 0);
+  const totalHours = calcs.reduce((s, { part, calc }) => {
+    const min = part.kiAnalysis?.druckzeit_minuten;
+    const hours = min != null ? min / 60 : (calc.weight / 10) * presetByInfill(part.infill).speedFactor;
+    return s + hours * part.quantity;
+  }, 0);
+
+
 
   const hasStep = parts.some((p) => isStepFile(p.fileName));
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
@@ -1075,19 +1101,30 @@ const CalculatorOnlinePage = () => {
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Zurück
               </Button>
-              <div
-                className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors flex items-center gap-1.5 ${
-                  kiLoading || priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {kiLoading ? (
-                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 🤖 Analysiert…</>
-                ) : hasStep
-                  ? "Preis nach Prüfung"
-                  : priceBadge !== null
-                    ? (hasKiAnalysis ? `ca. ${CHF(totalMin)} – ${CHF(totalMax)}` : `Aktueller Preis: ${CHF(priceBadge)}`)
-                    : "Aktueller Preis: CHF –.–"}
+              <div className="flex flex-col items-end gap-0.5">
+                <div
+                  className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors flex items-center gap-1.5 ${
+                    kiLoading || priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {kiLoading ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 🤖 Analysiert…</>
+                  ) : hasStep
+                    ? "Preis nach Prüfung"
+                    : priceBadge !== null
+                      ? (hasKiAnalysis ? `ab ${CHF(totalMin)}` : `ab ${CHF(priceBadge)}`)
+                      : "Preis: CHF –.–"}
+                </div>
+                {!kiLoading && !hasStep && priceBadge !== null && (
+                  <>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Einmalige Anfertigung</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight hidden sm:block">
+                      Keine Mindestmenge · Kein Abo · Keine versteckten Kosten
+                    </p>
+                  </>
+                )}
               </div>
+
 
             </div>
           </div>
@@ -1288,6 +1325,12 @@ const CalculatorOnlinePage = () => {
                       </a>
                     </div>
                   )}
+
+                  <div className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">
+                    <p className="font-semibold text-foreground flex items-center gap-1.5"><Package className="w-4 h-4 text-success" /> Mehr bestellen = mehr sparen</p>
+                    <p className="text-muted-foreground mt-1">5+ Stück → 10% Rabatt · 10+ Stück → 15% Rabatt</p>
+                  </div>
+
 
                   {parts.length > 0 && (
                     <Button className="w-full gap-2" onClick={goNext}>
@@ -1624,6 +1667,36 @@ const CalculatorOnlinePage = () => {
                     <p className="text-muted-foreground text-sm">Wie belastbar soll dein Teil sein?</p>
                   </div>
 
+                  {/* Wert-Kommunikation vor dem Preis */}
+                  <div className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-5">
+                    <p className="font-semibold text-foreground flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-primary" /> Warum kostet 3D-Druck was es kostet?
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                      Jedes Teil wird einzeln für Sie gefertigt – keine Formen, keine Mindestmengen.
+                      Ihr Bauteil entsteht Schicht für Schicht direkt aus Ihren Daten, in Schweizer Qualität
+                      und in 48h geliefert.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setValueInfoOpen((o) => !o)}
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    >
+                      {valueInfoOpen ? "weniger anzeigen" : "mehr erfahren"}
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${valueInfoOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {valueInfoOpen && (
+                      <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                        <li>⏱ Druckzeit: {totalHours > 0 ? `ca. ${totalHours.toFixed(1)} Stunden` : "mehrere Stunden"} Maschinenzeit für Ihr Teil</li>
+                        <li>🧵 Material: {totalGrams > 0 ? `ca. ${totalGrams.toFixed(0)} Gramm` : "hochwertiges"} hochwertiges Filament</li>
+                        <li>🇨🇭 Standort: Gefertigt in Eschlikon TG, Schweiz</li>
+                        <li>✅ Qualitätskontrolle inklusive</li>
+                        <li>📦 Verpackung &amp; Versand inklusive</li>
+                      </ul>
+                    )}
+                  </div>
+
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {qualityPresets.map((q) => {
                       const sel = qualityKey === q.key;
@@ -1838,9 +1911,25 @@ const CalculatorOnlinePage = () => {
                     </div>
                     <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
                       <span className="font-bold">Total</span>
-                      <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(total)}</span>
+                      <div className="text-right">
+                        <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(total)}</span>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Einmalige Anfertigung · Keine Mindestmenge · Kein Abo</p>
+                      </div>
                     </div>
                   </div>
+
+                  {!hasStep && total > 50 && (
+                    <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+                      💡 <strong className="text-foreground">Zum Vergleich:</strong> Eine Spritzgussform für dieses Teil würde
+                      CHF 5'000–50'000 kosten – erst ab 10'000 Stück rentabel. Bei uns: ab 1 Stück, sofort.
+                    </div>
+                  )}
+
+                  <div className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">
+                    <p className="font-semibold text-foreground flex items-center gap-1.5"><Package className="w-4 h-4 text-success" /> Mehr bestellen = mehr sparen</p>
+                    <p className="text-muted-foreground mt-1">5+ Stück → 10% Rabatt · 10+ Stück → 15% Rabatt</p>
+                  </div>
+
 
                   {/* Kontaktformular */}
                   <form onSubmit={handleSend} className="bg-card rounded-2xl border border-border p-5 space-y-4">
@@ -1903,7 +1992,29 @@ const CalculatorOnlinePage = () => {
                     <p className="text-xs text-muted-foreground text-center">
                       Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.
                     </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1.5 justify-center"><LockIcon className="w-3.5 h-3.5 text-primary" /> SSL-verschlüsselt</div>
+                      <div className="flex items-center gap-1.5 justify-center">🇨🇭 Hergestellt in der Schweiz</div>
+                      <div className="flex items-center gap-1.5 justify-center"><RotateCcw className="w-3.5 h-3.5 text-primary" /> Kostenlose Nachbesserung bei Druckfehler</div>
+                    </div>
                   </form>
+
+                  {calcReviews.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {calcReviews.map((r) => (
+                        <div key={r.id} className="bg-card border border-border rounded-2xl p-4">
+                          <div className="flex gap-0.5 mb-2">
+                            {Array.from({ length: 5 }).map((_, j) => (
+                              <Star key={j} className="w-3.5 h-3.5 fill-primary text-primary" />
+                            ))}
+                          </div>
+                          <p className="text-sm text-foreground leading-relaxed">„{r.kommentar}"</p>
+                          <p className="text-xs text-muted-foreground mt-2">– {r.customer_name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                 </div>
               )}
             </motion.div>
