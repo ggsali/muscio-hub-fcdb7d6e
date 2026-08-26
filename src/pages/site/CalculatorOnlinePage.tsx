@@ -672,6 +672,7 @@ const CalculatorOnlinePage = () => {
 
     // STL als ArrayBuffer (Slicer) und Base64 (Edge-Function-Fallback) speichern
     if (ext === "stl") {
+      startProgress();
       try {
         const arrayBuffer = await file.arrayBuffer();
         setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
