@@ -1661,6 +1661,36 @@ const CalculatorOnlinePage = () => {
                     <p className="text-muted-foreground text-sm">Wie belastbar soll dein Teil sein?</p>
                   </div>
 
+                  {/* Wert-Kommunikation vor dem Preis */}
+                  <div className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-5">
+                    <p className="font-semibold text-foreground flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-primary" /> Warum kostet 3D-Druck was es kostet?
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                      Jedes Teil wird einzeln für Sie gefertigt – keine Formen, keine Mindestmengen.
+                      Ihr Bauteil entsteht Schicht für Schicht direkt aus Ihren Daten, in Schweizer Qualität
+                      und in 48h geliefert.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setValueInfoOpen((o) => !o)}
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                    >
+                      {valueInfoOpen ? "weniger anzeigen" : "mehr erfahren"}
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${valueInfoOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {valueInfoOpen && (
+                      <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                        <li>⏱ Druckzeit: {totalHours > 0 ? `ca. ${totalHours.toFixed(1)} Stunden` : "mehrere Stunden"} Maschinenzeit für Ihr Teil</li>
+                        <li>🧵 Material: {totalGrams > 0 ? `ca. ${totalGrams.toFixed(0)} Gramm` : "hochwertiges"} hochwertiges Filament</li>
+                        <li>🇨🇭 Standort: Gefertigt in Eschlikon TG, Schweiz</li>
+                        <li>✅ Qualitätskontrolle inklusive</li>
+                        <li>📦 Verpackung &amp; Versand inklusive</li>
+                      </ul>
+                    )}
+                  </div>
+
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {qualityPresets.map((q) => {
                       const sel = qualityKey === q.key;
