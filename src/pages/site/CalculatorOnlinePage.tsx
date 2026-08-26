@@ -1162,7 +1162,8 @@ const CalculatorOnlinePage = () => {
     }
   };
 
-  const priceBadge = !materialId || parts.length === 0 || hasStep ? null : total;
+  const hasSlicerResult = parts.some((p) => p.slicerResult);
+  const priceBadge = parts.length === 0 || hasStep ? null : (analysisProgress === 100 && hasSlicerResult ? totalMin : (!materialId ? null : total));
 
   return (
     <div className="pb-20">
