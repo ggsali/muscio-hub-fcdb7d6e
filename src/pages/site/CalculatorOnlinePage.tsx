@@ -1915,11 +1915,19 @@ const CalculatorOnlinePage = () => {
                     })}
                   </div>
 
-                  <Button className="w-full gap-2" onClick={goNext} disabled={kiLoading}>
-                    {kiLoading
-                      ? <><Loader2 className="w-4 h-4 animate-spin" /> 🤖 Analyse läuft…</>
-                      : <>Weiter zur Übersicht <ArrowRight className="w-4 h-4" /></>}
-                  </Button>
+                  <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto z-40 lg:z-auto bg-background/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-t border-border lg:border-none p-4 lg:p-0"
+                    style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+                    <Button
+                      onClick={goNext}
+                      disabled={!canGoNext}
+                      className="w-full lg:w-auto"
+                      size="lg"
+                    >
+                      {kiLoading
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> 🤖 Analyse läuft…</>
+                        : <>Weiter → {STEPS[step] || ""}</>}
+                    </Button>
+                  </div>
 
                 </div>
               )}
