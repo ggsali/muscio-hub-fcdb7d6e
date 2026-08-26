@@ -301,6 +301,10 @@ const CalculatorOnlinePage = () => {
       });
   }, []);
 
+  // Analyse-Fortschritt simulieren
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisPhase, setAnalysisPhase] = useState<"idle" | "analysing" | "done">("idle");
+
 
   const isMobile = useIsMobile();
   const { slice } = useSlicerWorker();
