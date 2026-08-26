@@ -303,7 +303,41 @@ const CalculatorOnlinePage = () => {
 
   // Analyse-Fortschritt simulieren
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisPhase, setAnalysisPhase] = useState<"idle" | "analysing" | "done">("idle");
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isAnalysingRef = useRef(false);
+
+  const startProgress = useCallback(() => {
+    if (isAnalysingRef.current) return; // Bereits aktiv, nicht neu starten
+    isAnalysingRef.current = true;
+    setAnalysisProgress(5);
+
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+
+    progressIntervalRef.current = setInterval(() => {
+      setAnalysisProgress((prev) => {
+        if (prev >= 88) {
+          clearInterval(progressIntervalRef.current!);
+          return 88; // Wartet auf echtes Fertig-Signal
+        }
+        return Math.min(prev + Math.random() * 5 + 1, 88);
+      });
+    }, 600);
+  }, []);
+
+  const finishProgress = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    isAnalysingRef.current = false;
+    setAnalysisProgress(100);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    };
+  }, []);
 
 
   const isMobile = useIsMobile();
