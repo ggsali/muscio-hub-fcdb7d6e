@@ -26,7 +26,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // three-slicer Worker benötigt ES-Module-Format (Code-Splitting + WASM)
+  worker: {
+    format: "es",
+  },
   build: {
+
     rollupOptions: {
       output: {
         entryFileNames: "assets/[name]-[hash].js",

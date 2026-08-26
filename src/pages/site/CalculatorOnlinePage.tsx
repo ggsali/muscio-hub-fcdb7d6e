@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { takePendingUploads } from "@/lib/pendingUpload";
+import { useSlicerWorker, type SlicerResult } from "@/hooks/useSlicerWorker";
+
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -92,9 +94,14 @@ interface Part {
   previewUrl?: string;
   images: PartImage[];
   stlBase64: string | null;
+  stlArrayBuffer: ArrayBuffer | null;
+  slicerResult: SlicerResult | null;
+  slicerLoading: boolean;
+  slicerError: string | null;
   kiAnalysis: KiAnalysis | null;
   kiAnalysisLoading: boolean;
   kiAnalysisError: string | null;
+
 }
 
 
@@ -296,6 +303,8 @@ const CalculatorOnlinePage = () => {
 
 
   const isMobile = useIsMobile();
+  const { slice } = useSlicerWorker();
+
 
   const { settings } = useSettings();
 
@@ -536,6 +545,52 @@ const CalculatorOnlinePage = () => {
     parts.forEach((p) => { if (p.stlBase64) runKiAnalysis(p.id); });
   }, [parts, runKiAnalysis]);
 
+  /** Browser-Slicing via three-slicer Web Worker (OrcaSlicer-Kernel) */
+  const runSlicerNow = useCallback(async (partId: string) => {
+    const part = parts.find((p) => p.id === partId);
+    if (!part?.stlArrayBuffer || isStepFile(part.fileName)) return;
+
+    const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
+    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+
+    setParts((prev) => prev.map((p) => p.id === partId
+      ? { ...p, slicerLoading: true, slicerError: null }
+      : p));
+
+    try {
+      const result = await slice(part.stlArrayBuffer.slice(0), {
+        material: mat?.materialType || mat?.name.split(" ")[0] || "PLA",
+        layerHeight: quality.layerHeight,
+        infill: quality.infill,
+        speedFactor: quality.speedFactor,
+        density: mat?.density,
+      });
+      console.log("[Slicer]", result);
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, slicerResult: result, slicerLoading: false, slicerError: null }
+        : p));
+    } catch (err: any) {
+      console.error("[Slicer Error]", err);
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, slicerLoading: false, slicerError: "Slicer nicht verfügbar – Schätzung wird verwendet" }
+        : p));
+    }
+  }, [parts, materials, qualityPresets, qualityKey, slice]);
+
+  const slicerFnRef = useRef(runSlicerNow);
+  useEffect(() => { slicerFnRef.current = runSlicerNow; }, [runSlicerNow]);
+  const slicerTimers = useRef<Record<string, number>>({});
+
+  const runSlicer = useCallback((partId: string) => {
+    window.clearTimeout(slicerTimers.current[partId]);
+    slicerTimers.current[partId] = window.setTimeout(() => { void slicerFnRef.current(partId); }, 300);
+  }, []);
+
+  const runSlicerAll = useCallback(() => {
+    parts.forEach((p) => { if (p.stlArrayBuffer) runSlicer(p.id); });
+  }, [parts, runSlicer]);
+
+
   const addFile = useCallback(async (file: File) => {
     const id = crypto.randomUUID();
     const defaultMat = materials[0];
@@ -563,14 +618,26 @@ const CalculatorOnlinePage = () => {
         previewUrl,
         images: [],
         stlBase64: null,
+        stlArrayBuffer: null,
+        slicerResult: null,
+        slicerLoading: ext === "stl",
+        slicerError: null,
         kiAnalysis: null,
         kiAnalysisLoading: ext === "stl",
         kiAnalysisError: null,
       },
     ]);
 
-    // STL zusätzlich als Base64 für die KI-Analyse speichern
+    // STL als ArrayBuffer (Slicer) und Base64 (Edge-Function-Fallback) speichern
     if (ext === "stl") {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
+        runSlicer(id);
+      } catch (e) {
+        console.warn("STL konnte nicht gelesen werden", e);
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, slicerLoading: false } : x)));
+      }
       try {
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -585,6 +652,7 @@ const CalculatorOnlinePage = () => {
         setParts((p) => p.map((x) => (x.id === id ? { ...x, kiAnalysisLoading: false } : x)));
       }
     }
+
 
 
     // Volumen berechnen
@@ -767,18 +835,42 @@ const CalculatorOnlinePage = () => {
     setQualityKey(key);
     applyAll({ infill });
     runKiAnalysisAll();
+    runSlicerAll();
   };
 
   const MIN_PRICE = calcParams.min_price;
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** KI-Analyse bevorzugt, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
+  /** Slicer-Daten bevorzugt, dann KI-Analyse, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
   const calcPart = (p: Part) => {
+    const mat = materials.find((m) => m.id === p.materialId);
+
+    let discount = 0;
+    if (p.quantity >= 10) discount = 0.15;
+    else if (p.quantity >= 5) discount = 0.1;
+
+    // 1) Echte Slicer-Daten
+    if (p.slicerResult && !p.slicerLoading && mat && p.slicerResult.filamentGrams > 0) {
+      const weightG = p.slicerResult.filamentGrams;
+      const druckzeitMin = p.slicerResult.printTimeMinutes ||
+        weightG * 2.5 * (presetByInfill(p.infill).speedFactor || 1);
+      const materialCost = weightG * mat.pricePerGram;
+      const machineCost = (druckzeitMin / 60) * (settings.maschinenzeit_pro_h || 3);
+      const supportCost = p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
+      const unit = materialCost + machineCost + supportCost;
+      return {
+        weight: weightG,
+        unit,
+        subtotal: Math.max(unit * p.quantity * (1 - discount), 0),
+        discount,
+        exact: true,
+        druckzeitMin,
+      };
+    }
+
+    // 2) KI-Analyse (Edge Function als Fallback)
     if (p.kiAnalysis && !p.kiAnalysisLoading) {
-      let discount = 0;
-      if (p.quantity >= 10) discount = 0.15;
-      else if (p.quantity >= 5) discount = 0.1;
       const unit = p.kiAnalysis.preis_pro_stueck;
       return {
         weight: p.kiAnalysis.weightG ?? p.estimatedWeight,
@@ -791,7 +883,6 @@ const CalculatorOnlinePage = () => {
       };
     }
 
-    const mat = materials.find((m) => m.id === p.materialId);
     if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
     }
@@ -808,18 +899,15 @@ const CalculatorOnlinePage = () => {
 
     const unit = materialCost + machineCost;
 
-    let discount = 0;
-    if (p.quantity >= 10) discount = 0.15;
-    else if (p.quantity >= 5) discount = 0.1;
-
     const subtotal = Math.max(unit * p.quantity * (1 - discount), 0);
     return { weight, unit, subtotal, discount, exact: false };
   };
 
 
+
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
 
-  const kiLoading = parts.some((p) => p.kiAnalysisLoading);
+  const kiLoading = parts.some((p) => p.kiAnalysisLoading || p.slicerLoading);
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const setupFee = parts.length > 0 ? (FIX_COST || 20) : 0;
@@ -828,12 +916,12 @@ const CalculatorOnlinePage = () => {
   const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
   const totalMin = Math.round(total * 0.9 * 100) / 100;
   const totalMax = Math.round(total * 1.15 * 100) / 100;
-  const hasKiAnalysis = parts.some((p) => p.kiAnalysis);
+  const hasKiAnalysis = parts.some((p) => p.kiAnalysis || p.slicerResult);
 
   // Aggregierte Werte für die Wert-Kommunikation (nur Anzeige)
   const totalGrams = calcs.reduce((s, { part, calc }) => s + calc.weight * part.quantity, 0);
   const totalHours = calcs.reduce((s, { part, calc }) => {
-    const min = part.kiAnalysis?.druckzeit_minuten;
+    const min = part.slicerResult?.printTimeMinutes || part.kiAnalysis?.druckzeit_minuten;
     const hours = min != null ? min / 60 : (calc.weight / 10) * presetByInfill(part.infill).speedFactor;
     return s + hours * part.quantity;
   }, 0);
@@ -892,6 +980,7 @@ const CalculatorOnlinePage = () => {
     setColor((c) => (mat?.farben?.includes(c) ? c : firstColor));
     applyAll({ materialId: id });
     runKiAnalysisAll();
+    runSlicerAll();
   };
 
 
@@ -1777,6 +1866,28 @@ const CalculatorOnlinePage = () => {
                               </p>
                             )}
 
+                            {p.slicerLoading && (
+                              <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+                                <Loader2 className="w-3 h-3 animate-spin" /> ⚙️ Slicing läuft…
+                              </p>
+                            )}
+                            {p.slicerResult && !p.slicerLoading && (
+                              <div className="mt-1 space-y-0.5">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success text-xs px-2 py-0.5">
+                                  ✓ Gesliced
+                                </span>
+                                <p className="text-xs text-muted-foreground">
+                                  Druckzeit: {(p.slicerResult.printTimeMinutes / 60).toFixed(1)} h (OrcaSlicer) · Filament: {p.slicerResult.filamentGrams.toFixed(0)} g · Layer: {p.slicerResult.layers}
+                                </p>
+                                {p.slicerResult.hasSupport && (
+                                  <p className="text-xs text-muted-foreground">⚠️ Support erkannt</p>
+                                )}
+                              </div>
+                            )}
+                            {p.slicerError && !p.slicerResult && (
+                              <p className="text-xs text-orange-500 mt-1">~ Schätzung – {p.slicerError}</p>
+                            )}
+
                             {p.kiAnalysisLoading && (
                               <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
                                 <Loader2 className="w-3 h-3 animate-spin" /> 🤖 Modell wird analysiert…
@@ -1785,6 +1896,7 @@ const CalculatorOnlinePage = () => {
                             {p.kiAnalysisError && (
                               <p className="text-xs text-muted-foreground mt-1">{p.kiAnalysisError}</p>
                             )}
+
                             {p.kiAnalysis && !p.kiAnalysisLoading && (
                               <div className="mt-1 space-y-0.5">
                                 {p.kiAnalysis.orientierung !== "Original (Z oben)" && (

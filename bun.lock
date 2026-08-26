@@ -69,6 +69,7 @@
         "tailwind-merge": "^2.6.0",
         "tailwindcss-animate": "^1.0.7",
         "three": "0.160.0",
+        "three-slicer": "^0.2.2",
         "vaul": "^0.9.9",
         "zod": "^3.25.76",
       },
@@ -1493,6 +1494,8 @@
     "three": ["three@0.160.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/three/-/three-0.160.0.tgz", {}, "sha512-DLU8lc0zNIPkM7rH5/e1Ks1Z8tWCGRq6g8mPowdDJpw1CFBJMU7UoJjC6PefXW7z//SSl0b2+GCw14LB+uDhng=="],
 
     "three-mesh-bvh": ["three-mesh-bvh@0.7.8", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/three-mesh-bvh/-/three-mesh-bvh-0.7.8.tgz", { "peerDependencies": { "three": ">= 0.151.0" } }, "sha512-BGEZTOIC14U0XIRw3tO4jY7IjP7n7v24nv9JXS1CyeVRWOCkcOMhRnmENUjuV39gktAw4Ofhr0OvIAiTspQrrw=="],
+
+    "three-slicer": ["three-slicer@0.2.2", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/three-slicer/-/three-slicer-0.2.2.tgz", { "peerDependencies": { "react": ">=18", "react-dom": ">=18", "three": "^0.160.0" }, "optionalPeers": ["react", "react-dom", "three"] }, "sha512-JbosmS9Ae8ZaHKwgeTl7Olm9S+VDqHJAbjib9VVJ3JVZc/Q25ZpbrQN80LgQKUmj/IvpumNKW3MJGJ1snp95YQ=="],
 
     "three-stdlib": ["three-stdlib@2.36.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/three-stdlib/-/three-stdlib-2.36.1.tgz", { "dependencies": { "@types/draco3d": "^1.4.0", "@types/offscreencanvas": "^2019.6.4", "@types/webxr": "^0.5.2", "draco3d": "^1.4.1", "fflate": "^0.6.9", "potpack": "^1.0.1" }, "peerDependencies": { "three": ">=0.128.0" } }, "sha512-XyGQrFmNQ5O/IoKm556ftwKsBg11TIb301MB5dWNicziQBEs2g3gtOYIf7pFiLa0zI2gUwhtCjv9fmjnxKZ1Cg=="],
 
