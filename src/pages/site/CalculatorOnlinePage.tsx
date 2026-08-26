@@ -1099,19 +1099,30 @@ const CalculatorOnlinePage = () => {
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Zurück
               </Button>
-              <div
-                className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors flex items-center gap-1.5 ${
-                  kiLoading || priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {kiLoading ? (
-                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 🤖 Analysiert…</>
-                ) : hasStep
-                  ? "Preis nach Prüfung"
-                  : priceBadge !== null
-                    ? (hasKiAnalysis ? `ca. ${CHF(totalMin)} – ${CHF(totalMax)}` : `Aktueller Preis: ${CHF(priceBadge)}`)
-                    : "Aktueller Preis: CHF –.–"}
+              <div className="flex flex-col items-end gap-0.5">
+                <div
+                  className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors flex items-center gap-1.5 ${
+                    kiLoading || priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {kiLoading ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 🤖 Analysiert…</>
+                  ) : hasStep
+                    ? "Preis nach Prüfung"
+                    : priceBadge !== null
+                      ? (hasKiAnalysis ? `ab ${CHF(totalMin)}` : `ab ${CHF(priceBadge)}`)
+                      : "Preis: CHF –.–"}
+                </div>
+                {!kiLoading && !hasStep && priceBadge !== null && (
+                  <>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Einmalige Anfertigung</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight hidden sm:block">
+                      Keine Mindestmenge · Kein Abo · Keine versteckten Kosten
+                    </p>
+                  </>
+                )}
               </div>
+
 
             </div>
           </div>
