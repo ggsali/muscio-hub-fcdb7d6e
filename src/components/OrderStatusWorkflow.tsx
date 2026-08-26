@@ -201,7 +201,7 @@ export default function OrderStatusWorkflow({
         notiz: `✉️ Bewertungsanfrage gesendet an ${customerEmail}`,
         created_at: new Date().toISOString(),
       });
-      toast({ title: "Bewertungsanfrage gesendet ✓" });
+      toast.success("Bewertungsanfrage gesendet ✓");
       loadLog?.();
     } catch (e) {
       await (supabase.from as any)("order_status_log").insert({
@@ -210,8 +210,9 @@ export default function OrderStatusWorkflow({
         notiz: "⚠️ Bewertungsanfrage konnte nicht gesendet werden",
         created_at: new Date().toISOString(),
       });
-      toast({ title: "Fehler beim Senden", variant: "destructive" });
+      toast.error("Fehler beim Senden");
     } finally {
+
       setReviewSending(false);
       setShowReviewModal(false);
     }
