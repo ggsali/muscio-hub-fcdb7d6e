@@ -204,45 +204,45 @@ const ContactPage = () => {
                   <form className="space-y-5" onSubmit={handleSubmit}>
                     <div>
                       <Label className="text-xs font-medium">Name *</Label>
-                      <Input required className="mt-1" placeholder="Dein Name"
+                      <Input required className="mt-1 text-base" placeholder="Dein Name"
                         value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                     </div>
                     <div>
                       <Label className="text-xs font-medium">E-Mail *</Label>
-                      <Input type="email" required className="mt-1" placeholder="name@beispiel.ch"
+                      <Input type="email" required className="mt-1 text-base" placeholder="name@beispiel.ch"
                         value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                     </div>
                     <div>
                       <Label className="text-xs font-medium">Telefon (optional)</Label>
-                      <Input type="tel" className="mt-1" placeholder="+41 79..."
+                      <Input type="tel" className="mt-1 text-base" placeholder="+41 79..."
                         value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                     </div>
                     <div>
                       <Label className="text-xs font-medium">Strasse & Hausnummer</Label>
-                      <Input className="mt-1" placeholder="Musterstrasse 12"
+                      <Input className="mt-1 text-base" placeholder="Musterstrasse 12"
                         value={form.strasse} onChange={e => setForm(f => ({ ...f, strasse: e.target.value }))} />
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div>
                         <Label className="text-xs font-medium">PLZ</Label>
-                        <Input className="mt-1" placeholder="8000"
+                        <Input className="mt-1 text-base" placeholder="8000"
                           value={form.plz} onChange={e => setForm(f => ({ ...f, plz: e.target.value }))} />
                       </div>
                       <div className="col-span-2">
                         <Label className="text-xs font-medium">Ort</Label>
-                        <Input className="mt-1" placeholder="Zürich"
+                        <Input className="mt-1 text-base" placeholder="Zürich"
                           value={form.ort} onChange={e => setForm(f => ({ ...f, ort: e.target.value }))} />
                       </div>
                     </div>
                     <div>
                       <Label className="text-xs font-medium">Land</Label>
-                      <Input className="mt-1" placeholder="Schweiz"
+                      <Input className="mt-1 text-base" placeholder="Schweiz"
                         value={form.land} onChange={e => setForm(f => ({ ...f, land: e.target.value }))} />
                     </div>
                     <div>
                       <Label className="text-xs font-medium">Betreff *</Label>
                       <Select value={betreff} onValueChange={setBetreff}>
-                        <SelectTrigger className="mt-1"><SelectValue placeholder="Bitte wählen" /></SelectTrigger>
+                        <SelectTrigger className="mt-1 text-base"><SelectValue placeholder="Bitte wählen" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Anfrage">Anfrage</SelectItem>
                           <SelectItem value="Support">Support</SelectItem>
@@ -253,7 +253,7 @@ const ContactPage = () => {
                     </div>
                     <div>
                       <Label className="text-xs font-medium">Nachricht *</Label>
-                      <Textarea rows={5} required className="mt-1" placeholder="Deine Nachricht..."
+                      <Textarea rows={5} required className="mt-1 text-base" placeholder="Deine Nachricht..."
                         value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
                     </div>
                     <div>

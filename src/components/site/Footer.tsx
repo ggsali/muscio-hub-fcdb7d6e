@@ -24,7 +24,7 @@ const itemVariants = {
 };
 
 export const Footer = () => (
-  <footer className="border-t border-border bg-background relative overflow-hidden">
+  <footer className="border-t border-border bg-background relative overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}>
     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-primary/[0.04] rounded-full blur-[80px] pointer-events-none" />
 
     <div className="container mx-auto px-4 py-16 relative z-10">

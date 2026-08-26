@@ -1183,6 +1183,13 @@ const CalculatorOnlinePage = () => {
   const hasSlicerResult = parts.some((p) => p.slicerResult);
   const priceBadge = parts.length === 0 || hasStep ? null : (analysisProgress === 100 && hasSlicerResult ? totalMin : (!materialId ? null : total));
 
+  const canGoNext = step === 1 ? parts.length > 0
+    : step === 2 ? true
+    : step === 3 ? !!materialId
+    : step === 4 ? !!color
+    : step === 5 ? !kiLoading
+    : true;
+
   return (
     <div className="pb-20">
       <Seo
@@ -1267,7 +1274,7 @@ const CalculatorOnlinePage = () => {
         </div>
       )}
 
-      <div className="container mx-auto px-4 max-w-4xl pt-8">
+      <div className="container mx-auto px-4 max-w-4xl pt-8 pb-24 lg:pb-0">
         {submitted ? (
           <SuccessView
             inquiryId={herkunftInquiryId}
@@ -1495,9 +1502,17 @@ const CalculatorOnlinePage = () => {
 
 
                   {parts.length > 0 && (
-                    <Button className="w-full gap-2" onClick={goNext}>
-                      Weiter zu den Bildern <ArrowRight className="w-4 h-4" />
-                    </Button>
+                    <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto z-40 lg:z-auto bg-background/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-t border-border lg:border-none p-4 lg:p-0"
+                      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+                      <Button
+                        onClick={goNext}
+                        disabled={!canGoNext}
+                        className="w-full lg:w-auto"
+                        size="lg"
+                      >
+                        Weiter → {STEPS[step] || ""}
+                      </Button>
+                    </div>
                   )}
                 </div>
               )}
@@ -1547,9 +1562,17 @@ const CalculatorOnlinePage = () => {
                     )}
                   </div>
 
-                  <Button className="w-full gap-2" onClick={goNext}>
-                    {refImages.length > 0 ? "Weiter zur Materialwahl" : "Ohne Bilder weiter"} <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto z-40 lg:z-auto bg-background/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-t border-border lg:border-none p-4 lg:p-0"
+                    style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+                    <Button
+                      onClick={goNext}
+                      disabled={!canGoNext}
+                      className="w-full lg:w-auto"
+                      size="lg"
+                    >
+                      Weiter → {STEPS[step] || ""}
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -1762,16 +1785,18 @@ const CalculatorOnlinePage = () => {
                   )}
 
 
-                  {materialMode === "manual" && materialId && (
-                    <Button className="w-full gap-2" onClick={goNext}>
-                      Weiter zur Farbe <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  )}
-
-                  {materialMode === "ki" && materialId && (!isMobile || !kiChatOpen) && (
-                    <Button className="w-full gap-2" onClick={goNext}>
-                      Weiter zur Farbe <ArrowRight className="w-4 h-4" />
-                    </Button>
+                  {materialId && (materialMode === "manual" || (materialMode === "ki" && (!isMobile || !kiChatOpen))) && (
+                    <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto z-40 lg:z-auto bg-background/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-t border-border lg:border-none p-4 lg:p-0"
+                      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+                      <Button
+                        onClick={goNext}
+                        disabled={!canGoNext}
+                        className="w-full lg:w-auto"
+                        size="lg"
+                      >
+                        Weiter → {STEPS[step] || ""}
+                      </Button>
+                    </div>
                   )}
 
                 </div>
@@ -1890,11 +1915,19 @@ const CalculatorOnlinePage = () => {
                     })}
                   </div>
 
-                  <Button className="w-full gap-2" onClick={goNext} disabled={kiLoading}>
-                    {kiLoading
-                      ? <><Loader2 className="w-4 h-4 animate-spin" /> 🤖 Analyse läuft…</>
-                      : <>Weiter zur Übersicht <ArrowRight className="w-4 h-4" /></>}
-                  </Button>
+                  <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto z-40 lg:z-auto bg-background/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-t border-border lg:border-none p-4 lg:p-0"
+                    style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+                    <Button
+                      onClick={goNext}
+                      disabled={!canGoNext}
+                      className="w-full lg:w-auto"
+                      size="lg"
+                    >
+                      {kiLoading
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> 🤖 Analyse läuft…</>
+                        : <>Weiter → {STEPS[step] || ""}</>}
+                    </Button>
+                  </div>
 
                 </div>
               )}
@@ -2004,7 +2037,7 @@ const CalculatorOnlinePage = () => {
                               </button>
                               <Input type="number" min={1} value={p.quantity}
                                 onChange={(e) => update(p.id, { quantity: Math.max(1, Number(e.target.value)) })}
-                                className="h-8 w-16 text-center" aria-label="Menge" />
+                                className="h-8 w-16 text-center text-base" aria-label="Menge" />
                               <button onClick={() => update(p.id, { quantity: p.quantity + 1 })} aria-label="Menge erhöhen"
                                 className="w-8 h-8 rounded-md border border-input flex items-center justify-center hover:bg-muted">
                                 <Plus className="w-3 h-3" />
@@ -2128,48 +2161,48 @@ const CalculatorOnlinePage = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">Vorname *</Label>
-                        <Input required value={form.vorname} onChange={(e) => setForm((f) => ({ ...f, vorname: e.target.value }))} className="mt-1" />
+                        <Input required value={form.vorname} onChange={(e) => setForm((f) => ({ ...f, vorname: e.target.value }))} className="mt-1 text-base" />
                       </div>
                       <div>
                         <Label className="text-xs">Nachname *</Label>
-                        <Input required value={form.nachname} onChange={(e) => setForm((f) => ({ ...f, nachname: e.target.value }))} className="mt-1" />
+                        <Input required value={form.nachname} onChange={(e) => setForm((f) => ({ ...f, nachname: e.target.value }))} className="mt-1 text-base" />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs">E-Mail *</Label>
-                        <Input type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" />
+                        <Input type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="mt-1 text-base" />
                       </div>
                       <div>
                         <Label className="text-xs">Telefon *</Label>
-                        <Input type="tel" required value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" />
+                        <Input type="tel" required value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1 text-base" />
                       </div>
                     </div>
                     {!isLoggedIn && (
                       <>
                         <div>
                           <Label className="text-xs">Strasse & Hausnummer *</Label>
-                          <Input required value={form.strasse} onChange={(e) => setForm((f) => ({ ...f, strasse: e.target.value }))} className="mt-1" />
+                          <Input required value={form.strasse} onChange={(e) => setForm((f) => ({ ...f, strasse: e.target.value }))} className="mt-1 text-base" />
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                           <div>
                             <Label className="text-xs">PLZ *</Label>
-                            <Input required value={form.plz} onChange={(e) => setForm((f) => ({ ...f, plz: e.target.value }))} className="mt-1" />
+                            <Input required value={form.plz} onChange={(e) => setForm((f) => ({ ...f, plz: e.target.value }))} className="mt-1 text-base" />
                           </div>
                           <div className="col-span-2">
                             <Label className="text-xs">Ort *</Label>
-                            <Input required value={form.ort} onChange={(e) => setForm((f) => ({ ...f, ort: e.target.value }))} className="mt-1" />
+                            <Input required value={form.ort} onChange={(e) => setForm((f) => ({ ...f, ort: e.target.value }))} className="mt-1 text-base" />
                           </div>
                         </div>
                         <div>
                           <Label className="text-xs">Land</Label>
-                          <Input value={form.land} onChange={(e) => setForm((f) => ({ ...f, land: e.target.value }))} className="mt-1" />
+                          <Input value={form.land} onChange={(e) => setForm((f) => ({ ...f, land: e.target.value }))} className="mt-1 text-base" />
                         </div>
                       </>
                     )}
                     <div>
                       <Label className="text-xs">Nachricht (optional)</Label>
-                      <Textarea rows={3} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="mt-1" />
+                      <Textarea rows={3} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="mt-1 text-base" />
                     </div>
                     <Button type="submit" className="w-full gap-2" disabled={submitting || parts.length === 0 || parts.some(p => p.uploading)}>
                       {submitting ? (
