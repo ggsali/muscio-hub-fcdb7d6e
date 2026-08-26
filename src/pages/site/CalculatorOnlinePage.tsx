@@ -543,6 +543,52 @@ const CalculatorOnlinePage = () => {
     parts.forEach((p) => { if (p.stlBase64) runKiAnalysis(p.id); });
   }, [parts, runKiAnalysis]);
 
+  /** Browser-Slicing via three-slicer Web Worker (OrcaSlicer-Kernel) */
+  const runSlicerNow = useCallback(async (partId: string) => {
+    const part = parts.find((p) => p.id === partId);
+    if (!part?.stlArrayBuffer || isStepFile(part.fileName)) return;
+
+    const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
+    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+
+    setParts((prev) => prev.map((p) => p.id === partId
+      ? { ...p, slicerLoading: true, slicerError: null }
+      : p));
+
+    try {
+      const result = await slice(part.stlArrayBuffer.slice(0), {
+        material: mat?.materialType || mat?.name.split(" ")[0] || "PLA",
+        layerHeight: quality.layerHeight,
+        infill: quality.infill,
+        speedFactor: quality.speedFactor,
+        density: mat?.density,
+      });
+      console.log("[Slicer]", result);
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, slicerResult: result, slicerLoading: false, slicerError: null }
+        : p));
+    } catch (err: any) {
+      console.error("[Slicer Error]", err);
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, slicerLoading: false, slicerError: "Slicer nicht verfügbar – Schätzung wird verwendet" }
+        : p));
+    }
+  }, [parts, materials, qualityPresets, qualityKey, slice]);
+
+  const slicerFnRef = useRef(runSlicerNow);
+  useEffect(() => { slicerFnRef.current = runSlicerNow; }, [runSlicerNow]);
+  const slicerTimers = useRef<Record<string, number>>({});
+
+  const runSlicer = useCallback((partId: string) => {
+    window.clearTimeout(slicerTimers.current[partId]);
+    slicerTimers.current[partId] = window.setTimeout(() => { void slicerFnRef.current(partId); }, 300);
+  }, []);
+
+  const runSlicerAll = useCallback(() => {
+    parts.forEach((p) => { if (p.stlArrayBuffer) runSlicer(p.id); });
+  }, [parts, runSlicer]);
+
+
   const addFile = useCallback(async (file: File) => {
     const id = crypto.randomUUID();
     const defaultMat = materials[0];
