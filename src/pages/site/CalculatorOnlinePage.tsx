@@ -1875,9 +1875,25 @@ const CalculatorOnlinePage = () => {
                     </div>
                     <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
                       <span className="font-bold">Total</span>
-                      <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(total)}</span>
+                      <div className="text-right">
+                        <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(total)}</span>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Einmalige Anfertigung · Keine Mindestmenge · Kein Abo</p>
+                      </div>
                     </div>
                   </div>
+
+                  {!hasStep && total > 50 && (
+                    <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+                      💡 <strong className="text-foreground">Zum Vergleich:</strong> Eine Spritzgussform für dieses Teil würde
+                      CHF 5'000–50'000 kosten – erst ab 10'000 Stück rentabel. Bei uns: ab 1 Stück, sofort.
+                    </div>
+                  )}
+
+                  <div className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">
+                    <p className="font-semibold text-foreground flex items-center gap-1.5"><Package className="w-4 h-4 text-success" /> Mehr bestellen = mehr sparen</p>
+                    <p className="text-muted-foreground mt-1">5+ Stück → 10% Rabatt · 10+ Stück → 15% Rabatt</p>
+                  </div>
+
 
                   {/* Kontaktformular */}
                   <form onSubmit={handleSend} className="bg-card rounded-2xl border border-border p-5 space-y-4">
