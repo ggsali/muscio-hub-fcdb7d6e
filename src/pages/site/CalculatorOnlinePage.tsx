@@ -301,6 +301,10 @@ const CalculatorOnlinePage = () => {
       });
   }, []);
 
+  // Analyse-Fortschritt simulieren
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisPhase, setAnalysisPhase] = useState<"idle" | "analysing" | "done">("idle");
+
 
   const isMobile = useIsMobile();
   const { slice } = useSlicerWorker();
@@ -959,6 +963,30 @@ const CalculatorOnlinePage = () => {
     }
   }, [quickMode, materialId, parts, materials]);
 
+  useEffect(() => {
+    const isLoading = parts.some((p) => p.slicerLoading || p.kiAnalysisLoading);
+    setAnalysisPhase(isLoading ? "analysing" : parts.length > 0 ? "done" : "idle");
+    if (!isLoading) {
+      setAnalysisProgress(100);
+      return;
+    }
+    setAnalysisProgress(5);
+    const interval = setInterval(() => {
+      setAnalysisProgress((p) => {
+        if (p >= 90) { clearInterval(interval); return 90; }
+        return p + Math.random() * 8 + 2;
+      });
+    }, 400);
+    return () => clearInterval(interval);
+  }, [parts]);
+
+  useEffect(() => {
+    const allDone = parts.every((p) => !p.slicerLoading && !p.kiAnalysisLoading);
+    if (allDone && parts.length > 0) {
+      setAnalysisProgress(100);
+    }
+  }, [parts]);
+
 
   const geometryText = useMemo(() => {
     if (parts.length === 0) return "";
@@ -1134,7 +1162,8 @@ const CalculatorOnlinePage = () => {
     }
   };
 
-  const priceBadge = !materialId || parts.length === 0 || hasStep ? null : total;
+  const hasSlicerResult = parts.some((p) => p.slicerResult);
+  const priceBadge = parts.length === 0 || hasStep ? null : (analysisProgress === 100 && hasSlicerResult ? totalMin : (!materialId ? null : total));
 
   return (
     <div className="pb-20">
@@ -1362,31 +1391,52 @@ const CalculatorOnlinePage = () => {
                   {parts.length > 0 && (
                     <div className="space-y-3">
                       {parts.map((p) => (
-                        <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
-                          {p.file ? (
-                            <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden shrink-0">
-                              <ModelPreview file={p.file} />
+                        p.slicerLoading || p.kiAnalysisLoading ? (
+                          <div key={p.id} className="bg-card border border-border rounded-3xl p-8 text-center">
+                            <div className="w-14 h-14 mx-auto mb-4">
+                              <svg className="animate-spin w-14 h-14 text-primary" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5"/>
+                                <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                              </svg>
                             </div>
-                          ) : (
-                            <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                              <FileText className="w-7 h-7 text-muted-foreground" />
+                            <p className="font-semibold text-foreground mb-1">Bauteil wird analysiert...</p>
+                            <p className="text-sm text-muted-foreground mb-4">{p.fileName}</p>
+                            {/* Fortschrittsbalken */}
+                            <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
+                              <div
+                                className="bg-primary h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${analysisProgress}%` }}
+                              />
                             </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm truncate">{p.fileName}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {p.hasVolume && p.volumeCm3 > 0
-                                ? `Volumen: ${p.volumeCm3.toFixed(1)} cm³`
-                                : isStepFile(p.fileName)
-                                  ? "STEP-Datei · Preis nach manueller Prüfung"
-                                  : "Volumen wird berechnet…"}
-                              {p.uploading && <span className="ml-2 text-primary">· wird hochgeladen…</span>}
-                            </p>
+                            <p className="text-xs text-muted-foreground">{analysisProgress}%</p>
                           </div>
-                          <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        ) : (
+                          <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
+                            {p.file ? (
+                              <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden shrink-0">
+                                <ModelPreview file={p.file} />
+                              </div>
+                            ) : (
+                              <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                                <FileText className="w-7 h-7 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-sm truncate">{p.fileName}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {p.hasVolume && p.volumeCm3 > 0
+                                  ? `Volumen: ${p.volumeCm3.toFixed(1)} cm³`
+                                  : isStepFile(p.fileName)
+                                    ? "STEP-Datei · Preis nach manueller Prüfung"
+                                    : "Volumen wird berechnet…"}
+                                {p.uploading && <span className="ml-2 text-primary">· wird hochgeladen…</span>}
+                              </p>
+                            </div>
+                            <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )
                       ))}
                     </div>
                   )}
