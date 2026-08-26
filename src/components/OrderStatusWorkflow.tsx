@@ -158,13 +158,33 @@ export default function OrderStatusWorkflow({
   };
 
   const handleConfirmDelivery = async () => {
+    if (savingTracking) return; // Doppelklick verhindern
     setSavingTracking(true);
-    const notiz = trackingInput ? `Tracking-Nr.: ${trackingInput}` : null;
-    // Tracking-Nr. in Auftrag speichern
-    await supabase.from("orders").update({ tracking_nr: trackingInput || null } as any).eq("id", orderId);
-    onTrackingNrChange?.(trackingInput);
-    await commitStatus("Geliefert", notiz);
-    setSavingTracking(false);
+    try {
+      const notiz = trackingInput ? `Tracking-Nr.: ${trackingInput}` : null;
+
+      // Tracking-Nr. speichern
+      await supabase
+        .from("orders")
+        .update({ tracking_nr: trackingInput || null } as any)
+        .eq("id", orderId);
+
+      onTrackingNrChange?.(trackingInput);
+
+      // Status setzen
+      await commitStatus("Geliefert", notiz);
+
+      // Tracking-Input schliessen
+      setShowTrackingInput(false);
+
+    } catch (e) {
+      console.error("handleConfirmDelivery failed", e);
+      toast.error("Fehler beim Speichern", {
+        description: "Bitte nochmal versuchen.",
+      });
+    } finally {
+      setSavingTracking(false); // Immer zurücksetzen, auch bei Fehler
+    }
   };
 
   const sendReviewRequest = async () => {
