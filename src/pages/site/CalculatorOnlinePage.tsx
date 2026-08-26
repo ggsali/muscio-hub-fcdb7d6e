@@ -1183,6 +1183,13 @@ const CalculatorOnlinePage = () => {
   const hasSlicerResult = parts.some((p) => p.slicerResult);
   const priceBadge = parts.length === 0 || hasStep ? null : (analysisProgress === 100 && hasSlicerResult ? totalMin : (!materialId ? null : total));
 
+  const canGoNext = step === 1 ? parts.length > 0
+    : step === 2 ? true
+    : step === 3 ? !!materialId
+    : step === 4 ? !!color
+    : step === 5 ? !kiLoading
+    : true;
+
   return (
     <div className="pb-20">
       <Seo
