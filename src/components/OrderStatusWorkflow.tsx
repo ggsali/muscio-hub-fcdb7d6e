@@ -465,44 +465,6 @@ export default function OrderStatusWorkflow({
         </div>
       )}
 
-      {/* Bewertungsanfrage Modal */}
-      {showReviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-background rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <div className="text-center mb-4">
-              <span className="text-4xl">⭐</span>
-              <h3 className="font-bold text-lg mt-2">Bewertungsanfrage senden?</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Möchten Sie dem Kunden eine E-Mail schicken und um eine Google-Rezension bitten?
-              </p>
-            </div>
-            <div className="bg-muted rounded-xl p-3 mb-4 text-sm text-center text-muted-foreground">
-              Auftrag wurde als <strong>Abgeschlossen</strong> markiert ✓
-            </div>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={sendReviewRequest}
-                disabled={reviewSending}
-                className="w-full bg-primary text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {reviewSending ? (
-                  <span className="animate-spin">⏳</span>
-                ) : (
-                  <span>⭐</span>
-                )}
-                {reviewSending ? "Wird gesendet..." : "Bewertungsanfrage senden"}
-              </button>
-              <button
-                onClick={skipReview}
-                disabled={reviewSending}
-                className="w-full border border-border rounded-xl py-3 text-sm text-muted-foreground hover:bg-muted"
-              >
-                Überspringen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
 
   );
