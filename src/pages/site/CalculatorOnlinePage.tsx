@@ -1941,7 +1941,7 @@ const CalculatorOnlinePage = () => {
                       Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-muted-foreground">
-                      <div className="flex items-center gap-1.5 justify-center"><Lock className="w-3.5 h-3.5 text-primary" /> SSL-verschlüsselt</div>
+                      <div className="flex items-center gap-1.5 justify-center"><LockIcon className="w-3.5 h-3.5 text-primary" /> SSL-verschlüsselt</div>
                       <div className="flex items-center gap-1.5 justify-center">🇨🇭 Hergestellt in der Schweiz</div>
                       <div className="flex items-center gap-1.5 justify-center"><RotateCcw className="w-3.5 h-3.5 text-primary" /> Kostenlose Nachbesserung bei Druckfehler</div>
                     </div>
