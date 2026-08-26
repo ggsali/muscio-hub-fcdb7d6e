@@ -1938,7 +1938,29 @@ const CalculatorOnlinePage = () => {
                     <p className="text-xs text-muted-foreground text-center">
                       Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.
                     </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1.5 justify-center"><Lock className="w-3.5 h-3.5 text-primary" /> SSL-verschlüsselt</div>
+                      <div className="flex items-center gap-1.5 justify-center">🇨🇭 Hergestellt in der Schweiz</div>
+                      <div className="flex items-center gap-1.5 justify-center"><RotateCcw className="w-3.5 h-3.5 text-primary" /> Kostenlose Nachbesserung bei Druckfehler</div>
+                    </div>
                   </form>
+
+                  {calcReviews.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {calcReviews.map((r) => (
+                        <div key={r.id} className="bg-card border border-border rounded-2xl p-4">
+                          <div className="flex gap-0.5 mb-2">
+                            {Array.from({ length: 5 }).map((_, j) => (
+                              <Star key={j} className="w-3.5 h-3.5 fill-primary text-primary" />
+                            ))}
+                          </div>
+                          <p className="text-sm text-foreground leading-relaxed">„{r.kommentar}"</p>
+                          <p className="text-xs text-muted-foreground mt-2">– {r.customer_name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                 </div>
               )}
             </motion.div>
