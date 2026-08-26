@@ -835,6 +835,7 @@ const CalculatorOnlinePage = () => {
     setQualityKey(key);
     applyAll({ infill });
     runKiAnalysisAll();
+    runSlicerAll();
   };
 
   const MIN_PRICE = calcParams.min_price;
@@ -906,7 +907,7 @@ const CalculatorOnlinePage = () => {
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
 
-  const kiLoading = parts.some((p) => p.kiAnalysisLoading);
+  const kiLoading = parts.some((p) => p.kiAnalysisLoading || p.slicerLoading);
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const setupFee = parts.length > 0 ? (FIX_COST || 20) : 0;
@@ -915,12 +916,12 @@ const CalculatorOnlinePage = () => {
   const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
   const totalMin = Math.round(total * 0.9 * 100) / 100;
   const totalMax = Math.round(total * 1.15 * 100) / 100;
-  const hasKiAnalysis = parts.some((p) => p.kiAnalysis);
+  const hasKiAnalysis = parts.some((p) => p.kiAnalysis || p.slicerResult);
 
   // Aggregierte Werte für die Wert-Kommunikation (nur Anzeige)
   const totalGrams = calcs.reduce((s, { part, calc }) => s + calc.weight * part.quantity, 0);
   const totalHours = calcs.reduce((s, { part, calc }) => {
-    const min = part.kiAnalysis?.druckzeit_minuten;
+    const min = part.slicerResult?.printTimeMinutes || part.kiAnalysis?.druckzeit_minuten;
     const hours = min != null ? min / 60 : (calc.weight / 10) * presetByInfill(part.infill).speedFactor;
     return s + hours * part.quantity;
   }, 0);
@@ -979,6 +980,7 @@ const CalculatorOnlinePage = () => {
     setColor((c) => (mat?.farben?.includes(c) ? c : firstColor));
     applyAll({ materialId: id });
     runKiAnalysisAll();
+    runSlicerAll();
   };
 
 
