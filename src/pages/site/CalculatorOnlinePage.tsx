@@ -570,14 +570,26 @@ const CalculatorOnlinePage = () => {
         previewUrl,
         images: [],
         stlBase64: null,
+        stlArrayBuffer: null,
+        slicerResult: null,
+        slicerLoading: ext === "stl",
+        slicerError: null,
         kiAnalysis: null,
         kiAnalysisLoading: ext === "stl",
         kiAnalysisError: null,
       },
     ]);
 
-    // STL zusätzlich als Base64 für die KI-Analyse speichern
+    // STL als ArrayBuffer (Slicer) und Base64 (Edge-Function-Fallback) speichern
     if (ext === "stl") {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
+        runSlicer(id);
+      } catch (e) {
+        console.warn("STL konnte nicht gelesen werden", e);
+        setParts((p) => p.map((x) => (x.id === id ? { ...x, slicerLoading: false } : x)));
+      }
       try {
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -592,6 +604,7 @@ const CalculatorOnlinePage = () => {
         setParts((p) => p.map((x) => (x.id === id ? { ...x, kiAnalysisLoading: false } : x)));
       }
     }
+
 
 
     // Volumen berechnen
