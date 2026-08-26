@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, Trash2, Plus, Minus, Loader2, Send, ArrowRight, ArrowLeft, FileText,
   Check, Zap, Gauge, Shield, Gem, Sparkles, MessageCircle,
-  Lock as LockIcon, RotateCcw, Star, ChevronDown, Package, Lightbulb,
+  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb,
 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -281,7 +281,6 @@ const CalculatorOnlinePage = () => {
   // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
   const [quickMode, setQuickMode] = useState(false);
   // Wert-Kommunikation & Social Proof
-  const [valueInfoOpen, setValueInfoOpen] = useState(false);
   const [calcReviews, setCalcReviews] = useState<Array<{ id: string; customer_name: string; kommentar: string | null; rating: number }>>([]);
   useEffect(() => {
     supabase.from("public_reviews")
