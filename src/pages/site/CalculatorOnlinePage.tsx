@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, Trash2, Plus, Minus, Loader2, Send, ArrowRight, ArrowLeft, FileText,
   Check, Zap, Gauge, Shield, Gem, Sparkles, MessageCircle,
-  Lock as LockIcon, RotateCcw, Star, ChevronDown, Package, Lightbulb,
+  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb,
 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -281,7 +281,6 @@ const CalculatorOnlinePage = () => {
   // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
   const [quickMode, setQuickMode] = useState(false);
   // Wert-Kommunikation & Social Proof
-  const [valueInfoOpen, setValueInfoOpen] = useState(false);
   const [calcReviews, setCalcReviews] = useState<Array<{ id: string; customer_name: string; kommentar: string | null; rating: number }>>([]);
   useEffect(() => {
     supabase.from("public_reviews")
@@ -1101,28 +1100,29 @@ const CalculatorOnlinePage = () => {
               >
                 <ArrowLeft className="w-3.5 h-3.5" /> Zurück
               </Button>
-              <div className="flex flex-col items-end gap-0.5">
+              <div className="flex flex-col items-end gap-1.5">
                 <div
-                  className={`px-3 py-1.5 rounded-full text-sm font-bold tabular-nums transition-colors flex items-center gap-1.5 ${
-                    kiLoading || priceBadge !== null ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                  className={`px-5 py-2.5 rounded-2xl font-bold text-lg sm:text-xl tabular-nums shadow-sm flex items-center gap-2 ${
+                    kiLoading || priceBadge !== null ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {kiLoading ? (
-                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 🤖 Analysiert…</>
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Analysiert…</>
                   ) : hasStep
                     ? "Preis nach Prüfung"
                     : priceBadge !== null
                       ? (hasKiAnalysis ? `ab ${CHF(totalMin)}` : `ab ${CHF(priceBadge)}`)
-                      : "Preis: CHF –.–"}
+                      : "CHF –.–"}
                 </div>
-                {!kiLoading && !hasStep && priceBadge !== null && (
-                  <>
-                    <p className="text-[10px] text-muted-foreground leading-tight">Einmalige Anfertigung</p>
-                    <p className="text-[10px] text-muted-foreground leading-tight hidden sm:block">
-                      Keine Mindestmenge · Kein Abo · Keine versteckten Kosten
-                    </p>
-                  </>
-                )}
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground flex-wrap justify-end">
+                  <span>🇨🇭 Swiss Made</span>
+                  <span>·</span>
+                  <span>⚡ 48h Lieferung</span>
+                  <span className="hidden sm:inline">·</span>
+                  <span className="hidden sm:inline">✓ Ab 1 Stück</span>
+                  <span className="hidden md:inline">·</span>
+                  <span className="hidden md:inline">↩️ Nachbesserung inklusive</span>
+                </div>
               </div>
 
 
@@ -1668,33 +1668,42 @@ const CalculatorOnlinePage = () => {
                   </div>
 
                   {/* Wert-Kommunikation vor dem Preis */}
-                  <div className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-5">
-                    <p className="font-semibold text-foreground flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-primary" /> Warum kostet 3D-Druck was es kostet?
+                  <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4">
+                    <p className="font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <Lightbulb className="w-4 h-4 text-primary" /> Jedes Teil wird einzeln für Sie gefertigt – Schicht für Schicht, in Schweizer Qualität.
                     </p>
-                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                      Jedes Teil wird einzeln für Sie gefertigt – keine Formen, keine Mindestmengen.
-                      Ihr Bauteil entsteht Schicht für Schicht direkt aus Ihren Daten, in Schweizer Qualität
-                      und in 48h geliefert.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setValueInfoOpen((o) => !o)}
-                      className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                    >
-                      {valueInfoOpen ? "weniger anzeigen" : "mehr erfahren"}
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${valueInfoOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {valueInfoOpen && (
-                      <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-                        <li>⏱ Druckzeit: {totalHours > 0 ? `ca. ${totalHours.toFixed(1)} Stunden` : "mehrere Stunden"} Maschinenzeit für Ihr Teil</li>
-                        <li>🧵 Material: {totalGrams > 0 ? `ca. ${totalGrams.toFixed(0)} Gramm` : "hochwertiges"} hochwertiges Filament</li>
-                        <li>🇨🇭 Standort: Gefertigt in Eschlikon TG, Schweiz</li>
-                        <li>✅ Qualitätskontrolle inklusive</li>
-                        <li>📦 Verpackung &amp; Versand inklusive</li>
-                      </ul>
-                    )}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">⏱</span>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Druckzeit</p>
+                          <p className="font-semibold text-sm">{totalHours > 0 ? `${totalHours.toFixed(1)} Stunden` : "wird berechnet"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🧵</span>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Filament</p>
+                          <p className="font-semibold text-sm">{totalGrams > 0 ? `${totalGrams.toFixed(0)}g` : "wird berechnet"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🇨🇭</span>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Standort</p>
+                          <p className="font-semibold text-sm">Eschlikon TG</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">✅</span>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Qualität</p>
+                          <p className="font-semibold text-sm">Geprüft &amp; verpackt</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
 
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1819,15 +1828,12 @@ const CalculatorOnlinePage = () => {
                                 {isStepFile(p.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}
                               </span>
                             </div>
-                            {p.quantity >= 4 && p.quantity < 5 && (
-                              <p className="mt-2 text-xs text-success font-medium">Ab 5 Stück: 10% Rabatt</p>
-                            )}
-                            {p.quantity >= 5 && p.quantity < 10 && (
-                              <p className="mt-2 text-xs text-success font-medium">10% Rabatt aktiv · Ab 10 Stück: 15% Rabatt</p>
-                            )}
-                            {p.quantity >= 10 && (
-                              <p className="mt-2 text-xs text-success font-medium">15% Mengenrabatt aktiv</p>
-                            )}
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="text-xs text-muted-foreground">Mengenrabatt:</span>
+                              <span className={`text-xs font-semibold ${p.quantity >= 5 ? "text-primary" : "text-muted-foreground"}`}>
+                                {p.quantity >= 10 ? "15% Rabatt ✓" : p.quantity >= 5 ? "10% Rabatt ✓" : "5+ Stück → 10% · 10+ Stück → 15%"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
