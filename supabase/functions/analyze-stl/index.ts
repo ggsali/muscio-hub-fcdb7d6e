@@ -202,41 +202,192 @@ Deno.serve(async (req) => {
       ? "Für Überhänge brauchen wir Stützmaterial – das kostet etwas Nachbearbeitung. Eine leichte Änderung der Geometrie könnte den Preis senken."
       : "Dein Teil lässt sich ohne Stützmaterial drucken – das hält den Preis tief.";
 
+    // KI-Werte (nur gesetzt, wenn plausibel)
+    let ki: Record<string, number> | null = null;
+
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (apiKey) {
       try {
-        const prompt = `Bauteil "${fileName || "teil.stl"}": Volumen ${volumeCm3.toFixed(1)} cm³, Oberfläche ${(geo.surfaceMm2 / 100).toFixed(0)} cm², Bounding-Box ${geo.bbox.x.toFixed(0)}×${geo.bbox.y.toFixed(0)}×${geo.bbox.z.toFixed(0)} mm, ${geo.tris.length} Dreiecke.
-Material ${material} (CHF ${pricePerGram}/g), Qualität ${qualityKey} (${layerHeight} mm, ${infill}% Infill), Menge ${qty}.
-Gewicht ${weightG} g, Druckzeit ${druckzeitMinuten} min, Materialkosten CHF ${materialkosten}, Maschinenkosten CHF ${maschinenkosten}, Support-Nachbearbeitung CHF ${supportNachbearbeitung}.
-Beste Orientierung: ${best.label} (Überhang ${original.overhang.toFixed(0)}% → ${best.overhang.toFixed(0)}%). Support nötig: ${hatSupport ? "ja" : "nein"}.
+        const surfaceCm2 = geo.surfaceMm2 / 100;
+        const dimX = geo.bbox.x, dimY = geo.bbox.y, dimZ = geo.bbox.z;
+        const bestOverhangPct = best.overhang;
+        const originalOverhangPct = original.overhang;
+        const bestOrientation = best.label;
+        const triangleCount = geo.tris.length;
+        // Sphärizität: Kugelfläche gleichen Volumens / echte Oberfläche
+        const sphericity = geo.surfaceMm2 > 0
+          ? (Math.PI ** (1 / 3)) * ((6 * geo.volumeMm3) ** (2 / 3)) / geo.surfaceMm2
+          : 1;
 
-Antworte NUR als JSON: {"begruendung":"<2-3 Sätze, wie sich der Preis zusammensetzt, auf Deutsch, du-Form>","hinweis_fuer_kunden":"<1-2 Sätze konkreter Tipp zu Orientierung/Support/Kosten>"}`;
+        const prompt = `Du bist ein präziser 3D-Druck-Ingenieur für 3DMuscio Schweiz (Bambu Lab H2C, CoreXY-Drucker).
 
-        const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              { role: "system", content: "Du bist Fertigungsexperte bei 3DMuscio (Schweizer 3D-Druck-Service). Antworte knapp, sachlich und ausschliesslich als JSON." },
-              { role: "user", content: prompt },
-            ],
-            response_format: { type: "json_object" },
-          }),
-        });
-        if (resp.ok) {
-          const data = await resp.json();
-          const raw = data?.choices?.[0]?.message?.content ?? "{}";
-          const parsed = JSON.parse(raw);
-          if (parsed?.begruendung) begruendung = String(parsed.begruendung);
-          if (parsed?.hinweis_fuer_kunden) hinweisFuerKunden = String(parsed.hinweis_fuer_kunden);
-        } else {
-          console.warn("AI-Erklärung nicht verfügbar", resp.status);
+BAUTEIL-DATEN:
+Volumen: ${volumeCm3.toFixed(3)} cm³ = ${(volumeCm3 * 1000).toFixed(0)} mm³
+Oberfläche: ${surfaceCm2.toFixed(1)} cm²
+Abmessungen: ${dimX.toFixed(1)} × ${dimY.toFixed(1)} × ${dimZ.toFixed(1)} mm
+Überhänge (nach Orientierungsoptimierung): ${bestOverhangPct.toFixed(1)}%
+Sphärizität: ${sphericity.toFixed(4)}
+Anzahl Dreiecke: ${triangleCount}
+Optimale Ausrichtung: ${bestOrientation}
+
+MATERIAL & QUALITÄT:
+Material: ${material} (Dichte: ${density} g/cm³)
+Infill: ${infill}%
+Schichthöhe: ${layerHeight}mm
+SpeedFactor: ${speedFactor}
+
+PREISPARAMETER:
+Materialpreis: CHF ${pricePerGram}/g
+Maschinenzeit: CHF ${maschinenzeit}/h
+Setup-Pauschale: CHF ${setupFee} (einmalig)
+Mindestpreis: CHF ${minPrice}
+Versand: CHF ${versandkosten} (gratis ab CHF ${versandkostenfrei_ab})
+Menge: ${qty} Stück
+
+BERECHNE SCHRITT FÜR SCHRITT:
+
+SCHRITT 1 – GEWICHT:
+fillFactor = 0.3 + (1 - 0.3) × (${infill}/100) = ?
+weightG = ${volumeCm3.toFixed(3)} × ${density} × fillFactor = ?
+
+SCHRITT 2 – FILAMENTLÄNGE:
+filamentVolumeMm3 = ${(volumeCm3 * 1000).toFixed(0)} × fillFactor = ?
+filamentLaengeMm = filamentVolumeMm3 / (π × 0.875²) = ?
+
+SCHRITT 3 – BASIS-DRUCKZEIT (Bambu H2C):
+Durchschnittliche Druckgeschwindigkeit: 180 mm/s
+(inkl. äussere Wände 150mm/s, Infill 300mm/s, Reisen 500mm/s, Starts/Stops)
+basisZeitSek = filamentLaengeMm / 180 = ?
+basisZeitMin = basisZeitSek / 60 = ?
+
+SCHRITT 4 – KORREKTURFAKTOREN:
+qualitaetsFaktor = 0.2 / ${layerHeight} = ?
+(0.3mm=0.67 schneller, 0.2mm=1.0 Standard, 0.15mm=1.33, 0.1mm=2.0 langsamer)
+ueberhangFaktor = ${bestOverhangPct > overhang_schwellwert
+  ? `1 + (${bestOverhangPct.toFixed(1)}/100 × 0.3) = ?`
+  : "1.0 (kein Support nötig)"}
+komplexitaetsFaktor = ${sphericity < 0.3 ? "1.15 (komplexe Geometrie)" : "1.0 (einfache Geometrie)"}
+
+SCHRITT 5 – FINALE DRUCKZEIT:
+druckzeitMin = basisZeitMin × qualitaetsFaktor × ueberhangFaktor × komplexitaetsFaktor = ?
+druckzeitStunden = druckzeitMin / 60 = ?
+
+SCHRITT 6 – KOSTEN:
+materialkosten = weightG × CHF ${pricePerGram} = ?
+maschinenkosten = druckzeitStunden × CHF ${maschinenzeit} = ?
+supportNachbearbeitung = ${bestOverhangPct > overhang_schwellwert
+  ? bestOverhangPct > 50
+    ? "CHF 15-25 (viele Überhänge, aufwändige Nachbearbeitung)"
+    : "CHF 5-15 (moderate Überhänge)"
+  : "CHF 0 (kein Support nötig)"}
+
+SCHRITT 7 – PREIS PRO STÜCK:
+preisProStueck = materialkosten + maschinenkosten + supportNachbearbeitung = ?
+
+SCHRITT 8 – GESAMTPREIS:
+mengenrabatt = ${qty >= 10 ? "15%" : qty >= 5 ? "10%" : "0%"}
+subtotal = preisProStueck × ${qty} × (1 - mengenrabatt) = ?
+gesamtPreis = subtotal + CHF ${setupFee} Setup = ?
+versand = gesamtPreis < ${versandkostenfrei_ab} ? CHF ${versandkosten} : 0 = ?
+total = gesamtPreis + versand = ?
+preisspanne_min = total × 0.9 = ?
+preisspanne_max = total × 1.1 = ?
+
+SCHRITT 9 – TEXTE FÜR KUNDEN:
+Schreibe eine kurze begruendung (2 Sätze, professionell, erklärt Druckzeit und warum der Preis gerechtfertigt ist).
+Schreibe einen hinweis_fuer_kunden (1 Satz, praktisch, z.B. über Ausrichtung oder Support).
+
+Antworte NUR mit diesem JSON (alle ? durch berechnete Werte ersetzen):
+{
+  "weightG": ?,
+  "filamentLaengeMm": ?,
+  "druckzeit_minuten": ?,
+  "druckzeit_stunden": ?,
+  "qualitaetsFaktor": ?,
+  "ueberhangFaktor": ?,
+  "komplexitaetsFaktor": ?,
+  "materialkosten": ?,
+  "maschinenkosten": ?,
+  "support_nachbearbeitung": ?,
+  "preis_pro_stueck": ?,
+  "gesamtpreis": ?,
+  "gesamtpreis_min": ?,
+  "gesamtpreis_max": ?,
+  "versand": ?,
+  "hat_support": true/false,
+  "orientierung": "${bestOrientation}",
+  "orientierung_original_ueberhang": ${originalOverhangPct.toFixed(1)},
+  "orientierung_beste_ueberhang": ${bestOverhangPct.toFixed(1)},
+  "begruendung": "...",
+  "hinweis_fuer_kunden": "..."
+}`;
+
+        const models = ["anthropic/claude-sonnet-4-5", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
+        let parsed: any = null;
+        for (const model of models) {
+          const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: "Du bist Fertigungsingenieur bei 3DMuscio (Schweizer 3D-Druck-Service). Rechne exakt Schritt für Schritt und antworte ausschliesslich mit gültigem JSON." },
+                { role: "user", content: prompt },
+              ],
+              response_format: { type: "json_object" },
+            }),
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            const raw = data?.choices?.[0]?.message?.content ?? "{}";
+            try {
+              parsed = JSON.parse(raw);
+            } catch {
+              const m = String(raw).match(/\{[\s\S]*\}/);
+              parsed = m ? JSON.parse(m[0]) : null;
+            }
+            if (parsed) break;
+          } else if (resp.status === 429 || resp.status >= 500 || resp.status === 400) {
+            console.warn("AI-Modell nicht verfügbar", model, resp.status);
+            continue;
+          } else {
+            console.warn("AI-Aufruf abgelehnt", model, resp.status);
+            break;
+          }
+        }
+
+        if (parsed) {
+          if (parsed.begruendung) begruendung = String(parsed.begruendung);
+          if (parsed.hinweis_fuer_kunden) hinweisFuerKunden = String(parsed.hinweis_fuer_kunden);
+          const num = (v: unknown) => {
+            const n = typeof v === "number" ? v : parseFloat(String(v));
+            return Number.isFinite(n) && n >= 0 ? n : null;
+          };
+          const kiWeight = num(parsed.weightG);
+          const kiZeit = num(parsed.druckzeit_minuten);
+          const kiPreis = num(parsed.gesamtpreis);
+          // Plausibilitätsprüfung: KI-Werte nur in sinnvollen Bandbreiten übernehmen
+          if (kiWeight && kiZeit && kiPreis && kiZeit >= 3 && kiZeit <= 60 * 200 && kiPreis >= minPrice * 0.5) {
+            ki = {
+              weightG: Math.round(kiWeight * 10) / 10,
+              filamentLaengeMm: num(parsed.filamentLaengeMm) ?? 0,
+              druckzeit_minuten: Math.round(kiZeit),
+              materialkosten: num(parsed.materialkosten) ?? 0,
+              maschinenkosten: num(parsed.maschinenkosten) ?? 0,
+              support_nachbearbeitung: num(parsed.support_nachbearbeitung) ?? 0,
+              preis_pro_stueck: num(parsed.preis_pro_stueck) ?? 0,
+              gesamtpreis: Math.round(Math.max(kiPreis, minPrice) * 100) / 100,
+              gesamtpreis_min: num(parsed.gesamtpreis_min) ?? Math.round(kiPreis * 0.9 * 100) / 100,
+              gesamtpreis_max: num(parsed.gesamtpreis_max) ?? Math.round(kiPreis * 1.1 * 100) / 100,
+              versand: num(parsed.versand) ?? versand,
+            };
+          }
         }
       } catch (aiErr) {
-        console.warn("AI-Erklärung fehlgeschlagen", aiErr);
+        console.warn("AI-Berechnung fehlgeschlagen", aiErr);
       }
     }
+
 
     return json({
       fileName: fileName || null,
