@@ -1829,15 +1829,12 @@ const CalculatorOnlinePage = () => {
                                 {isStepFile(p.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}
                               </span>
                             </div>
-                            {p.quantity >= 4 && p.quantity < 5 && (
-                              <p className="mt-2 text-xs text-success font-medium">Ab 5 Stück: 10% Rabatt</p>
-                            )}
-                            {p.quantity >= 5 && p.quantity < 10 && (
-                              <p className="mt-2 text-xs text-success font-medium">10% Rabatt aktiv · Ab 10 Stück: 15% Rabatt</p>
-                            )}
-                            {p.quantity >= 10 && (
-                              <p className="mt-2 text-xs text-success font-medium">15% Mengenrabatt aktiv</p>
-                            )}
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="text-xs text-muted-foreground">Mengenrabatt:</span>
+                              <span className={`text-xs font-semibold ${p.quantity >= 5 ? "text-primary" : "text-muted-foreground"}`}>
+                                {p.quantity >= 10 ? "15% Rabatt ✓" : p.quantity >= 5 ? "10% Rabatt ✓" : "5+ Stück → 10% · 10+ Stück → 15%"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
