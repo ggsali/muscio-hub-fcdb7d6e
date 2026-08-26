@@ -1777,6 +1777,28 @@ const CalculatorOnlinePage = () => {
                               </p>
                             )}
 
+                            {p.slicerLoading && (
+                              <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+                                <Loader2 className="w-3 h-3 animate-spin" /> ⚙️ Slicing läuft…
+                              </p>
+                            )}
+                            {p.slicerResult && !p.slicerLoading && (
+                              <div className="mt-1 space-y-0.5">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-success/10 text-success text-xs px-2 py-0.5">
+                                  ✓ Gesliced
+                                </span>
+                                <p className="text-xs text-muted-foreground">
+                                  Druckzeit: {(p.slicerResult.printTimeMinutes / 60).toFixed(1)} h (OrcaSlicer) · Filament: {p.slicerResult.filamentGrams.toFixed(0)} g · Layer: {p.slicerResult.layers}
+                                </p>
+                                {p.slicerResult.hasSupport && (
+                                  <p className="text-xs text-muted-foreground">⚠️ Support erkannt</p>
+                                )}
+                              </div>
+                            )}
+                            {p.slicerError && !p.slicerResult && (
+                              <p className="text-xs text-orange-500 mt-1">~ Schätzung – {p.slicerError}</p>
+                            )}
+
                             {p.kiAnalysisLoading && (
                               <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
                                 <Loader2 className="w-3 h-3 animate-spin" /> 🤖 Modell wird analysiert…
@@ -1785,6 +1807,7 @@ const CalculatorOnlinePage = () => {
                             {p.kiAnalysisError && (
                               <p className="text-xs text-muted-foreground mt-1">{p.kiAnalysisError}</p>
                             )}
+
                             {p.kiAnalysis && !p.kiAnalysisLoading && (
                               <div className="mt-1 space-y-0.5">
                                 {p.kiAnalysis.orientierung !== "Original (Z oben)" && (
