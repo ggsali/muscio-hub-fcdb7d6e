@@ -149,58 +149,10 @@ export default function OrderStatusWorkflow({
       } catch (e) { console.error("send-email status failed", e); }
     }
 
-    // Bewertungs-Mail bei Status "Abgeschlossen"
     if (newStatus === "Abgeschlossen") {
-      try {
-        const { data: order } = await supabase
-          .from("orders")
-          .select("bewertungs_token, customer_id, customers:customer_id(email, vorname, name)")
-          .eq("id", orderId)
-          .maybeSingle();
-        let token = (order as any)?.bewertungs_token as string | null;
-        if (!token) {
-          token = crypto.randomUUID();
-          await supabase.from("orders").update({ bewertungs_token: token } as any).eq("id", orderId);
-        }
-        const cust = (order as any)?.customers;
-        const customerEmail = cust?.email;
-        const kundenName = [cust?.vorname, cust?.name].filter(Boolean).join(" ").trim() || "Kunde";
-        if (!customerEmail) {
-          await (supabase.from as any)("order_status_log").insert({
-            order_id: orderId,
-            status: "Abgeschlossen",
-            notiz: "⚠️ Keine E-Mail-Adresse hinterlegt – Bewertungsanfrage nicht gesendet",
-            created_at: new Date().toISOString(),
-          });
-        } else {
-          await supabase.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "bewertung",
-              recipientEmail: customerEmail,
-              idempotencyKey: `bewertung-${orderId}`,
-              templateData: {
-                name: kundenName,
-                bewertungsLink: `https://3dmuscio.com/bewertung/${token}`,
-              },
-            },
-          });
-          await (supabase.from as any)("order_status_log").insert({
-            order_id: orderId,
-            status: "Abgeschlossen",
-            notiz: "✉️ Bewertungsanfrage automatisch gesendet an " + customerEmail,
-            created_at: new Date().toISOString(),
-          });
-        }
-      } catch (e) {
-        console.error("bewertung email failed", e);
-        await (supabase.from as any)("order_status_log").insert({
-          order_id: orderId,
-          status: "Abgeschlossen",
-          notiz: "⚠️ Bewertungsanfrage konnte nicht gesendet werden – bitte manuell nachfassen",
-          created_at: new Date().toISOString(),
-        });
-      }
+      setShowReviewModal(true);
     }
+
   };
 
   const handleConfirmDelivery = async () => {
