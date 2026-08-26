@@ -1669,33 +1669,42 @@ const CalculatorOnlinePage = () => {
                   </div>
 
                   {/* Wert-Kommunikation vor dem Preis */}
-                  <div className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-5">
-                    <p className="font-semibold text-foreground flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-primary" /> Warum kostet 3D-Druck was es kostet?
+                  <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4">
+                    <p className="font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <Lightbulb className="w-4 h-4 text-primary" /> Jedes Teil wird einzeln für Sie gefertigt – Schicht für Schicht, in Schweizer Qualität.
                     </p>
-                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                      Jedes Teil wird einzeln für Sie gefertigt – keine Formen, keine Mindestmengen.
-                      Ihr Bauteil entsteht Schicht für Schicht direkt aus Ihren Daten, in Schweizer Qualität
-                      und in 48h geliefert.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setValueInfoOpen((o) => !o)}
-                      className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                    >
-                      {valueInfoOpen ? "weniger anzeigen" : "mehr erfahren"}
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${valueInfoOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {valueInfoOpen && (
-                      <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-                        <li>⏱ Druckzeit: {totalHours > 0 ? `ca. ${totalHours.toFixed(1)} Stunden` : "mehrere Stunden"} Maschinenzeit für Ihr Teil</li>
-                        <li>🧵 Material: {totalGrams > 0 ? `ca. ${totalGrams.toFixed(0)} Gramm` : "hochwertiges"} hochwertiges Filament</li>
-                        <li>🇨🇭 Standort: Gefertigt in Eschlikon TG, Schweiz</li>
-                        <li>✅ Qualitätskontrolle inklusive</li>
-                        <li>📦 Verpackung &amp; Versand inklusive</li>
-                      </ul>
-                    )}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">⏱</span>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Druckzeit</p>
+                          <p className="font-semibold text-sm">{totalHours > 0 ? `${totalHours.toFixed(1)} Stunden` : "wird berechnet"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🧵</span>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Filament</p>
+                          <p className="font-semibold text-sm">{totalGrams > 0 ? `${totalGrams.toFixed(0)}g` : "wird berechnet"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🇨🇭</span>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Standort</p>
+                          <p className="font-semibold text-sm">Eschlikon TG</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">✅</span>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Qualität</p>
+                          <p className="font-semibold text-sm">Geprüft &amp; verpackt</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
 
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
