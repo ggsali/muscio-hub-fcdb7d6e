@@ -303,6 +303,8 @@ const CalculatorOnlinePage = () => {
 
 
   const isMobile = useIsMobile();
+  const { slice } = useSlicerWorker();
+
 
   const { settings } = useSettings();
 
