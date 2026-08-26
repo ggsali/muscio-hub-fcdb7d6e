@@ -58,9 +58,15 @@ self.onmessage = async (e: MessageEvent) => {
           ) / 10
         : 0);
 
-    console.log("RAW", JSON.stringify(stats));
     const layers = Number(stats.layers) || 0;
-    const hasSupport = (Number(stats.t_support_ms) || 0) > 100;
+    // Support nur melden, wenn tatsächlich Support-Extrusionen im G-Code sind
+    // (Rollen 7/8 = support / support interface im OrcaSlicer-Kernel)
+    const roleTimes = (stats.role_times ?? {}) as Record<string, number>;
+    const supportRoleTime = ["7", "8", "10", "11"].reduce(
+      (a, k) => a + (Number(roleTimes[k]) || 0),
+      0,
+    );
+    const hasSupport = supportRoleTime > 0;
 
     self.postMessage({
       id,
