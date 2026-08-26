@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { takePendingUploads } from "@/lib/pendingUpload";
+import { useSlicerWorker, type SlicerResult } from "@/hooks/useSlicerWorker";
+
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
