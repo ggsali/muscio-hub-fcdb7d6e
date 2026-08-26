@@ -303,7 +303,41 @@ const CalculatorOnlinePage = () => {
 
   // Analyse-Fortschritt simulieren
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisPhase, setAnalysisPhase] = useState<"idle" | "analysing" | "done">("idle");
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isAnalysingRef = useRef(false);
+
+  const startProgress = useCallback(() => {
+    if (isAnalysingRef.current) return; // Bereits aktiv, nicht neu starten
+    isAnalysingRef.current = true;
+    setAnalysisProgress(5);
+
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+
+    progressIntervalRef.current = setInterval(() => {
+      setAnalysisProgress((prev) => {
+        if (prev >= 88) {
+          clearInterval(progressIntervalRef.current!);
+          return 88; // Wartet auf echtes Fertig-Signal
+        }
+        return Math.min(prev + Math.random() * 5 + 1, 88);
+      });
+    }, 600);
+  }, []);
+
+  const finishProgress = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    isAnalysingRef.current = false;
+    setAnalysisProgress(100);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    };
+  }, []);
 
 
   const isMobile = useIsMobile();
@@ -528,10 +562,12 @@ const CalculatorOnlinePage = () => {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, kiAnalysisLoading: false, kiAnalysisError: "Analyse fehlgeschlagen – vereinfachte Schätzung wird verwendet" }
         : p));
+      finishProgress();
     } else {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, kiAnalysis: data as KiAnalysis, kiAnalysisLoading: false, kiAnalysisError: null }
         : p));
+      finishProgress();
     }
   }, [parts, materials, qualityPresets, qualityKey, settings.maschinenzeit_pro_h, calcParams]);
 
@@ -573,11 +609,13 @@ const CalculatorOnlinePage = () => {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerResult: result, slicerLoading: false, slicerError: null }
         : p));
+      finishProgress();
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerLoading: false, slicerError: "Slicer nicht verfügbar – Schätzung wird verwendet" }
         : p));
+      finishProgress();
     }
   }, [parts, materials, qualityPresets, qualityKey, slice]);
 
@@ -634,6 +672,7 @@ const CalculatorOnlinePage = () => {
 
     // STL als ArrayBuffer (Slicer) und Base64 (Edge-Function-Fallback) speichern
     if (ext === "stl") {
+      startProgress();
       try {
         const arrayBuffer = await file.arrayBuffer();
         setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
@@ -838,6 +877,7 @@ const CalculatorOnlinePage = () => {
     trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
     setQualityKey(key);
     applyAll({ infill });
+    startProgress();
     runKiAnalysisAll();
     runSlicerAll();
   };
@@ -963,29 +1003,6 @@ const CalculatorOnlinePage = () => {
     }
   }, [quickMode, materialId, parts, materials]);
 
-  useEffect(() => {
-    const isLoading = parts.some((p) => p.slicerLoading || p.kiAnalysisLoading);
-    setAnalysisPhase(isLoading ? "analysing" : parts.length > 0 ? "done" : "idle");
-    if (!isLoading) {
-      setAnalysisProgress(100);
-      return;
-    }
-    setAnalysisProgress(5);
-    const interval = setInterval(() => {
-      setAnalysisProgress((p) => {
-        if (p >= 90) { clearInterval(interval); return 90; }
-        return p + Math.random() * 8 + 2;
-      });
-    }, 400);
-    return () => clearInterval(interval);
-  }, [parts]);
-
-  useEffect(() => {
-    const allDone = parts.every((p) => !p.slicerLoading && !p.kiAnalysisLoading);
-    if (allDone && parts.length > 0) {
-      setAnalysisProgress(100);
-    }
-  }, [parts]);
 
 
   const geometryText = useMemo(() => {
@@ -1007,6 +1024,7 @@ const CalculatorOnlinePage = () => {
     const firstColor = mat?.farben?.[0] || "";
     setColor((c) => (mat?.farben?.includes(c) ? c : firstColor));
     applyAll({ materialId: id });
+    startProgress();
     runKiAnalysisAll();
     runSlicerAll();
   };
@@ -1404,11 +1422,16 @@ const CalculatorOnlinePage = () => {
                             {/* Fortschrittsbalken */}
                             <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
                               <div
-                                className="bg-primary h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${analysisProgress}%` }}
+                                className="bg-primary h-2 rounded-full"
+                                style={{
+                                  width: `${analysisProgress}%`,
+                                  transition: analysisProgress === 100 ? 'width 0.3s ease' : 'width 0.6s ease'
+                                }}
                               />
                             </div>
-                            <p className="text-xs text-muted-foreground">{analysisProgress}%</p>
+                            <p className="text-xs text-muted-foreground">
+                              {analysisProgress < 100 ? `${Math.round(analysisProgress)}%` : "Fertig ✓"}
+                            </p>
                           </div>
                         ) : (
                           <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
