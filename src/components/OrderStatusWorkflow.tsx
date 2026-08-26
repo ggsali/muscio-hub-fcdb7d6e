@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+
 
 const STATUSES_MANUAL = ["Offen", "In Bearbeitung", "Bezahlt", "Geliefert", "Abgeschlossen"] as const;
 const STATUSES_WEBSITE = ["Offen", "Bezahlt", "In Bearbeitung", "Geliefert", "Abgeschlossen"] as const;
@@ -41,6 +43,9 @@ export default function OrderStatusWorkflow({
   const [editingTracking, setEditingTracking] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewSending, setReviewSending] = useState(false);
+
 
   const isWebsiteOrder = source === 'website' || source === 'shop' || source === 'kalkulator'
   const STATUSES = isWebsiteOrder ? STATUSES_WEBSITE : STATUSES_MANUAL
@@ -146,58 +151,10 @@ export default function OrderStatusWorkflow({
       } catch (e) { console.error("send-email status failed", e); }
     }
 
-    // Bewertungs-Mail bei Status "Abgeschlossen"
     if (newStatus === "Abgeschlossen") {
-      try {
-        const { data: order } = await supabase
-          .from("orders")
-          .select("bewertungs_token, customer_id, customers:customer_id(email, vorname, name)")
-          .eq("id", orderId)
-          .maybeSingle();
-        let token = (order as any)?.bewertungs_token as string | null;
-        if (!token) {
-          token = crypto.randomUUID();
-          await supabase.from("orders").update({ bewertungs_token: token } as any).eq("id", orderId);
-        }
-        const cust = (order as any)?.customers;
-        const customerEmail = cust?.email;
-        const kundenName = [cust?.vorname, cust?.name].filter(Boolean).join(" ").trim() || "Kunde";
-        if (!customerEmail) {
-          await (supabase.from as any)("order_status_log").insert({
-            order_id: orderId,
-            status: "Abgeschlossen",
-            notiz: "⚠️ Keine E-Mail-Adresse hinterlegt – Bewertungsanfrage nicht gesendet",
-            created_at: new Date().toISOString(),
-          });
-        } else {
-          await supabase.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "bewertung",
-              recipientEmail: customerEmail,
-              idempotencyKey: `bewertung-${orderId}`,
-              templateData: {
-                name: kundenName,
-                bewertungsLink: `https://3dmuscio.com/bewertung/${token}`,
-              },
-            },
-          });
-          await (supabase.from as any)("order_status_log").insert({
-            order_id: orderId,
-            status: "Abgeschlossen",
-            notiz: "✉️ Bewertungsanfrage automatisch gesendet an " + customerEmail,
-            created_at: new Date().toISOString(),
-          });
-        }
-      } catch (e) {
-        console.error("bewertung email failed", e);
-        await (supabase.from as any)("order_status_log").insert({
-          order_id: orderId,
-          status: "Abgeschlossen",
-          notiz: "⚠️ Bewertungsanfrage konnte nicht gesendet werden – bitte manuell nachfassen",
-          created_at: new Date().toISOString(),
-        });
-      }
+      setShowReviewModal(true);
     }
+
   };
 
   const handleConfirmDelivery = async () => {
@@ -210,7 +167,70 @@ export default function OrderStatusWorkflow({
     setSavingTracking(false);
   };
 
+  const sendReviewRequest = async () => {
+    setReviewSending(true);
+    try {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("bewertungs_token, customer_id, customers:customer_id(email, vorname, name)")
+        .eq("id", orderId)
+        .single();
+      let token = (order as any)?.bewertungs_token as string | null;
+      if (!token) {
+        token = crypto.randomUUID();
+        await supabase.from("orders").update({ bewertungs_token: token } as any).eq("id", orderId);
+      }
+      const customer = (order as any)?.customers;
+      const customerEmail = customer?.email;
+      const customerName = `${customer?.vorname || ""} ${customer?.name || ""}`.trim();
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "bewertung",
+          recipientEmail: customerEmail,
+          recipientName: customerName,
+          idempotencyKey: `bewertung-${orderId}-manual`,
+          templateData: {
+            name: customerName,
+            bewertungsLink: `https://3dmuscio.com/bewertung/${token}`,
+          },
+        },
+      });
+      await (supabase.from as any)("order_status_log").insert({
+        order_id: orderId,
+        status: "Abgeschlossen",
+        notiz: `✉️ Bewertungsanfrage gesendet an ${customerEmail}`,
+        created_at: new Date().toISOString(),
+      });
+      toast.success("Bewertungsanfrage gesendet ✓");
+      loadLog?.();
+    } catch (e) {
+      await (supabase.from as any)("order_status_log").insert({
+        order_id: orderId,
+        status: "Abgeschlossen",
+        notiz: "⚠️ Bewertungsanfrage konnte nicht gesendet werden",
+        created_at: new Date().toISOString(),
+      });
+      toast.error("Fehler beim Senden");
+    } finally {
+
+      setReviewSending(false);
+      setShowReviewModal(false);
+    }
+  };
+
+  const skipReview = async () => {
+    await (supabase.from as any)("order_status_log").insert({
+      order_id: orderId,
+      status: "Abgeschlossen",
+      notiz: "⏭️ Bewertungsanfrage übersprungen",
+      created_at: new Date().toISOString(),
+    });
+    loadLog?.();
+    setShowReviewModal(false);
+  };
+
   const currentIdx = STATUSES.indexOf(currentStatus as OrderStatus);
+
 
   const bannerText = (() => {
     if (!isWebsiteOrder) {
@@ -424,6 +444,46 @@ export default function OrderStatusWorkflow({
           ))}
         </div>
       )}
+
+      {/* Bewertungsanfrage Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-background rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <div className="text-center mb-4">
+              <span className="text-4xl">⭐</span>
+              <h3 className="font-bold text-lg mt-2">Bewertungsanfrage senden?</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Möchten Sie dem Kunden eine E-Mail schicken und um eine Google-Rezension bitten?
+              </p>
+            </div>
+            <div className="bg-muted rounded-xl p-3 mb-4 text-sm text-center text-muted-foreground">
+              Auftrag wurde als <strong>Abgeschlossen</strong> markiert ✓
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={sendReviewRequest}
+                disabled={reviewSending}
+                className="w-full bg-primary text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {reviewSending ? (
+                  <span className="animate-spin">⏳</span>
+                ) : (
+                  <span>⭐</span>
+                )}
+                {reviewSending ? "Wird gesendet..." : "Bewertungsanfrage senden"}
+              </button>
+              <button
+                onClick={skipReview}
+                disabled={reviewSending}
+                className="w-full border border-border rounded-xl py-3 text-sm text-muted-foreground hover:bg-muted"
+              >
+                Überspringen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
