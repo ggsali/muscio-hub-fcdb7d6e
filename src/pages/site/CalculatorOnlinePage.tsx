@@ -1024,6 +1024,7 @@ const CalculatorOnlinePage = () => {
     const firstColor = mat?.farben?.[0] || "";
     setColor((c) => (mat?.farben?.includes(c) ? c : firstColor));
     applyAll({ materialId: id });
+    startProgress();
     runKiAnalysisAll();
     runSlicerAll();
   };
