@@ -1422,11 +1422,16 @@ const CalculatorOnlinePage = () => {
                             {/* Fortschrittsbalken */}
                             <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
                               <div
-                                className="bg-primary h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${analysisProgress}%` }}
+                                className="bg-primary h-2 rounded-full"
+                                style={{
+                                  width: `${analysisProgress}%`,
+                                  transition: analysisProgress === 100 ? 'width 0.3s ease' : 'width 0.6s ease'
+                                }}
                               />
                             </div>
-                            <p className="text-xs text-muted-foreground">{analysisProgress}%</p>
+                            <p className="text-xs text-muted-foreground">
+                              {analysisProgress < 100 ? `${Math.round(analysisProgress)}%` : "Fertig ✓"}
+                            </p>
                           </div>
                         ) : (
                           <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
