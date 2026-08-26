@@ -1326,6 +1326,12 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
+                  <div className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">
+                    <p className="font-semibold text-foreground flex items-center gap-1.5"><Package className="w-4 h-4 text-success" /> Mehr bestellen = mehr sparen</p>
+                    <p className="text-muted-foreground mt-1">5+ Stück → 10% Rabatt · 10+ Stück → 15% Rabatt</p>
+                  </div>
+
+
                   {parts.length > 0 && (
                     <Button className="w-full gap-2" onClick={goNext}>
                       Weiter zu den Bildern <ArrowRight className="w-4 h-4" />
