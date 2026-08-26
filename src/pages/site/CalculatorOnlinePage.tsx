@@ -829,6 +829,15 @@ const CalculatorOnlinePage = () => {
   const totalMax = Math.round(total * 1.15 * 100) / 100;
   const hasKiAnalysis = parts.some((p) => p.kiAnalysis);
 
+  // Aggregierte Werte für die Wert-Kommunikation (nur Anzeige)
+  const totalGrams = calcs.reduce((s, { part, calc }) => s + calc.weight * part.quantity, 0);
+  const totalHours = calcs.reduce((s, { part, calc }) => {
+    const min = part.kiAnalysis?.druckzeit_minuten;
+    const hours = min != null ? min / 60 : (calc.weight / 10) * presetByInfill(part.infill).speedFactor;
+    return s + hours * part.quantity;
+  }, 0);
+
+
 
   const hasStep = parts.some((p) => isStepFile(p.fileName));
   const selectedMaterial = materials.find((m) => m.id === materialId) || null;
