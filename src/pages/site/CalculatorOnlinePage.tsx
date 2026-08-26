@@ -11,8 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, Trash2, Plus, Minus, Loader2, Send, ArrowRight, ArrowLeft, FileText,
   Check, Zap, Gauge, Shield, Gem, Sparkles, MessageCircle,
-  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb,
-
+  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1394,95 +1393,100 @@ const CalculatorOnlinePage = () => {
                     </p>
                   </div>
 
-                  <div
-                    onDrop={handleDrop}
-                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
-                    className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
-                      dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
-                    }`}
-                  >
-                    <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
-                    <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-                    <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
-                    <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
-                    <label htmlFor="file-input">
-                      <Button asChild className="gap-2 cursor-pointer">
-                        <span><Upload className="w-4 h-4" /> Dateien auswählen</span>
-                      </Button>
-                    </label>
-                  </div>
-
-                  {parts.length > 0 && (
+                  {/* Fertige Parts */}
+                  {parts.filter(p => !p.slicerLoading && p.hasVolume).length > 0 && (
                     <div className="space-y-3">
-                      {parts.map((p) => (
-                        p.slicerLoading || p.kiAnalysisLoading ? (
-                          <div key={p.id} className="bg-card border border-border rounded-3xl p-8 text-center">
-                            <div className="w-14 h-14 mx-auto mb-4">
-                              <svg className="animate-spin w-14 h-14 text-primary" viewBox="0 0 24 24" fill="none">
-                                <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5"/>
-                                <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                              </svg>
-                            </div>
-                            <p className="font-semibold text-foreground mb-1">Bauteil wird analysiert...</p>
-                            <p className="text-sm text-muted-foreground mb-4">{p.fileName}</p>
-                            {/* Fortschrittsbalken */}
-                            <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
-                              <div
-                                className="bg-primary h-2 rounded-full"
-                                style={{
-                                  width: `${analysisProgress}%`,
-                                  transition: analysisProgress === 100 ? 'width 0.3s ease' : 'width 0.6s ease'
-                                }}
-                              />
-                            </div>
+                      {parts.filter(p => !p.slicerLoading && p.hasVolume).map((p) => (
+                        <div key={p.id} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">{p.fileName}</p>
                             <p className="text-xs text-muted-foreground">
-                              {analysisProgress < 100 ? `${Math.round(analysisProgress)}%` : "Fertig ✓"}
+                              {p.slicerResult?.filamentGrams?.toFixed(0)}g · {(p.slicerResult?.printTimeMinutes ?? 0 / 60).toFixed(1)}h · {p.slicerResult?.hasSupport ? " ⚠️ Support" : " ✅ Kein Support"}
                             </p>
                           </div>
-                        ) : (
-                          <div key={p.id} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
-                            {p.file ? (
-                              <div className="w-16 h-16 rounded-xl bg-muted overflow-hidden shrink-0">
-                                <ModelPreview file={p.file} />
-                              </div>
-                            ) : (
-                              <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                                <FileText className="w-7 h-7 text-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-sm truncate">{p.fileName}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {p.hasVolume && p.volumeCm3 > 0
-                                  ? `Volumen: ${p.volumeCm3.toFixed(1)} cm³`
-                                  : isStepFile(p.fileName)
-                                    ? "STEP-Datei · Preis nach manueller Prüfung"
-                                    : "Volumen wird berechnet…"}
-                                {p.uploading && <span className="ml-2 text-primary">· wird hochgeladen…</span>}
+                          {p.kiAnalysis ? (
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-bold text-sm text-primary">
+                                ab CHF {p.kiAnalysis.gesamtpreis_min}
                               </p>
                             </div>
-                            <button onClick={() => remove(p.id)} aria-label="Datei entfernen" className="text-muted-foreground hover:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )
+                          ) : (
+                            <div className="w-16 h-4 bg-muted animate-pulse rounded" />
+                          )}
+                          <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive ml-1" aria-label="Datei entfernen">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
 
-                  {parts.length > 0 && (
-                  <div>
-                    <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
-                      <label htmlFor="step1-add-file">
-                        <Button asChild variant="outline" className="w-full gap-2 cursor-pointer">
-                          <span><Plus className="w-4 h-4" /> Weiteres Teil hinzufügen</span>
-                        </Button>
-                      </label>
-                      <p className="text-xs text-muted-foreground mt-2 text-center">
-                        Du kannst mehrere Teile gleichzeitig kalkulieren — die KI-Beratung berücksichtigt alle Teile.
+                  {/* Fortschrittsbalken oder Dropzone */}
+                  {parts.some(p => p.slicerLoading) ? (
+                    <div className="border-2 border-dashed border-primary/40 rounded-3xl p-8 text-center bg-primary/5">
+                      <div className="w-12 h-12 mx-auto mb-3">
+                        <svg className="animate-spin w-12 h-12 text-primary" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5"/>
+                          <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      </div>
+                      <p className="font-semibold mb-1">Bauteil wird analysiert...</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {parts.find(p => p.slicerLoading)?.fileName}
                       </p>
+                      <div className="w-full bg-muted rounded-full h-2.5 mb-1.5 overflow-hidden">
+                        <div
+                          className="bg-primary h-2.5 rounded-full"
+                          style={{
+                            width: `${analysisProgress}%`,
+                            transition: 'width 0.6s ease'
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">{Math.round(analysisProgress)}%</p>
                     </div>
+                  ) : (
+                    <>
+                      {parts.length === 0 ? (
+                        <div
+                          onDrop={handleDrop}
+                          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                          onDragLeave={() => setDragOver(false)}
+                          className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
+                            dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
+                          }`}
+                        >
+                          <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
+                          <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
+                          <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
+                          <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
+                          <label htmlFor="file-input">
+                            <Button asChild className="gap-2 cursor-pointer">
+                              <span><Upload className="w-4 h-4" /> Dateien auswählen</span>
+                            </Button>
+                          </label>
+                        </div>
+                      ) : (
+                        <div
+                          onDrop={handleDrop}
+                          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                          onDragLeave={() => setDragOver(false)}
+                          className={`border-2 border-dashed rounded-2xl p-4 text-center transition-colors cursor-pointer ${
+                            dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                          }`}
+                          onClick={() => document.getElementById("step1-add-file")?.click()}
+                        >
+                          <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
+                          <p className="text-sm text-muted-foreground">
+                            <span className="text-primary font-medium">+ Weitere Datei hochladen</span>
+                            <span className="hidden sm:inline"> (STL, STEP, 3MF, OBJ)</span>
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {hasStep && (
