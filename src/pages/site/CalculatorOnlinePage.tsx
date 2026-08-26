@@ -877,6 +877,7 @@ const CalculatorOnlinePage = () => {
     trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
     setQualityKey(key);
     applyAll({ infill });
+    startProgress();
     runKiAnalysisAll();
     runSlicerAll();
   };
