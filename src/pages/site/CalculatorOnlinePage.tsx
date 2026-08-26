@@ -841,12 +841,35 @@ const CalculatorOnlinePage = () => {
   const FIX_COST = calcParams.fix_cost;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
-  /** KI-Analyse bevorzugt, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
+  /** Slicer-Daten bevorzugt, dann KI-Analyse, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
   const calcPart = (p: Part) => {
+    const mat = materials.find((m) => m.id === p.materialId);
+
+    let discount = 0;
+    if (p.quantity >= 10) discount = 0.15;
+    else if (p.quantity >= 5) discount = 0.1;
+
+    // 1) Echte Slicer-Daten
+    if (p.slicerResult && !p.slicerLoading && mat && p.slicerResult.filamentGrams > 0) {
+      const weightG = p.slicerResult.filamentGrams;
+      const druckzeitMin = p.slicerResult.printTimeMinutes ||
+        weightG * 2.5 * (presetByInfill(p.infill).speedFactor || 1);
+      const materialCost = weightG * mat.pricePerGram;
+      const machineCost = (druckzeitMin / 60) * (settings.maschinenzeit_pro_h || 3);
+      const supportCost = p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
+      const unit = materialCost + machineCost + supportCost;
+      return {
+        weight: weightG,
+        unit,
+        subtotal: Math.max(unit * p.quantity * (1 - discount), 0),
+        discount,
+        exact: true,
+        druckzeitMin,
+      };
+    }
+
+    // 2) KI-Analyse (Edge Function als Fallback)
     if (p.kiAnalysis && !p.kiAnalysisLoading) {
-      let discount = 0;
-      if (p.quantity >= 10) discount = 0.15;
-      else if (p.quantity >= 5) discount = 0.1;
       const unit = p.kiAnalysis.preis_pro_stueck;
       return {
         weight: p.kiAnalysis.weightG ?? p.estimatedWeight,
@@ -859,7 +882,6 @@ const CalculatorOnlinePage = () => {
       };
     }
 
-    const mat = materials.find((m) => m.id === p.materialId);
     if (!mat || !p.hasVolume || p.estimatedWeight <= 0) {
       return { weight: 0, unit: 0, subtotal: 0, discount: 0, exact: false };
     }
@@ -876,13 +898,10 @@ const CalculatorOnlinePage = () => {
 
     const unit = materialCost + machineCost;
 
-    let discount = 0;
-    if (p.quantity >= 10) discount = 0.15;
-    else if (p.quantity >= 5) discount = 0.1;
-
     const subtotal = Math.max(unit * p.quantity * (1 - discount), 0);
     return { weight, unit, subtotal, discount, exact: false };
   };
+
 
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
