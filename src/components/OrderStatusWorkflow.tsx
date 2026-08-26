@@ -177,12 +177,12 @@ export default function OrderStatusWorkflow({
       // Tracking-Input schliessen
       setShowTrackingInput(false);
 
-  } catch (e) {
-    console.error("handleConfirmDelivery failed", e);
-    toast.error("Fehler beim Speichern", {
-      description: "Bitte nochmal versuchen.",
-    });
-  } finally {
+    } catch (e) {
+      console.error("handleConfirmDelivery failed", e);
+      toast.error("Fehler beim Speichern", {
+        description: "Bitte nochmal versuchen.",
+      });
+    } finally {
       setSavingTracking(false); // Immer zurücksetzen, auch bei Fehler
     }
   };
