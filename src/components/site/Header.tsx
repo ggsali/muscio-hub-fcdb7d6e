@@ -322,7 +322,7 @@ export const Header = () => {
                                 key={c.path}
                                 to={c.path}
                                 onClick={() => setOpen(false)}
-                                className="block px-3 py-2 text-sm text-white/55 hover:text-white rounded-md"
+                                className="block px-3 py-3 min-h-[48px] flex items-center text-sm text-white/55 hover:text-white rounded-md"
                               >
                                 {c.label}
                               </Link>
