@@ -963,6 +963,30 @@ const CalculatorOnlinePage = () => {
     }
   }, [quickMode, materialId, parts, materials]);
 
+  useEffect(() => {
+    const isLoading = parts.some((p) => p.slicerLoading || p.kiAnalysisLoading);
+    setAnalysisPhase(isLoading ? "analysing" : parts.length > 0 ? "done" : "idle");
+    if (!isLoading) {
+      setAnalysisProgress(100);
+      return;
+    }
+    setAnalysisProgress(5);
+    const interval = setInterval(() => {
+      setAnalysisProgress((p) => {
+        if (p >= 90) { clearInterval(interval); return 90; }
+        return p + Math.random() * 8 + 2;
+      });
+    }, 400);
+    return () => clearInterval(interval);
+  }, [parts]);
+
+  useEffect(() => {
+    const allDone = parts.every((p) => !p.slicerLoading && !p.kiAnalysisLoading);
+    if (allDone && parts.length > 0) {
+      setAnalysisProgress(100);
+    }
+  }, [parts]);
+
 
   const geometryText = useMemo(() => {
     if (parts.length === 0) return "";
