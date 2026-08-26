@@ -278,6 +278,21 @@ const CalculatorOnlinePage = () => {
   const [chatKey, setChatKey] = useState(0);
   // Schnell-Schätzung (Einstieg von der Startseite): grober Preis vor dem geführten Prozess
   const [quickMode, setQuickMode] = useState(false);
+  // Wert-Kommunikation & Social Proof
+  const [valueInfoOpen, setValueInfoOpen] = useState(false);
+  const [calcReviews, setCalcReviews] = useState<Array<{ id: string; customer_name: string; kommentar: string | null; rating: number }>>([]);
+  useEffect(() => {
+    supabase.from("public_reviews")
+      .select("id, customer_name, kommentar, rating")
+      .eq("rating", 5)
+      .limit(12)
+      .then(({ data }) => {
+        if (!data) return;
+        const withText = (data as typeof calcReviews).filter((r) => r.kommentar && r.kommentar.trim().length > 10);
+        setCalcReviews([...withText].sort(() => Math.random() - 0.5).slice(0, 3));
+      });
+  }, []);
+
 
   const isMobile = useIsMobile();
 
