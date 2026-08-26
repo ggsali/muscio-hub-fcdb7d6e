@@ -289,7 +289,7 @@ export const Header = () => {
                           to={l.path}
                           onClick={() => !hasChildren && setOpen(false)}
                           className={cn(
-                            "flex-1 flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                            "flex-1 flex items-center justify-between px-4 py-3 min-h-[48px] rounded-lg text-sm font-medium transition-colors",
                             location.pathname === l.path
                               ? "text-white bg-white/10 font-semibold"
                               : "text-white/55 hover:text-white hover:bg-white/10"
