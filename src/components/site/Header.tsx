@@ -20,12 +20,15 @@ const DEFAULT_NAV: NavItem[] = [
     label: "Leistungen",
     path: "/leistungen",
     children: [
-      { label: "Ersatzteile drucken", path: "/ersatzteile" },
-      { label: "Prototypen / Rapid Prototyping", path: "/prototypen" },
-      { label: "Kleinserien", path: "/kleinserien" },
+      { label: "FDM 3D-Druck", path: "/leistungen/fdm-3d-druck" },
+      { label: "SLA Resin Druck", path: "/leistungen/sla-3d-druck" },
+      { label: "Prototypen", path: "/leistungen/3d-druck-prototypen" },
+      { label: "Ersatzteile", path: "/leistungen/3d-druck-ersatzteile" },
+      { label: "Kleinserien", path: "/leistungen/3d-druck-kleinserien" },
       { label: "Materialien", path: "/materialien" },
     ],
   },
+
   { label: "Materialien", path: "/materialien" },
   {
     label: "Über uns",
