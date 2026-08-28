@@ -270,6 +270,65 @@ export const services: ServiceContent[] = [
       { label: "Prototypen", to: "/leistungen/3d-druck-prototypen", text: "Der Schritt vor der Serie." },
     ],
   },
+  {
+    slug: "b2b-3d-druck",
+    eyebrow: "Für Unternehmen",
+    h1: "3D-Druck für Unternehmen – B2B-Service aus der Schweiz",
+    title: "B2B 3D-Druck Schweiz – Rechnung, Kleinserien, Industriematerial | 3DMuscio",
+    description:
+      "3D-Druck für Firmen aus der Schweiz: Bestellung auf Rechnung mit QR-Zahlteil, Mengenrabatt ab dem ersten Stück, technische Materialien wie PETG, ABS, ASA und TPU. Produktion in Eschlikon TG, Standard 48 h.",
+    shortAnswer:
+      "3DMuscio fertigt für Schweizer Unternehmen Prototypen, Betriebsmittel, Ersatzteile und Kleinserien im FDM- und SLA-Verfahren. Firmenkunden bestellen auf Rechnung (Schweizer QR-Rechnung), erhalten Mengenrabatt bereits ab kleinen Stückzahlen und wählen aus technischen Materialien wie PETG, ABS, ASA, TPU und Resin. Produziert wird in Eschlikon TG, Standardproduktionszeit 48 Stunden.",
+    sections: [
+      {
+        title: "Was Firmenkunden bei uns bestellen",
+        bullets: [
+          "Prototypen für Produktentwicklung und Design-Reviews",
+          "Betriebsmittel: Vorrichtungen, Lehren, Montage- und Prüfhilfen",
+          "Ersatzteile für Maschinen und Anlagen, auch wenn das Original nicht mehr erhältlich ist",
+          "Kleinserien ohne Werkzeug- und Formkosten",
+          "Messe-, Muster- und Anschauungsteile",
+        ],
+      },
+      {
+        title: "Abwicklung und Bezahlung",
+        text: "Firmenkunden können auf Rechnung bestellen – mit Schweizer QR-Rechnung inklusive Zahlteil, passend für die übliche Kreditorenverarbeitung. Alternativ stehen Karte, TWINT und Apple Pay zur Verfügung. Für wiederkehrende Aufträge legen wir Teile in unserer Bibliothek ab, damit Nachbestellungen mit identischen Parametern gefertigt werden.",
+        bullets: [
+          "Bestellung auf Rechnung mit QR-Zahlteil",
+          "Angebot vor Auftragsfreigabe möglich",
+          "Kundenportal mit Aufträgen, Dokumenten und Rechnungen",
+          "Teilebibliothek für gleichbleibende Nachbestellungen",
+        ],
+      },
+      {
+        title: "Preise und Mengenrabatt",
+        text: "Der Preis setzt sich aus Material, Maschinenzeit und einmaligen Rüstkosten pro Auftrag zusammen. Weil die Rüstkosten nur einmal anfallen, wird jedes weitere Teil pro Stück günstiger – der Online-Kalkulator zeigt den Mengenrabatt direkt bei der Stückzahl. Für grössere Serien oder Rahmenmengen erstellen wir ein individuelles Angebot.",
+      },
+      {
+        title: "Materialien und Verfahren",
+        text: "Für belastbare Funktionsteile setzen wir FDM mit PETG, ABS, ASA oder TPU ein; ASA und ABS für höhere Temperatur- und UV-Anforderungen, TPU für flexible Teile. Für feine Details und glatte Sichtflächen nutzen wir SLA/Resin. Typische FDM-Toleranz ±0.2 mm.",
+      },
+      {
+        title: "Ablauf für Unternehmen",
+        text: "Datei (STL, STEP, 3MF oder OBJ) im Online-Kalkulator hochladen, Material und Qualität wählen, Preis sofort sehen und bestellen oder ein Angebot anfordern. Wir produzieren in Eschlikon TG und versenden schweizweit – Abholung ist nach Absprache möglich.",
+      },
+    ],
+    faqs: [
+      { q: "Können wir als Firma auf Rechnung bestellen?", a: "Ja. Für Firmenkunden stellen wir eine Schweizer QR-Rechnung mit Zahlteil aus. Karte, TWINT und Apple Pay sind ebenfalls möglich." },
+      { q: "Gibt es eine Mindestbestellmenge?", a: "Nein. Wir fertigen ab 1 Stück – Mengenrabatt wird im Kalkulator automatisch berücksichtigt." },
+      { q: "Erhalten wir vorab ein Angebot?", a: "Ja. Sende Datei, Stückzahl und Zieltermin über das Kontaktformular, dann erstellen wir ein schriftliches Angebot." },
+      { q: "Welche Materialien eignen sich für technische Bauteile?", a: "PETG für allgemeine Funktionsteile, ABS und ASA für höhere Temperatur- und UV-Belastung, TPU für flexible Teile, Resin für feine Details." },
+      { q: "Wie lange dauert die Produktion?", a: "Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung, danach 1–2 Tage Versand innerhalb der Schweiz." },
+    ],
+    related: [
+      { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien", text: "Serienfertigung ohne Werkzeugkosten." },
+      { label: "Prototypen", to: "/leistungen/3d-druck-prototypen", text: "Schnelle Iterationen in der Entwicklung." },
+      { label: "Ersatzteile", to: "/leistungen/3d-druck-ersatzteile", text: "Teile nachdrucken, die es nicht mehr gibt." },
+      { label: "3D-Druck vs Spritzguss", to: "/vergleich/3d-druck-vs-spritzguss", text: "Ab welcher Menge sich eine Form lohnt." },
+      { label: "Preisrechner", to: "/kalkulator-online", text: "Datei hochladen, Preis sofort sehen." },
+    ],
+  },
 ];
+
 
 export const getService = (slug?: string) => services.find((s) => s.slug === slug);
