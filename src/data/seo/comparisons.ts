@@ -55,11 +55,17 @@ export const comparisons: ComparisonContent[] = [
         title: "Praxis-Empfehlung",
         text: "Für die erste Iteration eines Prototyps ist PLA günstig und schnell. Sobald das Teil eine echte Funktion übernimmt – tragen, klemmen, halten, draussen liegen – wechseln wir in PETG. Wird es noch heisser oder UV-intensiver, sind ABS oder ASA die nächste Stufe.",
       },
+      {
+        title: "Was kostet der Unterschied?",
+        text: "Der Aufpreis von PLA auf PETG hängt vom Bauteilvolumen ab und liegt bei den meisten Teilen im einstelligen Frankenbereich. Lade deine Datei im Online-Kalkulator hoch und wechsle das Material – du siehst den Preisunterschied sofort, bevor du bestellst.",
+      },
     ],
     faqs: [
       { q: "Ist PETG teurer als PLA?", a: "Der Materialpreis liegt meist leicht höher; im Online-Kalkulator siehst du für dein Teil den exakten Unterschied." },
       { q: "Ist PLA lebensmittelecht?", a: "Wir machen keine Lebensmittel- oder Medizinzulassungs-Aussagen für gedruckte Teile. Für solche Anwendungen bitte vorher anfragen." },
       { q: "Welches Material hält im Auto?", a: "Weder PLA noch PETG sind für heisse Innenräume ideal – dafür empfehlen wir ABS oder ASA." },
+      { q: "Welches Material ist einfacher zu verarbeiten?", a: "Für dich als Kundschaft spielt das kaum eine Rolle – wir übernehmen die Druckvorbereitung. Beide Materialien drucken wir auf unseren CoreXY-Maschinen zuverlässig." },
+      { q: "Kann ich PLA nachträglich draussen verwenden?", a: "Nicht empfohlen: PLA verliert durch UV und Feuchtigkeit über Monate an Festigkeit. Für Aussenteile nimm PETG, besser noch ASA." },
     ],
     related: [
       { label: "PETG vs ABS", to: "/vergleich/petg-vs-abs", text: "Die nächste Stufe bei Temperatur." },
@@ -195,10 +201,16 @@ export const comparisons: ComparisonContent[] = [
         title: "Kombination ist möglich",
         text: "Bei mehrteiligen Projekten drucken wir belastete Komponenten in FDM und Sichtteile in Resin. Lade einfach alle Dateien in einer Anfrage hoch – wir schlagen pro Teil das passende Verfahren vor.",
       },
+      {
+        title: "Was bedeutet das für die Oberfläche?",
+        text: "FDM-Teile zeigen je nach Schichthöhe feine Linien – bei der Qualitätsstufe „Fein“ kaum sichtbar, bei „Draft“ deutlich. Resin-Teile kommen praktisch schichtfrei aus der Produktion und eignen sich direkt als Lackiergrundlage. Wenn ein FDM-Teil glatt aussehen soll, ist Nachbearbeitung (schleifen, füllern, lackieren) nötig – dabei helfen ABS/ASA, weil sie sich gut bearbeiten lassen.",
+      },
     ],
     faqs: [
       { q: "Was ist günstiger?", a: "Bei grösseren Volumen ist FDM klar günstiger. Bei kleinen, detailreichen Teilen liegen beide nahe beieinander." },
       { q: "Welches Verfahren wähle ich im Kalkulator?", a: "Du wählst das Material – daraus ergibt sich das Verfahren. Resin steht für SLA, alle Filamente für FDM." },
+      { q: "Wie gross darf ein Teil sein?", a: "FDM erlaubt deutlich grössere Bauteile; übergrosse Teile teilen wir bei Bedarf und fügen sie nach dem Druck zusammen. Resin ist auf kleinere Bauteile optimiert." },
+      { q: "Welches Verfahren ist schneller?", a: "Kleine Resin-Teile sind oft in wenigen Stunden fertig, grössere FDM-Teile brauchen entsprechend länger. In beiden Verfahren gilt unser Standard von 48 Stunden Produktionszeit." },
     ],
     related: [
       { label: "FDM 3D-Druck", to: "/leistungen/fdm-3d-druck" },
