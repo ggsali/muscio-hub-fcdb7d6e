@@ -31,6 +31,22 @@ export default function ProjektDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [view3d, setView3d] = useState(false);
+  const [stlSignedUrl, setStlSignedUrl] = useState<string | null>(null);
+
+  // Kurzlebige Signed URL (5 Min) für die 3D-Vorschau statt dauerhafter Public URL
+  useEffect(() => {
+    if (!view3d || !project?.stl_url) return;
+    let active = true;
+    (async () => {
+      const marker = "/project-stls/";
+      const idx = project.stl_url!.indexOf(marker);
+      if (idx === -1) { setStlSignedUrl(project.stl_url); return; }
+      const path = decodeURIComponent(project.stl_url!.substring(idx + marker.length));
+      const { data } = await supabase.storage.from("project-stls").createSignedUrl(path, 300);
+      if (active) setStlSignedUrl(data?.signedUrl || project.stl_url);
+    })();
+    return () => { active = false; };
+  }, [view3d, project?.stl_url]);
 
   useEffect(() => {
     if (!slug) return;
@@ -85,9 +101,13 @@ export default function ProjektDetailPage() {
                 <div className="relative space-y-3">
                   <div className="relative rounded-2xl overflow-hidden border border-border bg-card aspect-square flex items-center justify-center">
                     {view3d && project.stl_url ? (
+                      stlSignedUrl ? (
                       <Suspense fallback={<div className="text-muted-foreground text-sm">Lädt 3D-Modell…</div>}>
-                        <StlViewer url={project.stl_url} />
+                        <StlViewer url={stlSignedUrl} />
                       </Suspense>
+                      ) : (
+                        <div className="text-muted-foreground text-sm">Lädt 3D-Modell…</div>
+                      )
                     ) : current ? (
                       <img src={current} alt={project.name} loading="lazy" className="w-full h-full object-cover transition-opacity duration-300" />
                     ) : (

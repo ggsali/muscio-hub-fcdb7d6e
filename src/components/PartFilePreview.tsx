@@ -167,5 +167,12 @@ export default function PartFilePreview({ url, filename }: { url: string; filena
     );
   }
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div
+      ref={containerRef}
+      onContextMenu={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+      className="w-full h-full select-none"
+    />
+  );
 }
