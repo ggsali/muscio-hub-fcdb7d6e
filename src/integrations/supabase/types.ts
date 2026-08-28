@@ -634,6 +634,7 @@ export type Database = {
           created_at: string | null
           dichte_g_cm3: number | null
           farbe: string | null
+          farben: Json
           hersteller: string | null
           id: string
           material: string
@@ -647,6 +648,7 @@ export type Database = {
           created_at?: string | null
           dichte_g_cm3?: number | null
           farbe?: string | null
+          farben?: Json
           hersteller?: string | null
           id?: string
           material?: string
@@ -660,6 +662,7 @@ export type Database = {
           created_at?: string | null
           dichte_g_cm3?: number | null
           farbe?: string | null
+          farben?: Json
           hersteller?: string | null
           id?: string
           material?: string
