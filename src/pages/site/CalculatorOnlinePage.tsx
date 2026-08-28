@@ -445,7 +445,9 @@ const CalculatorOnlinePage = () => {
         farbe: null,
         hersteller: null,
         farben: Array.isArray(m.farben) ? m.farben : [],
+        farbHex: {},
       }));
+
 
       if (fallback.length === 0) {
         setMaterialsError("Materialien konnten nicht geladen werden.");
