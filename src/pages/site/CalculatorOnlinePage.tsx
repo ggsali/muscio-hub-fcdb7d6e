@@ -1596,44 +1596,21 @@ const CalculatorOnlinePage = () => {
                       </label>
                     </div>
                   ) : (
-                    <>
-                      {parts.length === 0 ? (
-                        <div
-                          onDrop={handleDrop}
-                          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                          onDragLeave={() => setDragOver(false)}
-                          className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
-                            dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
-                          }`}
-                        >
-                          <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
-                          <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-                          <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
-                          <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
-                          <label htmlFor="file-input">
-                            <Button asChild className="gap-2 cursor-pointer">
-                              <span><Upload className="w-4 h-4" /> Dateien auswählen</span>
-                            </Button>
-                          </label>
-                        </div>
-                      ) : (
-                        <div
-                          onDrop={handleDrop}
-                          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                          onDragLeave={() => setDragOver(false)}
-                          className={`border-2 border-dashed rounded-2xl p-4 text-center transition-colors cursor-pointer ${
-                            dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
-                          }`}
-                          onClick={() => document.getElementById("step1-add-file")?.click()}
-                        >
-                          <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
-                          <p className="text-sm text-muted-foreground">
-                            <span className="text-primary font-medium">+ Weitere Datei hochladen</span>
-                            <span className="hidden sm:inline"> (STL, STEP, 3MF, OBJ)</span>
-                          </p>
-                        </div>
-                      )}
-                    </>
+                    <div
+                      onDrop={handleDrop}
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      className={`border-2 border-dashed rounded-2xl p-4 text-center transition-colors cursor-pointer ${
+                        dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                      }`}
+                      onClick={() => document.getElementById("step1-add-file")?.click()}
+                    >
+                      <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
+                      <p className="text-sm text-muted-foreground">
+                        <span className="text-primary font-medium">+ Weitere Datei hochladen</span>
+                        <span className="hidden sm:inline"> (STL, STEP, 3MF, OBJ)</span>
+                      </p>
+                    </div>
                   )}
 
                   {hasStep && (
