@@ -134,13 +134,34 @@ export default function FilamentePage() {
                 {MATERIAL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Farbe</Label>
-              <div className="flex gap-2 items-center">
-                <input type="color" value={editing.farbe || "#888888"} onChange={e => setEditing({ ...editing, farbe: e.target.value })} className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-transparent" />
-                <Input value={editing.farbe ?? ""} onChange={e => setEditing({ ...editing, farbe: e.target.value })} className="bg-input border-border h-8 text-sm flex-1" placeholder="Blau, #1A2B3C…" />
+            <div className="space-y-1.5 md:col-span-3">
+              <Label className="text-xs">Farben ({colors.length}) – erscheinen direkt im Kalkulator</Label>
+              <div className="space-y-2">
+                {colors.map((c, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={/^#[0-9a-fA-F]{6}$/.test(c.hex) ? c.hex : "#888888"}
+                      onChange={e => setColors(colors.map((x, j) => (j === i ? { ...x, hex: e.target.value } : x)))}
+                      className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-transparent shrink-0"
+                    />
+                    <Input
+                      value={c.name}
+                      onChange={e => setColors(colors.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+                      className="bg-input border-border h-8 text-sm flex-1"
+                      placeholder="Farbname, z.B. Signalblau"
+                    />
+                    <button type="button" onClick={() => setColors(colors.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive p-1">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" className="border-border gap-1.5" onClick={() => setColors([...colors, { name: "", hex: "#888888" }])}>
+                  <Plus className="w-3.5 h-3.5" /> Farbe hinzufügen
+                </Button>
               </div>
             </div>
+
             <div className="space-y-1.5">
               <Label className="text-xs">Hersteller</Label>
               <Input value={editing.hersteller ?? ""} onChange={e => setEditing({ ...editing, hersteller: e.target.value })} className="bg-input border-border h-8 text-sm" placeholder="Prusa, eSUN, Bambu…" />
