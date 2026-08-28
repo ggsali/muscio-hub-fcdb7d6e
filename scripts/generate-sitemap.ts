@@ -55,7 +55,9 @@ const staticEntries: SitemapEntry[] = [
   ...comparisonSlugs.map((s): SitemapEntry => ({ path: `/vergleich/${s}`, changefreq: "monthly", priority: "0.8" })),
   { path: "/wissen/3d-druck-kosten-schweiz", changefreq: "monthly", priority: "0.9" },
   ...locationSlugs.map((s): SitemapEntry => ({ path: `/standorte/${s}`, changefreq: "monthly", priority: "0.7" })),
+  ...lokaleSlugs.map((s): SitemapEntry => ({ path: `/${s}`, changefreq: "monthly", priority: "0.8" })),
   { path: "/shop", changefreq: "weekly", priority: "0.8" },
+
   { path: "/maschinen", changefreq: "monthly", priority: "0.6" },
   { path: "/ueber-uns", changefreq: "monthly", priority: "0.6" },
   { path: "/ueber-ki", changefreq: "monthly", priority: "0.5" },
