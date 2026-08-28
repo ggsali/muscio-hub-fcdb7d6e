@@ -611,12 +611,10 @@ const CalculatorOnlinePage = () => {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, kiAnalysisLoading: false, kiAnalysisError: "Analyse fehlgeschlagen – vereinfachte Schätzung wird verwendet" }
         : p));
-      finishProgress();
     } else {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, kiAnalysis: data as KiAnalysis, kiAnalysisLoading: false, kiAnalysisError: null }
         : p));
-      finishProgress();
     }
   }, [parts, materials, qualityPresets, qualityKey, settings.maschinenzeit_pro_h, calcParams]);
 
