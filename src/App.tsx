@@ -170,7 +170,13 @@ const App = () => (
                 <Route path="/vergleich" element={<VergleichPage />} />
                 <Route path="/vergleich/:slug" element={<VergleichPage />} />
                 <Route path="/standorte/:slug" element={<StandortPage />} />
+                <Route path="/3d-druck-zuerich" element={<LokalPage />} />
+                <Route path="/3d-druck-winterthur" element={<LokalPage />} />
+                <Route path="/3d-druck-st-gallen" element={<LokalPage />} />
+                <Route path="/3d-druck-ostschweiz" element={<LokalPage />} />
+                <Route path="/3d-druck-bern" element={<LokalPage />} />
                 <Route path="/wissen/3d-druck-kosten-schweiz" element={<KostenPage />} />
+
                 <Route path="/newsletter/abmelden" element={<NewsletterAbmeldenPage />} />
               </Route>
 
