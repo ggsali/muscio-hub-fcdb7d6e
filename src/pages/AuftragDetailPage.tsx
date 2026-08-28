@@ -15,6 +15,7 @@ import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF }
 import { exportAkontoPDF, exportRestbetragPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
+import StlViewer from "@/components/site/StlViewer";
 import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 import TimeTracker from "@/components/TimeTracker";
@@ -99,6 +100,7 @@ export default function AuftragDetailPage() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
   const [partsWithFiles, setPartsWithFiles] = useState<string[]>([]);
+  const [partFiles, setPartFiles] = useState<{ part_id: string; storage_path: string; filename?: string; file_type?: string }[]>([]);
   const [activeSettings, setActiveSettings] = useState<Settings>(settings);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
@@ -371,11 +373,13 @@ export default function AuftragDetailPage() {
   useEffect(() => {
     if (!isNew && id) {
       supabase.from("part_files" as any)
-        .select("part_id")
+        .select("part_id, storage_path, filename, file_type")
         .eq("order_id", id)
         .then(({ data }) => {
           if (data && data.length > 0) {
-            const partIds = [...new Set(data.map((f: any) => f.part_id))] as string[];
+            const files = (data as unknown) as { part_id: string; storage_path: string; filename?: string; file_type?: string }[];
+            setPartFiles(files);
+            const partIds = [...new Set(files.map((f) => f.part_id))] as string[];
             setPartsWithFiles(partIds);
             const partIdx = parts.findIndex(p => p.id && partIds.includes(p.id));
             if (partIdx >= 0) setExpandedPartIdx(prev => prev ?? partIdx);
@@ -383,6 +387,16 @@ export default function AuftragDetailPage() {
         });
     }
   }, [parts.length, id, isNew]);
+
+  const getPartStlUrl = (partId: string | undefined): string | null => {
+    if (!partId) return null;
+    const stlFile = partFiles.find(f =>
+      f.part_id === partId &&
+      (f.filename?.toLowerCase().endsWith('.stl') || f.file_type === 'stl')
+    );
+    if (!stlFile) return null;
+    return supabase.storage.from('part-files').getPublicUrl(stlFile.storage_path).data.publicUrl;
+  };
 
   const addPart = async () => {
     const newPart = emptyPart();
@@ -1594,15 +1608,32 @@ export default function AuftragDetailPage() {
                       <span className="text-xs text-muted-foreground">Total</span>
                       <span className="text-sm font-bold">{formatCHF(part.preis_total)}</span>
                     </div>
-                    {expandedPartIdx === idx && part.id && (
-                      <div className="pt-2 border-t border-border/50">
-                        <PartFileUpload
-                          partId={part.id}
-                          orderId={typeof id === "string" && id !== "neu" ? id : undefined}
-                          customerId={customerId || undefined}
-                        />
-                      </div>
-                    )}
+                    {(() => {
+                      const stlUrl = getPartStlUrl(part.id);
+                      return (
+                        <>
+                          {stlUrl ? (
+                            <div className="rounded-xl overflow-hidden border border-border bg-[#111315] h-40">
+                              <StlViewer url={stlUrl} />
+                            </div>
+                          ) : part.id && partsWithFiles.includes(part.id) ? (
+                            <div className="rounded-xl border border-border bg-muted/30 h-24 flex flex-col items-center justify-center text-muted-foreground gap-1">
+                              <Layers className="w-8 h-8 opacity-30" />
+                              <span className="text-xs">Kein STL verfügbar (nur STEP/andere Datei)</span>
+                            </div>
+                          ) : null}
+                          {expandedPartIdx === idx && part.id && (
+                            <div className="pt-2 border-t border-border/50">
+                              <PartFileUpload
+                                partId={part.id}
+                                orderId={typeof id === "string" && id !== "neu" ? id : undefined}
+                                customerId={customerId || undefined}
+                              />
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
@@ -1697,13 +1728,29 @@ export default function AuftragDetailPage() {
                             </div>
                           </td>
                         </tr>
-                        {expandedPartIdx === idx && part.id && (
-                          <tr className="bg-muted/10 border-b border-border/50">
-                            <td colSpan={12} className="px-4 py-3">
-                              <PartFileUpload partId={part.id} orderId={typeof id === "string" && id !== "neu" ? id : undefined} customerId={customerId || undefined} />
-                            </td>
-                          </tr>
-                        )}
+                        {(() => {
+                          const stlUrl = getPartStlUrl(part.id);
+                          return (
+                            <>
+                              {stlUrl && (
+                                <tr className="bg-muted/10 border-b border-border/50">
+                                  <td colSpan={12} className="px-4 py-3">
+                                    <div className="rounded-xl overflow-hidden border border-border bg-[#111315] h-48">
+                                      <StlViewer url={stlUrl} />
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                              {expandedPartIdx === idx && part.id && (
+                                <tr className="bg-muted/10 border-b border-border/50">
+                                  <td colSpan={12} className="px-4 py-3">
+                                    <PartFileUpload partId={part.id} orderId={typeof id === "string" && id !== "neu" ? id : undefined} customerId={customerId || undefined} />
+                                  </td>
+                                </tr>
+                              )}
+                            </>
+                          );
+                        })()}
                       </React.Fragment>
                     ))}
                   </tbody>
