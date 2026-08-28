@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
+
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -62,6 +64,29 @@ export default function FaqPage() {
           </div>
         ))}
       </div>
+
+      <section className="mt-12">
+        <h2 className="text-xl font-bold mb-4">Mehr zu unseren Leistungen</h2>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {[
+            { label: "FDM 3D-Druck", to: "/leistungen/fdm-3d-druck" },
+            { label: "SLA Resin 3D-Druck", to: "/leistungen/sla-3d-druck" },
+            { label: "Prototypen / Rapid Prototyping", to: "/leistungen/3d-druck-prototypen" },
+            { label: "Ersatzteile drucken lassen", to: "/leistungen/3d-druck-ersatzteile" },
+            { label: "Kleinserien ab 1 Stück", to: "/leistungen/3d-druck-kleinserien" },
+            { label: "Materialien im Überblick", to: "/materialien" },
+          ].map(l => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="block rounded-lg border border-border bg-card p-3 text-sm hover:border-primary/50 transition-colors"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
+
   );
 }

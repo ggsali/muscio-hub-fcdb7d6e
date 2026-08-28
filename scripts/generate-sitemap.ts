@@ -32,6 +32,14 @@ const comparisonSlugs = [
   "3d-druck-vs-spritzguss",
 ];
 const locationSlugs = ["thurgau", "ostschweiz", "zuerich", "st-gallen"];
+const lokaleSlugs = [
+  "3d-druck-zuerich",
+  "3d-druck-winterthur",
+  "3d-druck-st-gallen",
+  "3d-druck-ostschweiz",
+  "3d-druck-bern",
+];
+
 
 const staticEntries: SitemapEntry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
@@ -47,7 +55,9 @@ const staticEntries: SitemapEntry[] = [
   ...comparisonSlugs.map((s): SitemapEntry => ({ path: `/vergleich/${s}`, changefreq: "monthly", priority: "0.8" })),
   { path: "/wissen/3d-druck-kosten-schweiz", changefreq: "monthly", priority: "0.9" },
   ...locationSlugs.map((s): SitemapEntry => ({ path: `/standorte/${s}`, changefreq: "monthly", priority: "0.7" })),
+  ...lokaleSlugs.map((s): SitemapEntry => ({ path: `/${s}`, changefreq: "monthly", priority: "0.8" })),
   { path: "/shop", changefreq: "weekly", priority: "0.8" },
+
   { path: "/maschinen", changefreq: "monthly", priority: "0.6" },
   { path: "/ueber-uns", changefreq: "monthly", priority: "0.6" },
   { path: "/ueber-ki", changefreq: "monthly", priority: "0.5" },

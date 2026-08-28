@@ -793,6 +793,78 @@ export type Database = {
         }
         Relationships: []
       }
+      leistungen_seiten: {
+        Row: {
+          aktiv: boolean | null
+          created_at: string | null
+          faq: Json | null
+          h1: string | null
+          id: string
+          inhalt: string | null
+          intro: string | null
+          meta_description: string | null
+          meta_title: string | null
+          slug: string
+          titel: string
+        }
+        Insert: {
+          aktiv?: boolean | null
+          created_at?: string | null
+          faq?: Json | null
+          h1?: string | null
+          id?: string
+          inhalt?: string | null
+          intro?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          slug: string
+          titel: string
+        }
+        Update: {
+          aktiv?: boolean | null
+          created_at?: string | null
+          faq?: Json | null
+          h1?: string | null
+          id?: string
+          inhalt?: string | null
+          intro?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          slug?: string
+          titel?: string
+        }
+        Relationships: []
+      }
+      lokale_seiten: {
+        Row: {
+          aktiv: boolean | null
+          created_at: string | null
+          id: string
+          meta_description: string | null
+          meta_title: string | null
+          region_name: string
+          slug: string
+        }
+        Insert: {
+          aktiv?: boolean | null
+          created_at?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          region_name: string
+          slug: string
+        }
+        Update: {
+          aktiv?: boolean | null
+          created_at?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          region_name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       materials: {
         Row: {
           aktiv: boolean

@@ -92,6 +92,8 @@ import ServiceDetailPage from "@/pages/site/ServiceDetailPage";
 import MaterialDetailPage from "@/pages/site/MaterialDetailPage";
 import VergleichPage from "@/pages/site/VergleichPage";
 import StandortPage from "@/pages/site/StandortPage";
+import LokalPage from "@/pages/site/LokalPage";
+
 import KostenPage from "@/pages/site/KostenPage";
 import ErsatzteilePage from "@/pages/site/ErsatzteilePage";
 import PrototypenPage from "@/pages/site/PrototypenPage";
@@ -170,7 +172,13 @@ const App = () => (
                 <Route path="/vergleich" element={<VergleichPage />} />
                 <Route path="/vergleich/:slug" element={<VergleichPage />} />
                 <Route path="/standorte/:slug" element={<StandortPage />} />
+                <Route path="/3d-druck-zuerich" element={<LokalPage />} />
+                <Route path="/3d-druck-winterthur" element={<LokalPage />} />
+                <Route path="/3d-druck-st-gallen" element={<LokalPage />} />
+                <Route path="/3d-druck-ostschweiz" element={<LokalPage />} />
+                <Route path="/3d-druck-bern" element={<LokalPage />} />
                 <Route path="/wissen/3d-druck-kosten-schweiz" element={<KostenPage />} />
+
                 <Route path="/newsletter/abmelden" element={<NewsletterAbmeldenPage />} />
               </Route>
 

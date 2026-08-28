@@ -11,7 +11,18 @@ const SITE = 'https://3dmuscio.com'
 const STATIC_URLS = [
   { loc: '/', changefreq: 'weekly', priority: '1.0' },
   { loc: '/leistungen', changefreq: 'monthly', priority: '0.9' },
+  { loc: '/leistungen/fdm-3d-druck', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/leistungen/sla-3d-druck', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/leistungen/3d-druck-prototypen', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/leistungen/3d-druck-ersatzteile', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/leistungen/3d-druck-kleinserien', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/3d-druck-zuerich', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/3d-druck-winterthur', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/3d-druck-st-gallen', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/3d-druck-ostschweiz', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/3d-druck-bern', changefreq: 'monthly', priority: '0.8' },
   { loc: '/kalkulator-online', changefreq: 'monthly', priority: '0.9' },
+
   { loc: '/ersatzteile', changefreq: 'monthly', priority: '0.9' },
   { loc: '/prototypen', changefreq: 'monthly', priority: '0.9' },
   { loc: '/kleinserien', changefreq: 'monthly', priority: '0.9' },
