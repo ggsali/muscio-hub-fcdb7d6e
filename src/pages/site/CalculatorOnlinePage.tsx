@@ -1329,6 +1329,11 @@ const CalculatorOnlinePage = () => {
                     : priceBadge !== null
                       ? (hasKiAnalysis ? `ab ${CHF(totalMin)}` : `ab ${CHF(priceBadge)}`)
                       : "CHF –.–"}
+                  {anyQuickSlice && (
+                    <span className="ml-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
+                      ~ Schnellschätzung
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground flex-wrap justify-end">
                   <span>🇨🇭 Swiss Made</span>
