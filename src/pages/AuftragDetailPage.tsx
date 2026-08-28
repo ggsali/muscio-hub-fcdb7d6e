@@ -1728,13 +1728,29 @@ export default function AuftragDetailPage() {
                             </div>
                           </td>
                         </tr>
-                        {expandedPartIdx === idx && part.id && (
-                          <tr className="bg-muted/10 border-b border-border/50">
-                            <td colSpan={12} className="px-4 py-3">
-                              <PartFileUpload partId={part.id} orderId={typeof id === "string" && id !== "neu" ? id : undefined} customerId={customerId || undefined} />
-                            </td>
-                          </tr>
-                        )}
+                        {(() => {
+                          const stlUrl = getPartStlUrl(part.id);
+                          return (
+                            <>
+                              {stlUrl && (
+                                <tr className="bg-muted/10 border-b border-border/50">
+                                  <td colSpan={12} className="px-4 py-3">
+                                    <div className="rounded-xl overflow-hidden border border-border bg-[#111315] h-48">
+                                      <StlViewer url={stlUrl} />
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                              {expandedPartIdx === idx && part.id && (
+                                <tr className="bg-muted/10 border-b border-border/50">
+                                  <td colSpan={12} className="px-4 py-3">
+                                    <PartFileUpload partId={part.id} orderId={typeof id === "string" && id !== "neu" ? id : undefined} customerId={customerId || undefined} />
+                                  </td>
+                                </tr>
+                              )}
+                            </>
+                          );
+                        })()}
                       </React.Fragment>
                     ))}
                   </tbody>
