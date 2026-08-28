@@ -92,6 +92,8 @@ import ServiceDetailPage from "@/pages/site/ServiceDetailPage";
 import MaterialDetailPage from "@/pages/site/MaterialDetailPage";
 import VergleichPage from "@/pages/site/VergleichPage";
 import StandortPage from "@/pages/site/StandortPage";
+import LokalPage from "@/pages/site/LokalPage";
+
 import KostenPage from "@/pages/site/KostenPage";
 import ErsatzteilePage from "@/pages/site/ErsatzteilePage";
 import PrototypenPage from "@/pages/site/PrototypenPage";
