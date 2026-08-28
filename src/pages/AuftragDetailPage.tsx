@@ -15,6 +15,7 @@ import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF }
 import { exportAkontoPDF, exportRestbetragPDF } from "@/lib/pdfAkontoExport";
 import { useCompanySettings } from "@/contexts/CompanySettingsContext";
 import PartFileUpload from "@/components/PartFileUpload";
+import StlViewer from "@/components/site/StlViewer";
 import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 import TimeTracker from "@/components/TimeTracker";
