@@ -303,6 +303,7 @@ const CalculatorOnlinePage = () => {
   const [quickMode, setQuickMode] = useState(false);
   // Wert-Kommunikation & Social Proof
   const [calcReviews, setCalcReviews] = useState<Array<{ id: string; customer_name: string; kommentar: string | null; rating: number }>>([]);
+  const [priceFlash, setPriceFlash] = useState(false);
   useEffect(() => {
     supabase.from("public_reviews")
       .select("id, customer_name, kommentar, rating")
