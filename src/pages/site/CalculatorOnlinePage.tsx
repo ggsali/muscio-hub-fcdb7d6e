@@ -126,6 +126,17 @@ const calcWeight = (volumeCm3: number, material: Material, infill: number): numb
   return Math.max(1, Math.round(baseWeight * safetyFactor * 10) / 10)
 }
 
+const calcQuickPrice = (volumeCm3: number, mat: Material, quality: QualityPreset, maschinenzeitProH = 3, minPrice = 5): number => {
+  const density = mat.density || 1.24;
+  const shellFactor = 0.3;
+  const fillFactor = shellFactor + (1 - shellFactor) * (quality.infill / 100);
+  const weightG = volumeCm3 * density * fillFactor;
+  const materialCost = weightG * mat.pricePerGram;
+  const druckzeitMin = weightG * 2.5 * quality.speedFactor;
+  const machineCost = (druckzeitMin / 60) * maschinenzeitProH;
+  return Math.max(materialCost + machineCost, minPrice);
+};
+
 
 async function calcStlVolumeCm3(file: File): Promise<number> {
   const buffer = await file.arrayBuffer();
