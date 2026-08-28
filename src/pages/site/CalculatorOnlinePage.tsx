@@ -1738,24 +1738,23 @@ const CalculatorOnlinePage = () => {
                                   }`}
                                 >
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                                  <div className="flex items-center gap-2 mb-1">
-                                    {m.farbe && (
-                                      <div
-                                        style={{
-                                          width: 14,
-                                          height: 14,
-                                          borderRadius: "50%",
-                                          backgroundColor: m.farbe,
-                                          border: "1px solid rgba(0,0,0,0.15)",
-                                          flexShrink: 0,
-                                        }}
-                                      />
-                                    )}
-                                    <p className="font-bold text-sm leading-tight">{m.name}</p>
-                                  </div>
-                                  {m.farbe && !m.farbe.startsWith("#") && (
-                                    <p className="text-xs text-muted-foreground">{m.farbe}</p>
+                                  <p className="font-bold text-sm leading-tight mb-1">{m.name}</p>
+                                  {m.farben.length > 0 && (
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {m.farben.slice(0, 8).map((cn) => (
+                                        <span
+                                          key={cn}
+                                          title={cn}
+                                          className="w-3.5 h-3.5 rounded-full border border-border/60"
+                                          style={{ backgroundColor: m.farbHex?.[cn] || colorHex(cn) }}
+                                        />
+                                      ))}
+                                      <span className="text-[11px] text-muted-foreground ml-1">
+                                        {m.farben.length} {m.farben.length === 1 ? "Farbe" : "Farben"}
+                                      </span>
+                                    </div>
                                   )}
+
                                 </button>
                               );
                             })}
