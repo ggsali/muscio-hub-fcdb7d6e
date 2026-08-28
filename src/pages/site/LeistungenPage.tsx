@@ -138,6 +138,7 @@ export default function LeistungenPage() {
                 { label: "Prototypen", to: "/leistungen/3d-druck-prototypen" },
                 { label: "Ersatzteile", to: "/leistungen/3d-druck-ersatzteile" },
                 { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien" },
+                { label: "B2B / Firmenkunden", to: "/leistungen/b2b-3d-druck" },
                 { label: "3D-Druck Kosten Schweiz", to: "/wissen/3d-druck-kosten-schweiz" },
                 { label: "FDM vs SLA", to: "/vergleich/fdm-vs-sla" },
                 { label: "3D-Druck vs Spritzguss", to: "/vergleich/3d-druck-vs-spritzguss" },

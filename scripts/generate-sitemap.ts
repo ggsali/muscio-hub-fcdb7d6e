@@ -21,6 +21,7 @@ const serviceSlugs = [
   "3d-druck-prototypen",
   "3d-druck-ersatzteile",
   "3d-druck-kleinserien",
+  "b2b-3d-druck",
 ];
 const comparisonSlugs = [
   "pla-vs-petg",
