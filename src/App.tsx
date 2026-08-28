@@ -152,9 +152,11 @@ const App = () => (
                 <Route path="/kalkulator-online" element={<CalculatorOnlinePage />} />
                 <Route path="/kalkulator" element={<Navigate to="/kalkulator-online" replace />} />
                 <Route path="/leistungen" element={<LeistungenPage />} />
-                <Route path="/ersatzteile" element={<ErsatzteilePage />} />
-                <Route path="/prototypen" element={<PrototypenPage />} />
-                <Route path="/kleinserien" element={<KleinserienPage />} />
+                {/* Alte Service-URLs auf die kanonischen /leistungen/* Seiten konsolidieren */}
+                <Route path="/ersatzteile" element={<Navigate to="/leistungen/3d-druck-ersatzteile" replace />} />
+                <Route path="/prototypen" element={<Navigate to="/leistungen/3d-druck-prototypen" replace />} />
+                <Route path="/kleinserien" element={<Navigate to="/leistungen/3d-druck-kleinserien" replace />} />
+
                 <Route path="/materialien" element={<MaterialienPage />} />
                 <Route path="/ueber-uns" element={<UeberUnsPage />} />
                 <Route path="/ueber-ki" element={<UeberKiPage />} />
