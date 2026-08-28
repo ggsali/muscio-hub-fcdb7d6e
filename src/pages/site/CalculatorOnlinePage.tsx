@@ -2264,7 +2264,15 @@ const CalculatorOnlinePage = () => {
                       <span className="font-bold">Total</span>
                       <div className="text-right">
                         <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(total)}</span>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Einmalige Anfertigung · Keine Mindestmenge · Kein Abo</p>
+                        {hasStep ? (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">STEP-Datei – wir melden uns mit einem Angebot.</p>
+                        ) : parts.some(p => p.slicerLoading) ? (
+                          <p className="text-[11px] text-amber-600 mt-0.5">~ Geschätzter Preis (Analyse läuft noch…)</p>
+                        ) : parts.every(p => p.slicerResult || p.slicerError) ? (
+                          <p className="text-[11px] text-success mt-0.5">✓ Analysierter Preis (OrcaSlicer)</p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">~ Geschätzter Preis</p>
+                        )}
                       </div>
                     </div>
                   </div>
