@@ -78,7 +78,20 @@ export const locations: LocationContent[] = [
         text: "Datei im Online-Kalkulator hochladen, Material und Qualität wählen und den Preis direkt sehen. Ohne Datei geht es über das Kontaktformular mit Fotos und Maßen. Nach Auftragsbestätigung produzieren wir im Standard innerhalb von 48 Stunden.",
       },
     ],
-    faqs: commonFaqs,
+      {
+        title: "Wirtschaftsfaktor Region",
+        text: "Der Thurgau ist ein Industrie- und Landwirtschaftskanton – entsprechend vielfältig sind die Anfragen: von Halterungen für die Obstverarbeitung über Vorrichtungen für Metallbaubetriebe bis zu Gehäusen für lokale Elektronikprodukte. Weil wir selbst hier produzieren, verstehen wir die Anforderungen der regionalen Betriebe und können kurzfristig reagieren.",
+      },
+      {
+        title: "Entfernungen im Kanton",
+        bullets: [
+          "Frauenfeld, Weinfelden, Kreuzlingen: Versand meist 1 Tag nach Produktion",
+          "Amriswil, Romanshorn, Arbon: Versand 1–2 Tage, Abholung in ca. 20 Min. erreichbar",
+          "Wil, Münchwilen, Sirnach: direkte Nachbarschaft – Abholung in wenigen Minuten",
+        ],
+      },
+    ],
+    faqs: thurgauFaqs,
     related: commonRelated,
   },
   {
