@@ -77,7 +77,6 @@ export const locations: LocationContent[] = [
         title: "So läuft eine Anfrage ab",
         text: "Datei im Online-Kalkulator hochladen, Material und Qualität wählen und den Preis direkt sehen. Ohne Datei geht es über das Kontaktformular mit Fotos und Maßen. Nach Auftragsbestätigung produzieren wir im Standard innerhalb von 48 Stunden.",
       },
-    ],
       {
         title: "Wirtschaftsfaktor Region",
         text: "Der Thurgau ist ein Industrie- und Landwirtschaftskanton – entsprechend vielfältig sind die Anfragen: von Halterungen für die Obstverarbeitung über Vorrichtungen für Metallbaubetriebe bis zu Gehäusen für lokale Elektronikprodukte. Weil wir selbst hier produzieren, verstehen wir die Anforderungen der regionalen Betriebe und können kurzfristig reagieren.",
