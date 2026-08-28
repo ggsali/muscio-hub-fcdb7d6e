@@ -1608,15 +1608,32 @@ export default function AuftragDetailPage() {
                       <span className="text-xs text-muted-foreground">Total</span>
                       <span className="text-sm font-bold">{formatCHF(part.preis_total)}</span>
                     </div>
-                    {expandedPartIdx === idx && part.id && (
-                      <div className="pt-2 border-t border-border/50">
-                        <PartFileUpload
-                          partId={part.id}
-                          orderId={typeof id === "string" && id !== "neu" ? id : undefined}
-                          customerId={customerId || undefined}
-                        />
-                      </div>
-                    )}
+                    {(() => {
+                      const stlUrl = getPartStlUrl(part.id);
+                      return (
+                        <>
+                          {stlUrl ? (
+                            <div className="rounded-xl overflow-hidden border border-border bg-[#111315] h-40">
+                              <StlViewer url={stlUrl} />
+                            </div>
+                          ) : part.id && partsWithFiles.includes(part.id) ? (
+                            <div className="rounded-xl border border-border bg-muted/30 h-24 flex flex-col items-center justify-center text-muted-foreground gap-1">
+                              <Layers className="w-8 h-8 opacity-30" />
+                              <span className="text-xs">Kein STL verfügbar (nur STEP/andere Datei)</span>
+                            </div>
+                          ) : null}
+                          {expandedPartIdx === idx && part.id && (
+                            <div className="pt-2 border-t border-border/50">
+                              <PartFileUpload
+                                partId={part.id}
+                                orderId={typeof id === "string" && id !== "neu" ? id : undefined}
+                                customerId={customerId || undefined}
+                              />
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
