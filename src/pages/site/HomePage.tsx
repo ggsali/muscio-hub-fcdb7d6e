@@ -20,6 +20,7 @@ import Seo from "@/components/site/Seo";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
 import { toast } from "sonner";
+import { company, fullAddress, localBusinessJsonLd, faqJsonLd } from "@/data/company";
 
 
 
@@ -422,7 +423,54 @@ const CTA = () => (
   </section>
 );
 
+/* ─── ENTITY / KURZANTWORT ─── */
+const EntityAnswer = () => (
+  <section className="py-16">
+    <div className="container mx-auto px-4 max-w-4xl">
+      <ScrollReveal>
+        <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
+          <h2 className="font-heading text-xl md:text-2xl font-bold mb-3">Was ist 3DMuscio?</h2>
+          <p className="text-muted-foreground leading-relaxed">{company.shortDescription}</p>
+          <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 mt-6 text-sm">
+            {[
+              ["Standort", fullAddress],
+              ["Verfahren", company.processes.join(", ")],
+              ["Materialien", company.materials.join(", ")],
+              ["Dateiformate", company.fileFormats.join(", ")],
+              ["Produktionszeit", company.productionTime],
+              ["Mindestmenge", company.minOrder],
+            ].map(([k, v]) => (
+              <div key={k} className="flex flex-col border-t border-border pt-3">
+                <dt className="text-xs uppercase tracking-widest text-primary font-semibold">{k}</dt>
+                <dd className="text-muted-foreground mt-1">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="flex flex-wrap gap-2 mt-6">
+            {[
+              { label: "Leistungen", to: "/leistungen" },
+              { label: "Materialien", to: "/materialien" },
+              { label: "Preise & Kosten", to: "/wissen/3d-druck-kosten-schweiz" },
+              { label: "3D-Druck Thurgau", to: "/standorte/thurgau" },
+            ].map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:border-primary/40 transition-colors"
+              >
+                {l.label}
+                <ArrowRight className="w-3.5 h-3.5 text-primary" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+    </div>
+  </section>
+);
+
 /* ─── SEO CONTENT ─── */
+
 const SEOContent = () => (
   <section className="py-20 bg-muted/30">
     <div className="container mx-auto px-4 max-w-4xl">
@@ -511,20 +559,25 @@ const Index = () => (
       title="3D Druck Schweiz – Sofortpreis & 48h Lieferung | 3DMuscio"
       description="Datei hochladen, Sofortpreis erhalten, in 48h geliefert. Professioneller 3D-Druck aus der Schweiz für Prototypen, Ersatzteile und Kleinserien. FDM & SLA, 0.1 mm Präzision."
       path="/"
-      jsonLd={{
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: faqs.map((f) => ({
-          "@type": "Question",
-          name: f.q,
-          acceptedAnswer: { "@type": "Answer", text: f.a },
-        })),
-      }}
+      jsonLd={[
+        localBusinessJsonLd,
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "@id": "https://3dmuscio.com/#website",
+          url: "https://3dmuscio.com",
+          name: company.name,
+          inLanguage: "de-CH",
+          publisher: { "@id": "https://3dmuscio.com/#organization" },
+        },
+        faqJsonLd(faqs),
+      ]}
     />
     <HeroBento />
     <Marquee />
     <StatsTrust />
     <HowItWorks />
+    <EntityAnswer />
     <MaterialsTeaser />
     <ReviewsSection />
     <FAQ />
