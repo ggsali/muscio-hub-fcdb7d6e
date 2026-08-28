@@ -559,20 +559,25 @@ const Index = () => (
       title="3D Druck Schweiz – Sofortpreis & 48h Lieferung | 3DMuscio"
       description="Datei hochladen, Sofortpreis erhalten, in 48h geliefert. Professioneller 3D-Druck aus der Schweiz für Prototypen, Ersatzteile und Kleinserien. FDM & SLA, 0.1 mm Präzision."
       path="/"
-      jsonLd={{
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: faqs.map((f) => ({
-          "@type": "Question",
-          name: f.q,
-          acceptedAnswer: { "@type": "Answer", text: f.a },
-        })),
-      }}
+      jsonLd={[
+        localBusinessJsonLd,
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "@id": "https://3dmuscio.com/#website",
+          url: "https://3dmuscio.com",
+          name: company.name,
+          inLanguage: "de-CH",
+          publisher: { "@id": "https://3dmuscio.com/#organization" },
+        },
+        faqJsonLd(faqs),
+      ]}
     />
     <HeroBento />
     <Marquee />
     <StatsTrust />
     <HowItWorks />
+    <EntityAnswer />
     <MaterialsTeaser />
     <ReviewsSection />
     <FAQ />
