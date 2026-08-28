@@ -72,7 +72,7 @@ const Slot = ({
         />
       </AnimatePresence>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
       {badge && (
         <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur border border-border/60 text-[10px] font-semibold uppercase tracking-widest text-foreground">
           Echte Kundenteile
@@ -86,7 +86,7 @@ const Slot = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.5, delay: delay + 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute bottom-3 left-3 right-3 text-xs md:text-sm font-heading font-bold text-foreground truncate"
+            className="absolute bottom-3 left-3 right-3 text-xs md:text-sm font-heading font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] truncate"
           >
             {shot.name}
           </motion.span>
@@ -96,14 +96,14 @@ const Slot = ({
   ) : (
     <>
       {image}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
       {badge && (
         <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur border border-border/60 text-[10px] font-semibold uppercase tracking-widest text-foreground">
           Echte Kundenteile
         </span>
       )}
       {shot.name && (
-        <span className="absolute bottom-3 left-3 right-3 text-xs md:text-sm font-heading font-bold text-foreground truncate">
+        <span className="absolute bottom-3 left-3 right-3 text-xs md:text-sm font-heading font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] truncate">
           {shot.name}
         </span>
       )}
