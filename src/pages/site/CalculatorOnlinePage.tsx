@@ -1065,11 +1065,17 @@ const CalculatorOnlinePage = () => {
     (step === 4 && (!!color || availableColors.length === 0)) ||
     step === 5;
 
-  const goNext = () => setStep((s) => Math.min(STEPS.length, s + 1));
-  const goBack = () => setStep((s) => {
-    if (s === STEPS.length) trackCalc("schritt_5_abgebrochen");
-    return Math.max(1, s - 1);
-  });
+  const goNext = useCallback(() => {
+    setStep((s) => Math.min(STEPS.length, s + 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+  const goBack = useCallback(() => {
+    setStep((s) => {
+      if (s === STEPS.length) trackCalc("schritt_5_abgebrochen");
+      return Math.max(1, s - 1);
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
