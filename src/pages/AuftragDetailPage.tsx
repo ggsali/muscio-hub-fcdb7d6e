@@ -100,6 +100,7 @@ export default function AuftragDetailPage() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
   const [partsWithFiles, setPartsWithFiles] = useState<string[]>([]);
+  const [partFiles, setPartFiles] = useState<{ part_id: string; storage_path: string; filename?: string; file_type?: string }[]>([]);
   const [activeSettings, setActiveSettings] = useState<Settings>(settings);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
