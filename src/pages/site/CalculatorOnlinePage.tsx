@@ -1477,7 +1477,7 @@ const CalculatorOnlinePage = () => {
                   )}
 
                   {/* Fortschrittsbalken oder Dropzone */}
-                  {parts.some(p => p.slicerLoading) ? (
+                  {(parts.some(p => p.slicerLoading || p.kiAnalysisLoading) || (analysisProgress > 0 && analysisProgress < 100)) ? (
                     <div className="border-2 border-dashed border-primary/40 rounded-3xl p-8 text-center bg-primary/5">
                       <div className="w-12 h-12 mx-auto mb-3">
                         <svg className="animate-spin w-12 h-12 text-primary" viewBox="0 0 24 24" fill="none">
