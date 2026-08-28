@@ -88,6 +88,11 @@ import EquipmentAdminPage from "@/pages/website-admin/EquipmentAdminPage";
 import WebsiteAnalyticsPage from "@/pages/website-admin/WebsiteAnalyticsPage";
 import EquipmentPage from "@/pages/site/EquipmentPage";
 import LeistungenPage from "@/pages/site/LeistungenPage";
+import ServiceDetailPage from "@/pages/site/ServiceDetailPage";
+import MaterialDetailPage from "@/pages/site/MaterialDetailPage";
+import VergleichPage from "@/pages/site/VergleichPage";
+import StandortPage from "@/pages/site/StandortPage";
+import KostenPage from "@/pages/site/KostenPage";
 import ErsatzteilePage from "@/pages/site/ErsatzteilePage";
 import PrototypenPage from "@/pages/site/PrototypenPage";
 import KleinserienPage from "@/pages/site/KleinserienPage";
@@ -160,6 +165,12 @@ const App = () => (
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/maschinen" element={<EquipmentPage />} />
+                <Route path="/leistungen/:slug" element={<ServiceDetailPage />} />
+                <Route path="/materialien/:slug" element={<MaterialDetailPage />} />
+                <Route path="/vergleich" element={<VergleichPage />} />
+                <Route path="/vergleich/:slug" element={<VergleichPage />} />
+                <Route path="/standorte/:slug" element={<StandortPage />} />
+                <Route path="/wissen/3d-druck-kosten-schweiz" element={<KostenPage />} />
                 <Route path="/newsletter/abmelden" element={<NewsletterAbmeldenPage />} />
               </Route>
 

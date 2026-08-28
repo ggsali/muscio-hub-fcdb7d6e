@@ -5,14 +5,25 @@ import logo from "@/assets/logo.jpeg";
 
 const footerLinks = [
   { label: "Kalkulator", path: "/kalkulator-online" },
+  { label: "Leistungen", path: "/leistungen" },
   { label: "Materialien", path: "/materialien" },
+  { label: "3D-Druck Kosten", path: "/wissen/3d-druck-kosten-schweiz" },
+  { label: "Vergleiche", path: "/vergleich" },
+  { label: "3D-Druck Thurgau", path: "/standorte/thurgau" },
   { label: "Unsere Maschinen", path: "/maschinen" },
   { label: "Über uns", path: "/ueber-uns" },
   { label: "Blog", path: "/blog" },
   { label: "Kontakt", path: "/kontakt" },
 ];
 
-const materials = ["PLA", "PETG", "ABS", "TPU", "Resin"];
+const materials = [
+  { label: "PLA", path: "/materialien/pla" },
+  { label: "PETG", path: "/materialien/petg" },
+  { label: "ABS", path: "/materialien/abs" },
+  { label: "ASA", path: "/materialien/asa" },
+  { label: "TPU", path: "/materialien/tpu" },
+  { label: "Resin", path: "/materialien/resin" },
+];
 
 const containerVariants = {
   hidden: {},
