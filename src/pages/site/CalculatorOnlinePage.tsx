@@ -656,13 +656,11 @@ const CalculatorOnlinePage = () => {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerResult: result, slicerLoading: false, slicerError: null }
         : p));
-      finishProgress();
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerLoading: false, slicerError: "Slicer nicht verfügbar – Schätzung wird verwendet" }
         : p));
-      finishProgress();
     }
   }, [parts, materials, qualityPresets, qualityKey, slice]);
 
