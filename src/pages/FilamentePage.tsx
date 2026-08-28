@@ -46,28 +46,48 @@ export default function FilamentePage() {
   const [editing, setEditing] = useState<(Partial<Filament> & { isNew?: boolean }) | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const normalize = (rows: any[]): Filament[] =>
+    rows.map((r) => ({
+      ...r,
+      farben: Array.isArray(r.farben)
+        ? (r.farben as any[])
+            .map((c) =>
+              typeof c === "string"
+                ? { name: c, hex: c.startsWith("#") ? c : "#888888" }
+                : { name: String(c?.name ?? ""), hex: String(c?.hex ?? "#888888") },
+            )
+            .filter((c) => c.name)
+        : [],
+    })) as Filament[];
+
   const load = async () => {
     const { data } = await supabase.from("filaments").select("*").order("material").order("name");
-    if (data) setFilaments(data as Filament[]);
+    if (data) setFilaments(normalize(data as any[]));
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
+  const colors: FilamentColor[] = editing?.farben ?? [];
+  const setColors = (farben: FilamentColor[]) =>
+    setEditing((e) => (e ? { ...e, farben, farbe: farben[0]?.name ?? e.farbe ?? "" } : e));
+
   const handleSave = async () => {
     if (!editing) return;
     setSaving(true);
+    const farben = (editing.farben ?? []).filter((c) => c.name.trim());
     if (editing.id) {
-      const { isNew, ...data } = editing as any;
-      await supabase.from("filaments").update(data).eq("id", editing.id);
+      const { isNew, created_at, ...rest } = editing as any;
+      await supabase.from("filaments").update({ ...rest, farben, farbe: farben[0]?.name ?? rest.farbe ?? "" } as any).eq("id", editing.id);
     } else {
-      const { isNew, id, ...data } = editing as any;
-      await supabase.from("filaments").insert([data]);
+      const { isNew, id, created_at, ...rest } = editing as any;
+      await supabase.from("filaments").insert([{ ...rest, farben, farbe: farben[0]?.name ?? rest.farbe ?? "" }] as any);
     }
     await load();
     setEditing(null);
     setSaving(false);
   };
+
 
   const handleDelete = async (id: string) => {
     await supabase.from("filaments").delete().eq("id", id);
