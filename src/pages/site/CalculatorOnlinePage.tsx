@@ -308,7 +308,7 @@ const CalculatorOnlinePage = () => {
   const isAnalysingRef = useRef(false);
 
   const startProgress = useCallback(() => {
-    if (isAnalysingRef.current) return; // Bereits aktiv, nicht neu starten
+    if (isAnalysingRef.current && progressIntervalRef.current) return; // läuft bereits
     isAnalysingRef.current = true;
     setAnalysisProgress(5);
 
@@ -339,6 +339,35 @@ const CalculatorOnlinePage = () => {
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
   }, []);
+
+  // Echter Status-Monitor: 100% erst wenn Slicer UND KI-Analyse fertig sind
+  useEffect(() => {
+    const anyLoading = parts.some((p) => p.slicerLoading || p.kiAnalysisLoading);
+    const anyStarted = parts.some((p) =>
+      p.fileName && (p.slicerResult || p.kiAnalysis || p.slicerError || p.kiAnalysisError)
+    );
+
+    if (anyLoading) {
+      if (!isAnalysingRef.current) {
+        startProgress();
+      }
+    } else if (anyStarted && !anyLoading) {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      isAnalysingRef.current = false;
+      setAnalysisProgress(100);
+    }
+  }, [parts.map((p) => `${p.slicerLoading}-${p.kiAnalysisLoading}`).join(",")]);
+
+  // Nach 2 Sekunden bei 100% ausblenden
+  useEffect(() => {
+    if (analysisProgress === 100) {
+      const t = setTimeout(() => setAnalysisProgress(0), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [analysisProgress]);
 
 
   const isMobile = useIsMobile();
@@ -582,12 +611,10 @@ const CalculatorOnlinePage = () => {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, kiAnalysisLoading: false, kiAnalysisError: "Analyse fehlgeschlagen – vereinfachte Schätzung wird verwendet" }
         : p));
-      finishProgress();
     } else {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, kiAnalysis: data as KiAnalysis, kiAnalysisLoading: false, kiAnalysisError: null }
         : p));
-      finishProgress();
     }
   }, [parts, materials, qualityPresets, qualityKey, settings.maschinenzeit_pro_h, calcParams]);
 
@@ -629,13 +656,11 @@ const CalculatorOnlinePage = () => {
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerResult: result, slicerLoading: false, slicerError: null }
         : p));
-      finishProgress();
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerLoading: false, slicerError: "Slicer nicht verfügbar – Schätzung wird verwendet" }
         : p));
-      finishProgress();
     }
   }, [parts, materials, qualityPresets, qualityKey, slice]);
 
@@ -1452,7 +1477,7 @@ const CalculatorOnlinePage = () => {
                   )}
 
                   {/* Fortschrittsbalken oder Dropzone */}
-                  {parts.some(p => p.slicerLoading) ? (
+                  {(parts.some(p => p.slicerLoading || p.kiAnalysisLoading) || (analysisProgress > 0 && analysisProgress < 100)) ? (
                     <div className="border-2 border-dashed border-primary/40 rounded-3xl p-8 text-center bg-primary/5">
                       <div className="w-12 h-12 mx-auto mb-3">
                         <svg className="animate-spin w-12 h-12 text-primary" viewBox="0 0 24 24" fill="none">
