@@ -373,11 +373,13 @@ export default function AuftragDetailPage() {
   useEffect(() => {
     if (!isNew && id) {
       supabase.from("part_files" as any)
-        .select("part_id")
+        .select("part_id, storage_path, filename, file_type")
         .eq("order_id", id)
         .then(({ data }) => {
           if (data && data.length > 0) {
-            const partIds = [...new Set(data.map((f: any) => f.part_id))] as string[];
+            const files = data as { part_id: string; storage_path: string; filename?: string; file_type?: string }[];
+            setPartFiles(files);
+            const partIds = [...new Set(files.map((f) => f.part_id))] as string[];
             setPartsWithFiles(partIds);
             const partIdx = parts.findIndex(p => p.id && partIds.includes(p.id));
             if (partIdx >= 0) setExpandedPartIdx(prev => prev ?? partIdx);
@@ -385,6 +387,16 @@ export default function AuftragDetailPage() {
         });
     }
   }, [parts.length, id, isNew]);
+
+  const getPartStlUrl = (partId: string | undefined): string | null => {
+    if (!partId) return null;
+    const stlFile = partFiles.find(f =>
+      f.part_id === partId &&
+      (f.filename?.toLowerCase().endsWith('.stl') || f.file_type === 'stl')
+    );
+    if (!stlFile) return null;
+    return supabase.storage.from('part-files').getPublicUrl(stlFile.storage_path).data.publicUrl;
+  };
 
   const addPart = async () => {
     const newPart = emptyPart();
