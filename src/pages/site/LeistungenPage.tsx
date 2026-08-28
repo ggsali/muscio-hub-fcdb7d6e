@@ -125,6 +125,39 @@ export default function LeistungenPage() {
         </div>
 
         <ScrollReveal>
+          <section className="mt-16">
+            <h2 className="font-heading text-2xl font-bold mb-2">Detailseiten und Entscheidungshilfen</h2>
+            <p className="text-muted-foreground mb-6 max-w-2xl">
+              Ausführliche Informationen zu Verfahren, Materialien und Kosten – jeweils mit direkter
+              Antwort, Vergleichstabelle und häufigen Fragen.
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                { label: "FDM 3D-Druck", to: "/leistungen/fdm-3d-druck" },
+                { label: "SLA / Resin 3D-Druck", to: "/leistungen/sla-3d-druck" },
+                { label: "Prototypen", to: "/leistungen/3d-druck-prototypen" },
+                { label: "Ersatzteile", to: "/leistungen/3d-druck-ersatzteile" },
+                { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien" },
+                { label: "3D-Druck Kosten Schweiz", to: "/wissen/3d-druck-kosten-schweiz" },
+                { label: "FDM vs SLA", to: "/vergleich/fdm-vs-sla" },
+                { label: "3D-Druck vs Spritzguss", to: "/vergleich/3d-druck-vs-spritzguss" },
+                { label: "Alle Vergleiche", to: "/vergleich" },
+              ].map((l) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className="group flex items-center justify-between gap-2 bg-card border border-border rounded-xl px-4 py-3.5 text-sm font-semibold hover:border-primary/40 transition-colors"
+                >
+                  {l.label}
+                  <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        </ScrollReveal>
+
+
+        <ScrollReveal>
           <section className="mt-16 bg-card border border-border rounded-2xl p-8 text-center">
             <h2 className="font-heading text-2xl font-bold mb-2">Projekt in Arbeit?</h2>
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
