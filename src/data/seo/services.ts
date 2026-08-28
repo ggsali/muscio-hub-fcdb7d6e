@@ -170,7 +170,7 @@ export const services: ServiceContent[] = [
       { q: "Wie lange dauert ein Prototyp?", a: "Standard 48 Stunden Produktionszeit ab Auftragsbestätigung, danach Versand (1–2 Tage innerhalb der Schweiz) oder Abholung in Eschlikon TG." },
     ],
     related: [
-      { label: "Prototypen-Service", to: "/prototypen", text: "Überblick, Ablauf und Beispiele." },
+      { label: "Prototypen-Service", to: "/leistungen/3d-druck-prototypen", text: "Überblick, Ablauf und Beispiele." },
       { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien", text: "Vom Prototyp zur Serie." },
       { label: "Materialien", to: "/materialien", text: "Welches Material für welchen Test?" },
     ],
@@ -221,7 +221,7 @@ export const services: ServiceContent[] = [
       { q: "Wie viele Teile kann ich bestellen?", a: "Ab 1 Stück, ohne Mindestbestellmenge. Bei mehreren Stück sinkt der Stückpreis, weil die Rüstkosten nur einmal anfallen." },
     ],
     related: [
-      { label: "Ersatzteil-Service", to: "/ersatzteile", text: "Ablauf und Beispiele." },
+      { label: "Ersatzteil-Service", to: "/leistungen/3d-druck-ersatzteile", text: "Ablauf und Beispiele." },
       { label: "Materialien", to: "/materialien", text: "Materialwahl nach Belastung." },
       { label: "3D-Druck Kosten", to: "/wissen/3d-druck-kosten-schweiz", text: "Was ein Ersatzteil kostet." },
     ],
@@ -265,7 +265,7 @@ export const services: ServiceContent[] = [
       { q: "Sind grössere Serien möglich?", a: "Für grössere Serien erstellen wir gern ein individuelles Angebot – melde dich über das Kontaktformular mit Datei, Stückzahl und Zieltermin." },
     ],
     related: [
-      { label: "Kleinserien-Service", to: "/kleinserien", text: "Überblick und Ablauf." },
+      { label: "Kleinserien-Service", to: "/leistungen/3d-druck-kleinserien", text: "Überblick und Ablauf." },
       { label: "3D-Druck vs Spritzguss", to: "/vergleich/3d-druck-vs-spritzguss", text: "Ab wann sich eine Form lohnt." },
       { label: "Prototypen", to: "/leistungen/3d-druck-prototypen", text: "Der Schritt vor der Serie." },
     ],
