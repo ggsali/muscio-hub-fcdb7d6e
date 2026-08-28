@@ -936,7 +936,16 @@ const CalculatorOnlinePage = () => {
     applyAll({ infill });
     startProgress();
     runKiAnalysisAll();
-    runSlicerAll();
+
+    const quality = qualityPresets.find((q) => q.key === key);
+    // Nur neu slicen wenn sich Qualität vom QuickSlice unterscheidet
+    if (quality && quality.layerHeight !== 0.3) {
+      parts.forEach((p) => {
+        if (p.stlArrayBuffer && !isStepFile(p.fileName)) {
+          runSlicer(p.id, false); // genauer Slice mit echter Qualität
+        }
+      });
+    }
   };
 
   const MIN_PRICE = calcParams.min_price;
