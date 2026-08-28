@@ -383,6 +383,16 @@ const CalculatorOnlinePage = () => {
     }
   }, [analysisProgress]);
 
+  // Preis-Badge kurz grün aufleuchten lassen, wenn Slicer-Ergebnis fertig wird
+  useEffect(() => {
+    const anyJustFinished = parts.some((p) => p.slicerResult && !p.isQuickSlice && !p.slicerLoading);
+    if (anyJustFinished) {
+      setPriceFlash(true);
+      const t = setTimeout(() => setPriceFlash(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [parts.map((p) => `${p.slicerResult?.filamentGrams ?? 0}-${p.isQuickSlice}-${p.slicerLoading}`).join(",")]);
+
 
   const isMobile = useIsMobile();
   const { slice } = useSlicerWorker();
