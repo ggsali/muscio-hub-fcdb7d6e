@@ -101,9 +101,13 @@ export default function ProjektDetailPage() {
                 <div className="relative space-y-3">
                   <div className="relative rounded-2xl overflow-hidden border border-border bg-card aspect-square flex items-center justify-center">
                     {view3d && project.stl_url ? (
+                      stlSignedUrl ? (
                       <Suspense fallback={<div className="text-muted-foreground text-sm">Lädt 3D-Modell…</div>}>
-                        <StlViewer url={project.stl_url} />
+                        <StlViewer url={stlSignedUrl} />
                       </Suspense>
+                      ) : (
+                        <div className="text-muted-foreground text-sm">Lädt 3D-Modell…</div>
+                      )
                     ) : current ? (
                       <img src={current} alt={project.name} loading="lazy" className="w-full h-full object-cover transition-opacity duration-300" />
                     ) : (
