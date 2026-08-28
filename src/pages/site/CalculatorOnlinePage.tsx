@@ -126,6 +126,17 @@ const calcWeight = (volumeCm3: number, material: Material, infill: number): numb
   return Math.max(1, Math.round(baseWeight * safetyFactor * 10) / 10)
 }
 
+const calcQuickPrice = (volumeCm3: number, mat: Material, quality: QualityPreset, maschinenzeitProH = 3, minPrice = 5): number => {
+  const density = mat.density || 1.24;
+  const shellFactor = 0.3;
+  const fillFactor = shellFactor + (1 - shellFactor) * (quality.infill / 100);
+  const weightG = volumeCm3 * density * fillFactor;
+  const materialCost = weightG * mat.pricePerGram;
+  const druckzeitMin = weightG * 2.5 * quality.speedFactor;
+  const machineCost = (druckzeitMin / 60) * maschinenzeitProH;
+  return Math.max(materialCost + machineCost, minPrice);
+};
+
 
 async function calcStlVolumeCm3(file: File): Promise<number> {
   const buffer = await file.arrayBuffer();
@@ -292,6 +303,7 @@ const CalculatorOnlinePage = () => {
   const [quickMode, setQuickMode] = useState(false);
   // Wert-Kommunikation & Social Proof
   const [calcReviews, setCalcReviews] = useState<Array<{ id: string; customer_name: string; kommentar: string | null; rating: number }>>([]);
+  const [priceFlash, setPriceFlash] = useState(false);
   useEffect(() => {
     supabase.from("public_reviews")
       .select("id, customer_name, kommentar, rating")
@@ -370,6 +382,16 @@ const CalculatorOnlinePage = () => {
       return () => clearTimeout(t);
     }
   }, [analysisProgress]);
+
+  // Preis-Badge kurz grün aufleuchten lassen, wenn Slicer-Ergebnis fertig wird
+  useEffect(() => {
+    const anyJustFinished = parts.some((p) => p.slicerResult && !p.isQuickSlice && !p.slicerLoading);
+    if (anyJustFinished) {
+      setPriceFlash(true);
+      const t = setTimeout(() => setPriceFlash(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [parts.map((p) => `${p.slicerResult?.filamentGrams ?? 0}-${p.isQuickSlice}-${p.slicerLoading}`).join(",")]);
 
 
   const isMobile = useIsMobile();
@@ -1253,10 +1275,31 @@ const CalculatorOnlinePage = () => {
   };
 
   const hasSlicerResult = parts.some((p) => p.slicerResult);
-  const priceBadge = parts.length === 0 || hasStep ? null : (analysisProgress === 100 && hasSlicerResult ? totalMin : (!materialId ? null : total));
-  const anyQuickSlice = parts.some((p) => p.isQuickSlice && !p.slicerLoading);
+  const allSlicerFinished = parts.length > 0 && parts.every((p) => !p.slicerLoading);
+  const anySlicerLoading = parts.some((p) => p.slicerLoading);
+  const anySlicerError = parts.some((p) => p.slicerError);
 
-  const canGoNext = step === 1 ? parts.length > 0
+  // Sofortpreis aus geometrischer Schätzung (bevor Slicer fertig ist)
+  const quickTotal = useMemo(() => {
+    if (parts.length === 0 || hasStep) return 0;
+    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+    let sum = 0;
+    parts.forEach((p) => {
+      const mat = materials.find((m) => m.id === (p.materialId || materials[0]?.id));
+      if (!mat || !p.hasVolume || p.volumeCm3 <= 0) return;
+      const unit = calcQuickPrice(p.volumeCm3, mat, quality, settings.maschinenzeit_pro_h || 3, calcParams.min_price);
+      sum += unit * p.quantity;
+    });
+    const setup = parts.length > 0 ? (calcParams.fix_cost || 20) : 0;
+    const sub = sum + setup;
+    const ship = sub === 0 ? 0 : sub >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
+    return Math.max(sub + ship, calcParams.min_price || 5);
+  }, [parts, materials, qualityKey, qualityPresets, settings.maschinenzeit_pro_h, calcParams, hasStep]);
+
+  const priceBadge = parts.length === 0 || hasStep ? null : quickTotal;
+
+  const canGoNext = step === 1
+    ? parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName))
     : step === 2 ? true
     : step === 3 ? !!materialId
     : step === 4 ? !!color
@@ -1318,22 +1361,29 @@ const CalculatorOnlinePage = () => {
               </Button>
               <div className="flex flex-col items-end gap-1.5">
                 <div
-                  className={`px-5 py-2.5 rounded-2xl font-bold text-lg sm:text-xl tabular-nums shadow-sm flex items-center gap-2 ${
+                  className={`px-5 py-2.5 rounded-2xl font-bold text-lg sm:text-xl tabular-nums shadow-sm flex items-center gap-2 transition-transform duration-300 ${
                     kiLoading || priceBadge !== null ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}
+                  } ${priceFlash ? "scale-105 !bg-green-500 !text-white" : ""}`}
                 >
                   {kiLoading ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Analysiert…</>
                   ) : hasStep
                     ? "Preis nach Prüfung"
                     : priceBadge !== null
-                      ? (hasKiAnalysis ? `ab ${CHF(totalMin)}` : `ab ${CHF(priceBadge)}`)
+                      ? (allSlicerFinished && hasSlicerResult ? `ab ${CHF(totalMin)}` : `ca. ${CHF(quickTotal)}`)
                       : "CHF –.–"}
-                  {anyQuickSlice && (
-                    <span className="ml-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
-                      ~ Schnellschätzung
-                    </span>
+                  {anySlicerLoading && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   )}
+                  {allSlicerFinished && hasSlicerResult && !anySlicerError ? (
+                    <span className="ml-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
+                      ✓ Analysiert
+                    </span>
+                  ) : priceBadge !== null && !hasStep ? (
+                    <span className="ml-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
+                      ~ Schätzung
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground flex-wrap justify-end">
                   <span>🇨🇭 Swiss Made</span>
@@ -1472,100 +1522,95 @@ const CalculatorOnlinePage = () => {
                     </p>
                   </div>
 
-                  {/* Fertige Parts */}
-                  {parts.filter(p => !p.slicerLoading && p.hasVolume).length > 0 && (
+                  {/* Hochgeladene Parts */}
+                  {parts.filter(p => p.hasVolume || isStepFile(p.fileName)).length > 0 && (
                     <div className="space-y-3">
-                      {parts.filter(p => !p.slicerLoading && p.hasVolume).map((p) => (
-                        <div key={p.id} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <FileText className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm truncate">{p.fileName}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {p.slicerResult?.filamentGrams?.toFixed(0)}g · {(p.slicerResult?.printTimeMinutes ?? 0 / 60).toFixed(1)}h · {p.slicerResult?.hasSupport ? " ⚠️ Support" : " ✅ Kein Support"}
-                            </p>
-                          </div>
-                          {p.kiAnalysis ? (
-                            <div className="text-right flex-shrink-0">
-                              <p className="font-bold text-sm text-primary">
-                                ab CHF {p.kiAnalysis.gesamtpreis_min}
+                      {parts.filter(p => p.hasVolume || isStepFile(p.fileName)).map((p) => (
+                        <div key={p.id} className="bg-card border border-border rounded-2xl p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm truncate">{p.fileName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {isStepFile(p.fileName)
+                                  ? "STEP-Datei – manuelle Prüfung"
+                                  : p.slicerResult
+                                    ? `${p.slicerResult.filamentGrams.toFixed(0)}g · ${(p.slicerResult.printTimeMinutes / 60).toFixed(1)}h · ${p.slicerResult.hasSupport ? "⚠️ Support" : "✅ Kein Support"}`
+                                    : `${p.volumeCm3.toFixed(1)} cm³ · ca. ${p.estimatedWeight.toFixed(1)}g`}
                               </p>
                             </div>
-                          ) : (
-                            <div className="w-16 h-4 bg-muted animate-pulse rounded" />
+                            {p.slicerLoading ? (
+                              <div className="text-right flex-shrink-0">
+                                <Loader2 className="w-4 h-4 animate-spin text-primary mx-auto" />
+                              </div>
+                            ) : p.slicerResult ? (
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-bold text-sm text-primary">
+                                  ab {CHF(calcPart(p).unit)}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-bold text-sm text-primary">
+                                  ca. {CHF(calcQuickPrice(p.volumeCm3, materials.find((m) => m.id === (p.materialId || materials[0]?.id)) || materials[0], qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1], settings.maschinenzeit_pro_h || 3, calcParams.min_price))}
+                                </p>
+                              </div>
+                            )}
+                            <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive ml-1" aria-label="Datei entfernen">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {p.slicerLoading && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                                <div className="bg-primary/50 h-1 rounded-full animate-pulse w-full" />
+                              </div>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Analysiert...</span>
+                            </div>
                           )}
-                          <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive ml-1" aria-label="Datei entfernen">
-                            <X className="w-4 h-4" />
-                          </button>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Fortschrittsbalken oder Dropzone */}
-                  {(parts.some(p => p.slicerLoading || p.kiAnalysisLoading) || (analysisProgress > 0 && analysisProgress < 100)) ? (
-                    <div className="border-2 border-dashed border-primary/40 rounded-3xl p-8 text-center bg-primary/5">
-                      <div className="w-12 h-12 mx-auto mb-3">
-                        <svg className="animate-spin w-12 h-12 text-primary" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5"/>
-                          <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                      </div>
-                      <p className="font-semibold mb-1">Bauteil wird analysiert...</p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {parts.find(p => p.slicerLoading)?.fileName}
-                      </p>
-                      <div className="w-full bg-muted rounded-full h-2.5 mb-1.5 overflow-hidden">
-                        <div
-                          className="bg-primary h-2.5 rounded-full"
-                          style={{
-                            width: `${analysisProgress}%`,
-                            transition: 'width 0.6s ease'
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">{Math.round(analysisProgress)}%</p>
+                  {/* Dropzone */}
+                  {parts.length === 0 ? (
+                    <div
+                      onDrop={handleDrop}
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
+                        dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
+                      }`}
+                    >
+                      <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
+                      <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
+                      <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
+                      <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
+                      <label htmlFor="file-input">
+                        <Button asChild className="gap-2 cursor-pointer">
+                          <span><Upload className="w-4 h-4" /> Dateien auswählen</span>
+                        </Button>
+                      </label>
                     </div>
                   ) : (
-                    <>
-                      {parts.length === 0 ? (
-                        <div
-                          onDrop={handleDrop}
-                          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                          onDragLeave={() => setDragOver(false)}
-                          className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
-                            dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
-                          }`}
-                        >
-                          <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
-                          <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
-                          <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
-                          <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
-                          <label htmlFor="file-input">
-                            <Button asChild className="gap-2 cursor-pointer">
-                              <span><Upload className="w-4 h-4" /> Dateien auswählen</span>
-                            </Button>
-                          </label>
-                        </div>
-                      ) : (
-                        <div
-                          onDrop={handleDrop}
-                          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                          onDragLeave={() => setDragOver(false)}
-                          className={`border-2 border-dashed rounded-2xl p-4 text-center transition-colors cursor-pointer ${
-                            dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
-                          }`}
-                          onClick={() => document.getElementById("step1-add-file")?.click()}
-                        >
-                          <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
-                          <p className="text-sm text-muted-foreground">
-                            <span className="text-primary font-medium">+ Weitere Datei hochladen</span>
-                            <span className="hidden sm:inline"> (STL, STEP, 3MF, OBJ)</span>
-                          </p>
-                        </div>
-                      )}
-                    </>
+                    <div
+                      onDrop={handleDrop}
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      className={`border-2 border-dashed rounded-2xl p-4 text-center transition-colors cursor-pointer ${
+                        dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                      }`}
+                      onClick={() => document.getElementById("step1-add-file")?.click()}
+                    >
+                      <input id="step1-add-file" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
+                      <p className="text-sm text-muted-foreground">
+                        <span className="text-primary font-medium">+ Weitere Datei hochladen</span>
+                        <span className="hidden sm:inline"> (STL, STEP, 3MF, OBJ)</span>
+                      </p>
+                    </div>
                   )}
 
                   {hasStep && (
@@ -2219,7 +2264,15 @@ const CalculatorOnlinePage = () => {
                       <span className="font-bold">Total</span>
                       <div className="text-right">
                         <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(total)}</span>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Einmalige Anfertigung · Keine Mindestmenge · Kein Abo</p>
+                        {hasStep ? (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">STEP-Datei – wir melden uns mit einem Angebot.</p>
+                        ) : parts.some(p => p.slicerLoading) ? (
+                          <p className="text-[11px] text-amber-600 mt-0.5">~ Geschätzter Preis (Analyse läuft noch…)</p>
+                        ) : parts.every(p => p.slicerResult || p.slicerError) ? (
+                          <p className="text-[11px] text-success mt-0.5">✓ Analysierter Preis (OrcaSlicer)</p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">~ Geschätzter Preis</p>
+                        )}
                       </div>
                     </div>
                   </div>
