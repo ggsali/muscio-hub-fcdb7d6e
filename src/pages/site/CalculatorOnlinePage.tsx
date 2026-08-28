@@ -1275,10 +1275,31 @@ const CalculatorOnlinePage = () => {
   };
 
   const hasSlicerResult = parts.some((p) => p.slicerResult);
-  const priceBadge = parts.length === 0 || hasStep ? null : (analysisProgress === 100 && hasSlicerResult ? totalMin : (!materialId ? null : total));
-  const anyQuickSlice = parts.some((p) => p.isQuickSlice && !p.slicerLoading);
+  const allSlicerFinished = parts.length > 0 && parts.every((p) => !p.slicerLoading);
+  const anySlicerLoading = parts.some((p) => p.slicerLoading);
+  const anySlicerError = parts.some((p) => p.slicerError);
 
-  const canGoNext = step === 1 ? parts.length > 0
+  // Sofortpreis aus geometrischer Schätzung (bevor Slicer fertig ist)
+  const quickTotal = useMemo(() => {
+    if (parts.length === 0 || hasStep) return 0;
+    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+    let sum = 0;
+    parts.forEach((p) => {
+      const mat = materials.find((m) => m.id === (p.materialId || materials[0]?.id));
+      if (!mat || !p.hasVolume || p.volumeCm3 <= 0) return;
+      const unit = calcQuickPrice(p.volumeCm3, mat, quality, settings.maschinenzeit_pro_h || 3, calcParams.min_price);
+      sum += unit * p.quantity;
+    });
+    const setup = parts.length > 0 ? (calcParams.fix_cost || 20) : 0;
+    const sub = sum + setup;
+    const ship = sub === 0 ? 0 : sub >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
+    return Math.max(sub + ship, calcParams.min_price || 5);
+  }, [parts, materials, qualityKey, qualityPresets, settings.maschinenzeit_pro_h, calcParams, hasStep]);
+
+  const priceBadge = parts.length === 0 || hasStep ? null : quickTotal;
+
+  const canGoNext = step === 1
+    ? parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName))
     : step === 2 ? true
     : step === 3 ? !!materialId
     : step === 4 ? !!color
