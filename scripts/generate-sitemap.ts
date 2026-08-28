@@ -32,6 +32,14 @@ const comparisonSlugs = [
   "3d-druck-vs-spritzguss",
 ];
 const locationSlugs = ["thurgau", "ostschweiz", "zuerich", "st-gallen"];
+const lokaleSlugs = [
+  "3d-druck-zuerich",
+  "3d-druck-winterthur",
+  "3d-druck-st-gallen",
+  "3d-druck-ostschweiz",
+  "3d-druck-bern",
+];
+
 
 const staticEntries: SitemapEntry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
