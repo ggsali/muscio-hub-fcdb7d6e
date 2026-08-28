@@ -680,13 +680,13 @@ const CalculatorOnlinePage = () => {
   useEffect(() => { slicerFnRef.current = runSlicerNow; }, [runSlicerNow]);
   const slicerTimers = useRef<Record<string, number>>({});
 
-  const runSlicer = useCallback((partId: string) => {
+  const runSlicer = useCallback((partId: string, quickSlice = false) => {
     window.clearTimeout(slicerTimers.current[partId]);
-    slicerTimers.current[partId] = window.setTimeout(() => { void slicerFnRef.current(partId); }, 300);
+    slicerTimers.current[partId] = window.setTimeout(() => { void slicerFnRef.current(partId, quickSlice); }, 300);
   }, []);
 
-  const runSlicerAll = useCallback(() => {
-    parts.forEach((p) => { if (p.stlArrayBuffer) runSlicer(p.id); });
+  const runSlicerAll = useCallback((quickSlice = false) => {
+    parts.forEach((p) => { if (p.stlArrayBuffer) runSlicer(p.id, quickSlice); });
   }, [parts, runSlicer]);
 
 
