@@ -733,7 +733,7 @@ const CalculatorOnlinePage = () => {
       try {
         const arrayBuffer = await file.arrayBuffer();
         setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
-        runSlicer(id);
+        runSlicer(id, true); // QuickSlice für schnellen Sofortpreis
       } catch (e) {
         console.warn("STL konnte nicht gelesen werden", e);
         setParts((p) => p.map((x) => (x.id === id ? { ...x, slicerLoading: false } : x)));
