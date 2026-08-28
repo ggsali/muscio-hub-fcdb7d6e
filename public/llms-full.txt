@@ -83,6 +83,27 @@ Deutsch (Hauptsprache), Englisch auf Anfrage
 - Startseite: https://3dmuscio.com
 - Kalkulator: https://3dmuscio.com/kalkulator-online
 - Materialien: https://3dmuscio.com/materialien
+- Leistungen: https://3dmuscio.com/leistungen
+- FDM 3D-Druck: https://3dmuscio.com/leistungen/fdm-3d-druck
+- SLA / Resin 3D-Druck: https://3dmuscio.com/leistungen/sla-3d-druck
+- Prototypen: https://3dmuscio.com/leistungen/3d-druck-prototypen
+- Ersatzteile: https://3dmuscio.com/leistungen/3d-druck-ersatzteile
+- Kleinserien: https://3dmuscio.com/leistungen/3d-druck-kleinserien
+- 3D-Druck Kosten Schweiz: https://3dmuscio.com/wissen/3d-druck-kosten-schweiz
+- Vergleiche: https://3dmuscio.com/vergleich
+- FDM vs SLA: https://3dmuscio.com/vergleich/fdm-vs-sla
+- 3D-Druck vs Spritzguss: https://3dmuscio.com/vergleich/3d-druck-vs-spritzguss
+- Material PLA: https://3dmuscio.com/materialien/pla
+- Material PETG: https://3dmuscio.com/materialien/petg
+- Material ABS: https://3dmuscio.com/materialien/abs
+- Material ASA: https://3dmuscio.com/materialien/asa
+- Material TPU: https://3dmuscio.com/materialien/tpu
+- Material Nylon: https://3dmuscio.com/materialien/nylon
+- Material Resin: https://3dmuscio.com/materialien/resin
+- 3D-Druck Thurgau: https://3dmuscio.com/standorte/thurgau
+- 3D-Druck Ostschweiz: https://3dmuscio.com/standorte/ostschweiz
+- 3D-Druck Zürich: https://3dmuscio.com/standorte/zuerich
+- 3D-Druck St. Gallen: https://3dmuscio.com/standorte/st-gallen
 - Maschinen: https://3dmuscio.com/maschinen
 - Projekte: https://3dmuscio.com/projekte
 - Shop: https://3dmuscio.com/shop
