@@ -473,19 +473,36 @@ const CalculatorOnlinePage = () => {
 
     setMaterialsError(null);
     setMaterials(
-      validFilaments.map((f: any) => ({
-        id: f.id,
-        name: f.name,
-        materialType: f.material,
-        pricePerGram: f.verkaufspreis_pro_g
-          ? Number(f.verkaufspreis_pro_g)
-          : (Number(f.preis_pro_kg) / 1000) * 2.5,
-        density: Number(f.dichte_g_cm3) || 1.24,
-        farbe: f.farbe,
-        hersteller: f.hersteller,
-        farben: [f.farbe].filter(Boolean) as string[],
-      })),
+      validFilaments.map((f: any) => {
+        const raw = Array.isArray(f.farben) ? f.farben : [];
+        const list = raw
+          .map((c: any) =>
+            typeof c === "string"
+              ? { name: c, hex: c.startsWith("#") ? c : "" }
+              : { name: String(c?.name ?? ""), hex: String(c?.hex ?? "") },
+          )
+          .filter((c: any) => c.name);
+        if (list.length === 0 && f.farbe) {
+          list.push({ name: f.farbe, hex: String(f.farbe).startsWith("#") ? f.farbe : "" });
+        }
+        const farbHex: Record<string, string> = {};
+        list.forEach((c: any) => { if (c.hex) farbHex[c.name] = c.hex; });
+        return {
+          id: f.id,
+          name: f.name,
+          materialType: f.material,
+          pricePerGram: f.verkaufspreis_pro_g
+            ? Number(f.verkaufspreis_pro_g)
+            : (Number(f.preis_pro_kg) / 1000) * 2.5,
+          density: Number(f.dichte_g_cm3) || 1.24,
+          farbe: list[0]?.hex || f.farbe,
+          hersteller: f.hersteller,
+          farben: list.map((c: any) => c.name),
+          farbHex,
+        };
+      }),
     );
+
 
     setMaterialsLoading(false);
   }, []);
