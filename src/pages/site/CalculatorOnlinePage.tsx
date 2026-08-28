@@ -102,6 +102,8 @@ interface Part {
   kiAnalysis: KiAnalysis | null;
   kiAnalysisLoading: boolean;
   kiAnalysisError: string | null;
+  isQuickSlice?: boolean;
+  quickSliceResult?: SlicerResult;
 
 }
 
