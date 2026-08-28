@@ -95,9 +95,6 @@ import StandortPage from "@/pages/site/StandortPage";
 import LokalPage from "@/pages/site/LokalPage";
 
 import KostenPage from "@/pages/site/KostenPage";
-import ErsatzteilePage from "@/pages/site/ErsatzteilePage";
-import PrototypenPage from "@/pages/site/PrototypenPage";
-import KleinserienPage from "@/pages/site/KleinserienPage";
 
 const queryClient = new QueryClient();
 
