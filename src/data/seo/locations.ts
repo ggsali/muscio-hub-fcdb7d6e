@@ -18,6 +18,31 @@ const commonFaqs: AnswerFaq[] = [
   { q: "Welche Dateiformate nehmt ihr an?", a: "STL, STEP, 3MF und OBJ – direkt im Online-Kalkulator hochladen." },
 ];
 
+const thurgauFaqs: AnswerFaq[] = [
+  { q: "Wo genau in Eschlikon kann ich abholen?", a: "Unsere Werkstatt ist an der Gartensiedlung 13 in 8360 Eschlikon TG. Abholung stimmen wir nach Produktion kurz per E-Mail oder Telefon ab." },
+  { q: "Lohnt sich Abholung auch für kleine Teile?", a: "Ja – du sparst Versandkosten und Wartezeit. Gerade bei Eilaufträgen ist die Abholung in Eschlikon der schnellste Weg zum fertigen Teil." },
+  { q: "Druckt ihr auch für Firmen im Thurgau?", a: "Ja, wir beliefern KMU, Landwirtschaft, Handwerk und Startups in der ganzen Region – von Einzelteilen bis zu Kleinserien mit Rechnung." },
+  ...commonFaqs,
+];
+
+const ostschweizFaqs: AnswerFaq[] = [
+  { q: "Liefert ihr in alle Ostschweizer Kantone?", a: "Ja – Thurgau, St. Gallen, Appenzell Innerrhoden und Ausserrhoden, Glarus und das Zürcher Oberland beliefern wir per Post oder DHL in 1–2 Tagen nach Produktion." },
+  { q: "Gibt es einen Express-Versand?", a: "Bei dringenden Aufträgen klären wir individuell, ob eine schnellere Produktion oder ein Express-Versand möglich ist – schreibe uns dazu einfach bei der Anfrage." },
+  ...commonFaqs,
+];
+
+const zuerichFaqs: AnswerFaq[] = [
+  { q: "Wie schnell ist mein Teil in Zürich?", a: "Nach Auftragsbestätigung produzieren wir im Standard innert 48 Stunden; der Versand nach Zürich dauert in der Regel 1–2 Tage. Insgesamt also meist 3–4 Tage von Upload bis Zustellung." },
+  { q: "Muss ich für ein Angebot vorbeikommen?", a: "Nein – der ganze Prozess läuft online: Datei hochladen, Preis sehen, bestellen. Bei Rückfragen melden wir uns telefonisch oder per E-Mail." },
+  ...commonFaqs,
+];
+
+const stGallenFaqs: AnswerFaq[] = [
+  { q: "Wie weit ist Eschlikon von St. Gallen?", a: "Rund 40 Kilometer – Abholung ist nach Absprache möglich, der Versand in die Region St. Gallen dauert nach der Produktion üblicherweise nur 1 Tag." },
+  { q: "Könnt ihr kurzfristige Ersatzteile liefern?", a: "Häufig ja. Wenn ein Teil dringend ist, markiere die Anfrage entsprechend – wir priorisieren nach Möglichkeit." },
+  ...commonFaqs,
+];
+
 const commonRelated: RelatedLink[] = [
   { label: "Preis online berechnen", to: "/kalkulator-online", text: "Datei hochladen und Preis sehen." },
   { label: "Leistungen", to: "/leistungen", text: "FDM, SLA, Prototypen, Ersatzteile, Kleinserien." },
@@ -52,8 +77,20 @@ export const locations: LocationContent[] = [
         title: "So läuft eine Anfrage ab",
         text: "Datei im Online-Kalkulator hochladen, Material und Qualität wählen und den Preis direkt sehen. Ohne Datei geht es über das Kontaktformular mit Fotos und Maßen. Nach Auftragsbestätigung produzieren wir im Standard innerhalb von 48 Stunden.",
       },
+      {
+        title: "Wirtschaftsfaktor Region",
+        text: "Der Thurgau ist ein Industrie- und Landwirtschaftskanton – entsprechend vielfältig sind die Anfragen: von Halterungen für die Obstverarbeitung über Vorrichtungen für Metallbaubetriebe bis zu Gehäusen für lokale Elektronikprodukte. Weil wir selbst hier produzieren, verstehen wir die Anforderungen der regionalen Betriebe und können kurzfristig reagieren.",
+      },
+      {
+        title: "Entfernungen im Kanton",
+        bullets: [
+          "Frauenfeld, Weinfelden, Kreuzlingen: Versand meist 1 Tag nach Produktion",
+          "Amriswil, Romanshorn, Arbon: Versand 1–2 Tage, Abholung in ca. 20 Min. erreichbar",
+          "Wil, Münchwilen, Sirnach: direkte Nachbarschaft – Abholung in wenigen Minuten",
+        ],
+      },
     ],
-    faqs: commonFaqs,
+    faqs: thurgauFaqs,
     related: commonRelated,
   },
   {
@@ -83,8 +120,12 @@ export const locations: LocationContent[] = [
         title: "Fertigung in der Schweiz",
         text: "Alle Teile entstehen in unserer Werkstatt in Eschlikon TG – kein Import, keine Zollabwicklung, kein Warten auf Sendungen aus dem Ausland. Bei Rückfragen sprichst du direkt mit der Person, die dein Teil druckt.",
       },
+      {
+        title: "Warum die Ostschweiz für den 3D-Druck ideal ist",
+        text: "Die Region hat eine starke industrielle Basis – von Textilmaschinen über Lebensmitteltechnik bis zum Apparatebau. Genau diese Betriebe brauchen schnell verfügbare Ersatzteile, Vorrichtungen und Prototypen in kleinen Stückzahlen. Statt wochenlang auf Zulieferer zu warten, liefern wir nach Auftragsbestätigung innert weniger Tage.",
+      },
     ],
-    faqs: commonFaqs,
+    faqs: ostschweizFaqs,
     related: commonRelated,
   },
   {
@@ -114,8 +155,12 @@ export const locations: LocationContent[] = [
         title: "Warum Schweizer Fertigung",
         text: "Kurze Lieferwege, Ansprechperson in derselben Zeitzone und Sprache, keine Zollformalitäten. Bei Reklamationen oder Änderungswünschen entfällt der Umweg über einen Auslandsanbieter.",
       },
+      {
+        title: "Für Startups und Industrie in Zürich",
+        text: "Zürich ist eine der dichtesten Startup- und Industrieregionen Europas. Wir unterstützen Entwicklungsteams mit schnellen Iterationen: heute hochgeladen, in wenigen Tagen das physische Teil in der Hand. Auch für etablierte Firmen drucken wir Vorrichtungen, Halterungen und Ersatzteile – ohne Mindestmenge und ohne lange Beschaffungswege.",
+      },
     ],
-    faqs: commonFaqs,
+    faqs: zuerichFaqs,
     related: commonRelated,
   },
   {
@@ -145,8 +190,12 @@ export const locations: LocationContent[] = [
         title: "Beratung vor dem Druck",
         text: "Wenn eine Geometrie kritisch ist – dünne Wände, enge Toleranzen, hohe Belastung – melden wir uns vor der Produktion mit einem Hinweis, statt ein Teil zu drucken, das später nicht funktioniert.",
       },
+      {
+        title: "Persönlich statt anonym",
+        text: "Bei grossen Online-Druckplattformen weisst du nie, wer dein Teil produziert. Bei uns sprichst du mit der Person, die deine Datei prüft und den Druck überwacht – das macht Korrekturen und kurzfristige Änderungen deutlich einfacher.",
+      },
     ],
-    faqs: commonFaqs,
+    faqs: stGallenFaqs,
     related: commonRelated,
   },
 ];
