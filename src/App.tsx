@@ -94,6 +94,14 @@ import KleinserienPage from "@/pages/site/KleinserienPage";
 
 const queryClient = new QueryClient();
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
+  return null;
+}
+
 function MaintenanceGate({ children }: { children: React.ReactNode }) {
   const [check, setCheck] = useState<{ active: boolean; msg: string } | null>(null);
   useEffect(() => {
