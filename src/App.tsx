@@ -165,6 +165,12 @@ const App = () => (
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/maschinen" element={<EquipmentPage />} />
+                <Route path="/leistungen/:slug" element={<ServiceDetailPage />} />
+                <Route path="/materialien/:slug" element={<MaterialDetailPage />} />
+                <Route path="/vergleich" element={<VergleichPage />} />
+                <Route path="/vergleich/:slug" element={<VergleichPage />} />
+                <Route path="/standorte/:slug" element={<StandortPage />} />
+                <Route path="/wissen/3d-druck-kosten-schweiz" element={<KostenPage />} />
                 <Route path="/newsletter/abmelden" element={<NewsletterAbmeldenPage />} />
               </Route>
 
