@@ -1522,60 +1522,78 @@ const CalculatorOnlinePage = () => {
                     </p>
                   </div>
 
-                  {/* Fertige Parts */}
-                  {parts.filter(p => !p.slicerLoading && p.hasVolume).length > 0 && (
+                  {/* Hochgeladene Parts */}
+                  {parts.filter(p => p.hasVolume || isStepFile(p.fileName)).length > 0 && (
                     <div className="space-y-3">
-                      {parts.filter(p => !p.slicerLoading && p.hasVolume).map((p) => (
-                        <div key={p.id} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <FileText className="w-5 h-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm truncate">{p.fileName}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {p.slicerResult?.filamentGrams?.toFixed(0)}g · {(p.slicerResult?.printTimeMinutes ?? 0 / 60).toFixed(1)}h · {p.slicerResult?.hasSupport ? " ⚠️ Support" : " ✅ Kein Support"}
-                            </p>
-                          </div>
-                          {p.kiAnalysis ? (
-                            <div className="text-right flex-shrink-0">
-                              <p className="font-bold text-sm text-primary">
-                                ab CHF {p.kiAnalysis.gesamtpreis_min}
+                      {parts.filter(p => p.hasVolume || isStepFile(p.fileName)).map((p) => (
+                        <div key={p.id} className="bg-card border border-border rounded-2xl p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm truncate">{p.fileName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {isStepFile(p.fileName)
+                                  ? "STEP-Datei – manuelle Prüfung"
+                                  : p.slicerResult
+                                    ? `${p.slicerResult.filamentGrams.toFixed(0)}g · ${(p.slicerResult.printTimeMinutes / 60).toFixed(1)}h · ${p.slicerResult.hasSupport ? "⚠️ Support" : "✅ Kein Support"}`
+                                    : `${p.volumeCm3.toFixed(1)} cm³ · ca. ${p.estimatedWeight.toFixed(1)}g`}
                               </p>
                             </div>
-                          ) : (
-                            <div className="w-16 h-4 bg-muted animate-pulse rounded" />
+                            {p.slicerLoading ? (
+                              <div className="text-right flex-shrink-0">
+                                <Loader2 className="w-4 h-4 animate-spin text-primary mx-auto" />
+                              </div>
+                            ) : p.slicerResult ? (
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-bold text-sm text-primary">
+                                  ab {CHF(calcPart(p).unit)}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-bold text-sm text-primary">
+                                  ca. {CHF(calcQuickPrice(p.volumeCm3, materials.find((m) => m.id === (p.materialId || materials[0]?.id)) || materials[0], qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1], settings.maschinenzeit_pro_h || 3, calcParams.min_price))}
+                                </p>
+                              </div>
+                            )}
+                            <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive ml-1" aria-label="Datei entfernen">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          {p.slicerLoading && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                                <div className="bg-primary/50 h-1 rounded-full animate-pulse w-full" />
+                              </div>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">Analysiert...</span>
+                            </div>
                           )}
-                          <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive ml-1" aria-label="Datei entfernen">
-                            <X className="w-4 h-4" />
-                          </button>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Fortschrittsbalken oder Dropzone */}
-                  {(parts.some(p => p.slicerLoading || p.kiAnalysisLoading) || (analysisProgress > 0 && analysisProgress < 100)) ? (
-                    <div className="border-2 border-dashed border-primary/40 rounded-3xl p-8 text-center bg-primary/5">
-                      <div className="w-12 h-12 mx-auto mb-3">
-                        <svg className="animate-spin w-12 h-12 text-primary" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5"/>
-                          <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                      </div>
-                      <p className="font-semibold mb-1">Bauteil wird analysiert...</p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {parts.find(p => p.slicerLoading)?.fileName}
-                      </p>
-                      <div className="w-full bg-muted rounded-full h-2.5 mb-1.5 overflow-hidden">
-                        <div
-                          className="bg-primary h-2.5 rounded-full"
-                          style={{
-                            width: `${analysisProgress}%`,
-                            transition: 'width 0.6s ease'
-                          }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">{Math.round(analysisProgress)}%</p>
+                  {/* Dropzone */}
+                  {parts.length === 0 ? (
+                    <div
+                      onDrop={handleDrop}
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
+                        dragOver ? "border-primary bg-primary/5" : "border-border bg-card"
+                      }`}
+                    >
+                      <input id="file-input" type="file" multiple accept=".stl,.3mf,.step,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*" className="hidden" onChange={handleInput} />
+                      <Upload className="w-12 h-12 text-primary mx-auto mb-4" />
+                      <h2 className="font-heading text-xl font-bold text-foreground mb-2">Dateien hierher ziehen</h2>
+                      <p className="text-sm text-muted-foreground mb-4">STL, 3MF, STEP, OBJ — bis 500MB pro Datei</p>
+                      <label htmlFor="file-input">
+                        <Button asChild className="gap-2 cursor-pointer">
+                          <span><Upload className="w-4 h-4" /> Dateien auswählen</span>
+                        </Button>
+                      </label>
                     </div>
                   ) : (
                     <>
