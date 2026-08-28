@@ -13,13 +13,15 @@ interface SeoProps {
   type?: "website" | "article" | "product";
   /** Optional JSON-LD object(s) for this page */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Seite aus dem Index nehmen (z. B. Danke-/Token-Seiten) */
+  noindex?: boolean;
 }
 
 /**
  * Per-Route Head-Tags (Title, Description, Open Graph, Twitter Card).
  * Canonical wird global über CanonicalTag gesetzt (self-referencing pro Route).
  */
-export const Seo = ({ title, description, path, image = DEFAULT_IMAGE, type = "website", jsonLd }: SeoProps) => {
+export const Seo = ({ title, description, path, image = DEFAULT_IMAGE, type = "website", jsonLd, noindex }: SeoProps) => {
   const url = `${SITE_URL}${path === "/" ? "/" : path.replace(/\/$/, "")}`;
   const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
@@ -27,6 +29,12 @@ export const Seo = ({ title, description, path, image = DEFAULT_IMAGE, type = "w
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <meta
+        name="robots"
+        content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"}
+      />
+      <link rel="alternate" hrefLang="de-CH" href={url} />
+      <link rel="alternate" hrefLang="x-default" href={url} />
 
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
