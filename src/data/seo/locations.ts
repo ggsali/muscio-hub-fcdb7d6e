@@ -18,6 +18,31 @@ const commonFaqs: AnswerFaq[] = [
   { q: "Welche Dateiformate nehmt ihr an?", a: "STL, STEP, 3MF und OBJ – direkt im Online-Kalkulator hochladen." },
 ];
 
+const thurgauFaqs: AnswerFaq[] = [
+  { q: "Wo genau in Eschlikon kann ich abholen?", a: "Unsere Werkstatt ist an der Gartensiedlung 13 in 8360 Eschlikon TG. Abholung stimmen wir nach Produktion kurz per E-Mail oder Telefon ab." },
+  { q: "Lohnt sich Abholung auch für kleine Teile?", a: "Ja – du sparst Versandkosten und Wartezeit. Gerade bei Eilaufträgen ist die Abholung in Eschlikon der schnellste Weg zum fertigen Teil." },
+  { q: "Druckt ihr auch für Firmen im Thurgau?", a: "Ja, wir beliefern KMU, Landwirtschaft, Handwerk und Startups in der ganzen Region – von Einzelteilen bis zu Kleinserien mit Rechnung." },
+  ...commonFaqs,
+];
+
+const ostschweizFaqs: AnswerFaq[] = [
+  { q: "Liefert ihr in alle Ostschweizer Kantone?", a: "Ja – Thurgau, St. Gallen, Appenzell Innerrhoden und Ausserrhoden, Glarus und das Zürcher Oberland beliefern wir per Post oder DHL in 1–2 Tagen nach Produktion." },
+  { q: "Gibt es einen Express-Versand?", a: "Bei dringenden Aufträgen klären wir individuell, ob eine schnellere Produktion oder ein Express-Versand möglich ist – schreibe uns dazu einfach bei der Anfrage." },
+  ...commonFaqs,
+];
+
+const zuerichFaqs: AnswerFaq[] = [
+  { q: "Wie schnell ist mein Teil in Zürich?", a: "Nach Auftragsbestätigung produzieren wir im Standard innert 48 Stunden; der Versand nach Zürich dauert in der Regel 1–2 Tage. Insgesamt also meist 3–4 Tage von Upload bis Zustellung." },
+  { q: "Muss ich für ein Angebot vorbeikommen?", a: "Nein – der ganze Prozess läuft online: Datei hochladen, Preis sehen, bestellen. Bei Rückfragen melden wir uns telefonisch oder per E-Mail." },
+  ...commonFaqs,
+];
+
+const stGallenFaqs: AnswerFaq[] = [
+  { q: "Wie weit ist Eschlikon von St. Gallen?", a: "Rund 40 Kilometer – Abholung ist nach Absprache möglich, der Versand in die Region St. Gallen dauert nach der Produktion üblicherweise nur 1 Tag." },
+  { q: "Könnt ihr kurzfristige Ersatzteile liefern?", a: "Häufig ja. Wenn ein Teil dringend ist, markiere die Anfrage entsprechend – wir priorisieren nach Möglichkeit." },
+  ...commonFaqs,
+];
+
 const commonRelated: RelatedLink[] = [
   { label: "Preis online berechnen", to: "/kalkulator-online", text: "Datei hochladen und Preis sehen." },
   { label: "Leistungen", to: "/leistungen", text: "FDM, SLA, Prototypen, Ersatzteile, Kleinserien." },
