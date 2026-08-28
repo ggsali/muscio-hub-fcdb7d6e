@@ -635,15 +635,19 @@ const CalculatorOnlinePage = () => {
   }, [parts, runKiAnalysis]);
 
   /** Browser-Slicing via three-slicer Web Worker (OrcaSlicer-Kernel) */
-  const runSlicerNow = useCallback(async (partId: string) => {
+  const runSlicerNow = useCallback(async (partId: string, quickSlice = false) => {
     const part = parts.find((p) => p.id === partId);
     if (!part?.stlArrayBuffer || isStepFile(part.fileName)) return;
 
     const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
-    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+
+    // QuickSlice: immer 0.3mm und 15% Infill für schnellen Sofortpreis
+    const quality = quickSlice
+      ? { layerHeight: 0.3, infill: 15, speedFactor: 0.7, key: "quick" }
+      : (qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1]);
 
     setParts((prev) => prev.map((p) => p.id === partId
-      ? { ...p, slicerLoading: true, slicerError: null }
+      ? { ...p, slicerLoading: true, slicerError: null, isQuickSlice: quickSlice }
       : p));
 
     try {
@@ -656,7 +660,13 @@ const CalculatorOnlinePage = () => {
       });
       console.log("[Slicer]", result);
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, slicerResult: result, slicerLoading: false, slicerError: null }
+        ? {
+            ...p,
+            slicerResult: result,
+            slicerLoading: false,
+            isQuickSlice: quickSlice,
+            quickSliceResult: quickSlice ? result : p.quickSliceResult,
+          }
         : p));
     } catch (err: any) {
       console.error("[Slicer Error]", err);
