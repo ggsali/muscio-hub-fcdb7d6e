@@ -97,12 +97,12 @@ export const Footer = () => (
           <div className="flex flex-col gap-2">
             {materials.map((m) => (
               <Link
-                key={m}
-                to="/materialien"
+                key={m.path}
+                to={m.path}
                 className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
               >
                 <span className="w-1 h-1 rounded-full bg-border group-hover:bg-primary transition-colors" />
-                {m}
+                {m.label}
               </Link>
             ))}
           </div>
