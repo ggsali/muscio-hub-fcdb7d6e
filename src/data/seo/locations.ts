@@ -155,8 +155,12 @@ export const locations: LocationContent[] = [
         title: "Warum Schweizer Fertigung",
         text: "Kurze Lieferwege, Ansprechperson in derselben Zeitzone und Sprache, keine Zollformalitäten. Bei Reklamationen oder Änderungswünschen entfällt der Umweg über einen Auslandsanbieter.",
       },
+      {
+        title: "Für Startups und Industrie in Zürich",
+        text: "Zürich ist eine der dichtesten Startup- und Industrieregionen Europas. Wir unterstützen Entwicklungsteams mit schnellen Iterationen: heute hochgeladen, in wenigen Tagen das physische Teil in der Hand. Auch für etablierte Firmen drucken wir Vorrichtungen, Halterungen und Ersatzteile – ohne Mindestmenge und ohne lange Beschaffungswege.",
+      },
     ],
-    faqs: commonFaqs,
+    faqs: zuerichFaqs,
     related: commonRelated,
   },
   {
@@ -186,8 +190,12 @@ export const locations: LocationContent[] = [
         title: "Beratung vor dem Druck",
         text: "Wenn eine Geometrie kritisch ist – dünne Wände, enge Toleranzen, hohe Belastung – melden wir uns vor der Produktion mit einem Hinweis, statt ein Teil zu drucken, das später nicht funktioniert.",
       },
+      {
+        title: "Persönlich statt anonym",
+        text: "Bei grossen Online-Druckplattformen weisst du nie, wer dein Teil produziert. Bei uns sprichst du mit der Person, die deine Datei prüft und den Druck überwacht – das macht Korrekturen und kurzfristige Änderungen deutlich einfacher.",
+      },
     ],
-    faqs: commonFaqs,
+    faqs: stGallenFaqs,
     related: commonRelated,
   },
 ];
