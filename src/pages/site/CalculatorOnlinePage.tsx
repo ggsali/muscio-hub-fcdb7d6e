@@ -39,7 +39,9 @@ interface Material {
   farbe?: string | null;
   hersteller?: string | null;
   farben: string[];
+  farbHex: Record<string, string>;
 }
+
 
 const QUALITY_ICONS: Record<string, typeof Zap> = {
   schnell: Zap,
