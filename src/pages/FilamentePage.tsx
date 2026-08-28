@@ -5,11 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Save, X, Pencil } from "lucide-react";
 
+export interface FilamentColor {
+  name: string;
+  hex: string;
+}
+
 export interface Filament {
   id: string;
   name: string;
   material: string;
   farbe: string;
+  farben: FilamentColor[];
   hersteller: string;
   preis_pro_kg: number;
   dichte_g_cm3: number;
@@ -18,12 +24,13 @@ export interface Filament {
   aktiv: boolean;
 }
 
-const MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "Sonstige"];
+const MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "Resin", "Sonstige"];
 
 const emptyFilament = (): Omit<Filament, "id"> => ({
   name: "",
   material: "PLA",
   farbe: "",
+  farben: [],
   hersteller: "",
   preis_pro_kg: 25,
   dichte_g_cm3: 1.24,
@@ -31,6 +38,7 @@ const emptyFilament = (): Omit<Filament, "id"> => ({
   notizen: "",
   aktiv: true,
 });
+
 
 export default function FilamentePage() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
