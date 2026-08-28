@@ -5,11 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Save, X, Pencil } from "lucide-react";
 
+export interface FilamentColor {
+  name: string;
+  hex: string;
+}
+
 export interface Filament {
   id: string;
   name: string;
   material: string;
   farbe: string;
+  farben: FilamentColor[];
   hersteller: string;
   preis_pro_kg: number;
   dichte_g_cm3: number;
@@ -18,12 +24,13 @@ export interface Filament {
   aktiv: boolean;
 }
 
-const MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "Sonstige"];
+const MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "Resin", "Sonstige"];
 
 const emptyFilament = (): Omit<Filament, "id"> => ({
   name: "",
   material: "PLA",
   farbe: "",
+  farben: [],
   hersteller: "",
   preis_pro_kg: 25,
   dichte_g_cm3: 1.24,
@@ -32,34 +39,55 @@ const emptyFilament = (): Omit<Filament, "id"> => ({
   aktiv: true,
 });
 
+
 export default function FilamentePage() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<(Partial<Filament> & { isNew?: boolean }) | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const normalize = (rows: any[]): Filament[] =>
+    rows.map((r) => ({
+      ...r,
+      farben: Array.isArray(r.farben)
+        ? (r.farben as any[])
+            .map((c) =>
+              typeof c === "string"
+                ? { name: c, hex: c.startsWith("#") ? c : "#888888" }
+                : { name: String(c?.name ?? ""), hex: String(c?.hex ?? "#888888") },
+            )
+            .filter((c) => c.name)
+        : [],
+    })) as Filament[];
+
   const load = async () => {
     const { data } = await supabase.from("filaments").select("*").order("material").order("name");
-    if (data) setFilaments(data as Filament[]);
+    if (data) setFilaments(normalize(data as any[]));
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
+  const colors: FilamentColor[] = editing?.farben ?? [];
+  const setColors = (farben: FilamentColor[]) =>
+    setEditing((e) => (e ? { ...e, farben, farbe: farben[0]?.name ?? e.farbe ?? "" } : e));
+
   const handleSave = async () => {
     if (!editing) return;
     setSaving(true);
+    const farben = (editing.farben ?? []).filter((c) => c.name.trim());
     if (editing.id) {
-      const { isNew, ...data } = editing as any;
-      await supabase.from("filaments").update(data).eq("id", editing.id);
+      const { isNew, created_at, ...rest } = editing as any;
+      await supabase.from("filaments").update({ ...rest, farben, farbe: farben[0]?.name ?? rest.farbe ?? "" } as any).eq("id", editing.id);
     } else {
-      const { isNew, id, ...data } = editing as any;
-      await supabase.from("filaments").insert([data]);
+      const { isNew, id, created_at, ...rest } = editing as any;
+      await supabase.from("filaments").insert([{ ...rest, farben, farbe: farben[0]?.name ?? rest.farbe ?? "" }] as any);
     }
     await load();
     setEditing(null);
     setSaving(false);
   };
+
 
   const handleDelete = async (id: string) => {
     await supabase.from("filaments").delete().eq("id", id);
@@ -106,13 +134,34 @@ export default function FilamentePage() {
                 {MATERIAL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Farbe</Label>
-              <div className="flex gap-2 items-center">
-                <input type="color" value={editing.farbe || "#888888"} onChange={e => setEditing({ ...editing, farbe: e.target.value })} className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-transparent" />
-                <Input value={editing.farbe ?? ""} onChange={e => setEditing({ ...editing, farbe: e.target.value })} className="bg-input border-border h-8 text-sm flex-1" placeholder="Blau, #1A2B3C…" />
+            <div className="space-y-1.5 md:col-span-3">
+              <Label className="text-xs">Farben ({colors.length}) – erscheinen direkt im Kalkulator</Label>
+              <div className="space-y-2">
+                {colors.map((c, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={/^#[0-9a-fA-F]{6}$/.test(c.hex) ? c.hex : "#888888"}
+                      onChange={e => setColors(colors.map((x, j) => (j === i ? { ...x, hex: e.target.value } : x)))}
+                      className="w-8 h-8 rounded border border-border cursor-pointer p-0.5 bg-transparent shrink-0"
+                    />
+                    <Input
+                      value={c.name}
+                      onChange={e => setColors(colors.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+                      className="bg-input border-border h-8 text-sm flex-1"
+                      placeholder="Farbname, z.B. Signalblau"
+                    />
+                    <button type="button" onClick={() => setColors(colors.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive p-1">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" className="border-border gap-1.5" onClick={() => setColors([...colors, { name: "", hex: "#888888" }])}>
+                  <Plus className="w-3.5 h-3.5" /> Farbe hinzufügen
+                </Button>
               </div>
             </div>
+
             <div className="space-y-1.5">
               <Label className="text-xs">Hersteller</Label>
               <Input value={editing.hersteller ?? ""} onChange={e => setEditing({ ...editing, hersteller: e.target.value })} className="bg-input border-border h-8 text-sm" placeholder="Prusa, eSUN, Bambu…" />
@@ -182,11 +231,18 @@ export default function FilamentePage() {
                       <tr key={f.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/20 ${!f.aktiv ? "opacity-50" : ""}`}>
                         <td className="px-4 py-2.5 font-medium">{f.name}</td>
                         <td className="px-4 py-2.5">
-                          <div className="flex items-center gap-2">
-                            {f.farbe && <div className="w-4 h-4 rounded-full border border-border flex-shrink-0" style={{ backgroundColor: f.farbe }} />}
-                            <span className="text-muted-foreground text-xs">{f.farbe || "—"}</span>
-                          </div>
+                          {f.farben.length === 0 ? (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          ) : (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {f.farben.slice(0, 6).map((c, i) => (
+                                <div key={i} title={c.name} className="w-4 h-4 rounded-full border border-border flex-shrink-0" style={{ backgroundColor: c.hex }} />
+                              ))}
+                              <span className="text-muted-foreground text-xs ml-1">{f.farben.length} Farben</span>
+                            </div>
+                          )}
                         </td>
+
                         <td className="px-4 py-2.5 text-muted-foreground text-xs">{f.hersteller || "—"}</td>
                         <td className="px-4 py-2.5 text-right font-medium tabular-nums text-primary">CHF {f.preis_pro_kg.toFixed(2)}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums text-xs">

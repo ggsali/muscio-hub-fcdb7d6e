@@ -39,7 +39,9 @@ interface Material {
   farbe?: string | null;
   hersteller?: string | null;
   farben: string[];
+  farbHex: Record<string, string>;
 }
+
 
 const QUALITY_ICONS: Record<string, typeof Zap> = {
   schnell: Zap,
@@ -419,7 +421,7 @@ const CalculatorOnlinePage = () => {
   const loadMaterials = useCallback(async () => {
     const { data: filaments, error } = await supabase
       .from("filaments")
-      .select("id, name, material, farbe, hersteller, verkaufspreis_pro_g, preis_pro_kg, dichte_g_cm3, aktiv")
+      .select("id, name, material, farbe, farben, hersteller, verkaufspreis_pro_g, preis_pro_kg, dichte_g_cm3, aktiv")
       .eq("aktiv", true)
       .order("material", { ascending: true });
 
@@ -443,7 +445,9 @@ const CalculatorOnlinePage = () => {
         farbe: null,
         hersteller: null,
         farben: Array.isArray(m.farben) ? m.farben : [],
+        farbHex: {},
       }));
+
 
       if (fallback.length === 0) {
         setMaterialsError("Materialien konnten nicht geladen werden.");
@@ -469,19 +473,36 @@ const CalculatorOnlinePage = () => {
 
     setMaterialsError(null);
     setMaterials(
-      validFilaments.map((f: any) => ({
-        id: f.id,
-        name: f.name,
-        materialType: f.material,
-        pricePerGram: f.verkaufspreis_pro_g
-          ? Number(f.verkaufspreis_pro_g)
-          : (Number(f.preis_pro_kg) / 1000) * 2.5,
-        density: Number(f.dichte_g_cm3) || 1.24,
-        farbe: f.farbe,
-        hersteller: f.hersteller,
-        farben: [f.farbe].filter(Boolean) as string[],
-      })),
+      validFilaments.map((f: any) => {
+        const raw = Array.isArray(f.farben) ? f.farben : [];
+        const list = raw
+          .map((c: any) =>
+            typeof c === "string"
+              ? { name: c, hex: c.startsWith("#") ? c : "" }
+              : { name: String(c?.name ?? ""), hex: String(c?.hex ?? "") },
+          )
+          .filter((c: any) => c.name);
+        if (list.length === 0 && f.farbe) {
+          list.push({ name: f.farbe, hex: String(f.farbe).startsWith("#") ? f.farbe : "" });
+        }
+        const farbHex: Record<string, string> = {};
+        list.forEach((c: any) => { if (c.hex) farbHex[c.name] = c.hex; });
+        return {
+          id: f.id,
+          name: f.name,
+          materialType: f.material,
+          pricePerGram: f.verkaufspreis_pro_g
+            ? Number(f.verkaufspreis_pro_g)
+            : (Number(f.preis_pro_kg) / 1000) * 2.5,
+          density: Number(f.dichte_g_cm3) || 1.24,
+          farbe: list[0]?.hex || f.farbe,
+          hersteller: f.hersteller,
+          farben: list.map((c: any) => c.name),
+          farbHex,
+        };
+      }),
     );
+
 
     setMaterialsLoading(false);
   }, []);
@@ -1717,24 +1738,23 @@ const CalculatorOnlinePage = () => {
                                   }`}
                                 >
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                                  <div className="flex items-center gap-2 mb-1">
-                                    {m.farbe && (
-                                      <div
-                                        style={{
-                                          width: 14,
-                                          height: 14,
-                                          borderRadius: "50%",
-                                          backgroundColor: m.farbe,
-                                          border: "1px solid rgba(0,0,0,0.15)",
-                                          flexShrink: 0,
-                                        }}
-                                      />
-                                    )}
-                                    <p className="font-bold text-sm leading-tight">{m.name}</p>
-                                  </div>
-                                  {m.farbe && !m.farbe.startsWith("#") && (
-                                    <p className="text-xs text-muted-foreground">{m.farbe}</p>
+                                  <p className="font-bold text-sm leading-tight mb-1">{m.name}</p>
+                                  {m.farben.length > 0 && (
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {m.farben.slice(0, 8).map((cn) => (
+                                        <span
+                                          key={cn}
+                                          title={cn}
+                                          className="w-3.5 h-3.5 rounded-full border border-border/60"
+                                          style={{ backgroundColor: m.farbHex?.[cn] || colorHex(cn) }}
+                                        />
+                                      ))}
+                                      <span className="text-[11px] text-muted-foreground ml-1">
+                                        {m.farben.length} {m.farben.length === 1 ? "Farbe" : "Farben"}
+                                      </span>
+                                    </div>
                                   )}
+
                                 </button>
                               );
                             })}
@@ -1767,24 +1787,23 @@ const CalculatorOnlinePage = () => {
                                     <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
                                   )}
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                                  <div className="flex items-center gap-2 mb-1">
-                                    {m.farbe && (
-                                      <div
-                                        style={{
-                                          width: 14,
-                                          height: 14,
-                                          borderRadius: "50%",
-                                          backgroundColor: m.farbe,
-                                          border: "1px solid rgba(0,0,0,0.15)",
-                                          flexShrink: 0,
-                                        }}
-                                      />
-                                    )}
-                                    <p className="font-bold text-sm leading-tight">{m.name}</p>
-                                  </div>
-                                  {m.farbe && !m.farbe.startsWith("#") && (
-                                    <p className="text-xs text-muted-foreground">{m.farbe}</p>
+                                  <p className="font-bold text-sm leading-tight mb-1">{m.name}</p>
+                                  {m.farben.length > 0 && (
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {m.farben.slice(0, 8).map((cn) => (
+                                        <span
+                                          key={cn}
+                                          title={cn}
+                                          className="w-3.5 h-3.5 rounded-full border border-border/60"
+                                          style={{ backgroundColor: m.farbHex?.[cn] || colorHex(cn) }}
+                                        />
+                                      ))}
+                                      <span className="text-[11px] text-muted-foreground ml-1">
+                                        {m.farben.length} {m.farben.length === 1 ? "Farbe" : "Farben"}
+                                      </span>
+                                    </div>
                                   )}
+
                                 </button>
                               );
                             })}
@@ -1837,8 +1856,9 @@ const CalculatorOnlinePage = () => {
                           >
                             <span
                               className="w-10 h-10 rounded-full border border-border"
-                              style={{ backgroundColor: colorHex(name) }}
+                              style={{ backgroundColor: selectedMaterial?.farbHex?.[name] || colorHex(name) }}
                             />
+
                             <span className="text-xs font-medium text-center">{name}</span>
                           </button>
                         );
