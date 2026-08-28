@@ -20,6 +20,7 @@ import Seo from "@/components/site/Seo";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
 import { toast } from "sonner";
+import { company, fullAddress, localBusinessJsonLd, faqJsonLd } from "@/data/company";
 
 
 
