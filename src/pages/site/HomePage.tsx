@@ -422,7 +422,54 @@ const CTA = () => (
   </section>
 );
 
+/* ─── ENTITY / KURZANTWORT ─── */
+const EntityAnswer = () => (
+  <section className="py-16">
+    <div className="container mx-auto px-4 max-w-4xl">
+      <ScrollReveal>
+        <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
+          <h2 className="font-heading text-xl md:text-2xl font-bold mb-3">Was ist 3DMuscio?</h2>
+          <p className="text-muted-foreground leading-relaxed">{company.shortDescription}</p>
+          <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 mt-6 text-sm">
+            {[
+              ["Standort", fullAddress],
+              ["Verfahren", company.processes.join(", ")],
+              ["Materialien", company.materials.join(", ")],
+              ["Dateiformate", company.fileFormats.join(", ")],
+              ["Produktionszeit", company.productionTime],
+              ["Mindestmenge", company.minOrder],
+            ].map(([k, v]) => (
+              <div key={k} className="flex flex-col border-t border-border pt-3">
+                <dt className="text-xs uppercase tracking-widest text-primary font-semibold">{k}</dt>
+                <dd className="text-muted-foreground mt-1">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="flex flex-wrap gap-2 mt-6">
+            {[
+              { label: "Leistungen", to: "/leistungen" },
+              { label: "Materialien", to: "/materialien" },
+              { label: "Preise & Kosten", to: "/wissen/3d-druck-kosten-schweiz" },
+              { label: "3D-Druck Thurgau", to: "/standorte/thurgau" },
+            ].map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold hover:border-primary/40 transition-colors"
+              >
+                {l.label}
+                <ArrowRight className="w-3.5 h-3.5 text-primary" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+    </div>
+  </section>
+);
+
 /* ─── SEO CONTENT ─── */
+
 const SEOContent = () => (
   <section className="py-20 bg-muted/30">
     <div className="container mx-auto px-4 max-w-4xl">
