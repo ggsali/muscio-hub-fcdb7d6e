@@ -231,11 +231,18 @@ export default function FilamentePage() {
                       <tr key={f.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/20 ${!f.aktiv ? "opacity-50" : ""}`}>
                         <td className="px-4 py-2.5 font-medium">{f.name}</td>
                         <td className="px-4 py-2.5">
-                          <div className="flex items-center gap-2">
-                            {f.farbe && <div className="w-4 h-4 rounded-full border border-border flex-shrink-0" style={{ backgroundColor: f.farbe }} />}
-                            <span className="text-muted-foreground text-xs">{f.farbe || "—"}</span>
-                          </div>
+                          {f.farben.length === 0 ? (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          ) : (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {f.farben.slice(0, 6).map((c, i) => (
+                                <div key={i} title={c.name} className="w-4 h-4 rounded-full border border-border flex-shrink-0" style={{ backgroundColor: c.hex }} />
+                              ))}
+                              <span className="text-muted-foreground text-xs ml-1">{f.farben.length} Farben</span>
+                            </div>
+                          )}
                         </td>
+
                         <td className="px-4 py-2.5 text-muted-foreground text-xs">{f.hersteller || "—"}</td>
                         <td className="px-4 py-2.5 text-right font-medium tabular-nums text-primary">CHF {f.preis_pro_kg.toFixed(2)}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums text-xs">
