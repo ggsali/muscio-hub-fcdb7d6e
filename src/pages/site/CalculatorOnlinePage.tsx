@@ -102,6 +102,8 @@ interface Part {
   kiAnalysis: KiAnalysis | null;
   kiAnalysisLoading: boolean;
   kiAnalysisError: string | null;
+  isQuickSlice?: boolean;
+  quickSliceResult?: SlicerResult;
 
 }
 
@@ -633,15 +635,19 @@ const CalculatorOnlinePage = () => {
   }, [parts, runKiAnalysis]);
 
   /** Browser-Slicing via three-slicer Web Worker (OrcaSlicer-Kernel) */
-  const runSlicerNow = useCallback(async (partId: string) => {
+  const runSlicerNow = useCallback(async (partId: string, quickSlice = false) => {
     const part = parts.find((p) => p.id === partId);
     if (!part?.stlArrayBuffer || isStepFile(part.fileName)) return;
 
     const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
-    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+
+    // QuickSlice: immer 0.3mm und 15% Infill für schnellen Sofortpreis
+    const quality = quickSlice
+      ? { layerHeight: 0.3, infill: 15, speedFactor: 0.7, key: "quick" }
+      : (qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1]);
 
     setParts((prev) => prev.map((p) => p.id === partId
-      ? { ...p, slicerLoading: true, slicerError: null }
+      ? { ...p, slicerLoading: true, slicerError: null, isQuickSlice: quickSlice }
       : p));
 
     try {
@@ -654,7 +660,13 @@ const CalculatorOnlinePage = () => {
       });
       console.log("[Slicer]", result);
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, slicerResult: result, slicerLoading: false, slicerError: null }
+        ? {
+            ...p,
+            slicerResult: result,
+            slicerLoading: false,
+            isQuickSlice: quickSlice,
+            quickSliceResult: quickSlice ? result : p.quickSliceResult,
+          }
         : p));
     } catch (err: any) {
       console.error("[Slicer Error]", err);
@@ -668,13 +680,13 @@ const CalculatorOnlinePage = () => {
   useEffect(() => { slicerFnRef.current = runSlicerNow; }, [runSlicerNow]);
   const slicerTimers = useRef<Record<string, number>>({});
 
-  const runSlicer = useCallback((partId: string) => {
+  const runSlicer = useCallback((partId: string, quickSlice = false) => {
     window.clearTimeout(slicerTimers.current[partId]);
-    slicerTimers.current[partId] = window.setTimeout(() => { void slicerFnRef.current(partId); }, 300);
+    slicerTimers.current[partId] = window.setTimeout(() => { void slicerFnRef.current(partId, quickSlice); }, 300);
   }, []);
 
-  const runSlicerAll = useCallback(() => {
-    parts.forEach((p) => { if (p.stlArrayBuffer) runSlicer(p.id); });
+  const runSlicerAll = useCallback((quickSlice = false) => {
+    parts.forEach((p) => { if (p.stlArrayBuffer) runSlicer(p.id, quickSlice); });
   }, [parts, runSlicer]);
 
 
@@ -721,7 +733,7 @@ const CalculatorOnlinePage = () => {
       try {
         const arrayBuffer = await file.arrayBuffer();
         setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
-        runSlicer(id);
+        runSlicer(id, true); // QuickSlice für schnellen Sofortpreis
       } catch (e) {
         console.warn("STL konnte nicht gelesen werden", e);
         setParts((p) => p.map((x) => (x.id === id ? { ...x, slicerLoading: false } : x)));
@@ -924,7 +936,16 @@ const CalculatorOnlinePage = () => {
     applyAll({ infill });
     startProgress();
     runKiAnalysisAll();
-    runSlicerAll();
+
+    const quality = qualityPresets.find((q) => q.key === key);
+    // Nur neu slicen wenn sich Qualität vom QuickSlice unterscheidet
+    if (quality && quality.layerHeight !== 0.3) {
+      parts.forEach((p) => {
+        if (p.stlArrayBuffer && !isStepFile(p.fileName)) {
+          runSlicer(p.id, false); // genauer Slice mit echter Qualität
+        }
+      });
+    }
   };
 
   const MIN_PRICE = calcParams.min_price;
@@ -1233,6 +1254,7 @@ const CalculatorOnlinePage = () => {
 
   const hasSlicerResult = parts.some((p) => p.slicerResult);
   const priceBadge = parts.length === 0 || hasStep ? null : (analysisProgress === 100 && hasSlicerResult ? totalMin : (!materialId ? null : total));
+  const anyQuickSlice = parts.some((p) => p.isQuickSlice && !p.slicerLoading);
 
   const canGoNext = step === 1 ? parts.length > 0
     : step === 2 ? true
@@ -1307,6 +1329,11 @@ const CalculatorOnlinePage = () => {
                     : priceBadge !== null
                       ? (hasKiAnalysis ? `ab ${CHF(totalMin)}` : `ab ${CHF(priceBadge)}`)
                       : "CHF –.–"}
+                  {anyQuickSlice && (
+                    <span className="ml-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
+                      ~ Schnellschätzung
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground flex-wrap justify-end">
                   <span>🇨🇭 Swiss Made</span>

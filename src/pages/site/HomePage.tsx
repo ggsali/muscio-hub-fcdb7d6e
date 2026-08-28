@@ -26,10 +26,10 @@ import { company, fullAddress, localBusinessJsonLd, faqJsonLd } from "@/data/com
 
 /* ─── HERO BENTO ─── */
 const HERO_STATS = [
-  { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers },
-  { value: "AUCH B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2 },
-  { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle },
-  { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap },
+  { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers, link: "/projekte" },
+  { value: "AUCH B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2, link: "/leistungen" },
+  { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle, link: "/ueber-uns" },
+  { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap, link: "/kalkulator-online" },
 ];
 
 const HeroUploadButton = () => {
@@ -171,8 +171,11 @@ const StatsTrust = () => (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {HERO_STATS.map((s, i) => (
           <ScrollReveal key={s.label} delay={i * 0.06}>
-            <div className="bg-card border border-border rounded-2xl p-5 md:p-6 h-full">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+            <Link
+              to={s.link}
+              className="block bg-card border border-border rounded-2xl p-5 md:p-6 h-full cursor-pointer no-underline transition-all hover:scale-[1.02] hover:shadow-[0_8px_24px_-4px_hsl(var(--foreground)/0.12)] group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3 transition-colors group-hover:bg-primary/20">
                 <s.icon className="w-4.5 h-4.5 text-primary" strokeWidth={2.5} />
               </div>
               <div
@@ -187,7 +190,7 @@ const StatsTrust = () => (
               <div className="text-[11px] md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
                 {s.label}
               </div>
-            </div>
+            </Link>
           </ScrollReveal>
         ))}
       </div>
