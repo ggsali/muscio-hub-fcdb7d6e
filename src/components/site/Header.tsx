@@ -25,6 +25,7 @@ const DEFAULT_NAV: NavItem[] = [
       { label: "Prototypen", path: "/leistungen/3d-druck-prototypen" },
       { label: "Ersatzteile", path: "/leistungen/3d-druck-ersatzteile" },
       { label: "Kleinserien", path: "/leistungen/3d-druck-kleinserien" },
+      { label: "B2B / Firmenkunden", path: "/leistungen/b2b-3d-druck" },
       { label: "Materialien", path: "/materialien" },
     ],
   },
