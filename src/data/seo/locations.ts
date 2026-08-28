@@ -120,8 +120,12 @@ export const locations: LocationContent[] = [
         title: "Fertigung in der Schweiz",
         text: "Alle Teile entstehen in unserer Werkstatt in Eschlikon TG – kein Import, keine Zollabwicklung, kein Warten auf Sendungen aus dem Ausland. Bei Rückfragen sprichst du direkt mit der Person, die dein Teil druckt.",
       },
+      {
+        title: "Warum die Ostschweiz für den 3D-Druck ideal ist",
+        text: "Die Region hat eine starke industrielle Basis – von Textilmaschinen über Lebensmitteltechnik bis zum Apparatebau. Genau diese Betriebe brauchen schnell verfügbare Ersatzteile, Vorrichtungen und Prototypen in kleinen Stückzahlen. Statt wochenlang auf Zulieferer zu warten, liefern wir nach Auftragsbestätigung innert weniger Tage.",
+      },
     ],
-    faqs: commonFaqs,
+    faqs: ostschweizFaqs,
     related: commonRelated,
   },
   {
