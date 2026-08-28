@@ -65,8 +65,15 @@ export const Header = () => {
             const def = DEFAULT_NAV.find(d => d.path === item.path);
             return def?.children ? { ...item, children: item.children || def.children } : item;
           });
+          // Leistungen-Menü immer verfügbar halten (SEO-Unterseiten)
+          if (!merged.some(m => m.path === "/leistungen")) {
+            const leistungen = DEFAULT_NAV.find(d => d.path === "/leistungen")!;
+            const idx = merged.findIndex(m => m.path === "/kalkulator-online");
+            merged.splice(idx >= 0 ? idx + 1 : merged.length, 0, leistungen);
+          }
           setNavLinks(merged);
         }
+
       });
   }, []);
 
