@@ -23,9 +23,6 @@ const STATIC_URLS = [
   { loc: '/3d-druck-bern', changefreq: 'monthly', priority: '0.8' },
   { loc: '/kalkulator-online', changefreq: 'monthly', priority: '0.9' },
 
-  { loc: '/ersatzteile', changefreq: 'monthly', priority: '0.9' },
-  { loc: '/prototypen', changefreq: 'monthly', priority: '0.9' },
-  { loc: '/kleinserien', changefreq: 'monthly', priority: '0.9' },
   { loc: '/materialien', changefreq: 'monthly', priority: '0.8' },
   { loc: '/maschinen', changefreq: 'monthly', priority: '0.7' },
   { loc: '/projekte', changefreq: 'weekly', priority: '0.8' },
