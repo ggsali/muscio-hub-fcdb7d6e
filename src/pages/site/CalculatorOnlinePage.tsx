@@ -421,7 +421,7 @@ const CalculatorOnlinePage = () => {
   const loadMaterials = useCallback(async () => {
     const { data: filaments, error } = await supabase
       .from("filaments")
-      .select("id, name, material, farbe, hersteller, verkaufspreis_pro_g, preis_pro_kg, dichte_g_cm3, aktiv")
+      .select("id, name, material, farbe, farben, hersteller, verkaufspreis_pro_g, preis_pro_kg, dichte_g_cm3, aktiv")
       .eq("aktiv", true)
       .order("material", { ascending: true });
 
