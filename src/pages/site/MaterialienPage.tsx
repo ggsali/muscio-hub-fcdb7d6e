@@ -208,6 +208,40 @@ export default function MaterialienPage() {
         </section>
       )}
 
+      <section className="container mx-auto px-4 pb-12">
+        <ScrollReveal>
+          <h2 className="font-heading text-2xl md:text-3xl font-bold mb-2">Materialien im Detail</h2>
+          <p className="text-muted-foreground mb-6 max-w-2xl">
+            Eigenschaften, Grenzen, typische Anwendungen und Alternativen – pro Material auf einer Seite
+            zusammengefasst.
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { label: "PLA", to: "/materialien/pla", hint: "Modelle & Prototypen" },
+              { label: "PETG", to: "/materialien/petg", hint: "Funktionsteile" },
+              { label: "ABS", to: "/materialien/abs", hint: "temperaturfest" },
+              { label: "ASA", to: "/materialien/asa", hint: "wetterfest" },
+              { label: "TPU", to: "/materialien/tpu", hint: "flexibel" },
+              { label: "Nylon", to: "/materialien/nylon", hint: "abriebfest" },
+              { label: "Resin", to: "/materialien/resin", hint: "feinste Details" },
+              { label: "Alle Vergleiche", to: "/vergleich", hint: "PLA vs PETG & mehr" },
+            ].map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="group bg-card border border-border rounded-xl px-4 py-3.5 hover:border-primary/40 transition-colors"
+              >
+                <span className="flex items-center justify-between gap-2 font-semibold text-sm">
+                  {l.label}
+                  <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-0.5 transition-transform" />
+                </span>
+                <span className="block text-xs text-muted-foreground mt-1">{l.hint}</span>
+              </Link>
+            ))}
+          </div>
+        </ScrollReveal>
+      </section>
+
       <section className="container mx-auto px-4 pb-24 text-center">
         <Button asChild size="lg" className="rounded-xl min-h-[52px] px-8">
           <Link to="/kalkulator-online">Preis berechnen <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
