@@ -26,10 +26,10 @@ import { company, fullAddress, localBusinessJsonLd, faqJsonLd } from "@/data/com
 
 /* ─── HERO BENTO ─── */
 const HERO_STATS = [
-  { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers },
-  { value: "AUCH B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2 },
-  { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle },
-  { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap },
+  { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers, link: "/projekte" },
+  { value: "AUCH B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2, link: "/leistungen" },
+  { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle, link: "/ueber-uns" },
+  { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap, link: "/kalkulator-online" },
 ];
 
 const HeroUploadButton = () => {
