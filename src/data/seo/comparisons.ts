@@ -333,10 +333,16 @@ export const comparisons: ComparisonContent[] = [
           "Ersatz- und Nachserienteile weiter drucken",
         ],
       },
+      {
+        title: "Rechenbeispiel ohne Formkosten",
+        text: "Eine Spritzgussform kostet je nach Komplexität schnell mehrere tausend Franken – bevor das erste Teil existiert. Dieselbe Summe reicht im 3D-Druck oft für hunderte von Teilen. Erst wenn die Stückzahlen regelmässig in die Tausende gehen und die Geometrie fix ist, dreht das Verhältnis. Bis dahin bleibst du mit dem 3D-Druck flexibel: Jede Bestellung kann eine verbesserte Version enthalten, ohne dass eine Form angepasst werden muss.",
+      },
     ],
     faqs: [
       { q: "Bietet 3DMuscio Spritzguss an?", a: "Nein. Wir fertigen im 3D-Druck und sagen dir, wenn eine Serienfertigung für dich sinnvoller wäre." },
       { q: "Sind gedruckte Teile so gut wie Spritzgussteile?", a: "Nicht identisch, aber für viele Anwendungen ausreichend. Entscheidend sind Material, Wandstärke und Druckrichtung." },
+      { q: "Ab welcher Stückzahl lohnt sich Spritzguss?", a: "Das hängt stark vom Teil ab – als grobe Orientierung oft erst ab mehreren tausend Stück. Rechne Formkosten plus Stückkosten gegen unsere Druckpreise, wir helfen dir bei der Abschätzung." },
+      { q: "Kann ich bei euch Kleinserien vor der Form bestellen?", a: "Genau dafür ist unser Kleinserien-Angebot gedacht: Mengenrabatt, konsistente Qualität und die Möglichkeit, das Design zwischen den Serien anzupassen." },
     ],
     related: [
       { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien" },
