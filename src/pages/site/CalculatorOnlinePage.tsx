@@ -1373,7 +1373,7 @@ const CalculatorOnlinePage = () => {
                       ? (allSlicerFinished && hasSlicerResult ? `ab ${CHF(totalMin)}` : `ca. ${CHF(quickTotal)}`)
                       : "CHF –.–"}
                   {anySlicerLoading && (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" title="Analyse läuft…" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   )}
                   {allSlicerFinished && hasSlicerResult && !anySlicerError ? (
                     <span className="ml-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
