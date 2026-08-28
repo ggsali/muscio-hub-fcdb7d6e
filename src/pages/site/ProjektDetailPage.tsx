@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowUpRight, ImageIcon, Box } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ImageIcon, Box, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,10 +59,11 @@ export default function ProjektDetailPage() {
       setProject(data as Project);
       const { data: rest } = await supabase
         .from("projekte")
-        .select("id, slug, name, kategorie, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths")
+        .select("id, slug, name, kategorie, kurzbeschreibung, beschreibung, bild_url, verfahren, material, toleranz, lieferzeit, gallery_paths")
         .eq("aktiv", true).neq("slug", slug)
-        .order("sort_order", { ascending: true }).limit(3);
-      setOthers((rest as Project[]) || []);
+        .limit(20);
+      const shuffled = (rest || []).sort(() => Math.random() - 0.5).slice(0, 3);
+      setOthers(shuffled as Project[]);
       setLoading(false);
     })();
   }, [slug]);
@@ -212,16 +213,26 @@ export default function ProjektDetailPage() {
             <p className="text-xs font-medium text-primary uppercase tracking-widest mb-6">Weitere Projekte</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {others.map(p => (
-                <Link key={p.id} to={`/projekte/${p.slug}`} className="group relative rounded-2xl overflow-hidden border border-border bg-card aspect-[4/3]">
-                  {p.bild_url ? (
-                    <img src={p.bild_url} alt={p.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  ) : (
-                    <div className="absolute inset-0 bg-muted flex items-center justify-center"><ImageIcon className="w-10 h-10 text-muted-foreground/40" /></div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/30 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-5">
-                    {p.kategorie && <p className="text-[10px] uppercase tracking-widest text-primary font-semibold mb-1">{p.kategorie}</p>}
-                    <h3 className="font-heading text-lg font-bold text-foreground">{p.name}</h3>
+                <Link key={p.id} to={`/projekte/${p.slug}`} className="group relative overflow-hidden rounded-2xl bg-card border border-border hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    {p.bild_url ? (
+                      <img src={p.bild_url} alt={p.name} loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <Layers className="w-12 h-12 text-muted-foreground/30" />
+                      </div>
+                    )}
+                    {p.kategorie && (
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur text-[10px] font-semibold uppercase tracking-wider">
+                        {p.kategorie}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="font-bold text-sm line-clamp-2 text-foreground">{p.name}</p>
+                    {p.kurzbeschreibung && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.kurzbeschreibung}</p>
+                    )}
                   </div>
                 </Link>
               ))}
