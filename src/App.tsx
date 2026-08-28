@@ -3,12 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { CompanySettingsProvider } from "@/contexts/CompanySettingsContext";
 import { CustomerAuthProvider } from "@/contexts/CustomerAuthContext";
-import { ScrollToTop } from "@/components/ScrollToTop";
 
 import AdminGate from "@/components/AdminGate";
 import SiteLayout from "@/components/SiteLayout";
