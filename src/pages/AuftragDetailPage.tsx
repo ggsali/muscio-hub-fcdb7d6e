@@ -377,7 +377,7 @@ export default function AuftragDetailPage() {
         .eq("order_id", id)
         .then(({ data }) => {
           if (data && data.length > 0) {
-            const files = data as { part_id: string; storage_path: string; filename?: string; file_type?: string }[];
+            const files = (data as unknown) as { part_id: string; storage_path: string; filename?: string; file_type?: string }[];
             setPartFiles(files);
             const partIds = [...new Set(files.map((f) => f.part_id))] as string[];
             setPartsWithFiles(partIds);
