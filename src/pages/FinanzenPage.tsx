@@ -160,9 +160,15 @@ export default function FinanzenPage() {
   const ausgabenSumme = ausgabenInRange.reduce((s, a) => s + Number(a.betrag || 0), 0);
   const reingewinn = einnahmen - ausgabenSumme;
 
-  const offeneBills = bills.filter(b => !b.bezahlt);
-  const offenBetrag = offeneBills.reduce((s, b) => s + Number(b.betrag || 0), 0);
-  const bezahltBetrag = bills.filter(b => b.bezahlt).reduce((s, b) => s + Number(b.betrag || 0), 0);
+  const avgMarge = useMemo(() => {
+    const rel = ordersInRange.filter(o => Number(o.umsatz_total || 0) > 0);
+    if (!rel.length) return 0;
+    return rel.reduce((s, o) => {
+      const u = Number(o.umsatz_total || 0);
+      return s + ((u - Number(o.kosten_total || 0)) / u) * 100;
+    }, 0) / rel.length;
+  }, [ordersInRange]);
+
 
   // 12-Monats-Chart
   const chartData = useMemo(() => {
