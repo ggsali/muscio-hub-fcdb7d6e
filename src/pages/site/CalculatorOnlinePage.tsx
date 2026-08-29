@@ -1254,6 +1254,7 @@ const CalculatorOnlinePage = () => {
       }
 
       setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
 
       setForm({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
       setParts([]);
