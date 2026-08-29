@@ -109,7 +109,8 @@ export default function StlViewer({ url }: { url: string }) {
       ref={containerRef}
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
-      className="w-full h-full min-h-[400px] select-none"
+      className={`w-full h-full select-none ${className}`}
     />
   );
 }
+
