@@ -21,17 +21,23 @@ function densityFor(material: string): number {
   return 1.24;
 }
 
+/** Grenzen, damit der Edge-Worker nicht am Speicher-/CPU-Limit abbricht */
+const MAX_BASE64_LEN = 24 * 1024 * 1024; // ~18 MB Datei
+const MAX_TRIS = 300_000;
+
+/** Base64 blockweise dekodieren (kein zeichenweiser Aufbau über die ganze Datei) */
 function base64ToBytes(b64: string): Uint8Array {
   const clean = b64.includes(",") ? b64.split(",")[1] : b64;
   const bin = atob(clean);
   const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  const CHUNK = 65536;
+  for (let start = 0; start < bin.length; start += CHUNK) {
+    const end = Math.min(start + CHUNK, bin.length);
+    for (let i = start; i < end; i++) out[i] = bin.charCodeAt(i);
+  }
   return out;
 }
 
-interface Tri {
-  nx: number; ny: number; nz: number; area: number;
-}
 
 function parseStl(bytes: Uint8Array) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
