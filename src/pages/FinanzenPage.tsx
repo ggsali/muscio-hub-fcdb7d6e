@@ -297,10 +297,13 @@ export default function FinanzenPage() {
           <h1 className="text-2xl font-bold text-foreground">Finanzen</h1>
           <p className="text-sm text-muted-foreground">Einnahmen, Ausgaben, Gewinn und Rechnungen im Überblick</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" /> Ausgabe
           </Button>
+          <Link to="/admin/finanzen/abrechnungen">
+            <Button variant="outline">Abrechnungen</Button>
+          </Link>
           <Link to="/admin/finanzen/neue-rechnung">
             <Button><Plus className="w-4 h-4 mr-2" /> Rechnung</Button>
           </Link>
