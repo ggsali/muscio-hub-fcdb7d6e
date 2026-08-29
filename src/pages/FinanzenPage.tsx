@@ -337,12 +337,13 @@ export default function FinanzenPage() {
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            <p className="text-xs uppercase tracking-wide">Offene Rechnungen</p>
+            <Wallet className="w-4 h-4" />
+            <p className="text-xs uppercase tracking-wide">Ø Auftragswert</p>
           </div>
-          <p className="text-2xl font-bold mt-2 text-amber-500">
-            {offeneBills.length} · CHF {fmtCHF(offenBetrag)}
+          <p className="text-2xl font-bold mt-2">
+            CHF {fmtCHF(einnahmen / Math.max(ordersInRange.length, 1))}
           </p>
+          <p className="text-[11px] text-muted-foreground mt-1">{ordersInRange.length} Aufträge</p>
         </div>
       </div>
 
