@@ -153,9 +153,12 @@ Deno.serve(async (req) => {
     if (typeof stlBase64 !== "string" || stlBase64.length < 100) {
       return json({ error: "stlBase64 fehlt oder ist ungültig" }, 400);
     }
+    if (stlBase64.length > MAX_BASE64_LEN) {
+      return json({ error: "Datei zu gross für die Serveranalyse (max. ca. 18 MB)" }, 413);
+    }
 
     const geo = parseStl(base64ToBytes(stlBase64));
-    if (geo.volumeMm3 <= 0 || geo.tris.length === 0) {
+    if (geo.volumeMm3 <= 0 || geo.triCount === 0) {
       return json({ error: "STL konnte nicht gelesen werden" }, 422);
     }
 
@@ -228,7 +231,7 @@ Deno.serve(async (req) => {
         const bestOverhangPct = best.overhang;
         const originalOverhangPct = original.overhang;
         const bestOrientation = best.label;
-        const triangleCount = geo.tris.length;
+        const triangleCount = geo.triCount;
         // Sphärizität: Kugelfläche gleichen Volumens / echte Oberfläche
         const sphericity = geo.surfaceMm2 > 0
           ? (Math.PI ** (1 / 3)) * ((6 * geo.volumeMm3) ** (2 / 3)) / geo.surfaceMm2
@@ -337,11 +340,16 @@ Antworte NUR mit diesem JSON (alle ? durch berechnete Werte ersetzen):
   "hinweis_fuer_kunden": "..."
 }`;
 
-        const models = ["anthropic/claude-sonnet-4-5", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
+        const models = ["google/gemini-2.5-flash", "anthropic/claude-sonnet-4-5"];
         let parsed: any = null;
         for (const model of models) {
-          const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 25_000);
+          let resp: Response;
+          try {
+            resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
+            signal: ctrl.signal,
             headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model,
@@ -351,7 +359,13 @@ Antworte NUR mit diesem JSON (alle ? durch berechnete Werte ersetzen):
               ],
               response_format: { type: "json_object" },
             }),
-          });
+            });
+          } catch (e) {
+            console.warn("AI-Aufruf abgebrochen/Timeout", model, String(e));
+            continue;
+          } finally {
+            clearTimeout(timer);
+          }
           if (resp.ok) {
             const data = await resp.json();
             const raw = data?.choices?.[0]?.message?.content ?? "{}";
@@ -409,7 +423,7 @@ Antworte NUR mit diesem JSON (alle ? durch berechnete Werte ersetzen):
       volumeCm3: Math.round(volumeCm3 * 10) / 10,
       surfaceCm2: Math.round(geo.surfaceMm2 / 100),
       bbox: geo.bbox,
-      triangles: geo.tris.length,
+      triangles: geo.triCount,
       weightG: ki?.weightG ?? weightG,
       filament_laenge_mm: ki?.filamentLaengeMm ?? null,
       druckzeit_minuten: ki?.druckzeit_minuten ?? druckzeitMinuten,
