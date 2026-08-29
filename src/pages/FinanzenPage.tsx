@@ -13,12 +13,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 import {
-  Plus, FileText, CheckCircle2, Clock, TrendingUp, TrendingDown, Wallet,
+  Plus, TrendingUp, TrendingDown, Wallet,
   Download, Trash2, Paperclip,
 } from "lucide-react";
+
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
@@ -160,9 +160,15 @@ export default function FinanzenPage() {
   const ausgabenSumme = ausgabenInRange.reduce((s, a) => s + Number(a.betrag || 0), 0);
   const reingewinn = einnahmen - ausgabenSumme;
 
-  const offeneBills = bills.filter(b => !b.bezahlt);
-  const offenBetrag = offeneBills.reduce((s, b) => s + Number(b.betrag || 0), 0);
-  const bezahltBetrag = bills.filter(b => b.bezahlt).reduce((s, b) => s + Number(b.betrag || 0), 0);
+  const avgMarge = useMemo(() => {
+    const rel = ordersInRange.filter(o => Number(o.umsatz_total || 0) > 0);
+    if (!rel.length) return 0;
+    return rel.reduce((s, o) => {
+      const u = Number(o.umsatz_total || 0);
+      return s + ((u - Number(o.kosten_total || 0)) / u) * 100;
+    }, 0) / rel.length;
+  }, [ordersInRange]);
+
 
   // 12-Monats-Chart
   const chartData = useMemo(() => {
@@ -205,11 +211,8 @@ export default function FinanzenPage() {
     return { avgMarge, avgWert, best, worst, count: rel.length };
   }, [orders, chartData]);
 
-  async function download(b: Bill) {
-    if (!b.file_path) return;
-    const { data } = await supabase.storage.from("bills").createSignedUrl(b.file_path, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-  }
+
+
 
   async function openBeleg(path: string) {
     const { data } = await supabase.storage.from("bills").createSignedUrl(path, 300);
@@ -255,17 +258,17 @@ export default function FinanzenPage() {
 
   function exportCsv() {
     const rows = [
-      ["Datum", "Auftrag", "Kunde", "Umsatz", "Kosten", "Gewinn", "Status", "Bezahlt"],
+      ["Datum", "Auftrag", "Kunde", "Umsatz CHF", "Kosten CHF", "Gewinn CHF", "Marge %"],
       ...ordersInRange.map(o => {
         const u = Number(o.umsatz_total || 0);
         const k = Number(o.kosten_total || 0);
-        const paid = bills.some(b => b.order_id === o.id && b.bezahlt) || PAID_STATUS.includes(o.status || "");
+        const gewinn = u - k;
         return [
           orderDate(o).toLocaleDateString("de-CH"),
           o.name || o.beschreibung || o.id.slice(0, 8),
           custName(o.customer_id),
-          u.toFixed(2), k.toFixed(2), (u - k).toFixed(2),
-          o.status || "", paid ? "ja" : "nein",
+          u.toFixed(2), k.toFixed(2), gewinn.toFixed(2),
+          u ? ((gewinn / u) * 100).toFixed(1) : "0",
         ];
       }),
     ];
@@ -273,10 +276,11 @@ export default function FinanzenPage() {
     const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = `finanzen-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `3DMuscio_Finanzen_${range}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
+
 
   const sumUmsatz = ordersInRange.reduce((s, o) => s + Number(o.umsatz_total || 0), 0);
   const sumKosten = ordersInRange.reduce((s, o) => s + Number(o.kosten_total || 0), 0);
@@ -337,12 +341,13 @@ export default function FinanzenPage() {
         </div>
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            <p className="text-xs uppercase tracking-wide">Offene Rechnungen</p>
+            <Wallet className="w-4 h-4" />
+            <p className="text-xs uppercase tracking-wide">Ø Auftragswert</p>
           </div>
-          <p className="text-2xl font-bold mt-2 text-amber-500">
-            {offeneBills.length} · CHF {fmtCHF(offenBetrag)}
+          <p className="text-2xl font-bold mt-2">
+            CHF {fmtCHF(einnahmen / Math.max(ordersInRange.length, 1))}
           </p>
+          <p className="text-[11px] text-muted-foreground mt-1">{ordersInRange.length} Aufträge</p>
         </div>
       </div>
 
@@ -377,9 +382,10 @@ export default function FinanzenPage() {
       <Tabs defaultValue="uebersicht">
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+          <TabsTrigger value="auftraege">Aufträge</TabsTrigger>
           <TabsTrigger value="ausgaben">Ausgaben</TabsTrigger>
-          <TabsTrigger value="rechnungen">Rechnungen</TabsTrigger>
         </TabsList>
+
 
         {/* ÜBERSICHT */}
         <TabsContent value="uebersicht" className="space-y-6 mt-4">
@@ -404,12 +410,38 @@ export default function FinanzenPage() {
             </div>
           </div>
 
-          {/* Auftrags-Tabelle */}
+          {/* Marge-Analyse */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Ø Marge</p>
+              <p className="text-xl font-bold mt-1">{avgMarge.toFixed(1)}%</p>
+              <p className="text-[11px] text-muted-foreground mt-1">im Zeitraum</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Aufträge</p>
+              <p className="text-xl font-bold mt-1">{ordersInRange.length}</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Bester Monat</p>
+              <p className="text-xl font-bold mt-1 text-emerald-500">
+                {analyse.best ? `CHF ${fmtCHF(analyse.best.einnahmen)}` : "—"}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1">{analyse.best?.monat || "—"}</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Ø Auftragswert</p>
+              <p className="text-xl font-bold mt-1">CHF {fmtCHF(einnahmen / Math.max(ordersInRange.length, 1))}</p>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* AUFTRÄGE */}
+        <TabsContent value="auftraege" className="space-y-4 mt-4">
           <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
               <h2 className="font-semibold text-sm">Aufträge im Zeitraum ({ordersInRange.length})</h2>
               <Button size="sm" variant="outline" onClick={exportCsv}>
-                <Download className="w-4 h-4 mr-1" /> CSV
+                <Download className="w-4 h-4 mr-1" /> Als CSV exportieren
               </Button>
             </div>
             <div className="overflow-x-auto">
@@ -422,19 +454,19 @@ export default function FinanzenPage() {
                     <th className="text-right px-4 py-2">Umsatz</th>
                     <th className="text-right px-4 py-2">Kosten</th>
                     <th className="text-right px-4 py-2">Gewinn</th>
-                    <th className="text-left px-4 py-2">Status</th>
-                    <th className="text-left px-4 py-2">Bezahlt</th>
+                    <th className="text-right px-4 py-2">Marge %</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {loading ? (
-                    <tr><td colSpan={8} className="px-4 py-6 text-muted-foreground">Laden…</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-6 text-muted-foreground">Laden…</td></tr>
                   ) : ordersInRange.length === 0 ? (
-                    <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Keine Aufträge im Zeitraum.</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Keine Aufträge im Zeitraum.</td></tr>
                   ) : ordersInRange.map(o => {
                     const u = Number(o.umsatz_total || 0);
                     const k = Number(o.kosten_total || 0);
-                    const paid = bills.some(b => b.order_id === o.id && b.bezahlt) || PAID_STATUS.includes(o.status || "");
+                    const gewinn = u - k;
+                    const marge = u ? (gewinn / u) * 100 : 0;
                     return (
                       <tr key={o.id} className="hover:bg-muted/30">
                         <td className="px-4 py-2 whitespace-nowrap">{orderDate(o).toLocaleDateString("de-CH")}</td>
@@ -446,13 +478,8 @@ export default function FinanzenPage() {
                         <td className="px-4 py-2 text-muted-foreground">{custName(o.customer_id)}</td>
                         <td className="px-4 py-2 text-right">CHF {fmtCHF(u)}</td>
                         <td className="px-4 py-2 text-right text-destructive">CHF {fmtCHF(k)}</td>
-                        <td className={`px-4 py-2 text-right ${u - k >= 0 ? "text-emerald-500" : "text-destructive"}`}>CHF {fmtCHF(u - k)}</td>
-                        <td className="px-4 py-2">{o.status ? <StatusBadge status={o.status} /> : "—"}</td>
-                        <td className="px-4 py-2">
-                          {paid
-                            ? <Badge className="bg-emerald-500/15 text-emerald-500 text-[10px]">bezahlt</Badge>
-                            : <Badge className="bg-amber-500/15 text-amber-500 text-[10px]">offen</Badge>}
-                        </td>
+                        <td className={`px-4 py-2 text-right ${gewinn >= 0 ? "text-emerald-500" : "text-destructive"}`}>CHF {fmtCHF(gewinn)}</td>
+                        <td className="px-4 py-2 text-right text-muted-foreground">{marge.toFixed(1)}%</td>
                       </tr>
                     );
                   })}
@@ -466,41 +493,15 @@ export default function FinanzenPage() {
                       <td className={`px-4 py-2 text-right ${sumUmsatz - sumKosten >= 0 ? "text-emerald-500" : "text-destructive"}`}>
                         CHF {fmtCHF(sumUmsatz - sumKosten)}
                       </td>
-                      <td colSpan={2} />
+                      <td className="px-4 py-2 text-right">{avgMarge.toFixed(1)}%</td>
                     </tr>
                   </tfoot>
                 )}
               </table>
             </div>
           </div>
-
-          {/* Marge-Analyse */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Ø Marge</p>
-              <p className="text-xl font-bold mt-1">{analyse.avgMarge.toFixed(1)}%</p>
-              <p className="text-[11px] text-muted-foreground mt-1">{analyse.count} Aufträge</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Bester Monat</p>
-              <p className="text-xl font-bold mt-1 text-emerald-500">
-                {analyse.best ? `CHF ${fmtCHF(analyse.best.einnahmen)}` : "—"}
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1">{analyse.best?.monat || "—"}</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Schwächster Monat</p>
-              <p className="text-xl font-bold mt-1 text-amber-500">
-                {analyse.worst ? `CHF ${fmtCHF(analyse.worst.einnahmen)}` : "—"}
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1">{analyse.worst?.monat || "—"}</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Ø Auftragswert</p>
-              <p className="text-xl font-bold mt-1">CHF {fmtCHF(analyse.avgWert)}</p>
-            </div>
-          </div>
         </TabsContent>
+
 
         {/* AUSGABEN */}
         <TabsContent value="ausgaben" className="space-y-4 mt-4">
@@ -571,70 +572,6 @@ export default function FinanzenPage() {
           </div>
         </TabsContent>
 
-        {/* RECHNUNGEN */}
-        <TabsContent value="rechnungen" className="space-y-4 mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Rechnungen</p>
-              <p className="text-2xl font-bold mt-1">{bills.length}</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Offen</p>
-              <p className="text-2xl font-bold mt-1 text-amber-500">CHF {fmtCHF(offenBetrag)}</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Bezahlt</p>
-              <p className="text-2xl font-bold mt-1 text-emerald-500">CHF {fmtCHF(bezahltBetrag)}</p>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-              <h2 className="font-semibold text-sm">Alle Rechnungen</h2>
-            </div>
-            {loading ? (
-              <div className="p-6 text-sm text-muted-foreground">Laden…</div>
-            ) : bills.length === 0 ? (
-              <div className="p-8 text-center text-sm text-muted-foreground">Noch keine Rechnungen vorhanden.</div>
-            ) : (
-              <div className="divide-y divide-border">
-                {bills.map(b => (
-                  <div key={b.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40">
-                    <div className="flex-shrink-0">
-                      {b.bezahlt
-                        ? <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                        : <Clock className="w-5 h-5 text-amber-500" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm truncate">{b.rechnungsnummer || b.titel || "Rechnung"}</span>
-                        {b.order_id
-                          ? <Badge variant="secondary" className="text-[10px]">Auftrag</Badge>
-                          : <Badge variant="outline" className="text-[10px]">Manuell</Badge>}
-                        {b.bezahlt
-                          ? <Badge className="bg-emerald-500/15 text-emerald-500 text-[10px]">bezahlt</Badge>
-                          : <Badge className="bg-amber-500/15 text-amber-500 text-[10px]">offen</Badge>}
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {b.empfaenger_name || b.titel}
-                        {b.rechnungs_datum ? ` · ${new Date(b.rechnungs_datum).toLocaleDateString("de-CH")}` : ""}
-                        {b.faellig_am ? ` · fällig ${new Date(b.faellig_am).toLocaleDateString("de-CH")}` : ""}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm">CHF {fmtCHF(Number(b.betrag || 0))}</p>
-                    </div>
-                    {b.file_path && (
-                      <Button size="sm" variant="outline" onClick={() => download(b)}>
-                        <FileText className="w-4 h-4 mr-1" /> PDF
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </TabsContent>
       </Tabs>
 
       {/* Ausgabe-Dialog */}
