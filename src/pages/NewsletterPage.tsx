@@ -270,7 +270,7 @@ export default function NewsletterPage() {
 
       const hatAbgeschlossen = abgeschlosseneOrders.length > 0;
       const letzterAbgeschlossen = abgeschlosseneOrders
-        .map((o: any) => new Date(o.updated_at || o.created_at).getTime())
+        .map((o: any) => new Date(o.created_at).getTime())
         .sort((x: number, y: number) => y - x)[0] ?? null;
 
       if (a.typ === "reaktivierung") {
@@ -280,14 +280,18 @@ export default function NewsletterPage() {
         if (!hatAbgeschlossen || !inaktivGenug) continue;
       } else if (a.typ === "nach_erstem_auftrag") {
         const hatGenauEinen = abgeschlosseneOrders.length === 1;
-        const ersterAbgeschlossen = abgeschlosseneOrders[0];
-        const alterMs = now - new Date(ersterAbgeschlossen.updated_at || ersterAbgeschlossen.created_at).getTime();
-        const alterTage = alterMs / 86400_000;
-        const imFenster = Math.abs(alterTage - days) <= 2;
-        if (!hatGenauEinen || !imFenster) continue;
+        if (!hatGenauEinen) continue;
+
+        const ersterAuftrag = abgeschlosseneOrders[0];
+        const auftragDatum = new Date(ersterAuftrag.created_at).getTime();
+        const alterTage = (now - auftragDatum) / 86400_000;
+        // Fenster: mindestens X Tage alt, aber nicht länger als X + 30 Tage
+        const imFenster = alterTage >= days && alterTage <= days + 30;
+        if (!imFenster) continue;
       } else {
         continue;
       }
+
 
       out.push({
         id: c.id,
