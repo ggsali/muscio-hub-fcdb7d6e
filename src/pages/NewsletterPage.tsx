@@ -955,7 +955,10 @@ export default function NewsletterPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
                       {nl.betreff}
-                      {nl.ist_ab_test && <span className="ml-2 text-xs text-muted-foreground">Version {nl.ab_variante}</span>}
+                      {nl.ist_ab_test && (
+                        <Badge variant="outline" className="ml-2 align-middle text-[10px]">A/B {nl.ab_variante}</Badge>
+                      )}
+
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {nl.status === "gesendet" ? `Gesendet am ${fmt(nl.gesendet_am)}` : `Erstellt am ${fmt(nl.erstellt_am)}`} · Gesendet an {nl.empfaenger_anzahl} Empfänger
