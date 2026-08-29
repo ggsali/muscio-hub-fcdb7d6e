@@ -211,11 +211,8 @@ export default function FinanzenPage() {
     return { avgMarge, avgWert, best, worst, count: rel.length };
   }, [orders, chartData]);
 
-  async function download(b: Bill) {
-    if (!b.file_path) return;
-    const { data } = await supabase.storage.from("bills").createSignedUrl(b.file_path, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-  }
+
+
 
   async function openBeleg(path: string) {
     const { data } = await supabase.storage.from("bills").createSignedUrl(path, 300);
