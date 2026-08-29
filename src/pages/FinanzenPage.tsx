@@ -377,9 +377,10 @@ export default function FinanzenPage() {
       <Tabs defaultValue="uebersicht">
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+          <TabsTrigger value="auftraege">Aufträge</TabsTrigger>
           <TabsTrigger value="ausgaben">Ausgaben</TabsTrigger>
-          <TabsTrigger value="rechnungen">Rechnungen</TabsTrigger>
         </TabsList>
+
 
         {/* ÜBERSICHT */}
         <TabsContent value="uebersicht" className="space-y-6 mt-4">
