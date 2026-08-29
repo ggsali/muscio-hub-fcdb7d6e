@@ -13,12 +13,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 import {
-  Plus, FileText, CheckCircle2, Clock, TrendingUp, TrendingDown, Wallet,
+  Plus, TrendingUp, TrendingDown, Wallet,
   Download, Trash2, Paperclip,
 } from "lucide-react";
+
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
