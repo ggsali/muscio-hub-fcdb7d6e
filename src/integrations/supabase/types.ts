@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      abrechnung_positionen: {
+        Row: {
+          abrechnung_id: string
+          ausgabe_id: string | null
+          beschreibung: string | null
+          betrag: number
+          created_at: string
+          datum: string | null
+          id: string
+          order_id: string | null
+          typ: string
+        }
+        Insert: {
+          abrechnung_id: string
+          ausgabe_id?: string | null
+          beschreibung?: string | null
+          betrag?: number
+          created_at?: string
+          datum?: string | null
+          id?: string
+          order_id?: string | null
+          typ: string
+        }
+        Update: {
+          abrechnung_id?: string
+          ausgabe_id?: string | null
+          beschreibung?: string | null
+          betrag?: number
+          created_at?: string
+          datum?: string | null
+          id?: string
+          order_id?: string | null
+          typ?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abrechnung_positionen_abrechnung_id_fkey"
+            columns: ["abrechnung_id"]
+            isOneToOne: false
+            referencedRelation: "abrechnungen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abrechnung_positionen_ausgabe_id_fkey"
+            columns: ["ausgabe_id"]
+            isOneToOne: false
+            referencedRelation: "ausgaben"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abrechnung_positionen_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      abrechnungen: {
+        Row: {
+          ausgaben_total: number
+          einnahmen_total: number
+          erstellt_am: string
+          gewinn_total: number
+          id: string
+          mwst_betrag: number
+          mwst_satz: number
+          notizen: string | null
+          nummer: string
+          pdf_path: string | null
+          status: string
+          typ: string
+          updated_at: string
+          zeitraum_bis: string
+          zeitraum_von: string
+        }
+        Insert: {
+          ausgaben_total?: number
+          einnahmen_total?: number
+          erstellt_am?: string
+          gewinn_total?: number
+          id?: string
+          mwst_betrag?: number
+          mwst_satz?: number
+          notizen?: string | null
+          nummer: string
+          pdf_path?: string | null
+          status?: string
+          typ?: string
+          updated_at?: string
+          zeitraum_bis: string
+          zeitraum_von: string
+        }
+        Update: {
+          ausgaben_total?: number
+          einnahmen_total?: number
+          erstellt_am?: string
+          gewinn_total?: number
+          id?: string
+          mwst_betrag?: number
+          mwst_satz?: number
+          notizen?: string | null
+          nummer?: string
+          pdf_path?: string | null
+          status?: string
+          typ?: string
+          updated_at?: string
+          zeitraum_bis?: string
+          zeitraum_von?: string
+        }
+        Relationships: []
+      }
       admin_allowlist: {
         Row: {
           created_at: string
