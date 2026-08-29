@@ -1629,7 +1629,7 @@ export default function AuftragDetailPage() {
                         <>
                           {stlUrl ? (
                             <div className="rounded-xl overflow-hidden border border-border bg-[#111315] h-40">
-                              <StlViewer url={stlUrl} />
+                              <StlViewer url={stlUrl} className="" />
                             </div>
                           ) : part.id && partsWithFiles.includes(part.id) ? (
                             <div className="rounded-xl border border-border bg-muted/30 h-24 flex flex-col items-center justify-center text-muted-foreground gap-1">
@@ -1751,7 +1751,7 @@ export default function AuftragDetailPage() {
                                 <tr className="bg-muted/10 border-b border-border/50">
                                   <td colSpan={12} className="px-4 py-3">
                                     <div className="rounded-xl overflow-hidden border border-border bg-[#111315] h-48">
-                                      <StlViewer url={stlUrl} />
+                                      <StlViewer url={stlUrl} className="" />
                                     </div>
                                   </td>
                                 </tr>
