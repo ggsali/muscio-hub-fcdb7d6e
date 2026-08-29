@@ -29,6 +29,8 @@ import KalkulatorPage from "@/pages/KalkulatorPage";
 import EinstellungenPage from "@/pages/EinstellungenPage";
 import FinanzenPage from "@/pages/FinanzenPage";
 import NeueRechnungPage from "@/pages/NeueRechnungPage";
+import AbrechnungenPage from "@/pages/AbrechnungenPage";
+import AbrechnungDetailPage from "@/pages/AbrechnungDetailPage";
 import FilamentePage from "@/pages/FilamentePage";
 import NotFound from "@/pages/NotFound";
 import AnfragenPage from "@/pages/AnfragenPage";
