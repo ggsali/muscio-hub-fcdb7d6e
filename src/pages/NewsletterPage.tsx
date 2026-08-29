@@ -1133,7 +1133,20 @@ export default function NewsletterPage() {
         </DialogContent>
       </Dialog>
 
+      {/* E-Mail HTML Vorschau */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>E-Mail Vorschau</DialogTitle></DialogHeader>
+          <iframe
+            srcDoc={renderHtmlPreview(betreff, inhalt, blogUrl, blogTitel, bildUrl)}
+            className="w-full min-h-[500px] border-0"
+            title="Newsletter Vorschau"
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Vorschau */}
+
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
 
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
