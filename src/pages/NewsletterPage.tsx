@@ -84,7 +84,76 @@ function fmt(d?: string | null) {
   return d ? new Date(d).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" }) : "–";
 }
 
-/** Live-Vorschau des Newsletters (vereinfachtes Abbild des E-Mail-Templates). */
+const LOGO_URL = "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg";
+
+function escHtml(s: string) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/** Erzeugt exakt dasselbe HTML wie beim Versand (mit Platzhalter-Namen). */
+function renderHtmlPreview(betreff: string, inhalt: string, blogUrl: string, blogTitel: string, bildUrl: string) {
+  const text = String(inhalt ?? "")
+    .replace(/\[Kundenname\]/g, "Kunde")
+    .replace(/\[LINK_KALKULATOR\]/g, "");
+  const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+    .map((p) => {
+      const html = escHtml(p).replace(/\n/g, "<br/>")
+        .replace(/(https?:\/\/[^\s<]+)/g, (m) => `<a href="${escHtml(m)}" style="color:#16a34a;">${escHtml(m)}</a>`);
+      return `<p style="font-size:15px;line-height:1.7;color:#3f3f46;margin:0 0 16px;">${html}</p>`;
+    }).join("");
+
+  const imageBlock = /^https?:\/\//i.test(bildUrl)
+    ? `<tr><td style="padding:0 0 8px;"><img src="${escHtml(bildUrl)}" alt="" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;" /></td></tr>`
+    : "";
+
+  const blogBlock = /^https?:\/\//i.test(blogUrl)
+    ? `<tr><td style="padding:8px 32px 32px;">
+          <div style="background-color:#f4f4f5;border-radius:10px;padding:18px 20px;">
+            <p style="margin:0 0 8px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#71717a;font-weight:700;">Lesenswerter Beitrag</p>
+            <a href="${escHtml(blogUrl)}" style="font-size:15px;font-weight:600;color:#16a34a;text-decoration:none;">📖 ${escHtml(blogTitel || "Zum Beitrag")} →</a>
+          </div>
+        </td></tr>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="de" dir="ltr">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>${escHtml(betreff)}</title></head>
+  <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:24px 12px;">
+      <tr><td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background-color:#ffffff;border-radius:14px;overflow:hidden;">
+          <tr>
+            <td style="padding:24px 32px;background-color:#0f172a;">
+              <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                <td style="padding-right:12px;"><img src="${LOGO_URL}" alt="3DMuscio" width="40" height="40" style="display:block;border-radius:8px;" /></td>
+                <td>
+                  <div style="font-size:17px;font-weight:700;color:#ffffff;line-height:1.2;">3DMuscio</div>
+                  <div style="font-size:12px;color:#9ca3af;line-height:1.4;">3D-Druck Schweiz</div>
+                </td>
+              </tr></table>
+            </td>
+          </tr>
+          ${imageBlock}
+          <tr><td style="padding:28px 32px 8px;">${paragraphs}</td></tr>
+          <tr><td style="padding:8px 32px 24px;" align="center">
+            <a href="${SITE_URL}/kalkulator-online" style="background-color:#16a34a;color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">Jetzt Preis berechnen →</a>
+          </td></tr>
+          ${blogBlock}
+          <tr><td style="padding:20px 32px 28px;border-top:1px solid #e4e4e7;">
+            <p style="margin:0 0 10px;font-size:12px;line-height:1.6;color:#71717a;">
+              3DMuscio | Gartensiedlung 13, 8360 Eschlikon TG | info@3dmuscio.com | www.3dmuscio.com
+            </p>
+            <p style="margin:0;font-size:12px;color:#a1a1aa;"><span style="text-decoration:underline;">Vom Newsletter abmelden</span></p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+}
+
+
 function NewsletterPreview({
   betreff, inhalt, bildUrl, blogUrl, blogTitel,
 }: { betreff: string; inhalt: string; bildUrl: string; blogUrl: string; blogTitel: string }) {
