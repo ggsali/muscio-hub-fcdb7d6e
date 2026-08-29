@@ -388,15 +388,30 @@ export default function AuftragDetailPage() {
     }
   }, [parts.length, id, isNew]);
 
+  // Signierte URLs für STL-Vorschauen (Bucket ist privat)
+  const [partStlUrls, setPartStlUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const stlFiles = partFiles.filter(f =>
+        f.filename?.toLowerCase().endsWith('.stl') || f.file_type === 'stl'
+      );
+      const entries: [string, string][] = [];
+      for (const f of stlFiles) {
+        if (!f.part_id) continue;
+        const { data } = await supabase.storage.from('part-files').createSignedUrl(f.storage_path, 3600);
+        if (data?.signedUrl) entries.push([f.part_id, data.signedUrl]);
+      }
+      if (!cancelled && entries.length) setPartStlUrls(Object.fromEntries(entries));
+    })();
+    return () => { cancelled = true; };
+  }, [partFiles]);
+
   const getPartStlUrl = (partId: string | undefined): string | null => {
     if (!partId) return null;
-    const stlFile = partFiles.find(f =>
-      f.part_id === partId &&
-      (f.filename?.toLowerCase().endsWith('.stl') || f.file_type === 'stl')
-    );
-    if (!stlFile) return null;
-    return supabase.storage.from('part-files').getPublicUrl(stlFile.storage_path).data.publicUrl;
+    return partStlUrls[partId] || null;
   };
+
 
   const addPart = async () => {
     const newPart = emptyPart();
