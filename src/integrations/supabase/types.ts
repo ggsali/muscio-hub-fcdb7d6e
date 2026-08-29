@@ -35,6 +35,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ausgaben: {
+        Row: {
+          beleg_url: string | null
+          beschreibung: string
+          betrag: number
+          created_at: string
+          datum: string
+          id: string
+          kategorie: string
+          updated_at: string
+        }
+        Insert: {
+          beleg_url?: string | null
+          beschreibung: string
+          betrag?: number
+          created_at?: string
+          datum?: string
+          id?: string
+          kategorie?: string
+          updated_at?: string
+        }
+        Update: {
+          beleg_url?: string | null
+          beschreibung?: string
+          betrag?: number
+          created_at?: string
+          datum?: string
+          id?: string
+          kategorie?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bill_items: {
         Row: {
           beschreibung: string
