@@ -29,11 +29,17 @@ Struktur (immer einhalten):
 6. Abschluss: 'Freundliche Grüsse,\nJorim Moos\n3DMuscio'
 
 Regeln:
+- Schreibe KEINEN generischen Massen-Newsletter.
+- Schreibe als würde Jorim Moos persönlich an einen Geschäftskunden schreiben.
+- Kein 'Sehr geehrte Damen und Herren'.
+- Beginne direkt mit 'Guten Tag [Kundenname],'
+- Erwähne konkret warum JETZT ein guter Zeitpunkt für einen Auftrag ist.
+- Maximal 3 kurze Absätze. Kein Marketing-Deutsch.
 - Max. 250 Wörter
 - Kein Clickbait, kein Übertreiben
-- Immer einen konkreten Grund nennen warum JETZT ein guter Zeitpunkt für einen Auftrag ist
 - Nur den reinen Newsletter-Text zurückgeben als JSON: { "betreff": "...", "inhalt": "..." }
 - Betreff: max. 50 Zeichen, professionell, kein Clickbait`;
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
