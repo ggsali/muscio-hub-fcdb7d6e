@@ -404,12 +404,38 @@ export default function FinanzenPage() {
             </div>
           </div>
 
-          {/* Auftrags-Tabelle */}
+          {/* Marge-Analyse */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Ø Marge</p>
+              <p className="text-xl font-bold mt-1">{avgMarge.toFixed(1)}%</p>
+              <p className="text-[11px] text-muted-foreground mt-1">im Zeitraum</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Aufträge</p>
+              <p className="text-xl font-bold mt-1">{ordersInRange.length}</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Bester Monat</p>
+              <p className="text-xl font-bold mt-1 text-emerald-500">
+                {analyse.best ? `CHF ${fmtCHF(analyse.best.einnahmen)}` : "—"}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1">{analyse.best?.monat || "—"}</p>
+            </div>
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Ø Auftragswert</p>
+              <p className="text-xl font-bold mt-1">CHF {fmtCHF(einnahmen / Math.max(ordersInRange.length, 1))}</p>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* AUFTRÄGE */}
+        <TabsContent value="auftraege" className="space-y-4 mt-4">
           <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
               <h2 className="font-semibold text-sm">Aufträge im Zeitraum ({ordersInRange.length})</h2>
               <Button size="sm" variant="outline" onClick={exportCsv}>
-                <Download className="w-4 h-4 mr-1" /> CSV
+                <Download className="w-4 h-4 mr-1" /> Als CSV exportieren
               </Button>
             </div>
             <div className="overflow-x-auto">
@@ -422,19 +448,19 @@ export default function FinanzenPage() {
                     <th className="text-right px-4 py-2">Umsatz</th>
                     <th className="text-right px-4 py-2">Kosten</th>
                     <th className="text-right px-4 py-2">Gewinn</th>
-                    <th className="text-left px-4 py-2">Status</th>
-                    <th className="text-left px-4 py-2">Bezahlt</th>
+                    <th className="text-right px-4 py-2">Marge %</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {loading ? (
-                    <tr><td colSpan={8} className="px-4 py-6 text-muted-foreground">Laden…</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-6 text-muted-foreground">Laden…</td></tr>
                   ) : ordersInRange.length === 0 ? (
-                    <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Keine Aufträge im Zeitraum.</td></tr>
+                    <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Keine Aufträge im Zeitraum.</td></tr>
                   ) : ordersInRange.map(o => {
                     const u = Number(o.umsatz_total || 0);
                     const k = Number(o.kosten_total || 0);
-                    const paid = bills.some(b => b.order_id === o.id && b.bezahlt) || PAID_STATUS.includes(o.status || "");
+                    const gewinn = u - k;
+                    const marge = u ? (gewinn / u) * 100 : 0;
                     return (
                       <tr key={o.id} className="hover:bg-muted/30">
                         <td className="px-4 py-2 whitespace-nowrap">{orderDate(o).toLocaleDateString("de-CH")}</td>
@@ -446,13 +472,8 @@ export default function FinanzenPage() {
                         <td className="px-4 py-2 text-muted-foreground">{custName(o.customer_id)}</td>
                         <td className="px-4 py-2 text-right">CHF {fmtCHF(u)}</td>
                         <td className="px-4 py-2 text-right text-destructive">CHF {fmtCHF(k)}</td>
-                        <td className={`px-4 py-2 text-right ${u - k >= 0 ? "text-emerald-500" : "text-destructive"}`}>CHF {fmtCHF(u - k)}</td>
-                        <td className="px-4 py-2">{o.status ? <StatusBadge status={o.status} /> : "—"}</td>
-                        <td className="px-4 py-2">
-                          {paid
-                            ? <Badge className="bg-emerald-500/15 text-emerald-500 text-[10px]">bezahlt</Badge>
-                            : <Badge className="bg-amber-500/15 text-amber-500 text-[10px]">offen</Badge>}
-                        </td>
+                        <td className={`px-4 py-2 text-right ${gewinn >= 0 ? "text-emerald-500" : "text-destructive"}`}>CHF {fmtCHF(gewinn)}</td>
+                        <td className="px-4 py-2 text-right text-muted-foreground">{marge.toFixed(1)}%</td>
                       </tr>
                     );
                   })}
@@ -466,41 +487,15 @@ export default function FinanzenPage() {
                       <td className={`px-4 py-2 text-right ${sumUmsatz - sumKosten >= 0 ? "text-emerald-500" : "text-destructive"}`}>
                         CHF {fmtCHF(sumUmsatz - sumKosten)}
                       </td>
-                      <td colSpan={2} />
+                      <td className="px-4 py-2 text-right">{avgMarge.toFixed(1)}%</td>
                     </tr>
                   </tfoot>
                 )}
               </table>
             </div>
           </div>
-
-          {/* Marge-Analyse */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Ø Marge</p>
-              <p className="text-xl font-bold mt-1">{analyse.avgMarge.toFixed(1)}%</p>
-              <p className="text-[11px] text-muted-foreground mt-1">{analyse.count} Aufträge</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Bester Monat</p>
-              <p className="text-xl font-bold mt-1 text-emerald-500">
-                {analyse.best ? `CHF ${fmtCHF(analyse.best.einnahmen)}` : "—"}
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1">{analyse.best?.monat || "—"}</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Schwächster Monat</p>
-              <p className="text-xl font-bold mt-1 text-amber-500">
-                {analyse.worst ? `CHF ${fmtCHF(analyse.worst.einnahmen)}` : "—"}
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1">{analyse.worst?.monat || "—"}</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Ø Auftragswert</p>
-              <p className="text-xl font-bold mt-1">CHF {fmtCHF(analyse.avgWert)}</p>
-            </div>
-          </div>
         </TabsContent>
+
 
         {/* AUSGABEN */}
         <TabsContent value="ausgaben" className="space-y-4 mt-4">
