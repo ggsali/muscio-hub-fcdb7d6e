@@ -21,22 +21,30 @@ function densityFor(material: string): number {
   return 1.24;
 }
 
+/** Grenzen, damit der Edge-Worker nicht am Speicher-/CPU-Limit abbricht */
+const MAX_BASE64_LEN = 24 * 1024 * 1024; // ~18 MB Datei
+const MAX_TRIS = 300_000;
+
+/** Base64 blockweise dekodieren (kein zeichenweiser Aufbau über die ganze Datei) */
 function base64ToBytes(b64: string): Uint8Array {
   const clean = b64.includes(",") ? b64.split(",")[1] : b64;
   const bin = atob(clean);
   const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  const CHUNK = 65536;
+  for (let start = 0; start < bin.length; start += CHUNK) {
+    const end = Math.min(start + CHUNK, bin.length);
+    for (let i = start; i < end; i++) out[i] = bin.charCodeAt(i);
+  }
   return out;
 }
 
-interface Tri {
-  nx: number; ny: number; nz: number; area: number;
-}
 
 function parseStl(bytes: Uint8Array) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const isBinary = bytes.byteLength >= 84 && view.getUint8(0) !== 115; // "s" von "solid"
-  const tris: Tri[] = [];
+  // Normalen + Fläche in einem flachen Float32Array (kein Objekt pro Dreieck)
+  let tris = new Float32Array(4 * 4096);
+  let triCount = 0;
   let volume = 0, surface = 0;
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
@@ -46,23 +54,28 @@ function parseStl(bytes: Uint8Array) {
     bx: number, by: number, bz: number,
     cx: number, cy: number, cz: number,
   ) => {
-    for (const [x, y, z] of [[ax, ay, az], [bx, by, bz], [cx, cy, cz]]) {
-      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-      minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
-    }
+    minX = Math.min(minX, ax, bx, cx); maxX = Math.max(maxX, ax, bx, cx);
+    minY = Math.min(minY, ay, by, cy); maxY = Math.max(maxY, ay, by, cy);
+    minZ = Math.min(minZ, az, bz, cz); maxZ = Math.max(maxZ, az, bz, cz);
     volume += (ax * (by * cz - bz * cy) + bx * (cy * az - cz * ay) + cx * (ay * bz - az * by)) / 6;
-    const e1 = [bx - ax, by - ay, bz - az];
-    const e2 = [cx - ax, cy - ay, cz - az];
-    const cr = [
-      e1[1] * e2[2] - e1[2] * e2[1],
-      e1[2] * e2[0] - e1[0] * e2[2],
-      e1[0] * e2[1] - e1[1] * e2[0],
-    ];
-    const len = Math.sqrt(cr[0] ** 2 + cr[1] ** 2 + cr[2] ** 2);
+    const e1x = bx - ax, e1y = by - ay, e1z = bz - az;
+    const e2x = cx - ax, e2y = cy - ay, e2z = cz - az;
+    const crx = e1y * e2z - e1z * e2y;
+    const cry = e1z * e2x - e1x * e2z;
+    const crz = e1x * e2y - e1y * e2x;
+    const len = Math.sqrt(crx * crx + cry * cry + crz * crz);
     const area = len / 2;
     surface += area;
-    if (len > 0) tris.push({ nx: cr[0] / len, ny: cr[1] / len, nz: cr[2] / len, area });
+    if (len > 0 && triCount < MAX_TRIS) {
+      if (4 * (triCount + 1) > tris.length) {
+        const bigger = new Float32Array(Math.min(tris.length * 2, 4 * MAX_TRIS));
+        bigger.set(tris.subarray(0, 4 * triCount));
+        tris = bigger;
+      }
+      const o = 4 * triCount;
+      tris[o] = crx / len; tris[o + 1] = cry / len; tris[o + 2] = crz / len; tris[o + 3] = area;
+      triCount++;
+    }
   };
 
   if (isBinary) {
@@ -78,21 +91,21 @@ function parseStl(bytes: Uint8Array) {
     }
   } else {
     const text = new TextDecoder().decode(bytes);
-    const verts: number[] = [];
     const re = /vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g;
+    const buf: number[] = [];
     let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) verts.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
-    for (let i = 0; i + 8 < verts.length; i += 9) {
-      pushTriangle(
-        verts[i], verts[i + 1], verts[i + 2],
-        verts[i + 3], verts[i + 4], verts[i + 5],
-        verts[i + 6], verts[i + 7], verts[i + 8],
-      );
+    while ((m = re.exec(text)) !== null) {
+      buf.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
+      if (buf.length === 9) {
+        pushTriangle(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]);
+        buf.length = 0;
+      }
     }
   }
 
   return {
-    tris,
+    tris: tris.subarray(0, 4 * triCount),
+    triCount,
     volumeMm3: Math.abs(volume),
     surfaceMm2: surface,
     bbox: {
@@ -104,18 +117,20 @@ function parseStl(bytes: Uint8Array) {
 }
 
 /** Anteil (in %) der Fläche, die bei gegebener Bau-Richtung Support braucht */
-function overhangShare(tris: Tri[], up: [number, number, number], thresholdDeg: number): number {
+function overhangShare(tris: Float32Array, up: [number, number, number], thresholdDeg: number): number {
   const limit = -Math.cos(((90 - thresholdDeg) * Math.PI) / 180);
+  const [ux, uy, uz] = up;
   let total = 0, over = 0;
-  for (const t of tris) {
-    const dot = t.nx * up[0] + t.ny * up[1] + t.nz * up[2];
-    total += t.area;
+  for (let o = 0; o < tris.length; o += 4) {
+    const dot = tris[o] * ux + tris[o + 1] * uy + tris[o + 2] * uz;
+    const area = tris[o + 3];
+    total += area;
     // Flächen, die praktisch flach auf der Druckplatte liegen (dot ≈ -1), brauchen keinen Support
-    if (dot < limit && dot > -0.98) over += t.area;
-
+    if (dot < limit && dot > -0.98) over += area;
   }
   return total > 0 ? (over / total) * 100 : 0;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -138,9 +153,12 @@ Deno.serve(async (req) => {
     if (typeof stlBase64 !== "string" || stlBase64.length < 100) {
       return json({ error: "stlBase64 fehlt oder ist ungültig" }, 400);
     }
+    if (stlBase64.length > MAX_BASE64_LEN) {
+      return json({ error: "Datei zu gross für die Serveranalyse (max. ca. 18 MB)" }, 413);
+    }
 
     const geo = parseStl(base64ToBytes(stlBase64));
-    if (geo.volumeMm3 <= 0 || geo.tris.length === 0) {
+    if (geo.volumeMm3 <= 0 || geo.triCount === 0) {
       return json({ error: "STL konnte nicht gelesen werden" }, 422);
     }
 
@@ -213,7 +231,7 @@ Deno.serve(async (req) => {
         const bestOverhangPct = best.overhang;
         const originalOverhangPct = original.overhang;
         const bestOrientation = best.label;
-        const triangleCount = geo.tris.length;
+        const triangleCount = geo.triCount;
         // Sphärizität: Kugelfläche gleichen Volumens / echte Oberfläche
         const sphericity = geo.surfaceMm2 > 0
           ? (Math.PI ** (1 / 3)) * ((6 * geo.volumeMm3) ** (2 / 3)) / geo.surfaceMm2
@@ -322,11 +340,16 @@ Antworte NUR mit diesem JSON (alle ? durch berechnete Werte ersetzen):
   "hinweis_fuer_kunden": "..."
 }`;
 
-        const models = ["anthropic/claude-sonnet-4-5", "google/gemini-2.5-pro", "google/gemini-2.5-flash"];
+        const models = ["google/gemini-2.5-flash", "anthropic/claude-sonnet-4-5"];
         let parsed: any = null;
         for (const model of models) {
-          const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 25_000);
+          let resp: Response;
+          try {
+            resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
+            signal: ctrl.signal,
             headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model,
@@ -336,7 +359,13 @@ Antworte NUR mit diesem JSON (alle ? durch berechnete Werte ersetzen):
               ],
               response_format: { type: "json_object" },
             }),
-          });
+            });
+          } catch (e) {
+            console.warn("AI-Aufruf abgebrochen/Timeout", model, String(e));
+            continue;
+          } finally {
+            clearTimeout(timer);
+          }
           if (resp.ok) {
             const data = await resp.json();
             const raw = data?.choices?.[0]?.message?.content ?? "{}";
@@ -394,7 +423,7 @@ Antworte NUR mit diesem JSON (alle ? durch berechnete Werte ersetzen):
       volumeCm3: Math.round(volumeCm3 * 10) / 10,
       surfaceCm2: Math.round(geo.surfaceMm2 / 100),
       bbox: geo.bbox,
-      triangles: geo.tris.length,
+      triangles: geo.triCount,
       weightG: ki?.weightG ?? weightG,
       filament_laenge_mm: ki?.filamentLaengeMm ?? null,
       druckzeit_minuten: ki?.druckzeit_minuten ?? druckzeitMinuten,

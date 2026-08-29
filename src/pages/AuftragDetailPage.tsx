@@ -388,15 +388,30 @@ export default function AuftragDetailPage() {
     }
   }, [parts.length, id, isNew]);
 
+  // Signierte URLs für STL-Vorschauen (Bucket ist privat)
+  const [partStlUrls, setPartStlUrls] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const stlFiles = partFiles.filter(f =>
+        f.filename?.toLowerCase().endsWith('.stl') || f.file_type === 'stl'
+      );
+      const entries: [string, string][] = [];
+      for (const f of stlFiles) {
+        if (!f.part_id) continue;
+        const { data } = await supabase.storage.from('part-files').createSignedUrl(f.storage_path, 3600);
+        if (data?.signedUrl) entries.push([f.part_id, data.signedUrl]);
+      }
+      if (!cancelled && entries.length) setPartStlUrls(Object.fromEntries(entries));
+    })();
+    return () => { cancelled = true; };
+  }, [partFiles]);
+
   const getPartStlUrl = (partId: string | undefined): string | null => {
     if (!partId) return null;
-    const stlFile = partFiles.find(f =>
-      f.part_id === partId &&
-      (f.filename?.toLowerCase().endsWith('.stl') || f.file_type === 'stl')
-    );
-    if (!stlFile) return null;
-    return supabase.storage.from('part-files').getPublicUrl(stlFile.storage_path).data.publicUrl;
+    return partStlUrls[partId] || null;
   };
+
 
   const addPart = async () => {
     const newPart = emptyPart();
@@ -1614,7 +1629,7 @@ export default function AuftragDetailPage() {
                         <>
                           {stlUrl ? (
                             <div className="rounded-xl overflow-hidden border border-border bg-[#111315] h-40">
-                              <StlViewer url={stlUrl} />
+                              <StlViewer url={stlUrl} className="" />
                             </div>
                           ) : part.id && partsWithFiles.includes(part.id) ? (
                             <div className="rounded-xl border border-border bg-muted/30 h-24 flex flex-col items-center justify-center text-muted-foreground gap-1">
@@ -1736,7 +1751,7 @@ export default function AuftragDetailPage() {
                                 <tr className="bg-muted/10 border-b border-border/50">
                                   <td colSpan={12} className="px-4 py-3">
                                     <div className="rounded-xl overflow-hidden border border-border bg-[#111315] h-48">
-                                      <StlViewer url={stlUrl} />
+                                      <StlViewer url={stlUrl} className="" />
                                     </div>
                                   </td>
                                 </tr>

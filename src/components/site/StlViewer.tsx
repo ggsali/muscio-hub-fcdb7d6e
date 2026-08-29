@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
-export default function StlViewer({ url }: { url: string }) {
+export default function StlViewer({ url, className = "min-h-[400px]" }: { url: string; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,7 +109,8 @@ export default function StlViewer({ url }: { url: string }) {
       ref={containerRef}
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
-      className="w-full h-full min-h-[400px] select-none"
+      className={`w-full h-full select-none ${className}`}
     />
   );
 }
+
