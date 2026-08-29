@@ -746,11 +746,15 @@ export default function NewsletterPage() {
               <BookOpen className="w-4 h-4 mr-2" /> Aus Blog wählen
             </Button>
 
-            <div>
+            <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => setPreviewOpen(true)}>
                 <Eye className="w-4 h-4 mr-2" /> Vorschau
               </Button>
+              <Button variant="outline" onClick={() => setShowPreview(true)}>
+                <Mail className="w-4 h-4 mr-2" /> E-Mail Vorschau (HTML)
+              </Button>
             </div>
+
           </section>
 
           {/* Empfänger */}
