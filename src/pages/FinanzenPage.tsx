@@ -261,17 +261,17 @@ export default function FinanzenPage() {
 
   function exportCsv() {
     const rows = [
-      ["Datum", "Auftrag", "Kunde", "Umsatz", "Kosten", "Gewinn", "Status", "Bezahlt"],
+      ["Datum", "Auftrag", "Kunde", "Umsatz CHF", "Kosten CHF", "Gewinn CHF", "Marge %"],
       ...ordersInRange.map(o => {
         const u = Number(o.umsatz_total || 0);
         const k = Number(o.kosten_total || 0);
-        const paid = bills.some(b => b.order_id === o.id && b.bezahlt) || PAID_STATUS.includes(o.status || "");
+        const gewinn = u - k;
         return [
           orderDate(o).toLocaleDateString("de-CH"),
           o.name || o.beschreibung || o.id.slice(0, 8),
           custName(o.customer_id),
-          u.toFixed(2), k.toFixed(2), (u - k).toFixed(2),
-          o.status || "", paid ? "ja" : "nein",
+          u.toFixed(2), k.toFixed(2), gewinn.toFixed(2),
+          u ? ((gewinn / u) * 100).toFixed(1) : "0",
         ];
       }),
     ];
@@ -279,10 +279,11 @@ export default function FinanzenPage() {
     const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = `finanzen-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `3DMuscio_Finanzen_${range}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
+
 
   const sumUmsatz = ordersInRange.reduce((s, o) => s + Number(o.umsatz_total || 0), 0);
   const sumKosten = ordersInRange.reduce((s, o) => s + Number(o.kosten_total || 0), 0);
