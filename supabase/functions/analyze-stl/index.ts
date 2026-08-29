@@ -42,7 +42,9 @@ function base64ToBytes(b64: string): Uint8Array {
 function parseStl(bytes: Uint8Array) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const isBinary = bytes.byteLength >= 84 && view.getUint8(0) !== 115; // "s" von "solid"
-  const tris: Tri[] = [];
+  // Normalen + Fläche in einem flachen Float32Array (kein Objekt pro Dreieck)
+  let tris = new Float32Array(4 * 4096);
+  let triCount = 0;
   let volume = 0, surface = 0;
   let minX = Infinity, minY = Infinity, minZ = Infinity;
   let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
@@ -52,23 +54,28 @@ function parseStl(bytes: Uint8Array) {
     bx: number, by: number, bz: number,
     cx: number, cy: number, cz: number,
   ) => {
-    for (const [x, y, z] of [[ax, ay, az], [bx, by, bz], [cx, cy, cz]]) {
-      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-      minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
-    }
+    minX = Math.min(minX, ax, bx, cx); maxX = Math.max(maxX, ax, bx, cx);
+    minY = Math.min(minY, ay, by, cy); maxY = Math.max(maxY, ay, by, cy);
+    minZ = Math.min(minZ, az, bz, cz); maxZ = Math.max(maxZ, az, bz, cz);
     volume += (ax * (by * cz - bz * cy) + bx * (cy * az - cz * ay) + cx * (ay * bz - az * by)) / 6;
-    const e1 = [bx - ax, by - ay, bz - az];
-    const e2 = [cx - ax, cy - ay, cz - az];
-    const cr = [
-      e1[1] * e2[2] - e1[2] * e2[1],
-      e1[2] * e2[0] - e1[0] * e2[2],
-      e1[0] * e2[1] - e1[1] * e2[0],
-    ];
-    const len = Math.sqrt(cr[0] ** 2 + cr[1] ** 2 + cr[2] ** 2);
+    const e1x = bx - ax, e1y = by - ay, e1z = bz - az;
+    const e2x = cx - ax, e2y = cy - ay, e2z = cz - az;
+    const crx = e1y * e2z - e1z * e2y;
+    const cry = e1z * e2x - e1x * e2z;
+    const crz = e1x * e2y - e1y * e2x;
+    const len = Math.sqrt(crx * crx + cry * cry + crz * crz);
     const area = len / 2;
     surface += area;
-    if (len > 0) tris.push({ nx: cr[0] / len, ny: cr[1] / len, nz: cr[2] / len, area });
+    if (len > 0 && triCount < MAX_TRIS) {
+      if (4 * (triCount + 1) > tris.length) {
+        const bigger = new Float32Array(Math.min(tris.length * 2, 4 * MAX_TRIS));
+        bigger.set(tris.subarray(0, 4 * triCount));
+        tris = bigger;
+      }
+      const o = 4 * triCount;
+      tris[o] = crx / len; tris[o + 1] = cry / len; tris[o + 2] = crz / len; tris[o + 3] = area;
+      triCount++;
+    }
   };
 
   if (isBinary) {
@@ -84,21 +91,21 @@ function parseStl(bytes: Uint8Array) {
     }
   } else {
     const text = new TextDecoder().decode(bytes);
-    const verts: number[] = [];
     const re = /vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g;
+    const buf: number[] = [];
     let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) verts.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
-    for (let i = 0; i + 8 < verts.length; i += 9) {
-      pushTriangle(
-        verts[i], verts[i + 1], verts[i + 2],
-        verts[i + 3], verts[i + 4], verts[i + 5],
-        verts[i + 6], verts[i + 7], verts[i + 8],
-      );
+    while ((m = re.exec(text)) !== null) {
+      buf.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
+      if (buf.length === 9) {
+        pushTriangle(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]);
+        buf.length = 0;
+      }
     }
   }
 
   return {
-    tris,
+    tris: tris.subarray(0, 4 * triCount),
+    triCount,
     volumeMm3: Math.abs(volume),
     surfaceMm2: surface,
     bbox: {
@@ -110,18 +117,20 @@ function parseStl(bytes: Uint8Array) {
 }
 
 /** Anteil (in %) der Fläche, die bei gegebener Bau-Richtung Support braucht */
-function overhangShare(tris: Tri[], up: [number, number, number], thresholdDeg: number): number {
+function overhangShare(tris: Float32Array, up: [number, number, number], thresholdDeg: number): number {
   const limit = -Math.cos(((90 - thresholdDeg) * Math.PI) / 180);
+  const [ux, uy, uz] = up;
   let total = 0, over = 0;
-  for (const t of tris) {
-    const dot = t.nx * up[0] + t.ny * up[1] + t.nz * up[2];
-    total += t.area;
+  for (let o = 0; o < tris.length; o += 4) {
+    const dot = tris[o] * ux + tris[o + 1] * uy + tris[o + 2] * uz;
+    const area = tris[o + 3];
+    total += area;
     // Flächen, die praktisch flach auf der Druckplatte liegen (dot ≈ -1), brauchen keinen Support
-    if (dot < limit && dot > -0.98) over += t.area;
-
+    if (dot < limit && dot > -0.98) over += area;
   }
   return total > 0 ? (over / total) * 100 : 0;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
