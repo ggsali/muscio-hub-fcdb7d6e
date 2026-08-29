@@ -215,6 +215,8 @@ export default function NewsletterPage() {
   const [blogUrl, setBlogUrl] = useState("");
   const [blogTitel, setBlogTitel] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
   const [blogModalOpen, setBlogModalOpen] = useState(false);
 
   // Empfänger
