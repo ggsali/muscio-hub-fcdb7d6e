@@ -917,9 +917,22 @@ export default function NewsletterPage() {
             )}
 
             <p className="text-sm font-medium text-foreground">{recipients.length} Empfänger ausgewählt</p>
+            {recipients.length > 0 && (
+              <details className="mt-2">
+                <summary className="text-xs text-primary cursor-pointer">
+                  {recipients.length} Empfänger anzeigen
+                </summary>
+                <div className="mt-2 max-h-32 overflow-y-auto text-xs text-muted-foreground space-y-0.5">
+                  {recipients.map((e) => (
+                    <div key={e.customer_id || e.email}>{e.name} – {e.email}</div>
+                  ))}
+                </div>
+              </details>
+            )}
             {recipients.length < 1 && (
               <p className="text-sm text-destructive">Keine Empfänger ausgewählt</p>
             )}
+
           </section>
 
           {sending && <Progress value={progress} className="h-2" />}
