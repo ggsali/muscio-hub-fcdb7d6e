@@ -221,6 +221,8 @@ const App = () => (
                 <Route path="kalkulator" element={<KalkulatorPage />} />
                 <Route path="finanzen" element={<FinanzenPage />} />
                 <Route path="finanzen/neue-rechnung" element={<NeueRechnungPage />} />
+                <Route path="finanzen/abrechnungen" element={<AbrechnungenPage />} />
+                <Route path="finanzen/abrechnungen/:id" element={<AbrechnungDetailPage />} />
                 <Route path="einstellungen" element={<EinstellungenPage />} />
                 <Route path="anfragen" element={<AnfragenPage />} />
                 <Route path="kalender" element={<KalenderPage />} />
