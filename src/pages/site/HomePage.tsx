@@ -574,7 +574,7 @@ const Index = () => (
           inLanguage: "de-CH",
           publisher: { "@id": "https://3dmuscio.com/#organization" },
         },
-        faqJsonLd(faqs),
+        
       ]}
     />
     <HeroBento />
