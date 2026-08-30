@@ -37,7 +37,7 @@ const websiteNavItems = [
 // Bottom nav shows only the 5 most important items on mobile
 const mobileBottomNav = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/admin/auftraege", icon: Package, label: "Aufträge" },
+  { to: "/website-admin/bestellungen", icon: ShoppingBag, label: "Bestellungen" },
   { to: "/admin/anfragen", icon: MessageSquare, label: "Anfragen" },
   { to: "/admin/kunden", icon: Users, label: "Kunden" },
   { to: "/admin/kalkulator", icon: Calculator, label: "Kalkulator" },
