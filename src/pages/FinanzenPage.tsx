@@ -75,7 +75,6 @@ function rangeBounds(key: RangeKey, from: string, to: string): { start: Date; en
 }
 
 export default function FinanzenPage() {
-  const [bills, setBills] = useState<Bill[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [ausgaben, setAusgaben] = useState<Ausgabe[]>([]);
