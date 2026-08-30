@@ -442,9 +442,84 @@ export default function ShopProdukteAdminPage() {
               <label className="flex items-center gap-2 text-sm"><Switch checked={form.aktiv} onCheckedChange={v => setForm({ ...form, aktiv: v })} /> Aktiv</label>
               <label className="flex items-center gap-2 text-sm"><Switch checked={form.featured} onCheckedChange={v => setForm({ ...form, featured: v })} /> Featured</label>
             </div>
-            {!editing && (
-              <p className="text-xs text-muted-foreground">Bilder kannst du nach dem Erstellen direkt in der Produktkarte hochladen.</p>
+            {!editing ? (
+              <p className="text-xs text-muted-foreground">Bilder und Optionen kannst du nach dem Erstellen direkt bearbeiten.</p>
+            ) : (
+              <div className="pt-4 border-t border-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold">Optionen</Label>
+                  <Button size="sm" variant="outline" onClick={addOption}>
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Option
+                  </Button>
+                </div>
+                {optionen.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Noch keine Optionen (z.B. Farbe, Material, Grösse).</p>
+                )}
+                {optionen.map(o => (
+                  <div key={o.id} className="border border-border rounded-xl p-3 space-y-3 bg-muted/20">
+                    <div className="flex flex-wrap items-end gap-2">
+                      <div className="flex-1 min-w-[140px]">
+                        <Label className="text-xs">Name</Label>
+                        <Input value={o.name}
+                          onChange={e => setOptionen(prev => prev.map(x => x.id === o.id ? { ...x, name: e.target.value } : x))}
+                          onBlur={e => patchOption(o, { name: e.target.value })} />
+                      </div>
+                      <div className="w-44">
+                        <Label className="text-xs">Typ</Label>
+                        <Select value={o.typ} onValueChange={v => patchOption(o, { typ: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {OPTION_TYPEN.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <label className="flex items-center gap-2 text-xs pb-2">
+                        <Switch checked={o.pflichtfeld} onCheckedChange={v => patchOption(o, { pflichtfeld: v })} /> Pflicht
+                      </label>
+                      <Button size="sm" variant="ghost" onClick={() => removeOption(o)}>
+                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {o.shop_produkt_option_werte.map(w => (
+                        <div key={w.id} className="flex flex-wrap items-center gap-2">
+                          {o.typ === "farbe" && (
+                            <input type="color" value={w.hex_code || "#888888"}
+                              onChange={e => patchWert(o, w, { hex_code: e.target.value })}
+                              className="w-9 h-9 rounded-lg border border-border bg-transparent cursor-pointer" />
+                          )}
+                          <Input className="flex-1 min-w-[110px]" placeholder="Wert" value={w.wert}
+                            onChange={e => setOptionen(prev => prev.map(x => x.id !== o.id ? x : {
+                              ...x, shop_produkt_option_werte: x.shop_produkt_option_werte.map(y => y.id === w.id ? { ...y, wert: e.target.value } : y),
+                            }))}
+                            onBlur={e => patchWert(o, w, { wert: e.target.value })} />
+                          <div className="w-28">
+                            <Input type="number" step="0.05" placeholder="+CHF" value={String(w.preis_aufschlag ?? 0)}
+                              onChange={e => patchWert(o, w, { preis_aufschlag: Number(e.target.value) || 0 })} />
+                          </div>
+                          <div className="w-28">
+                            <Input type="number" placeholder="Lager ∞" value={w.lagerbestand ?? ""}
+                              onChange={e => patchWert(o, w, { lagerbestand: e.target.value === "" ? null : Number(e.target.value) })} />
+                          </div>
+                          <label className="flex items-center gap-1.5 text-xs">
+                            <Switch checked={w.aktiv} onCheckedChange={v => patchWert(o, w, { aktiv: v })} /> Aktiv
+                          </label>
+                          <Button size="sm" variant="ghost" onClick={() => removeWert(o, w)}>
+                            <X className="w-3.5 h-3.5 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button size="sm" variant="ghost" onClick={() => addWert(o)}>
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Wert hinzufügen
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-[11px] text-muted-foreground">Optionen werden sofort gespeichert. Lager leer = unbegrenzt.</p>
+              </div>
             )}
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
