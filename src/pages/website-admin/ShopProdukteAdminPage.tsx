@@ -75,6 +75,77 @@ export default function ShopProdukteAdminPage() {
   // Kategorie-Form
   const [catForm, setCatForm] = useState({ name: "", slug: "" });
 
+  // Optionen des bearbeiteten Produkts
+  const [optionen, setOptionen] = useState<ProductOption[]>([]);
+
+  const loadOptionen = async (productId: string) => {
+    const { data } = await supabase
+      .from("shop_product_optionen")
+      .select("*, shop_produkt_option_werte(*)")
+      .eq("product_id", productId)
+      .order("sort_order");
+    setOptionen(
+      ((data as any[]) || []).map(o => ({
+        ...o,
+        shop_produkt_option_werte: [...(o.shop_produkt_option_werte || [])].sort(
+          (a: any, b: any) => a.sort_order - b.sort_order
+        ),
+      }))
+    );
+  };
+
+  const addOption = async () => {
+    if (!editing) return;
+    const { error } = await supabase.from("shop_product_optionen").insert({
+      product_id: editing.id, name: "Neue Option", typ: "chips",
+      pflichtfeld: true, sort_order: optionen.length + 1,
+    });
+    if (error) { toast.error(error.message); return; }
+    loadOptionen(editing.id);
+  };
+
+  const patchOption = async (o: ProductOption, patch: Partial<ProductOption>) => {
+    setOptionen(prev => prev.map(x => (x.id === o.id ? { ...x, ...patch } : x)));
+    const { error } = await supabase.from("shop_product_optionen").update(patch as any).eq("id", o.id);
+    if (error) toast.error(error.message);
+  };
+
+  const removeOption = async (o: ProductOption) => {
+    if (!confirm(`Option "${o.name}" löschen?`)) return;
+    const { error } = await supabase.from("shop_product_optionen").delete().eq("id", o.id);
+    if (error) { toast.error(error.message); return; }
+    setOptionen(prev => prev.filter(x => x.id !== o.id));
+  };
+
+  const addWert = async (o: ProductOption) => {
+    const { error } = await supabase.from("shop_produkt_option_werte").insert({
+      option_id: o.id, wert: "Neuer Wert",
+      hex_code: o.typ === "farbe" ? "#888888" : null,
+      preis_aufschlag: 0, lagerbestand: null, aktiv: true,
+      sort_order: o.shop_produkt_option_werte.length + 1,
+    });
+    if (error) { toast.error(error.message); return; }
+    if (editing) loadOptionen(editing.id);
+  };
+
+  const patchWert = async (o: ProductOption, w: OptionWert, patch: Partial<OptionWert>) => {
+    setOptionen(prev => prev.map(x => x.id !== o.id ? x : {
+      ...x,
+      shop_produkt_option_werte: x.shop_produkt_option_werte.map(y => (y.id === w.id ? { ...y, ...patch } : y)),
+    }));
+    const { error } = await supabase.from("shop_produkt_option_werte").update(patch as any).eq("id", w.id);
+    if (error) toast.error(error.message);
+  };
+
+  const removeWert = async (o: ProductOption, w: OptionWert) => {
+    const { error } = await supabase.from("shop_produkt_option_werte").delete().eq("id", w.id);
+    if (error) { toast.error(error.message); return; }
+    setOptionen(prev => prev.map(x => x.id !== o.id ? x : {
+      ...x, shop_produkt_option_werte: x.shop_produkt_option_werte.filter(y => y.id !== w.id),
+    }));
+  };
+
+
   const load = async () => {
     setLoading(true);
     const [prodRes, catRes] = await Promise.all([
