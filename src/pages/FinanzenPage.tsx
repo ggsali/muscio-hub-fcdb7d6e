@@ -362,7 +362,6 @@ export default function FinanzenPage() {
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
           <TabsTrigger value="auftraege">Aufträge</TabsTrigger>
-          <TabsTrigger value="rechnungen">Rechnungen</TabsTrigger>
           <TabsTrigger value="ausgaben">Ausgaben</TabsTrigger>
         </TabsList>
 
