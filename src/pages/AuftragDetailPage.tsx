@@ -225,7 +225,7 @@ export default function AuftragDetailPage() {
         const def = data.find((p: any) => p.is_default);
         if (def && isNew) {
           setSelectedPresetId(def.id);
-          setActiveSettings({ ...settings, ...def });
+          setActiveSettings({ ...settings, ...def } as unknown as Settings);
         }
       }
     });
@@ -245,8 +245,8 @@ export default function AuftragDetailPage() {
           setOrderName((o as any).name || "");
           setCustomerId(o.customer_id || "");
           setBeschreibung(o.beschreibung || "");
-          setDatum(o.datum);
-          setStatus(o.status);
+          setDatum(o.datum ?? "");
+          setStatus(o.status ?? "");
           setTrackingNr((o as any).tracking_nr || "");
           setLieferart(((o as any).lieferart === "abholung") ? "abholung" : "versand");
           setGeplantVon((o as any).geplant_von || "");

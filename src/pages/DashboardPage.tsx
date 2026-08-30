@@ -72,9 +72,9 @@ export default function DashboardPage() {
         const abgeschlossen = orders.filter(o => o.status === "Abgeschlossen");
         const umsatz = abgeschlossen.reduce((s, o) => s + (o.umsatz_total || 0), 0);
         const gewinn = abgeschlossen.reduce((s, o) => s + (o.gewinn_total || 0), 0);
-        const offeneAuftraege = orders.filter(o => ["Offen", "In Bearbeitung"].includes(o.status)).length;
-        const marges = abgeschlossen.filter(o => o.marge > 0).map(o => o.marge);
-        const avgMarge = marges.length ? marges.reduce((a, b) => a + b, 0) / marges.length : 0;
+        const offeneAuftraege = orders.filter(o => ["Offen", "In Bearbeitung"].includes(o.status ?? "")).length;
+        const marges = abgeschlossen.filter(o => (o.marge ?? 0) > 0).map(o => o.marge ?? 0);
+        const avgMarge = marges.length ? marges.reduce((a, b) => (a ?? 0) + (b ?? 0), 0) / marges.length : 0;
         const investFonds = gewinn * (settings.investitions_fonds_prozent / 100);
 
         setKpis({ umsatz, gewinn, offeneAuftraege, avgMarge, investFonds });

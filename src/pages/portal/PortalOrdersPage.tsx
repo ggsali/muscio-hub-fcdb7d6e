@@ -58,7 +58,7 @@ export default function PortalOrdersPage() {
           // Combine into per-order file list
           const filesByOrder: Record<string, any[]> = {};
           const partOrderMap: Record<string, string> = {};
-          for (const part of p || []) partOrderMap[part.id] = part.order_id;
+          for (const part of p || []) partOrderMap[part.id] = part.order_id ?? "";
           for (const f of pf || []) {
             const oid = partOrderMap[f.part_id];
             if (!oid) continue;
