@@ -72,6 +72,8 @@ export default function EinstellungenPage() {
     bulkDiscount5: 0.05,
     bulkDiscount10: 0.10,
     mwst: 0.081,
+    drucker_anzahl: 2,
+    druckstunden_pro_tag: 20,
   });
   const [googleReviewUrl, setGoogleReviewUrl] = useState<string>("");
   const [reviewSubject, setReviewSubject] = useState<string>(REVIEW_DEFAULT_SUBJECT);
@@ -142,6 +144,7 @@ export default function EinstellungenPage() {
   const loadWebsiteSettings = async () => {
     const { data } = await supabase.from("settings").select("*").in("key", [
       "postProcessingFee", "shippingCost", "freeShippingThreshold", "bulkDiscount5", "bulkDiscount10", "mwst",
+      "drucker_anzahl", "druckstunden_pro_tag",
     ]);
     if (data && data.length > 0) {
       const ws: Record<string, number> = {};
@@ -492,6 +495,27 @@ export default function EinstellungenPage() {
               { key: "bulkDiscount5", label: "Mengenrabatt ab 5 Stk.", unit: "Faktor (0.05 = 5%)", step: "0.01" },
               { key: "bulkDiscount10", label: "Mengenrabatt ab 10 Stk.", unit: "Faktor (0.10 = 10%)", step: "0.01" },
               { key: "mwst", label: "Mehrwertsteuer", unit: "Faktor (0.081 = 8.1%)", step: "0.001" },
+            ].map(f => (
+              <div key={f.key} className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <Label className="text-sm">{f.label}</Label>
+                  <div className="text-xs text-muted-foreground">{f.unit}</div>
+                </div>
+                <Input
+                  type="number"
+                  step={f.step}
+                  value={websiteSettings[f.key] ?? ""}
+                  onChange={e => setWebsiteSettings(prev => ({ ...prev, [f.key]: parseFloat(e.target.value) || 0 }))}
+                  className="w-28 md:w-32 bg-input border-border text-right tabular-nums flex-shrink-0"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <h3 className="font-semibold text-sm">Druckkapazität (Lieferzeit-Berechnung)</h3>
+            {[
+              { key: "drucker_anzahl", label: "Anzahl aktive Drucker", unit: "Drucker", step: "1" },
+              { key: "druckstunden_pro_tag", label: "Druckstunden pro Tag", unit: "h / Tag", step: "1" },
             ].map(f => (
               <div key={f.key} className="flex items-center justify-between gap-4">
                 <div className="flex-1">
