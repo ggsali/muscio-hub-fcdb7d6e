@@ -22,6 +22,15 @@ interface Product {
   kategorie_id?: string | null;
 }
 
+interface OptionWert {
+  id: string; wert: string; hex_code: string | null;
+  preis_aufschlag: number; lagerbestand: number | null; aktiv: boolean; sort_order: number;
+}
+interface ProductOption {
+  id: string; name: string; typ: string; pflichtfeld: boolean; sort_order: number;
+  shop_produkt_option_werte: OptionWert[];
+}
+
 const getImageUrl = (path: string) =>
   supabase.storage.from("shop-products").getPublicUrl(path).data.publicUrl;
 
@@ -36,6 +45,9 @@ export default function ShopDetailPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [added, setAdded] = useState(false);
   const [related, setRelated] = useState<any[]>([]);
+  const [optionen, setOptionen] = useState<ProductOption[]>([]);
+  const [gewaehlteOptionen, setGewaehlteOptionen] = useState<Record<string, string>>({});
+
 
   useEffect(() => {
     const load = async () => {
