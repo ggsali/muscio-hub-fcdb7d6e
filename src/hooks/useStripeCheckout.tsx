@@ -1,12 +1,20 @@
 import { useState, useCallback } from "react";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 
+interface CheckoutOption {
+  optionId: string;
+  optionName: string;
+  wertId: string;
+  wertName: string;
+}
+
 interface CheckoutItem {
   product_id: string;
   name: string;
   preis: number;
   quantity: number;
   slug: string;
+  optionen?: CheckoutOption[];
 }
 
 interface CheckoutCustomer {

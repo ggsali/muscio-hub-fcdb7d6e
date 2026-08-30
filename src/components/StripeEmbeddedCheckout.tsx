@@ -9,6 +9,12 @@ interface StripeEmbeddedCheckoutProps {
     preis: number;
     quantity: number;
     slug: string;
+    optionen?: Array<{
+      optionId: string;
+      optionName: string;
+      wertId: string;
+      wertName: string;
+    }>;
   }>;
   customer?: {
     email: string;

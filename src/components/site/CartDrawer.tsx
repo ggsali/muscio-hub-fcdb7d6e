@@ -46,6 +46,12 @@ export const CartDrawer = () => {
         preis: i.preis,
         quantity: i.quantity,
         slug: i.slug,
+        optionen: (i.optionen || []).map((o) => ({
+          optionId: o.optionId,
+          optionName: o.optionName,
+          wertId: o.wertId,
+          wertName: o.wertName,
+        })),
       })),
       customer: profile
         ? {

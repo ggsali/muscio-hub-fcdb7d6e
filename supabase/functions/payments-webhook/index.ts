@@ -41,7 +41,9 @@ async function handleCheckoutSessionCompleted(session: any, env: StripeEnv) {
     return;
   }
 
-  await getSupabase().from("shop_orders").update({
+  const totalChf = (session.amount_total ?? 0) / 100;
+
+  const { error: updErr } = await getSupabase().from("shop_orders").update({
     status: "paid",
     paid_at: new Date().toISOString(),
     customer_email: email,
@@ -51,9 +53,12 @@ async function handleCheckoutSessionCompleted(session: any, env: StripeEnv) {
     shipping_city: addr?.city || "—",
     shipping_postal_code: addr?.postal_code || "—",
     shipping_country: addr?.country || "Schweiz",
-    total: (session.amount_total ?? 0) / 100,
-    environment: env,
+    total: totalChf,
   }).eq("id", shopOrderId);
+  if (updErr) {
+    console.error("[payments-webhook] shop_orders update failed:", updErr);
+    throw updErr;
+  }
 
   let customerId: string | null = null;
   const { data: existCust } = await getSupabase().from("customers").select("id").eq("email", email).maybeSingle();
@@ -63,33 +68,35 @@ async function handleCheckoutSessionCompleted(session: any, env: StripeEnv) {
     const parts = fullName.split(" ");
     const vorname = parts[0] || "";
     const name = parts.slice(1).join(" ") || fullName;
-    const { data: newCust } = await getSupabase().from("customers").insert({
+    const { data: newCust, error: custErr } = await getSupabase().from("customers").insert({
       name, vorname, email, telefon: phone,
       strasse: addr?.line1 || null, plz: addr?.postal_code || null,
       ort: addr?.city || null, land: addr?.country || "Schweiz",
       notizen: "Automatisch aus Webshop-Bestellung importiert",
     }).select("id").single();
+    if (custErr) console.error("[payments-webhook] customer insert failed:", custErr);
     customerId = newCust?.id ?? null;
   }
 
   const { data: items } = await getSupabase()
     .from("shop_order_items")
-    .select("product_name, quantity, unit_price, total")
+    .select("product_id, product_name, quantity, unit_price, total, optionen")
     .eq("order_id", shopOrderId);
 
   const desc = (items || []).map((i: any) => `${i.quantity}× ${i.product_name} (CHF ${Number(i.total).toFixed(2)})`).join("\n");
 
-  const { data: newOrder } = await getSupabase().from("orders").insert({
+  const { data: newOrder, error: orderErr } = await getSupabase().from("orders").insert({
     customer_id: customerId,
     name: `Webshop-Bestellung #${shopOrderId.substring(0, 8)}`,
     beschreibung: desc,
     status: "Offen",
     source: "website-shop",
-    umsatz_total: (session.amount_total ?? 0) / 100,
+    umsatz_total: totalChf,
     kosten_total: 0,
-    gewinn_total: (session.amount_total ?? 0) / 100,
+    gewinn_total: totalChf,
     marge: 100,
   }).select("id").single();
+  if (orderErr) console.error("[payments-webhook] orders insert failed:", orderErr);
 
   if (newOrder) {
     await getSupabase().from("shop_orders").update({ order_id: newOrder.id }).eq("id", shopOrderId);
@@ -100,12 +107,13 @@ async function handleCheckoutSessionCompleted(session: any, env: StripeEnv) {
     });
   }
 
-  if (items) {
-    for (const it of items as any[]) {
+  // Lagerbestände reduzieren (Produkt + Optionswerte)
+  for (const it of (items || []) as any[]) {
+    if (it.product_id) {
       const { data: prodRow } = await getSupabase()
         .from("shop_products")
         .select("id, lagerbestand, unendlich_bestand")
-        .eq("name", it.product_name)
+        .eq("id", it.product_id)
         .maybeSingle();
       if (prodRow && !prodRow.unendlich_bestand) {
         await getSupabase().from("shop_products").update({
@@ -113,8 +121,44 @@ async function handleCheckoutSessionCompleted(session: any, env: StripeEnv) {
         }).eq("id", prodRow.id);
       }
     }
+    for (const opt of (it.optionen || []) as any[]) {
+      if (!opt?.wertId) continue;
+      const { data: wert } = await getSupabase()
+        .from("shop_produkt_option_werte")
+        .select("id, lagerbestand")
+        .eq("id", opt.wertId)
+        .maybeSingle();
+      if (wert && wert.lagerbestand !== null && wert.lagerbestand !== undefined) {
+        await getSupabase().from("shop_produkt_option_werte").update({
+          lagerbestand: Math.max(0, Number(wert.lagerbestand) - it.quantity),
+        }).eq("id", wert.id);
+      }
+    }
   }
+
+  // Zahlungsbestätigung per E-Mail
+  try {
+    const { error: mailErr } = await getSupabase().functions.invoke("send-transactional-email", {
+      body: {
+        templateName: "zahlung-bestaetigung",
+        recipientEmail: email,
+        idempotencyKey: `shop-payment-${session.id}`,
+        templateData: {
+          customerName: fullName,
+          orderName: `Webshop-Bestellung #${shopOrderId.substring(0, 8)}`,
+          orderNr: shopOrderId.substring(0, 8).toUpperCase(),
+          amountFormatted: `CHF ${totalChf.toFixed(2)}`,
+        },
+      },
+    });
+    if (mailErr) console.error("[payments-webhook] confirmation email failed:", mailErr);
+  } catch (e) {
+    console.error("[payments-webhook] confirmation email exception:", e);
+  }
+
+  console.log(`[payments-webhook] shop_order ${shopOrderId} paid (${env}), CHF ${totalChf.toFixed(2)}`);
 }
+
 
 async function handleTransactionCompleted(transaction: any, env: StripeEnv) {
   // For one-time payments, the transaction may carry a session_id in metadata.

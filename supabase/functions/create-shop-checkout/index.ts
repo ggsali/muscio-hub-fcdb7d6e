@@ -7,13 +7,22 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+interface InOption {
+  optionId: string;
+  optionName?: string;
+  wertId: string;
+  wertName?: string;
+}
+
 interface InItem {
   product_id: string;
   name: string;
   preis: number;
   quantity: number;
   slug: string;
+  optionen?: InOption[];
 }
+
 
 interface InCustomer {
   email?: string;
@@ -119,18 +128,75 @@ Deno.serve(async (req) => {
     if (prodErr) throw prodErr;
     const productMap = new Map(products?.map((p) => [p.id, p]) || []);
 
+    // Optionen serverseitig validieren (Aufschläge dürfen nicht vom Client kommen)
+    const wertIds = [
+      ...new Set(items.flatMap((i) => (i.optionen || []).map((o) => o.wertId)).filter(Boolean)),
+    ];
+    const werteMap = new Map<string, any>();
+    const optionMap = new Map<string, any>();
+    if (wertIds.length > 0) {
+      const { data: werte, error: werteErr } = await supabase
+        .from("shop_produkt_option_werte")
+        .select("id, wert, preis_aufschlag, aktiv, lagerbestand, option_id")
+        .in("id", wertIds);
+      if (werteErr) throw werteErr;
+      for (const w of werte || []) werteMap.set(w.id, w);
+
+      const optionIds = [...new Set((werte || []).map((w: any) => w.option_id).filter(Boolean))];
+      if (optionIds.length > 0) {
+        const { data: opts, error: optErr } = await supabase
+          .from("shop_product_optionen")
+          .select("id, name, product_id, pflichtfeld")
+          .in("id", optionIds);
+        if (optErr) throw optErr;
+        for (const o of opts || []) optionMap.set(o.id, o);
+      }
+    }
+
     const validated = items.map((i) => {
       const p = productMap.get(i.product_id);
       if (!p || !p.aktiv) throw new Error(`Produkt nicht verfügbar: ${i.name}`);
-      if (!p.unendlich_bestand && p.lagerbestand <= 0) throw new Error(`Ausverkauft: ${p.name}`);
       const qty = Math.max(1, Math.min(99, Math.floor(i.quantity)));
+      if (!p.unendlich_bestand && (p.lagerbestand ?? 0) < qty) {
+        throw new Error(
+          (p.lagerbestand ?? 0) <= 0
+            ? `Ausverkauft: ${p.name}`
+            : `Nur noch ${p.lagerbestand}× verfügbar: ${p.name}`
+        );
+      }
+
+      const optionen = (i.optionen || []).map((o) => {
+        const w = werteMap.get(o.wertId);
+        if (!w || w.aktiv === false) throw new Error(`Option nicht verfügbar bei ${p.name}`);
+        const opt = optionMap.get(w.option_id);
+        if (!opt || opt.product_id !== p.id) throw new Error(`Ungültige Option bei ${p.name}`);
+        if (w.lagerbestand !== null && w.lagerbestand !== undefined && w.lagerbestand < qty) {
+          throw new Error(`Ausverkauft: ${p.name} (${w.wert})`);
+        }
+        return {
+          optionId: opt.id,
+          optionName: opt.name,
+          wertId: w.id,
+          wertName: w.wert,
+          aufschlag: Number(w.preis_aufschlag || 0),
+        };
+      });
+
+      const aufschlag = optionen.reduce((s, o) => s + o.aufschlag, 0);
+      const label = optionen.length > 0
+        ? `${p.name} (${optionen.map((o) => `${o.optionName}: ${o.wertName}`).join(", ")})`
+        : p.name;
+
       return {
         product_id: p.id,
         name: p.name,
+        label,
         slug: p.slug,
-        preis: Number(p.preis),
+        preis: Number(p.preis) + aufschlag,
         quantity: qty,
-        stripe_price_id: p.stripe_price_id,
+        // Produkt-Preis-IDs können Optionsaufschläge nicht abbilden
+        stripe_price_id: optionen.length > 0 ? null : p.stripe_price_id,
+        optionen,
       };
     });
 
@@ -155,17 +221,20 @@ Deno.serve(async (req) => {
     if (draftErr) throw draftErr;
     const orderId = draft.id;
 
-    await supabase.from("shop_order_items").insert(
+    const { error: itemsErr } = await supabase.from("shop_order_items").insert(
       validated.map((v) => ({
         order_id: orderId,
         product_id: v.product_id,
         product_slug: v.slug,
-        product_name: v.name,
+        product_name: v.label,
         quantity: v.quantity,
         unit_price: v.preis,
         total: v.preis * v.quantity,
+        optionen: v.optionen,
       }))
     );
+    if (itemsErr) throw itemsErr;
+
 
     const stripe = createStripeClient(environment);
     const origin = req.headers.get("origin") || "https://3dmuscio.com";
@@ -215,7 +284,7 @@ Deno.serve(async (req) => {
           price_data: {
             currency: "chf",
             unit_amount: Math.round(v.preis * 100),
-            product_data: { name: v.name },
+            product_data: { name: v.label },
           },
         };
       })

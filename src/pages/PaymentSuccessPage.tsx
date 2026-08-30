@@ -1,11 +1,22 @@
+import { useEffect, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import successImg from "@/assets/payment-success.png";
 import { Button } from "@/components/ui/button";
 
 export default function PaymentSuccessPage() {
   const [params] = useSearchParams();
+  const cleared = useRef(false);
   const orderNr = params.get("order_id")?.slice(0, 8).toUpperCase();
   const sessionId = params.get("session_id")?.slice(0, 16);
+
+  // Nach erfolgreicher Zahlung Warenkorb leeren (nur einmal)
+  useEffect(() => {
+    if (cleared.current) return;
+    cleared.current = true;
+    // Warenkorb leeren (diese Seite liegt ausserhalb des CartProvider)
+    try { localStorage.removeItem("muscio_cart_v1"); } catch {}
+    window.scrollTo({ top: 0 });
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -46,4 +57,3 @@ export default function PaymentSuccessPage() {
     </div>
   );
 }
-

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
@@ -42,6 +42,14 @@ export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState(searchParams.get("kategorie") || "alle");
   const [sortBy, setSortBy] = useState("featured");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [optionProductIds, setOptionProductIds] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
+
+  // Produkte mit Pflicht-Optionen: dort muss zuerst gewählt werden
+  useEffect(() => {
+    supabase.from("shop_product_optionen").select("product_id").eq("pflichtfeld", true)
+      .then(({ data }) => setOptionProductIds(new Set((data || []).map((o: any) => o.product_id).filter(Boolean))));
+  }, []);
 
   useEffect(() => {
     supabase.from("shop_categories").select("*").eq("aktiv", true).order("sort_order")
@@ -90,6 +98,11 @@ export default function ShopPage() {
 
   const handleAddToCart = (p: Product, e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
+    if (optionProductIds.has(p.id)) {
+      toast({ title: "Optionen wählen", description: `Bitte wähle die Optionen für ${p.name}.` });
+      navigate(`/shop/${p.slug}`);
+      return;
+    }
     const img = p.shop_product_images[0];
     addItem({
       productId: p.id, name: p.name, preis: p.preis, quantity: 1,
