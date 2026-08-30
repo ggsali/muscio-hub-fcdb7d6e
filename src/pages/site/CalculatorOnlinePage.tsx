@@ -2329,19 +2329,6 @@ const CalculatorOnlinePage = () => {
                     <span className="text-foreground font-medium">{getDeliveryText()}</span>
                   </div>
 
-                  {!hasStep && total > 100 && (
-                    <p className="text-xs text-muted-foreground mt-2 text-center">
-                      Vergleich: Spritzgussform ab CHF 5'000 · Mindestmenge 1'000 Stück · 
-                      Lieferzeit 8 Wochen — bei uns ab 1 Stück, 48h.
-                    </p>
-                  )}
-
-                  {!hasStep && total > 50 && (
-                    <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-                      💡 <strong className="text-foreground">Zum Vergleich:</strong> Eine Spritzgussform für dieses Teil würde
-                      CHF 5'000–50'000 kosten – erst ab 10'000 Stück rentabel. Bei uns: ab 1 Stück, sofort.
-                    </div>
-                  )}
 
                   <div className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">
                     <p className="font-semibold text-foreground flex items-center gap-1.5"><Package className="w-4 h-4 text-success" /> Mehr bestellen = mehr sparen</p>
