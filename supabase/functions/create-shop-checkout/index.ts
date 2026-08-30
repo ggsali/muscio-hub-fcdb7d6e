@@ -203,8 +203,6 @@ Deno.serve(async (req) => {
     const subtotal = validated.reduce((s, i) => s + i.preis * i.quantity, 0);
     if (subtotal < 0.5) throw new Error("Mindestbetrag CHF 0.50");
 
-    const shipping = subtotal >= 65 ? 0 : 8;
-
     const { data: draft, error: draftErr } = await supabase.from("shop_orders").insert({
       user_id: userId ?? null,
       customer_email: userEmail || "guest@pending.local",
@@ -214,9 +212,9 @@ Deno.serve(async (req) => {
       shipping_postal_code: "—",
       shipping_country: "Schweiz",
       subtotal,
-      shipping,
+      shipping: 0,
       mwst: 0,
-      total: subtotal + shipping,
+      total: subtotal,
       status: "pending",
 
     }).select("id").single();
@@ -296,13 +294,6 @@ Deno.serve(async (req) => {
       })
     );
 
-    const checkoutSubtotal = lineItems.reduce((sum: number, item: any) => {
-      const unitAmount = item.price_data?.unit_amount || 0;
-      return sum + (unitAmount * item.quantity) / 100;
-    }, 0);
-    const checkoutShipping = checkoutSubtotal >= 65 ? 0 : 8;
-
-
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       ui_mode: "embedded_page",
@@ -310,40 +301,11 @@ Deno.serve(async (req) => {
       ...(customerId
         ? {
             customer: customerId,
-            customer_update: { shipping: "auto", address: "auto", name: "auto" },
+            customer_update: { address: "auto", name: "auto" },
           }
         : { customer_email: effectiveEmail }),
-      shipping_address_collection: { allowed_countries: ["CH", "LI", "DE", "AT"] },
       phone_number_collection: { enabled: true },
       automatic_tax: { enabled: true },
-      shipping_options: checkoutShipping > 0
-        ? [
-            {
-              shipping_rate_data: {
-                type: "fixed_amount",
-                fixed_amount: { amount: 800, currency: "chf" },
-                display_name: "Post CH Priority",
-                delivery_estimate: {
-                  minimum: { unit: "business_day", value: 2 },
-                  maximum: { unit: "business_day", value: 4 },
-                },
-              },
-            },
-          ]
-        : [
-            {
-              shipping_rate_data: {
-                type: "fixed_amount",
-                fixed_amount: { amount: 0, currency: "chf" },
-                display_name: "Gratis Versand (ab CHF 65)",
-                delivery_estimate: {
-                  minimum: { unit: "business_day", value: 2 },
-                  maximum: { unit: "business_day", value: 4 },
-                },
-              },
-            },
-          ],
-
       return_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         shop_order_id: orderId,
