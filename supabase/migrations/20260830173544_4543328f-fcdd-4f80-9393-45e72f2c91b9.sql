@@ -1,0 +1,1 @@
+ALTER TABLE public.shop_orders ADD COLUMN IF NOT EXISTS tracking_nr text;
