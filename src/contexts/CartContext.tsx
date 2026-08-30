@@ -59,12 +59,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const addItem = useCallback((newItem: Omit<CartItem, "id">) => {
     setItems(prev => {
-      const existing = prev.find(i => i.productId === newItem.productId);
+      const key = variantKey(newItem.productId, newItem.optionen);
+      const existing = prev.find(i => variantKey(i.productId, i.optionen) === key);
       if (existing) {
         return prev.map(i =>
-          i.productId === newItem.productId
-            ? { ...i, quantity: i.quantity + newItem.quantity }
-            : i
+          i.id === existing.id ? { ...i, quantity: i.quantity + newItem.quantity } : i
         );
       }
       return [...prev, { ...newItem, id: crypto.randomUUID() }];
@@ -72,19 +71,18 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setIsOpen(true);
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems(prev => prev.filter(i => i.productId !== productId));
+  const removeItem = useCallback((itemId: string) => {
+    setItems(prev => prev.filter(i => i.id !== itemId));
   }, []);
 
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((itemId: string, quantity: number) => {
     if (quantity <= 0) {
-      setItems(prev => prev.filter(i => i.productId !== productId));
+      setItems(prev => prev.filter(i => i.id !== itemId));
     } else {
-      setItems(prev => prev.map(i =>
-        i.productId === productId ? { ...i, quantity } : i
-      ));
+      setItems(prev => prev.map(i => (i.id === itemId ? { ...i, quantity } : i)));
     }
   }, []);
+
 
   const clearCart = useCallback(() => setItems([]), []);
 
