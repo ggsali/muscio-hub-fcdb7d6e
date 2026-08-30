@@ -73,7 +73,7 @@ const QUICK_SEGMENTS: { label: string; filter: SegmentFilter }[] = [
 
 const AUTOMATION_LABELS: Record<string, { titel: string; hinweis: string }> = {
   reaktivierung: { titel: "Reaktivierung", hinweis: "Kunden ohne Auftrag in den letzten X Tagen" },
-  nach_erstem_auftrag: { titel: "Nach erstem Auftrag", hinweis: "Kunden mit genau einem Auftrag, X Tage danach" },
+  nach_erstem_auftrag: { titel: "Kunden mit Auftrag in den letzten {days} Tagen", hinweis: "Diese Kunden haben kürzlich bei dir bestellt – jetzt ist der ideale Zeitpunkt sie für einen weiteren Auftrag zu motivieren." },
 };
 
 function customerName(c: Customer) {
