@@ -39,7 +39,7 @@ type Automation = {
   betreff_vorlage: string | null; inhalt_vorlage: string | null;
 };
 type AutoCandidate = {
-  id: string; name: string; email: string; lastCompleted: string; completedCount: number;
+  id: string; name: string; email: string; lastCompleted: string; completedCount: number; daysAgo: number;
 };
 type SegmentFilter = {
   letzterAuftragOp: "" | "vor" | "innerhalb";
@@ -73,7 +73,7 @@ const QUICK_SEGMENTS: { label: string; filter: SegmentFilter }[] = [
 
 const AUTOMATION_LABELS: Record<string, { titel: string; hinweis: string }> = {
   reaktivierung: { titel: "Reaktivierung", hinweis: "Kunden ohne Auftrag in den letzten X Tagen" },
-  nach_erstem_auftrag: { titel: "Nach erstem Auftrag", hinweis: "Kunden mit genau einem Auftrag, X Tage danach" },
+  nach_erstem_auftrag: { titel: "Kunden mit Auftrag in den letzten {days} Tagen", hinweis: "Diese Kunden haben kürzlich bei dir bestellt – jetzt ist der ideale Zeitpunkt sie für einen weiteren Auftrag zu motivieren." },
 };
 
 function customerName(c: Customer) {
@@ -336,42 +336,31 @@ export default function NewsletterPage() {
 
     for (const c of (cs ?? []) as any[]) {
       if (!c.email || sentTo.has(c.id)) continue;
-      const abgeschlosseneOrders = (c.orders as any[]).filter((o: any) => o.status === "Abgeschlossen");
+      const abgeschlosseneOrders = (c.orders as any[])
+        .filter((o: any) => o.status === "Abgeschlossen")
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       if (abgeschlosseneOrders.length === 0) continue;
 
-      const hatAbgeschlossen = abgeschlosseneOrders.length > 0;
-      const letzterAbgeschlossen = abgeschlosseneOrders
-        .map((o: any) => new Date(o.created_at).getTime())
-        .sort((x: number, y: number) => y - x)[0] ?? null;
+      const letzterAuftrag = abgeschlosseneOrders[0];
+      const letzterAbgeschlossen = new Date(letzterAuftrag.created_at).getTime();
+      const alterTage = (now - letzterAbgeschlossen) / 86400_000;
 
       if (a.typ === "reaktivierung") {
-        const inaktivGenug = letzterAbgeschlossen
-          ? (now - letzterAbgeschlossen) > days * 86400_000
-          : false;
-        if (!hatAbgeschlossen || !inaktivGenug) continue;
+        if (alterTage <= days) continue;
       } else if (a.typ === "nach_erstem_auftrag") {
-        const hatGenauEinen = abgeschlosseneOrders.length === 1;
-        if (!hatGenauEinen) continue;
-
-        const ersterAuftrag = abgeschlosseneOrders[0];
-        const auftragDatum = new Date(ersterAuftrag.created_at).getTime();
-        const alterTage = (now - auftragDatum) / 86400_000;
-        // Fenster: mindestens X Tage alt, aber nicht länger als X + 30 Tage
-        const imFenster = alterTage >= days && alterTage <= days + 30;
-        if (!imFenster) continue;
+        // Kunden die in den letzten X Tagen (default 30) einen Auftrag hatten
+        if (alterTage > days) continue;
       } else {
         continue;
       }
-
 
       out.push({
         id: c.id,
         name: [c.vorname, c.name].filter(Boolean).join(" ") || "—",
         email: c.email,
-        lastCompleted: letzterAbgeschlossen
-          ? new Date(letzterAbgeschlossen).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })
-          : "—",
+        lastCompleted: new Date(letzterAbgeschlossen).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" }),
         completedCount: abgeschlosseneOrders.length,
+        daysAgo: Math.max(1, Math.floor(alterTage)),
       });
     }
     return out.sort((x, y) => x.name.localeCompare(y.name));
@@ -1028,11 +1017,12 @@ export default function NewsletterPage() {
 
           {automations.map((a) => {
             const meta = AUTOMATION_LABELS[a.typ] ?? { titel: a.typ, hinweis: "" };
+            const titel = meta.titel.replace("{days}", String(a.tage_verzoegerung));
             return (
               <section key={a.id} className="bg-card border border-border rounded-xl p-5 space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="font-semibold text-foreground">{meta.titel}</h3>
+                    <h3 className="font-semibold text-foreground">{titel}</h3>
                     <p className="text-xs text-muted-foreground">{meta.hinweis}</p>
                   </div>
                   <Switch checked={a.aktiv}
@@ -1113,8 +1103,8 @@ export default function NewsletterPage() {
                   <tr className="border-b border-border text-muted-foreground">
                     <th className="px-3 py-2 text-left font-medium">Name</th>
                     <th className="px-3 py-2 text-left font-medium">E-Mail</th>
-                    <th className="px-3 py-2 text-left font-medium">Letzter abgeschl. Auftrag</th>
-                    <th className="px-3 py-2 text-right font-medium">Abgeschl. Aufträge</th>
+                    <th className="px-3 py-2 text-left font-medium">Letzter Auftrag</th>
+                    <th className="px-3 py-2 text-right font-medium">Aufträge total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1122,7 +1112,7 @@ export default function NewsletterPage() {
                     <tr key={r.id} className="border-b border-border/50 last:border-0">
                       <td className="px-3 py-2">{r.name}</td>
                       <td className="px-3 py-2 text-muted-foreground">{r.email}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{r.lastCompleted}</td>
+                      <td className="px-3 py-2 text-muted-foreground">vor {r.daysAgo} Tag{r.daysAgo === 1 ? "" : "en"}</td>
                       <td className="px-3 py-2 text-right">{r.completedCount}</td>
                     </tr>
                   ))}
