@@ -1408,19 +1408,19 @@ const CalculatorOnlinePage = () => {
               </Button>
               <div className="flex flex-col items-end gap-1.5">
                 <div
-                  className={`px-5 py-2.5 rounded-2xl font-bold text-lg sm:text-xl tabular-nums shadow-sm flex items-center gap-2 transition-transform duration-300 ${
+                  className={`px-3 py-1.5 lg:px-5 lg:py-2.5 rounded-2xl font-bold text-sm lg:text-xl tabular-nums shadow-sm flex items-center gap-2 transition-transform duration-300 ${
                     kiLoading || priceBadge !== null ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                   } ${priceFlash ? "scale-105 !bg-green-500 !text-white" : ""}`}
                 >
                   {kiLoading ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Analysiert…</>
+                    <><Loader2 className="w-3 h-3 animate-spin" /> Analysiert…</>
                   ) : hasStep
                     ? "Preis nach Prüfung"
                     : priceBadge !== null
                       ? (allSlicerFinished && hasSlicerResult ? `ab ${CHF(totalMin)}` : `ca. ${CHF(quickTotal)}`)
                       : "CHF –.–"}
                   {anySlicerLoading && (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin" />
                   )}
                   {allSlicerFinished && hasSlicerResult && !anySlicerError ? (
                     <span className="ml-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground px-1.5 py-0.5 rounded-full">
