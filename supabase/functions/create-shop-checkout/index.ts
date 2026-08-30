@@ -203,6 +203,8 @@ Deno.serve(async (req) => {
     const subtotal = validated.reduce((s, i) => s + i.preis * i.quantity, 0);
     if (subtotal < 0.5) throw new Error("Mindestbetrag CHF 0.50");
 
+    const shipping = subtotal >= 65 ? 0 : 8;
+
     const { data: draft, error: draftErr } = await supabase.from("shop_orders").insert({
       user_id: userId ?? null,
       customer_email: userEmail || "guest@pending.local",
@@ -212,9 +214,9 @@ Deno.serve(async (req) => {
       shipping_postal_code: "—",
       shipping_country: "Schweiz",
       subtotal,
-      shipping: 0,
+      shipping,
       mwst: 0,
-      total: subtotal,
+      total: subtotal + shipping,
       status: "pending",
 
     }).select("id").single();
