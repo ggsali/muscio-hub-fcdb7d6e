@@ -301,19 +301,7 @@ Deno.serve(async (req) => {
       return sum + (unitAmount * item.quantity) / 100;
     }, 0);
     const checkoutShipping = checkoutSubtotal >= 65 ? 0 : 8;
-    if (checkoutShipping > 0) {
-      lineItems.push({
-        quantity: 1,
-        price_data: {
-          currency: "chf",
-          unit_amount: 800,
-          product_data: {
-            name: "Versand (Post CH Priority)",
-            tax_code: "txcd_99999999",
-          },
-        },
-      });
-    }
+
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -347,7 +335,7 @@ Deno.serve(async (req) => {
               shipping_rate_data: {
                 type: "fixed_amount",
                 fixed_amount: { amount: 0, currency: "chf" },
-                display_name: "Gratis Versand",
+                display_name: "Gratis Versand (ab CHF 65)",
                 delivery_estimate: {
                   minimum: { unit: "business_day", value: 2 },
                   maximum: { unit: "business_day", value: 4 },
@@ -355,6 +343,7 @@ Deno.serve(async (req) => {
               },
             },
           ],
+
       return_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         shop_order_id: orderId,
