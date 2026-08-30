@@ -160,11 +160,14 @@ export default function ShopProdukteAdminPage() {
 
   const openNew = () => {
     setEditing(null);
+    setOptionen([]);
     setForm({ ...emptyForm, sort_order: products.length + 1 });
     setOpen(true);
   };
   const openEdit = (p: Product) => {
     setEditing(p);
+    setOptionen([]);
+    loadOptionen(p.id);
     setForm({
       name: p.name, slug: p.slug,
       kurzbeschreibung: p.kurzbeschreibung || "",
@@ -177,6 +180,7 @@ export default function ShopProdukteAdminPage() {
     });
     setOpen(true);
   };
+
 
   const save = async () => {
     if (!form.name.trim()) { toast.error("Name fehlt"); return; }
