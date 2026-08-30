@@ -1103,8 +1103,8 @@ export default function NewsletterPage() {
                   <tr className="border-b border-border text-muted-foreground">
                     <th className="px-3 py-2 text-left font-medium">Name</th>
                     <th className="px-3 py-2 text-left font-medium">E-Mail</th>
-                    <th className="px-3 py-2 text-left font-medium">Letzter abgeschl. Auftrag</th>
-                    <th className="px-3 py-2 text-right font-medium">Abgeschl. Aufträge</th>
+                    <th className="px-3 py-2 text-left font-medium">Letzter Auftrag</th>
+                    <th className="px-3 py-2 text-right font-medium">Aufträge total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1112,7 +1112,7 @@ export default function NewsletterPage() {
                     <tr key={r.id} className="border-b border-border/50 last:border-0">
                       <td className="px-3 py-2">{r.name}</td>
                       <td className="px-3 py-2 text-muted-foreground">{r.email}</td>
-                      <td className="px-3 py-2 text-muted-foreground">{r.lastCompleted}</td>
+                      <td className="px-3 py-2 text-muted-foreground">vor {r.daysAgo} Tag{r.daysAgo === 1 ? "" : "en"}</td>
                       <td className="px-3 py-2 text-right">{r.completedCount}</td>
                     </tr>
                   ))}
