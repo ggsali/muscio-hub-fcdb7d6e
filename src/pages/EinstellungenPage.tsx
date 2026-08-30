@@ -512,6 +512,27 @@ export default function EinstellungenPage() {
             ))}
           </div>
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+            <h3 className="font-semibold text-sm">Druckkapazität (Lieferzeit-Berechnung)</h3>
+            {[
+              { key: "drucker_anzahl", label: "Anzahl aktive Drucker", unit: "Drucker", step: "1" },
+              { key: "druckstunden_pro_tag", label: "Druckstunden pro Tag", unit: "h / Tag", step: "1" },
+            ].map(f => (
+              <div key={f.key} className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <Label className="text-sm">{f.label}</Label>
+                  <div className="text-xs text-muted-foreground">{f.unit}</div>
+                </div>
+                <Input
+                  type="number"
+                  step={f.step}
+                  value={websiteSettings[f.key] ?? ""}
+                  onChange={e => setWebsiteSettings(prev => ({ ...prev, [f.key]: parseFloat(e.target.value) || 0 }))}
+                  className="w-28 md:w-32 bg-input border-border text-right tabular-nums flex-shrink-0"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <h3 className="font-semibold text-sm">Verrechnungssätze (wird vom ERP übernommen)</h3>
             <p className="text-xs text-muted-foreground">Die Preise pro Gramm, Druckzeit etc. werden aus den Verrechnungssätzen oben automatisch für den Website-Kalkulator verwendet.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
