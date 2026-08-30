@@ -39,7 +39,7 @@ type Automation = {
   betreff_vorlage: string | null; inhalt_vorlage: string | null;
 };
 type AutoCandidate = {
-  id: string; name: string; email: string; lastCompleted: string; completedCount: number;
+  id: string; name: string; email: string; lastCompleted: string; completedCount: number; daysAgo: number;
 };
 type SegmentFilter = {
   letzterAuftragOp: "" | "vor" | "innerhalb";
