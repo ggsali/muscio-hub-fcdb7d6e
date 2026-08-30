@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { CountUp } from "@/components/site/CountUp";
@@ -9,9 +9,6 @@ import {
   Zap, Building2, CheckCircle,
 } from "lucide-react";
 
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
 import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -374,19 +371,23 @@ const MaterialsTeaser = () => {
 
 /* ─── FAQ ─── */
 const faqs = [
-  { q: "Was kostet ein 3D-Druck?", a: "Der Preis ergibt sich aus Material, Druckzeit und Nachbearbeitung. Im Online-Kalkulator sehen Sie den Preis sofort und transparent aufgeschlüsselt — ab CHF 0.055/g Material. Ab 5 Stück gibt es 10 %, ab 10 Stück 15 % Mengenrabatt." },
-  { q: "Wie lange dauert die Lieferung?", a: "Standard 48 Stunden Produktionszeit ab Auftragsbestätigung, danach Versand mit Post oder DHL innerhalb der Schweiz (1–2 Tage). Express ist auf Anfrage möglich, Abholung in Eschlikon TG jederzeit." },
-  { q: "Welche Dateiformate werden unterstützt?", a: "STL, STEP/STP, 3MF und OBJ bis 500 MB. Der Kalkulator berechnet Volumen und Gewicht automatisch aus Ihrer Datei — ohne manuelle Eingabe." },
-  { q: "Welche Materialien stehen zur Auswahl?", a: "FDM: PLA, PETG, ABS, ASA, TPU und Nylon in über 12 Farben. SLA: Resin für höchste Detailtreue. Unsicher? Wir beraten Sie kostenlos zur Materialwahl." },
-  { q: "Welche Toleranzen und Genauigkeit erreichen Sie?", a: "FDM typisch ±0.1 bis ±0.2 mm bei Schichthöhen von 0.1–0.3 mm. SLA/Resin erreicht Auflösungen bis 0.025 mm für filigrane Bauteile." },
-  { q: "Eignet sich der Service für industrielle Anwendungen?", a: "Ja. Wir fertigen Funktionsteile, Betriebsmittel, Vorrichtungen und Ersatzteile für KMU, Startups und Industriekunden — auch als Kleinserie mit reproduzierbaren Parametern." },
-  { q: "Wie erfolgt der Versand?", a: "Versand als Paket mit Schweizer Post oder DHL, ab CHF 65 Bestellwert kostenlos. Kein Zoll, keine Wartezeit aus dem Ausland. Abholung vor Ort ist ebenfalls möglich." },
-  { q: "Wie stellen Sie die Qualität sicher?", a: "Jedes Teil wird vor dem Versand visuell und dimensionell geprüft. Fehldrucke gehen nicht raus — bei Abweichungen drucken wir kostenlos nach." },
+  { q: "Was kostet ein 3D-Druck in der Schweiz?", a: "Der Preis ergibt sich aus Material, Druckzeit und Nachbearbeitung — Kleinteile gibt es bereits ab CHF 5.–. Im Online-Kalkulator sehen Sie den Preis sofort und transparent aufgeschlüsselt, ab CHF 0.055 pro Gramm Material. Ab 5 Stück erhalten Sie 10 % Mengenrabatt, ab 10 Stück 15 %." },
+  { q: "Was ist der Unterschied zwischen FDM- und SLA-Druck?", a: "Beim FDM-Druck wird geschmolzener Kunststoff Schicht für Schicht aufgetragen — ideal für robuste Funktionsteile, Ersatzteile und grössere Bauteile. SLA härtet flüssiges Resin mit Licht aus und erreicht Auflösungen bis 0.025 mm für sehr feine Details und glatte Oberflächen. Wir beraten Sie kostenlos, welches Verfahren für Ihr Bauteil das richtige ist." },
+  { q: "Welche Materialien stehen zur Auswahl?", a: "Im FDM-Verfahren drucken wir PLA, PETG, ABS, ASA, TPU und Nylon in über 12 Farben. Für höchste Detailtreue steht im SLA-Verfahren Resin zur Verfügung. Unsicher bei der Materialwahl? Unsere kostenlose KI-Materialberatung im Kalkulator hilft Ihnen weiter." },
+  { q: "Wie lange dauert die Lieferung?", a: "Die Standardproduktion dauert 48 Stunden ab Auftragsbestätigung. Danach versenden wir mit der Schweizer Post oder DHL innerhalb der Schweiz, was 1–2 Werktage dauert. Express-Fertigung ist auf Anfrage möglich, Abholung in Eschlikon TG jederzeit." },
+  { q: "Wo befindet sich 3DMuscio?", a: "Unser Standort ist in Eschlikon im Kanton Thurgau, zentral in der Ostschweiz zwischen Winterthur und St. Gallen. Wir fertigen alle Teile lokal in der Schweiz — ohne Zoll und ohne lange Wartezeiten aus dem Ausland. Bestellungen können Sie schweizweit online aufgeben oder direkt vor Ort abholen." },
+  { q: "Gibt es eine Mindestbestellmenge?", a: "Nein, bei uns gibt es keine Mindestbestellmenge — wir drucken auch ein einzelnes Teil ab CHF 5.–. Vom Einzelstück über Prototypen bis zur Kleinserie mit reproduzierbaren Parametern ist alles möglich. Ab 5 Stück profitieren Sie zusätzlich von Mengenrabatten." },
+  { q: "Welche Dateiformate werden unterstützt?", a: "Wir verarbeiten STL, STEP/STP, 3MF und OBJ bis 500 MB Dateigrösse. Der Online-Kalkulator berechnet Volumen, Gewicht und Preis automatisch aus Ihrer Datei. Eine manuelle Eingabe von Massen ist nicht nötig." },
+  { q: "Wie stellen Sie die Qualität sicher?", a: "Jedes Teil wird vor dem Versand visuell und dimensionell geprüft — FDM typisch mit Toleranzen von ±0.1 bis ±0.2 mm. Fehldrucke verlassen unser Haus nicht. Bei Abweichungen drucken wir Ihr Teil kostenlos nach." },
 ];
 
 
 const FAQ = () => (
-  <section className="py-28 relative">
+  <section className="py-28 relative" id="faq">
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd(faqs)) }}
+    />
     <div className="container mx-auto px-4 max-w-3xl">
       <ScrollReveal>
         <div className="mb-12 text-center">
@@ -396,16 +397,16 @@ const FAQ = () => (
           </h2>
         </div>
       </ScrollReveal>
-      <ScrollReveal>
-        <Accordion type="single" collapsible className="w-full">
-          {faqs.map((f, i) => (
-            <AccordionItem key={i} value={`f-${i}`} className="border-border">
-              <AccordionTrigger className="text-left font-heading font-semibold hover:no-underline">{f.q}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground text-sm leading-relaxed">{f.a}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </ScrollReveal>
+      <div className="space-y-8">
+        {faqs.map((f, i) => (
+          <ScrollReveal key={i}>
+            <div className="border-b border-border pb-8">
+              <h3 className="font-heading font-semibold text-lg text-foreground mb-3">{f.q}</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">{f.a}</p>
+            </div>
+          </ScrollReveal>
+        ))}
+      </div>
     </div>
   </section>
 );
@@ -573,7 +574,7 @@ const Index = () => (
           inLanguage: "de-CH",
           publisher: { "@id": "https://3dmuscio.com/#organization" },
         },
-        faqJsonLd(faqs),
+        
       ]}
     />
     <HeroBento />

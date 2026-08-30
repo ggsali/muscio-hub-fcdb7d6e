@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

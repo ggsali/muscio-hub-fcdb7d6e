@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "@/lib/router-compat";
 import successImg from "@/assets/payment-success.png";
 import { Button } from "@/components/ui/button";
 

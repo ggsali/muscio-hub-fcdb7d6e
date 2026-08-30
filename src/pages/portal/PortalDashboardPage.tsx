@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Package, FileText, ArrowRight, MapPin, X } from "lucide-react";
 import { formatCHF } from "@/lib/calc";
 import { StatusBadge } from "@/components/StatusBadge";

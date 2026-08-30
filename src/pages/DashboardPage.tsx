@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
 import { formatCHF, formatPct } from "@/lib/calc";
 import { StatusBadge } from "@/components/StatusBadge";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus, ChevronRight, ShoppingBag, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -72,19 +72,19 @@ export default function DashboardPage() {
         const abgeschlossen = orders.filter(o => o.status === "Abgeschlossen");
         const umsatz = abgeschlossen.reduce((s, o) => s + (o.umsatz_total || 0), 0);
         const gewinn = abgeschlossen.reduce((s, o) => s + (o.gewinn_total || 0), 0);
-        const offeneAuftraege = orders.filter(o => ["Offen", "In Bearbeitung"].includes(o.status)).length;
-        const marges = abgeschlossen.filter(o => o.marge > 0).map(o => o.marge);
-        const avgMarge = marges.length ? marges.reduce((a, b) => a + b, 0) / marges.length : 0;
+        const offeneAuftraege = orders.filter(o => ["Offen", "In Bearbeitung"].includes(o.status ?? "")).length;
+        const marges = abgeschlossen.filter(o => (o.marge ?? 0) > 0).map(o => o.marge ?? 0);
+        const avgMarge = marges.length ? marges.reduce((a, b) => (a ?? 0) + (b ?? 0), 0) / marges.length : 0;
         const investFonds = gewinn * (settings.investitions_fonds_prozent / 100);
 
         setKpis({ umsatz, gewinn, offeneAuftraege, avgMarge, investFonds });
 
         const recent = orders.slice(0, 5).map(o => ({
           id: o.id,
-          datum: o.datum,
+          datum: o.datum ?? "",
           beschreibung: o.name || o.beschreibung || "Ohne Titel",
           umsatz_total: o.umsatz_total || 0,
-          status: o.status,
+          status: o.status ?? "",
           customer_name: fullName(o.customers),
         }));
         setRecentOrders(recent);

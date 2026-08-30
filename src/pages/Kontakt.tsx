@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 // @ts-ignore
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useCallback } from "react";
 import { useCart } from "@/contexts/CartContext";
@@ -55,7 +55,7 @@ export const CartDrawer = () => {
       })),
       customer: profile
         ? {
-            email: user.email,
+            email: user.email ?? "",
             name: profile.full_name || "",
             phone: profile.phone || "",
             address: profile.address || "",
@@ -63,7 +63,7 @@ export const CartDrawer = () => {
             postal_code: profile.postal_code || "",
             country: profile.country || "Schweiz",
           }
-        : { email: user.email },
+        : { email: user.email ?? "" },
       userId: user.id,
       returnUrl: `${window.location.origin}/payment-success`,
       onError: (message) => {

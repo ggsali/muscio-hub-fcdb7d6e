@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Mail, Phone, Clock, User, RefreshCw, ExternalLink, Plus, ChevronRight, X, ArrowLeft, Download, Paperclip, Loader2, Trash2, MapPin } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import InquiryChat from "@/components/InquiryChat";

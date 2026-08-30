@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet } from "@/lib/router-compat";
 import { Header } from "./site/Header";
 import { Footer } from "./site/Footer";
 import { CursorSpotlight } from "./site/CursorSpotlight";

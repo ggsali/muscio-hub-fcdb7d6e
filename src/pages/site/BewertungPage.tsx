@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "@/lib/router-compat";
 import { Star, CheckCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

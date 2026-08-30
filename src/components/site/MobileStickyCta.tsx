@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "@/lib/router-compat";
 import { UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";

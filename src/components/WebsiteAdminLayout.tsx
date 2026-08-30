@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNoIndex } from "@/hooks/useNoIndex";

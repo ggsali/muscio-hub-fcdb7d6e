@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { toast } from "sonner";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { supabase } from "@/integrations/supabase/client";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "@/lib/router-compat";
 import Seo from "@/components/site/Seo";
 import DbContentPage, { type DbFaq } from "@/components/site/DbContentPage";
 import { supabase } from "@/integrations/supabase/client";

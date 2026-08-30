@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { Plus, Search, ChevronRight, Building2, Globe, Phone, MapPin, CheckCircle2, Briefcase, RefreshCw, MoreVertical, Link2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

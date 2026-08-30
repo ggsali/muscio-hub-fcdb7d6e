@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 export const ShopPromoBanner = () => (
