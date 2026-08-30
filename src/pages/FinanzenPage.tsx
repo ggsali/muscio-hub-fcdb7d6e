@@ -98,17 +98,13 @@ export default function FinanzenPage() {
 
   async function load() {
     setLoading(true);
-    const [b, o, c, a] = await Promise.all([
-      (supabase.from as any)("bills")
-        .select("id, titel, betrag, bezahlt, bezahlt_am, faellig_am, created_at, order_id, rechnungsnummer, rechnungs_datum, empfaenger_name, file_path, filename")
-        .order("created_at", { ascending: false }),
+    const [o, c, a] = await Promise.all([
       (supabase.from as any)("orders")
         .select("id, name, beschreibung, datum, created_at, status, umsatz_total, kosten_total, gewinn_total, customer_id")
         .order("created_at", { ascending: false }),
       (supabase.from as any)("customers").select("id, name, vorname, firma"),
       (supabase.from as any)("ausgaben").select("*").order("datum", { ascending: false }),
     ]);
-    setBills((b.data as Bill[]) || []);
     setOrders((o.data as Order[]) || []);
     setCustomers((c.data as Customer[]) || []);
     setAusgaben((a.data as Ausgabe[]) || []);
