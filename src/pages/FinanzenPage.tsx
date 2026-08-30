@@ -16,28 +16,12 @@ import {
 import { toast } from "sonner";
 import {
   Plus, TrendingUp, TrendingDown, Wallet,
-  Download, Trash2, Paperclip, CheckCircle2, Circle, AlertTriangle,
+  Download, Trash2, Paperclip,
 } from "lucide-react";
 
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-
-type Bill = {
-  id: string;
-  titel: string;
-  betrag: number;
-  bezahlt: boolean;
-  bezahlt_am: string | null;
-  faellig_am: string | null;
-  created_at: string;
-  order_id: string | null;
-  rechnungsnummer: string | null;
-  rechnungs_datum: string | null;
-  empfaenger_name: string | null;
-  file_path: string | null;
-  filename: string | null;
-};
 
 type Order = {
   id: string;
@@ -91,7 +75,6 @@ function rangeBounds(key: RangeKey, from: string, to: string): { start: Date; en
 }
 
 export default function FinanzenPage() {
-  const [bills, setBills] = useState<Bill[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [ausgaben, setAusgaben] = useState<Ausgabe[]>([]);
@@ -115,17 +98,13 @@ export default function FinanzenPage() {
 
   async function load() {
     setLoading(true);
-    const [b, o, c, a] = await Promise.all([
-      (supabase.from as any)("bills")
-        .select("id, titel, betrag, bezahlt, bezahlt_am, faellig_am, created_at, order_id, rechnungsnummer, rechnungs_datum, empfaenger_name, file_path, filename")
-        .order("created_at", { ascending: false }),
+    const [o, c, a] = await Promise.all([
       (supabase.from as any)("orders")
         .select("id, name, beschreibung, datum, created_at, status, umsatz_total, kosten_total, gewinn_total, customer_id")
         .order("created_at", { ascending: false }),
       (supabase.from as any)("customers").select("id, name, vorname, firma"),
       (supabase.from as any)("ausgaben").select("*").order("datum", { ascending: false }),
     ]);
-    setBills((b.data as Bill[]) || []);
     setOrders((o.data as Order[]) || []);
     setCustomers((c.data as Customer[]) || []);
     setAusgaben((a.data as Ausgabe[]) || []);
@@ -218,28 +197,6 @@ export default function FinanzenPage() {
     const { data } = await supabase.storage.from("bills").createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
     else toast.error("Beleg konnte nicht geöffnet werden");
-  }
-
-  function daysUntil(dateStr: string | null): number | null {
-    if (!dateStr) return null;
-    const diff = new Date(dateStr).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0);
-    return Math.ceil(diff / 86400000);
-  }
-
-  async function downloadBill(path: string, filename?: string | null) {
-    const { data, error } = await supabase.storage.from("bills").createSignedUrl(path, 300);
-    if (error || !data?.signedUrl) {
-      toast.error("PDF konnte nicht geladen werden");
-      return;
-    }
-    const a = document.createElement("a");
-    a.href = data.signedUrl;
-    a.download = filename || path.split("/").pop() || "rechnung.pdf";
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
   }
 
   async function saveAusgabe() {
@@ -405,7 +362,6 @@ export default function FinanzenPage() {
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
           <TabsTrigger value="auftraege">Aufträge</TabsTrigger>
-          <TabsTrigger value="rechnungen">Rechnungen</TabsTrigger>
           <TabsTrigger value="ausgaben">Ausgaben</TabsTrigger>
         </TabsList>
 
@@ -522,76 +478,6 @@ export default function FinanzenPage() {
                 )}
               </table>
             </div>
-          </div>
-        </TabsContent>
-
-        {/* RECHNUNGEN */}
-        <TabsContent value="rechnungen" className="space-y-4 mt-4">
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
-              <h2 className="font-semibold text-sm">Alle Rechnungen ({bills.length})</h2>
-            </div>
-            {bills.length === 0 ? (
-              <div className="p-8 text-center text-sm text-muted-foreground">Noch keine Rechnungen erfasst.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="text-left px-4 py-2">Status</th>
-                      <th className="text-left px-4 py-2">Rechnung</th>
-                      <th className="text-left px-4 py-2">Empfänger</th>
-                      <th className="text-left px-4 py-2">Datum</th>
-                      <th className="text-right px-4 py-2">Betrag</th>
-                      <th className="px-4 py-2" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {bills.map(b => {
-                      const days = daysUntil(b.faellig_am);
-                      const isOverdue = !b.bezahlt && days !== null && days < 0;
-                      return (
-                        <tr key={b.id} className="hover:bg-muted/30">
-                          <td className="px-4 py-2 whitespace-nowrap">
-                            {b.bezahlt ? (
-                              <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
-                                <CheckCircle2 className="w-4 h-4" /> Bezahlt
-                              </span>
-                            ) : isOverdue ? (
-                              <span className="inline-flex items-center gap-1 text-xs text-destructive font-medium">
-                                <AlertTriangle className="w-4 h-4" /> Überfällig
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                                <Circle className="w-4 h-4" /> Offen
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2">
-                            <div className="font-medium">{b.titel}</div>
-                            {b.rechnungsnummer && <div className="text-[11px] text-muted-foreground">{b.rechnungsnummer}</div>}
-                          </td>
-                          <td className="px-4 py-2 text-muted-foreground">{b.empfaenger_name || "—"}</td>
-                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
-                            {b.rechnungs_datum
-                              ? new Date(b.rechnungs_datum).toLocaleDateString("de-CH")
-                              : new Date(b.created_at).toLocaleDateString("de-CH")}
-                          </td>
-                          <td className="px-4 py-2 text-right font-medium">CHF {fmtCHF(Number(b.betrag))}</td>
-                          <td className="px-4 py-2 text-right whitespace-nowrap">
-                            {b.file_path && (
-                              <Button size="sm" variant="outline" onClick={() => downloadBill(b.file_path!, b.filename)}>
-                                <Download className="w-3.5 h-3.5 mr-1" /> PDF
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         </TabsContent>
 
