@@ -335,7 +335,7 @@ Deno.serve(async (req) => {
               shipping_rate_data: {
                 type: "fixed_amount",
                 fixed_amount: { amount: 0, currency: "chf" },
-                display_name: "Gratis Versand",
+                display_name: "Gratis Versand (ab CHF 65)",
                 delivery_estimate: {
                   minimum: { unit: "business_day", value: 2 },
                   maximum: { unit: "business_day", value: 4 },
@@ -343,6 +343,7 @@ Deno.serve(async (req) => {
               },
             },
           ],
+
       return_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         shop_order_id: orderId,
