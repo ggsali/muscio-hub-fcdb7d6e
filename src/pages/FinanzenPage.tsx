@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import {
   Plus, TrendingUp, TrendingDown, Wallet,
-  Download, Trash2, Paperclip,
+  Download, Trash2, Paperclip, CheckCircle2, Circle, AlertTriangle,
 } from "lucide-react";
 
 import {
