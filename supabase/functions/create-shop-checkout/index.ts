@@ -83,12 +83,23 @@ Deno.serve(async (req) => {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  console.log("[checkout] STRIPE_SECRET_KEY vorhanden:", !!stripeKey);
+  console.log("[checkout] Key prefix:", stripeKey?.slice(0, 7));
+
+  if (!stripeKey) {
+    return new Response(
+      JSON.stringify({ error: "STRIPE_SECRET_KEY nicht konfiguriert" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     const body = await req.json();
     const items = (body?.items || []) as InItem[];
     const inCustomer = (body?.customer || null) as InCustomer | null;
@@ -255,11 +266,11 @@ Deno.serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
-    console.error("create-shop-checkout error:", e);
-    return new Response(JSON.stringify({ error: getStripeErrorMessage(e) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  } catch (err: any) {
+    console.error("[checkout] Fehler:", err?.message, err?.stack);
+    return new Response(
+      JSON.stringify({ error: err?.message || "Unbekannter Fehler" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
