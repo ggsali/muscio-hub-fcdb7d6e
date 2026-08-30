@@ -81,10 +81,10 @@ export default function DashboardPage() {
 
         const recent = orders.slice(0, 5).map(o => ({
           id: o.id,
-          datum: o.datum,
+          datum: o.datum ?? "",
           beschreibung: o.name || o.beschreibung || "Ohne Titel",
           umsatz_total: o.umsatz_total || 0,
-          status: o.status,
+          status: o.status ?? "",
           customer_name: fullName(o.customers),
         }));
         setRecentOrders(recent);
