@@ -144,6 +144,7 @@ export default function EinstellungenPage() {
   const loadWebsiteSettings = async () => {
     const { data } = await supabase.from("settings").select("*").in("key", [
       "postProcessingFee", "shippingCost", "freeShippingThreshold", "bulkDiscount5", "bulkDiscount10", "mwst",
+      "drucker_anzahl", "druckstunden_pro_tag",
     ]);
     if (data && data.length > 0) {
       const ws: Record<string, number> = {};
