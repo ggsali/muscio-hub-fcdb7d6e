@@ -1017,11 +1017,12 @@ export default function NewsletterPage() {
 
           {automations.map((a) => {
             const meta = AUTOMATION_LABELS[a.typ] ?? { titel: a.typ, hinweis: "" };
+            const titel = meta.titel.replace("{days}", String(a.tage_verzoegerung));
             return (
               <section key={a.id} className="bg-card border border-border rounded-xl p-5 space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="font-semibold text-foreground">{meta.titel}</h3>
+                    <h3 className="font-semibold text-foreground">{titel}</h3>
                     <p className="text-xs text-muted-foreground">{meta.hinweis}</p>
                   </div>
                   <Switch checked={a.aktiv}
