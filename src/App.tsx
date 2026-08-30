@@ -39,6 +39,7 @@ import ProjectUploadPage from "@/pages/ProjectUploadPage";
 import ChatPage from "@/pages/ChatPage";
 import PaymentSuccessPage from "@/pages/PaymentSuccessPage";
 import WebsiteBestellungenPage from "@/pages/WebsiteBestellungenPage";
+import ShopBestellungDetailPage from "@/pages/ShopBestellungDetailPage";
 import WebsiteKundenAdminPage from "@/pages/WebsiteKundenAdminPage";
 import NewsletterPage from "@/pages/NewsletterPage";
 import NewsletterAbmeldenPage from "@/pages/site/NewsletterAbmeldenPage";
@@ -230,6 +231,7 @@ const App = () => (
                 <Route path="kalender" element={<KalenderPage />} />
                 <Route path="chat" element={<ChatPage />} />
                 <Route path="website/bestellungen" element={<WebsiteBestellungenPage />} />
+                <Route path="shop/bestellungen/:id" element={<ShopBestellungDetailPage />} />
                 <Route path="website/kunden" element={<WebsiteKundenAdminPage />} />
                 <Route path="newsletter" element={<NewsletterPage />} />
 
@@ -242,6 +244,7 @@ const App = () => (
                 <Route index element={<WebsiteAdminDashboardPage />} />
                 <Route path="analyse" element={<WebsiteAnalyticsPage />} />
                 <Route path="bestellungen" element={<WebsiteBestellungenPage />} />
+                <Route path="bestellungen/:id" element={<ShopBestellungDetailPage />} />
                 <Route path="shop" element={<ShopUebersichtAdminPage />} />
                 <Route path="shop-produkte" element={<ShopProdukteAdminPage />} />
                 <Route path="blog" element={<BlogAdminPage />} />
