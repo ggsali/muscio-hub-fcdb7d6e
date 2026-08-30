@@ -66,6 +66,20 @@ export default function ShopDetailPage() {
           ),
         };
         setProduct(sorted);
+        const { data: opts } = await supabase
+          .from("shop_product_optionen")
+          .select("*, shop_produkt_option_werte(*)")
+          .eq("product_id", (data as any).id)
+          .order("sort_order");
+        const cleaned: ProductOption[] = ((opts as any[]) || []).map(o => ({
+          ...o,
+          shop_produkt_option_werte: [...(o.shop_produkt_option_werte || [])]
+            .filter((w: any) => w.aktiv)
+            .sort((a: any, b: any) => a.sort_order - b.sort_order)
+            .map((w: any) => ({ ...w, preis_aufschlag: Number(w.preis_aufschlag) || 0 })),
+        }));
+        setOptionen(cleaned);
+        setGewaehlteOptionen({});
         if ((data as any).kategorie_id) {
           const { data: rel } = await supabase
             .from("shop_products")
@@ -82,20 +96,44 @@ export default function ShopDetailPage() {
     load();
   }, [slug]);
 
+  const preisAufschlag = optionen.reduce((sum, option) => {
+    const w = option.shop_produkt_option_werte.find(x => x.id === gewaehlteOptionen[option.id]);
+    return sum + (w?.preis_aufschlag || 0);
+  }, 0);
+  const einzelPreis = (product?.preis || 0) + preisAufschlag;
+
   const handleAddToCart = () => {
     if (!product) return;
+    const fehlend = optionen.filter(o => o.pflichtfeld && !gewaehlteOptionen[o.id]);
+    if (fehlend.length > 0) {
+      toast({
+        title: "Bitte alle Optionen wählen",
+        description: `Noch nicht gewählt: ${fehlend.map(o => o.name).join(", ")}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    const gewaehlt = optionen
+      .map(o => {
+        const w = o.shop_produkt_option_werte.find(x => x.id === gewaehlteOptionen[o.id]);
+        return w ? { optionId: o.id, optionName: o.name, wertId: w.id, wertName: w.wert, aufschlag: w.preis_aufschlag } : null;
+      })
+      .filter(Boolean) as { optionId: string; optionName: string; wertId: string; wertName: string; aufschlag: number }[];
+
     const primaryImg = product.shop_product_images.find(i => i.is_primary) || product.shop_product_images[0];
     addItem({
-      productId: product.id, name: product.name, preis: product.preis, quantity,
+      productId: product.id, name: product.name, preis: einzelPreis, quantity,
       image: primaryImg ? getImageUrl(primaryImg.storage_path) : undefined, slug: product.slug,
+      optionen: gewaehlt.length ? gewaehlt : undefined,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
-    toast({ title: "In den Warenkorb hinzugefügt", description: `${quantity}× ${product.name}` });
+    toast({ title: "In den Warenkorb gelegt ✓", description: `${quantity}× ${product.name}` });
   };
 
   const inStock = product ? (product.unendlich_bestand || product.lagerbestand > 0) : false;
   const discount = product?.vergleichspreis ? Math.round((1 - product.preis / product.vergleichspreis) * 100) : null;
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
   if (!product) return (
