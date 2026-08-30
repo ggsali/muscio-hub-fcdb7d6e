@@ -220,7 +220,7 @@ export default function ShopDetailPage() {
             {product.shop_categories && <span className="text-xs font-medium text-primary uppercase tracking-widest mb-2">{product.shop_categories.name}</span>}
             <h1 className="font-heading text-3xl md:text-4xl font-extrabold text-foreground tracking-tight mb-3">{product.name}</h1>
             <div className="flex items-baseline gap-3 mb-4">
-              <span className="text-3xl font-bold text-foreground">CHF {product.preis.toFixed(2)}</span>
+              <span className="text-3xl font-bold text-foreground">CHF {einzelPreis.toFixed(2)}</span>
               {product.vergleichspreis && <span className="text-lg text-muted-foreground line-through">CHF {product.vergleichspreis.toFixed(2)}</span>}
               {discount && <span className="text-sm font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded">{discount}% Rabatt</span>}
             </div>
@@ -234,6 +234,77 @@ export default function ShopDetailPage() {
               </span>
               {product.material && <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-muted text-muted-foreground">{product.material}</span>}
             </div>
+
+            {optionen.length > 0 && (
+              <div className="mb-6 space-y-5">
+                {optionen.map(option => (
+                  <div key={option.id}>
+                    <p className="text-sm font-semibold mb-2">
+                      {option.name}
+                      {option.pflichtfeld && <span className="text-destructive ml-1">*</span>}
+                    </p>
+
+                    {option.typ === "farbe" && (
+                      <div className="flex gap-2 flex-wrap">
+                        {option.shop_produkt_option_werte.map(wert => (
+                          <button
+                            key={wert.id}
+                            type="button"
+                            disabled={wert.lagerbestand === 0}
+                            onClick={() => setGewaehlteOptionen(prev => ({ ...prev, [option.id]: wert.id }))}
+                            className={cn("w-10 h-10 rounded-full border-2 transition-all",
+                              gewaehlteOptionen[option.id] === wert.id ? "border-primary scale-110 shadow-md" : "border-border",
+                              wert.lagerbestand === 0 && "opacity-40 cursor-not-allowed")}
+                            style={{ backgroundColor: wert.hex_code || "#888888" }}
+                            title={`${wert.wert}${wert.preis_aufschlag > 0 ? ` (+CHF ${wert.preis_aufschlag.toFixed(2)})` : ""}`}
+                            aria-label={wert.wert}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {option.typ !== "farbe" && option.typ !== "dropdown" && (
+                      <div className="flex gap-2 flex-wrap">
+                        {option.shop_produkt_option_werte.map(wert => (
+                          <button
+                            key={wert.id}
+                            type="button"
+                            disabled={wert.lagerbestand === 0}
+                            onClick={() => setGewaehlteOptionen(prev => ({ ...prev, [option.id]: wert.id }))}
+                            className={cn("px-4 py-2 rounded-xl border text-sm font-medium transition-all",
+                              gewaehlteOptionen[option.id] === wert.id
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border hover:border-primary/50",
+                              wert.lagerbestand === 0 && "opacity-40 cursor-not-allowed line-through")}
+                          >
+                            {wert.wert}
+                            {wert.preis_aufschlag > 0 && (
+                              <span className="text-xs text-muted-foreground ml-1">+CHF {wert.preis_aufschlag.toFixed(2)}</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {option.typ === "dropdown" && (
+                      <select
+                        value={gewaehlteOptionen[option.id] || ""}
+                        onChange={e => setGewaehlteOptionen(prev => ({ ...prev, [option.id]: e.target.value }))}
+                        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-base"
+                      >
+                        <option value="">Bitte wählen…</option>
+                        {option.shop_produkt_option_werte.map(wert => (
+                          <option key={wert.id} value={wert.id} disabled={wert.lagerbestand === 0}>
+                            {wert.wert}{wert.preis_aufschlag > 0 ? ` (+CHF ${wert.preis_aufschlag.toFixed(2)})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
 
             {inStock && (
               <div className="flex items-center gap-3 mb-6">
