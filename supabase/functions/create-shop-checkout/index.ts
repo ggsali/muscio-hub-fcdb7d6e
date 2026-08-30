@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
       mwst: 0,
       total: subtotal,
       status: "pending",
-      environment,
+
     }).select("id").single();
     if (draftErr) throw draftErr;
     const orderId = draft.id;
