@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
 import { calcUmsatz, calcKosten, calcGewinn, calcMarge, formatCHF, formatPct, Settings } from "@/lib/calc";

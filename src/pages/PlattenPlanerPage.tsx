@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "@/lib/router-compat";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";

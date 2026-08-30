@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { CountUp } from "@/components/site/CountUp";

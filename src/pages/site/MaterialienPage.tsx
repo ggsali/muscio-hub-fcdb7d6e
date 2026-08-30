@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { useEffect, useState } from "react";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink as RouterNavLink, useLocation } from "react-router-dom";
+import { NavLink as RouterNavLink, useLocation } from "@/lib/router-compat";
 import { cn } from "@/lib/utils";
 
 interface SidebarNavLinkProps {

@@ -1,4 +1,4 @@
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "@/lib/router-compat";
 import Seo from "@/components/site/Seo";
 import AnswerLanding from "@/components/site/AnswerLanding";
 import { getLocation } from "@/data/seo/locations";

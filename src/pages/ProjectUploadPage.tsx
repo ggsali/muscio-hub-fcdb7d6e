@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "@/lib/router-compat";
 import { Upload, CheckCircle, AlertCircle, FileText, Image, Box, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

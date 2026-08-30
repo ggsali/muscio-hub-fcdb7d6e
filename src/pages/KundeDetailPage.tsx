@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import InquiryChat from "@/components/InquiryChat";
 import { Button } from "@/components/ui/button";

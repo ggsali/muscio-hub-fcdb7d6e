@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 

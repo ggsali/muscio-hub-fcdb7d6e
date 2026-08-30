@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link, Navigate } from "@/lib/router-compat";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowUpRight, ImageIcon, Box, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";

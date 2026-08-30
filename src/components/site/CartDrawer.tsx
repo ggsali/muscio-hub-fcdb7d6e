@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useCallback } from "react";
 import { useCart } from "@/contexts/CartContext";

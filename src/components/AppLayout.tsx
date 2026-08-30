@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "@/lib/router-compat";
 import {
   LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle,
@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAdminPwaInstall } from "@/hooks/useAdminPwaInstall";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "@/lib/router-compat";
 import { cn } from "@/lib/utils";
 
 const navItems = [

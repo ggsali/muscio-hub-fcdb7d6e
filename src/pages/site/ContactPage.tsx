@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
@@ -21,7 +21,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { GoogleMap } from "@/components/site/GoogleMap";
 import Seo from "@/components/site/Seo";
 import HerkunftBanner from "@/components/site/HerkunftBanner";

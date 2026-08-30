@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
 import { formatCHF, formatPct } from "@/lib/calc";
 import { StatusBadge } from "@/components/StatusBadge";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus, ChevronRight, ShoppingBag, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
