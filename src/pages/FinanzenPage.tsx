@@ -220,6 +220,28 @@ export default function FinanzenPage() {
     else toast.error("Beleg konnte nicht geöffnet werden");
   }
 
+  function daysUntil(dateStr: string | null): number | null {
+    if (!dateStr) return null;
+    const diff = new Date(dateStr).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0);
+    return Math.ceil(diff / 86400000);
+  }
+
+  async function downloadBill(path: string, filename?: string | null) {
+    const { data, error } = await supabase.storage.from("bills").createSignedUrl(path, 300);
+    if (error || !data?.signedUrl) {
+      toast.error("PDF konnte nicht geladen werden");
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = data.signedUrl;
+    a.download = filename || path.split("/").pop() || "rechnung.pdf";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   async function saveAusgabe() {
     const betrag = parseFloat(form.betrag.replace(",", "."));
     if (!form.beschreibung.trim() || Number.isNaN(betrag)) {
