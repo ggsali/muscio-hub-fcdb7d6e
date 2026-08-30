@@ -296,6 +296,25 @@ Deno.serve(async (req) => {
       })
     );
 
+    const checkoutSubtotal = lineItems.reduce((sum: number, item: any) => {
+      const unitAmount = item.price_data?.unit_amount || 0;
+      return sum + (unitAmount * item.quantity) / 100;
+    }, 0);
+    const checkoutShipping = checkoutSubtotal >= 65 ? 0 : 8;
+    if (checkoutShipping > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency: "chf",
+          unit_amount: 800,
+          product_data: {
+            name: "Versand (Post CH Priority)",
+            tax_code: "txcd_99999999",
+          },
+        },
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       ui_mode: "embedded_page",
