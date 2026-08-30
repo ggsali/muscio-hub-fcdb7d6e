@@ -153,6 +153,43 @@ export function Navigate({ to, replace, state }: { to: string; replace?: boolean
 
 export const Outlet = TSOutlet;
 
-// ---------- NavLink (minimal) ----------
+// ---------- NavLink (react-router-dom compat: function className/style, end prop) ----------
 
-export const NavLink = Link;
+type NavLinkRenderState = { isActive: boolean; isPending: boolean };
+
+export type NavLinkProps = Omit<LinkProps, "className" | "style" | "children"> & {
+  end?: boolean;
+  className?: string | ((state: NavLinkRenderState) => string);
+  style?: React.CSSProperties | ((state: NavLinkRenderState) => React.CSSProperties);
+  children?: ReactNode | ((state: NavLinkRenderState) => ReactNode);
+};
+
+export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(function NavLink(
+  { to, end, className, style, children, ...rest },
+  ref,
+) {
+  const loc = tsLocation();
+  const { pathname, search, hash } = parseTo(to);
+  const target = pathname === "." ? loc.pathname : pathname;
+  const isActive = end
+    ? loc.pathname === target || loc.pathname === `${target}/`
+    : loc.pathname === target || loc.pathname.startsWith(target.endsWith("/") ? target : `${target}/`) || target === "/" && loc.pathname === "/";
+  const state: NavLinkRenderState = { isActive, isPending: false };
+  const resolvedClassName = typeof className === "function" ? className(state) : className;
+  const resolvedStyle = typeof style === "function" ? style(state) : style;
+  const resolvedChildren = typeof children === "function" ? children(state) : children;
+  return (
+    <TSLink
+      ref={ref as never}
+      to={target as never}
+      search={search as never}
+      hash={hash}
+      className={resolvedClassName}
+      style={resolvedStyle}
+      aria-current={isActive ? "page" : undefined}
+      {...((rest ?? {}) as Record<string, unknown>)}
+    >
+      {resolvedChildren}
+    </TSLink>
+  );
+});
