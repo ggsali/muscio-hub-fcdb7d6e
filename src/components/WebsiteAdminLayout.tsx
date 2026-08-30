@@ -33,7 +33,8 @@ const NAV = [
 
 const mobileBottomNav = [
   { to: "/website-admin", icon: Globe, label: "Übersicht", end: true },
-  { to: "/website-admin/shop", icon: ShoppingBag, label: "Shop" },
+  { to: "/website-admin/shop", icon: TrendingUp, label: "Shop" },
+  { to: "/website-admin/bestellungen", icon: ShoppingBag, label: "Bestellungen" },
   { to: "/website-admin/chat", icon: MessageCircle, label: "Chat" },
   { to: "/website-admin/kunden", icon: Users2, label: "Kunden" },
   { to: "/website-admin/einstellungen", icon: Settings, label: "Settings" },
