@@ -7,13 +7,22 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+interface InOption {
+  optionId: string;
+  optionName?: string;
+  wertId: string;
+  wertName?: string;
+}
+
 interface InItem {
   product_id: string;
   name: string;
   preis: number;
   quantity: number;
   slug: string;
+  optionen?: InOption[];
 }
+
 
 interface InCustomer {
   email?: string;
