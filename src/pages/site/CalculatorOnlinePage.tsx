@@ -1307,6 +1307,22 @@ const CalculatorOnlinePage = () => {
     : step === 5 ? !kiLoading
     : true;
 
+  const getDeliveryText = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    const day = now.getDay();
+    const isWeekday = day >= 1 && day <= 5;
+    if (isWeekday && hour >= 8 && hour < 17) {
+      const delivery = new Date(now);
+      delivery.setDate(delivery.getDate() + 2);
+      return `Jetzt bestellen → Lieferung ${delivery.toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+    } else if (isWeekday) {
+      return "Heute noch bestellen → Lieferung in 48h";
+    } else {
+      return "Montag bestellen → Lieferung Mittwoch";
+    }
+  };
+
   return (
     <div className="pb-20">
       <Seo
@@ -1332,7 +1348,7 @@ const CalculatorOnlinePage = () => {
                           active
                             ? "bg-primary text-primary-foreground"
                             : doneStep
-                              ? "bg-primary/15 text-primary"
+                              ? "bg-success text-white"
                               : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -2277,6 +2293,18 @@ const CalculatorOnlinePage = () => {
                       </div>
                     </div>
                   </div>
+
+                  <div className="flex items-center gap-2 bg-success/10 border border-success/30 rounded-xl px-4 py-2.5 text-sm mt-3">
+                    <span className="text-success">⚡</span>
+                    <span className="text-foreground font-medium">{getDeliveryText()}</span>
+                  </div>
+
+                  {!hasStep && total > 100 && (
+                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                      Vergleich: Spritzgussform ab CHF 5'000 · Mindestmenge 1'000 Stück · 
+                      Lieferzeit 8 Wochen — bei uns ab 1 Stück, 48h.
+                    </p>
+                  )}
 
                   {!hasStep && total > 50 && (
                     <div className="rounded-2xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
