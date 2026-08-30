@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import {
   Plus, TrendingUp, TrendingDown, Wallet,
-  Download, Trash2, Paperclip,
+  Download, Trash2, Paperclip, CheckCircle2, Circle, AlertTriangle,
 } from "lucide-react";
 
 import {
@@ -220,6 +220,28 @@ export default function FinanzenPage() {
     else toast.error("Beleg konnte nicht geöffnet werden");
   }
 
+  function daysUntil(dateStr: string | null): number | null {
+    if (!dateStr) return null;
+    const diff = new Date(dateStr).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0);
+    return Math.ceil(diff / 86400000);
+  }
+
+  async function downloadBill(path: string, filename?: string | null) {
+    const { data, error } = await supabase.storage.from("bills").createSignedUrl(path, 300);
+    if (error || !data?.signedUrl) {
+      toast.error("PDF konnte nicht geladen werden");
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = data.signedUrl;
+    a.download = filename || path.split("/").pop() || "rechnung.pdf";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   async function saveAusgabe() {
     const betrag = parseFloat(form.betrag.replace(",", "."));
     if (!form.beschreibung.trim() || Number.isNaN(betrag)) {
@@ -383,6 +405,7 @@ export default function FinanzenPage() {
         <TabsList>
           <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
           <TabsTrigger value="auftraege">Aufträge</TabsTrigger>
+          <TabsTrigger value="rechnungen">Rechnungen</TabsTrigger>
           <TabsTrigger value="ausgaben">Ausgaben</TabsTrigger>
         </TabsList>
 
@@ -502,6 +525,75 @@ export default function FinanzenPage() {
           </div>
         </TabsContent>
 
+        {/* RECHNUNGEN */}
+        <TabsContent value="rechnungen" className="space-y-4 mt-4">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
+              <h2 className="font-semibold text-sm">Alle Rechnungen ({bills.length})</h2>
+            </div>
+            {bills.length === 0 ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">Noch keine Rechnungen erfasst.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="text-left px-4 py-2">Status</th>
+                      <th className="text-left px-4 py-2">Rechnung</th>
+                      <th className="text-left px-4 py-2">Empfänger</th>
+                      <th className="text-left px-4 py-2">Datum</th>
+                      <th className="text-right px-4 py-2">Betrag</th>
+                      <th className="px-4 py-2" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {bills.map(b => {
+                      const days = daysUntil(b.faellig_am);
+                      const isOverdue = !b.bezahlt && days !== null && days < 0;
+                      return (
+                        <tr key={b.id} className="hover:bg-muted/30">
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {b.bezahlt ? (
+                              <span className="inline-flex items-center gap-1 text-xs text-emerald-500">
+                                <CheckCircle2 className="w-4 h-4" /> Bezahlt
+                              </span>
+                            ) : isOverdue ? (
+                              <span className="inline-flex items-center gap-1 text-xs text-destructive font-medium">
+                                <AlertTriangle className="w-4 h-4" /> Überfällig
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                <Circle className="w-4 h-4" /> Offen
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="font-medium">{b.titel}</div>
+                            {b.rechnungsnummer && <div className="text-[11px] text-muted-foreground">{b.rechnungsnummer}</div>}
+                          </td>
+                          <td className="px-4 py-2 text-muted-foreground">{b.empfaenger_name || "—"}</td>
+                          <td className="px-4 py-2 whitespace-nowrap text-muted-foreground">
+                            {b.rechnungs_datum
+                              ? new Date(b.rechnungs_datum).toLocaleDateString("de-CH")
+                              : new Date(b.created_at).toLocaleDateString("de-CH")}
+                          </td>
+                          <td className="px-4 py-2 text-right font-medium">CHF {fmtCHF(Number(b.betrag))}</td>
+                          <td className="px-4 py-2 text-right whitespace-nowrap">
+                            {b.file_path && (
+                              <Button size="sm" variant="outline" onClick={() => downloadBill(b.file_path!, b.filename)}>
+                                <Download className="w-3.5 h-3.5 mr-1" /> PDF
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </TabsContent>
 
         {/* AUSGABEN */}
         <TabsContent value="ausgaben" className="space-y-4 mt-4">
