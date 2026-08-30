@@ -2274,6 +2274,44 @@ export type Database = {
           },
         ]
       }
+      shop_product_optionen: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          pflichtfeld: boolean
+          product_id: string | null
+          sort_order: number
+          typ: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          pflichtfeld?: boolean
+          product_id?: string | null
+          sort_order?: number
+          typ?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          pflichtfeld?: boolean
+          product_id?: string | null
+          sort_order?: number
+          typ?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_product_optionen_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_products: {
         Row: {
           aktiv: boolean
@@ -2341,6 +2379,50 @@ export type Database = {
             columns: ["kategorie_id"]
             isOneToOne: false
             referencedRelation: "shop_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_produkt_option_werte: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          hex_code: string | null
+          id: string
+          lagerbestand: number | null
+          option_id: string | null
+          preis_aufschlag: number
+          sort_order: number
+          wert: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          hex_code?: string | null
+          id?: string
+          lagerbestand?: number | null
+          option_id?: string | null
+          preis_aufschlag?: number
+          sort_order?: number
+          wert: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          hex_code?: string | null
+          id?: string
+          lagerbestand?: number | null
+          option_id?: string | null
+          preis_aufschlag?: number
+          sort_order?: number
+          wert?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_produkt_option_werte_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "shop_product_optionen"
             referencedColumns: ["id"]
           },
         ]

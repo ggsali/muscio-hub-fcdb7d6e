@@ -145,22 +145,32 @@ export const CartDrawer = () => {
                         className="text-sm font-semibold text-foreground hover:text-primary transition-colors line-clamp-1">
                         {item.name}
                       </Link>
+                      {item.optionen && item.optionen.length > 0 && (
+                        <div className="mt-0.5 space-y-0.5">
+                          {item.optionen.map(o => (
+                            <p key={o.optionId} className="text-xs text-muted-foreground">
+                              {o.optionName}: {o.wertName}
+                            </p>
+                          ))}
+                        </div>
+                      )}
                       <p className="text-sm font-bold text-primary mt-0.5">CHF {(item.preis * item.quantity).toFixed(2)}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <div className="flex items-center border border-border rounded-lg overflow-hidden">
-                          <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="px-2 py-1 hover:bg-muted">
+                          <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-2 py-1 hover:bg-muted">
                             <Minus className="w-3 h-3" />
                           </button>
                           <span className="px-2 text-xs font-bold border-x border-border">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="px-2 py-1 hover:bg-muted">
+                          <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-2 py-1 hover:bg-muted">
                             <Plus className="w-3 h-3" />
                           </button>
                         </div>
-                        <button onClick={() => removeItem(item.productId)} className="p-1 text-muted-foreground hover:text-destructive">
+                        <button onClick={() => removeItem(item.id)} className="p-1 text-muted-foreground hover:text-destructive">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
+
                   </motion.div>
                 ))
               )}
