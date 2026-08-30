@@ -1308,6 +1308,13 @@ const CalculatorOnlinePage = () => {
     : true;
 
   const getDeliveryText = () => {
+    if (lieferdatum) {
+      return `⚡ Jetzt bestellen → Lieferung ${lieferdatum.toLocaleDateString("de-CH", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      })}`;
+    }
     const now = new Date();
     const hour = now.getHours();
     const day = now.getDay();
@@ -1322,6 +1329,7 @@ const CalculatorOnlinePage = () => {
       return "Montag bestellen → Lieferung Mittwoch";
     }
   };
+
 
   return (
     <div className="pb-20">
