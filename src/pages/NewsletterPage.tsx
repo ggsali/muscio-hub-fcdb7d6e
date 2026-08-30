@@ -336,42 +336,31 @@ export default function NewsletterPage() {
 
     for (const c of (cs ?? []) as any[]) {
       if (!c.email || sentTo.has(c.id)) continue;
-      const abgeschlosseneOrders = (c.orders as any[]).filter((o: any) => o.status === "Abgeschlossen");
+      const abgeschlosseneOrders = (c.orders as any[])
+        .filter((o: any) => o.status === "Abgeschlossen")
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       if (abgeschlosseneOrders.length === 0) continue;
 
-      const hatAbgeschlossen = abgeschlosseneOrders.length > 0;
-      const letzterAbgeschlossen = abgeschlosseneOrders
-        .map((o: any) => new Date(o.created_at).getTime())
-        .sort((x: number, y: number) => y - x)[0] ?? null;
+      const letzterAuftrag = abgeschlosseneOrders[0];
+      const letzterAbgeschlossen = new Date(letzterAuftrag.created_at).getTime();
+      const alterTage = (now - letzterAbgeschlossen) / 86400_000;
 
       if (a.typ === "reaktivierung") {
-        const inaktivGenug = letzterAbgeschlossen
-          ? (now - letzterAbgeschlossen) > days * 86400_000
-          : false;
-        if (!hatAbgeschlossen || !inaktivGenug) continue;
+        if (alterTage <= days) continue;
       } else if (a.typ === "nach_erstem_auftrag") {
-        const hatGenauEinen = abgeschlosseneOrders.length === 1;
-        if (!hatGenauEinen) continue;
-
-        const ersterAuftrag = abgeschlosseneOrders[0];
-        const auftragDatum = new Date(ersterAuftrag.created_at).getTime();
-        const alterTage = (now - auftragDatum) / 86400_000;
-        // Fenster: mindestens X Tage alt, aber nicht länger als X + 30 Tage
-        const imFenster = alterTage >= days && alterTage <= days + 30;
-        if (!imFenster) continue;
+        // Kunden die in den letzten X Tagen (default 30) einen Auftrag hatten
+        if (alterTage > days) continue;
       } else {
         continue;
       }
-
 
       out.push({
         id: c.id,
         name: [c.vorname, c.name].filter(Boolean).join(" ") || "—",
         email: c.email,
-        lastCompleted: letzterAbgeschlossen
-          ? new Date(letzterAbgeschlossen).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })
-          : "—",
+        lastCompleted: new Date(letzterAbgeschlossen).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" }),
         completedCount: abgeschlosseneOrders.length,
+        daysAgo: Math.max(1, Math.floor(alterTage)),
       });
     }
     return out.sort((x, y) => x.name.localeCompare(y.name));
