@@ -72,53 +72,87 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      "name": "3DMuscio",
-      "description": "Professioneller 3D Druckservice in der Schweiz. FDM und SLA Druck, Einzelteile, Kleinserien, Prototypen.",
-      "url": "https://3dmuscio.com",
-      "email": "info@3dmuscio.com",
-      "image": "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
-      "logo": "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Gartensiedlung 13",
-        "addressLocality": "Eschlikon",
-        "postalCode": "8360",
-        "addressRegion": "Thurgau",
-        "addressCountry": "CH"
-      },
-      "geo": { "@type": "GeoCoordinates", "latitude": 47.4833, "longitude": 8.9667 },
-      "areaServed": ["Schweiz", "Ostschweiz", "Thurgau", "Zürich", "St. Gallen", "Winterthur"],
-      "priceRange": "CHF",
-      "currenciesAccepted": "CHF",
-      "paymentAccepted": "Kreditkarte, TWINT, Banküberweisung",
-      "openingHours": "Mo-Fr 08:00-18:00",
-      "sameAs": ["https://www.instagram.com/3dmuscio"]
+      "@graph": [
+        {
+          "@type": ["LocalBusiness", "ManufacturingBusiness"],
+          "@id": "https://3dmuscio.com/#organization",
+          "name": "3DMuscio",
+          "description": "Professioneller 3D Druckservice in der Schweiz. FDM und SLA Druck, Einzelteile, Kleinserien, Prototypen.",
+          "url": "https://3dmuscio.com",
+          "email": "info@3dmuscio.com",
+          "image": "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
+          "logo": "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Gartensiedlung 13",
+            "addressLocality": "Eschlikon",
+            "postalCode": "8360",
+            "addressRegion": "Thurgau",
+            "addressCountry": "CH"
+          },
+          "geo": { "@type": "GeoCoordinates", "latitude": 47.4833, "longitude": 8.9667 },
+          "areaServed": { "@type": "Country", "name": "Schweiz" },
+          "priceRange": "CHF",
+          "currenciesAccepted": "CHF",
+          "paymentAccepted": "Kreditkarte, TWINT, Banküberweisung",
+          "openingHours": "Mo-Fr 08:00-18:00",
+          "sameAs": ["https://www.instagram.com/3dmuscio"],
+          "makesOffer": [
+            { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "FDM 3D Druck" } },
+            { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "SLA Resin Druck" } },
+            { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Prototypenentwicklung" } },
+            { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Kleinserienfertigung" } },
+            { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Ersatzteile herstellen" } }
+          ],
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "3D Druckleistungen und Materialien",
+            "itemListElement": [
+              {
+                "@type": "OfferCatalog",
+                "name": "Verfahren",
+                "itemListElement": [
+                  { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "FDM 3D Druck", "serviceType": "FDM" } },
+                  { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "SLA Resin Druck", "serviceType": "SLA" } }
+                ]
+              },
+              {
+                "@type": "OfferCatalog",
+                "name": "Materialien",
+                "itemListElement": [
+                  { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "PLA", "material": "PLA" } },
+                  { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "PETG", "material": "PETG" } },
+                  { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "ABS", "material": "ABS" } },
+                  { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "ASA", "material": "ASA" } },
+                  { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "TPU", "material": "TPU" } },
+                  { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Nylon (PA)", "material": "Nylon" } },
+                  { "@type": "Offer", "itemOffered": { "@type": "Product", "name": "Resin", "material": "Resin" } }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "@type": "Service",
+          "name": "3D Druckservice Schweiz",
+          "provider": { "@id": "https://3dmuscio.com/#organization" },
+          "serviceType": "3D Druck",
+          "description": "FDM und SLA 3D Druckservice für B2B-Kunden in der Schweiz. Materialien: PLA, PETG, ABS, ASA, TPU, Nylon, Resin.",
+          "areaServed": { "@type": "Country", "name": "Schweiz" },
+          "url": "https://3dmuscio.com"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://3dmuscio.com/#website",
+          "url": "https://3dmuscio.com",
+          "name": "3DMuscio",
+          "inLanguage": "de-CH",
+          "publisher": { "@id": "https://3dmuscio.com/#organization" }
+        }
+      ]
     }
     </script>
 
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Service",
-      "name": "3D Druckservice Schweiz",
-      "provider": { "@type": "LocalBusiness", "name": "3DMuscio" },
-      "serviceType": "3D Druck",
-      "description": "FDM und SLA 3D Druckservice für B2B-Kunden in der Schweiz. Materialien: PLA, PETG, ABS, ASA, TPU, Resin.",
-      "areaServed": "CH",
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "3D Druckleistungen",
-        "itemListElement": [
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "FDM 3D Druck" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "SLA Resin Druck" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Prototypenentwicklung" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Kleinserienfertigung" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Ersatzteile herstellen" } }
-        ]
-      }
-    }
-    </script>
 
     <script type="application/ld+json">
     {
@@ -126,7 +160,9 @@
       "@type": "FAQPage",
       "mainEntity": [
         { "@type": "Question", "name": "Was kostet 3D Druck in der Schweiz?", "acceptedAnswer": { "@type": "Answer", "text": "Kosten variieren nach Material, Grösse und Komplexität. Online-Kalkulator auf 3dmuscio.com/kalkulator." } },
-        { "@type": "Question", "name": "Welche Materialien bietet 3DMuscio?", "acceptedAnswer": { "@type": "Answer", "text": "PLA, PETG, ABS, ASA, TPU (FDM) sowie verschiedene Resins (SLA)." } },
+        { "@type": "Question", "name": "Welche Materialien bietet 3DMuscio?", "acceptedAnswer": { "@type": "Answer", "text": "PLA, PETG, ABS, ASA, TPU und Nylon (FDM) sowie verschiedene Resins (SLA)." } },
+        { "@type": "Question", "name": "Welches Material eignet sich für technische Bauteile?", "acceptedAnswer": { "@type": "Answer", "text": "Für technische Bauteile empfehlen wir PETG, ABS, ASA oder Nylon – temperaturstabil und mechanisch belastbar." } },
+        { "@type": "Question", "name": "Was ist der Unterschied zwischen FDM und SLA Druck?", "acceptedAnswer": { "@type": "Answer", "text": "FDM druckt mit geschmolzenem Filament und ist ideal für funktionale Teile. SLA härtet Resin mit Licht und liefert feinste Details und glatte Oberflächen." } },
         { "@type": "Question", "name": "Wie lange dauert ein 3D Druckauftrag?", "acceptedAnswer": { "@type": "Answer", "text": "2–7 Werktage je nach Komplexität. Express auf Anfrage." } },
         { "@type": "Question", "name": "Bietet 3DMuscio B2B 3D Druck?", "acceptedAnswer": { "@type": "Answer", "text": "Ja, spezialisiert auf B2B-Kunden in der Schweiz." } },
         { "@type": "Question", "name": "Wo kann ich ein Kunststoffteil herstellen lassen?", "acceptedAnswer": { "@type": "Answer", "text": "Bei 3DMuscio in Eschlikon TG, Lieferung schweizweit." } },
