@@ -328,6 +328,33 @@ Deno.serve(async (req) => {
       shipping_address_collection: { allowed_countries: ["CH", "LI", "DE", "AT"] },
       phone_number_collection: { enabled: true },
       automatic_tax: { enabled: true },
+      shipping_options: checkoutShipping > 0
+        ? [
+            {
+              shipping_rate_data: {
+                type: "fixed_amount",
+                fixed_amount: { amount: 800, currency: "chf" },
+                display_name: "Post CH Priority",
+                delivery_estimate: {
+                  minimum: { unit: "business_day", value: 2 },
+                  maximum: { unit: "business_day", value: 4 },
+                },
+              },
+            },
+          ]
+        : [
+            {
+              shipping_rate_data: {
+                type: "fixed_amount",
+                fixed_amount: { amount: 0, currency: "chf" },
+                display_name: "Gratis Versand",
+                delivery_estimate: {
+                  minimum: { unit: "business_day", value: 2 },
+                  maximum: { unit: "business_day", value: 4 },
+                },
+              },
+            },
+          ],
       return_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         shop_order_id: orderId,
