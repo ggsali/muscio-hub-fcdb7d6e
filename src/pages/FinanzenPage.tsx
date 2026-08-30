@@ -23,22 +23,6 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
 
-type Bill = {
-  id: string;
-  titel: string;
-  betrag: number;
-  bezahlt: boolean;
-  bezahlt_am: string | null;
-  faellig_am: string | null;
-  created_at: string;
-  order_id: string | null;
-  rechnungsnummer: string | null;
-  rechnungs_datum: string | null;
-  empfaenger_name: string | null;
-  file_path: string | null;
-  filename: string | null;
-};
-
 type Order = {
   id: string;
   name: string | null;
