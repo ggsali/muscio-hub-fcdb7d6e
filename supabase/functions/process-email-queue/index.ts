@@ -260,7 +260,14 @@ Deno.serve(async (req) => {
             text: payload.text,
             purpose: payload.purpose,
             label: payload.label,
-            idempotency_key: payload.idempotency_key,
+            // A failed send permanently invalidates its idempotency key at the
+            // provider (409 "Send again with a new idempotency key"), so every
+            // retry must use a fresh key derived from the attempt counter.
+            idempotency_key: payload.idempotency_key
+              ? failedAttempts > 0
+                ? `${payload.idempotency_key}:retry-${failedAttempts}`
+                : payload.idempotency_key
+              : payload.idempotency_key,
             unsubscribe_token: payload.unsubscribe_token,
             message_id: payload.message_id,
           },
