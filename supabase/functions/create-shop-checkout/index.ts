@@ -83,9 +83,16 @@ Deno.serve(async (req) => {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
   }
 
-  // Hinweis: Der Stripe-Key wird pro Umgebung geladen
-  // (STRIPE_SANDBOX_API_KEY / STRIPE_LIVE_API_KEY) via createStripeClient().
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  console.log("[checkout] STRIPE_SECRET_KEY vorhanden:", !!stripeKey);
+  console.log("[checkout] Key prefix:", stripeKey?.slice(0, 7));
 
+  if (!stripeKey) {
+    return new Response(
+      JSON.stringify({ error: "STRIPE_SECRET_KEY nicht konfiguriert" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   try {
     const supabase = createClient(
