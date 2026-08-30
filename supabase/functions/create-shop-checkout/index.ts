@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
           price_data: {
             currency: "chf",
             unit_amount: Math.round(v.preis * 100),
-            product_data: { name: v.name },
+            product_data: { name: v.label },
           },
         };
       })
