@@ -16,7 +16,7 @@ const NAV = [
   { to: "/website-admin", label: "Übersicht", icon: Globe, end: true },
   { to: "/website-admin/analyse", label: "Analyse", icon: BarChart3 },
   { to: "/website-admin/shop", label: "Shop-Übersicht", icon: TrendingUp },
-  { to: "/website-admin/bestellungen", label: "Shop-Bestellungen", icon: ShoppingBag },
+  { to: "/website-admin/bestellungen", label: "Bestellungen & Anfragen", icon: ShoppingBag },
   { to: "/website-admin/shop-produkte", label: "Shop-Produkte", icon: Package },
   { to: "/website-admin/blog", label: "Blog / News", icon: FileText },
   { to: "/website-admin/reviews", label: "Bewertungen", icon: Star },
