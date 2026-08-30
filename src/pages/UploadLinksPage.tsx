@@ -18,7 +18,7 @@ const NAS_USER_KEY = "nas_webdav_user";
 // sondern bleibt nur im React-State dieser Sitzung. Bei Tab-Wechsel/Reload muss
 // es erneut eingegeben werden — dies verhindert XSS-Diebstahl des Passworts.
 
-const PREVIEW_ORIGIN = window.location.origin;
+const PREVIEW_ORIGIN = typeof window !== "undefined" ? window.location.origin : "";
 
 interface UploadLink {
   id: string;
