@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { Resend } from "npm:resend@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -130,6 +131,74 @@ serve(async (req) => {
         }
       } catch (emailErr) {
         console.error("[stripe-webhook] confirmation email exception:", emailErr);
+      }
+
+      // Admin notification for shop orders
+      try {
+        const shopOrderId = session.metadata?.shop_order_id;
+        if (shopOrderId) {
+          const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
+          const { data: shopOrder } = await supabase
+            .from("shop_orders")
+            .select("*, shop_order_items(*, shop_products(name))")
+            .eq("id", shopOrderId)
+            .single();
+
+          if (shopOrder) {
+            const itemsHtml = (shopOrder.shop_order_items || [])
+              .map((item: any) => `
+                <tr>
+                  <td style="padding:8px;border-bottom:1px solid #f0f0f0;">${item.shop_products?.name || "–"}</td>
+                  <td style="padding:8px;border-bottom:1px solid #f0f0f0;text-align:center;">${item.quantity}×</td>
+                  <td style="padding:8px;border-bottom:1px solid #f0f0f0;text-align:right;">CHF ${Number(item.unit_price || 0).toFixed(2)}</td>
+                </tr>
+              `).join("");
+
+            await resend.emails.send({
+              from: "3DMuscio <noreply@3dmuscio.com>",
+              to: ["info@3dmuscio.com"],
+              subject: `🛍️ Neue Shop-Bestellung – CHF ${Number(shopOrder.total || 0).toFixed(2)}`,
+              html: `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111;">
+                  <h1 style="color:#FF5A00;">🛍️ Neue Shop-Bestellung</h1>
+                  <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                    <thead>
+                      <tr style="background:#f8f8f8;">
+                        <th style="padding:8px;text-align:left;">Produkt</th>
+                        <th style="padding:8px;text-align:center;">Menge</th>
+                        <th style="padding:8px;text-align:right;">Preis</th>
+                      </tr>
+                    </thead>
+                    <tbody>${itemsHtml}</tbody>
+                  </table>
+                  <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                    <tr>
+                      <td style="padding:8px;">Zwischensumme</td>
+                      <td style="padding:8px;text-align:right;">CHF ${Number(shopOrder.subtotal || 0).toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px;">Versand</td>
+                      <td style="padding:8px;text-align:right;">CHF ${Number(shopOrder.shipping || 0).toFixed(2)}</td>
+                    </tr>
+                    <tr style="font-weight:bold;">
+                      <td style="padding:8px;">Total</td>
+                      <td style="padding:8px;text-align:right;">CHF ${Number(shopOrder.total || 0).toFixed(2)}</td>
+                    </tr>
+                  </table>
+                  <p><strong>Kunde:</strong> ${shopOrder.customer_name || "–"}</p>
+                  <p><strong>E-Mail:</strong> ${shopOrder.customer_email || "–"}</p>
+                  <p><strong>Lieferadresse:</strong> ${shopOrder.shipping_address || "–"}, ${shopOrder.shipping_postal_code || ""} ${shopOrder.shipping_city || ""}</p>
+                  <p style="margin-top:24px;">
+                    <a href="https://muscio-hub.lovable.app/admin/website-bestellungen" style="background:#FF5A00;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px;">Bestellung im Admin anzeigen →</a>
+                  </p>
+                </div>
+              `,
+            });
+            console.log(`[stripe-webhook] admin notification sent for shop order ${shopOrderId}`);
+          }
+        }
+      } catch (notifyErr) {
+        console.error("[stripe-webhook] admin notification error:", notifyErr);
       }
 
       return new Response(JSON.stringify({ received: true, orderId }), {
