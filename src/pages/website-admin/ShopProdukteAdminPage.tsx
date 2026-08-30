@@ -12,6 +12,21 @@ import { toast } from "sonner";
 
 interface Category { id: string; name: string; slug: string; aktiv: boolean; sort_order: number; }
 interface ProductImage { id: string; storage_path: string; is_primary: boolean; sort_order: number; }
+interface OptionWert {
+  id: string; option_id: string; wert: string; hex_code: string | null;
+  preis_aufschlag: number; lagerbestand: number | null; aktiv: boolean; sort_order: number;
+}
+interface ProductOption {
+  id: string; product_id: string; name: string; typ: string; pflichtfeld: boolean; sort_order: number;
+  shop_produkt_option_werte: OptionWert[];
+}
+
+const OPTION_TYPEN = [
+  { value: "farbe", label: "🎨 Farbe (Farbkreise)" },
+  { value: "chips", label: "📦 Chips (Material / Grösse)" },
+  { value: "dropdown", label: "🔢 Dropdown" },
+];
+
 interface Product {
   id: string;
   name: string;
