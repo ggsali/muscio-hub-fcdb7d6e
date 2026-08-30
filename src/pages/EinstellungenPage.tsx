@@ -72,6 +72,8 @@ export default function EinstellungenPage() {
     bulkDiscount5: 0.05,
     bulkDiscount10: 0.10,
     mwst: 0.081,
+    drucker_anzahl: 2,
+    druckstunden_pro_tag: 20,
   });
   const [googleReviewUrl, setGoogleReviewUrl] = useState<string>("");
   const [reviewSubject, setReviewSubject] = useState<string>(REVIEW_DEFAULT_SUBJECT);
