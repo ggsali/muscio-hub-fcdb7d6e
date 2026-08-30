@@ -1307,6 +1307,28 @@ const CalculatorOnlinePage = () => {
     : step === 5 ? !kiLoading
     : true;
 
+  // Realistisches Lieferdatum aus echter Auftragslast (Edge Function)
+  const [lieferdatum, setLieferdatum] = useState<Date | null>(null);
+  const neuerAuftragSekunden = useMemo(
+    () => parts.reduce((sum, p) => sum + (p.slicerResult?.printTimeMinutes || 0) * 60, 0),
+    [parts],
+  );
+
+  useEffect(() => {
+    if (step < 5 || neuerAuftragSekunden <= 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("calc-lieferzeit", {
+        body: { neuer_auftrag_sekunden: neuerAuftragSekunden },
+      });
+      if (cancelled || error || !data?.lieferdatum) return;
+      setLieferdatum(new Date(data.lieferdatum));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [step, neuerAuftragSekunden]);
+
   const getDeliveryText = () => {
     if (lieferdatum) {
       return `⚡ Jetzt bestellen → Lieferung ${lieferdatum.toLocaleDateString("de-CH", {
