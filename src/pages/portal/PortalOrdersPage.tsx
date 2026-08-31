@@ -175,18 +175,6 @@ export default function PortalOrdersPage() {
                           <StatusBadge status={o.status} />
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">{o.datum}{o.tracking_nr && ` · Tracking: ${o.tracking_nr}`}</p>
-                        {o.tracking_nr && (
-                          <a
-                            href={`https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(o.tracking_nr)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            className="text-xs text-primary underline flex items-center gap-1 mt-1"
-                          >
-                            <Package className="w-3 h-3" />
-                            Sendung verfolgen →
-                          </a>
-                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="font-bold text-primary">{formatCHF(o.umsatz_total)}</div>
@@ -195,8 +183,19 @@ export default function PortalOrdersPage() {
                     </div>
                   </button>
 
-                  <div className="px-5 pb-4">
+                  <div className="px-5 pb-4 space-y-2">
                     <OrderProgress status={o.status} source={o.source || 'manual'} lieferart={(o as any).lieferart} />
+                    {o.tracking_nr && (
+                      <a
+                        href={`https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(o.tracking_nr)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary underline flex items-center gap-1"
+                      >
+                        <Package className="w-3 h-3" />
+                        Sendung verfolgen →
+                      </a>
+                    )}
                   </div>
 
                   {isOpen && (
