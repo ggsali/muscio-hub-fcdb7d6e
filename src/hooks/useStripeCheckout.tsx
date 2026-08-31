@@ -32,6 +32,7 @@ interface CheckoutOptions {
   customer?: CheckoutCustomer;
   userId?: string;
   returnUrl?: string;
+  gutscheinCode?: string;
   onError?: (message: string) => void;
 }
 

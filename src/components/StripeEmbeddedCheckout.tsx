@@ -27,6 +27,7 @@ interface StripeEmbeddedCheckoutProps {
   };
   userId?: string;
   returnUrl?: string;
+  gutscheinCode?: string;
   onError?: (message: string) => void;
 }
 
@@ -35,6 +36,7 @@ export function StripeEmbeddedCheckout({
   customer,
   userId,
   returnUrl,
+  gutscheinCode,
   onError,
 }: StripeEmbeddedCheckoutProps) {
   const fetchClientSecret = async (): Promise<string> => {
@@ -43,6 +45,7 @@ export function StripeEmbeddedCheckout({
         items,
         customer,
         userId,
+        gutscheinCode: gutscheinCode || undefined,
         environment: getStripeEnvironment(),
         returnUrl: returnUrl || `${window.location.origin}/payment-success`,
       },
