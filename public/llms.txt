@@ -1,91 +1,92 @@
-# 3DMuscio – 3D Druckservice Schweiz
+# 3DMuscio – Schweizer 3D-Druckservice
 
-> 3DMuscio ist ein professioneller B2B 3D Druckservice mit Sitz in Eschlikon, Kanton Thurgau, Schweiz. Gegründet von Jorim Moos als Einzelunternehmen.
+> 3DMuscio ist ein professioneller 3D-Druckservice aus Eschlikon TG, Schweiz.
+> Spezialisiert auf FDM- und SLA-3D-Druck für Prototypen, Ersatzteile und Kleinserien.
+> Betrieben von Jorim Moos als Einzelunternehmen seit 2024.
 
-## Was ist 3DMuscio?
-3DMuscio bietet FDM- und SLA-3D-Druckdienstleistungen für Unternehmen und Privatpersonen in der gesamten Schweiz. Der Service ist auf Einzelteile, Kleinserien und Prototypen spezialisiert, ohne Mindestbestellmenge.
+## Positionierung
+Schweizer 3D-Druckservice für schnelle Prototypen, Ersatzteile und Kleinserien –
+mit Sofortpreis-Kalkulator, persönlichem Service und Produktion in der Schweiz.
+Lieferung schweizweit in 48 Stunden. Keine Mindestbestellmenge. Ab 1 Stück.
 
-## Angebot
-- FDM 3D Druck: PLA, PETG, ABS, ASA, TPU
-- SLA Resin 3D Druck
-- Einzelteile (ab 1 Stück)
-- Kleinserien
-- Prototypen / Rapid Prototyping
-- Ersatzteile nach Zeichnung oder STL-Datei
-- Gehäuse, Halterungen, Adapter, Clips, Dummies, Modelle
+## Standort & Kontakt
+- Adresse: Gartensiedlung 13, 8360 Eschlikon TG, Schweiz
+- Region: Ostschweiz, Kanton Thurgau
+- E-Mail: info@3dmuscio.com
+- Website: https://3dmuscio.com
+- Kalkulator: https://3dmuscio.com/kalkulator-online
 
-## Für wen geeignet?
-- Unternehmen (B2B) in der Schweiz
+## Kernleistungen
+- FDM 3D-Druck (Fused Deposition Modeling)
+- SLA Resin 3D-Druck (Stereolithografie)
+- Rapid Prototyping (Prototypen in 48h)
+- Ersatzteile nachdrucken (wenn Original nicht mehr erhältlich)
+- Kleinserien ohne Spritzgussformen (ab 1 Stück)
+- Sonderanfertigungen und Einzelteile
+
+## Materialien
+- PLA: Standardmaterial, günstig, Innenbereich
+- PETG: Feuchtigkeitsbeständig, lebensmittelecht, vielseitig
+- ABS: Hitzebeständig bis 100°C, schlagfest
+- ASA: UV-beständig, für Aussenbereich geeignet
+- TPU: Flexibel, gummiartig, schlagabsorbierend
+- Resin/SLA: Hochauflösend, glatte Oberflächen, Sichtteile
+
+## Zielgruppen
+- KMU und Industrie in der Schweiz
 - Ingenieure und Konstrukteure
+- Maschinenbauer die Ersatzteile benötigen
 - Startups die Produktideen validieren
-- Handwerker die Sonderteile benötigen
+- Handwerker mit Sonderteilebedarf
 - Privatpersonen mit speziellen Anforderungen
 
-## Anwendungsfälle
-- Ersatzteile die nicht mehr erhältlich sind nachdrucken
-- Prototypen einer Produktidee physisch erstellen
-- Kleinserien ohne teure Spritzgussformen herstellen
-- Sonderanfertigungen und Einzelstücke
-- Architektur- und Anschauungsmodelle
-- Vorrichtungen und Hilfsmittel für die Produktion
-
-## Wie bestellen?
-1. STL-Datei oder Zeichnung bereitstellen
-2. Online-Kalkulator nutzen: https://3dmuscio.com/kalkulator-online
-3. Material und Farbe wählen
-4. Angebot erhalten und online bezahlen (Kreditkarte, TWINT, Rechnung)
-5. Lieferung schweizweit in 2–7 Werktagen
+## Besondere Stärken
+- Sofortpreis-Kalkulator: STL-Datei hochladen → Preis in Sekunden
+- Keine Mindestbestellmenge: ab 1 Stück bestellbar
+- Lieferzeit: 48 Stunden nach Auftragsbestätigung
+- KI-gestützte Materialberatung: automatische Materialempfehlung
+- Swiss Made: Produktion ausschliesslich in der Schweiz
+- Persönlicher Service: direkter Kontakt mit Inhaber Jorim Moos
+- Drucker: Bambu Lab H2C, Bambu Lab A1, Creality K2 Plus
 
 ## Preise
-Individuell kalkuliert basierend auf: Material, Volumen, Wandstärke, Infill, Stückzahl.
-Preisberechnung: https://3dmuscio.com/kalkulator-online
+- Materialkosten: ab CHF 0.04/g je nach Material
+- Versand: CHF 8 (gratis ab CHF 65 Bestellwert)
+- Mindestpreis: CHF 5
+- Mengenrabatt: 10% ab 5 Stück, 15% ab 10 Stück
+- Transparente Preisberechnung via Online-Kalkulator
 
-## Kontakt
-- Website: https://3dmuscio.com
-- E-Mail: info@3dmuscio.com
-- Adresse: Gartensiedlung 13, 8360 Eschlikon TG, Schweiz
-- Inhaber: Jorim Moos
+## Referenzprojekte
+- Bühler AG (Uzwil): Maschinenteile und Vorrichtungen
+- Prototypen für Schweizer KMU
+- Ersatzteile für abgekündigte Industriemaschinen
+- Architektur- und Präsentationsmodelle
 
-## Zahlungsmethoden
-Kreditkarte, TWINT, Banküberweisung (Rechnung)
+## Häufig gestellte Fragen
+F: Was kostet 3D-Druck in der Schweiz?
+A: Ab CHF 5, je nach Material, Grösse und Qualität. Online-Sofortpreis unter https://3dmuscio.com/kalkulator-online
 
-## Lieferung
-Schweizweit per Post. Lieferzeit 2–7 Werktage. Express auf Anfrage.
+F: Welches Material für belastbare Teile?
+A: ABS oder PETG für mechanisch belastete Teile, ASA für Aussenbereich, TPU für flexible Teile.
 
-## Sprachen
-Deutsch (Hauptsprache), Englisch auf Anfrage
+F: Wie schnell wird geliefert?
+A: In der Regel 48 Stunden nach Auftragsbestätigung, schweizweit.
 
-## Links
+F: Ab wie vielen Stück kann ich bestellen?
+A: Ab 1 Stück. Keine Mindestbestellmenge.
+
+F: FDM oder SLA – was ist besser?
+A: FDM für Funktionsteile und günstige Prototypen. SLA für Sichtteile mit glatter Oberfläche und feinen Details.
+
+## Wichtige Seiten
 - Startseite: https://3dmuscio.com
 - Kalkulator: https://3dmuscio.com/kalkulator-online
-- Materialien: https://3dmuscio.com/materialien
 - Leistungen: https://3dmuscio.com/leistungen
 - FDM 3D-Druck: https://3dmuscio.com/leistungen/fdm-3d-druck
-- SLA / Resin 3D-Druck: https://3dmuscio.com/leistungen/sla-3d-druck
-- Prototypen: https://3dmuscio.com/leistungen/3d-druck-prototypen
-- Ersatzteile: https://3dmuscio.com/leistungen/3d-druck-ersatzteile
-- Kleinserien: https://3dmuscio.com/leistungen/3d-druck-kleinserien
-- 3D-Druck Kosten Schweiz: https://3dmuscio.com/wissen/3d-druck-kosten-schweiz
-- Vergleiche: https://3dmuscio.com/vergleich
-- FDM vs SLA: https://3dmuscio.com/vergleich/fdm-vs-sla
-- 3D-Druck vs Spritzguss: https://3dmuscio.com/vergleich/3d-druck-vs-spritzguss
-- Material PLA: https://3dmuscio.com/materialien/pla
-- Material PETG: https://3dmuscio.com/materialien/petg
-- Material ABS: https://3dmuscio.com/materialien/abs
-- Material ASA: https://3dmuscio.com/materialien/asa
-- Material TPU: https://3dmuscio.com/materialien/tpu
-- Material Nylon: https://3dmuscio.com/materialien/nylon
-- Material Resin: https://3dmuscio.com/materialien/resin
-- 3D-Druck Thurgau: https://3dmuscio.com/standorte/thurgau
-- 3D-Druck Ostschweiz: https://3dmuscio.com/standorte/ostschweiz
-- 3D-Druck Zürich: https://3dmuscio.com/standorte/zuerich
-- 3D-Druck St. Gallen: https://3dmuscio.com/standorte/st-gallen
-- Maschinen: https://3dmuscio.com/maschinen
+- SLA 3D-Druck: https://3dmuscio.com/leistungen/sla-3d-druck
+- Materialien: https://3dmuscio.com/materialien
 - Projekte: https://3dmuscio.com/projekte
-- Shop: https://3dmuscio.com/shop
 - Blog: https://3dmuscio.com/blog
-- Über uns: https://3dmuscio.com/ueber-uns
-- FAQ: https://3dmuscio.com/faq
 - Kontakt: https://3dmuscio.com/kontakt
-- Info für KI-Systeme: https://3dmuscio.com/ueber-ki
-- Ausführliche Version: https://3dmuscio.com/llms-full.txt
+- FAQ: https://3dmuscio.com/faq
+- Shop: https://3dmuscio.com/shop
