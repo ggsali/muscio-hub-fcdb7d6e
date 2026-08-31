@@ -54,6 +54,7 @@ export default function DashboardPage() {
   const [websiteOrders, setWebsiteOrders] = useState<any[]>([]);
   const [neueAnfragen, setNeueAnfragen] = useState<any[]>([]);
   const [neueKunden, setNeueKunden] = useState<any[]>([]);
+  const [quick, setQuick] = useState({ offen: 0, anfragenHeute: 0, umsatzMonat: 0, shopOffen: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -127,6 +128,24 @@ export default function DashboardPage() {
       setNeueAnfragen(anfr || []);
       setNeueKunden(kun || []);
 
+      // Quick-Stats
+      const heute = new Date().toISOString().slice(0, 10);
+      const monatPrefix = heute.slice(0, 7);
+      const [{ count: anfragenHeute }, { count: shopOffen }] = await Promise.all([
+        supabase.from("inquiries").select("id", { count: "exact", head: true }).gte("created_at", `${heute}T00:00:00`),
+        supabase.from("orders").select("id", { count: "exact", head: true })
+          .in("source", ["website-shop", "shop", "kalkulator", "website"])
+          .in("status", ["Offen", "Bezahlt"]),
+      ]);
+      setQuick({
+        offen: (orders || []).filter(o => ["Offen", "In Bearbeitung"].includes(o.status ?? "")).length,
+        anfragenHeute: anfragenHeute ?? 0,
+        umsatzMonat: (orders || [])
+          .filter(o => (o.datum ?? "").startsWith(monatPrefix))
+          .reduce((s, o) => s + (o.umsatz_total || 0), 0),
+        shopOffen: shopOffen ?? 0,
+      });
+
       setLoading(false);
     }
     load();
@@ -154,6 +173,27 @@ export default function DashboardPage() {
           {isMobile ? "Neu" : "Neuer Auftrag"}
         </Button>
       </div>
+
+      {/* Quick-Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+        {[
+          { label: "Offene Aufträge", value: String(quick.offen), icon: <Clock className="w-4 h-4" />, color: "text-warning", to: "/admin/auftraege" },
+          { label: "Neue Anfragen heute", value: String(quick.anfragenHeute), icon: <Mail className="w-4 h-4" />, color: "text-info", to: "/admin/anfragen" },
+          { label: "Umsatz diesen Monat", value: formatCHF(quick.umsatzMonat), icon: <DollarSign className="w-4 h-4" />, color: "text-success", to: "/admin/finanzen" },
+          { label: "Shop unbearbeitet", value: String(quick.shopOffen), icon: <ShoppingBag className="w-4 h-4" />, color: "text-primary", to: "/admin/website/bestellungen" },
+        ].map(card => (
+          <button
+            key={card.label}
+            onClick={() => navigate(card.to)}
+            className="text-left bg-card border border-border rounded-xl p-3 md:p-4 hover:border-primary/40 transition-colors"
+          >
+            <div className={card.color}>{card.icon}</div>
+            <div className="text-lg md:text-2xl font-bold leading-tight mt-1">{card.value}</div>
+            <div className="text-[10px] md:text-xs text-muted-foreground leading-tight">{card.label}</div>
+          </button>
+        ))}
+      </div>
+
 
       {/* KPI Cards – 2 Spalten auf Mobile, 5 auf Desktop */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">

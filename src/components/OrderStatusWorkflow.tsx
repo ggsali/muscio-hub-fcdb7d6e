@@ -1,9 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+
+/** Ordnet einen Log-Eintrag einer Kategorie mit Icon & Farbe zu */
+function logKind(entry: { status: string; notiz: string | null }) {
+  const text = `${entry.status} ${entry.notiz ?? ""}`.toLowerCase();
+  if (/fehler|fehlgeschlagen|warnung|storniert|abgebrochen/.test(text)) {
+    return { icon: <AlertTriangle className="w-3.5 h-3.5" />, color: "text-warning", bg: "bg-warning/10" };
+  }
+  if (/mail|e-mail|versendet|gesendet|rezension|bewertung/.test(text)) {
+    return { icon: <Mail className="w-3.5 h-3.5" />, color: "text-info", bg: "bg-info/10" };
+  }
+  if (/bezahlt|zahlung|stripe|akonto|rechnung|überweisung/.test(text)) {
+    return { icon: <Banknote className="w-3.5 h-3.5" />, color: "text-success", bg: "bg-success/10" };
+  }
+  return { icon: <Settings2 className="w-3.5 h-3.5" />, color: "text-muted-foreground", bg: "bg-muted/40" };
+}
 
 
 const STATUSES_MANUAL = ["Offen", "In Bearbeitung", "Bezahlt", "Geliefert", "Abgeschlossen"] as const;
@@ -428,19 +443,23 @@ export default function OrderStatusWorkflow({
         </div>
       )}
 
-      {/* Verlauf */}
+      {/* Verlauf / Aktivitäts-Log */}
       {!loadingLog && log.length > 0 && (
         <div className="border-t border-border pt-3 space-y-1.5">
-          <p className="text-xs text-muted-foreground font-medium mb-2">Verlauf</p>
-          {log.slice(0, 6).map(entry => (
-            <div key={entry.id} className="flex items-start gap-2 text-xs">
-              <span className="text-muted-foreground tabular-nums shrink-0">
-                {new Date(entry.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
-              </span>
-              <span className="text-foreground font-medium">{entry.status}</span>
-              {entry.notiz && <span className="text-muted-foreground">· {entry.notiz}</span>}
-            </div>
-          ))}
+          <p className="text-xs text-muted-foreground font-medium mb-2">Aktivitäts-Verlauf</p>
+          {log.map(entry => {
+            const kind = logKind(entry);
+            return (
+              <div key={entry.id} className={`flex items-start gap-2 text-xs rounded-lg px-2 py-1.5 ${kind.bg}`}>
+                <span className={`shrink-0 mt-0.5 ${kind.color}`}>{kind.icon}</span>
+                <span className="text-muted-foreground tabular-nums shrink-0">
+                  {new Date(entry.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+                <span className="text-foreground font-medium">{entry.status}</span>
+                {entry.notiz && <span className="text-muted-foreground">· {entry.notiz}</span>}
+              </div>
+            );
+          })}
         </div>
       )}
 
