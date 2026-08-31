@@ -65,7 +65,17 @@ export default function BlogPostPage() {
           image: post.titelbild_url || undefined,
           datePublished: post.veroeffentlicht_am || undefined,
           author: { "@type": "Person", name: post.autor },
+          publisher: { "@id": "https://3dmuscio.com/#organization" },
           mainEntityOfPage: url,
+        })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Start", item: "https://3dmuscio.com/" },
+            { "@type": "ListItem", position: 2, name: "Blog", item: "https://3dmuscio.com/blog" },
+            { "@type": "ListItem", position: 3, name: post.titel, item: url },
+          ],
         })}</script>
       </Helmet>
       <article className="container mx-auto px-4 py-12 md:py-20 max-w-3xl">
