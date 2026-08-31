@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, Trash2, Plus, Minus, Loader2, Send, ArrowRight, ArrowLeft, FileText,
   Check, Zap, Gauge, Shield, Gem, Sparkles, MessageCircle,
-  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X,
+  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X, Ticket,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, erfasseGutscheinVerwendung, type Gutschein } from "@/lib/gutschein";
