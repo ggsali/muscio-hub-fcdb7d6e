@@ -280,13 +280,19 @@
 }
 
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
 }
 
 .marquee-track {
   animation: marquee 35s linear infinite;
+  will-change: transform;
+  backface-visibility: hidden;
 }
-.marquee-track:hover {
-  animation-play-state: paused;
+/* Pause nur mit echter Maus – auf Touch bleibt der Hover sonst "kleben" und das Band stoppt */
+@media (hover: hover) and (pointer: fine) {
+  .marquee-track:hover {
+    animation-play-state: paused;
+  }
 }
+
