@@ -187,7 +187,7 @@ export default function PortalOrdersPage() {
                     <OrderProgress status={o.status} source={o.source || 'manual'} lieferart={(o as any).lieferart} />
                     {o.tracking_nr && (
                       <a
-                        href={`https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(o.tracking_nr)}`}
+                        href={`https://www.post.ch/de/empfangen/sendungsverfolgung#/sucheBarcode?barcode=${encodeURIComponent(o.tracking_nr)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-primary underline flex items-center gap-1"
