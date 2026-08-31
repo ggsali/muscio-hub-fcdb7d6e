@@ -1,13 +1,15 @@
 import { Link, useNavigate } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
-import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart, Ticket, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, type Gutschein } from "@/lib/gutschein";
 
 const RESUME_CHECKOUT_KEY = "muscio_resume_checkout";
 
@@ -17,6 +19,26 @@ export const CartDrawer = () => {
   const { user } = useCustomerAuth();
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
   const { openCheckout, checkoutElement } = useStripeCheckout();
+  const [codeInput, setCodeInput] = useState("");
+  const [gutschein, setGutschein] = useState<Gutschein | null>(null);
+  const [checkingCode, setCheckingCode] = useState(false);
+
+  const rabatt = gutschein ? berechneRabatt(gutschein, totalPrice).rabatt : 0;
+  const endTotal = Math.max(totalPrice - rabatt, 0);
+
+  const applyCode = async () => {
+    setCheckingCode(true);
+    const res = await pruefeGutschein(codeInput, totalPrice);
+    setCheckingCode(false);
+    if (!res.ok) {
+      setGutschein(null);
+      toast({ title: "Gutschein ungültig", description: res.error, variant: "destructive" });
+      return;
+    }
+    setGutschein(res.gutschein);
+    toast({ title: "Gutschein aktiviert", description: `${res.gutschein.code} · ${gutscheinWertLabel(res.gutschein)}` });
+  };
+
 
   const handleCheckout = useCallback(async () => {
     if (items.length === 0) return;
