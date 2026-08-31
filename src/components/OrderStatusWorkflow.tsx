@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote, Settings2 } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote, Settings2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+
+/** Post-CH Sendungsverfolgungs-Link */
+export function postTrackingUrl(nr: string) {
+  return `https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(nr)}`;
+}
 
 /** Ordnet einen Log-Eintrag einer Kategorie mit Icon & Farbe zu */
 function logKind(entry: { status: string; notiz: string | null }) {
@@ -376,7 +381,14 @@ export default function OrderStatusWorkflow({
             </>
           ) : (
             <>
-              <span className="font-medium text-foreground flex-1">{trackingInput || "—"}</span>
+              <span className="font-mono font-medium text-foreground">{trackingInput || "—"}</span>
+              {trackingInput && (
+                <a href={postTrackingUrl(trackingInput)} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
+                  <ExternalLink className="w-3 h-3" />
+                  Post CH verfolgen →
+                </a>
+              )}
+              <span className="flex-1" />
               <button onClick={() => setEditingTracking(true)} className="text-xs text-primary hover:underline whitespace-nowrap">Bearbeiten</button>
             </>
           )}
@@ -391,15 +403,26 @@ export default function OrderStatusWorkflow({
             <p className="text-sm font-semibold">Lieferung bestätigen</p>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">Tracking-Nummer (optional)</label>
+            <label className="text-xs text-muted-foreground">Tracking-Nummer (Post CH)</label>
             <Input
               value={trackingInput}
-              onChange={e => setTrackingInput(e.target.value)}
-              placeholder="z.B. 990123456789012345 (Post CH)"
-              className="bg-input border-border text-sm"
+              onChange={e => setTrackingInput(e.target.value.replace(/\s/g, ""))}
+              placeholder="z.B. 98.44.123456.78901234"
+              className="bg-input border-border text-base font-mono"
               autoFocus
             />
-            <p className="text-[11px] text-muted-foreground">Die Nummer wird im Verlauf gespeichert und kann dem Kunden mitgeteilt werden.</p>
+            {trackingInput && (
+              <a
+                href={postTrackingUrl(trackingInput)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Sendungsverfolgung testen →
+              </a>
+            )}
+            <p className="text-[11px] text-muted-foreground">Die Nummer wird gespeichert und dem Kunden per Mail mit Tracking-Link mitgeteilt.</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleConfirmDelivery} disabled={savingTracking} className="bg-primary hover:bg-primary/90 gap-2 text-sm" size="sm">

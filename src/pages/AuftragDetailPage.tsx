@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
@@ -2036,13 +2036,27 @@ export default function AuftragDetailPage() {
             <h3 className="font-semibold text-sm">{lieferart === "abholung" ? "Termine" : "Tracking & Termine"}</h3>
             {lieferart === "versand" && (
               <div className="space-y-1.5">
-                <Label>Tracking-Nummer</Label>
+                <Label>Tracking-Nummer (Post CH)</Label>
                 <div className="flex gap-2">
-                  <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value)} className="bg-input border-border" placeholder="z.B. CH123456789DE" />
+                  <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value.replace(/\s/g, ""))} className="bg-input border-border font-mono" placeholder="z.B. 98.44.123456.78901234" />
                   <Button onClick={handleSave} disabled={saving} variant="outline" className="border-border gap-2">
                     <Save className="w-4 h-4" /> Speichern
                   </Button>
                 </div>
+                {trackingNr && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="font-mono text-sm">{trackingNr}</span>
+                    <a
+                      href={`https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(trackingNr)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary underline flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Post CH verfolgen →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">

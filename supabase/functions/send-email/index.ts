@@ -106,6 +106,18 @@ function emailLayout({ title, bodyHtml }: { title: string; bodyHtml: string }) {
 </body></html>`;
 }
 
+/** Tracking-Block mit Post-CH Sendungsverfolgungs-Link */
+function trackingBlockHtml(trackingNr: string): string {
+  const trackingUrl = `https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(trackingNr)}`;
+  return `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:16px;margin:16px 0;text-align:center;">
+  <p style="color:#166534;font-size:13px;margin:0 0 10px;font-weight:600;">📦 Ihre Sendung ist unterwegs!</p>
+  <p style="color:#374151;font-size:13px;margin:0 0 10px;">Tracking-Nummer: <strong style="font-family:monospace;">${trackingNr}</strong></p>
+  <a href="${trackingUrl}" style="background:#00a651;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;display:inline-block;">Sendung verfolgen →</a>
+  <p style="color:#9ca3af;font-size:11px;margin:10px 0 0;">Lieferung in 1–2 Werktagen (Post CH Priority)</p>
+</div>`;
+}
+
+
 function buildOrderEmail(opts: {
   type: string;
   customerName: string;
@@ -211,7 +223,7 @@ function buildOrderEmail(opts: {
       subject: `Ihre Bestellung „${orderName}" wurde versendet`,
       html: emailLayout({
         title: "Bestellung versendet",
-        bodyHtml: `${greet}<p>Ihre Bestellung wurde soeben versendet.</p>${trackingNr ? `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#16a34a;font-weight:700;text-transform:uppercase;">Tracking-Nummer</p><p style="margin:0;font-size:18px;font-weight:700;letter-spacing:0.1em;">${trackingNr}</p></div>` : ""}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        bodyHtml: `${greet}<p>Ihre Bestellung wurde soeben versendet.</p>${trackingNr ? trackingBlockHtml(trackingNr) : ""}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
     };
   }
@@ -297,7 +309,7 @@ Deno.serve(async (req) => {
         } else {
           const effectiveTracking = trackingNr || (order as any).tracking_nr || null;
           if (effectiveTracking) {
-            infoBlock = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#16a34a;font-weight:700;text-transform:uppercase;">Tracking-Nummer</p><p style="margin:0;font-size:18px;font-weight:700;letter-spacing:0.1em;">${effectiveTracking}</p></div>`;
+            infoBlock = trackingBlockHtml(effectiveTracking);
           }
         }
       }
