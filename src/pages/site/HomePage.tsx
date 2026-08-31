@@ -133,8 +133,8 @@ const HeroBento = () => (
           </h1>
 
           <p className="text-base md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed">
-            Professioneller 3D-Druck für Prototypen, Ersatzteile und Kleinserien. Sofortpreis,
-            schnelle Lieferung und Schweizer Präzision.
+            Schweizer 3D-Druckservice für schnelle Prototypen, Ersatzteile und Kleinserien – mit
+            Sofortpreis, persönlichem Service und Produktion in der Schweiz.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
