@@ -818,6 +818,124 @@ export type Database = {
         }
         Relationships: []
       }
+      gutschein_verwendungen: {
+        Row: {
+          customer_id: string | null
+          gutschein_id: string | null
+          id: string
+          order_id: string | null
+          rabatt_betrag: number
+          shop_order_id: string | null
+          verwendet_am: string | null
+        }
+        Insert: {
+          customer_id?: string | null
+          gutschein_id?: string | null
+          id?: string
+          order_id?: string | null
+          rabatt_betrag: number
+          shop_order_id?: string | null
+          verwendet_am?: string | null
+        }
+        Update: {
+          customer_id?: string | null
+          gutschein_id?: string | null
+          id?: string
+          order_id?: string | null
+          rabatt_betrag?: number
+          shop_order_id?: string | null
+          verwendet_am?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gutschein_verwendungen_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gutschein_verwendungen_gutschein_id_fkey"
+            columns: ["gutschein_id"]
+            isOneToOne: false
+            referencedRelation: "gutscheine"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gutschein_verwendungen_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gutschein_verwendungen_shop_order_id_fkey"
+            columns: ["shop_order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gutscheine: {
+        Row: {
+          aktiv: boolean | null
+          code: string
+          erstellt_am: string | null
+          grund: string | null
+          gueltig_ab: string | null
+          gueltig_bis: string | null
+          id: string
+          kunde_id: string | null
+          max_verwendungen: number | null
+          mindestbestellwert: number | null
+          notiz: string | null
+          typ: string
+          verwendungen: number | null
+          wert: number
+        }
+        Insert: {
+          aktiv?: boolean | null
+          code: string
+          erstellt_am?: string | null
+          grund?: string | null
+          gueltig_ab?: string | null
+          gueltig_bis?: string | null
+          id?: string
+          kunde_id?: string | null
+          max_verwendungen?: number | null
+          mindestbestellwert?: number | null
+          notiz?: string | null
+          typ?: string
+          verwendungen?: number | null
+          wert?: number
+        }
+        Update: {
+          aktiv?: boolean | null
+          code?: string
+          erstellt_am?: string | null
+          grund?: string | null
+          gueltig_ab?: string | null
+          gueltig_bis?: string | null
+          id?: string
+          kunde_id?: string | null
+          max_verwendungen?: number | null
+          mindestbestellwert?: number | null
+          notiz?: string | null
+          typ?: string
+          verwendungen?: number | null
+          wert?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gutscheine_kunde_id_fkey"
+            columns: ["kunde_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           attachments: Json | null
