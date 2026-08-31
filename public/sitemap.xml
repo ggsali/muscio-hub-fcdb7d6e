@@ -231,6 +231,11 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://3dmuscio.com/blog/ersatzteile-3d-druck-schweiz</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://3dmuscio.com/blog/pla-vs-petg</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -246,7 +251,27 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://3dmuscio.com/blog/was-kostet-3d-druck-schweiz</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://3dmuscio.com/blog/wie-berechne-ich-3d-druck-kosten</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/blog/pla-vs-petg-welches-material</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/blog/fdm-vs-sla-3d-druck</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/blog/3d-druck-kleinserien-statt-spritzguss</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
