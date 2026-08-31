@@ -7,24 +7,28 @@ interface SidebarNavLinkProps {
   icon: React.ReactNode;
   label: string;
   collapsed: boolean;
+  exact?: boolean;
 }
 
-export const SidebarNavLink: React.FC<SidebarNavLinkProps> = ({ to, icon, label, collapsed }) => {
+export const SidebarNavLink: React.FC<SidebarNavLinkProps> = ({ to, icon, label, collapsed, exact }) => {
   const location = useLocation();
-  const isActive = location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
+  const isActive = exact
+    ? location.pathname === to
+    : location.pathname === to || (to !== "/" && location.pathname.startsWith(to + "/"));
 
   return (
-    <RouterNavLink to={to}>
+    <RouterNavLink to={to} title={collapsed ? label : undefined}>
       <div
         className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150",
+          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+          collapsed && "justify-center px-0",
           isActive
-            ? "bg-primary/20 text-primary"
-            : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+            ? "bg-primary/10 text-primary font-medium"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
       >
         <span className={cn("flex-shrink-0", isActive && "text-primary")}>{icon}</span>
-        {!collapsed && <span>{label}</span>}
+        {!collapsed && <span className="truncate">{label}</span>}
       </div>
     </RouterNavLink>
   );

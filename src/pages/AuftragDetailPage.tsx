@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
@@ -33,7 +33,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 interface PartRow {
@@ -136,6 +136,10 @@ export default function AuftragDetailPage() {
   type Tab = typeof TABS[number];
   const [activeTab, setActiveTab] = useState<Tab>("Übersicht");
   const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [manualStatus, setManualStatus] = useState("");
+  const [duplicating, setDuplicating] = useState(false);
+  const [stripePending, setStripePending] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -169,6 +173,21 @@ export default function AuftragDetailPage() {
       ));
   }, [id, isNew]);
 
+  // Stripe-Zahlung angelegt, aber noch nicht als bezahlt erfasst?
+  useEffect(() => {
+    if (!id || isNew) { setStripePending(false); return; }
+    (supabase.from as any)("shop_orders")
+      .select("id, status, paid_at, stripe_session_id")
+      .eq("order_id", id)
+      .not("stripe_session_id", "is", null)
+      .then(({ data }: any) => {
+        const pending = (data || []).some((r: any) =>
+          !r.paid_at && !["bezahlt", "paid", "abgeschlossen"].includes(String(r.status || "").toLowerCase())
+        );
+        setStripePending(pending);
+      });
+  }, [id, isNew]);
+
 
   const handleCreatePaymentLink = async () => {
     if (!id || totalUmsatz <= 0) return;
@@ -189,6 +208,62 @@ export default function AuftragDetailPage() {
     }
     setCreatingPaymentLink(false);
   };
+
+  // ---- Notfall-Aktionen ----------------------------------------------------
+  const logAction = async (statusLabel: string, notiz: string) => {
+    if (!id) return;
+    await (supabase.from as any)("order_status_log").insert({ order_id: id, status: statusLabel, notiz });
+  };
+
+  const applyManualStatus = async () => {
+    if (!id || !manualStatus) return;
+    const { error } = await supabase.from("orders").update({ status: manualStatus } as any).eq("id", id);
+    if (error) { toast({ title: "Fehler", description: error.message, variant: "destructive" }); return; }
+    setStatus(manualStatus);
+    await logAction(manualStatus, "Status manuell korrigiert");
+    setShowStatusDialog(false);
+    toast({ title: "Status korrigiert ✓", description: manualStatus });
+  };
+
+  const handleArchive = async () => {
+    if (!id) return;
+    const { error } = await supabase.from("orders").update({ status: "Archiviert" } as any).eq("id", id);
+    if (error) { toast({ title: "Fehler", description: error.message, variant: "destructive" }); return; }
+    setStatus("Archiviert");
+    await logAction("Archiviert", "Auftrag archiviert");
+    toast({ title: "Auftrag archiviert" });
+  };
+
+  const handleDuplicate = async () => {
+    if (!id || isNew) return;
+    setDuplicating(true);
+    try {
+      const { data: src } = await supabase.from("orders").select("*").eq("id", id).single();
+      if (!src) throw new Error("Auftrag nicht gefunden");
+      const { id: _oldId, created_at, updated_at, bewertungs_token, ...rest } = src as any;
+      const { data: copy, error } = await supabase
+        .from("orders")
+        .insert({ ...rest, name: `${(src as any).name || "Auftrag"} (Kopie)`, status: "Offen", tracking_nr: null, datum: new Date().toISOString().split("T")[0] } as any)
+        .select()
+        .single();
+      if (error || !copy) throw new Error(error?.message || "Kopie fehlgeschlagen");
+      const { data: srcParts } = await supabase.from("parts").select("*").eq("order_id", id);
+      if (srcParts && srcParts.length > 0) {
+        const newParts = (srcParts as any[]).map(({ id: _pid, created_at: _pc, updated_at: _pu, ...p }) => ({
+          ...p, order_id: copy.id, status: "Ausstehend",
+        }));
+        await supabase.from("parts").insert(newParts as any);
+      }
+      toast({ title: "Auftrag duplizert ✓" });
+      navigate(`/admin/auftraege/${copy.id}`);
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
+
 
   const nextActionForStatus = (s: string): { label: string; onClick: () => void; disabled?: boolean } => {
     switch (s) {
@@ -977,6 +1052,21 @@ export default function AuftragDetailPage() {
                       {trackingNr ? "Update-Mail" : "Lieferung mailen"}
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => { setManualStatus(status || ""); setShowStatusDialog(true); }} className="gap-2">
+                    <Settings2 className="w-4 h-4" /> Status korrigieren
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} className="gap-2">
+                    <Link2 className="w-4 h-4" /> Zahlungslink senden
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="gap-2">
+                    <Copy className="w-4 h-4" /> Duplizieren
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleArchive} className="gap-2">
+                    <Archive className="w-4 h-4" /> Archivieren
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
                     <Trash2 className="w-4 h-4" /> Löschen
                   </DropdownMenuItem>
@@ -1054,6 +1144,34 @@ export default function AuftragDetailPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <Wrench className="w-4 h-4" /> Aktionen <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Korrektur & Verwaltung</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => { setManualStatus(status || ""); setShowStatusDialog(true); }} className="gap-2">
+                      <Settings2 className="w-4 h-4" /> Status manuell korrigieren
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExportPDF(false)} className="gap-2">
+                      <FileDown className="w-4 h-4" /> Rechnung neu generieren
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} className="gap-2">
+                      <Link2 className="w-4 h-4" /> Zahlungslink neu senden
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="gap-2">
+                      <Copy className="w-4 h-4" /> Auftrag duplizieren
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleArchive} className="gap-2">
+                      <Archive className="w-4 h-4" /> Auftrag archivieren
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+
                 <Button onClick={() => setShowDeleteDialog(true)} variant="outline" className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10">
                   <Trash2 className="w-4 h-4" /> Löschen
                 </Button>
@@ -1066,6 +1184,49 @@ export default function AuftragDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Fehler-Banner: Stripe-Zahlung ausstehend */}
+      {!isNew && stripePending && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span className="text-sm text-amber-800">
+            Zahlung via Stripe ausstehend –
+            <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noreferrer" className="underline ml-1">
+              In Stripe prüfen →
+            </a>
+          </span>
+        </div>
+      )}
+
+      {/* Status manuell korrigieren */}
+      <AlertDialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Status manuell korrigieren</AlertDialogTitle>
+            <AlertDialogDescription>
+              Setzt den Auftragsstatus direkt – ohne E-Mail-Versand. Die Änderung wird im Verlauf protokolliert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid grid-cols-2 gap-2">
+            {["Offen", "In Bearbeitung", "Bezahlt", "Geliefert", "Abgeschlossen", "Storniert", "Archiviert"].map(s => (
+              <button
+                key={s}
+                onClick={() => setManualStatus(s)}
+                className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                  manualStatus === s ? "border-primary bg-primary/10 text-primary font-medium" : "border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setManualStatus("")}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={applyManualStatus} disabled={!manualStatus}>Übernehmen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* E-Mail Bestätigungsdialog */}
       <AlertDialog open={!!confirmEmailType} onOpenChange={(open) => { if (!open) { setConfirmEmailType(null); setWithDetails(false); setWithPaymentLink(false); } }}>

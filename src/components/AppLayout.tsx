@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Outlet, useLocation } from "@/lib/router-compat";
 import {
-  LayoutDashboard, Users, Package, Library, Calculator, Settings, ChevronLeft, Box,
-  LogOut, FlaskConical, MessageSquare, Upload, Menu, X, CalendarDays, MessageCircle,
-  Globe, Mail, Layers, Receipt, Smartphone, ShoppingBag
+  LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
+  LogOut, FlaskConical, MessageSquare, Menu, X, CalendarDays, MessageCircle,
+  Mail, Layers, Receipt, Smartphone, ShoppingBag, FileText, PenLine, Star,
+  ShoppingCart, FolderKanban, BarChart3, Users2,
 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,35 +14,80 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavLink } from "@/lib/router-compat";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { to: "/admin", icon: <LayoutDashboard className="w-[18px] h-[18px]" />, label: "Dashboard" },
-  { to: "/admin/kunden", icon: <Users className="w-[18px] h-[18px]" />, label: "Kunden" },
-  { to: "/admin/auftraege", icon: <Package className="w-[18px] h-[18px]" />, label: "Aufträge" },
-  { to: "/admin/anfragen", icon: <MessageSquare className="w-[18px] h-[18px]" />, label: "Anfragen" },
-  { to: "/admin/teile", icon: <Library className="w-[18px] h-[18px]" />, label: "Teile-Bibliothek" },
-  { to: "/admin/druckplatten", icon: <Layers className="w-[18px] h-[18px]" />, label: "Druckplatten" },
-  { to: "/admin/filamente", icon: <FlaskConical className="w-[18px] h-[18px]" />, label: "Filamente" },
-  { to: "/admin/kalkulator", icon: <Calculator className="w-[18px] h-[18px]" />, label: "Kalkulator" },
-  { to: "/admin/finanzen", icon: <Receipt className="w-[18px] h-[18px]" />, label: "Finanzen" },
-  { to: "/admin/kalender", icon: <CalendarDays className="w-[18px] h-[18px]" />, label: "Kalender" },
-  { to: "/admin/chat", icon: <MessageCircle className="w-[18px] h-[18px]" />, label: "Live-Chat" },
-  { to: "/admin/newsletter", icon: <Mail className="w-[18px] h-[18px]" />, label: "Newsletter" },
+const ic = "w-[18px] h-[18px]";
 
-  { to: "/admin/einstellungen", icon: <Settings className="w-[18px] h-[18px]" />, label: "Einstellungen" },
-];
+type NavItem = { to: string; icon: React.ReactNode; label: string; exact?: boolean };
+type NavGroup = { label: string; items: NavItem[] };
 
-const websiteNavItems = [
-  { to: "/website-admin", icon: <Globe className="w-[18px] h-[18px]" />, label: "Website-Verwaltung öffnen" },
+const navGroups: NavGroup[] = [
+  {
+    label: "Übersicht",
+    items: [
+      { to: "/admin", icon: <LayoutDashboard className={ic} />, label: "Dashboard", exact: true },
+    ],
+  },
+  {
+    label: "Aufträge & Kunden",
+    items: [
+      { to: "/admin/auftraege", icon: <Package className={ic} />, label: "Aufträge" },
+      { to: "/admin/kunden", icon: <Users className={ic} />, label: "Kunden" },
+      { to: "/admin/anfragen", icon: <MessageSquare className={ic} />, label: "Anfragen" },
+      { to: "/admin/website/bestellungen", icon: <ShoppingBag className={ic} />, label: "Bestellungen" },
+      { to: "/admin/chat", icon: <MessageCircle className={ic} />, label: "Live-Chat" },
+    ],
+  },
+  {
+    label: "Produktion",
+    items: [
+      { to: "/admin/druckplatten", icon: <Layers className={ic} />, label: "Druckplatten" },
+      { to: "/admin/filamente", icon: <FlaskConical className={ic} />, label: "Filamente" },
+      { to: "/admin/teile", icon: <Library className={ic} />, label: "Teile-Bibliothek" },
+    ],
+  },
+  {
+    label: "Finanzen",
+    items: [
+      { to: "/admin/finanzen", icon: <Receipt className={ic} />, label: "Übersicht", exact: true },
+      { to: "/admin/finanzen/abrechnungen", icon: <FileText className={ic} />, label: "Abrechnungen" },
+      { to: "/admin/finanzen/neue-rechnung", icon: <PenLine className={ic} />, label: "Neue Rechnung" },
+    ],
+  },
+  {
+    label: "Marketing",
+    items: [
+      { to: "/admin/newsletter", icon: <Mail className={ic} />, label: "Newsletter" },
+      { to: "/website-admin/reviews", icon: <Star className={ic} />, label: "Bewertungen" },
+      { to: "/website-admin/blog", icon: <FileText className={ic} />, label: "Blog" },
+    ],
+  },
+  {
+    label: "Website",
+    items: [
+      { to: "/website-admin/shop-produkte", icon: <ShoppingCart className={ic} />, label: "Shop & Produkte" },
+      { to: "/website-admin/projekte", icon: <FolderKanban className={ic} />, label: "Projekte" },
+      { to: "/website-admin/analyse", icon: <BarChart3 className={ic} />, label: "Analytics" },
+      { to: "/admin/website/kunden", icon: <Users2 className={ic} />, label: "Website-Kunden" },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { to: "/admin/kalender", icon: <CalendarDays className={ic} />, label: "Kalender" },
+      { to: "/admin/einstellungen", icon: <Settings className={ic} />, label: "Einstellungen" },
+    ],
+  },
 ];
 
 // Bottom nav shows only the 5 most important items on mobile
 const mobileBottomNav = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/website-admin/bestellungen", icon: ShoppingBag, label: "Bestellungen" },
+  { to: "/admin/website/bestellungen", icon: ShoppingBag, label: "Bestellungen" },
   { to: "/admin/anfragen", icon: MessageSquare, label: "Anfragen" },
   { to: "/admin/kunden", icon: Users, label: "Kunden" },
-  { to: "/admin/kalkulator", icon: Calculator, label: "Kalkulator" },
+  { to: "/admin/auftraege", icon: Package, label: "Aufträge" },
 ];
+
+const GROUP_LABEL = "text-[10px] uppercase tracking-widest text-muted-foreground px-3 mb-1 mt-4";
 
 function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -83,63 +129,49 @@ function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstal
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
-              <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-                {navItems.map(item => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to === "/admin"}
-                    onClick={() => setMenuOpen(false)}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors",
-                        isActive
-                          ? "bg-primary/15 text-primary font-medium"
-                          : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-                      )
-                    }
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </NavLink>
+              <nav className="flex-1 px-2 py-3 overflow-y-auto">
+                {navGroups.map(group => (
+                  <div key={group.label}>
+                    <p className={GROUP_LABEL}>{group.label}</p>
+                    <div className="space-y-0.5">
+                      {group.items.map(item => (
+                        <NavLink
+                          key={item.to}
+                          to={item.to}
+                          end={item.exact}
+                          onClick={() => setMenuOpen(false)}
+                          className={({ isActive }) =>
+                            cn(
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors",
+                              isActive
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            )
+                          }
+                        >
+                          {item.icon}
+                          <span>{item.label}</span>
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
                 ))}
-                <div className="pt-3 mt-2 border-t border-sidebar-border">
-                  <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Website</p>
-                  {websiteNavItems.map(item => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      onClick={() => setMenuOpen(false)}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors",
-                          isActive
-                            ? "bg-primary/15 text-primary font-medium"
-                            : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-                        )
-                      }
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </NavLink>
-                  ))}
-                </div>
               </nav>
               <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
                 {canInstall && (
                   <button
                     onClick={() => { setMenuOpen(false); onInstall(); }}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-primary hover:bg-sidebar-accent transition-colors w-full"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-primary hover:bg-muted transition-colors w-full"
                   >
-                    <Smartphone className="w-[18px] h-[18px] flex-shrink-0" />
+                    <Smartphone className={cn(ic, "flex-shrink-0")} />
                     <span>Als App installieren</span>
                   </button>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full"
                 >
-                  <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+                  <LogOut className={cn(ic, "flex-shrink-0")} />
                   <span>Abmelden</span>
                 </button>
               </div>
@@ -188,7 +220,7 @@ function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInsta
     <div className="flex min-h-screen w-full bg-background">
       <aside
         className="flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-200 flex-shrink-0 relative"
-        style={{ width: collapsed ? 60 : 228 }}
+        style={{ width: collapsed ? 60 : 240 }}
       >
         <div className={`flex items-center gap-2.5 border-b border-sidebar-border flex-shrink-0 ${collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"}`}>
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 glow-primary">
@@ -201,54 +233,52 @@ function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInsta
             </div>
           )}
         </div>
-        <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-          {navItems.map(item => (
-            <SidebarNavLink
-              key={item.to}
-              to={item.to}
-              icon={item.icon}
-              label={item.label}
-              collapsed={collapsed}
-            />
+        <nav className="flex-1 px-2 py-2 overflow-y-auto">
+          {navGroups.map(group => (
+            <div key={group.label}>
+              {collapsed ? (
+                <div className="my-2 border-t border-sidebar-border" />
+              ) : (
+                <p className={GROUP_LABEL}>{group.label}</p>
+              )}
+              <div className="space-y-0.5">
+                {group.items.map(item => (
+                  <SidebarNavLink
+                    key={item.to}
+                    to={item.to}
+                    icon={item.icon}
+                    label={item.label}
+                    collapsed={collapsed}
+                    exact={item.exact}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
-          <div className="pt-3 mt-2 border-t border-sidebar-border">
-            {!collapsed && (
-              <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Website</p>
-            )}
-            {websiteNavItems.map(item => (
-              <SidebarNavLink
-                key={item.to}
-                to={item.to}
-                icon={item.icon}
-                label={item.label}
-                collapsed={collapsed}
-              />
-            ))}
-          </div>
         </nav>
         <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
           {canInstall && (
             <button
               onClick={onInstall}
               title="Als App installieren"
-              className={`flex items-center gap-3 rounded-lg text-[13px] text-primary hover:bg-sidebar-accent transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
+              className={`flex items-center gap-3 rounded-lg text-sm text-primary hover:bg-muted transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
             >
-              <Smartphone className="w-[18px] h-[18px] flex-shrink-0" />
+              <Smartphone className={cn(ic, "flex-shrink-0")} />
               {!collapsed && <span>Als App installieren</span>}
             </button>
           )}
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 rounded-lg text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
+            className={`flex items-center gap-3 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
           >
-            <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+            <LogOut className={cn(ic, "flex-shrink-0")} />
             {!collapsed && <span>Abmelden</span>}
           </button>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className={`flex items-center gap-3 rounded-lg text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
+            className={`flex items-center gap-3 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
           >
-            <ChevronLeft className={`w-[18px] h-[18px] flex-shrink-0 transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`} />
+            <ChevronLeft className={cn(ic, "flex-shrink-0 transition-transform duration-200", collapsed && "rotate-180")} />
             {!collapsed && <span>Einklappen</span>}
           </button>
         </div>

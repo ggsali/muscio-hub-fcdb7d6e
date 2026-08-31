@@ -135,6 +135,7 @@ export default function KundeDetailPage() {
   const [profileLink, setProfileLink] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [createdAt, setCreatedAt] = useState<string | null>(null);
 
   const handleSendProfileCompletion = async () => {
     if (!customer.email) { toast.error("Kunde hat keine E-Mail-Adresse"); return; }
@@ -191,7 +192,10 @@ export default function KundeDetailPage() {
     if (isNew) return;
     async function load() {
       const { data: c } = await supabase.from("customers").select("*").eq("id", id!).single();
-      if (c) setCustomer({ ...emptyCustomer(), ...(c as any) });
+      if (c) {
+        setCustomer({ ...emptyCustomer(), ...(c as any) });
+        setCreatedAt(((c as any).created_at as string) ?? null);
+      }
 
       const { data: o } = await supabase.from("orders").select("*").eq("customer_id", id!).order("datum", { ascending: false });
       if (o) setOrders(o as Order[]);
@@ -428,6 +432,86 @@ export default function KundeDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Übersicht-Kacheln */}
+      {!isNew && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+          {[
+            { label: "Total Umsatz", value: formatCHF(totalUmsatz) },
+            { label: "Letzter Auftrag", value: orders[0]?.datum ? new Date(orders[0].datum).toLocaleDateString("de-CH") : "–" },
+            { label: "Ø Auftragswert", value: orders.length ? formatCHF(totalUmsatz / orders.length) : "–" },
+            { label: "Kunde seit", value: createdAt ? new Date(createdAt).toLocaleDateString("de-CH", { month: "short", year: "numeric" }) : "–" },
+          ].map(k => (
+            <div key={k.label} className="bg-card border border-border rounded-xl p-3 md:p-4">
+              <div className="text-lg md:text-xl font-bold leading-tight">{k.value}</div>
+              <div className="text-[10px] md:text-xs text-muted-foreground">{k.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Schnell-Aktionen */}
+      {!isNew && !editing && (
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate(`/admin/anfragen?customer_id=${id}`)}>
+            <MessageSquare className="w-4 h-4" /> Neue Anfrage
+          </Button>
+          <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate(`/admin/finanzen/neue-rechnung?customer_id=${id}`)}>
+            <FileText className="w-4 h-4" /> Rechnung erstellen
+          </Button>
+          <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate("/admin/newsletter")}>
+            <Send className="w-4 h-4" /> Newsletter
+          </Button>
+          {customer.email && (
+            <Button size="sm" variant="outline" className="gap-2" asChild>
+              <a href={`mailto:${customer.email}`}>
+                <Send className="w-4 h-4" /> E-Mail schreiben
+              </a>
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Aktivitäts-Timeline */}
+      {!isNew && (orders.length > 0 || inquiries.length > 0) && (
+        <div className="bg-card border border-border rounded-xl p-4">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mb-3">Aktivität</p>
+          <div className="space-y-2">
+            {[
+              ...orders.map(o => ({
+                key: `o-${o.id}`,
+                date: o.datum,
+                icon: <Box className="w-3.5 h-3.5" />,
+                color: "text-primary",
+                text: `Auftrag ${o.name || o.beschreibung || ""} · ${formatCHF(o.umsatz_total || 0)}`,
+                status: o.status,
+                onClick: () => navigate(`/admin/auftraege/${o.id}`),
+              })),
+              ...inquiries.map(i => ({
+                key: `i-${i.id}`,
+                date: (i as any).created_at as string,
+                icon: <MessageSquare className="w-3.5 h-3.5" />,
+                color: "text-info",
+                text: `Anfrage: ${(i as any).betreff || (i as any).nachricht?.slice(0, 60) || "–"}`,
+                status: (i as any).status as string,
+                onClick: () => { setActiveTab("anfragen"); setSelectedInquiryId(i.id); },
+              })),
+            ]
+              .filter(e => e.date)
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 12)
+              .map(e => (
+                <button key={e.key} onClick={e.onClick} className="w-full text-left flex items-center gap-2.5 text-xs hover:bg-muted/50 rounded-lg px-2 py-1.5 transition-colors">
+                  <span className={`shrink-0 ${e.color}`}>{e.icon}</span>
+                  <span className="text-muted-foreground tabular-nums shrink-0">{new Date(e.date).toLocaleDateString("de-CH")}</span>
+                  <span className="flex-1 truncate">{e.text}</span>
+                  {e.status && <StatusBadge status={e.status} />}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
+
 
       {/* Tabs */}
       {!isNew && (
