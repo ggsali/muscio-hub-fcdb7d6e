@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote, Settings2 } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote, Settings2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+
+/** Post-CH Sendungsverfolgungs-Link */
+export function postTrackingUrl(nr: string) {
+  return `https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(nr)}`;
+}
 
 /** Ordnet einen Log-Eintrag einer Kategorie mit Icon & Farbe zu */
 function logKind(entry: { status: string; notiz: string | null }) {
