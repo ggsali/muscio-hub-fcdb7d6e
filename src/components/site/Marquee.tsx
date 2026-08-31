@@ -33,21 +33,29 @@ export const Marquee = () => {
     loadItems();
   }, []);
 
+  // Genug Wiederholungen, damit auch auf breiten Screens keine Lücke entsteht
+  const group = Array.from({ length: 4 }).flatMap((_, c) =>
+    items.map((item, i) => (
+      <span
+        key={`${c}-${i}`}
+        className="text-sm font-medium text-muted-foreground whitespace-nowrap flex items-center gap-2 pr-8"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+        {item}
+      </span>
+    ))
+  );
+
   return (
     <div className="relative overflow-hidden py-4 border-y border-border bg-muted/50">
-      <div className="marquee-track flex gap-8 w-max">
-        {Array.from({ length: 8 }).flatMap((_, copyIndex) =>
-          items.map((item, i) => (
-            <span
-              key={`${copyIndex}-${i}`}
-              className="text-sm font-medium text-muted-foreground whitespace-nowrap flex items-center gap-2"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-              {item}
-            </span>
-          ))
-        )}
+      <div className="marquee-track flex w-max">
+        {/* Zwei identische Hälften: Animation läuft exakt -50% → nahtloser Loop */}
+        <div className="flex shrink-0">{group}</div>
+        <div className="flex shrink-0" aria-hidden="true">
+          {group}
+        </div>
       </div>
     </div>
   );
 };
+
