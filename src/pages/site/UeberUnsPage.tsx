@@ -81,7 +81,8 @@ export default function UeberUnsPage() {
                   Wir machen 3D-Druck<br />zugänglich.
                 </h1>
                 <p className="text-muted-foreground text-base leading-relaxed">
-                  Schweizer Qualität trifft modernste Technologie — seit 2021.
+                  Schweizer 3D-Druckservice für schnelle Prototypen, Ersatzteile und Kleinserien – mit
+                  Sofortpreis, persönlichem Service und Produktion in der Schweiz.
                 </p>
               </div>
             </ScrollReveal>
