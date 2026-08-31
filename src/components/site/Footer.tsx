@@ -12,6 +12,7 @@ const footerLinks = [
   { label: "3D-Druck Thurgau", path: "/standorte/thurgau" },
   { label: "Unsere Maschinen", path: "/maschinen" },
   { label: "Über uns", path: "/ueber-uns" },
+  { label: "Gutschein kaufen", path: "/gutschein" },
   { label: "Blog", path: "/blog" },
   { label: "Kontakt", path: "/kontakt" },
 ];
