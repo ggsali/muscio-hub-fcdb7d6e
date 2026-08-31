@@ -337,10 +337,52 @@ Deno.serve(async (req) => {
       })
     );
 
+
+    // ── Gutschein-Code einlösen ───────────────────────────────────────
+    let gutscheinId: string | null = null;
+    let rabattBetrag = 0;
+    let stripeDiscounts: Array<{ coupon: string }> | undefined;
+    if (gutscheinCode) {
+      const { data: g } = await supabase
+        .from("gutscheine")
+        .select("*")
+        .eq("code", gutscheinCode)
+        .maybeSingle();
+      const heute = new Date().toISOString().slice(0, 10);
+      const ungueltig =
+        !g ? "Code existiert nicht" :
+        !g.aktiv ? "Code ist nicht aktiv" :
+        g.gueltig_ab && heute < g.gueltig_ab ? "Code ist noch nicht gültig" :
+        g.gueltig_bis && heute > g.gueltig_bis ? "Code ist abgelaufen" :
+        g.max_verwendungen !== null && (g.verwendungen ?? 0) >= g.max_verwendungen ? "Code ist aufgebraucht" :
+        Number(g.mindestbestellwert || 0) > subtotal ? `Mindestbestellwert CHF ${Number(g.mindestbestellwert).toFixed(2)} nicht erreicht` :
+        null;
+      if (ungueltig) throw new Error(`Gutschein: ${ungueltig}`);
+
+      gutscheinId = g!.id;
+      const coupon = g!.typ === "prozent"
+        ? await stripe.coupons.create({ percent_off: Number(g!.wert), duration: "once", name: g!.code })
+        : g!.typ === "betrag"
+          ? await stripe.coupons.create({
+              amount_off: Math.round(Math.min(Number(g!.wert), subtotal) * 100),
+              currency: "chf",
+              duration: "once",
+              name: g!.code,
+            })
+          : null;
+      if (coupon) {
+        stripeDiscounts = [{ coupon: coupon.id }];
+        rabattBetrag = g!.typ === "prozent"
+          ? Math.round(subtotal * (Number(g!.wert) / 100) * 100) / 100
+          : Math.min(Number(g!.wert), subtotal);
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       ui_mode: "embedded_page",
       line_items: lineItems,
+      ...(stripeDiscounts ? { discounts: stripeDiscounts } : {}),
       ...(customerId
         ? {
             customer: customerId,
@@ -354,7 +396,9 @@ Deno.serve(async (req) => {
         shop_order_id: orderId,
         source: "website-shop",
         ...(userId && { userId }),
+        ...(gutscheinId && { gutschein_id: gutscheinId, gutschein_rabatt: String(rabattBetrag) }),
       },
+
       payment_intent_data: {
         description: `Webshop-Bestellung #${orderId.substring(0, 8)}`,
         metadata: {
