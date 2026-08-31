@@ -44,13 +44,15 @@ const organizationJsonLd = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": ["LocalBusiness", "ManufacturingBusiness"],
+      "@type": ["LocalBusiness", "ProfessionalService", "ManufacturingBusiness"],
       "@id": "https://3dmuscio.com/#organization",
       name: "3DMuscio",
       description:
-        "Professioneller 3D Druckservice in der Schweiz. FDM und SLA Druck, Einzelteile, Kleinserien, Prototypen.",
+        "Schweizer 3D-Druckservice für Prototypen, Ersatzteile und Kleinserien. FDM und SLA 3D-Druck aus Eschlikon TG.",
       url: "https://3dmuscio.com",
       email: "info@3dmuscio.com",
+      founder: { "@type": "Person", name: "Jorim Moos" },
+      foundingDate: "2024",
       image:
         "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
       logo: "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
@@ -62,13 +64,14 @@ const organizationJsonLd = JSON.stringify({
         addressRegion: "Thurgau",
         addressCountry: "CH",
       },
-      geo: { "@type": "GeoCoordinates", latitude: 47.4833, longitude: 8.9667 },
+      geo: { "@type": "GeoCoordinates", latitude: 47.6537, longitude: 8.9736 },
       areaServed: { "@type": "Country", name: "Schweiz" },
-      priceRange: "CHF",
+      serviceType: ["FDM 3D-Druck", "SLA 3D-Druck", "Rapid Prototyping", "Kleinserienfertigung"],
+      priceRange: "CHF 5 – CHF 500",
       currenciesAccepted: "CHF",
       paymentAccepted: "Kreditkarte, TWINT, Banküberweisung",
       openingHours: "Mo-Fr 08:00-18:00",
-      sameAs: ["https://www.instagram.com/3dmuscio"],
+      sameAs: ["https://www.instagram.com/3dmuscio", "https://www.linkedin.com/company/3dmuscio"],
       makesOffer: [
         { "@type": "Offer", itemOffered: { "@type": "Service", name: "FDM 3D Druck" } },
         { "@type": "Offer", itemOffered: { "@type": "Service", name: "SLA Resin Druck" } },
