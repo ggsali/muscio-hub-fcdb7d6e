@@ -106,6 +106,18 @@ function emailLayout({ title, bodyHtml }: { title: string; bodyHtml: string }) {
 </body></html>`;
 }
 
+/** Tracking-Block mit Post-CH Sendungsverfolgungs-Link */
+function trackingBlockHtml(trackingNr: string): string {
+  const trackingUrl = `https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(trackingNr)}`;
+  return `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:16px;margin:16px 0;text-align:center;">
+  <p style="color:#166534;font-size:13px;margin:0 0 10px;font-weight:600;">📦 Ihre Sendung ist unterwegs!</p>
+  <p style="color:#374151;font-size:13px;margin:0 0 10px;">Tracking-Nummer: <strong style="font-family:monospace;">${trackingNr}</strong></p>
+  <a href="${trackingUrl}" style="background:#00a651;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;display:inline-block;">Sendung verfolgen →</a>
+  <p style="color:#9ca3af;font-size:11px;margin:10px 0 0;">Lieferung in 1–2 Werktagen (Post CH Priority)</p>
+</div>`;
+}
+
+
 function buildOrderEmail(opts: {
   type: string;
   customerName: string;
