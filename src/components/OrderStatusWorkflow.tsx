@@ -381,7 +381,14 @@ export default function OrderStatusWorkflow({
             </>
           ) : (
             <>
-              <span className="font-medium text-foreground flex-1">{trackingInput || "—"}</span>
+              <span className="font-mono font-medium text-foreground">{trackingInput || "—"}</span>
+              {trackingInput && (
+                <a href={postTrackingUrl(trackingInput)} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
+                  <ExternalLink className="w-3 h-3" />
+                  Post CH verfolgen →
+                </a>
+              )}
+              <span className="flex-1" />
               <button onClick={() => setEditingTracking(true)} className="text-xs text-primary hover:underline whitespace-nowrap">Bearbeiten</button>
             </>
           )}
