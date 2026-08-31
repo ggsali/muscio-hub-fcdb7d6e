@@ -11,9 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, Trash2, Plus, Minus, Loader2, Send, ArrowRight, ArrowLeft, FileText,
   Check, Zap, Gauge, Shield, Gem, Sparkles, MessageCircle,
-  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X,
+  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X, Ticket,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, erfasseGutscheinVerwendung, type Gutschein } from "@/lib/gutschein";
 import { toast } from "sonner";
 import ModelPreview from "@/components/site/ModelPreview";
 import HerkunftBanner from "@/components/site/HerkunftBanner";
@@ -1048,6 +1049,26 @@ const CalculatorOnlinePage = () => {
   const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
   const totalMin = Math.round(total * 0.9 * 100) / 100;
   const totalMax = Math.round(total * 1.15 * 100) / 100;
+
+  // Gutschein
+  const [gutscheinInput, setGutscheinInput] = useState("");
+  const [gutschein, setGutschein] = useState<Gutschein | null>(null);
+  const [gutscheinPruefen, setGutscheinPruefen] = useState(false);
+  const gutscheinRabatt = gutschein ? berechneRabatt(gutschein, subtotal, shipping).rabatt : 0;
+  const totalMitGutschein = Math.max(total - gutscheinRabatt, 0);
+
+  const gutscheinEinloesen = async () => {
+    setGutscheinPruefen(true);
+    const res = await pruefeGutschein(gutscheinInput, subtotal);
+    setGutscheinPruefen(false);
+    if (!res.ok) {
+      setGutschein(null);
+      toast.error(res.error);
+      return;
+    }
+    setGutschein(res.gutschein);
+    toast.success(`Gutschein aktiviert: ${gutscheinWertLabel(res.gutschein)}`);
+  };
   const hasKiAnalysis = parts.some((p) => p.kiAnalysis || p.slicerResult);
 
   // Aggregierte Werte für die Wert-Kommunikation (nur Anzeige)
@@ -1224,7 +1245,10 @@ const CalculatorOnlinePage = () => {
           })),
       ];
 
-      const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${addressLine}${kiBlock}\n\nNachricht: ${form.message}`;
+      const gutscheinBlock = gutschein
+        ? `\n\nGutschein: ${gutschein.code} (${gutscheinWertLabel(gutschein)}) – Rabatt ${CHF(gutscheinRabatt)}\nPreis nach Gutschein: ${CHF(totalMitGutschein)}`
+        : "";
+      const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${gutscheinBlock}${addressLine}${kiBlock}\n\nNachricht: ${form.message}`;
 
       const { data, error } = await supabase.functions.invoke("submit-inquiry", {
         body: {
@@ -1243,6 +1267,16 @@ const CalculatorOnlinePage = () => {
         },
       });
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
+
+      if (gutschein) {
+        try {
+          await erfasseGutscheinVerwendung({ gutschein, rabattBetrag: gutscheinRabatt });
+        } catch (gErr) {
+          console.error("Gutschein-Verwendung konnte nicht erfasst werden", gErr);
+        }
+        setGutschein(null);
+        setGutscheinInput("");
+      }
 
       trackCalc("schritt_5_bestellung_abgesendet", { teile: parts.length });
 
@@ -2307,10 +2341,33 @@ const CalculatorOnlinePage = () => {
                       <span>Versand</span>
                       <span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
                     </div>
+                    {gutschein && (
+                      <div className="flex justify-between text-success">
+                        <span className="flex items-center gap-1.5"><Ticket className="w-3.5 h-3.5" /> {gutschein.code}</span>
+                        <span className="font-semibold tabular-nums">− {CHF(gutscheinRabatt)}</span>
+                      </div>
+                    )}
+                    <div className="flex gap-2 pt-2">
+                      <Input
+                        value={gutscheinInput}
+                        onChange={(e) => setGutscheinInput(e.target.value.toUpperCase())}
+                        placeholder="Gutschein-Code"
+                        className="h-9 text-sm"
+                      />
+                      {gutschein ? (
+                        <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { setGutschein(null); setGutscheinInput(""); }}>
+                          Entfernen
+                        </Button>
+                      ) : (
+                        <Button type="button" variant="outline" size="sm" className="h-9" onClick={gutscheinEinloesen} disabled={gutscheinPruefen || !gutscheinInput.trim()}>
+                          {gutscheinPruefen ? <Loader2 className="w-4 h-4 animate-spin" /> : "Einlösen"}
+                        </Button>
+                      )}
+                    </div>
                     <div className="border-t border-border pt-3 mt-3 flex items-center justify-between">
                       <span className="font-bold">Total</span>
                       <div className="text-right">
-                        <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(total)}</span>
+                        <span className="text-xl font-bold text-primary">{hasStep ? "Auf Anfrage" : CHF(totalMitGutschein)}</span>
                         {hasStep ? (
                           <p className="text-[11px] text-muted-foreground mt-0.5">STEP-Datei – wir melden uns mit einem Angebot.</p>
                         ) : parts.some(p => p.slicerLoading) ? (

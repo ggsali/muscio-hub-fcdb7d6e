@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
 import { toast } from "sonner";
-import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare, Send, Link2, Copy, Check } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare, Send, Link2, Copy, Check , Ticket} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -458,6 +458,9 @@ export default function KundeDetailPage() {
           </Button>
           <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate(`/admin/finanzen/neue-rechnung?customer_id=${id}`)}>
             <FileText className="w-4 h-4" /> Rechnung erstellen
+          </Button>
+          <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate("/admin/gutscheine")}>
+            <Ticket className="w-4 h-4" /> Gutschein erstellen
           </Button>
           <Button size="sm" variant="outline" className="gap-2" onClick={() => navigate("/admin/newsletter")}>
             <Send className="w-4 h-4" /> Newsletter

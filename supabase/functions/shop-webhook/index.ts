@@ -38,11 +38,98 @@ serve(async (req) => {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      // ── Gutschein-Kauf (Geschenkkarte) ──────────────────────────────
+      if (session.metadata?.gutschein_kauf === "1") {
+        const betrag = Number(session.metadata?.gutschein_betrag || 0);
+        const empfaengerEmail =
+          (session.metadata?.gutschein_empfaenger_email || "").trim() ||
+          session.customer_details?.email ||
+          "";
+        const empfaengerName = (session.metadata?.gutschein_empfaenger_name || "").trim();
+        const nachricht = (session.metadata?.gutschein_nachricht || "").trim();
+
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let suffix = "";
+        for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+        const code = `GESCHENK-${suffix}`;
+        const gueltigBis = new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10);
+
+        const { error: gErr } = await sb.from("gutscheine" as any).insert({
+          code,
+          typ: "betrag",
+          wert: betrag,
+          mindestbestellwert: 0,
+          max_verwendungen: 1,
+          gueltig_bis: gueltigBis,
+          grund: "Gutschein-Kauf über Website",
+          notiz: `Stripe Session ${session.id}`,
+          aktiv: true,
+        });
+        if (gErr) console.error("[shop-webhook] gutschein insert error:", gErr);
+
+        if (empfaengerEmail) {
+          try {
+            const resendKey = Deno.env.get("RESEND_API_KEY");
+            if (resendKey) {
+              const res = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  from: "3DMuscio <noreply@3dmuscio.com>",
+                  to: [empfaengerEmail],
+                  subject: `Dein 3DMuscio Gutschein: CHF ${betrag.toFixed(2)}`,
+                  html: `
+                    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#111;">
+                      <h1 style="color:#FF5A00;">Dein 3DMuscio Gutschein</h1>
+                      <p>${empfaengerName ? `Hallo ${empfaengerName}` : "Hallo"}</p>
+                      ${nachricht ? `<p style="white-space:pre-wrap;">${nachricht}</p>` : ""}
+                      <div style="border:2px dashed #FF5A00;border-radius:12px;padding:20px;text-align:center;margin:24px 0;">
+                        <div style="font-size:12px;letter-spacing:2px;color:#666;text-transform:uppercase;">Gutschein-Code</div>
+                        <div style="font-size:28px;font-weight:bold;letter-spacing:3px;margin-top:8px;">${code}</div>
+                        <div style="font-size:14px;color:#666;margin-top:8px;">CHF ${betrag.toFixed(2)} Guthaben</div>
+                      </div>
+                      <p style="color:#444;font-size:14px;">Gültig bis ${new Date(gueltigBis).toLocaleDateString("de-CH")} · einlösbar im Shop und im Online-Kalkulator.</p>
+                      <p style="margin-top:24px;">
+                        <a href="https://3dmuscio.com/kalkulator-online" style="background:#FF5A00;color:#fff;padding:12px 20px;text-decoration:none;border-radius:8px;">Jetzt einlösen &rarr;</a>
+                      </p>
+                    </div>`,
+                }),
+              });
+              if (!res.ok) console.error("[shop-webhook] gutschein mail failed:", await res.text());
+            }
+          } catch (mailErr) {
+            console.error("[shop-webhook] gutschein mail exception:", mailErr);
+          }
+        }
+
+        return new Response(JSON.stringify({ ok: true, gutschein: code }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const shopOrderId = session.metadata?.shop_order_id;
       if (!shopOrderId) {
         console.warn("No shop_order_id in metadata; ignoring");
         return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+
+      // ── Eingelösten Gutschein protokollieren ────────────────────────
+      const gutscheinId = session.metadata?.gutschein_id;
+      if (gutscheinId) {
+        const rabatt = Number(session.metadata?.gutschein_rabatt || 0);
+        const { error: vErr } = await sb.from("gutschein_verwendungen" as any).insert({
+          gutschein_id: gutscheinId,
+          shop_order_id: shopOrderId,
+          rabatt_betrag: rabatt,
+        });
+        if (vErr) console.error("[shop-webhook] gutschein verwendung error:", vErr);
+        const { data: gRow } = await sb.from("gutscheine" as any).select("verwendungen").eq("id", gutscheinId).maybeSingle();
+        await sb.from("gutscheine" as any)
+          .update({ verwendungen: ((gRow as any)?.verwendungen ?? 0) + 1 })
+          .eq("id", gutscheinId);
+      }
+
 
       const cd = session.customer_details;
       const addr = cd?.address;

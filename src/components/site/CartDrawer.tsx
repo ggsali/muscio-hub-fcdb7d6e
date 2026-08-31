@@ -1,13 +1,15 @@
 import { Link, useNavigate } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
-import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart, Ticket, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, type Gutschein } from "@/lib/gutschein";
 
 const RESUME_CHECKOUT_KEY = "muscio_resume_checkout";
 
@@ -17,6 +19,26 @@ export const CartDrawer = () => {
   const { user } = useCustomerAuth();
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
   const { openCheckout, checkoutElement } = useStripeCheckout();
+  const [codeInput, setCodeInput] = useState("");
+  const [gutschein, setGutschein] = useState<Gutschein | null>(null);
+  const [checkingCode, setCheckingCode] = useState(false);
+
+  const rabatt = gutschein ? berechneRabatt(gutschein, totalPrice).rabatt : 0;
+  const endTotal = Math.max(totalPrice - rabatt, 0);
+
+  const applyCode = async () => {
+    setCheckingCode(true);
+    const res = await pruefeGutschein(codeInput, totalPrice);
+    setCheckingCode(false);
+    if (!res.ok) {
+      setGutschein(null);
+      toast({ title: "Gutschein ungültig", description: res.error, variant: "destructive" });
+      return;
+    }
+    setGutschein(res.gutschein);
+    toast({ title: "Gutschein aktiviert", description: `${res.gutschein.code} · ${gutscheinWertLabel(res.gutschein)}` });
+  };
+
 
   const handleCheckout = useCallback(async () => {
     if (items.length === 0) return;
@@ -66,12 +88,13 @@ export const CartDrawer = () => {
         : { email: user.email ?? "" },
       userId: user.id,
       returnUrl: `${window.location.origin}/payment-success`,
+      gutscheinCode: gutschein?.code,
       onError: (message) => {
         toast({ title: "Checkout fehlgeschlagen", description: message, variant: "destructive" });
       },
     });
     setIsOpen(false);
-  }, [items, user, navigate, setIsOpen, toast, openCheckout]);
+  }, [items, user, navigate, setIsOpen, toast, openCheckout, gutschein]);
 
   // Nach Login automatisch Checkout fortsetzen
   useEffect(() => {
@@ -187,6 +210,39 @@ export const CartDrawer = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Zwischensumme</span>
                   <span className="font-bold text-foreground text-lg">CHF {totalPrice.toFixed(2)}</span>
+                </div>
+                {gutschein && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-success flex items-center gap-1.5">
+                      <Ticket className="w-3.5 h-3.5" /> {gutschein.code}
+                    </span>
+                    <span className="text-success font-semibold">
+                      {gutschein.typ === "gratis_versand" ? "Gratis Versand" : `− CHF ${rabatt.toFixed(2)}`}
+                    </span>
+                  </div>
+                )}
+                {gutschein && gutschein.typ !== "gratis_versand" && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Total</span>
+                    <span className="font-bold text-primary text-lg">CHF {endTotal.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={codeInput}
+                    onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                    placeholder="Gutschein-Code"
+                    className="h-9 text-sm"
+                  />
+                  {gutschein ? (
+                    <Button variant="outline" size="sm" className="h-9" onClick={() => { setGutschein(null); setCodeInput(""); }}>
+                      Entfernen
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" className="h-9" onClick={applyCode} disabled={checkingCode || !codeInput.trim()}>
+                      {checkingCode ? <Loader2 className="w-4 h-4 animate-spin" /> : "Einlösen"}
+                    </Button>
+                  )}
                 </div>
                 <p className="text-[10px] text-muted-foreground">Versand wird im Checkout berechnet.</p>
                 <Button className="w-full gap-2" onClick={handleCheckout}>

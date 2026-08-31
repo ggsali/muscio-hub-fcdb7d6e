@@ -41,6 +41,7 @@ import { Route as Site3dDruckZuerichRouteImport } from './routes/_site/3d-druck-
 import { Route as SiteAgbRouteImport } from './routes/_site/agb'
 import { Route as SiteDatenschutzRouteImport } from './routes/_site/datenschutz'
 import { Route as SiteFaqRouteImport } from './routes/_site/faq'
+import { Route as SiteGutscheinRouteImport } from './routes/_site/gutschein'
 import { Route as SiteImpressumRouteImport } from './routes/_site/impressum'
 import { Route as SiteKalkulatorOnlineRouteImport } from './routes/_site/kalkulator-online'
 import { Route as SiteKontaktRouteImport } from './routes/_site/kontakt'
@@ -53,6 +54,7 @@ import { Route as AdminChatRouteImport } from './routes/admin/chat'
 import { Route as AdminDruckplattenRouteImport } from './routes/admin/druckplatten'
 import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellungen'
 import { Route as AdminFilamenteRouteImport } from './routes/admin/filamente'
+import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
@@ -276,6 +278,11 @@ const SiteFaqRoute = SiteFaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteGutscheinRoute = SiteGutscheinRouteImport.update({
+  id: '/gutschein',
+  path: '/gutschein',
+  getParentRoute: () => SiteRoute,
+} as any)
 const SiteImpressumRoute = SiteImpressumRouteImport.update({
   id: '/impressum',
   path: '/impressum',
@@ -334,6 +341,11 @@ const AdminEinstellungenRoute = AdminEinstellungenRouteImport.update({
 const AdminFilamenteRoute = AdminFilamenteRouteImport.update({
   id: '/filamente',
   path: '/filamente',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGutscheineRoute = AdminGutscheineRouteImport.update({
+  id: '/gutscheine',
+  path: '/gutscheine',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminKalenderRoute = AdminKalenderRouteImport.update({
@@ -694,6 +706,7 @@ export interface FileRoutesByFullPath {
   '/agb': typeof SiteAgbRoute
   '/datenschutz': typeof SiteDatenschutzRoute
   '/faq': typeof SiteFaqRoute
+  '/gutschein': typeof SiteGutscheinRoute
   '/impressum': typeof SiteImpressumRoute
   '/kalkulator-online': typeof SiteKalkulatorOnlineRoute
   '/kontakt': typeof SiteKontaktRoute
@@ -705,6 +718,7 @@ export interface FileRoutesByFullPath {
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRoute
+  '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
@@ -798,6 +812,7 @@ export interface FileRoutesByTo {
   '/agb': typeof SiteAgbRoute
   '/datenschutz': typeof SiteDatenschutzRoute
   '/faq': typeof SiteFaqRoute
+  '/gutschein': typeof SiteGutscheinRoute
   '/impressum': typeof SiteImpressumRoute
   '/kalkulator-online': typeof SiteKalkulatorOnlineRoute
   '/kontakt': typeof SiteKontaktRoute
@@ -809,6 +824,7 @@ export interface FileRoutesByTo {
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRoute
+  '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
@@ -908,6 +924,7 @@ export interface FileRoutesById {
   '/_site/agb': typeof SiteAgbRoute
   '/_site/datenschutz': typeof SiteDatenschutzRoute
   '/_site/faq': typeof SiteFaqRoute
+  '/_site/gutschein': typeof SiteGutscheinRoute
   '/_site/impressum': typeof SiteImpressumRoute
   '/_site/kalkulator-online': typeof SiteKalkulatorOnlineRoute
   '/_site/kontakt': typeof SiteKontaktRoute
@@ -919,6 +936,7 @@ export interface FileRoutesById {
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRoute
+  '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
@@ -1019,6 +1037,7 @@ export interface FileRouteTypes {
     | '/agb'
     | '/datenschutz'
     | '/faq'
+    | '/gutschein'
     | '/impressum'
     | '/kalkulator-online'
     | '/kontakt'
@@ -1030,6 +1049,7 @@ export interface FileRouteTypes {
     | '/admin/druckplatten'
     | '/admin/einstellungen'
     | '/admin/filamente'
+    | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
     | '/admin/newsletter'
@@ -1123,6 +1143,7 @@ export interface FileRouteTypes {
     | '/agb'
     | '/datenschutz'
     | '/faq'
+    | '/gutschein'
     | '/impressum'
     | '/kalkulator-online'
     | '/kontakt'
@@ -1134,6 +1155,7 @@ export interface FileRouteTypes {
     | '/admin/druckplatten'
     | '/admin/einstellungen'
     | '/admin/filamente'
+    | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
     | '/admin/newsletter'
@@ -1232,6 +1254,7 @@ export interface FileRouteTypes {
     | '/_site/agb'
     | '/_site/datenschutz'
     | '/_site/faq'
+    | '/_site/gutschein'
     | '/_site/impressum'
     | '/_site/kalkulator-online'
     | '/_site/kontakt'
@@ -1243,6 +1266,7 @@ export interface FileRouteTypes {
     | '/admin/druckplatten'
     | '/admin/einstellungen'
     | '/admin/filamente'
+    | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
     | '/admin/newsletter'
@@ -1572,6 +1596,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteFaqRouteImport
       parentRoute: typeof SiteRoute
     }
+    '/_site/gutschein': {
+      id: '/_site/gutschein'
+      path: '/gutschein'
+      fullPath: '/gutschein'
+      preLoaderRoute: typeof SiteGutscheinRouteImport
+      parentRoute: typeof SiteRoute
+    }
     '/_site/impressum': {
       id: '/_site/impressum'
       path: '/impressum'
@@ -1654,6 +1685,13 @@ declare module '@tanstack/react-router' {
       path: '/filamente'
       fullPath: '/admin/filamente'
       preLoaderRoute: typeof AdminFilamenteRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gutscheine': {
+      id: '/admin/gutscheine'
+      path: '/gutscheine'
+      fullPath: '/admin/gutscheine'
+      preLoaderRoute: typeof AdminGutscheineRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/kalender': {
@@ -2109,6 +2147,7 @@ interface SiteRouteChildren {
   SiteAgbRoute: typeof SiteAgbRoute
   SiteDatenschutzRoute: typeof SiteDatenschutzRoute
   SiteFaqRoute: typeof SiteFaqRoute
+  SiteGutscheinRoute: typeof SiteGutscheinRoute
   SiteImpressumRoute: typeof SiteImpressumRoute
   SiteKalkulatorOnlineRoute: typeof SiteKalkulatorOnlineRoute
   SiteKontaktRoute: typeof SiteKontaktRoute
@@ -2141,6 +2180,7 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteAgbRoute: SiteAgbRoute,
   SiteDatenschutzRoute: SiteDatenschutzRoute,
   SiteFaqRoute: SiteFaqRoute,
+  SiteGutscheinRoute: SiteGutscheinRoute,
   SiteImpressumRoute: SiteImpressumRoute,
   SiteKalkulatorOnlineRoute: SiteKalkulatorOnlineRoute,
   SiteKontaktRoute: SiteKontaktRoute,
@@ -2172,6 +2212,7 @@ interface AdminRouteChildren {
   AdminDruckplattenRoute: typeof AdminDruckplattenRoute
   AdminEinstellungenRoute: typeof AdminEinstellungenRoute
   AdminFilamenteRoute: typeof AdminFilamenteRoute
+  AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
@@ -2198,6 +2239,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDruckplattenRoute: AdminDruckplattenRoute,
   AdminEinstellungenRoute: AdminEinstellungenRoute,
   AdminFilamenteRoute: AdminFilamenteRoute,
+  AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,

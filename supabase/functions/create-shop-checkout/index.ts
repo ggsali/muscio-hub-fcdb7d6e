@@ -102,12 +102,55 @@ Deno.serve(async (req) => {
     const items = (body?.items || []) as InItem[];
     const inCustomer = (body?.customer || null) as InCustomer | null;
     const environment = (body?.environment || "sandbox") as StripeEnv;
+    const gutscheinCode = typeof body?.gutscheinCode === "string" ? body.gutscheinCode.trim().toUpperCase() : "";
+    const giftInput = (body?.gutschein || null) as
+      | { betrag: number; empfaenger_email?: string | null; empfaenger_name?: string | null; nachricht?: string | null }
+      | null;
     if (!["sandbox", "live"].includes(environment)) {
       throw new Error("Invalid environment");
     }
 
+    // ── Gutschein-Kauf (Geschenkkarte) ────────────────────────────────
+    if (giftInput) {
+      const betrag = Math.round(Number(giftInput.betrag) * 100) / 100;
+      if (!betrag || betrag < 10 || betrag > 1000) throw new Error("Betrag muss zwischen CHF 10 und CHF 1'000 liegen");
+      const email = (giftInput.empfaenger_email || "").trim();
+      if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Ungültige Empfänger-E-Mail");
+
+      const giftStripe = createStripeClient(environment);
+      const giftOrigin = req.headers.get("origin") || "https://3dmuscio.com";
+      const giftSession = await giftStripe.checkout.sessions.create({
+        mode: "payment",
+        ui_mode: "embedded_page",
+        line_items: [{
+          quantity: 1,
+          price_data: {
+            currency: "chf",
+            unit_amount: Math.round(betrag * 100),
+            product_data: { name: `3DMuscio Gutschein CHF ${betrag.toFixed(2)}`, tax_code: "txcd_99999999" },
+          },
+        }],
+        return_url: body?.returnUrl
+          ? String(body.returnUrl)
+          : `${giftOrigin}/gutschein?erfolg=1`,
+        metadata: {
+          gutschein_kauf: "1",
+          gutschein_betrag: String(betrag),
+          gutschein_empfaenger_email: email.slice(0, 255),
+          gutschein_empfaenger_name: (giftInput.empfaenger_name || "").slice(0, 120),
+          gutschein_nachricht: (giftInput.nachricht || "").slice(0, 500),
+        },
+      } as any);
+
+      return new Response(JSON.stringify({ clientSecret: giftSession.client_secret }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!Array.isArray(items) || items.length === 0) throw new Error("Warenkorb leer");
     if (items.length > 50) throw new Error("Zu viele Positionen");
+
 
     const auth = req.headers.get("Authorization");
     let userEmail: string | undefined;
@@ -294,10 +337,52 @@ Deno.serve(async (req) => {
       })
     );
 
+
+    // ── Gutschein-Code einlösen ───────────────────────────────────────
+    let gutscheinId: string | null = null;
+    let rabattBetrag = 0;
+    let stripeDiscounts: Array<{ coupon: string }> | undefined;
+    if (gutscheinCode) {
+      const { data: g } = await supabase
+        .from("gutscheine")
+        .select("*")
+        .eq("code", gutscheinCode)
+        .maybeSingle();
+      const heute = new Date().toISOString().slice(0, 10);
+      const ungueltig =
+        !g ? "Code existiert nicht" :
+        !g.aktiv ? "Code ist nicht aktiv" :
+        g.gueltig_ab && heute < g.gueltig_ab ? "Code ist noch nicht gültig" :
+        g.gueltig_bis && heute > g.gueltig_bis ? "Code ist abgelaufen" :
+        g.max_verwendungen !== null && (g.verwendungen ?? 0) >= g.max_verwendungen ? "Code ist aufgebraucht" :
+        Number(g.mindestbestellwert || 0) > subtotal ? `Mindestbestellwert CHF ${Number(g.mindestbestellwert).toFixed(2)} nicht erreicht` :
+        null;
+      if (ungueltig) throw new Error(`Gutschein: ${ungueltig}`);
+
+      gutscheinId = g!.id;
+      const coupon = g!.typ === "prozent"
+        ? await stripe.coupons.create({ percent_off: Number(g!.wert), duration: "once", name: g!.code })
+        : g!.typ === "betrag"
+          ? await stripe.coupons.create({
+              amount_off: Math.round(Math.min(Number(g!.wert), subtotal) * 100),
+              currency: "chf",
+              duration: "once",
+              name: g!.code,
+            })
+          : null;
+      if (coupon) {
+        stripeDiscounts = [{ coupon: coupon.id }];
+        rabattBetrag = g!.typ === "prozent"
+          ? Math.round(subtotal * (Number(g!.wert) / 100) * 100) / 100
+          : Math.min(Number(g!.wert), subtotal);
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       ui_mode: "embedded_page",
       line_items: lineItems,
+      ...(stripeDiscounts ? { discounts: stripeDiscounts } : {}),
       ...(customerId
         ? {
             customer: customerId,
@@ -311,7 +396,9 @@ Deno.serve(async (req) => {
         shop_order_id: orderId,
         source: "website-shop",
         ...(userId && { userId }),
+        ...(gutscheinId && { gutschein_id: gutscheinId, gutschein_rabatt: String(rabattBetrag) }),
       },
+
       payment_intent_data: {
         description: `Webshop-Bestellung #${orderId.substring(0, 8)}`,
         metadata: {
