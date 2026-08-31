@@ -211,7 +211,7 @@ function buildOrderEmail(opts: {
       subject: `Ihre Bestellung „${orderName}" wurde versendet`,
       html: emailLayout({
         title: "Bestellung versendet",
-        bodyHtml: `${greet}<p>Ihre Bestellung wurde soeben versendet.</p>${trackingNr ? `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#16a34a;font-weight:700;text-transform:uppercase;">Tracking-Nummer</p><p style="margin:0;font-size:18px;font-weight:700;letter-spacing:0.1em;">${trackingNr}</p></div>` : ""}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        bodyHtml: `${greet}<p>Ihre Bestellung wurde soeben versendet.</p>${trackingNr ? trackingBlockHtml(trackingNr) : ""}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
     };
   }
