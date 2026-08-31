@@ -14,13 +14,21 @@ export const CountUp = ({
   duration?: number;
   decimals?: number;
 }) => {
-  const [count, setCount] = useState(0);
+  // SSR + erster Render: Zielwert steht direkt im HTML (für Crawler).
+  const [count, setCount] = useState(end);
+  const [hydrated, setHydrated] = useState(false);
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
   const hasRun = useRef(false);
 
+  // Nach der Hydration auf 0 zurücksetzen, damit die Animation sichtbar ist.
   useEffect(() => {
-    if (!inView || hasRun.current) return;
+    setHydrated(true);
+    setCount(0);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || !inView || hasRun.current) return;
     hasRun.current = true;
     const start = Date.now();
     const timer = setInterval(() => {
@@ -35,7 +43,7 @@ export const CountUp = ({
       }
     }, 16);
     return () => clearInterval(timer);
-  }, [inView, end, duration, decimals]);
+  }, [hydrated, inView, end, duration, decimals]);
 
   return (
     <span ref={ref}>
