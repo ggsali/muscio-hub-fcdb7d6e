@@ -19,7 +19,7 @@ export const services: ServiceContent[] = [
     h1: "FDM 3D-Druck – robuste Teile aus Kunststoff",
     title: "FDM 3D-Druck Schweiz | Funktionsteile & Gehäuse | 3DMuscio",
     description:
-      "FDM 3D-Druck aus Eschlikon TG: PLA, PETG, ABS, ASA und TPU für Funktionsteile, Gehäuse und Halterungen. Toleranz typisch ±0.2 mm, 48 h Produktionszeit.",
+      "FDM 3D-Druck aus Eschlikon TG für Funktionsteile, Gehäuse und Halterungen: Schweizer 3D-Druckservice mit Sofortpreis, persönlichem Service und 48 h Produktion.",
     shortAnswer:
       "FDM (Fused Deposition Modeling) ist das richtige Verfahren, wenn ein Bauteil mechanisch belastbar, günstig und schnell sein soll. Ein Kunststofffaden wird geschmolzen und Schicht für Schicht aufgetragen. Bei 3DMuscio drucken wir FDM in PLA, PETG, ABS, ASA und TPU mit einer typischen Genauigkeit von ±0.2 mm.",
     sections: [
@@ -77,7 +77,7 @@ export const services: ServiceContent[] = [
     h1: "SLA / Resin 3D-Druck – maximale Detailtreue",
     title: "SLA & Resin 3D-Druck Schweiz | Feine Details | 3DMuscio",
     description:
-      "SLA/Resin 3D-Druck aus Eschlikon TG: glatte Oberflächen und feinste Details für Modelle, Miniaturen und filigrane Bauteile. Online kalkulieren, 48 h Produktionszeit.",
+      "SLA/Resin 3D-Druck für glatte Oberflächen und feinste Details: Schweizer 3D-Druckservice mit Sofortpreis, persönlichem Service und Produktion in Eschlikon TG.",
     shortAnswer:
       "SLA (Resin-Druck) ist die richtige Wahl, wenn ein Teil sehr feine Details oder eine glatte Oberfläche braucht. Flüssiges Harz wird schichtweise mit Licht ausgehärtet, wodurch Schichten kaum sichtbar sind. Ideal für Modelle, Miniaturen und kleine Sichtteile – weniger geeignet für stark belastete Funktionsteile.",
     sections: [
@@ -126,7 +126,7 @@ export const services: ServiceContent[] = [
     h1: "3D-Druck Prototypen – Ideen in Tagen statt Wochen testen",
     title: "3D-Druck Prototypen Schweiz | Rapid Prototyping | 3DMuscio",
     description:
-      "Rapid Prototyping aus Eschlikon TG: Funktionsmodelle, Designmuster und Iterationen im FDM- und SLA-Druck. 48 h Produktionszeit, ab 1 Stück, online kalkulieren.",
+      "Rapid Prototyping ab 1 Stück in FDM und SLA: Schweizer 3D-Druckservice für schnelle Prototypen – Sofortpreis, persönlicher Service, Produktion in der Schweiz.",
     shortAnswer:
       "Ein 3D-gedruckter Prototyp zeigt in Tagen, ob ein Design funktioniert – ohne Werkzeugkosten und ohne Mindestmenge. Bei 3DMuscio kannst du Funktions-, Design- und Passmuster einzeln bestellen und nach jeder Iteration direkt die nächste Version drucken lassen.",
     sections: [
@@ -181,7 +181,7 @@ export const services: ServiceContent[] = [
     h1: "3D-Druck Ersatzteile – nachfertigen statt neu kaufen",
     title: "Ersatzteile 3D-Druck Schweiz | Nachfertigung | 3DMuscio",
     description:
-      "Ersatzteile per 3D-Druck nachfertigen lassen: nach STL, STEP, Zeichnung oder Muster. FDM & SLA aus Eschlikon TG, ab 1 Stück, Lieferung schweizweit.",
+      "Ersatzteile nachfertigen nach STL, STEP, Zeichnung oder Muster: Schweizer 3D-Druckservice mit Sofortpreis, persönlichem Service und Produktion in der Schweiz.",
     shortAnswer:
       "Wenn ein Kunststoffteil bricht und nicht mehr lieferbar ist, lässt es sich meist per 3D-Druck nachfertigen. Wir drucken Ersatzteile nach STL-, STEP-, 3MF- oder OBJ-Datei – und in vielen Fällen auch nach Zeichnung, Maßangaben oder Muster. Gefertigt wird ab 1 Stück in Eschlikon TG.",
     sections: [
@@ -232,7 +232,7 @@ export const services: ServiceContent[] = [
     h1: "3D-Druck Kleinserien – Serienteile ohne Werkzeugkosten",
     title: "Kleinserien 3D-Druck Schweiz | Ohne Spritzgussform | 3DMuscio",
     description:
-      "Kleinserien im 3D-Druck aus Eschlikon TG: Serienteile ab 1 Stück ohne Formkosten. FDM & SLA, Mengenrabatt, Produktion in der Schweiz.",
+      "Kleinserien ab 1 Stück ohne Formkosten: Schweizer 3D-Druckservice für Serienteile – Sofortpreis, persönlicher Service, Produktion in der Schweiz, Mengenrabatt.",
     shortAnswer:
       "Kleinserien im 3D-Druck lohnen sich, solange die Stückzahl zu klein für eine Spritzgussform ist – typischerweise bis in den Bereich einiger hundert Teile. Es fallen keine Werkzeugkosten an, Änderungen sind jederzeit möglich, und wir produzieren ab 1 Stück in Eschlikon TG mit Mengenrabatt.",
     sections: [
@@ -276,7 +276,7 @@ export const services: ServiceContent[] = [
     h1: "3D-Druck für Unternehmen – B2B-Service aus der Schweiz",
     title: "B2B 3D-Druck Schweiz – Rechnung, Kleinserien, Industriematerial | 3DMuscio",
     description:
-      "3D-Druck für Firmen aus der Schweiz: Bestellung auf Rechnung mit QR-Zahlteil, Mengenrabatt ab dem ersten Stück, technische Materialien wie PETG, ABS, ASA und TPU. Produktion in Eschlikon TG, Standard 48 h.",
+      "3D-Druck für Schweizer Firmen: Prototypen, Ersatzteile und Kleinserien mit Sofortpreis, persönlichem Service, Rechnung mit QR-Zahlteil und Produktion in der Schweiz.",
     shortAnswer:
       "3DMuscio fertigt für Schweizer Unternehmen Prototypen, Betriebsmittel, Ersatzteile und Kleinserien im FDM- und SLA-Verfahren. Firmenkunden bestellen auf Rechnung (Schweizer QR-Rechnung), erhalten Mengenrabatt bereits ab kleinen Stückzahlen und wählen aus technischen Materialien wie PETG, ABS, ASA, TPU und Resin. Produziert wird in Eschlikon TG, Standardproduktionszeit 48 Stunden.",
     sections: [
