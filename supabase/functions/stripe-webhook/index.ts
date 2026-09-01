@@ -76,7 +76,7 @@ serve(async (req) => {
 
   try {
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object;
       const orderId = session.metadata?.order_id;
       const amountTotal = session.amount_total ?? 0;
       const amountChf = amountTotal / 100;
