@@ -420,10 +420,19 @@ export async function exportOrderPDF(data: OrderExportData) {
     });
   }
 
-  const afterTable = (doc as any).lastAutoTable.finalY + 6;
+  let afterTable = (doc as any).lastAutoTable.finalY + 6;
+
+  // ── Seitenumbruch falls zu wenig Platz ───────────────────────────
+  const footerHeight = 20;
+  const summaryHeight = 80;
+  const minSpace = summaryHeight + footerHeight + 10;
+  if (afterTable + minSpace > pageH) {
+    doc.addPage();
+    afterTable = margin;
+  }
 
   // ── Zusammenfassung rechts ──────────────────────────────────────
-  const sumW = 70;
+  const sumW = 80;
   const sumX = pageW - margin - sumW;
   let sumY = afterTable;
 
@@ -469,49 +478,33 @@ export async function exportOrderPDF(data: OrderExportData) {
   // Grand Total box bottom edge
   const totalBoxBottom = sumY + 8; // sumY - 4 + 12
 
-  // ── Dankeszeile links und Zahlungsbedingungen rechts ────────────
-  // Beide Blöcke starten auf derselben Höhe und dürfen den Footer nicht überlagern.
-  const thanksY = afterTable + 10;
+  // ── Zahlungsbedingungen links ────────────────────────────────────
+  const termsX = margin;
+  const termsWidth = sumX - margin - 10;
   const termsY = afterTable + 10;
   const footerY = pageH - 14;
-  const maxTermsY = footerY - 5;
 
-  // Links: Dankeszeile
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...BLACK);
-  doc.text("Vielen Dank!", margin, thanksY);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(...GRAY);
-  doc.text("Wir schätzen Ihr Vertrauen.", margin, thanksY + 6);
-
-  // UID
-  if (data.company.uid_nummer) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...GRAY);
-    doc.text(`UID: ${data.company.uid_nummer}`, margin, thanksY + 12);
-  }
-
-  // Rechts: Zahlungsbedingungen
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(...BLACK);
-  doc.text("ZAHLUNGSBEDINGUNGEN", sumX, termsY);
+  doc.text("ZAHLUNGSBEDINGUNGEN", termsX, termsY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...GRAY);
   const termsText =
     data.company.zahlungsbedingungen ||
     "Zahlung fällig innerhalb von 30 Tagen nach Rechnungsdatum. Bei Fragen stehen wir Ihnen gerne zur Verfügung.";
-  const termsLines = doc.splitTextToSize(termsText, pageW - sumX - margin);
-  const termsHeight = termsLines.length * 4;
-  if (termsY + 6 + termsHeight < maxTermsY) {
-    doc.text(termsLines, sumX, termsY + 6);
-  } else {
-    const maxLines = Math.max(0, Math.floor((maxTermsY - termsY - 6) / 4));
-    doc.text(termsLines.slice(0, maxLines), sumX, termsY + 6);
+  const termsLines = doc.splitTextToSize(termsText, termsWidth);
+  const maxLines = Math.max(0, Math.floor((footerY - afterTable - 10) / 4));
+  doc.text(termsLines.slice(0, maxLines), termsX, termsY + 6);
+
+  // UID unter Zahlungsbedingungen, falls noch Platz vorhanden
+  const uidY = termsY + 6 + Math.min(termsLines.length, maxLines) * 4 + 4;
+  if (data.company.uid_nummer && uidY + 4 < footerY - 5) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GRAY);
+    doc.text(`UID: ${data.company.uid_nummer}`, termsX, uidY);
   }
 
   // ── Fusszeile ───────────────────────────────────────────────────
