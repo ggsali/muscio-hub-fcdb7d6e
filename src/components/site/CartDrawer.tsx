@@ -26,6 +26,23 @@ export const CartDrawer = () => {
   const rabatt = gutschein ? berechneRabatt(gutschein, totalPrice).rabatt : 0;
   const endTotal = Math.max(totalPrice - rabatt, 0);
 
+  // Gutschein verwerfen, wenn der Warenkorb geändert wird (z. B. Mindestbestellwert
+  // nicht mehr erreicht) – sonst scheitert der Checkout serverseitig.
+  useEffect(() => {
+    if (!gutschein) return;
+    const mindest = Number(gutschein.mindestbestellwert || 0);
+    if (items.length === 0 || (mindest > 0 && totalPrice < mindest)) {
+      setGutschein(null);
+      setCodeInput("");
+      if (items.length > 0) {
+        toast({
+          title: "Gutschein entfernt",
+          description: `Mindestbestellwert CHF ${mindest.toFixed(2)} nicht mehr erreicht.`,
+        });
+      }
+    }
+  }, [items, totalPrice, gutschein, toast]);
+
   const applyCode = async () => {
     setCheckingCode(true);
     const res = await pruefeGutschein(codeInput, totalPrice);
@@ -38,6 +55,7 @@ export const CartDrawer = () => {
     setGutschein(res.gutschein);
     toast({ title: "Gutschein aktiviert", description: `${res.gutschein.code} · ${gutscheinWertLabel(res.gutschein)}` });
   };
+
 
 
   const handleCheckout = useCallback(async () => {
@@ -90,6 +108,16 @@ export const CartDrawer = () => {
       returnUrl: `${window.location.origin}/payment-success`,
       gutscheinCode: gutschein?.code,
       onError: (message) => {
+        if (/gutschein/i.test(message)) {
+          setGutschein(null);
+          setCodeInput("");
+          toast({
+            title: "Gutschein nicht einlösbar",
+            description: `${message} – der Code wurde entfernt, bitte erneut zur Kasse gehen.`,
+            variant: "destructive",
+          });
+          return;
+        }
         toast({ title: "Checkout fehlgeschlagen", description: message, variant: "destructive" });
       },
     });

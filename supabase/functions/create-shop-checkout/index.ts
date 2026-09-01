@@ -416,9 +416,13 @@ Deno.serve(async (req) => {
     });
   } catch (err: any) {
     console.error("[checkout] Fehler:", err?.message, err?.stack);
+    const msg = err?.message || "Unbekannter Fehler";
+    // Fachliche Fehler (Gutschein, Lagerbestand, Mindestbetrag …) als 200 mit
+    // Fehlertext zurückgeben, damit der Client die echte Meldung anzeigen kann.
+    const fachlich = /^(Gutschein:|Ausverkauft|Nur noch|Mindestbetrag|Mindestbestellwert|Produkt nicht verfügbar|Option nicht verfügbar|Ungültige|Betrag muss)/.test(msg);
     return new Response(
-      JSON.stringify({ error: err?.message || "Unbekannter Fehler" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: msg }),
+      { status: fachlich ? 200 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

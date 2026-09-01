@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import { encode } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { Resend } from "npm:resend@2";
 
@@ -8,30 +8,50 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
+/** Stripe-Signatur ohne Stripe-SDK/Secret-Key prüfen (HMAC-SHA256). */
+async function verifySignature(body: string, signature: string, secret: string): Promise<boolean> {
+  let timestamp: string | undefined;
+  const v1: string[] = [];
+  for (const part of signature.split(",")) {
+    const [k, v] = part.split("=", 2);
+    if (k === "t") timestamp = v;
+    if (k === "v1") v1.push(v);
+  }
+  if (!timestamp || v1.length === 0) return false;
+  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${timestamp}.${body}`));
+  const expected = new TextDecoder().decode(encode(new Uint8Array(signed)));
+  return v1.includes(expected);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
-  const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+  const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET")
+    || Deno.env.get("PAYMENTS_LIVE_WEBHOOK_SECRET")
+    || Deno.env.get("PAYMENTS_SANDBOX_WEBHOOK_SECRET");
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  if (!STRIPE_SECRET_KEY) {
-    console.error("[stripe-webhook] STRIPE_SECRET_KEY missing");
-    return new Response("STRIPE_SECRET_KEY missing", { status: 500 });
-  }
   if (!STRIPE_WEBHOOK_SECRET) {
-    console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET missing");
-    return new Response("STRIPE_WEBHOOK_SECRET missing", { status: 500 });
+    console.error("[stripe-webhook] webhook secret missing");
+    return new Response("Webhook secret missing", { status: 500 });
   }
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error("[stripe-webhook] Supabase env missing");
     return new Response("Supabase env missing", { status: 500 });
   }
 
-  const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   const body = await req.text();
@@ -41,15 +61,11 @@ serve(async (req) => {
     return new Response("Missing stripe-signature header", { status: 400 });
   }
 
-  let event: Stripe.Event;
+  let event: any;
   try {
-    event = await stripe.webhooks.constructEventAsync(
-      body,
-      signature,
-      STRIPE_WEBHOOK_SECRET,
-      undefined,
-      Stripe.createSubtleCryptoProvider(),
-    );
+    const ok = await verifySignature(body, signature, STRIPE_WEBHOOK_SECRET);
+    if (!ok) throw new Error("signature mismatch");
+    event = JSON.parse(body);
   } catch (err) {
     console.error("[stripe-webhook] Signature verification failed:", err);
     return new Response("Invalid signature", { status: 400 });
@@ -57,9 +73,10 @@ serve(async (req) => {
 
   console.log(`[stripe-webhook] ✅ Event received: type=${event.type} id=${event.id}`);
 
+
   try {
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object;
       const orderId = session.metadata?.order_id;
       const amountTotal = session.amount_total ?? 0;
       const amountChf = amountTotal / 100;
