@@ -100,26 +100,42 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Forward the admin's JWT to send-transactional-email (verify_jwt=true)
-    const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
-      method: 'POST',
-      headers: {
-        'Authorization': authHeader,
-        'apikey': anonKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        templateName: 'profil-vervollstaendigen',
-        recipientEmail: customer.email,
-        idempotencyKey: `profile-completion-${token}`,
-        templateData: { name: displayName, completionUrl },
-      }),
+    // E-Mail direkt via Resend versenden
+    const kundenName = displayName || 'Kunde'
+    const { error: mailErr } = await resend.emails.send({
+      from: '3DMuscio <noreply@3dmuscio.com>',
+      to: [customer.email!],
+      subject: 'Bitte ergänzen Sie Ihre Adressdaten – 3DMuscio',
+      html: `
+        <div style="font-family:Arial,Helvetica,sans-serif;background:#f5f5f5;padding:24px;">
+          <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">
+            <div style="background:#1a1a1a;padding:24px;">
+              <h1 style="margin:0;color:#ffffff;font-size:20px;">📋 Adressdaten ergänzen</h1>
+            </div>
+            <div style="padding:28px;color:#1f2937;">
+              <p style="margin:0 0 16px;">Guten Tag ${kundenName},</p>
+              <p style="margin:0 0 20px;line-height:1.6;">
+                Für die Verarbeitung Ihres Auftrags benötigen wir noch Ihre vollständigen Adressdaten.
+                Bitte klicken Sie auf den Button unten und ergänzen Sie Ihre Angaben.
+              </p>
+              <p style="margin:0 0 20px;">
+                <a href="${completionUrl}" style="display:inline-block;background:#FF5A00;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold;">
+                  Adressdaten ergänzen →
+                </a>
+              </p>
+              <p style="margin:0;color:#6b7280;font-size:13px;">Dieser Link ist 30 Tage gültig.</p>
+            </div>
+            <div style="padding:16px 28px;background:#fafafa;color:#9ca3af;font-size:12px;text-align:center;">
+              3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG · <a href="mailto:info@3dmuscio.com" style="color:#9ca3af;">info@3dmuscio.com</a>
+            </div>
+          </div>
+        </div>
+      `,
     })
 
-    if (!sendRes.ok) {
-      const errText = await sendRes.text()
-      console.error('send-transactional-email failed:', errText)
-      return new Response(JSON.stringify({ error: 'E-Mail-Versand fehlgeschlagen', detail: errText }), {
+    if (mailErr) {
+      console.error('Resend failed:', mailErr)
+      return new Response(JSON.stringify({ error: 'E-Mail-Versand fehlgeschlagen', detail: String((mailErr as any).message || mailErr) }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
