@@ -5,8 +5,10 @@ import type { TemplateEntry } from './registry.ts'
 
 interface Props {
   name?: string
+  amountFormatted?: string
   amount?: string
   orderNr?: string
+  [key: string]: any
 }
 
 const BRAND = '#00cc66'
@@ -41,10 +43,10 @@ const Email = ({ name, amount, orderNr }: Props) => (
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
             Vielen Dank für Ihre Zahlung. Wir haben den Betrag erfolgreich erhalten und bearbeiten Ihren Auftrag umgehend.
           </Text>
-          {amount ? (
+          {amountFormatted || amount ? (
             <Section style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '14px 18px', margin: '16px 0 20px' }}>
               <Text style={{ margin: '0 0 4px', fontSize: '11px', color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bezahlter Betrag</Text>
-              <Text style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: BRAND }}>{amount}</Text>
+              <Text style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: BRAND }}>{amountFormatted || amount}</Text>
             </Section>
           ) : null}
           {orderNr ? (

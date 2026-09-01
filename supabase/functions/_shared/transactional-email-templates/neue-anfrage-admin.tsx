@@ -9,6 +9,7 @@ interface Props {
   telefon?: string
   betreff?: string
   nachricht?: string
+  [key: string]: any
 }
 
 const BRAND = '#00cc66'

@@ -6,6 +6,7 @@ import type { TemplateEntry } from './registry.ts'
 interface Props {
   name?: string
   message?: string
+  [key: string]: any
 }
 
 const BRAND = '#00cc66'

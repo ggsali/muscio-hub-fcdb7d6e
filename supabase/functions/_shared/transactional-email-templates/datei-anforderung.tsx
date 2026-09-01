@@ -9,6 +9,7 @@ interface Props {
   titel?: string
   beschreibung?: string
   ablauf?: string
+  [key: string]: any
 }
 
 const BRAND = '#00cc66'

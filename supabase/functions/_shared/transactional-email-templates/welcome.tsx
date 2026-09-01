@@ -5,12 +5,14 @@ import type { TemplateEntry } from './registry.ts'
 
 interface Props {
   name?: string
+  needsAddress?: boolean
+  [key: string]: any
 }
 
 const BRAND = '#00cc66'
 const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
 
-const Email = ({ name }: Props) => (
+const Email = ({ name, needsAddress }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
     <Preview>Willkommen bei 3DMuscio</Preview>
@@ -47,6 +49,19 @@ const Email = ({ name }: Props) => (
               Zum Kundenportal
             </Link>
           </Section>
+          {needsAddress ? (
+            <Section style={{ margin: '28px 0 16px', textAlign: 'center' }}>
+              <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
+                Bitte ergänzen Sie noch Ihre Adressdaten, damit wir Rechnungen und Lieferungen korrekt abwickeln können.
+              </Text>
+              <Link
+                href="https://3dmuscio.com/portal/profil"
+                style={{ backgroundColor: '#18181b', color: '#ffffff', padding: '13px 26px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600, display: 'inline-block' }}
+              >
+                Adressdaten ergänzen
+              </Link>
+            </Section>
+          ) : null}
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
             Wir freuen uns auf Ihre Projekte!
           </Text>
