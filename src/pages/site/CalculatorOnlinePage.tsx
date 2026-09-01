@@ -14,7 +14,7 @@ import {
   Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X, Ticket,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, erfasseGutscheinVerwendung, type Gutschein } from "@/lib/gutschein";
+import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, type Gutschein } from "@/lib/gutschein";
 import { toast } from "sonner";
 import ModelPreview from "@/components/site/ModelPreview";
 import HerkunftBanner from "@/components/site/HerkunftBanner";
