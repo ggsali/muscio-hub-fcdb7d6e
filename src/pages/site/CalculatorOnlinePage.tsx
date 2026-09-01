@@ -14,7 +14,7 @@ import {
   Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X, Ticket,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, type Gutschein } from "@/lib/gutschein";
+import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, erfasseGutscheinVerwendung, type Gutschein } from "@/lib/gutschein";
 import { toast } from "sonner";
 import ModelPreview from "@/components/site/ModelPreview";
 import HerkunftBanner from "@/components/site/HerkunftBanner";
@@ -1268,9 +1268,13 @@ const CalculatorOnlinePage = () => {
       });
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
 
-      // Gutschein wird bei einer unverbindlichen Anfrage NICHT eingelöst.
-      // Die Einlösung erfolgt erst bei der echten Bestellung/Zahlung.
-
+      if (gutschein) {
+        await erfasseGutscheinVerwendung({
+          gutschein,
+          rabattBetrag: gutscheinRabatt,
+          orderId: data?.inquiry_id ?? null,
+        });
+      }
 
       trackCalc("schritt_5_bestellung_abgesendet", { teile: parts.length });
 

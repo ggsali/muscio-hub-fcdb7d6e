@@ -52,7 +52,7 @@ const emptyForm = () => ({
 export default function GutscheinePage() {
   const [gutscheine, setGutscheine] = useState<Gutschein[]>([]);
   const [kunden, setKunden] = useState<Kunde[]>([]);
-  const [verwendungen, setVerwendungen] = useState<Array<{ gutschein_id: string; rabatt_betrag: number }>>([]);
+  const [verwendungen, setVerwendungen] = useState<Array<{ gutschein_id: string; rabatt_betrag: number; verwendet_am: string; order_id: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -72,12 +72,12 @@ export default function GutscheinePage() {
     const [g, k, v] = await Promise.all([
       supabase.from("gutscheine").select("*").order("erstellt_am", { ascending: false }),
       supabase.from("customers").select("id, name, vorname, email").order("name"),
-      supabase.from("gutschein_verwendungen").select("gutschein_id, rabatt_betrag"),
+      supabase.from("gutschein_verwendungen").select("gutschein_id, rabatt_betrag, verwendet_am, order_id").order("verwendet_am", { ascending: false }),
     ]);
     if (g.error) toast.error("Gutscheine konnten nicht geladen werden.");
     setGutscheine((g.data as unknown as Gutschein[]) || []);
     setKunden((k.data as unknown as Kunde[]) || []);
-    setVerwendungen((v.data as unknown as Array<{ gutschein_id: string; rabatt_betrag: number }>) || []);
+    setVerwendungen((v.data as unknown as Array<{ gutschein_id: string; rabatt_betrag: number; verwendet_am: string; order_id: string | null }>) || []);
     setLoading(false);
   };
 
@@ -341,7 +341,7 @@ export default function GutscheinePage() {
           <div className="divide-y divide-border">
             {filtered.map((g) => {
               const st = statusOf(g);
-              const anzahl = verwendungen.filter((v) => v.gutschein_id === g.id).length;
+              const gutscheinVerwendungen = verwendungen?.filter(v => v.gutschein_id === g.id) || [];
               return (
                 <div key={g.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
@@ -357,7 +357,14 @@ export default function GutscheinePage() {
                     </p>
                   </div>
                   <div className="text-xs text-muted-foreground tabular-nums">
-                    {anzahl}/{g.max_verwendungen ?? "∞"} eingelöst
+                    {gutscheinVerwendungen.length > 0 ? (
+                      <span className="text-xs text-emerald-600 font-medium">
+                        ✓ Eingelöst {new Date(gutscheinVerwendungen[0].verwendet_am).toLocaleDateString("de-CH")}
+                        · CHF {Number(gutscheinVerwendungen[0].rabatt_betrag).toFixed(2)} Rabatt
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Noch nicht eingelöst</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="ghost" onClick={() => void copyCode(g.code)} title="Code kopieren">
