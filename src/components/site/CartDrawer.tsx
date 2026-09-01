@@ -108,6 +108,16 @@ export const CartDrawer = () => {
       returnUrl: `${window.location.origin}/payment-success`,
       gutscheinCode: gutschein?.code,
       onError: (message) => {
+        if (/gutschein/i.test(message)) {
+          setGutschein(null);
+          setCodeInput("");
+          toast({
+            title: "Gutschein nicht einlösbar",
+            description: `${message} – der Code wurde entfernt, bitte erneut zur Kasse gehen.`,
+            variant: "destructive",
+          });
+          return;
+        }
         toast({ title: "Checkout fehlgeschlagen", description: message, variant: "destructive" });
       },
     });
