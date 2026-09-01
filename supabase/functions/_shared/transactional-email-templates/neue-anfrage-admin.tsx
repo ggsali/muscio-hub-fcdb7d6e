@@ -3,6 +3,9 @@ import * as React from 'npm:react@18.3.1'
 import { Body, Container, Head, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
+const BRAND = '#00cc66'
+const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
+
 interface Props {
   name?: string
   email?: string
@@ -12,13 +15,10 @@ interface Props {
   [key: string]: any
 }
 
-const BRAND = '#00cc66'
-const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
-
 const Email = ({ name, email, telefon, betreff, nachricht }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Neue Anfrage eingegangen</Preview>
+    <Preview>Neue Anfrage</Preview>
     <Body style={{ backgroundColor: '#f4f4f5', fontFamily: 'Inter, Arial, sans-serif', margin: 0, padding: '24px 0' }}>
       <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
         <Section style={{ backgroundColor: '#18181b', padding: '20px 28px', borderRadius: '12px 12px 0 0' }}>
@@ -37,9 +37,9 @@ const Email = ({ name, email, telefon, betreff, nachricht }: Props) => (
         </Section>
 
         <Section style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '32px 28px' }}>
-          <Text style={{ fontSize: '22px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }}>Neue Anfrage eingegangen</Text>
+          <Text style={{ fontSize: '22px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }}>Neue Anfrage</Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
-            Es ist eine neue Anfrage über die Website eingegangen.
+            Eine neue Anfrage ist über die Website eingegangen.
           </Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
             <strong>Name:</strong> {name || '—'}

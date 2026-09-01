@@ -3,20 +3,18 @@ import * as React from 'npm:react@18.3.1'
 import { Body, Container, Head, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
+const BRAND = '#00cc66'
+const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
+
 interface Props {
   name?: string
-  bewertungsLink?: string
   [key: string]: any
 }
 
-const BRAND = '#00cc66'
-const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
-const GOOGLE_REVIEW_URL = 'https://g.page/r/CZWZrGWQTJ_OEAE/review'
-
-const Email = ({ name, bewertungsLink }: Props) => (
+const Email = ({ name }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Vielen Dank für Ihre Bewertung</Preview>
+    <Preview>Danke für Ihre Bewertung</Preview>
     <Body style={{ backgroundColor: '#f4f4f5', fontFamily: 'Inter, Arial, sans-serif', margin: 0, padding: '24px 0' }}>
       <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
         <Section style={{ backgroundColor: '#18181b', padding: '20px 28px', borderRadius: '12px 12px 0 0' }}>
@@ -35,27 +33,15 @@ const Email = ({ name, bewertungsLink }: Props) => (
         </Section>
 
         <Section style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '32px 28px' }}>
-          <Text style={{ fontSize: '22px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }}>Vielen Dank für Ihre Bewertung</Text>
+          <Text style={{ fontSize: '22px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }}>Danke für Ihre Bewertung</Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
             Guten Tag {name || 'Kunde'},
           </Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
-            Wir freuen uns sehr über Ihre Rückmeldung. Ihre Bewertung hilft uns, unseren 3D-Druck-Service kontinuierlich zu verbessern.
+            Ihre Bewertung wurde erfolgreich gespeichert. Wir freuen uns sehr über Ihr Feedback und werden es nutzen, um unseren 3D-Druck-Service kontinuierlich zu verbessern.
           </Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
-            Noch keine Bewertung abgegeben? Dann nehmen Sie sich gerne eine Minute Zeit:
-          </Text>
-          <Section style={{ margin: '28px 0 16px', textAlign: 'center' }}>
-            <Link
-              href={bewertungsLink || GOOGLE_REVIEW_URL}
-              style={{ backgroundColor: BRAND, color: '#ffffff', padding: '14px 28px', borderRadius: '8px', textDecoration: 'none', fontSize: '15px', fontWeight: 600, display: 'inline-block' }}
-            >
-              Jetzt bewerten
-            </Link>
-          </Section>
-          <Text style={{ fontSize: '12px', color: '#71717a', margin: '12px 0 0', wordBreak: 'break-all' }}>
-            Oder kopieren Sie diesen Link:<br />
-            <Link href={bewertungsLink || GOOGLE_REVIEW_URL} style={{ color: BRAND, textDecoration: 'none' }}>{bewertungsLink || GOOGLE_REVIEW_URL}</Link>
+            Vielen Dank, dass Sie sich Zeit genommen haben.
           </Text>
         </Section>
 
@@ -74,7 +60,7 @@ const Email = ({ name, bewertungsLink }: Props) => (
 
 export const template: TemplateEntry = {
   component: Email,
-  subject: 'Vielen Dank für Ihre Bewertung',
-  displayName: 'Bewertungsanfrage',
-  previewData: { name: 'Max Muster', bewertungsLink: 'https://3dmuscio.com/bewertung/abc123' },
+  subject: 'Danke für Ihre Bewertung',
+  displayName: 'Bewertungsbestätigung',
+  previewData: { name: 'Max Muster' },
 }

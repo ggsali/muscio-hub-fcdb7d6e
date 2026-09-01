@@ -3,14 +3,14 @@ import * as React from 'npm:react@18.3.1'
 import { Body, Container, Head, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
+const BRAND = '#00cc66'
+const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
+
 interface Props {
   name?: string
   message?: string
   [key: string]: any
 }
-
-const BRAND = '#00cc66'
-const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
 
 const Email = ({ name, message }: Props) => (
   <Html lang="de" dir="ltr">
@@ -39,7 +39,7 @@ const Email = ({ name, message }: Props) => (
             Guten Tag {name || 'Kunde'},
           </Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
-            Vielen Dank für Ihre Nachricht. Wir haben sie erhalten und melden uns so schnell wie möglich bei Ihnen zurück.
+            Wir haben Ihre Nachricht erhalten und melden uns so schnell wie möglich bei Ihnen zurück.
           </Text>
           {message ? (
             <>
@@ -69,7 +69,7 @@ const Email = ({ name, message }: Props) => (
 
 export const template: TemplateEntry = {
   component: Email,
-  subject: 'Nachricht erhalten – 3DMuscio',
+  subject: 'Nachricht erhalten',
   displayName: 'Kontaktformular-Bestätigung',
   previewData: { name: 'Max Muster', message: 'Ich hätte gerne ein Angebot für ein Custom-Print.' },
 }

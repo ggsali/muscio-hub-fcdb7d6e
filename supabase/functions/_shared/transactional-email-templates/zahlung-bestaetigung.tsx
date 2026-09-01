@@ -3,18 +3,18 @@ import * as React from 'npm:react@18.3.1'
 import { Body, Container, Head, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
+const BRAND = '#00cc66'
+const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
+
 interface Props {
   name?: string
-  amountFormatted?: string
   amount?: string
+  amountFormatted?: string
   orderNr?: string
   [key: string]: any
 }
 
-const BRAND = '#00cc66'
-const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
-
-const Email = ({ name, amount, orderNr }: Props) => (
+const Email = ({ name, amount, amountFormatted, orderNr }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
     <Preview>Zahlung bestätigt</Preview>
@@ -41,7 +41,7 @@ const Email = ({ name, amount, orderNr }: Props) => (
             Guten Tag {name || 'Kunde'},
           </Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
-            Vielen Dank für Ihre Zahlung. Wir haben den Betrag erfolgreich erhalten und bearbeiten Ihren Auftrag umgehend.
+            Ihre Zahlung wurde erfolgreich verarbeitet. Wir haben den Betrag erhalten und bearbeiten Ihren Auftrag umgehend.
           </Text>
           {amountFormatted || amount ? (
             <Section style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '14px 18px', margin: '16px 0 20px' }}>
@@ -74,7 +74,7 @@ const Email = ({ name, amount, orderNr }: Props) => (
 
 export const template: TemplateEntry = {
   component: Email,
-  subject: 'Zahlung bestätigt – 3DMuscio',
+  subject: 'Zahlung bestätigt',
   displayName: 'Zahlungsbestätigung',
   previewData: { name: 'Max Muster', amount: 'CHF 149.00', orderNr: 'AUF-12345' },
 }

@@ -3,19 +3,19 @@ import * as React from 'npm:react@18.3.1'
 import { Body, Container, Head, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
+const BRAND = '#00cc66'
+const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
+
 interface Props {
   name?: string
   completionUrl?: string
   [key: string]: any
 }
 
-const BRAND = '#00cc66'
-const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
-
 const Email = ({ name, completionUrl }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Bitte ergänzen Sie Ihre Adressdaten</Preview>
+    <Preview>Adressdaten ergänzen</Preview>
     <Body style={{ backgroundColor: '#f4f4f5', fontFamily: 'Inter, Arial, sans-serif', margin: 0, padding: '24px 0' }}>
       <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
         <Section style={{ backgroundColor: '#18181b', padding: '20px 28px', borderRadius: '12px 12px 0 0' }}>
@@ -34,15 +34,12 @@ const Email = ({ name, completionUrl }: Props) => (
         </Section>
 
         <Section style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '32px 28px' }}>
-          <Text style={{ fontSize: '22px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }}>Bitte ergänzen Sie Ihre Adressdaten</Text>
+          <Text style={{ fontSize: '22px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }}>Adressdaten ergänzen</Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
             Guten Tag {name || 'Kunde'},
           </Text>
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
-            Wir haben Sie als Kunden bei 3DMuscio angelegt. Damit wir Aufträge und Rechnungen korrekt abwickeln können, fehlen uns noch Ihre vollständigen Adressdaten.
-          </Text>
-          <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
-            Die Ergänzung dauert nur eine Minute:
+            Bitte ergänzen Sie Ihre Adressdaten über den untenstehenden Link. Die Ergänzung dauert nur eine Minute und ermöglicht uns die korrekte Abwicklung Ihrer Aufträge und Rechnungen.
           </Text>
           <Section style={{ margin: '28px 0 16px', textAlign: 'center' }}>
             <Link
@@ -74,7 +71,7 @@ const Email = ({ name, completionUrl }: Props) => (
 
 export const template: TemplateEntry = {
   component: Email,
-  subject: 'Bitte ergänzen Sie Ihre Adressdaten – 3DMuscio',
+  subject: 'Adressdaten ergänzen',
   displayName: 'Profil vervollständigen (Adresse)',
   previewData: { name: 'Max Muster', completionUrl: 'https://3dmuscio.com/profil-ergaenzen?token=demo' },
 }
