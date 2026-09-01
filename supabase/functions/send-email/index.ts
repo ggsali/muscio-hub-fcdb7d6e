@@ -25,12 +25,12 @@ const STATUS_KEY_MAP: Record<string, string> = {
   geliefert: "geliefert",
 };
 
-const PICKUP_ADDRESS_HTML = `<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:16px 20px;margin:20px 0;">
-  <p style="margin:0 0 6px;font-size:12px;color:#FF5A00;font-weight:700;text-transform:uppercase;">🏠 Abholadresse</p>
+const PICKUP_ADDRESS_HTML = `<div style="background:#ecfdf3;border:1px solid #00cc66;border-radius:10px;padding:16px 20px;margin:20px 0;">
+  <p style="margin:0 0 6px;font-size:12px;color:#047857;font-weight:700;text-transform:uppercase;">🏠 Abholadresse</p>
   <p style="margin:0;font-size:15px;font-weight:600;">3DMuscio</p>
   <p style="margin:2px 0 0;font-size:14px;">Gartensiedlung 13<br/>8360 Eschlikon TG</p>
-  <p style="margin:10px 0 0;font-size:12px;color:#c2410c;"><strong>Öffnungszeiten:</strong> Nach Vereinbarung — bitte vorgängig kurz melden.</p>
-  <p style="margin:6px 0 0;font-size:12px;color:#c2410c;">📞 +41 79 839 50 80 · ✉️ info@3dmuscio.com</p>
+  <p style="margin:10px 0 0;font-size:12px;color:#047857;"><strong>Öffnungszeiten:</strong> Nach Vereinbarung — bitte vorgängig kurz melden.</p>
+  <p style="margin:6px 0 0;font-size:12px;color:#047857;">📞 +41 79 839 50 80 · ✉️ info@3dmuscio.com</p>
 </div>`;
 
 const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: string; emoji: string }> = {
