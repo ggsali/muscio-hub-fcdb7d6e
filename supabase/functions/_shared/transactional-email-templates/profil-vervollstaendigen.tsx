@@ -1,58 +1,79 @@
 /// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
-import {
-  Body, Button, Container, Head, Heading, Html, Link, Preview, Section, Text,
-} from 'npm:@react-email/components@0.0.22'
+import { Body, Container, Head, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
-import {
-  EmailFooter, EmailHeader, SITE_NAME, SITE_URL, button, card, container,
-  formattedName, h1, link, main, smallText, text,
-} from './layout.tsx'
 
 interface Props {
   name?: string
   completionUrl?: string
 }
 
+const BRAND = '#00cc66'
+const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
+
 const Email = ({ name, completionUrl }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Bitte ergänze deine Adressdaten bei {SITE_NAME}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <EmailHeader emoji="📋" />
-        <Section style={card}>
-          <Heading style={h1}>
-            {name ? `Hallo ${formattedName(name)},` : 'Hallo,'}
-          </Heading>
-          <Text style={text}>
-            wir haben dich als Kunden bei {SITE_NAME} angelegt, uns fehlen jedoch noch deine vollständigen
-            Adressdaten. Bitte ergänze sie kurz über den folgenden Link – das dauert nur eine Minute und
-            ermöglicht uns die korrekte Abwicklung deiner Aufträge und Rechnungen.
-          </Text>
-
-          <Section style={{ margin: '24px 0' }}>
-            <Button href={completionUrl || SITE_URL} style={button}>
-              Adressdaten ergänzen
-            </Button>
-          </Section>
-
-          <Text style={smallText}>
-            Oder kopiere diesen Link in deinen Browser:<br />
-            <Link href={completionUrl || SITE_URL} style={link}>{completionUrl || SITE_URL}</Link>
-          </Text>
-
-          <Text style={smallText}>Der Link ist 30 Tage gültig.</Text>
+    <Preview>Bitte ergänzen Sie Ihre Adressdaten</Preview>
+    <Body style={{ backgroundColor: '#f4f4f5', fontFamily: 'Inter, Arial, sans-serif', margin: 0, padding: '24px 0' }}>
+      <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
+        <Section style={{ backgroundColor: '#18181b', padding: '20px 28px', borderRadius: '12px 12px 0 0' }}>
+          <table role="presentation" cellPadding={0} cellSpacing={0} border={0} width="100%" style={{ borderCollapse: 'collapse' }}>
+            <tr>
+              <td width={48} style={{ verticalAlign: 'middle', paddingRight: '14px' }}>
+                <img src={LOGO} alt="3DMuscio" width={48} height={48} style={{ borderRadius: '8px', display: 'block' }} />
+              </td>
+              <td style={{ verticalAlign: 'middle' }}>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', lineHeight: '24px' }}>3DMuscio</div>
+                <div style={{ fontSize: '12px', color: BRAND, lineHeight: '16px', fontWeight: 600 }}>3D-DRUCK SCHWEIZ</div>
+              </td>
+              <td align="right" style={{ verticalAlign: 'middle', fontSize: '26px' }}>📋</td>
+            </tr>
+          </table>
         </Section>
-        <EmailFooter />
+
+        <Section style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '32px 28px' }}>
+          <Text style={{ fontSize: '22px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }}>Bitte ergänzen Sie Ihre Adressdaten</Text>
+          <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
+            Guten Tag {name || 'Kunde'},
+          </Text>
+          <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
+            Wir haben Sie als Kunden bei 3DMuscio angelegt. Damit wir Aufträge und Rechnungen korrekt abwickeln können, fehlen uns noch Ihre vollständigen Adressdaten.
+          </Text>
+          <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
+            Die Ergänzung dauert nur eine Minute:
+          </Text>
+          <Section style={{ margin: '28px 0 16px', textAlign: 'center' }}>
+            <Link
+              href={completionUrl || 'https://3dmuscio.com/profil-ergaenzen'}
+              style={{ backgroundColor: BRAND, color: '#ffffff', padding: '14px 28px', borderRadius: '8px', textDecoration: 'none', fontSize: '15px', fontWeight: 600, display: 'inline-block' }}
+            >
+              Adressdaten ergänzen
+            </Link>
+          </Section>
+          <Text style={{ fontSize: '12px', color: '#71717a', margin: '12px 0 0', wordBreak: 'break-all' }}>
+            Oder kopieren Sie diesen Link:<br />
+            <Link href={completionUrl || 'https://3dmuscio.com/profil-ergaenzen'} style={{ color: BRAND, textDecoration: 'none' }}>{completionUrl || 'https://3dmuscio.com/profil-ergaenzen'}</Link>
+          </Text>
+          <Text style={{ fontSize: '12px', color: '#71717a', margin: '12px 0 0' }}>Der Link ist 30 Tage gültig.</Text>
+        </Section>
+
+        <Section style={{ padding: '20px 8px 0', textAlign: 'center' }}>
+          <Text style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 4px', textAlign: 'center' }}>3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</Text>
+          <Text style={{ fontSize: '12px', color: '#9ca3af', margin: 0, textAlign: 'center' }}>
+            <Link href="mailto:info@3dmuscio.com" style={{ color: '#9ca3af', textDecoration: 'none' }}>info@3dmuscio.com</Link>
+            {' · '} +41 79 839 50 80 {' · '}
+            <Link href="https://3dmuscio.com" style={{ color: '#9ca3af', textDecoration: 'none' }}>3dmuscio.com</Link>
+          </Text>
+        </Section>
       </Container>
     </Body>
   </Html>
 )
 
-export const template = {
+export const template: TemplateEntry = {
   component: Email,
-  subject: 'Bitte ergänze deine Adressdaten bei 3DMuscio',
+  subject: 'Bitte ergänzen Sie Ihre Adressdaten – 3DMuscio',
   displayName: 'Profil vervollständigen (Adresse)',
   previewData: { name: 'Max Muster', completionUrl: 'https://3dmuscio.com/profil-ergaenzen?token=demo' },
-} satisfies TemplateEntry
+}
