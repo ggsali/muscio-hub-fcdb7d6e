@@ -308,6 +308,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
+    console.log("[send-email] Funktion gestartet, kind:", body?.kind);
     const { kind, orderId, type, statusKey, trackingNr, pdfBase64, pdfFilename, paymentUrl, akontoPercent, akontoBetrag, restbetrag, lieferart: bodyLieferart } = body;
 
     // Auftrag + Kunde laden
