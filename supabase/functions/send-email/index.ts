@@ -25,12 +25,12 @@ const STATUS_KEY_MAP: Record<string, string> = {
   geliefert: "geliefert",
 };
 
-const PICKUP_ADDRESS_HTML = `<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:16px 20px;margin:20px 0;">
-  <p style="margin:0 0 6px;font-size:12px;color:#FF5A00;font-weight:700;text-transform:uppercase;">🏠 Abholadresse</p>
+const PICKUP_ADDRESS_HTML = `<div style="background:#ecfdf3;border:1px solid #00cc66;border-radius:10px;padding:16px 20px;margin:20px 0;">
+  <p style="margin:0 0 6px;font-size:12px;color:#047857;font-weight:700;text-transform:uppercase;">🏠 Abholadresse</p>
   <p style="margin:0;font-size:15px;font-weight:600;">3DMuscio</p>
   <p style="margin:2px 0 0;font-size:14px;">Gartensiedlung 13<br/>8360 Eschlikon TG</p>
-  <p style="margin:10px 0 0;font-size:12px;color:#c2410c;"><strong>Öffnungszeiten:</strong> Nach Vereinbarung — bitte vorgängig kurz melden.</p>
-  <p style="margin:6px 0 0;font-size:12px;color:#c2410c;">📞 +41 79 839 50 80 · ✉️ info@3dmuscio.com</p>
+  <p style="margin:10px 0 0;font-size:12px;color:#047857;"><strong>Öffnungszeiten:</strong> Nach Vereinbarung — bitte vorgängig kurz melden.</p>
+  <p style="margin:6px 0 0;font-size:12px;color:#047857;">📞 +41 79 839 50 80 · ✉️ info@3dmuscio.com</p>
 </div>`;
 
 const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: string; emoji: string }> = {
@@ -81,26 +81,58 @@ const STATUS_TEXTS_PICKUP: Record<string, { subject: string; title: string; intr
   },
 };
 
-function emailLayout({ title, bodyHtml }: { title: string; bodyHtml: string }) {
-  return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;color:#1a1a1a;">
-  <div style="max-width:600px;margin:0 auto;padding:24px;">
+const BRAND = "#00cc66";
+
+/** Namen sauber kapitalisieren: "max muster" -> "Max Muster" */
+const formattedName = (name: string) =>
+  (name || "")
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+
+const STATUS_EMOJIS: Record<string, string> = {
+  datei_erhalten: "📄",
+  im_druck: "🖨️",
+  qualitaetspruefung: "🔍",
+  versandt: "📦",
+  geliefert: "✅",
+  rechnung: "🧾",
+  offerte: "📋",
+  akonto: "💳",
+  restbetrag: "🧾",
+  auftragsbestaetigung: "✅",
+  druckfertig: "🖨️",
+  lieferung: "📦",
+  test: "✉️",
+};
+
+function emailLayout({ title, bodyHtml, emoji = "📧" }: { title: string; bodyHtml: string; emoji?: string }) {
+  return `<!doctype html><html><body style="margin:0;padding:24px 0;background:#f4f4f5;font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;color:#1a1a1a;">
+  <div style="max-width:600px;margin:0 auto;padding:0 16px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:#18181b;padding:20px 28px;border-radius:12px 12px 0 0;width:100%;border-collapse:separate;">
       <tr>
-        <td width="44" style="vertical-align:middle;padding-right:14px;">
-          <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" alt="3DMuscio" width="44" height="44" style="border-radius:8px;display:block;" />
+        <td width="48" style="vertical-align:middle;padding-right:14px;">
+          <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" alt="3DMuscio" width="48" height="48" style="border-radius:8px;display:block;" />
         </td>
-        <td style="vertical-align:middle;color:#ffffff;font-size:20px;font-weight:700;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;line-height:44px;">3DMuscio</td>
+        <td style="vertical-align:middle;">
+          <div style="color:#ffffff;font-size:20px;font-weight:700;line-height:24px;">3DMuscio</div>
+          <div style="color:${BRAND};font-size:12px;font-weight:600;line-height:16px;">3D-Druck Schweiz</div>
+        </td>
+        <td align="right" style="vertical-align:middle;font-size:26px;">${emoji}</td>
       </tr>
     </table>
-    <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;line-height:1.6;font-size:14px;">
-      <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#000;">${title}</h1>
+    <div style="background:#ffffff;padding:32px 28px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;line-height:1.6;font-size:14px;">
+      <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#18181b;">${title}</h1>
       ${bodyHtml}
-      <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0 16px;" />
-      <div style="text-align:center;font-size:12px;color:#9ca3af;">
-        <a href="mailto:info@3dmuscio.com" style="color:#FF5A00;text-decoration:none;">info@3dmuscio.com</a>
+    </div>
+    <div style="text-align:center;font-size:12px;color:#9ca3af;padding:20px 8px 0;">
+      <p style="margin:0 0 4px;">3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</p>
+      <p style="margin:0;">
+        <a href="mailto:info@3dmuscio.com" style="color:#9ca3af;text-decoration:none;">info@3dmuscio.com</a>
         &nbsp;·&nbsp; +41 79 839 50 80 &nbsp;·&nbsp;
-        <a href="https://3dmuscio.com" style="color:#FF5A00;text-decoration:none;">3dmuscio.com</a>
-      </div>
+        <a href="https://3dmuscio.com" style="color:#9ca3af;text-decoration:none;">www.3dmuscio.com</a>
+      </p>
     </div>
   </div>
 </body></html>`;
@@ -108,11 +140,11 @@ function emailLayout({ title, bodyHtml }: { title: string; bodyHtml: string }) {
 
 /** Tracking-Block mit Post-CH Sendungsverfolgungs-Link */
 function trackingBlockHtml(trackingNr: string): string {
-  const trackingUrl = `https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(trackingNr)}`;
-  return `<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:16px;margin:16px 0;text-align:center;">
-  <p style="color:#c2410c;font-size:13px;margin:0 0 10px;font-weight:600;">📦 Ihre Sendung ist unterwegs!</p>
+  const trackingUrl = `https://www.post.ch/de/empfangen/sendungsverfolgung#/sucheBarcode?barcode=${encodeURIComponent(trackingNr)}`;
+  return `<div style="background:#ecfdf3;border:1px solid #00cc66;border-radius:10px;padding:16px;margin:16px 0;text-align:center;">
+  <p style="color:#047857;font-size:13px;margin:0 0 10px;font-weight:600;">📦 Ihre Sendung ist unterwegs!</p>
   <p style="color:#374151;font-size:13px;margin:0 0 10px;">Tracking-Nummer: <strong style="font-family:monospace;">${trackingNr}</strong></p>
-  <a href="${trackingUrl}" style="background:#FF5A00;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;display:inline-block;">Sendung verfolgen →</a>
+  <a href="${trackingUrl}" style="background:#00cc66;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;display:inline-block;">Sendung verfolgen →</a>
   <p style="color:#9ca3af;font-size:11px;margin:10px 0 0;">Lieferung in 1–2 Werktagen (Post CH Priority)</p>
 </div>`;
 }
@@ -134,11 +166,12 @@ function buildOrderEmail(opts: {
   const { type, customerName, orderNr, orderName, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag, lieferart } = opts;
   const isPickup = lieferart === "abholung";
 
-  const greet = `<p>Guten Tag ${customerName},</p>`;
+  const greet = `<p>Guten Tag ${formattedName(customerName)},</p>`;
+  const emoji = STATUS_EMOJIS[type] || "📧";
 
   const paymentBtn = paymentUrl
     ? `<div style="margin:24px 0;text-align:center;">
-        <a href="${paymentUrl}" style="display:inline-block;background:#FF5A00;color:#fff;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">💳 Jetzt online bezahlen</a>
+        <a href="${paymentUrl}" style="display:inline-block;background:#00cc66;color:#fff;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">💳 Jetzt online bezahlen</a>
         <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Sichere Zahlung via Stripe</p>
       </div>`
     : "";
@@ -147,6 +180,7 @@ function buildOrderEmail(opts: {
     return {
       subject: `Rechnung ${orderNr} – 3DMuscio`,
       html: emailLayout({
+        emoji,
         title: "Ihre Rechnung",
         bodyHtml: `${greet}<p>vielen Dank für Ihren Auftrag. Im Anhang finden Sie Ihre Rechnung <strong>Nr. ${orderNr}</strong> vom ${datum}.</p>${paymentBtn}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
@@ -156,6 +190,7 @@ function buildOrderEmail(opts: {
     return {
       subject: `Offerte ${orderNr} – 3DMuscio`,
       html: emailLayout({
+        emoji,
         title: "Ihre Offerte",
         bodyHtml: `${greet}<p>gerne unterbreiten wir Ihnen unser Angebot. Im Anhang finden Sie die Offerte vom ${datum}.</p><p>Für Rückfragen stehen wir Ihnen gerne zur Verfügung.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
@@ -166,8 +201,9 @@ function buildOrderEmail(opts: {
     return {
       subject: `Akontorechnung – 3DMuscio`,
       html: emailLayout({
+        emoji,
         title: "Akontorechnung",
-        bodyHtml: `${greet}<p>anbei erhalten Sie unsere Akontorechnung für den Auftrag „${orderName}".</p>${ak ? `<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#FF5A00;font-weight:700;text-transform:uppercase;">Akontozahlung (${akontoPercent}%)</p><p style="margin:0;font-size:22px;font-weight:700;">${ak}</p></div>` : ""}<p>Die vollständige Akontorechnung finden Sie im Anhang als PDF.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        bodyHtml: `${greet}<p>anbei erhalten Sie unsere Akontorechnung für den Auftrag „${orderName}".</p>${ak ? `<div style="background:#ecfdf3;border:1px solid #00cc66;border-radius:10px;padding:16px 20px;margin:20px 0;"><p style="margin:0 0 4px;font-size:12px;color:#047857;font-weight:700;text-transform:uppercase;">Akontozahlung (${akontoPercent}%)</p><p style="margin:0;font-size:22px;font-weight:700;">${ak}</p></div>` : ""}<p>Die vollständige Akontorechnung finden Sie im Anhang als PDF.</p>${paymentBtn}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
     };
   }
@@ -177,8 +213,9 @@ function buildOrderEmail(opts: {
     return {
       subject: `Schlussrechnung – 3DMuscio`,
       html: emailLayout({
+        emoji,
         title: "Schlussrechnung",
-        bodyHtml: `${greet}<p>anbei erhalten Sie unsere Schlussrechnung für den Auftrag „${orderName}".</p>${ak ? `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin:20px 0;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Gesamtbetrag</span><span>CHF ${(Number(akontoBetrag) + Number(restbetrag)).toFixed(2)}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Akonto (${akontoPercent}%)</span><span style="color:#FF5A00;">- ${ak}</span></div><div style="border-top:1px solid #e5e7eb;padding-top:8px;display:flex;justify-content:space-between;"><strong>Restbetrag (fällig)</strong><strong style="font-size:18px;">${rest}</strong></div></div>` : ""}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        bodyHtml: `${greet}<p>anbei erhalten Sie unsere Schlussrechnung für den Auftrag „${orderName}".</p>${ak ? `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin:20px 0;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Gesamtbetrag</span><span>CHF ${(Number(akontoBetrag) + Number(restbetrag)).toFixed(2)}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Akonto (${akontoPercent}%)</span><span style="color:#00cc66;">- ${ak}</span></div><div style="border-top:1px solid #e5e7eb;padding-top:8px;display:flex;justify-content:space-between;"><strong>Restbetrag (fällig)</strong><strong style="font-size:18px;">${rest}</strong></div></div>` : ""}${paymentBtn}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
     };
   }
@@ -186,6 +223,7 @@ function buildOrderEmail(opts: {
     return {
       subject: `Auftragsbestätigung – ${orderName} | 3DMuscio`,
       html: emailLayout({
+        emoji,
         title: "Auftrag bestätigt",
         bodyHtml: `${greet}<p>wir freuen uns, dass Ihr Auftrag <strong>„${orderName}"</strong> bestätigt wurde und wir mit der Bearbeitung beginnen.</p><p style="color:#6b7280;font-size:13px;">Auftrag Nr. ${orderNr} · ${datum}</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
@@ -195,6 +233,7 @@ function buildOrderEmail(opts: {
     return {
       subject: `Ihre 3D-Druckteile sind fertig – „${orderName}"`,
       html: emailLayout({
+        emoji,
         title: "Teile fertig gedruckt",
         bodyHtml: `${greet}<p>Ihre 3D-Druckteile für den Auftrag <strong>„${orderName}"</strong> wurden erfolgreich gedruckt und gehen nun in die Nachbearbeitung.</p><p>Sie erhalten eine weitere Benachrichtigung, sobald Ihr Paket unterwegs ist.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
@@ -204,7 +243,8 @@ function buildOrderEmail(opts: {
     return {
       subject: `Test-E-Mail von 3DMuscio`,
       html: emailLayout({
-        title: "✉️ Test-E-Mail",
+        emoji,
+        title: "Test-E-Mail",
         bodyHtml: `${greet}<p>dies ist eine Test-E-Mail von 3DMuscio. Wenn Sie diese Nachricht erhalten, funktioniert der E-Mail-Versand zu Ihrer Adresse einwandfrei.</p><p style="color:#6b7280;font-size:13px;">Bezug: Auftrag „${orderName}" · Nr. ${orderNr}${datum ? ` · ${datum}` : ""}</p><p>Sie müssen auf diese E-Mail nicht antworten.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
     };
@@ -214,7 +254,8 @@ function buildOrderEmail(opts: {
       return {
         subject: `Ihre Bestellung „${orderName}" ist abholbereit`,
         html: emailLayout({
-          title: "🏠 Bereit zur Abholung",
+          emoji: "🏪",
+          title: "Bereit zur Abholung",
           bodyHtml: `${greet}<p>Ihre Bestellung <strong>„${orderName}"</strong> ist fertig und kann bei uns abgeholt werden.</p>${PICKUP_ADDRESS_HTML}<p style="color:#6b7280;font-size:13px;">Bitte vorgängig kurz melden, damit wir Ihre Teile bereitstellen können.</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
         }),
       };
@@ -222,6 +263,7 @@ function buildOrderEmail(opts: {
     return {
       subject: `Ihre Bestellung „${orderName}" wurde versendet`,
       html: emailLayout({
+        emoji: "📦",
         title: "Bestellung versendet",
         bodyHtml: `${greet}<p>Ihre Bestellung wurde soeben versendet.</p>${trackingNr ? trackingBlockHtml(trackingNr) : ""}<p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       }),
@@ -229,7 +271,7 @@ function buildOrderEmail(opts: {
   }
   return {
     subject: `Information zu Ihrem Auftrag – 3DMuscio`,
-    html: emailLayout({ title: "Information", bodyHtml: `${greet}<p>Information zu Ihrem Auftrag „${orderName}".</p>` }),
+    html: emailLayout({ emoji, title: "Information", bodyHtml: `${greet}<p>Information zu Ihrem Auftrag „${orderName}".</p>` }),
   };
 }
 
@@ -314,8 +356,9 @@ Deno.serve(async (req) => {
         }
       }
       html = emailLayout({
-        title: `${s.emoji} ${s.title}`,
-        bodyHtml: `<p>Guten Tag ${customerName},</p><p>${s.intro}</p>${infoBlock}<p style="color:#6b7280;font-size:13px;">Auftrag Nr. ${orderNr}${datum ? ` · ${datum}` : ""}</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        emoji: STATUS_EMOJIS[key] || s.emoji || "📧",
+        title: s.title,
+        bodyHtml: `<p>Guten Tag ${formattedName(customerName)},</p><p>${s.intro}</p>${infoBlock}<p style="color:#6b7280;font-size:13px;">Auftrag Nr. ${orderNr}${datum ? ` · ${datum}` : ""}</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       });
     } else {
       // kind === "order" / default
