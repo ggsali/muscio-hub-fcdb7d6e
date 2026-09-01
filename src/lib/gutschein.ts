@@ -84,7 +84,7 @@ export async function pruefeGutschein(
   return { ok: true, gutschein: g };
 }
 
-/** Einlösung protokollieren und Zähler erhöhen. */
+/** Einlösung protokollieren und Zähler erhöhen (serverseitig geprüft). */
 export async function erfasseGutscheinVerwendung(params: {
   gutschein: Gutschein;
   rabattBetrag: number;
@@ -93,15 +93,11 @@ export async function erfasseGutscheinVerwendung(params: {
   shopOrderId?: string | null;
 }): Promise<void> {
   const { gutschein, rabattBetrag, customerId, orderId, shopOrderId } = params;
-  await supabase.from("gutschein_verwendungen").insert({
-    gutschein_id: gutschein.id,
-    customer_id: customerId ?? null,
-    order_id: orderId ?? null,
-    shop_order_id: shopOrderId ?? null,
-    rabatt_betrag: rabattBetrag,
-  } as never);
-  await supabase
-    .from("gutscheine")
-    .update({ verwendungen: (gutschein.verwendungen ?? 0) + 1 } as never)
-    .eq("id", gutschein.id);
+  await (supabase.rpc as any)("redeem_gutschein", {
+    p_gutschein_id: gutschein.id,
+    p_rabatt_betrag: rabattBetrag,
+    p_customer_id: customerId ?? null,
+    p_order_id: orderId ?? null,
+    p_shop_order_id: shopOrderId ?? null,
+  });
 }

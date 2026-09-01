@@ -2934,6 +2934,16 @@ export type Database = {
           read_ct: number
         }[]
       }
+      redeem_gutschein: {
+        Args: {
+          p_customer_id?: string
+          p_gutschein_id: string
+          p_order_id?: string
+          p_rabatt_betrag: number
+          p_shop_order_id?: string
+        }
+        Returns: boolean
+      }
       set_inquiry_herkunft: {
         Args: { p_herkunft: string; p_inquiry_id: string }
         Returns: undefined
