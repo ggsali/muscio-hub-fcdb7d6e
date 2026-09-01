@@ -99,7 +99,7 @@ function renderHtmlPreview(betreff: string, inhalt: string, blogUrl: string, blo
   const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
     .map((p) => {
       const html = escHtml(p).replace(/\n/g, "<br/>")
-        .replace(/(https?:\/\/[^\s<]+)/g, (m) => `<a href="${escHtml(m)}" style="color:#16a34a;">${escHtml(m)}</a>`);
+        .replace(/(https?:\/\/[^\s<]+)/g, (m) => `<a href="${escHtml(m)}" style="color:#FF5A00;">${escHtml(m)}</a>`);
       return `<p style="font-size:15px;line-height:1.7;color:#3f3f46;margin:0 0 16px;">${html}</p>`;
     }).join("");
 
@@ -111,7 +111,7 @@ function renderHtmlPreview(betreff: string, inhalt: string, blogUrl: string, blo
     ? `<tr><td style="padding:8px 32px 32px;">
           <div style="background-color:#f4f4f5;border-radius:10px;padding:18px 20px;">
             <p style="margin:0 0 8px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#71717a;font-weight:700;">Lesenswerter Beitrag</p>
-            <a href="${escHtml(blogUrl)}" style="font-size:15px;font-weight:600;color:#16a34a;text-decoration:none;">📖 ${escHtml(blogTitel || "Zum Beitrag")} →</a>
+            <a href="${escHtml(blogUrl)}" style="font-size:15px;font-weight:600;color:#FF5A00;text-decoration:none;">📖 ${escHtml(blogTitel || "Zum Beitrag")} →</a>
           </div>
         </td></tr>`
     : "";
@@ -137,7 +137,7 @@ function renderHtmlPreview(betreff: string, inhalt: string, blogUrl: string, blo
           ${imageBlock}
           <tr><td style="padding:28px 32px 8px;">${paragraphs}</td></tr>
           <tr><td style="padding:8px 32px 24px;" align="center">
-            <a href="${SITE_URL}/kalkulator-online" style="background-color:#16a34a;color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">Jetzt Preis berechnen →</a>
+            <a href="${SITE_URL}/kalkulator-online" style="background-color:#FF5A00;color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">Jetzt Preis berechnen →</a>
           </td></tr>
           ${blogBlock}
           <tr><td style="padding:20px 32px 28px;border-top:1px solid #e4e4e7;">
@@ -180,7 +180,7 @@ function NewsletterPreview({
         ))}
       </div>
       <div className="px-6 pb-6 text-center">
-        <span className="inline-block bg-[#16a34a] text-white px-7 py-3.5 rounded-lg text-[15px] font-semibold">
+        <span className="inline-block bg-[#FF5A00] text-white px-7 py-3.5 rounded-lg text-[15px] font-semibold">
           Jetzt Preis berechnen →
         </span>
       </div>
@@ -188,7 +188,7 @@ function NewsletterPreview({
         <div className="px-6 pb-6">
           <div className="bg-zinc-100 rounded-lg p-4">
             <p className="text-[11px] uppercase tracking-wider font-bold text-zinc-500 mb-2">Lesenswerter Beitrag</p>
-            <span className="text-[15px] font-semibold text-[#16a34a]">📖 {blogTitel || "Zum Beitrag"} →</span>
+            <span className="text-[15px] font-semibold text-[#FF5A00]">📖 {blogTitel || "Zum Beitrag"} →</span>
           </div>
         </div>
       )}

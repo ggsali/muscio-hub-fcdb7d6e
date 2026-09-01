@@ -49,7 +49,7 @@ export function renderNewsletter(opts: {
       const html = esc(p)
         .replace(/\n/g, "<br/>")
         .replace(/(https?:\/\/[^\s<]+)/g, (m) =>
-          `<a href="${esc(trackedUrl(m, trackId))}" style="color:#16a34a;">${esc(m)}</a>`,
+          `<a href="${esc(trackedUrl(m, trackId))}" style="color:#FF5A00;">${esc(m)}</a>`,
         );
       return `<p style="font-size:15px;line-height:1.7;color:#3f3f46;margin:0 0 16px;">${html}</p>`;
     })
@@ -63,7 +63,7 @@ export function renderNewsletter(opts: {
     ? `<tr><td style="padding:8px 32px 32px;">
           <div style="background-color:#f4f4f5;border-radius:10px;padding:18px 20px;">
             <p style="margin:0 0 8px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#71717a;font-weight:700;">Lesenswerter Beitrag</p>
-            <a href="${esc(trackedUrl(blogUrl, trackId))}" style="font-size:15px;font-weight:600;color:#16a34a;text-decoration:none;">📖 ${esc(blogTitel || "Zum Beitrag")} →</a>
+            <a href="${esc(trackedUrl(blogUrl, trackId))}" style="font-size:15px;font-weight:600;color:#FF5A00;text-decoration:none;">📖 ${esc(blogTitel || "Zum Beitrag")} →</a>
           </div>
         </td></tr>`
     : "";
@@ -95,7 +95,7 @@ export function renderNewsletter(opts: {
           ${imageBlock}
           <tr><td style="padding:28px 32px 8px;">${paragraphs}</td></tr>
           <tr><td style="padding:8px 32px 24px;" align="center">
-            <a href="${esc(ctaUrl)}" style="background-color:#16a34a;color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">Jetzt Preis berechnen →</a>
+            <a href="${esc(ctaUrl)}" style="background-color:#FF5A00;color:#ffffff;padding:14px 30px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">Jetzt Preis berechnen →</a>
           </td></tr>
           ${blogBlock}
           <tr><td style="padding:20px 32px 28px;border-top:1px solid #e4e4e7;">
