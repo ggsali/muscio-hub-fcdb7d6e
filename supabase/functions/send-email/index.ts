@@ -356,8 +356,9 @@ Deno.serve(async (req) => {
         }
       }
       html = emailLayout({
-        title: `${s.emoji} ${s.title}`,
-        bodyHtml: `<p>Guten Tag ${customerName},</p><p>${s.intro}</p>${infoBlock}<p style="color:#6b7280;font-size:13px;">Auftrag Nr. ${orderNr}${datum ? ` · ${datum}` : ""}</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
+        emoji: STATUS_EMOJIS[key] || s.emoji || "📧",
+        title: s.title,
+        bodyHtml: `<p>Guten Tag ${formattedName(customerName)},</p><p>${s.intro}</p>${infoBlock}<p style="color:#6b7280;font-size:13px;">Auftrag Nr. ${orderNr}${datum ? ` · ${datum}` : ""}</p><p>Mit freundlichen Grüssen<br><strong>3DMuscio</strong></p>`,
       });
     } else {
       // kind === "order" / default
