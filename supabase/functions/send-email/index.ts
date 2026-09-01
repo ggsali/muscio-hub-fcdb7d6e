@@ -81,26 +81,58 @@ const STATUS_TEXTS_PICKUP: Record<string, { subject: string; title: string; intr
   },
 };
 
-function emailLayout({ title, bodyHtml }: { title: string; bodyHtml: string }) {
-  return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;color:#1a1a1a;">
-  <div style="max-width:600px;margin:0 auto;padding:24px;">
+const BRAND = "#00cc66";
+
+/** Namen sauber kapitalisieren: "max muster" -> "Max Muster" */
+const formattedName = (name: string) =>
+  (name || "")
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+
+const STATUS_EMOJIS: Record<string, string> = {
+  datei_erhalten: "📄",
+  im_druck: "🖨️",
+  qualitaetspruefung: "🔍",
+  versandt: "📦",
+  geliefert: "✅",
+  rechnung: "🧾",
+  offerte: "📋",
+  akonto: "💳",
+  restbetrag: "🧾",
+  auftragsbestaetigung: "✅",
+  druckfertig: "🖨️",
+  lieferung: "📦",
+  test: "✉️",
+};
+
+function emailLayout({ title, bodyHtml, emoji = "📧" }: { title: string; bodyHtml: string; emoji?: string }) {
+  return `<!doctype html><html><body style="margin:0;padding:24px 0;background:#f4f4f5;font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;color:#1a1a1a;">
+  <div style="max-width:600px;margin:0 auto;padding:0 16px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:#18181b;padding:20px 28px;border-radius:12px 12px 0 0;width:100%;border-collapse:separate;">
       <tr>
-        <td width="44" style="vertical-align:middle;padding-right:14px;">
-          <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" alt="3DMuscio" width="44" height="44" style="border-radius:8px;display:block;" />
+        <td width="48" style="vertical-align:middle;padding-right:14px;">
+          <img src="https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg" alt="3DMuscio" width="48" height="48" style="border-radius:8px;display:block;" />
         </td>
-        <td style="vertical-align:middle;color:#ffffff;font-size:20px;font-weight:700;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;line-height:44px;">3DMuscio</td>
+        <td style="vertical-align:middle;">
+          <div style="color:#ffffff;font-size:20px;font-weight:700;line-height:24px;">3DMuscio</div>
+          <div style="color:${BRAND};font-size:12px;font-weight:600;line-height:16px;">3D-Druck Schweiz</div>
+        </td>
+        <td align="right" style="vertical-align:middle;font-size:26px;">${emoji}</td>
       </tr>
     </table>
-    <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;line-height:1.6;font-size:14px;">
-      <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#000;">${title}</h1>
+    <div style="background:#ffffff;padding:32px 28px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;line-height:1.6;font-size:14px;">
+      <h1 style="margin:0 0 20px;font-size:22px;font-weight:700;color:#18181b;">${title}</h1>
       ${bodyHtml}
-      <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0 16px;" />
-      <div style="text-align:center;font-size:12px;color:#9ca3af;">
-        <a href="mailto:info@3dmuscio.com" style="color:#FF5A00;text-decoration:none;">info@3dmuscio.com</a>
+    </div>
+    <div style="text-align:center;font-size:12px;color:#9ca3af;padding:20px 8px 0;">
+      <p style="margin:0 0 4px;">3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</p>
+      <p style="margin:0;">
+        <a href="mailto:info@3dmuscio.com" style="color:#9ca3af;text-decoration:none;">info@3dmuscio.com</a>
         &nbsp;·&nbsp; +41 79 839 50 80 &nbsp;·&nbsp;
-        <a href="https://3dmuscio.com" style="color:#FF5A00;text-decoration:none;">3dmuscio.com</a>
-      </div>
+        <a href="https://3dmuscio.com" style="color:#9ca3af;text-decoration:none;">www.3dmuscio.com</a>
+      </p>
     </div>
   </div>
 </body></html>`;
