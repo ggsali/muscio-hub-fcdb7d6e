@@ -140,11 +140,11 @@ function emailLayout({ title, bodyHtml, emoji = "📧" }: { title: string; bodyH
 
 /** Tracking-Block mit Post-CH Sendungsverfolgungs-Link */
 function trackingBlockHtml(trackingNr: string): string {
-  const trackingUrl = `https://www.post.ch/de/empfangen/sendungsverfolgung?name=${encodeURIComponent(trackingNr)}`;
-  return `<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:16px;margin:16px 0;text-align:center;">
-  <p style="color:#c2410c;font-size:13px;margin:0 0 10px;font-weight:600;">📦 Ihre Sendung ist unterwegs!</p>
+  const trackingUrl = `https://www.post.ch/de/empfangen/sendungsverfolgung#/sucheBarcode?barcode=${encodeURIComponent(trackingNr)}`;
+  return `<div style="background:#ecfdf3;border:1px solid #00cc66;border-radius:10px;padding:16px;margin:16px 0;text-align:center;">
+  <p style="color:#047857;font-size:13px;margin:0 0 10px;font-weight:600;">📦 Ihre Sendung ist unterwegs!</p>
   <p style="color:#374151;font-size:13px;margin:0 0 10px;">Tracking-Nummer: <strong style="font-family:monospace;">${trackingNr}</strong></p>
-  <a href="${trackingUrl}" style="background:#FF5A00;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;display:inline-block;">Sendung verfolgen →</a>
+  <a href="${trackingUrl}" style="background:#00cc66;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;display:inline-block;">Sendung verfolgen →</a>
   <p style="color:#9ca3af;font-size:11px;margin:10px 0 0;">Lieferung in 1–2 Werktagen (Post CH Priority)</p>
 </div>`;
 }
