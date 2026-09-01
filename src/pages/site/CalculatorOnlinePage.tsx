@@ -1268,9 +1268,13 @@ const CalculatorOnlinePage = () => {
       });
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
 
-      // Gutschein wird bei einer unverbindlichen Anfrage NICHT eingelöst.
-      // Die Einlösung erfolgt erst bei der echten Bestellung/Zahlung.
-
+      if (gutschein) {
+        await erfasseGutscheinVerwendung({
+          gutschein,
+          rabattBetrag: gutscheinRabatt,
+          orderId: data?.inquiry_id ?? null,
+        });
+      }
 
       trackCalc("schritt_5_bestellung_abgesendet", { teile: parts.length });
 
