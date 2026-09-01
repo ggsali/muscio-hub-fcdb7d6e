@@ -1,0 +1,2 @@
+ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_source_check;
+ALTER TABLE public.orders ADD CONSTRAINT orders_source_check CHECK (source IN ('manual','website','website-shop','shop','kalkulator'));
