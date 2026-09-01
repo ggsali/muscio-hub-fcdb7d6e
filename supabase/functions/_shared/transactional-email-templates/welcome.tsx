@@ -84,5 +84,5 @@ export const template: TemplateEntry = {
   component: Email,
   subject: 'Willkommen bei 3DMuscio',
   displayName: 'Willkommen / Konto erstellt',
-  previewData: { name: 'Max Muster' },
+  previewData: { name: 'Max Muster', needsAddress: true },
 }
