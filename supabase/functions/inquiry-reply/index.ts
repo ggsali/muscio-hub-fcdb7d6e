@@ -31,8 +31,8 @@ function htmlBody(text: string, quotedHistory?: string) {
       <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 12px;" />
       <div style="text-align:center;font-size:12px;color:#9ca3af;">
         Antworten Sie einfach auf diese E-Mail.<br/>
-        <a href="mailto:info@3dmuscio.com" style="color:#22c55e;text-decoration:none;">info@3dmuscio.com</a>
-        &nbsp;·&nbsp; <a href="https://3dmuscio.com" style="color:#22c55e;text-decoration:none;">3dmuscio.com</a>
+        <a href="mailto:info@3dmuscio.com" style="color:#FF5A00;text-decoration:none;">info@3dmuscio.com</a>
+        &nbsp;·&nbsp; <a href="https://3dmuscio.com" style="color:#FF5A00;text-decoration:none;">3dmuscio.com</a>
       </div>
     </div>
   </div></body></html>`;

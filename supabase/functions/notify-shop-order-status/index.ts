@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     const nr = String(order.id).slice(0, 8).toUpperCase();
     const trackingBlock = status === "shipped" && tracking_nr
       ? `<p style="margin:16px 0 0;font-size:14px;"><strong>Sendungsnummer:</strong> ${tracking_nr}</p>
-         <p style="margin:4px 0 0;font-size:13px;color:#666;">Sendung verfolgen: <a href="https://service.post.ch/ekp-web/ui/entry/search/${tracking_nr}" style="color:#16a34a;">Post CH Tracking</a></p>`
+         <p style="margin:4px 0 0;font-size:13px;color:#666;">Sendung verfolgen: <a href="https://service.post.ch/ekp-web/ui/entry/search/${tracking_nr}" style="color:#FF5A00;">Post CH Tracking</a></p>`
       : "";
 
     const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);

@@ -40,7 +40,7 @@ function renderEmail(opts: { bodyText: string; reviewUrl: string; heading: strin
       const rest = block.replace(BUTTON_PLACEHOLDER, "").replace(/^[\s👉>-]+/u, "").trim();
       if (reviewUrl) {
         parts.push(
-          `<div style="margin:28px 0;text-align:center;"><a href="${esc(reviewUrl)}" style="background-color:#22c55e;color:#ffffff;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">⭐ Google Rezension schreiben</a></div>`,
+          `<div style="margin:28px 0;text-align:center;"><a href="${esc(reviewUrl)}" style="background-color:#FF5A00;color:#ffffff;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">⭐ Google Rezension schreiben</a></div>`,
         );
       }
       if (rest) {
@@ -58,27 +58,30 @@ function renderEmail(opts: { bodyText: string; reviewUrl: string; heading: strin
   return `<!DOCTYPE html>
 <html lang="de" dir="ltr">
   <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /></head>
-  <body style="background-color:#ffffff;font-family:Inter,Arial,sans-serif;margin:0;padding:0;">
-    <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;margin-bottom:24px;">
+  <body style="background-color:#f5f5f5;font-family:Inter,Arial,sans-serif;margin:0;padding:0;color:#1a1a1a;">
+    <div style="max-width:600px;margin:0 auto;padding:24px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background:#18181b;padding:20px 28px;border-radius:12px 12px 0 0;width:100%;border-collapse:separate;">
         <tr>
-          <td width="48" style="vertical-align:middle;padding-right:12px;">
-            <img src="${LOGO_URL}" alt="${SITE_NAME}" width="48" height="48" style="border-radius:8px;" />
+          <td width="44" style="vertical-align:middle;padding-right:12px;">
+            <img src="${LOGO_URL}" alt="${SITE_NAME}" width="44" height="44" style="border-radius:8px;display:block;" />
           </td>
-          <td style="vertical-align:middle;font-size:20px;font-weight:700;color:#22c55e;line-height:48px;">${SITE_NAME}</td>
+          <td style="vertical-align:middle;font-size:20px;font-weight:700;color:#ffffff;line-height:44px;">${SITE_NAME}</td>
         </tr>
       </table>
 
+      <div style="background:#ffffff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;line-height:1.6;font-size:14px;">
       <h1 style="font-size:24px;font-weight:700;color:#18181b;margin:0 0 16px;">${esc(heading)}</h1>
 
       ${parts.join("\n      ")}
 
       <hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0 16px;" />
-      <p style="font-size:12px;color:#71717a;margin:0;">
+      <p style="font-size:12px;color:#71717a;margin:0;text-align:center;">
         Bei Fragen erreichst du uns unter
-        <a href="mailto:info@3dmuscio.com" style="color:#22c55e;text-decoration:none;">info@3dmuscio.com</a>
+        <a href="mailto:info@3dmuscio.com" style="color:#FF5A00;text-decoration:none;">info@3dmuscio.com</a>
         ·
-        <a href="${SITE_URL}" style="color:#22c55e;text-decoration:none;">3dmuscio.com</a>
+        <a href="${SITE_URL}" style="color:#FF5A00;text-decoration:none;">3dmuscio.com</a>
+      </p>
+      </div>
       </p>
     </div>
   </body>
