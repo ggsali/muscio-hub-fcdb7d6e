@@ -1,73 +1,88 @@
 /// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
-import {
-  Body, Button, Container, Head, Heading, Hr, Html, Link, Preview, Section, Text,
-} from 'npm:@react-email/components@0.0.22'
+import { Body, Container, Head, Html, Link, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
-import {
-  EmailFooter, EmailHeader, SITE_NAME, SITE_URL, button, buttonSecondary, card,
-  container, divider, formattedName, h1, h2, link, main, text,
-} from './layout.tsx'
 
-interface WelcomeProps {
+interface Props {
   name?: string
   needsAddress?: boolean
+  [key: string]: any
 }
 
-const WelcomeEmail = ({ name, needsAddress }: WelcomeProps) => (
+const BRAND = '#00cc66'
+const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg'
+
+const Email = ({ name, needsAddress }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Willkommen bei {SITE_NAME}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <EmailHeader emoji="👋" />
-        <Section style={card}>
-          <Heading style={h1}>
-            {name ? `Willkommen, ${formattedName(name)}!` : 'Willkommen bei 3DMuscio!'}
-          </Heading>
-          <Text style={text}>
-            Schön, dass du dabei bist. Dein Konto wurde erfolgreich erstellt – ab jetzt kannst du Anfragen senden,
-            Bestellungen verfolgen und auf deine Rechnungen zugreifen.
-          </Text>
-
-          <Section style={{ margin: '24px 0' }}>
-            <Button href={`${SITE_URL}/portal`} style={button}>
-              Zum Kundenkonto
-            </Button>
-          </Section>
-
-          {needsAddress ? (
-            <>
-              <Hr style={divider} />
-              <Heading as="h2" style={h2}>Bitte vervollständige dein Profil</Heading>
-              <Text style={text}>
-                Wir benötigen noch deine Adressdaten, damit wir deine Aufträge korrekt abwickeln und Rechnungen erstellen können.
-              </Text>
-              <Section style={{ margin: '16px 0' }}>
-                <Button href={`${SITE_URL}/portal/profil`} style={buttonSecondary}>
-                  Adressdaten ergänzen
-                </Button>
-              </Section>
-            </>
-          ) : null}
-
-          <Hr style={divider} />
-          <Text style={text}>Was du jetzt tun kannst:</Text>
-          <Text style={listItem}>• <Link href={`${SITE_URL}/kalkulator-online`} style={link}>Preis kalkulieren und Anfrage senden</Link></Text>
-          <Text style={listItem}>• <Link href={`${SITE_URL}/portal/bestellungen`} style={link}>Bestellungen verfolgen</Link></Text>
-          <Text style={listItem}>• <Link href={`${SITE_URL}/portal/profil`} style={link}>Profil bearbeiten</Link></Text>
+    <Preview>Willkommen bei 3DMuscio</Preview>
+    <Body style={{ backgroundColor: '#f4f4f5', fontFamily: 'Inter, Arial, sans-serif', margin: 0, padding: '24px 0' }}>
+      <Container style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
+        <Section style={{ backgroundColor: '#18181b', padding: '20px 28px', borderRadius: '12px 12px 0 0' }}>
+          <table role="presentation" cellPadding={0} cellSpacing={0} border={0} width="100%" style={{ borderCollapse: 'collapse' }}>
+            <tr>
+              <td width={48} style={{ verticalAlign: 'middle', paddingRight: '14px' }}>
+                <img src={LOGO} alt="3DMuscio" width={48} height={48} style={{ borderRadius: '8px', display: 'block' }} />
+              </td>
+              <td style={{ verticalAlign: 'middle' }}>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: '#ffffff', lineHeight: '24px' }}>3DMuscio</div>
+                <div style={{ fontSize: '12px', color: BRAND, lineHeight: '16px', fontWeight: 600 }}>3D-DRUCK SCHWEIZ</div>
+              </td>
+              <td align="right" style={{ verticalAlign: 'middle', fontSize: '26px' }}>👋</td>
+            </tr>
+          </table>
         </Section>
-        <EmailFooter />
+
+        <Section style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '32px 28px' }}>
+          <Text style={{ fontSize: '22px', fontWeight: 700, color: '#18181b', margin: '0 0 16px' }}>Willkommen bei 3DMuscio</Text>
+          <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
+            Guten Tag {name || 'Kunde'},
+          </Text>
+          <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
+            Ihr Kundenkonto wurde erfolgreich erstellt. Ab sofort können Sie Anfragen senden, Bestellungen verfolgen und Ihre Rechnungen einsehen.
+          </Text>
+          <Section style={{ margin: '28px 0 16px', textAlign: 'center' }}>
+            <Link
+              href="https://3dmuscio.com/portal"
+              style={{ backgroundColor: BRAND, color: '#ffffff', padding: '14px 28px', borderRadius: '8px', textDecoration: 'none', fontSize: '15px', fontWeight: 600, display: 'inline-block' }}
+            >
+              Zum Kundenportal
+            </Link>
+          </Section>
+          {needsAddress ? (
+            <Section style={{ margin: '28px 0 16px', textAlign: 'center' }}>
+              <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
+                Bitte ergänzen Sie noch Ihre Adressdaten, damit wir Rechnungen und Lieferungen korrekt abwickeln können.
+              </Text>
+              <Link
+                href="https://3dmuscio.com/portal/profil"
+                style={{ backgroundColor: '#18181b', color: '#ffffff', padding: '13px 26px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600, display: 'inline-block' }}
+              >
+                Adressdaten ergänzen
+              </Link>
+            </Section>
+          ) : null}
+          <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
+            Wir freuen uns auf Ihre Projekte!
+          </Text>
+        </Section>
+
+        <Section style={{ padding: '20px 8px 0', textAlign: 'center' }}>
+          <Text style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 4px', textAlign: 'center' }}>3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</Text>
+          <Text style={{ fontSize: '12px', color: '#9ca3af', margin: 0, textAlign: 'center' }}>
+            <Link href="mailto:info@3dmuscio.com" style={{ color: '#9ca3af', textDecoration: 'none' }}>info@3dmuscio.com</Link>
+            {' · '} +41 79 839 50 80 {' · '}
+            <Link href="https://3dmuscio.com" style={{ color: '#9ca3af', textDecoration: 'none' }}>3dmuscio.com</Link>
+          </Text>
+        </Section>
       </Container>
     </Body>
   </Html>
 )
 
-export const template = {
-  component: WelcomeEmail,
+export const template: TemplateEntry = {
+  component: Email,
   subject: 'Willkommen bei 3DMuscio',
   displayName: 'Willkommen / Konto erstellt',
   previewData: { name: 'Max Muster', needsAddress: true },
-} satisfies TemplateEntry
-
-const listItem: React.CSSProperties = { fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 6px' }
+}
