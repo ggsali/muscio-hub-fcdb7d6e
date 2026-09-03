@@ -985,8 +985,14 @@ export default function AuftragDetailPage() {
       navigate(`/admin/auftraege/${orderId}`, { replace: true });
     } else {
       // Reload parts from DB to sync IDs, without losing local UI state
-      const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!);
-      if (freshParts) setParts(applyFilamentPrices(freshParts as PartRow[]));
+      const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
+      if (freshParts) {
+        const partsWithOrder = (freshParts as PartRow[]).map((part, index) => ({
+          ...part,
+          sort_order: part.sort_order ?? index,
+        }));
+        setParts(applyFilamentPrices(partsWithOrder));
+      }
       toast({ title: "Gespeichert ✓", description: reviewInfo || undefined });
     }
   };
