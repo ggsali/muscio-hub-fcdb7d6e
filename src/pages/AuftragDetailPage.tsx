@@ -57,6 +57,7 @@ interface PartRow {
   slicer_hat_supports?: boolean | null;
   slicer_layer_anzahl?: number | null;
   notizen: string;
+  sort_order?: number | null;
 }
 
 const emptyPart = (): PartRow => ({
