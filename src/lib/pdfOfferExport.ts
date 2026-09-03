@@ -60,6 +60,17 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
 }
 
+function formatTelefon(tel: string | undefined): string | undefined {
+  if (!tel) return tel;
+  const clean = tel.replace(/\s+/g, "").replace(/[^\d+]/g, "");
+  // +41768175440 → +41 76 817 54 40
+  if (clean.startsWith("+41") && clean.length === 12) {
+    return `${clean.slice(0, 3)} ${clean.slice(3, 5)} ${clean.slice(5, 8)} ${clean.slice(8, 10)} ${clean.slice(10, 12)}`;
+  }
+  return tel;
+}
+
+
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
     const controller = new AbortController();
@@ -114,14 +125,18 @@ function drawRecipient(
   doc.text(label, margin, 76);
 
   doc.setFont("helvetica", "bold"); doc.setFontSize(10.5); doc.setTextColor(...BLACK);
-  doc.text(data.customerName, margin, 83);
+  const kundenName = data.customerName.replace(/\s+/g, " ").trim();
+  doc.text(kundenName, margin, 83);
 
   doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...DARK);
   let cy = 89;
-  if (data.customerFirma)   { doc.text(data.customerFirma, margin, cy); cy += 4.5; }
-  if (data.customerAdresse) { data.customerAdresse.split("\n").forEach(l => { doc.text(l, margin, cy); cy += 4.5; }); }
-  if (data.customerEmail)   { doc.text(data.customerEmail, margin, cy); cy += 4.5; }
-  if (data.customerTelefon) { doc.text(data.customerTelefon, margin, cy); }
+  if (data.customerFirma)   {
+    data.customerFirma.replace(/\s+/g, " ").trim().split("\n").forEach(l => { doc.text(l, margin, cy); cy += 4.5; });
+  }
+  if (data.customerAdresse) { data.customerAdresse.split("\n").forEach(l => { doc.text(l.replace(/\s+/g, " ").trim(), margin, cy); cy += 4.5; }); }
+  if (data.customerEmail)   { doc.text(data.customerEmail.replace(/\s+/g, " ").trim(), margin, cy); cy += 4.5; }
+  if (data.customerTelefon) { doc.text(formatTelefon(data.customerTelefon) || data.customerTelefon, margin, cy); }
+
 }
 
 /** Gemeinsamer Footer */

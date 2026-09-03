@@ -65,6 +65,17 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
 }
 
+function formatTelefon(tel: string | undefined): string | undefined {
+  if (!tel) return tel;
+  const clean = tel.replace(/\s+/g, "").replace(/[^\d+]/g, "");
+  // +41768175440 → +41 76 817 54 40
+  if (clean.startsWith("+41") && clean.length === 12) {
+    return `${clean.slice(0, 3)} ${clean.slice(3, 5)} ${clean.slice(5, 8)} ${clean.slice(8, 10)} ${clean.slice(10, 12)}`;
+  }
+  return tel;
+}
+
+
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
     const controller = new AbortController();
@@ -177,31 +188,35 @@ export async function exportOrderPDF(data: OrderExportData) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10.5);
   doc.setTextColor(...BLACK);
-  doc.text(data.customerName, empX, empY + 7);
+  const kundenName = data.customerName.replace(/\s+/g, " ").trim();
+  doc.text(kundenName, empX, empY + 7);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...DARK);
   let cy = empY + 13;
   if (data.customerFirma) {
-    data.customerFirma.split("\n").forEach(line => {
+    data.customerFirma.replace(/\s+/g, " ").trim().split("\n").forEach(line => {
       doc.text(line, empX, cy);
       cy += 4.5;
     });
   }
   if (data.customerAdresse) {
     data.customerAdresse.split("\n").forEach(line => {
-      doc.text(line, empX, cy);
+      doc.text(line.replace(/\s+/g, " ").trim(), empX, cy);
       cy += 4.5;
     });
   }
-  if (data.customerEmail) {
-    doc.text(data.customerEmail, empX, cy);
+  const customerEmail = data.customerEmail?.replace(/\s+/g, " ").trim();
+  if (customerEmail) {
+    doc.text(customerEmail, empX, cy);
     cy += 4.5;
   }
-  if (data.customerTelefon) {
-    doc.text(data.customerTelefon, empX, cy);
+  const customerTelefon = formatTelefon(data.customerTelefon);
+  if (customerTelefon) {
+    doc.text(customerTelefon, empX, cy);
   }
+
 
   // ── Rechts: Beschreibung ────────────────────────────────────────
   doc.setFont("helvetica", "bold");
