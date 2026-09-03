@@ -353,7 +353,13 @@ export default function AuftragDetailPage() {
             }
           }
         }
-        if (p && p.length > 0) setParts(p as PartRow[]);
+        if (p && p.length > 0) {
+          const partsWithOrder = (p as PartRow[]).map((part, index) => ({
+            ...part,
+            sort_order: part.sort_order ?? index,
+          }));
+          setParts(partsWithOrder);
+        }
         setLoading(false);
       }
       load();
