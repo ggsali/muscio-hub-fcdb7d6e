@@ -40,7 +40,7 @@ function renderEmail(opts: { bodyText: string; reviewUrl: string; heading: strin
       const rest = block.replace(BUTTON_PLACEHOLDER, "").replace(/^[\s👉>-]+/u, "").trim();
       if (reviewUrl) {
         parts.push(
-          `<div style="margin:28px 0;text-align:center;"><a href="${esc(reviewUrl)}" style="background-color:#FF5A00;color:#ffffff;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">⭐ Google Rezension schreiben</a></div>`,
+          `<div style="margin:28px 0;text-align:center;"><a href="${esc(reviewUrl)}" style="background-color:#00cc66;color:#ffffff;padding:14px 28px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:600;display:inline-block;">⭐ Google Rezension schreiben</a></div>`,
         );
       }
       if (rest) {
@@ -77,12 +77,11 @@ function renderEmail(opts: { bodyText: string; reviewUrl: string; heading: strin
       <hr style="border:none;border-top:1px solid #e4e4e7;margin:28px 0 16px;" />
       <p style="font-size:12px;color:#71717a;margin:0;text-align:center;">
         Bei Fragen erreichst du uns unter
-        <a href="mailto:info@3dmuscio.com" style="color:#FF5A00;text-decoration:none;">info@3dmuscio.com</a>
+        <a href="mailto:info@3dmuscio.com" style="color:#00cc66;text-decoration:none;">info@3dmuscio.com</a>
         ·
-        <a href="${SITE_URL}" style="color:#FF5A00;text-decoration:none;">3dmuscio.com</a>
+        <a href="${SITE_URL}" style="color:#00cc66;text-decoration:none;">3dmuscio.com</a>
       </p>
       </div>
-      </p>
     </div>
   </body>
 </html>`;

@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
                 Bitte klicken Sie auf den Button unten und ergänzen Sie Ihre Angaben.
               </p>
               <p style="margin:0 0 20px;">
-                <a href="${completionUrl}" style="display:inline-block;background:#FF5A00;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold;">
+                <a href="${completionUrl}" style="display:inline-block;background:#00cc66;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold;">
                   Adressdaten ergänzen →
                 </a>
               </p>
