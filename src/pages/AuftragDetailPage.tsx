@@ -57,6 +57,7 @@ interface PartRow {
   slicer_hat_supports?: boolean | null;
   slicer_layer_anzahl?: number | null;
   notizen: string;
+  sort_order?: number | null;
 }
 
 const emptyPart = (): PartRow => ({
@@ -312,7 +313,7 @@ export default function AuftragDetailPage() {
       async function load() {
         const [{ data: o }, { data: p }, { data: presetData }] = await Promise.all([
           supabase.from("orders").select("*").eq("id", id!).single(),
-          supabase.from("parts").select("*").eq("order_id", id!),
+          supabase.from("parts").select("*").eq("order_id", id!).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
           supabase.from("price_presets").select("*").order("created_at"),
         ]);
         const loadedPresets = (presetData || []) as Preset[];
@@ -352,7 +353,13 @@ export default function AuftragDetailPage() {
             }
           }
         }
-        if (p && p.length > 0) setParts(p as PartRow[]);
+        if (p && p.length > 0) {
+          const partsWithOrder = (p as PartRow[]).map((part, index) => ({
+            ...part,
+            sort_order: part.sort_order ?? index,
+          }));
+          setParts(partsWithOrder);
+        }
         setLoading(false);
       }
       load();
@@ -902,7 +909,7 @@ export default function AuftragDetailPage() {
     }
 
     if (orderId) {
-      const partPayload = (p: PartRow) => ({
+      const partPayload = (p: PartRow, index: number) => ({
         order_id: orderId,
         customer_id: customerId || null,
         teilname: p.teilname,
@@ -922,11 +929,12 @@ export default function AuftragDetailPage() {
         slicer_filament_gramm: p.slicer_filament_gramm ?? null,
         slicer_hat_supports: p.slicer_hat_supports ?? null,
         slicer_layer_anzahl: p.slicer_layer_anzahl ?? null,
+        sort_order: index,
       });
 
       if (isNew) {
         // Fresh insert for all parts of the new order
-        const partsData = parts.map(partPayload);
+        const partsData = parts.map((part, index) => partPayload(part, index));
         if (partsData.length > 0) {
           await supabase.from("parts").insert(partsData);
         }
@@ -944,17 +952,17 @@ export default function AuftragDetailPage() {
           await supabase.from("parts").delete().in("id", toDelete);
         }
 
-        // Update existing parts
-        for (const p of parts) {
+        // Update existing parts (with current array index as sort_order)
+        for (const [index, p] of parts.entries()) {
           if (p.id && existingIds.has(p.id)) {
-            await supabase.from("parts").update(partPayload(p)).eq("id", p.id);
+            await supabase.from("parts").update(partPayload(p, index)).eq("id", p.id);
           }
         }
 
         // Insert new parts (no id yet)
         const newParts = parts.filter(p => !p.id);
         if (newParts.length > 0) {
-          await supabase.from("parts").insert(newParts.map(partPayload));
+          await supabase.from("parts").insert(newParts.map((p) => partPayload(p, parts.indexOf(p))));
         }
       }
     }
@@ -977,8 +985,14 @@ export default function AuftragDetailPage() {
       navigate(`/admin/auftraege/${orderId}`, { replace: true });
     } else {
       // Reload parts from DB to sync IDs, without losing local UI state
-      const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!);
-      if (freshParts) setParts(applyFilamentPrices(freshParts as PartRow[]));
+      const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
+      if (freshParts) {
+        const partsWithOrder = (freshParts as PartRow[]).map((part, index) => ({
+          ...part,
+          sort_order: part.sort_order ?? index,
+        }));
+        setParts(applyFilamentPrices(partsWithOrder));
+      }
       toast({ title: "Gespeichert ✓", description: reviewInfo || undefined });
     }
   };

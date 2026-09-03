@@ -1738,6 +1738,7 @@ export type Database = {
           slicer_filament_gramm: number | null
           slicer_hat_supports: boolean | null
           slicer_layer_anzahl: number | null
+          sort_order: number | null
           status: string | null
           teilname: string
         }
@@ -1763,6 +1764,7 @@ export type Database = {
           slicer_filament_gramm?: number | null
           slicer_hat_supports?: boolean | null
           slicer_layer_anzahl?: number | null
+          sort_order?: number | null
           status?: string | null
           teilname: string
         }
@@ -1788,6 +1790,7 @@ export type Database = {
           slicer_filament_gramm?: number | null
           slicer_hat_supports?: boolean | null
           slicer_layer_anzahl?: number | null
+          sort_order?: number | null
           status?: string | null
           teilname?: string
         }
