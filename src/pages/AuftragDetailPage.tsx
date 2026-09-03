@@ -313,7 +313,7 @@ export default function AuftragDetailPage() {
       async function load() {
         const [{ data: o }, { data: p }, { data: presetData }] = await Promise.all([
           supabase.from("orders").select("*").eq("id", id!).single(),
-          supabase.from("parts").select("*").eq("order_id", id!),
+          supabase.from("parts").select("*").eq("order_id", id!).order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
           supabase.from("price_presets").select("*").order("created_at"),
         ]);
         const loadedPresets = (presetData || []) as Preset[];
