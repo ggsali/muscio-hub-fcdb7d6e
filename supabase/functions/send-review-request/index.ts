@@ -82,7 +82,6 @@ function renderEmail(opts: { bodyText: string; reviewUrl: string; heading: strin
         <a href="${SITE_URL}" style="color:#00cc66;text-decoration:none;">3dmuscio.com</a>
       </p>
       </div>
-      </p>
     </div>
   </body>
 </html>`;
