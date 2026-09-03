@@ -60,6 +60,17 @@ function hexToRgb(hex: string): [number, number, number] {
   return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
 }
 
+function formatTelefon(tel: string | undefined): string | undefined {
+  if (!tel) return tel;
+  const clean = tel.replace(/\s+/g, "").replace(/[^\d+]/g, "");
+  // +41768175440 → +41 76 817 54 40
+  if (clean.startsWith("+41") && clean.length === 12) {
+    return `${clean.slice(0, 3)} ${clean.slice(3, 5)} ${clean.slice(5, 8)} ${clean.slice(8, 10)} ${clean.slice(10, 12)}`;
+  }
+  return tel;
+}
+
+
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
     const controller = new AbortController();
