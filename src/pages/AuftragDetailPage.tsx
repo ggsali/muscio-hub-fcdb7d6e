@@ -909,7 +909,7 @@ export default function AuftragDetailPage() {
     }
 
     if (orderId) {
-      const partPayload = (p: PartRow) => ({
+      const partPayload = (p: PartRow, index: number) => ({
         order_id: orderId,
         customer_id: customerId || null,
         teilname: p.teilname,
@@ -929,11 +929,12 @@ export default function AuftragDetailPage() {
         slicer_filament_gramm: p.slicer_filament_gramm ?? null,
         slicer_hat_supports: p.slicer_hat_supports ?? null,
         slicer_layer_anzahl: p.slicer_layer_anzahl ?? null,
+        sort_order: index,
       });
 
       if (isNew) {
         // Fresh insert for all parts of the new order
-        const partsData = parts.map(partPayload);
+        const partsData = parts.map((part, index) => partPayload(part, index));
         if (partsData.length > 0) {
           await supabase.from("parts").insert(partsData);
         }
@@ -951,17 +952,17 @@ export default function AuftragDetailPage() {
           await supabase.from("parts").delete().in("id", toDelete);
         }
 
-        // Update existing parts
-        for (const p of parts) {
+        // Update existing parts (with current array index as sort_order)
+        for (const [index, p] of parts.entries()) {
           if (p.id && existingIds.has(p.id)) {
-            await supabase.from("parts").update(partPayload(p)).eq("id", p.id);
+            await supabase.from("parts").update(partPayload(p, index)).eq("id", p.id);
           }
         }
 
         // Insert new parts (no id yet)
         const newParts = parts.filter(p => !p.id);
         if (newParts.length > 0) {
-          await supabase.from("parts").insert(newParts.map(partPayload));
+          await supabase.from("parts").insert(newParts.map((p) => partPayload(p, parts.indexOf(p))));
         }
       }
     }
