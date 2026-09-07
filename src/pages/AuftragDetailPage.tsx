@@ -565,20 +565,20 @@ export default function AuftragDetailPage() {
   };
 
   const togglePart = async (partId: string) => {
+    const willBeSelected = !selectedPartIds.has(partId);
     setSelectedPartIds(prev => {
       const next = new Set(prev);
-      const willBeSelected = !next.has(partId);
       willBeSelected ? next.add(partId) : next.delete(partId);
-      // Sofort in DB speichern
-      supabase
-        .from("parts")
-        .update({ in_rechnung: willBeSelected })
-        .eq("id", partId)
-        .then(() => {})
-        .catch(err => console.error("Fehler beim Speichern der Teilauswahl:", err));
       return next;
     });
+    // Sofort in DB speichern
+    try {
+      await supabase.from("parts").update({ in_rechnung: willBeSelected }).eq("id", partId);
+    } catch (err: any) {
+      console.error("Fehler beim Speichern der Teilauswahl:", err);
+    }
   };
+
 
 
   const handleDeleteOrder = async () => {
