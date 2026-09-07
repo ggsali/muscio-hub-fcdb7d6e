@@ -832,7 +832,7 @@ export default function AuftragDetailPage() {
             await supabase.from("bills" as any).insert({
               order_id: id,
               titel: `Schlussrechnung per E-Mail gesendet`,
-              betrag: totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100,
+              betrag: selectedTotalUmsatz - Math.round(selectedTotalUmsatz * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
               file_path: storedPath,
