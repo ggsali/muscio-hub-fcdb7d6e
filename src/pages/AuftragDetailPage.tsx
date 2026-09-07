@@ -2359,3 +2359,42 @@ export default function AuftragDetailPage() {
     </div>
   );
 }
+
+/** Chronologischer Aktivitäts-Verlauf des Auftrags */
+function OrderActivityLog({ orderId }: { orderId: string }) {
+  const [entries, setEntries] = useState<{ id: string; status: string; notiz: string | null; created_at: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!orderId) return;
+    (supabase.from as any)("order_status_log")
+      .select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .then(({ data }: any) => {
+        setEntries((data ?? []) as any[]);
+        setLoading(false);
+      });
+  }, [orderId]);
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+      <h3 className="font-semibold text-sm mb-2">Aktivitäts-Log</h3>
+      {loading ? (
+        <p className="text-xs text-muted-foreground">Wird geladen...</p>
+      ) : entries.length === 0 ? (
+        <p className="text-xs text-muted-foreground">Noch keine Aktivitäten erfasst.</p>
+      ) : (
+        entries.map(e => (
+          <div key={e.id} className="flex items-start gap-2 text-xs bg-muted/30 rounded-lg px-2 py-1.5">
+            <span className="text-muted-foreground tabular-nums shrink-0">
+              {new Date(e.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <span className="text-foreground font-medium">{e.status}</span>
+            {e.notiz && <span className="text-muted-foreground">· {e.notiz}</span>}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
