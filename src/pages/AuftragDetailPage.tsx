@@ -2213,38 +2213,65 @@ export default function AuftragDetailPage() {
 
       {/* ====================== TAB: FINANZEN ====================== */}
       {activeTab === "Finanzen" && !isNew && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="space-y-4">
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
-              <h3 className="font-semibold text-sm mb-3">Kostenaufschlüsselung</h3>
-              <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Setup-Pauschale</span><span>{formatCHF(setupKosten)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Material</span><span>{formatCHF(matKosten)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
-                {expressBetrag > 0 && (
-                  <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(expressBetrag)}</span></div>
-                )}
-                {rabattBetrag > 0 && (
-                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
-                )}
-                <div className="border-t border-border my-2" />
-                <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(totalKosten)}</span></div>
-                <div className="flex justify-between font-bold"><span>Reingewinn</span><span className="text-success">{formatCHF(totalGewinn)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Marge</span><span>{formatPct(totalMarge)}</span></div>
-              </div>
+        <div className="space-y-4">
+          {/* 1. Kostenübersicht */}
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+            <h3 className="font-semibold text-sm mb-3">Kostenübersicht</h3>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Setup-Pauschale</span><span>{formatCHF(setupKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Material</span><span>{formatCHF(matKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
+              {expressBetrag > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(expressBetrag)}</span></div>
+              )}
+              {rabattBetrag > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
+              )}
+              <div className="border-t border-border my-2" />
+              <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(totalKosten)}</span></div>
+              <div className="flex justify-between font-bold"><span>Reingewinn</span><span className="text-success">{formatCHF(totalGewinn)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Marge</span><span>{formatPct(totalMarge)}</span></div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="gap-2 border-border w-full">
-                <FileDown className="w-4 h-4" /> Akontorechnung erstellen
-              </Button>
-              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="gap-2 border-border w-full">
+          </div>
+
+          {/* 2. Zahlungsstatus */}
+          {(() => {
+            const bezahlt = ["Bezahlt", "Im Druck", "Qualitätsprüfung", "Versandt", "Geliefert", "Abgeschlossen"].includes(status);
+            return (
+              <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+                <h3 className="font-semibold text-sm">Zahlungsstatus</h3>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${bezahlt ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+                    {bezahlt ? "Bezahlt" : "Offen"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {bezahlt ? "Zahlung erfasst – Details in den Rechnungen unten." : "Noch keine Zahlung erfasst."}
+                  </span>
+                </div>
+                {stripePending && (
+                  <p className="text-xs text-amber-600">Stripe-Zahlung ausstehend.</p>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* 3. Aktionen */}
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+            <h3 className="font-semibold text-sm mb-2">Aktionen</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte senden</Button>
+              <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung senden</Button>
+              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung erstellen</Button>
+              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
                 {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Stripe Zahlungslink erstellen
               </Button>
             </div>
           </div>
+
+          {/* 4. Gesendete Dokumente / Rechnungen */}
           <BillsSection orderId={id!} />
         </div>
       )}
