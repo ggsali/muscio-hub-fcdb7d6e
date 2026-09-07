@@ -379,6 +379,7 @@ export default function AuftragDetailPage() {
             sort_order: part.sort_order ?? index,
           }));
           setParts(partsWithOrder);
+          setSelectedPartIds(new Set(partsWithOrder.map(part => part.id).filter(Boolean) as string[]));
         }
         setLoading(false);
       }
