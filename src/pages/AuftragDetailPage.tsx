@@ -1442,10 +1442,76 @@ export default function AuftragDetailPage() {
       {/* ====================== TAB: ÜBERSICHT ====================== */}
       {activeTab === "Übersicht" && (
         <div className="space-y-4 md:space-y-6">
+          {/* 1. Status gross + 2. Nächste Aktion */}
+          {!isNew && (() => {
+            const action = nextActionForStatus(status);
+            return (
+              <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Aktueller Status</span>
+                    <span className="scale-125 origin-left inline-block">
+                      <StatusBadge status={status} />
+                    </span>
+                  </div>
+                  <button onClick={() => setActiveTab("Status & Versand")} className="text-xs text-primary hover:underline">
+                    Workflow öffnen →
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">Nächste Aktion</p>
+                  <Button
+                    onClick={action.onClick}
+                    disabled={action.disabled}
+                    size="lg"
+                    className={`w-full ${action.disabled ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"}`}
+                  >
+                    {action.label}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 3. Kundendaten */}
+          {!isNew && customerId && (() => {
+            const c = customers.find(cc => cc.id === customerId);
+            if (!c) return null;
+            const fullName = [c.vorname, c.name].filter(Boolean).join(" ").trim();
+            const strasse = [c.strasse, c.hausnummer].filter(Boolean).join(" ").trim();
+            const plzOrt = [c.plz, c.ort].filter(Boolean).join(" ").trim();
+            return (
+              <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-semibold text-sm">Kundendaten</h3>
+                  <button onClick={() => navigate(`/admin/kunden/${c.id}`)} className="text-xs text-primary hover:underline">
+                    Kundenprofil →
+                  </button>
+                </div>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div className="flex gap-2"><dt className="text-muted-foreground w-24 shrink-0">Name</dt><dd>{fullName || c.name || "—"}</dd></div>
+                  {c.firma && <div className="flex gap-2"><dt className="text-muted-foreground w-24 shrink-0">Firma</dt><dd>{c.firma}</dd></div>}
+                  <div className="flex gap-2">
+                    <dt className="text-muted-foreground w-24 shrink-0">E-Mail</dt>
+                    <dd>{c.email ? <a href={`mailto:${c.email}`} className="text-primary hover:underline break-all">{c.email}</a> : "—"}</dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt className="text-muted-foreground w-24 shrink-0">Telefon</dt>
+                    <dd>{c.telefon ? <a href={`tel:${c.telefon}`} className="text-primary hover:underline">{c.telefon}</a> : "—"}</dd>
+                  </div>
+                  <div className="flex gap-2 sm:col-span-2">
+                    <dt className="text-muted-foreground w-24 shrink-0">Adresse</dt>
+                    <dd>{[strasse, plzOrt, c.land].filter(Boolean).join(", ") || "—"}</dd>
+                  </div>
+                </dl>
+              </div>
+            );
+          })()}
+
           {source === "anfrage" && !isNew && (
             <div className="bg-muted/50 border border-border rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm text-muted-foreground">
               <MessageSquare className="w-4 h-4 shrink-0" />
-              <span>Aus Anfrage erstellt — Dateien im Tab <strong>Teile</strong> verfügbar. Bitte Gewicht, Druckzeit und Material ergänzen.</span>
+              <span>Aus Anfrage erstellt — Dateien im Tab <strong>Teile &amp; Kalkulation</strong> verfügbar. Bitte Gewicht, Druckzeit und Material ergänzen.</span>
             </div>
           )}
           {!isNew && inquiryHerkunft && (
