@@ -564,20 +564,6 @@ export default function AuftragDetailPage() {
     });
   };
 
-  const selectedParts = parts.filter(p => p.id && selectedPartIds.has(p.id));
-  const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + p.preis_total, 0);
-  const selectedExpressAmount = selectedParts.length > 0 ? expressBetrag : 0;
-  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedExpressAmount;
-  const selectedRabattBetrag = selectedBruttoUmsatz * (rabattPct / 100);
-  const selectedTotalUmsatz = selectedBruttoUmsatz - selectedRabattBetrag;
-  const selectedTotalKosten = selectedParts.reduce((s, p) => {
-    const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
-    const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
-    return s + calcKosten(partSettings, p.gewicht_g, p.druckzeit_h) * p.menge;
-  }, 0);
-  const selectedTotalGewinn = calcGewinn(selectedTotalUmsatz, selectedTotalKosten);
-  const selectedTotalMarge = calcMarge(selectedTotalGewinn, selectedTotalUmsatz);
-
   const handleDeleteOrder = async () => {
     if (!id || isNew) return;
     await supabase.from("part_files").delete().eq("order_id", id);
