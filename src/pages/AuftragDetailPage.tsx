@@ -564,6 +564,11 @@ export default function AuftragDetailPage() {
     });
   };
 
+  // Beim Neuladen / Ändern der Teile-Anzahl wieder alle Teile auswählen
+  useEffect(() => {
+    setSelectedPartIds(new Set(parts.map(p => p.id).filter(Boolean) as string[]));
+  }, [parts.length]);
+
   const handleDeleteOrder = async () => {
     if (!id || isNew) return;
     await supabase.from("part_files").delete().eq("order_id", id);
