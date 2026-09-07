@@ -803,14 +803,14 @@ export default function AuftragDetailPage() {
     setSendingAkonto(true);
     try {
       const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-      const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
-      const restbetrag = totalUmsatz - akontoBetrag;
+      const akontoBetrag = Math.round(selectedTotalUmsatz * akontoPercent) / 100;
+      const restbetrag = selectedTotalUmsatz - akontoBetrag;
       const result = await exportRestbetragPDF({
         orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-        parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag, restbetrag,
+        parts: selectedParts, umsatz_total: selectedTotalUmsatz, akontoPercent, akontoBetrag, restbetrag,
         settings: activeSettings, company, returnBase64: !download,
-        expressKosten: expressBetrag, expressLabel,
+        expressKosten: selectedExpressAmount, expressLabel,
       });
       if (!download && result) {
         const { data, error } = await supabase.functions.invoke("send-email", {
