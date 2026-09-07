@@ -201,12 +201,12 @@ export default function AuftragDetailPage() {
 
 
   const handleCreatePaymentLink = async () => {
-    if (!id || totalUmsatz <= 0) return;
+    if (!id || selectedTotalUmsatz <= 0) return;
     setCreatingPaymentLink(true);
     try {
       const { customerEmail } = await getCustomerData();
       const { data, error } = await supabase.functions.invoke("create-stripe-payment-link", {
-        body: { orderId: id, betrag: totalUmsatz, orderName, customerEmail },
+        body: { orderId: id, betrag: selectedTotalUmsatz, orderName, customerEmail },
       });
       if (error || data?.error) {
         toast({ title: "Stripe Fehler", description: data?.error || error?.message, variant: "destructive" });
