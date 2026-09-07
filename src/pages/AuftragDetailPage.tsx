@@ -271,14 +271,20 @@ export default function AuftragDetailPage() {
 
 
   const nextActionForStatus = (s: string): { label: string; onClick: () => void; disabled?: boolean } => {
+    const toWorkflow = () => setActiveTab("Status & Versand");
     switch (s) {
-      case "Offen": return { label: "Auftragsbestätigung senden →", onClick: () => setConfirmEmailType("auftragsbestaetigung") };
-      case "In Bearbeitung": return { label: "Als versandbereit markieren →", onClick: () => setStatus("Geliefert") };
-      case "Versandbereit": return { label: "Versandetikett erstellen →", onClick: () => window.open("https://www.post.ch/", "_blank") };
-      case "Geliefert": return { label: "Rechnung senden →", onClick: () => setConfirmEmailType("rechnung") };
-      case "Bezahlt": return { label: "Rechnung senden →", onClick: () => setConfirmEmailType("rechnung") };
+      case "Anfrage": return { label: "Offerte senden →", onClick: () => setConfirmEmailType("offerte") };
+      case "Offerte gesendet": return { label: "Auf Zahlung warten", onClick: () => {}, disabled: true };
+      case "Bezahlt": return { label: "Druckproduktion starten →", onClick: toWorkflow };
+      case "Im Druck": return { label: "Qualitätsprüfung durchführen →", onClick: toWorkflow };
+      case "Qualitätsprüfung": return { label: "Versenden →", onClick: toWorkflow };
+      case "Versandt": return { label: "Lieferung bestätigen →", onClick: toWorkflow };
       case "Abgeschlossen": return { label: "Auftrag abgeschlossen", onClick: () => {}, disabled: true };
-      default: return { label: "Status aktualisieren →", onClick: () => {} };
+      // Alt-Status (bestehende Aufträge)
+      case "Offen": return { label: "Offerte senden →", onClick: () => setConfirmEmailType("offerte") };
+      case "In Bearbeitung": return { label: "Status im Workflow aktualisieren →", onClick: toWorkflow };
+      case "Geliefert": return { label: "Auftrag abschliessen →", onClick: toWorkflow };
+      default: return { label: "Status im Workflow aktualisieren →", onClick: toWorkflow };
     }
   };
 
