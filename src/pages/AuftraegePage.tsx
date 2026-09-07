@@ -27,7 +27,7 @@ interface Order {
   customer_name: string;
 }
 
-const STATUS_OPTIONS = ["Alle", "Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"] as const;
+const STATUS_OPTIONS = ["Alle", "Anfrage", "Offen", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert", "Abgeschlossen", "Storniert"] as const;
 const SOURCE_OPTIONS = ["Alle", "Manuell", "Website"] as const;
 
 export default function AuftraegePage() {
