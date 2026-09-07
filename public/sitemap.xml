@@ -311,11 +311,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://3dmuscio.com/shop/candela-viva-lucentis-set</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://3dmuscio.com/shop/test</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
