@@ -1806,6 +1806,29 @@ export default function AuftragDetailPage() {
               </div>
             </div>
 
+            {/* Teile-Auswahl für Rechnung/Offerte */}
+            <div className="px-4 py-2 border-b border-border bg-muted/20 flex flex-wrap items-center gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectedPartIds(new Set(parts.filter(p => p.id).map(p => p.id as string)))}
+                  className="text-xs text-primary underline"
+                >
+                  Alle auswählen
+                </button>
+                <button
+                  onClick={() => setSelectedPartIds(new Set())}
+                  className="text-xs text-muted-foreground underline"
+                >
+                  Keine
+                </button>
+              </div>
+              {selectedPartIds.size < parts.filter(p => p.id).length && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ {parts.filter(p => p.id).length - selectedPartIds.size} Teil(e) nicht in Rechnung/Offerte enthalten
+                </p>
+              )}
+            </div>
+
             {isMobile ? (
               <div className="divide-y divide-border/50">
                 {parts.map((part, idx) => (
