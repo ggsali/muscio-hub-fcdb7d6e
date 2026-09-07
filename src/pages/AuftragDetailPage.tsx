@@ -1834,12 +1834,20 @@ export default function AuftragDetailPage() {
                 {parts.map((part, idx) => (
                   <div key={idx} className="p-4 space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <Input
-                        value={part.teilname}
-                        onChange={e => updatePart(idx, "teilname", e.target.value)}
-                        className="bg-input border-border h-9 text-sm flex-1"
-                        placeholder="Teilname"
-                      />
+                      <div className="flex items-center gap-3 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={part.id ? selectedPartIds.has(part.id) : false}
+                          onChange={() => part.id && togglePart(part.id)}
+                          className="w-4 h-4 accent-primary cursor-pointer"
+                        />
+                        <Input
+                          value={part.teilname}
+                          onChange={e => updatePart(idx, "teilname", e.target.value)}
+                          className="bg-input border-border h-9 text-sm flex-1"
+                          placeholder="Teilname"
+                        />
+                      </div>
                       <div className="flex gap-1 shrink-0">
                         {part.id && (
                           <button
