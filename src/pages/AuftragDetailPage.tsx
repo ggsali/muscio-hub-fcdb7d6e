@@ -566,14 +566,22 @@ export default function AuftragDetailPage() {
 
   const togglePart = async (partId: string) => {
     const willBeSelected = !selectedPartIds.has(partId);
-    setSelectedPartIds(prev => {
-      const next = new Set(prev);
-      willBeSelected ? next.add(partId) : next.delete(partId);
-      return next;
-    });
+    const nextSet = new Set(selectedPartIds);
+    willBeSelected ? nextSet.add(partId) : nextSet.delete(partId);
+    setSelectedPartIds(nextSet);
     // Sofort in DB speichern
     try {
       await supabase.from("parts").update({ in_rechnung: willBeSelected }).eq("id", partId);
+      if (id && !isNew) {
+        const nextParts = parts.filter(p => p.id && nextSet.has(p.id));
+        const pct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
+        const brutto =
+          nextParts.reduce((s, p) => s + (p.preis_total || 0), 0) +
+          nextParts.length * activeSettings.setup_pauschale +
+          (nextParts.length > 0 ? Math.max(0, Number(expressKosten) || 0) : 0);
+        const neuTotal = brutto - brutto * (pct / 100);
+        await supabase.from("orders").update({ umsatz_total: neuTotal }).eq("id", id);
+      }
     } catch (err: any) {
       console.error("Fehler beim Speichern der Teilauswahl:", err);
     }
