@@ -689,7 +689,7 @@ export default function AuftragDetailPage() {
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, kosten_total: selectedTotalKosten,
+            parts: selectedParts, umsatz_total: selectedTotalUmsatz, kosten_total: selectedTotalKosten,
             gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
             settings: activeSettings, company, returnBase64: true, withDetails,
             expressKosten: selectedExpressAmount, expressLabel,
@@ -699,7 +699,7 @@ export default function AuftragDetailPage() {
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
+            parts: selectedParts, umsatz_total: selectedTotalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
             expressKosten: selectedExpressAmount, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
@@ -710,7 +710,7 @@ export default function AuftragDetailPage() {
           const result = await exportAuftragsbestaetiguungPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, settings: activeSettings, company, returnBase64: true,
+            parts: selectedParts, umsatz_total: selectedTotalUmsatz, settings: activeSettings, company, returnBase64: true,
             expressKosten: selectedExpressAmount, expressLabel,
             rabattProzent: rabattPct,
           });
@@ -906,7 +906,7 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts: selectedParts,
-      umsatz_total: selectedBruttoUmsatz,
+      umsatz_total: selectedTotalUmsatz,
       kosten_total: selectedTotalKosten,
       gewinn_total: selectedTotalGewinn,
       marge: selectedTotalMarge,
@@ -931,7 +931,7 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts: selectedParts,
-      umsatz_total: selectedBruttoUmsatz,
+      umsatz_total: selectedTotalUmsatz,
       settings: activeSettings,
       company,
       withDetails: details,
@@ -953,7 +953,7 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts: selectedParts,
-      umsatz_total: selectedBruttoUmsatz,
+      umsatz_total: selectedTotalUmsatz,
       settings: activeSettings,
       company,
       expressKosten: selectedExpressAmount,
