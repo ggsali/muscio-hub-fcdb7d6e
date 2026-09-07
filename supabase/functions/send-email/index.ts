@@ -309,9 +309,14 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     console.log("[send-email] Funktion gestartet, kind:", body?.kind);
-    const { kind, orderId, type, statusKey, trackingNr, pdfBase64, pdfFilename, paymentUrl, akontoPercent, akontoBetrag, restbetrag, lieferart: bodyLieferart } = body;
+    const { kind, orderId, type, statusKey, trackingNr, pdfBase64, pdfFilename, paymentUrl, akontoPercent, akontoBetrag, restbetrag, lieferart: bodyLieferart, selectedPartIds } = body;
 
-    // Auftrag + Kunde laden
+    // Teile laden, falls gefiltert übergeben
+    let partsQuery = supabase.from("parts").select("*").eq("order_id", orderId);
+    if (selectedPartIds?.length) {
+      partsQuery = partsQuery.in("id", selectedPartIds);
+    }
+    const { data: parts } = await partsQuery;
     const { data: order } = await supabase
       .from("orders").select("*, customers(*)").eq("id", orderId).maybeSingle();
     if (!order) {

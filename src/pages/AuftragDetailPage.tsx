@@ -137,6 +137,7 @@ export default function AuftragDetailPage() {
   const [akontoMode, setAkontoMode] = useState<"akonto" | "restbetrag">("akonto");
   const [sendingAkonto, setSendingAkonto] = useState(false);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
+  const [selectedPartIds, setSelectedPartIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
@@ -378,6 +379,7 @@ export default function AuftragDetailPage() {
             sort_order: part.sort_order ?? index,
           }));
           setParts(partsWithOrder);
+          setSelectedPartIds(new Set(partsWithOrder.map(part => part.id).filter(Boolean) as string[]));
         }
         setLoading(false);
       }
@@ -542,7 +544,25 @@ export default function AuftragDetailPage() {
     }
     setParts(prev => [...prev, newPart]);
   };
-  const removePart = (idx: number) => setParts(prev => prev.filter((_, i) => i !== idx));
+  const removePart = (idx: number) => {
+    const part = parts[idx];
+    setParts(prev => prev.filter((_, i) => i !== idx));
+    if (part.id) {
+      setSelectedPartIds(prev => {
+        const next = new Set(prev);
+        next.delete(part.id as string);
+        return next;
+      });
+    }
+  };
+
+  const togglePart = (partId: string) => {
+    setSelectedPartIds(prev => {
+      const next = new Set(prev);
+      next.has(partId) ? next.delete(partId) : next.add(partId);
+      return next;
+    });
+  };
 
   const handleDeleteOrder = async () => {
     if (!id || isNew) return;
@@ -568,6 +588,20 @@ export default function AuftragDetailPage() {
   }, 0);
   const totalGewinn = calcGewinn(totalUmsatz, totalKosten);
   const totalMarge = calcMarge(totalGewinn, totalUmsatz);
+
+  const selectedParts = parts.filter(p => p.id && selectedPartIds.has(p.id));
+  const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + p.preis_total, 0);
+  const selectedExpressAmount = selectedParts.length > 0 ? expressBetrag : 0;
+  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedExpressAmount;
+  const selectedRabattBetrag = selectedBruttoUmsatz * (rabattPct / 100);
+  const selectedTotalUmsatz = selectedBruttoUmsatz - selectedRabattBetrag;
+  const selectedTotalKosten = selectedParts.reduce((s, p) => {
+    const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
+    const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
+    return s + calcKosten(partSettings, p.gewicht_g, p.druckzeit_h) * p.menge;
+  }, 0);
+  const selectedTotalGewinn = calcGewinn(selectedTotalUmsatz, selectedTotalKosten);
+  const selectedTotalMarge = calcMarge(selectedTotalGewinn, selectedTotalUmsatz);
 
   // Auftragsname immer in der Beschreibung voranstellen
   const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
@@ -610,10 +644,10 @@ export default function AuftragDetailPage() {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
         if (type === "rechnung") {
           // Optionally generate Stripe payment link
-          if (withPaymentLink && totalUmsatz > 0) {
+          if (withPaymentLink && selectedTotalUmsatz > 0) {
             try {
               const { data: plData, error: plErr } = await supabase.functions.invoke("create-stripe-payment-link", {
-                body: { orderId: id, betrag: totalUmsatz, orderName, customerEmail },
+                body: { orderId: id, betrag: selectedTotalUmsatz, orderName, customerEmail },
               });
               if (plErr || plData?.error) {
                 setSendingEmail(null);
@@ -630,25 +664,45 @@ export default function AuftragDetailPage() {
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts, umsatz_total: totalUmsatz, kosten_total: totalKosten,
-            gewinn_total: totalGewinn, marge: totalMarge,
+            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, kosten_total: selectedTotalKosten,
+            gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
             settings: activeSettings, company, returnBase64: true, withDetails,
-            expressKosten: expressBetrag, expressLabel,
+            expressKosten: selectedExpressAmount, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
-            expressKosten: expressBetrag, expressLabel,
+            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
+            expressKosten: selectedExpressAmount, expressLabel,
+          });
+          if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
+        }
+      } else if (type === "lieferung" || type === "auftragsbestaetigung" || type === "druckfertig") {
+        const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+        if (type === "auftragsbestaetigung") {
+          const result = await exportAuftragsbestaetiguungPDF({
+            orderId: id || "neu", datum, beschreibung: fullBeschreibung,
+            customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, settings: activeSettings, company, returnBase64: true,
+            expressKosten: selectedExpressAmount, expressLabel,
+            rabattProzent: rabattPct,
+          });
+          if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
+        }
+        if (type === "lieferung") {
+          const result = await exportLieferscheinPDF({
+            orderId: id || "neu", datum, beschreibung: fullBeschreibung,
+            customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+            parts: selectedParts, company, returnBase64: true, trackingNr,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
       }
 
       const { data, error } = await supabase.functions.invoke("send-email", {
-        body: { kind: "order", orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl, lieferart },
+        body: { kind: "order", orderId: id, type, trackingNr, pdfBase64, pdfFilename, paymentUrl, lieferart, selectedPartIds: Array.from(selectedPartIds) },
       });
       if (error || data?.error) {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -720,18 +774,18 @@ export default function AuftragDetailPage() {
     setSendingAkonto(true);
     try {
       const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-      const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
+      const akontoBetrag = Math.round(selectedTotalUmsatz * akontoPercent) / 100;
       const result = await exportAkontoPDF({
         orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-        parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag,
+        parts: selectedParts, umsatz_total: selectedTotalUmsatz, akontoPercent, akontoBetrag,
         settings: activeSettings, company, returnBase64: !download,
-        expressKosten: expressBetrag, expressLabel,
+        expressKosten: selectedExpressAmount, expressLabel,
       });
       if (!download && result) {
         // Send via email
         const { data, error } = await supabase.functions.invoke("send-email", {
-          body: { kind: "order", orderId: id, type: "akonto", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag },
+          body: { kind: "order", orderId: id, type: "akonto", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, selectedPartIds: Array.from(selectedPartIds) },
         });
         if (error || data?.error) {
           toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -749,7 +803,7 @@ export default function AuftragDetailPage() {
             await supabase.from("bills" as any).insert({
               order_id: id,
               titel: `Akontorechnung (${akontoPercent}%) per E-Mail gesendet`,
-              betrag: Math.round(totalUmsatz * akontoPercent) / 100,
+              betrag: Math.round(selectedTotalUmsatz * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
               file_path: storedPath,
@@ -769,18 +823,18 @@ export default function AuftragDetailPage() {
     setSendingAkonto(true);
     try {
       const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-      const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
-      const restbetrag = totalUmsatz - akontoBetrag;
+      const akontoBetrag = Math.round(selectedTotalUmsatz * akontoPercent) / 100;
+      const restbetrag = selectedTotalUmsatz - akontoBetrag;
       const result = await exportRestbetragPDF({
         orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-        parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag, restbetrag,
+        parts: selectedParts, umsatz_total: selectedTotalUmsatz, akontoPercent, akontoBetrag, restbetrag,
         settings: activeSettings, company, returnBase64: !download,
-        expressKosten: expressBetrag, expressLabel,
+        expressKosten: selectedExpressAmount, expressLabel,
       });
       if (!download && result) {
         const { data, error } = await supabase.functions.invoke("send-email", {
-          body: { kind: "order", orderId: id, type: "restbetrag", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, restbetrag },
+          body: { kind: "order", orderId: id, type: "restbetrag", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, restbetrag, selectedPartIds: Array.from(selectedPartIds) },
         });
         if (error || data?.error) {
           toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -798,7 +852,7 @@ export default function AuftragDetailPage() {
             await supabase.from("bills" as any).insert({
               order_id: id,
               titel: `Schlussrechnung per E-Mail gesendet`,
-              betrag: totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100,
+              betrag: selectedTotalUmsatz - Math.round(selectedTotalUmsatz * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
               file_path: storedPath,
@@ -826,15 +880,15 @@ export default function AuftragDetailPage() {
       customerEmail,
       customerTelefon,
       customerAdresse,
-      parts,
-      umsatz_total: bruttoUmsatz,
-      kosten_total: totalKosten,
-      gewinn_total: totalGewinn,
-      marge: totalMarge,
+      parts: selectedParts,
+      umsatz_total: selectedBruttoUmsatz,
+      kosten_total: selectedTotalKosten,
+      gewinn_total: selectedTotalGewinn,
+      marge: selectedTotalMarge,
       settings: activeSettings,
       company,
       withDetails: details,
-      expressKosten: expressBetrag,
+      expressKosten: selectedExpressAmount,
       expressLabel,
       rabattProzent: rabattPct,
     });
@@ -851,12 +905,12 @@ export default function AuftragDetailPage() {
       customerEmail,
       customerTelefon,
       customerAdresse,
-      parts,
-      umsatz_total: bruttoUmsatz,
+      parts: selectedParts,
+      umsatz_total: selectedBruttoUmsatz,
       settings: activeSettings,
       company,
       withDetails: details,
-      expressKosten: expressBetrag,
+      expressKosten: selectedExpressAmount,
       expressLabel,
       rabattProzent: rabattPct,
     });
@@ -873,11 +927,11 @@ export default function AuftragDetailPage() {
       customerEmail,
       customerTelefon,
       customerAdresse,
-      parts,
-      umsatz_total: bruttoUmsatz,
+      parts: selectedParts,
+      umsatz_total: selectedBruttoUmsatz,
       settings: activeSettings,
       company,
-      expressKosten: expressBetrag,
+      expressKosten: selectedExpressAmount,
       expressLabel,
       rabattProzent: rabattPct,
     });
@@ -890,7 +944,7 @@ export default function AuftragDetailPage() {
       datum,
       beschreibung: fullBeschreibung,
       customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-      parts,
+      parts: selectedParts,
       company,
       trackingNr,
     });
@@ -1011,6 +1065,7 @@ export default function AuftragDetailPage() {
           sort_order: part.sort_order ?? index,
         }));
         setParts(applyFilamentPrices(partsWithOrder));
+        setSelectedPartIds(new Set(partsWithOrder.map(part => part.id).filter(Boolean) as string[]));
       }
       toast({ title: "Gespeichert ✓", description: reviewInfo || undefined });
     }
@@ -1771,17 +1826,48 @@ export default function AuftragDetailPage() {
               </div>
             </div>
 
+            {/* Teile-Auswahl für Rechnung/Offerte */}
+            <div className="px-4 py-2 border-b border-border bg-muted/20 flex flex-wrap items-center gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectedPartIds(new Set(parts.filter(p => p.id).map(p => p.id as string)))}
+                  className="text-xs text-primary underline"
+                >
+                  Alle auswählen
+                </button>
+                <button
+                  onClick={() => setSelectedPartIds(new Set())}
+                  className="text-xs text-muted-foreground underline"
+                >
+                  Keine
+                </button>
+              </div>
+              {selectedPartIds.size < parts.filter(p => p.id).length && (
+                <p className="text-xs text-amber-600">
+                  ⚠️ {parts.filter(p => p.id).length - selectedPartIds.size} Teil(e) nicht in Rechnung/Offerte enthalten
+                </p>
+              )}
+            </div>
+
             {isMobile ? (
               <div className="divide-y divide-border/50">
                 {parts.map((part, idx) => (
                   <div key={idx} className="p-4 space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <Input
-                        value={part.teilname}
-                        onChange={e => updatePart(idx, "teilname", e.target.value)}
-                        className="bg-input border-border h-9 text-sm flex-1"
-                        placeholder="Teilname"
-                      />
+                      <div className="flex items-center gap-3 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={part.id ? selectedPartIds.has(part.id) : false}
+                          onChange={() => part.id && togglePart(part.id)}
+                          className="w-4 h-4 accent-primary cursor-pointer"
+                        />
+                        <Input
+                          value={part.teilname}
+                          onChange={e => updatePart(idx, "teilname", e.target.value)}
+                          className="bg-input border-border h-9 text-sm flex-1"
+                          placeholder="Teilname"
+                        />
+                      </div>
                       <div className="flex gap-1 shrink-0">
                         {part.id && (
                           <button
@@ -1928,6 +2014,7 @@ export default function AuftragDetailPage() {
                 <table className="w-full text-xs min-w-[900px]">
                   <thead>
                     <tr className="border-b border-border">
+                      <th className="px-2 py-2.5 text-muted-foreground font-medium text-left w-10"></th>
                       {["Teilname", "Filament / Material", "Menge", "Gewicht(g)", "Druck(h)", "NB(h)", "Konstr(h)", "Preis/St.", "Total", "Status", "Notizen", ""].map(h => (
                         <th key={h} className="px-3 py-2.5 text-muted-foreground font-medium text-left whitespace-nowrap">{h}</th>
                       ))}
@@ -1937,6 +2024,14 @@ export default function AuftragDetailPage() {
                     {parts.map((part, idx) => (
                       <React.Fragment key={idx}>
                         <tr className="border-b border-border/50 hover:bg-muted/20">
+                          <td className="px-2 py-2">
+                            <input
+                              type="checkbox"
+                              checked={part.id ? selectedPartIds.has(part.id) : false}
+                              onChange={() => part.id && togglePart(part.id)}
+                              className="w-4 h-4 accent-primary cursor-pointer"
+                            />
+                          </td>
                           <td className="px-2 py-2">
                             <Input value={part.teilname} onChange={e => updatePart(idx, "teilname", e.target.value)} className="bg-input border-border h-7 text-xs w-28" placeholder="Name" />
                           </td>
