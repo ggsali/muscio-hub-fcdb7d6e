@@ -82,7 +82,11 @@ interface Preset {
   rabatt_prozent: number;
 }
 
-const STATUS_OPTIONS = ["Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"];
+const STATUS_OPTIONS = [
+  "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "Qualitätsprüfung", "Versandt", "Abgeschlossen",
+  // Alt-Status bestehender Aufträge
+  "Offen", "In Bearbeitung", "Geliefert", "Storniert",
+];
 const PART_STATUS_OPTIONS = ["Ausstehend", "In Druck", "Fertig", "Geliefert"];
 const FALLBACK_MATERIALS = ["PLA", "PETG", "TPU", "Sonstige"];
 
@@ -96,7 +100,11 @@ export default function AuftragDetailPage() {
   const { settings } = useSettings();
   const { company } = useCompanySettings();
 
-  const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
+  const [customers, setCustomers] = useState<{
+    id: string; name: string;
+    vorname?: string | null; firma?: string | null; email?: string | null; telefon?: string | null;
+    strasse?: string | null; hausnummer?: string | null; plz?: string | null; ort?: string | null; land?: string | null;
+  }[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
@@ -133,7 +141,7 @@ export default function AuftragDetailPage() {
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const TABS = ["Übersicht", "Teile", "Status & Versand", "Finanzen", "Dokumente"] as const;
+  const TABS = ["Übersicht", "Teile & Kalkulation", "Status & Versand", "Finanzen", "Dokumente", "Notizen"] as const;
   type Tab = typeof TABS[number];
   const [activeTab, setActiveTab] = useState<Tab>("Übersicht");
   const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
@@ -267,32 +275,43 @@ export default function AuftragDetailPage() {
 
 
   const nextActionForStatus = (s: string): { label: string; onClick: () => void; disabled?: boolean } => {
+    const toWorkflow = () => setActiveTab("Status & Versand");
     switch (s) {
-      case "Offen": return { label: "Auftragsbestätigung senden →", onClick: () => setConfirmEmailType("auftragsbestaetigung") };
-      case "In Bearbeitung": return { label: "Als versandbereit markieren →", onClick: () => setStatus("Geliefert") };
-      case "Versandbereit": return { label: "Versandetikett erstellen →", onClick: () => window.open("https://www.post.ch/", "_blank") };
-      case "Geliefert": return { label: "Rechnung senden →", onClick: () => setConfirmEmailType("rechnung") };
-      case "Bezahlt": return { label: "Rechnung senden →", onClick: () => setConfirmEmailType("rechnung") };
+      case "Anfrage": return { label: "Offerte senden →", onClick: () => setConfirmEmailType("offerte") };
+      case "Offerte gesendet": return { label: "Auf Zahlung warten", onClick: () => {}, disabled: true };
+      case "Bezahlt": return { label: "Druckproduktion starten →", onClick: toWorkflow };
+      case "Im Druck": return { label: "Qualitätsprüfung durchführen →", onClick: toWorkflow };
+      case "Qualitätsprüfung": return { label: "Versenden →", onClick: toWorkflow };
+      case "Versandt": return { label: "Lieferung bestätigen →", onClick: toWorkflow };
       case "Abgeschlossen": return { label: "Auftrag abgeschlossen", onClick: () => {}, disabled: true };
-      default: return { label: "Status aktualisieren →", onClick: () => {} };
+      // Alt-Status (bestehende Aufträge)
+      case "Offen": return { label: "Offerte senden →", onClick: () => setConfirmEmailType("offerte") };
+      case "In Bearbeitung": return { label: "Status im Workflow aktualisieren →", onClick: toWorkflow };
+      case "Geliefert": return { label: "Auftrag abschliessen →", onClick: toWorkflow };
+      default: return { label: "Status im Workflow aktualisieren →", onClick: toWorkflow };
     }
   };
 
-  const PROGRESS_STEPS = ["Bestellt", "Bezahlt", "Produktion", "Versand", "Fertig"];
+  const PROGRESS_STEPS = ["Anfrage", "Offerte", "Bezahlt", "Im Druck", "Prüfung", "Versandt", "Fertig"];
   const progressIndex = (() => {
     switch (status) {
+      case "Anfrage": return 0;
       case "Offen": return 0;
-      case "Bezahlt": return 1;
-      case "In Bearbeitung": return 2;
-      case "Versandbereit": return 3;
-      case "Geliefert": return 3;
-      case "Abgeschlossen": return 4;
+      case "Offerte gesendet": return 1;
+      case "Bezahlt": return 2;
+      case "Im Druck": return 3;
+      case "In Bearbeitung": return 3;
+      case "Qualitätsprüfung": return 4;
+      case "Versandt": return 5;
+      case "Versandbereit": return 5;
+      case "Geliefert": return 5;
+      case "Abgeschlossen": return 6;
       default: return 0;
     }
   })();
 
   useEffect(() => {
-    supabase.from("customers").select("id, name").then(({ data }) => {
+    supabase.from("customers").select("id, name, vorname, firma, email, telefon, strasse, hausnummer, plz, ort, land").then(({ data }) => {
       if (data) setCustomers(data);
     });
     supabase.from("price_presets").select("*").order("created_at").then(({ data }) => {
@@ -1414,7 +1433,7 @@ export default function AuftragDetailPage() {
 
       {/* Tab navigation */}
       <div className="flex gap-0 border-b border-border overflow-x-auto">
-        {(isNew ? (["Übersicht", "Teile"] as Tab[]) : (TABS as readonly Tab[])).map(tab => (
+        {(isNew ? (["Übersicht", "Teile & Kalkulation"] as Tab[]) : (TABS as readonly Tab[])).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -1432,10 +1451,76 @@ export default function AuftragDetailPage() {
       {/* ====================== TAB: ÜBERSICHT ====================== */}
       {activeTab === "Übersicht" && (
         <div className="space-y-4 md:space-y-6">
+          {/* 1. Status gross + 2. Nächste Aktion */}
+          {!isNew && (() => {
+            const action = nextActionForStatus(status);
+            return (
+              <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Aktueller Status</span>
+                    <span className="scale-125 origin-left inline-block">
+                      <StatusBadge status={status} />
+                    </span>
+                  </div>
+                  <button onClick={() => setActiveTab("Status & Versand")} className="text-xs text-primary hover:underline">
+                    Workflow öffnen →
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">Nächste Aktion</p>
+                  <Button
+                    onClick={action.onClick}
+                    disabled={action.disabled}
+                    size="lg"
+                    className={`w-full ${action.disabled ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"}`}
+                  >
+                    {action.label}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 3. Kundendaten */}
+          {!isNew && customerId && (() => {
+            const c = customers.find(cc => cc.id === customerId);
+            if (!c) return null;
+            const fullName = [c.vorname, c.name].filter(Boolean).join(" ").trim();
+            const strasse = [c.strasse, c.hausnummer].filter(Boolean).join(" ").trim();
+            const plzOrt = [c.plz, c.ort].filter(Boolean).join(" ").trim();
+            return (
+              <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-semibold text-sm">Kundendaten</h3>
+                  <button onClick={() => navigate(`/admin/kunden/${c.id}`)} className="text-xs text-primary hover:underline">
+                    Kundenprofil →
+                  </button>
+                </div>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div className="flex gap-2"><dt className="text-muted-foreground w-24 shrink-0">Name</dt><dd>{fullName || c.name || "—"}</dd></div>
+                  {c.firma && <div className="flex gap-2"><dt className="text-muted-foreground w-24 shrink-0">Firma</dt><dd>{c.firma}</dd></div>}
+                  <div className="flex gap-2">
+                    <dt className="text-muted-foreground w-24 shrink-0">E-Mail</dt>
+                    <dd>{c.email ? <a href={`mailto:${c.email}`} className="text-primary hover:underline break-all">{c.email}</a> : "—"}</dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt className="text-muted-foreground w-24 shrink-0">Telefon</dt>
+                    <dd>{c.telefon ? <a href={`tel:${c.telefon}`} className="text-primary hover:underline">{c.telefon}</a> : "—"}</dd>
+                  </div>
+                  <div className="flex gap-2 sm:col-span-2">
+                    <dt className="text-muted-foreground w-24 shrink-0">Adresse</dt>
+                    <dd>{[strasse, plzOrt, c.land].filter(Boolean).join(", ") || "—"}</dd>
+                  </div>
+                </dl>
+              </div>
+            );
+          })()}
+
           {source === "anfrage" && !isNew && (
             <div className="bg-muted/50 border border-border rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm text-muted-foreground">
               <MessageSquare className="w-4 h-4 shrink-0" />
-              <span>Aus Anfrage erstellt — Dateien im Tab <strong>Teile</strong> verfügbar. Bitte Gewicht, Druckzeit und Material ergänzen.</span>
+              <span>Aus Anfrage erstellt — Dateien im Tab <strong>Teile &amp; Kalkulation</strong> verfügbar. Bitte Gewicht, Druckzeit und Material ergänzen.</span>
             </div>
           )}
           {!isNew && inquiryHerkunft && (
@@ -1588,10 +1673,9 @@ export default function AuftragDetailPage() {
                 <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={4} />
               </div>
               {!isNew && (
-                <div className="space-y-1.5">
-                  <Label>Interne Notizen <span className="text-muted-foreground font-normal text-xs">(nie für Kunden sichtbar)</span></Label>
-                  <Textarea value={notesInternal} onChange={e => setNotesInternal(e.target.value)} className="bg-input border-border" rows={3} placeholder="Nur intern sichtbar..." />
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Interne Notizen findest du im Tab <strong>Notizen</strong>.
+                </p>
               )}
             </div>
           </div>
@@ -1629,25 +1713,37 @@ export default function AuftragDetailPage() {
           )}
 
 
-          {/* Nächste Aktion */}
-          {!isNew && (() => {
-            const action = nextActionForStatus(status);
-            return (
-              <Button
-                onClick={action.onClick}
-                disabled={action.disabled}
-                className={`w-full ${action.disabled ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"}`}
-                size="lg"
-              >
-                {action.label}
-              </Button>
-            );
-          })()}
+          {/* 5. Schnellaktionen */}
+          {!isNew && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+              <h3 className="font-semibold text-sm">Schnellaktionen</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border">
+                  <Mail className="w-4 h-4" /> Offerte senden
+                </Button>
+                <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border">
+                  <Mail className="w-4 h-4" /> Rechnung senden
+                </Button>
+                <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
+                  {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} Zahlungslink senden
+                </Button>
+                <Button onClick={() => navigate(`/admin/auftraege/${id}/platten`)} variant="outline" className="justify-start gap-2 border-border">
+                  <Layers className="w-4 h-4" /> Druckplatten planen
+                </Button>
+                <Button onClick={handleDuplicate} disabled={duplicating} variant="outline" className="justify-start gap-2 border-border">
+                  <Copy className="w-4 h-4" /> Auftrag duplizieren
+                </Button>
+                <Button onClick={handleArchive} variant="outline" className="justify-start gap-2 border-border">
+                  <Archive className="w-4 h-4" /> Auftrag archivieren
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* ====================== TAB: TEILE ====================== */}
-      {activeTab === "Teile" && (
+      {activeTab === "Teile & Kalkulation" && (
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
@@ -2036,6 +2132,7 @@ export default function AuftragDetailPage() {
       {/* ====================== TAB: STATUS & VERSAND ====================== */}
       {activeTab === "Status & Versand" && !isNew && (
         <div className="space-y-4">
+          {/* 1. Workflow-Stepper (inkl. Status-Protokoll) */}
           <OrderStatusWorkflow
             orderId={id!}
             currentStatus={status}
@@ -2046,9 +2143,41 @@ export default function AuftragDetailPage() {
             onStatusChange={setStatus}
             onTrackingNrChange={setTrackingNr}
           />
+
+          {/* 2. Nächster Schritt */}
+          {(() => {
+            const action = nextActionForStatus(status);
+            return (
+              <Button
+                onClick={action.onClick}
+                disabled={action.disabled}
+                size="lg"
+                className={`w-full ${action.disabled ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"}`}
+              >
+                {action.label}
+              </Button>
+            );
+          })()}
+
+          {/* 3. E-Mail senden */}
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+            <h3 className="font-semibold text-sm mb-2">E-Mail senden</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte</Button>
+              <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung</Button>
+              <Button onClick={() => setConfirmEmailType("auftragsbestaetigung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Auftragsbestätigung</Button>
+              <Button onClick={() => setConfirmEmailType("druckfertig")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Druckfertig-Info</Button>
+              <Button onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Lieferbenachrichtigung</Button>
+              <Button onClick={handleSendTestEmail} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border">
+                {sendingEmail === "test" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Test-E-Mail
+              </Button>
+            </div>
+          </div>
+
+          {/* 4. Tracking-Nummer (bei Versand) + Termine */}
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
             <h3 className="font-semibold text-sm">{lieferart === "abholung" ? "Termine" : "Tracking & Termine"}</h3>
-            {lieferart === "versand" && (
+            {lieferart === "versand" && (["Versandt", "Geliefert", "Abgeschlossen"].includes(status) || !!trackingNr) && (
               <div className="space-y-1.5">
                 <Label>Tracking-Nummer (Post CH)</Label>
                 <div className="flex gap-2">
@@ -2093,38 +2222,65 @@ export default function AuftragDetailPage() {
 
       {/* ====================== TAB: FINANZEN ====================== */}
       {activeTab === "Finanzen" && !isNew && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="space-y-4">
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
-              <h3 className="font-semibold text-sm mb-3">Kostenaufschlüsselung</h3>
-              <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Setup-Pauschale</span><span>{formatCHF(setupKosten)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Material</span><span>{formatCHF(matKosten)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
-                {expressBetrag > 0 && (
-                  <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(expressBetrag)}</span></div>
-                )}
-                {rabattBetrag > 0 && (
-                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
-                )}
-                <div className="border-t border-border my-2" />
-                <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(totalKosten)}</span></div>
-                <div className="flex justify-between font-bold"><span>Reingewinn</span><span className="text-success">{formatCHF(totalGewinn)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Marge</span><span>{formatPct(totalMarge)}</span></div>
-              </div>
+        <div className="space-y-4">
+          {/* 1. Kostenübersicht */}
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+            <h3 className="font-semibold text-sm mb-3">Kostenübersicht</h3>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Setup-Pauschale</span><span>{formatCHF(setupKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Material</span><span>{formatCHF(matKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
+              {expressBetrag > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(expressBetrag)}</span></div>
+              )}
+              {rabattBetrag > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
+              )}
+              <div className="border-t border-border my-2" />
+              <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(totalKosten)}</span></div>
+              <div className="flex justify-between font-bold"><span>Reingewinn</span><span className="text-success">{formatCHF(totalGewinn)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Marge</span><span>{formatPct(totalMarge)}</span></div>
             </div>
-            <div className="flex flex-col gap-2">
-              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="gap-2 border-border w-full">
-                <FileDown className="w-4 h-4" /> Akontorechnung erstellen
-              </Button>
-              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="gap-2 border-border w-full">
+          </div>
+
+          {/* 2. Zahlungsstatus */}
+          {(() => {
+            const bezahlt = ["Bezahlt", "Im Druck", "Qualitätsprüfung", "Versandt", "Geliefert", "Abgeschlossen"].includes(status);
+            return (
+              <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+                <h3 className="font-semibold text-sm">Zahlungsstatus</h3>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${bezahlt ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+                    {bezahlt ? "Bezahlt" : "Offen"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {bezahlt ? "Zahlung erfasst – Details in den Rechnungen unten." : "Noch keine Zahlung erfasst."}
+                  </span>
+                </div>
+                {stripePending && (
+                  <p className="text-xs text-amber-600">Stripe-Zahlung ausstehend.</p>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* 3. Aktionen */}
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+            <h3 className="font-semibold text-sm mb-2">Aktionen</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte senden</Button>
+              <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung senden</Button>
+              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung erstellen</Button>
+              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
                 {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Stripe Zahlungslink erstellen
               </Button>
             </div>
           </div>
+
+          {/* 4. Gesendete Dokumente / Rechnungen */}
           <BillsSection orderId={id!} />
         </div>
       )}
@@ -2132,27 +2288,16 @@ export default function AuftragDetailPage() {
       {/* ====================== TAB: DOKUMENTE ====================== */}
       {activeTab === "Dokumente" && !isNew && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
-              <h3 className="font-semibold text-sm mb-2">PDF herunterladen</h3>
-              <Button onClick={() => handleExportPDF(false)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung</Button>
-              <Button onClick={() => handleExportPDF(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung (mit Details)</Button>
-              <Button onClick={() => handleExportOffer(false)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte</Button>
-              <Button onClick={() => handleExportOffer(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte (mit Details)</Button>
-              <Button onClick={() => handleExportAuftragsbestaetigung()} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Auftragsbestätigung</Button>
-              <Button onClick={() => handleExportLieferschein()} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Lieferschein</Button>
-              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung</Button>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
-              <h3 className="font-semibold text-sm mb-2">E-Mail senden</h3>
-              <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung</Button>
-              <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte</Button>
-              <Button onClick={() => setConfirmEmailType("auftragsbestaetigung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Auftragsbestätigung</Button>
-              <Button onClick={() => setConfirmEmailType("druckfertig")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Druckfertig-Info</Button>
-              <Button onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Lieferbenachrichtigung</Button>
-              <Button onClick={handleSendTestEmail} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border">
-                {sendingEmail === "test" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Test-E-Mail
-              </Button>
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+            <h3 className="font-semibold text-sm mb-2">PDF herunterladen</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button onClick={() => handleExportPDF(false)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung</Button>
+              <Button onClick={() => handleExportPDF(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung (mit Details)</Button>
+              <Button onClick={() => handleExportOffer(false)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte</Button>
+              <Button onClick={() => handleExportOffer(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte (mit Details)</Button>
+              <Button onClick={() => handleExportAuftragsbestaetigung()} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Auftragsbestätigung</Button>
+              <Button onClick={() => handleExportLieferschein()} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Lieferschein</Button>
+              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung</Button>
             </div>
           </div>
 
@@ -2168,6 +2313,28 @@ export default function AuftragDetailPage() {
           />
         </div>
       )}
+
+      {/* ====================== TAB: NOTIZEN ====================== */}
+      {activeTab === "Notizen" && !isNew && (
+        <div className="space-y-4">
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+            <h3 className="font-semibold text-sm">Interne Notizen</h3>
+            <Textarea
+              value={notesInternal}
+              onChange={e => setNotesInternal(e.target.value)}
+              className="bg-input border-border"
+              rows={8}
+              placeholder="Nur intern sichtbar – nicht für den Kunden."
+            />
+            <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2" size="sm">
+              <Save className="w-4 h-4" /> {saving ? "Speichern..." : "Notizen speichern"}
+            </Button>
+          </div>
+
+          <OrderActivityLog orderId={id!} />
+        </div>
+      )}
+
 
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -2189,6 +2356,45 @@ export default function AuftragDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+/** Chronologischer Aktivitäts-Verlauf des Auftrags */
+function OrderActivityLog({ orderId }: { orderId: string }) {
+  const [entries, setEntries] = useState<{ id: string; status: string; notiz: string | null; created_at: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!orderId) return;
+    (supabase.from as any)("order_status_log")
+      .select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .then(({ data }: any) => {
+        setEntries((data ?? []) as any[]);
+        setLoading(false);
+      });
+  }, [orderId]);
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+      <h3 className="font-semibold text-sm mb-2">Aktivitäts-Log</h3>
+      {loading ? (
+        <p className="text-xs text-muted-foreground">Wird geladen...</p>
+      ) : entries.length === 0 ? (
+        <p className="text-xs text-muted-foreground">Noch keine Aktivitäten erfasst.</p>
+      ) : (
+        entries.map(e => (
+          <div key={e.id} className="flex items-start gap-2 text-xs bg-muted/30 rounded-lg px-2 py-1.5">
+            <span className="text-muted-foreground tabular-nums shrink-0">
+              {new Date(e.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <span className="text-foreground font-medium">{e.status}</span>
+            {e.notiz && <span className="text-muted-foreground">· {e.notiz}</span>}
+          </div>
+        ))
+      )}
     </div>
   );
 }
