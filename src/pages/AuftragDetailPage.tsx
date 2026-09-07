@@ -814,7 +814,7 @@ export default function AuftragDetailPage() {
       });
       if (!download && result) {
         const { data, error } = await supabase.functions.invoke("send-email", {
-          body: { kind: "order", orderId: id, type: "restbetrag", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, restbetrag },
+          body: { kind: "order", orderId: id, type: "restbetrag", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, restbetrag, selectedPartIds: Array.from(selectedPartIds) },
         });
         if (error || data?.error) {
           toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
