@@ -140,7 +140,7 @@ function emailLayout({ title, bodyHtml, emoji = "📧" }: { title: string; bodyH
 
 /** Tracking-Block mit Post-CH Sendungsverfolgungs-Link */
 function trackingBlockHtml(trackingNr: string): string {
-  const trackingUrl = `https://www.post.ch/de/empfangen/sendungsverfolgung#/sucheBarcode?barcode=${encodeURIComponent(trackingNr)}`;
+  const trackingUrl = `https://www.post.ch/swisspost-tracking?formattedParcelCodes=${trackingNr}`;
   return `<div style="background:#ecfdf3;border:1px solid #00cc66;border-radius:10px;padding:16px;margin:16px 0;text-align:center;">
   <p style="color:#047857;font-size:13px;margin:0 0 10px;font-weight:600;">📦 Ihre Sendung ist unterwegs!</p>
   <p style="color:#374151;font-size:13px;margin:0 0 10px;">Tracking-Nummer: <strong style="font-family:monospace;">${trackingNr}</strong></p>
