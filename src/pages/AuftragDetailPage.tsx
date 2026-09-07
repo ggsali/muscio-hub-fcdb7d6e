@@ -296,7 +296,7 @@ export default function AuftragDetailPage() {
   })();
 
   useEffect(() => {
-    supabase.from("customers").select("id, name").then(({ data }) => {
+    supabase.from("customers").select("id, name, vorname, firma, email, telefon, strasse, hausnummer, plz, ort, land").then(({ data }) => {
       if (data) setCustomers(data);
     });
     supabase.from("price_presets").select("*").order("created_at").then(({ data }) => {
