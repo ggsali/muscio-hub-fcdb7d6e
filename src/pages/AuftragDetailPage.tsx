@@ -1887,34 +1887,9 @@ export default function AuftragDetailPage() {
                 </button>
               </div>
               {selectedPartIds.size < parts.filter(p => p.id).length && (
-                <>
-                  <p className="text-xs text-amber-600">
-                    ⚠️ {parts.filter(p => p.id).length - selectedPartIds.size} Teil(e) nicht in Rechnung/Offerte enthalten
-                  </p>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-3">
-                    <p className="text-sm font-semibold text-amber-800">Angepasste Kalkulation</p>
-                    <div className="flex justify-between text-sm mt-1">
-                      <span className="text-amber-700">Ausgewählte Teile ({selectedParts.length})</span>
-                      <span className="font-mono text-amber-900">CHF {selectedPartsUmsatz.toFixed(2)}</span>
-                    </div>
-                    {selectedExpressAmount > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-amber-700">{expressLabel?.trim() || "Express-Lieferung"}</span>
-                        <span className="font-mono text-amber-900">CHF {selectedExpressAmount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {selectedRabattBetrag > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-amber-700">Rabatt ({rabattPct}%)</span>
-                        <span className="font-mono text-amber-900">- CHF {selectedRabattBetrag.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm font-bold border-t border-amber-200 mt-1 pt-1">
-                      <span className="text-amber-800">Total</span>
-                      <span className="font-mono text-amber-900">CHF {selectedTotalUmsatz.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </>
+                <p className="text-xs text-muted-foreground">
+                  * {parts.filter(p => p.id).length - selectedPartIds.size} Teil(e) ausgeblendet
+                </p>
               )}
             </div>
 
@@ -2271,8 +2246,13 @@ export default function AuftragDetailPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
-                <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
+                <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(selectedTotalUmsatz)}</span></div>
               </div>
+              {selectedPartIds.size < parts.filter(p => p.id).length && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  * {parts.filter(p => p.id).length - selectedPartIds.size} Teil(e) ausgeblendet
+                </p>
+              )}
             </div>
           )}
 
@@ -2396,18 +2376,23 @@ export default function AuftragDetailPage() {
               <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
-              {expressBetrag > 0 && (
-                <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(expressBetrag)}</span></div>
+              {selectedExpressAmount > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">{expressLabel?.trim() || "Express"}</span><span>{formatCHF(selectedExpressAmount)}</span></div>
               )}
-              {rabattBetrag > 0 && (
-                <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
+              {selectedRabattBetrag > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(selectedRabattBetrag)}</span></div>
               )}
               <div className="border-t border-border my-2" />
-              <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(totalKosten)}</span></div>
-              <div className="flex justify-between font-bold"><span>Reingewinn</span><span className="text-success">{formatCHF(totalGewinn)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Marge</span><span>{formatPct(totalMarge)}</span></div>
+              <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(selectedTotalUmsatz)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(selectedTotalKosten)}</span></div>
+              <div className="flex justify-between font-bold"><span>Reingewinn</span><span className="text-success">{formatCHF(selectedTotalGewinn)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Marge</span><span>{formatPct(selectedTotalMarge)}</span></div>
             </div>
+            {selectedPartIds.size < parts.filter(p => p.id).length && (
+              <p className="text-xs text-muted-foreground mt-2">
+                * {parts.filter(p => p.id).length - selectedPartIds.size} Teil(e) ausgeblendet
+              </p>
+            )}
           </div>
 
           {/* 2. Zahlungsstatus */}
