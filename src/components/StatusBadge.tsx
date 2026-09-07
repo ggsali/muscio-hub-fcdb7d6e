@@ -20,6 +20,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   "Offerte gesendet": { label: "Offerte gesendet", className: "bg-blue-500/20 text-blue-400 border border-blue-500/30" },
   "Bezahlt": { label: "Bezahlt", className: "bg-green-500/20 text-green-400 border border-green-500/30" },
   "Qualitätsprüfung": { label: "Qualitätsprüfung", className: "bg-purple-500/20 text-purple-400 border border-purple-500/30" },
+  "Im Druck": { label: "Im Druck", className: "bg-amber-500/20 text-amber-400 border border-amber-500/30" },
   "Versandt": { label: "Versandt", className: "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30" },
 };
 
