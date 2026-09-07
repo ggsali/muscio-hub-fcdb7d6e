@@ -58,6 +58,7 @@ interface PartRow {
   slicer_layer_anzahl?: number | null;
   notizen: string;
   sort_order?: number | null;
+  in_rechnung?: boolean;
 }
 
 const emptyPart = (): PartRow => ({
@@ -379,7 +380,13 @@ export default function AuftragDetailPage() {
             sort_order: part.sort_order ?? index,
           }));
           setParts(partsWithOrder);
-          setSelectedPartIds(new Set(partsWithOrder.map(part => part.id).filter(Boolean) as string[]));
+          const selected = new Set(
+            partsWithOrder
+              .filter(part => part.in_rechnung !== false)
+              .map(part => part.id)
+              .filter(Boolean) as string[]
+          );
+          setSelectedPartIds(selected);
         }
         setLoading(false);
       }
@@ -536,8 +543,9 @@ export default function AuftragDetailPage() {
         notizen: newPart.notizen,
       }).select().single();
       if (data) {
-        const inserted = { ...newPart, id: data.id };
+        const inserted = { ...newPart, id: data.id, in_rechnung: true };
         setParts(prev => [...prev, inserted]);
+        setSelectedPartIds(prev => new Set([...prev, data.id]));
         setExpandedPartIdx(null); // close any open upload row
         return;
       }
@@ -556,18 +564,22 @@ export default function AuftragDetailPage() {
     }
   };
 
-  const togglePart = (partId: string) => {
+  const togglePart = async (partId: string) => {
     setSelectedPartIds(prev => {
       const next = new Set(prev);
-      next.has(partId) ? next.delete(partId) : next.add(partId);
+      const willBeSelected = !next.has(partId);
+      willBeSelected ? next.add(partId) : next.delete(partId);
+      // Sofort in DB speichern
+      supabase
+        .from("parts")
+        .update({ in_rechnung: willBeSelected })
+        .eq("id", partId)
+        .then(() => {})
+        .catch(err => console.error("Fehler beim Speichern der Teilauswahl:", err));
       return next;
     });
   };
 
-  // Beim Neuladen / Ändern der Teile-Anzahl wieder alle Teile auswählen
-  useEffect(() => {
-    setSelectedPartIds(new Set(parts.map(p => p.id).filter(Boolean) as string[]));
-  }, [parts.length]);
 
   const handleDeleteOrder = async () => {
     if (!id || isNew) return;
@@ -1028,6 +1040,7 @@ export default function AuftragDetailPage() {
         slicer_hat_supports: p.slicer_hat_supports ?? null,
         slicer_layer_anzahl: p.slicer_layer_anzahl ?? null,
         sort_order: index,
+        in_rechnung: p.id ? selectedPartIds.has(p.id) : true,
       });
 
       if (isNew) {
@@ -1090,7 +1103,13 @@ export default function AuftragDetailPage() {
           sort_order: part.sort_order ?? index,
         }));
         setParts(applyFilamentPrices(partsWithOrder));
-        setSelectedPartIds(new Set(partsWithOrder.map(part => part.id).filter(Boolean) as string[]));
+        const selected = new Set(
+          partsWithOrder
+            .filter(part => part.in_rechnung !== false)
+            .map(part => part.id)
+            .filter(Boolean) as string[]
+        );
+        setSelectedPartIds(selected);
       }
       toast({ title: "Gespeichert ✓", description: reviewInfo || undefined });
     }
