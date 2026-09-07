@@ -644,10 +644,10 @@ export default function AuftragDetailPage() {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
         if (type === "rechnung") {
           // Optionally generate Stripe payment link
-          if (withPaymentLink && totalUmsatz > 0) {
+          if (withPaymentLink && selectedTotalUmsatz > 0) {
             try {
               const { data: plData, error: plErr } = await supabase.functions.invoke("create-stripe-payment-link", {
-                body: { orderId: id, betrag: totalUmsatz, orderName, customerEmail },
+                body: { orderId: id, betrag: selectedTotalUmsatz, orderName, customerEmail },
               });
               if (plErr || plData?.error) {
                 setSendingEmail(null);
@@ -664,18 +664,38 @@ export default function AuftragDetailPage() {
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts, umsatz_total: totalUmsatz, kosten_total: totalKosten,
-            gewinn_total: totalGewinn, marge: totalMarge,
+            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, kosten_total: selectedTotalKosten,
+            gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
             settings: activeSettings, company, returnBase64: true, withDetails,
-            expressKosten: expressBetrag, expressLabel,
+            expressKosten: selectedExpressAmount, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts, umsatz_total: totalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
-            expressKosten: expressBetrag, expressLabel,
+            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
+            expressKosten: selectedExpressAmount, expressLabel,
+          });
+          if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
+        }
+      } else if (type === "lieferung" || type === "auftragsbestaetigung" || type === "druckfertig") {
+        const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+        if (type === "auftragsbestaetigung") {
+          const result = await exportAuftragsbestaetiguungPDF({
+            orderId: id || "neu", datum, beschreibung: fullBeschreibung,
+            customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+            parts: selectedParts, umsatz_total: selectedBruttoUmsatz, settings: activeSettings, company, returnBase64: true,
+            expressKosten: selectedExpressAmount, expressLabel,
+            rabattProzent: rabattPct,
+          });
+          if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
+        }
+        if (type === "lieferung") {
+          const result = await exportLieferscheinPDF({
+            orderId: id || "neu", datum, beschreibung: fullBeschreibung,
+            customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
+            parts: selectedParts, company, returnBase64: true, trackingNr,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
