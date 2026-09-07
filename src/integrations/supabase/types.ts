@@ -1725,6 +1725,7 @@ export type Database = {
           filament_id: string | null
           gewicht_g: number | null
           id: string
+          in_rechnung: boolean | null
           konstruktion_h: number | null
           laenge_mm: number | null
           material: string | null
@@ -1751,6 +1752,7 @@ export type Database = {
           filament_id?: string | null
           gewicht_g?: number | null
           id?: string
+          in_rechnung?: boolean | null
           konstruktion_h?: number | null
           laenge_mm?: number | null
           material?: string | null
@@ -1777,6 +1779,7 @@ export type Database = {
           filament_id?: string | null
           gewicht_g?: number | null
           id?: string
+          in_rechnung?: boolean | null
           konstruktion_h?: number | null
           laenge_mm?: number | null
           material?: string | null
