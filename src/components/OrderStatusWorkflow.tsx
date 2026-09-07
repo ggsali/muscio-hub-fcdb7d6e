@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote, Settings2, ExternalLink } from "lucide-react";
+import {
+  CheckCircle2, CheckCircle, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote,
+  Settings2, ExternalLink, MessageCircle, FileText, Printer, Search, Package,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -25,10 +28,41 @@ function logKind(entry: { status: string; notiz: string | null }) {
   return { icon: <Settings2 className="w-3.5 h-3.5" />, color: "text-muted-foreground", bg: "bg-muted/40" };
 }
 
+/** Einheitlicher Workflow für ALLE Auftragstypen (manuell + Website) */
+export const STATUSES = [
+  "Anfrage",
+  "Offerte gesendet",
+  "Bezahlt",
+  "Im Druck",
+  "Qualitätsprüfung",
+  "Versandt",
+  "Abgeschlossen",
+] as const;
+export type OrderStatus = typeof STATUSES[number];
 
-const STATUSES_MANUAL = ["Offen", "In Bearbeitung", "Bezahlt", "Geliefert", "Abgeschlossen"] as const;
-const STATUSES_WEBSITE = ["Offen", "Bezahlt", "In Bearbeitung", "Geliefert", "Abgeschlossen"] as const;
-type OrderStatus = typeof STATUSES_MANUAL[number];
+export const getNextStatus = (current: string): OrderStatus | null => {
+  const idx = (STATUSES as readonly string[]).indexOf(current);
+  return idx >= 0 && idx < STATUSES.length - 1 ? STATUSES[idx + 1] : null;
+};
+
+const STATUS_META: Record<string, { icon: React.ElementType; ring: string; text: string }> = {
+  "Anfrage": { icon: MessageCircle, ring: "bg-muted border-border text-muted-foreground", text: "text-muted-foreground" },
+  "Offerte gesendet": { icon: FileText, ring: "bg-blue-500 border-blue-500 text-white", text: "text-blue-400" },
+  "Bezahlt": { icon: CheckCircle, ring: "bg-green-500 border-green-500 text-white", text: "text-green-400" },
+  "Im Druck": { icon: Printer, ring: "bg-amber-500 border-amber-500 text-white", text: "text-amber-400" },
+  "Qualitätsprüfung": { icon: Search, ring: "bg-purple-500 border-purple-500 text-white", text: "text-purple-400" },
+  "Versandt": { icon: Package, ring: "bg-indigo-500 border-indigo-500 text-white", text: "text-indigo-400" },
+  "Abgeschlossen": { icon: CheckCircle2, ring: "bg-emerald-600 border-emerald-600 text-white", text: "text-emerald-400" },
+};
+
+const STATUS_TO_TEMPLATE: Record<string, string> = {
+  "Offerte gesendet": "offerte",
+  "Bezahlt": "zahlung-bestaetigung",
+  "Im Druck": "im_druck",
+  "Qualitätsprüfung": "qualitaetspruefung",
+  "Versandt": "versandt",
+  "Abgeschlossen": "geliefert",
+};
 
 interface LogEntry {
   id: string;
@@ -53,7 +87,7 @@ interface Props {
 }
 
 export default function OrderStatusWorkflow({
-  orderId, currentStatus, parts, trackingNr = "", source, lieferart = "versand", onStatusChange, onTrackingNrChange
+  orderId, currentStatus, parts, trackingNr = "", lieferart = "versand", onStatusChange, onTrackingNrChange
 }: Props) {
   const [log, setLog] = useState<LogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(true);
@@ -63,10 +97,6 @@ export default function OrderStatusWorkflow({
   const [editingTracking, setEditingTracking] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
-
-
-  const isWebsiteOrder = source === 'website' || source === 'shop' || source === 'kalkulator'
-  const STATUSES = isWebsiteOrder ? STATUSES_WEBSITE : STATUSES_MANUAL
 
   const loadLog = async () => {
     const { data } = await (supabase.from as any)("order_status_log")
@@ -85,39 +115,27 @@ export default function OrderStatusWorkflow({
   const totalParts = parts.length;
   const fertigParts = parts.filter(p => p.status === "Fertig" || p.status === "Geliefert").length;
   const allFertig = totalParts > 0 && fertigParts === totalParts;
-  const anyInDruck = parts.some(p => p.status === "In Druck");
 
-  // Automatisch abgeleiteter "vorgeschlagener" Status
-  const suggestedStatus: string | null = (() => {
-    if (!isWebsiteOrder) {
-      if (currentStatus === 'Offen') return 'In Bearbeitung'
-      if (currentStatus === 'In Bearbeitung' && allFertig) return 'Bezahlt'
-      if (currentStatus === 'Bezahlt') return 'Geliefert'
-      if (currentStatus === 'Geliefert') return 'Abgeschlossen'
-    } else {
-      if (currentStatus === 'Offen') return 'Bezahlt'
-      if (currentStatus === 'Bezahlt') return 'In Bearbeitung'
-      if (currentStatus === 'In Bearbeitung' && allFertig) return 'Geliefert'
-      if (currentStatus === 'Geliefert') return 'Abgeschlossen'
-    }
-    return null
-  })();
+  /** Alte Status-Werte (z.B. "Offen", "In Bearbeitung", "Geliefert") bleiben gültig
+   *  und werden als zusätzlicher erster Schritt im Stepper dargestellt. */
+  const isLegacy = !(STATUSES as readonly string[]).includes(currentStatus);
+  const steps: string[] = isLegacy ? [currentStatus, ...STATUSES] : [...STATUSES];
+  const currentIdx = steps.indexOf(currentStatus);
+
+  const suggestedStatus: string | null = isLegacy ? STATUSES[0] : getNextStatus(currentStatus);
 
   // Welche Steps sind erlaubt (klickbar)?
-  const isStepAllowed = (s: OrderStatus): boolean => {
-    const cur = STATUSES.indexOf(currentStatus as OrderStatus)
-    const target = STATUSES.indexOf(s)
-    if (cur === -1) return false
-    if (target <= cur) return true
-    if (target === cur + 1) return true
-    return false
-  }
+  const isStepAllowed = (s: string): boolean => {
+    const target = steps.indexOf(s);
+    if (currentIdx === -1 || target === -1) return false;
+    return target <= currentIdx + 1;
+  };
 
-  const handleStatusClick = async (newStatus: OrderStatus) => {
+  const handleStatusClick = async (newStatus: string) => {
     if (newStatus === currentStatus) return;
     if (!isStepAllowed(newStatus)) return;
 
-    if (newStatus === "Geliefert" && lieferart === "versand") {
+    if (newStatus === "Versandt" && lieferart === "versand") {
       setShowTrackingInput(true);
       return;
     }
@@ -136,8 +154,8 @@ export default function OrderStatusWorkflow({
       const notiz = method === "stripe"
         ? "Manuell bestätigt – Zahlung via Stripe"
         : "Manuell als bezahlt markiert – Zahlung per Rechnung/Überweisung";
+      const today = new Date().toISOString().slice(0, 10);
       if (method === "rechnung") {
-        const today = new Date().toISOString().slice(0, 10);
         await (supabase.from as any)("bills")
           .update({ bezahlt: true, bezahlt_am: today, notiz: "Bezahlt per Rechnung (manuell erfasst)" })
           .eq("order_id", orderId)
@@ -148,11 +166,6 @@ export default function OrderStatusWorkflow({
     } finally {
       setSavingPayment(false);
     }
-  };
-
-  const STATUS_TO_TEMPLATE: Record<string, string> = {
-    "In Bearbeitung": "im_druck",
-    "Geliefert": "versandt",
   };
 
   const commitStatus = async (newStatus: string, notiz: string | null) => {
@@ -214,7 +227,6 @@ export default function OrderStatusWorkflow({
         loadLog?.();
       }
     }
-
   };
 
   const handleConfirmDelivery = async () => {
@@ -223,7 +235,6 @@ export default function OrderStatusWorkflow({
     try {
       const notiz = trackingInput ? `Tracking-Nr.: ${trackingInput}` : null;
 
-      // Tracking-Nr. speichern
       await supabase
         .from("orders")
         .update({ tracking_nr: trackingInput || null } as any)
@@ -231,34 +242,28 @@ export default function OrderStatusWorkflow({
 
       onTrackingNrChange?.(trackingInput);
 
-      // Status setzen
-      await commitStatus("Geliefert", notiz);
-
-      // Tracking-Input schliessen
+      await commitStatus("Versandt", notiz);
       setShowTrackingInput(false);
-
     } catch (e) {
       console.error("handleConfirmDelivery failed", e);
       toast.error("Fehler beim Speichern", {
         description: "Bitte nochmal versuchen.",
       });
     } finally {
-      setSavingTracking(false); // Immer zurücksetzen, auch bei Fehler
+      setSavingTracking(false);
     }
   };
 
-
-  const currentIdx = STATUSES.indexOf(currentStatus as OrderStatus);
-
-
   const bannerText = (() => {
-    if (!isWebsiteOrder) {
-      if (suggestedStatus === 'In Bearbeitung') return 'Teile sind in Bearbeitung – Status aktualisieren?'
-      return 'Alle Teile fertig – bereit zur Lieferung!'
-    } else {
-      if (suggestedStatus === 'Bezahlt') return 'Bestellung eingegangen – Zahlung bestätigen?'
-      if (suggestedStatus === 'In Bearbeitung') return 'Zahlung bestätigt – in Produktion starten?'
-      return 'Alle Teile fertig – bereit zur Lieferung!'
+    switch (suggestedStatus) {
+      case "Anfrage": return "Auftrag auf den neuen Workflow umstellen?";
+      case "Offerte gesendet": return "Offerte erstellt und versendet?";
+      case "Bezahlt": return "Zahlung erhalten – jetzt bestätigen?";
+      case "Im Druck": return "Druck gestartet?";
+      case "Qualitätsprüfung": return allFertig ? "Alle Teile fertig – Qualitätsprüfung starten?" : "Druck fertig – Qualitätsprüfung starten?";
+      case "Versandt": return lieferart === "abholung" ? "Bereit zur Abholung?" : "Paket versandbereit – Tracking erfassen?";
+      case "Abgeschlossen": return "Auftrag abschliessen (Bewertungsmail wird gesendet)?";
+      default: return "";
     }
   })();
 
@@ -277,15 +282,9 @@ export default function OrderStatusWorkflow({
       {suggestedStatus && (
         <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
           <AlertTriangle className="w-4 h-4 text-primary shrink-0" />
-          <span className="text-xs text-primary flex-1">
-            {bannerText}
-          </span>
+          <span className="text-xs text-primary flex-1">{bannerText}</span>
           <button
-            onClick={() => {
-              if (suggestedStatus === "Geliefert") setShowTrackingInput(true);
-              else if (suggestedStatus === "Bezahlt") setShowPaymentDialog(true);
-              else commitStatus(suggestedStatus, null);
-            }}
+            onClick={() => handleStatusClick(suggestedStatus)}
             className="text-xs font-semibold text-primary hover:underline whitespace-nowrap"
           >
             Jetzt aktualisieren
@@ -295,42 +294,50 @@ export default function OrderStatusWorkflow({
 
       {/* Progress Steps */}
       <div className="flex items-center">
-        {STATUSES.map((s, i) => {
+        {steps.map((s, i) => {
           const done = currentIdx > i;
           const active = currentIdx === i;
           const allowed = isStepAllowed(s);
-          const isLast = i === STATUSES.length - 1;
-          const displayLabel = (s === "Geliefert" && lieferart === "abholung") ? "Abgeholt" : s;
+          const isLast = i === steps.length - 1;
+          const meta = STATUS_META[s];
+          const Icon = meta?.icon ?? Circle;
+          const displayLabel = (s === "Versandt" && lieferart === "abholung") ? "Abholbereit" : s;
           return (
             <React.Fragment key={s}>
               <button
                 onClick={() => handleStatusClick(s)}
                 disabled={!allowed && !done}
-                title={!allowed && !done ? (s === "Geliefert" ? "Alle Teile müssen 'Fertig' sein" : s === "Abgeschlossen" ? "Auftrag muss zuerst geliefert/bezahlt sein" : "") : ""}
+                title={displayLabel}
                 className={`flex flex-col items-center gap-1 transition-all ${
-                  done ? "opacity-90" : active ? "opacity-100" : allowed ? "opacity-50 hover:opacity-80" : "opacity-25 cursor-not-allowed"
+                  done ? "opacity-90" : active ? "opacity-100" : allowed ? "opacity-60 hover:opacity-90" : "opacity-30 cursor-not-allowed"
                 }`}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all border-2 ${
-                  active ? "bg-primary border-primary text-primary-foreground" :
+                  active ? (meta?.ring ?? "bg-primary border-primary text-primary-foreground") :
                   done ? "bg-success border-success text-white" :
                   "bg-card border-border text-muted-foreground"
                 }`}>
                   {done ? <CheckCircle2 className="w-4 h-4" /> :
-                   active ? <Clock className="w-4 h-4" /> :
+                   active ? <Icon className="w-4 h-4" /> :
                    !allowed ? <Lock className="w-3 h-3" /> :
-                   s === "Geliefert" ? <Truck className="w-4 h-4" /> :
-                   <Circle className="w-4 h-4" />}
+                   <Icon className="w-4 h-4" />}
                 </div>
-                <span className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-primary" : done ? "text-success" : "text-muted-foreground"}`}>{displayLabel}</span>
+                {/* Label: auf Mobile ausgeblendet (nur Icons) */}
+                <span className={`hidden sm:block text-[10px] font-medium whitespace-nowrap ${
+                  active ? (meta?.text ?? "text-primary") : done ? "text-success" : "text-muted-foreground"
+                }`}>{displayLabel}</span>
               </button>
               {!isLast && (
-                <div className={`flex-1 h-0.5 mb-5 mx-1 transition-all ${done ? "bg-success" : "bg-border"}`} />
+                <div className={`flex-1 h-0.5 sm:mb-5 mx-1 transition-all ${done ? "bg-success" : "bg-border"}`} />
               )}
             </React.Fragment>
           );
         })}
       </div>
+      {/* Aktiver Status als Text auf Mobile */}
+      <p className="sm:hidden text-xs text-center font-medium text-primary flex items-center justify-center gap-1">
+        <Clock className="w-3.5 h-3.5" /> {currentStatus}
+      </p>
 
       {/* Teile-Status Übersicht */}
       {totalParts > 0 && (
@@ -353,9 +360,9 @@ export default function OrderStatusWorkflow({
         </div>
       )}
 
-      {/* Tracking-Nr. nachträglich bearbeiten (wenn bereits geliefert) */}
-      {!showTrackingInput && (currentStatus === "Geliefert" || currentStatus === "Bezahlt" || currentStatus === "Abgeschlossen") && (
-        <div className="flex items-center gap-2 text-xs bg-muted/20 border border-border rounded-lg px-3 py-2">
+      {/* Tracking-Nr. nachträglich bearbeiten */}
+      {!showTrackingInput && ["Versandt", "Geliefert", "Abgeschlossen"].includes(currentStatus) && (
+        <div className="flex items-center gap-2 text-xs bg-muted/20 border border-border rounded-lg px-3 py-2 flex-wrap">
           <Truck className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           <span className="text-muted-foreground">Tracking-Nr.:</span>
           {editingTracking ? (
@@ -395,12 +402,12 @@ export default function OrderStatusWorkflow({
         </div>
       )}
 
-      {/* Tracking-Nr. Eingabe (bei Lieferung) */}
+      {/* Tracking-Nr. Eingabe (bei Versand) */}
       {showTrackingInput && (
         <div className="bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Truck className="w-4 h-4 text-primary" />
-            <p className="text-sm font-semibold">Lieferung bestätigen</p>
+            <Package className="w-4 h-4 text-primary" />
+            <p className="text-sm font-semibold">Versand bestätigen</p>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">Tracking-Nummer (Post CH)</label>
@@ -426,8 +433,8 @@ export default function OrderStatusWorkflow({
           </div>
           <div className="flex gap-2">
             <Button onClick={handleConfirmDelivery} disabled={savingTracking} className="bg-primary hover:bg-primary/90 gap-2 text-sm" size="sm">
-              <Truck className="w-3.5 h-3.5" />
-              {savingTracking ? "Speichern..." : "Als geliefert markieren"}
+              <Package className="w-3.5 h-3.5" />
+              {savingTracking ? "Speichern..." : "Als versandt markieren"}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setShowTrackingInput(false)} className="border-border">Abbrechen</Button>
           </div>
@@ -437,7 +444,7 @@ export default function OrderStatusWorkflow({
       {/* Zahlungs-Bestätigungs-Dialog */}
       {showPaymentDialog && (
         <div className="bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-3">
-          <p className="text-sm font-semibold">Wie wurde diese Bestellung bezahlt?</p>
+          <p className="text-sm font-semibold">Wie wurde dieser Auftrag bezahlt?</p>
           <div className="space-y-2">
             <button
               onClick={() => handleConfirmPayment("stripe")}
@@ -485,8 +492,6 @@ export default function OrderStatusWorkflow({
           })}
         </div>
       )}
-
     </div>
-
   );
 }

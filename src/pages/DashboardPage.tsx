@@ -73,7 +73,7 @@ export default function DashboardPage() {
         const abgeschlossen = orders.filter(o => o.status === "Abgeschlossen");
         const umsatz = abgeschlossen.reduce((s, o) => s + (o.umsatz_total || 0), 0);
         const gewinn = abgeschlossen.reduce((s, o) => s + (o.gewinn_total || 0), 0);
-        const offeneAuftraege = orders.filter(o => ["Offen", "In Bearbeitung"].includes(o.status ?? "")).length;
+        const offeneAuftraege = orders.filter(o => ["Offen", "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert"].includes(o.status ?? "")).length;
         const marges = abgeschlossen.filter(o => (o.marge ?? 0) > 0).map(o => o.marge ?? 0);
         const avgMarge = marges.length ? marges.reduce((a, b) => (a ?? 0) + (b ?? 0), 0) / marges.length : 0;
         const investFonds = gewinn * (settings.investitions_fonds_prozent / 100);
@@ -135,10 +135,10 @@ export default function DashboardPage() {
         supabase.from("inquiries").select("id", { count: "exact", head: true }).gte("created_at", `${heute}T00:00:00`),
         supabase.from("orders").select("id", { count: "exact", head: true })
           .in("source", ["website-shop", "shop", "kalkulator", "website"])
-          .in("status", ["Offen", "Bezahlt"]),
+          .in("status", ["Offen", "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung"]),
       ]);
       setQuick({
-        offen: (orders || []).filter(o => ["Offen", "In Bearbeitung"].includes(o.status ?? "")).length,
+        offen: (orders || []).filter(o => ["Offen", "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert"].includes(o.status ?? "")).length,
         anfragenHeute: anfragenHeute ?? 0,
         umsatzMonat: (orders || [])
           .filter(o => (o.datum ?? "").startsWith(monatPrefix))
