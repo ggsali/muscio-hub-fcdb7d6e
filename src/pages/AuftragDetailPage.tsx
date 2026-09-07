@@ -2314,6 +2314,28 @@ export default function AuftragDetailPage() {
         </div>
       )}
 
+      {/* ====================== TAB: NOTIZEN ====================== */}
+      {activeTab === "Notizen" && !isNew && (
+        <div className="space-y-4">
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+            <h3 className="font-semibold text-sm">Interne Notizen</h3>
+            <Textarea
+              value={notesInternal}
+              onChange={e => setNotesInternal(e.target.value)}
+              className="bg-input border-border"
+              rows={8}
+              placeholder="Nur intern sichtbar – nicht für den Kunden."
+            />
+            <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90 gap-2" size="sm">
+              <Save className="w-4 h-4" /> {saving ? "Speichern..." : "Notizen speichern"}
+            </Button>
+          </div>
+
+          <OrderActivityLog orderId={id!} />
+        </div>
+      )}
+
+
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
