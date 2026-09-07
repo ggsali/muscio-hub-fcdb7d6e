@@ -288,15 +288,20 @@ export default function AuftragDetailPage() {
     }
   };
 
-  const PROGRESS_STEPS = ["Bestellt", "Bezahlt", "Produktion", "Versand", "Fertig"];
+  const PROGRESS_STEPS = ["Anfrage", "Offerte", "Bezahlt", "Im Druck", "Prüfung", "Versandt", "Fertig"];
   const progressIndex = (() => {
     switch (status) {
+      case "Anfrage": return 0;
       case "Offen": return 0;
-      case "Bezahlt": return 1;
-      case "In Bearbeitung": return 2;
-      case "Versandbereit": return 3;
-      case "Geliefert": return 3;
-      case "Abgeschlossen": return 4;
+      case "Offerte gesendet": return 1;
+      case "Bezahlt": return 2;
+      case "Im Druck": return 3;
+      case "In Bearbeitung": return 3;
+      case "Qualitätsprüfung": return 4;
+      case "Versandt": return 5;
+      case "Versandbereit": return 5;
+      case "Geliefert": return 5;
+      case "Abgeschlossen": return 6;
       default: return 0;
     }
   })();
