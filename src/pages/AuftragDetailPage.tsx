@@ -582,44 +582,61 @@ export default function AuftragDetailPage() {
   // Totals
   const partsUmsatz = parts.reduce((s, p) => s + p.preis_total, 0);
   const expressBetrag = Math.max(0, Number(expressKosten) || 0);
-  const bruttoUmsatz = partsUmsatz + expressBetrag;
+  // ── RABATT ─────────────────────────────────────────────
   const rabattPct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
+
+  // ── GESAMT (alle Teile – für Anzeige Kostenübersicht) ──
+  const bruttoUmsatz = parts.reduce((s, p) => s + (p.preis_total || 0), 0) + expressBetrag;
   const rabattBetrag = bruttoUmsatz * (rabattPct / 100);
   const totalUmsatz = bruttoUmsatz - rabattBetrag;
   const totalKosten = parts.reduce((s, p) => {
     const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
-    const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
-    return s + calcKosten(partSettings, p.gewicht_g, p.druckzeit_h) * p.menge;
+    return s + calcKosten({ ...activeSettings, material_einkauf_pro_kg: einkauf }, p.gewicht_g, p.druckzeit_h) * p.menge;
   }, 0);
   const totalGewinn = calcGewinn(totalUmsatz, totalKosten);
   const totalMarge = calcMarge(totalGewinn, totalUmsatz);
 
+  // ── AUSGEWÄHLTE TEILE (für PDF/Mail/Anzeige) ───────────
   const selectedParts = parts.filter(p => p.id && selectedPartIds.has(p.id));
-  const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + p.preis_total, 0);
+
+  // Setup-Pauschale: 1× pro ausgewähltem Teil
+  const selectedSetup = selectedParts.reduce((s, _p) => s + activeSettings.setup_pauschale, 0);
+
+  // Teilpreise
+  const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + (p.preis_total || 0), 0);
+
+  // Express nur wenn Teile ausgewählt
   const selectedExpressAmount = selectedParts.length > 0 ? expressBetrag : 0;
-  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedExpressAmount;
+
+  // Brutto = Teile + Setup + Express
+  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedSetup + selectedExpressAmount;
+
+  // Rabatt auf Brutto
   const selectedRabattBetrag = selectedBruttoUmsatz * (rabattPct / 100);
+
+  // Netto = nach Rabatt
   const selectedTotalUmsatz = selectedBruttoUmsatz - selectedRabattBetrag;
+
+  // Kosten
   const selectedTotalKosten = selectedParts.reduce((s, p) => {
     const einkauf = p.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg;
-    const partSettings = { ...activeSettings, material_einkauf_pro_kg: einkauf };
-    return s + calcKosten(partSettings, p.gewicht_g, p.druckzeit_h) * p.menge;
+    return s + calcKosten({ ...activeSettings, material_einkauf_pro_kg: einkauf }, p.gewicht_g, p.druckzeit_h) * p.menge;
   }, 0);
   const selectedTotalGewinn = calcGewinn(selectedTotalUmsatz, selectedTotalKosten);
   const selectedTotalMarge = calcMarge(selectedTotalGewinn, selectedTotalUmsatz);
 
-  // Auftragsname immer in der Beschreibung voranstellen
-  const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
-
-  // Setup-Pauschale wird pro Teil (nicht pro Stück) berechnet
-  const setupKosten = parts.reduce((s, p) => s + activeSettings.setup_pauschale, 0);
-  const matKosten = parts.reduce((s, p) => {
-    const verkaufPreis = p.filament_verkauf_pro_g ?? activeSettings.material_verkauf_pro_g;
-    return s + p.gewicht_g * verkaufPreis * p.menge;
+  // ── KOSTENAUFSCHLÜSSELUNG (nur ausgewählte Teile) ──────
+  const setupKosten = selectedSetup;
+  const matKosten = selectedParts.reduce((s, p) => {
+    const vk = p.filament_verkauf_pro_g ?? activeSettings.material_verkauf_pro_g;
+    return s + p.gewicht_g * vk * p.menge;
   }, 0);
-  const maschKosten = parts.reduce((s, p) => s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
-  const nbKosten = parts.reduce((s, p) => s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
-  const konstrKosten = parts.reduce((s, p) => s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
+  const maschKosten = selectedParts.reduce((s, p) =>
+    s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
+  const nbKosten = selectedParts.reduce((s, p) =>
+    s + p.nachbearbeitung_h * activeSettings.nachbearbeitung_pro_h * p.menge, 0);
+  const konstrKosten = selectedParts.reduce((s, p) =>
+    s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
   const handleSendTestEmail = async () => {
     setSendingEmail("test" as any);
