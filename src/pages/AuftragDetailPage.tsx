@@ -82,7 +82,11 @@ interface Preset {
   rabatt_prozent: number;
 }
 
-const STATUS_OPTIONS = ["Offen", "In Bearbeitung", "Abgeschlossen", "Storniert"];
+const STATUS_OPTIONS = [
+  "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "Qualitätsprüfung", "Versandt", "Abgeschlossen",
+  // Alt-Status bestehender Aufträge
+  "Offen", "In Bearbeitung", "Geliefert", "Storniert",
+];
 const PART_STATUS_OPTIONS = ["Ausstehend", "In Druck", "Fertig", "Geliefert"];
 const FALLBACK_MATERIALS = ["PLA", "PETG", "TPU", "Sonstige"];
 
