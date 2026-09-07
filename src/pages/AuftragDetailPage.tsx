@@ -96,7 +96,11 @@ export default function AuftragDetailPage() {
   const { settings } = useSettings();
   const { company } = useCompanySettings();
 
-  const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
+  const [customers, setCustomers] = useState<{
+    id: string; name: string;
+    vorname?: string | null; firma?: string | null; email?: string | null; telefon?: string | null;
+    strasse?: string | null; hausnummer?: string | null; plz?: string | null; ort?: string | null; land?: string | null;
+  }[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
