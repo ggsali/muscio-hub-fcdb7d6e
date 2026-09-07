@@ -638,6 +638,9 @@ export default function AuftragDetailPage() {
   const konstrKosten = selectedParts.reduce((s, p) =>
     s + p.konstruktion_h * activeSettings.konstruktion_pro_h * p.menge, 0);
 
+  // Auftragsname immer in der Beschreibung voranstellen
+  const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
+
   const handleSendTestEmail = async () => {
     setSendingEmail("test" as any);
     try {
