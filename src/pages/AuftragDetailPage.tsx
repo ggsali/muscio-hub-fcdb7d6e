@@ -2279,27 +2279,16 @@ export default function AuftragDetailPage() {
       {/* ====================== TAB: DOKUMENTE ====================== */}
       {activeTab === "Dokumente" && !isNew && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
-              <h3 className="font-semibold text-sm mb-2">PDF herunterladen</h3>
-              <Button onClick={() => handleExportPDF(false)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung</Button>
-              <Button onClick={() => handleExportPDF(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung (mit Details)</Button>
-              <Button onClick={() => handleExportOffer(false)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte</Button>
-              <Button onClick={() => handleExportOffer(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte (mit Details)</Button>
-              <Button onClick={() => handleExportAuftragsbestaetigung()} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Auftragsbestätigung</Button>
-              <Button onClick={() => handleExportLieferschein()} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Lieferschein</Button>
-              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="w-full justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung</Button>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
-              <h3 className="font-semibold text-sm mb-2">E-Mail senden</h3>
-              <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung</Button>
-              <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte</Button>
-              <Button onClick={() => setConfirmEmailType("auftragsbestaetigung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Auftragsbestätigung</Button>
-              <Button onClick={() => setConfirmEmailType("druckfertig")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Druckfertig-Info</Button>
-              <Button onClick={() => setConfirmEmailType("lieferung")} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Lieferbenachrichtigung</Button>
-              <Button onClick={handleSendTestEmail} disabled={!!sendingEmail} variant="outline" className="w-full justify-start gap-2 border-border">
-                {sendingEmail === "test" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Test-E-Mail
-              </Button>
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
+            <h3 className="font-semibold text-sm mb-2">PDF herunterladen</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Button onClick={() => handleExportPDF(false)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung</Button>
+              <Button onClick={() => handleExportPDF(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung (mit Details)</Button>
+              <Button onClick={() => handleExportOffer(false)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte</Button>
+              <Button onClick={() => handleExportOffer(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Offerte (mit Details)</Button>
+              <Button onClick={() => handleExportAuftragsbestaetigung()} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Auftragsbestätigung</Button>
+              <Button onClick={() => handleExportLieferschein()} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Lieferschein</Button>
+              <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung</Button>
             </div>
           </div>
 
