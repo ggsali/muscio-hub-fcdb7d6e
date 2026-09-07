@@ -1994,6 +1994,7 @@ export default function AuftragDetailPage() {
                 <table className="w-full text-xs min-w-[900px]">
                   <thead>
                     <tr className="border-b border-border">
+                      <th className="px-2 py-2.5 text-muted-foreground font-medium text-left w-10"></th>
                       {["Teilname", "Filament / Material", "Menge", "Gewicht(g)", "Druck(h)", "NB(h)", "Konstr(h)", "Preis/St.", "Total", "Status", "Notizen", ""].map(h => (
                         <th key={h} className="px-3 py-2.5 text-muted-foreground font-medium text-left whitespace-nowrap">{h}</th>
                       ))}
