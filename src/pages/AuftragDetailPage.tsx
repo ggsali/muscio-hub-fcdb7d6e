@@ -2005,6 +2005,14 @@ export default function AuftragDetailPage() {
                       <React.Fragment key={idx}>
                         <tr className="border-b border-border/50 hover:bg-muted/20">
                           <td className="px-2 py-2">
+                            <input
+                              type="checkbox"
+                              checked={part.id ? selectedPartIds.has(part.id) : false}
+                              onChange={() => part.id && togglePart(part.id)}
+                              className="w-4 h-4 accent-primary cursor-pointer"
+                            />
+                          </td>
+                          <td className="px-2 py-2">
                             <Input value={part.teilname} onChange={e => updatePart(idx, "teilname", e.target.value)} className="bg-input border-border h-7 text-xs w-28" placeholder="Name" />
                           </td>
                           <td className="px-2 py-2 min-w-[160px]">
