@@ -1664,10 +1664,9 @@ export default function AuftragDetailPage() {
                 <Textarea value={beschreibung} onChange={e => setBeschreibung(e.target.value)} className="bg-input border-border" rows={4} />
               </div>
               {!isNew && (
-                <div className="space-y-1.5">
-                  <Label>Interne Notizen <span className="text-muted-foreground font-normal text-xs">(nie für Kunden sichtbar)</span></Label>
-                  <Textarea value={notesInternal} onChange={e => setNotesInternal(e.target.value)} className="bg-input border-border" rows={3} placeholder="Nur intern sichtbar..." />
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Interne Notizen findest du im Tab <strong>Notizen</strong>.
+                </p>
               )}
             </div>
           </div>
