@@ -1424,7 +1424,7 @@ export default function AuftragDetailPage() {
 
       {/* Tab navigation */}
       <div className="flex gap-0 border-b border-border overflow-x-auto">
-        {(isNew ? (["Übersicht", "Teile"] as Tab[]) : (TABS as readonly Tab[])).map(tab => (
+        {(isNew ? (["Übersicht", "Teile & Kalkulation"] as Tab[]) : (TABS as readonly Tab[])).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -1657,7 +1657,7 @@ export default function AuftragDetailPage() {
       )}
 
       {/* ====================== TAB: TEILE ====================== */}
-      {activeTab === "Teile" && (
+      {activeTab === "Teile & Kalkulation" && (
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
