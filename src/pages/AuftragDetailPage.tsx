@@ -2190,7 +2190,7 @@ export default function AuftragDetailPage() {
                   <div className="flex items-center gap-2 mt-2">
                     <span className="font-mono text-sm">{trackingNr}</span>
                     <a
-                      href={`https://www.post.ch/de/empfangen/sendungsverfolgung#/sucheBarcode?barcode=${encodeURIComponent(trackingNr)}`}
+                      href={`https://www.post.ch/swisspost-tracking?formattedParcelCodes=${trackingNr}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary underline flex items-center gap-1"

@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 /** Post-CH Sendungsverfolgungs-Link */
 export function postTrackingUrl(nr: string) {
-  return `https://www.post.ch/de/empfangen/sendungsverfolgung#/sucheBarcode?barcode=${encodeURIComponent(nr)}`;
+  return `https://www.post.ch/swisspost-tracking?formattedParcelCodes=${nr}`;
 }
 
 /** Ordnet einen Log-Eintrag einer Kategorie mit Icon & Farbe zu */
