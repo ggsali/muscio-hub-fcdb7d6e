@@ -754,18 +754,18 @@ export default function AuftragDetailPage() {
     setSendingAkonto(true);
     try {
       const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-      const akontoBetrag = Math.round(totalUmsatz * akontoPercent) / 100;
+      const akontoBetrag = Math.round(selectedTotalUmsatz * akontoPercent) / 100;
       const result = await exportAkontoPDF({
         orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-        parts, umsatz_total: totalUmsatz, akontoPercent, akontoBetrag,
+        parts: selectedParts, umsatz_total: selectedTotalUmsatz, akontoPercent, akontoBetrag,
         settings: activeSettings, company, returnBase64: !download,
-        expressKosten: expressBetrag, expressLabel,
+        expressKosten: selectedExpressAmount, expressLabel,
       });
       if (!download && result) {
         // Send via email
         const { data, error } = await supabase.functions.invoke("send-email", {
-          body: { kind: "order", orderId: id, type: "akonto", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag },
+          body: { kind: "order", orderId: id, type: "akonto", pdfBase64: result.base64, pdfFilename: result.filename, akontoPercent, akontoBetrag, selectedPartIds: Array.from(selectedPartIds) },
         });
         if (error || data?.error) {
           toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
