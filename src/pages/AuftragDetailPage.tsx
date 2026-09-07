@@ -564,6 +564,11 @@ export default function AuftragDetailPage() {
     });
   };
 
+  // Beim Neuladen / Ändern der Teile-Anzahl wieder alle Teile auswählen
+  useEffect(() => {
+    setSelectedPartIds(new Set(parts.map(p => p.id).filter(Boolean) as string[]));
+  }, [parts.length]);
+
   const handleDeleteOrder = async () => {
     if (!id || isNew) return;
     await supabase.from("part_files").delete().eq("order_id", id);
@@ -1843,9 +1848,34 @@ export default function AuftragDetailPage() {
                 </button>
               </div>
               {selectedPartIds.size < parts.filter(p => p.id).length && (
-                <p className="text-xs text-amber-600">
-                  ⚠️ {parts.filter(p => p.id).length - selectedPartIds.size} Teil(e) nicht in Rechnung/Offerte enthalten
-                </p>
+                <>
+                  <p className="text-xs text-amber-600">
+                    ⚠️ {parts.filter(p => p.id).length - selectedPartIds.size} Teil(e) nicht in Rechnung/Offerte enthalten
+                  </p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-3">
+                    <p className="text-sm font-semibold text-amber-800">Angepasste Kalkulation</p>
+                    <div className="flex justify-between text-sm mt-1">
+                      <span className="text-amber-700">Ausgewählte Teile ({selectedParts.length})</span>
+                      <span className="font-mono text-amber-900">CHF {selectedPartsUmsatz.toFixed(2)}</span>
+                    </div>
+                    {selectedExpressAmount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-amber-700">{expressLabel?.trim() || "Express-Lieferung"}</span>
+                        <span className="font-mono text-amber-900">CHF {selectedExpressAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {selectedRabattBetrag > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-amber-700">Rabatt ({rabattPct}%)</span>
+                        <span className="font-mono text-amber-900">- CHF {selectedRabattBetrag.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm font-bold border-t border-amber-200 mt-1 pt-1">
+                      <span className="text-amber-800">Total</span>
+                      <span className="font-mono text-amber-900">CHF {selectedTotalUmsatz.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
 

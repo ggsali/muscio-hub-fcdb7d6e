@@ -317,6 +317,11 @@ Deno.serve(async (req) => {
       partsQuery = partsQuery.in("id", selectedPartIds);
     }
     const { data: parts } = await partsQuery;
+    const recalculatedTotal = (parts || []).reduce(
+      (s: number, p: any) => s + (Number(p.preis_total) || 0),
+      0,
+    );
+    console.log("[send-email] Teile:", parts?.length ?? 0, "Total:", recalculatedTotal);
     const { data: order } = await supabase
       .from("orders").select("*, customers(*)").eq("id", orderId).maybeSingle();
     if (!order) {
