@@ -137,7 +137,7 @@ export default function AuftragDetailPage() {
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const TABS = ["Übersicht", "Teile", "Status & Versand", "Finanzen", "Dokumente"] as const;
+  const TABS = ["Übersicht", "Teile & Kalkulation", "Status & Versand", "Finanzen", "Dokumente", "Notizen"] as const;
   type Tab = typeof TABS[number];
   const [activeTab, setActiveTab] = useState<Tab>("Übersicht");
   const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
