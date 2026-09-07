@@ -1704,20 +1704,32 @@ export default function AuftragDetailPage() {
           )}
 
 
-          {/* Nächste Aktion */}
-          {!isNew && (() => {
-            const action = nextActionForStatus(status);
-            return (
-              <Button
-                onClick={action.onClick}
-                disabled={action.disabled}
-                className={`w-full ${action.disabled ? "bg-muted text-muted-foreground hover:bg-muted" : "bg-primary hover:bg-primary/90"}`}
-                size="lg"
-              >
-                {action.label}
-              </Button>
-            );
-          })()}
+          {/* 5. Schnellaktionen */}
+          {!isNew && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+              <h3 className="font-semibold text-sm">Schnellaktionen</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border">
+                  <Mail className="w-4 h-4" /> Offerte senden
+                </Button>
+                <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border">
+                  <Mail className="w-4 h-4" /> Rechnung senden
+                </Button>
+                <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
+                  {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} Zahlungslink senden
+                </Button>
+                <Button onClick={() => navigate(`/admin/auftraege/${id}/platten`)} variant="outline" className="justify-start gap-2 border-border">
+                  <Layers className="w-4 h-4" /> Druckplatten planen
+                </Button>
+                <Button onClick={handleDuplicate} disabled={duplicating} variant="outline" className="justify-start gap-2 border-border">
+                  <Copy className="w-4 h-4" /> Auftrag duplizieren
+                </Button>
+                <Button onClick={handleArchive} variant="outline" className="justify-start gap-2 border-border">
+                  <Archive className="w-4 h-4" /> Auftrag archivieren
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
