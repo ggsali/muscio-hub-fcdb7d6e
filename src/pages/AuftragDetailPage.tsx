@@ -137,6 +137,7 @@ export default function AuftragDetailPage() {
   const [akontoMode, setAkontoMode] = useState<"akonto" | "restbetrag">("akonto");
   const [sendingAkonto, setSendingAkonto] = useState(false);
   const [parts, setParts] = useState<PartRow[]>([emptyPart()]);
+  const [selectedPartIds, setSelectedPartIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
