@@ -907,11 +907,11 @@ export default function AuftragDetailPage() {
       customerEmail,
       customerTelefon,
       customerAdresse,
-      parts,
-      umsatz_total: bruttoUmsatz,
+      parts: selectedParts,
+      umsatz_total: selectedBruttoUmsatz,
       settings: activeSettings,
       company,
-      expressKosten: expressBetrag,
+      expressKosten: selectedExpressAmount,
       expressLabel,
       rabattProzent: rabattPct,
     });
@@ -924,7 +924,7 @@ export default function AuftragDetailPage() {
       datum,
       beschreibung: fullBeschreibung,
       customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-      parts,
+      parts: selectedParts,
       company,
       trackingNr,
     });
