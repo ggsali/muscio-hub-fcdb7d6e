@@ -201,12 +201,12 @@ export default function AuftragDetailPage() {
 
 
   const handleCreatePaymentLink = async () => {
-    if (!id || totalUmsatz <= 0) return;
+    if (!id || selectedTotalUmsatz <= 0) return;
     setCreatingPaymentLink(true);
     try {
       const { customerEmail } = await getCustomerData();
       const { data, error } = await supabase.functions.invoke("create-stripe-payment-link", {
-        body: { orderId: id, betrag: totalUmsatz, orderName, customerEmail },
+        body: { orderId: id, betrag: selectedTotalUmsatz, orderName, customerEmail },
       });
       if (error || data?.error) {
         toast({ title: "Stripe Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -566,14 +566,22 @@ export default function AuftragDetailPage() {
 
   const togglePart = async (partId: string) => {
     const willBeSelected = !selectedPartIds.has(partId);
-    setSelectedPartIds(prev => {
-      const next = new Set(prev);
-      willBeSelected ? next.add(partId) : next.delete(partId);
-      return next;
-    });
+    const nextSet = new Set(selectedPartIds);
+    willBeSelected ? nextSet.add(partId) : nextSet.delete(partId);
+    setSelectedPartIds(nextSet);
     // Sofort in DB speichern
     try {
       await supabase.from("parts").update({ in_rechnung: willBeSelected }).eq("id", partId);
+      if (id && !isNew) {
+        const nextParts = parts.filter(p => p.id && nextSet.has(p.id));
+        const pct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
+        const brutto =
+          nextParts.reduce((s, p) => s + (p.preis_total || 0), 0) +
+          nextParts.length * activeSettings.setup_pauschale +
+          (nextParts.length > 0 ? Math.max(0, Number(expressKosten) || 0) : 0);
+        const neuTotal = brutto - brutto * (pct / 100);
+        await supabase.from("orders").update({ umsatz_total: neuTotal }).eq("id", id);
+      }
     } catch (err: any) {
       console.error("Fehler beim Speichern der Teilauswahl:", err);
     }
@@ -768,7 +776,7 @@ export default function AuftragDetailPage() {
               console.error("Upload catch error:", e);
             }
           }
-          const betragValue = type === "rechnung" ? totalUmsatz : type === "offerte" ? totalUmsatz : 0;
+          const betragValue = type === "rechnung" ? selectedTotalUmsatz : type === "offerte" ? selectedTotalUmsatz : 0;
           const faelligAm = type === "rechnung" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] : null;
           await supabase.from("bills" as any).insert({
             order_id: id,
@@ -995,7 +1003,7 @@ export default function AuftragDetailPage() {
       beschreibung,
       datum,
       status,
-      umsatz_total: totalUmsatz,
+      umsatz_total: selectedTotalUmsatz,
       kosten_total: totalKosten,
       gewinn_total: totalGewinn,
       marge: totalMarge,
@@ -1189,7 +1197,7 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => { setManualStatus(status || ""); setShowStatusDialog(true); }} className="gap-2">
                     <Settings2 className="w-4 h-4" /> Status korrigieren
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} className="gap-2">
+                  <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} className="gap-2">
                     <Link2 className="w-4 h-4" /> Zahlungslink senden
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="gap-2">
@@ -1290,7 +1298,7 @@ export default function AuftragDetailPage() {
                     <DropdownMenuItem onClick={() => handleExportPDF(false)} className="gap-2">
                       <FileDown className="w-4 h-4" /> Rechnung neu generieren
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} className="gap-2">
+                    <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} className="gap-2">
                       <Link2 className="w-4 h-4" /> Zahlungslink neu senden
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -1384,7 +1392,7 @@ export default function AuftragDetailPage() {
                 />
                 <span>Mit Details <span className="text-muted-foreground text-xs">(Gewicht, Druckzeit, Konstruktion, Nachbearbeitung)</span></span>
               </label>
-              {confirmEmailType === "rechnung" && totalUmsatz > 0 && (
+              {confirmEmailType === "rechnung" && selectedTotalUmsatz > 0 && (
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input
                     type="checkbox"
@@ -1394,7 +1402,7 @@ export default function AuftragDetailPage() {
                   />
                   <span>
                     💳 Stripe Zahlungslink hinzufügen{" "}
-                    <span className="text-muted-foreground text-xs">(CHF {totalUmsatz.toFixed(2)} – Kunde kann online bezahlen)</span>
+                    <span className="text-muted-foreground text-xs">(CHF {selectedTotalUmsatz.toFixed(2)} – Kunde kann online bezahlen)</span>
                   </span>
                 </label>
               )}
@@ -1415,7 +1423,7 @@ export default function AuftragDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Teilrechnung / Schlussrechnung</AlertDialogTitle>
             <AlertDialogDescription>
-              Gesamtbetrag: <strong>{formatCHF(totalUmsatz)}</strong>
+              Gesamtbetrag: <strong>{formatCHF(selectedTotalUmsatz)}</strong>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-2">
@@ -1471,28 +1479,28 @@ export default function AuftragDetailPage() {
             <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-1.5">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Gesamtbetrag</span>
-                <span>{formatCHF(totalUmsatz)}</span>
+                <span>{formatCHF(selectedTotalUmsatz)}</span>
               </div>
               {akontoMode === "akonto" ? (
                 <>
                   <div className="flex justify-between text-sm font-semibold text-primary">
                     <span>Akontozahlung ({akontoPercent}%)</span>
-                    <span>{formatCHF(Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+                    <span>{formatCHF(Math.round(selectedTotalUmsatz * akontoPercent) / 100)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground border-t border-border pt-1.5">
                     <span>Verbleibender Restbetrag</span>
-                    <span>{formatCHF(totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+                    <span>{formatCHF(selectedTotalUmsatz - Math.round(selectedTotalUmsatz * akontoPercent) / 100)}</span>
                   </div>
                 </>
               ) : (
                 <>
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Abzüglich Akonto ({akontoPercent}%)</span>
-                    <span>- {formatCHF(Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+                    <span>- {formatCHF(Math.round(selectedTotalUmsatz * akontoPercent) / 100)}</span>
                   </div>
                   <div className="flex justify-between text-sm font-semibold text-primary border-t border-border pt-1.5">
                     <span>Restbetrag (fällig)</span>
-                    <span>{formatCHF(totalUmsatz - Math.round(totalUmsatz * akontoPercent) / 100)}</span>
+                    <span>{formatCHF(selectedTotalUmsatz - Math.round(selectedTotalUmsatz * akontoPercent) / 100)}</span>
                   </div>
                 </>
               )}
@@ -1660,7 +1668,7 @@ export default function AuftragDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-card border border-border rounded-lg p-4">
                 <div className="text-xs text-muted-foreground mb-1">Umsatz</div>
-                <div className="text-xl font-bold text-success">{formatCHF(totalUmsatz)}</div>
+                <div className="text-xl font-bold text-success">{formatCHF(selectedTotalUmsatz)}</div>
               </div>
               <div className="bg-card border border-border rounded-lg p-4">
                 <div className="text-xs text-muted-foreground mb-1">Gewinn</div>
@@ -1823,7 +1831,7 @@ export default function AuftragDetailPage() {
                 <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border">
                   <Mail className="w-4 h-4" /> Rechnung senden
                 </Button>
-                <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
+                <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
                   {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} Zahlungslink senden
                 </Button>
                 <Button onClick={() => navigate(`/admin/auftraege/${id}/platten`)} variant="outline" className="justify-start gap-2 border-border">
@@ -2230,7 +2238,7 @@ export default function AuftragDetailPage() {
                 <div className="md:col-span-2 text-sm space-y-1">
                   <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{formatCHF(bruttoUmsatz)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Rabatt {rabattPct > 0 ? `(${rabattPct}%)` : ""}</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
-                  <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(totalUmsatz)}</span></div>
+                  <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(selectedTotalUmsatz)}</span></div>
                 </div>
               </div>
             </div>
@@ -2423,7 +2431,7 @@ export default function AuftragDetailPage() {
               <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte senden</Button>
               <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung senden</Button>
               <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung erstellen</Button>
-              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
+              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
                 {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Stripe Zahlungslink erstellen
               </Button>
             </div>
