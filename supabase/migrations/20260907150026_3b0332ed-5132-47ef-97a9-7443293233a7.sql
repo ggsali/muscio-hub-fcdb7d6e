@@ -1,0 +1,1 @@
+ALTER TABLE public.parts ADD COLUMN IF NOT EXISTS in_rechnung BOOLEAN DEFAULT true;
