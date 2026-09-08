@@ -170,7 +170,7 @@ export default function KalenderPage() {
       })
     : [];
 
-  const legendStatuses = ["Offen", "In Bearbeitung", "Geliefert", "Bezahlt", "Abgeschlossen"];
+  const legendStatuses = ["Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "Qualitätsprüfung", "Versandt", "Abgeschlossen"];
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
