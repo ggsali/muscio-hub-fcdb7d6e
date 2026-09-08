@@ -59,8 +59,22 @@ export default function WebsiteAnalyticsPage() {
   const [herkunft, setHerkunft] = useState<[string, number][]>([]);
   const [calcCounts, setCalcCounts] = useState<Record<string, number>>({});
   const [calcRows, setCalcRows] = useState<{ event: string; created_at: string }[]>([]);
+  const [funnelRange, setFunnelRange] = useState<"heute" | "7tage" | "30tage">("30tage");
 
   const range = RANGES.find(r => r.key === rangeKey)!;
+
+  function getFunnelFrom() {
+    const now = new Date();
+    if (funnelRange === "heute") {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      return start.toISOString();
+    }
+    if (funnelRange === "7tage") {
+      return new Date(now.getTime() - 7 * 86400000).toISOString();
+    }
+    return new Date(now.getTime() - 30 * 86400000).toISOString();
+  }
 
   async function load() {
     setLoading(true);
