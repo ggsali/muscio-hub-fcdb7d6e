@@ -177,16 +177,20 @@ export const Header = () => {
                         className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 min-w-[200px]"
                       >
                         <div className="bg-popover border border-border rounded-xl shadow-xl p-1.5">
-                          {l.children!.map(c => (
-                            <Link
-                              key={c.path}
-                              to={c.path}
-                              onClick={() => setOpenDropdown(null)}
-                              className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                            >
-                              {c.label}
-                            </Link>
-                          ))}
+                          {l.children!.map((c, idx) =>
+                            c.divider ? (
+                              <hr key={`divider-${idx}`} className="my-1 border-border" />
+                            ) : (
+                              <Link
+                                key={c.path}
+                                to={c.path}
+                                onClick={() => setOpenDropdown(null)}
+                                className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                              >
+                                {c.label}
+                              </Link>
+                            )
+                          )}
                         </div>
                       </motion.div>
                     )}
