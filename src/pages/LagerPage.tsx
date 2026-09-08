@@ -49,8 +49,10 @@ export default function LagerPage() {
       {tab === "bestand" && <FilamentBestandPage />}
       {tab === "arten" && <FilamentArtenPage />}
       {tab === "rollen" && <FilamentRollenPage />}
+      {tab === "lieferung" && <FilamentLieferungPage />}
       {tab === "etiketten" && <FilamentEtikettenPage />}
       {tab === "scan" && <FilamentScanPage />}
+      {tab === "versand" && <VersandScanPage />}
     </div>
   );
 }
