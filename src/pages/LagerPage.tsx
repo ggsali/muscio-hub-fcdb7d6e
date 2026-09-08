@@ -5,13 +5,17 @@ import FilamentArtenPage from "@/pages/filament/FilamentArtenPage";
 import FilamentRollenPage from "@/pages/filament/FilamentRollenPage";
 import FilamentEtikettenPage from "@/pages/filament/FilamentEtikettenPage";
 import FilamentScanPage from "@/pages/filament/FilamentScanPage";
+import FilamentLieferungPage from "@/pages/filament/FilamentLieferungPage";
+import VersandScanPage from "@/pages/filament/VersandScanPage";
 
 const TABS = [
   { key: "bestand", label: "📊 Bestandsübersicht" },
   { key: "arten", label: "🎨 Filamentarten" },
   { key: "rollen", label: "➕ Rollen anlegen" },
+  { key: "lieferung", label: "🚚 Lieferung einbuchen" },
   { key: "etiketten", label: "🏷️ Etiketten" },
   { key: "scan", label: "📷 Leer melden" },
+  { key: "versand", label: "📦 Versand scannen" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -45,8 +49,10 @@ export default function LagerPage() {
       {tab === "bestand" && <FilamentBestandPage />}
       {tab === "arten" && <FilamentArtenPage />}
       {tab === "rollen" && <FilamentRollenPage />}
+      {tab === "lieferung" && <FilamentLieferungPage />}
       {tab === "etiketten" && <FilamentEtikettenPage />}
       {tab === "scan" && <FilamentScanPage />}
+      {tab === "versand" && <VersandScanPage />}
     </div>
   );
 }
