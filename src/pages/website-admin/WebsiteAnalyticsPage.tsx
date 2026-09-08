@@ -59,8 +59,22 @@ export default function WebsiteAnalyticsPage() {
   const [herkunft, setHerkunft] = useState<[string, number][]>([]);
   const [calcCounts, setCalcCounts] = useState<Record<string, number>>({});
   const [calcRows, setCalcRows] = useState<{ event: string; created_at: string }[]>([]);
+  const [funnelRange, setFunnelRange] = useState<"heute" | "7tage" | "30tage">("30tage");
 
   const range = RANGES.find(r => r.key === rangeKey)!;
+
+  function getFunnelFrom() {
+    const now = new Date();
+    if (funnelRange === "heute") {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      return start.toISOString();
+    }
+    if (funnelRange === "7tage") {
+      return new Date(now.getTime() - 7 * 86400000).toISOString();
+    }
+    return new Date(now.getTime() - 30 * 86400000).toISOString();
+  }
 
   async function load() {
     setLoading(true);
@@ -90,11 +104,11 @@ export default function WebsiteAnalyticsPage() {
   }
 
   async function loadCalcEvents() {
-    const since30 = subDays(new Date(), 30).toISOString();
+    const since = getFunnelFrom();
     const { data } = await supabase
       .from("calc_events")
       .select("event, created_at")
-      .gte("created_at", since30)
+      .gte("created_at", since)
       .limit(20000);
     const rows = (data as { event: string; created_at: string }[]) || [];
     const counts: Record<string, number> = {};
@@ -107,9 +121,19 @@ export default function WebsiteAnalyticsPage() {
 
   useEffect(() => { loadHerkunft(); loadCalcEvents(); }, []);
 
+  useEffect(() => { loadCalcEvents(); }, [funnelRange]);
+
+  useEffect(() => {
+    if (funnelRange !== "heute") return;
+    const interval = setInterval(() => loadCalcEvents(), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [funnelRange]);
+
+  const funnelDays = funnelRange === "7tage" ? 7 : 30;
+
   const funnelPerDay = useMemo(() => {
     const buckets: Record<string, any> = {};
-    for (let i = 29; i >= 0; i--) {
+    for (let i = funnelDays - 1; i >= 0; i--) {
       const d = startOfDay(subDays(new Date(), i));
       buckets[format(d, "yyyy-MM-dd")] = {
         date: format(d, "dd.MM", { locale: de }),
@@ -132,7 +156,22 @@ export default function WebsiteAnalyticsPage() {
       else if (r.event === "schritt_5_bestellung_abgesendet") b.Bestellungen += 1;
     }
     return Object.values(buckets);
-  }, [calcRows]);
+  }, [calcRows, funnelDays]);
+
+  const stundenData = useMemo(() => {
+    if (funnelRange !== "heute") return [];
+    return Array.from({ length: 24 }, (_, h) => {
+      const uploads = calcRows.filter(e => {
+        const hour = new Date(e.created_at).getHours();
+        return hour === h && e.event === "schritt_1_datei_hochgeladen";
+      }).length;
+      const bestellungen = calcRows.filter(e => {
+        const hour = new Date(e.created_at).getHours();
+        return hour === h && e.event === "schritt_5_bestellung_abgesendet";
+      }).length;
+      return { stunde: `${h}:00`, uploads, bestellungen };
+    }).filter(d => d.uploads > 0 || d.bestellungen > 0);
+  }, [calcRows, funnelRange]);
 
   const herkunftTotal = herkunft.reduce((s, [, n]) => s + n, 0);
 
@@ -159,6 +198,9 @@ export default function WebsiteAnalyticsPage() {
       kiUsage: uploads > 0 ? ((c["schritt_2_ki_chat_gestartet"] || 0) / uploads) * 100 : 0,
     };
   }, [calcCounts]);
+
+  const funnelLabel = funnelRange === "heute" ? "Heute" :
+    funnelRange === "7tage" ? "Letzte 7 Tage" : "Letzte 30 Tage";
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [rangeKey]);
 
@@ -286,10 +328,33 @@ export default function WebsiteAnalyticsPage() {
       </div>
 
       <Card className="p-4 md:p-6">
-        <h2 className="font-heading text-lg font-bold flex items-center gap-2">
-          <Filter className="w-4 h-4 text-primary" /> Kalkulator Funnel
-        </h2>
-        <p className="text-xs text-muted-foreground mb-4">Letzte 30 Tage</p>
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+          <div>
+            <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+              <Filter className="w-4 h-4 text-primary" /> Kalkulator Funnel
+            </h2>
+            <p className="text-xs text-muted-foreground">{funnelLabel}</p>
+          </div>
+          <div className="flex gap-2">
+            {[
+              { key: "heute", label: "Heute" },
+              { key: "7tage", label: "7 Tage" },
+              { key: "30tage", label: "30 Tage" },
+            ].map(r => (
+              <button
+                key={r.key}
+                onClick={() => setFunnelRange(r.key as any)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  funnelRange === r.key
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {funnel.total < 10 ? (
           <p className="text-sm text-muted-foreground">Noch zu wenig Daten</p>
         ) : (
@@ -321,31 +386,49 @@ export default function WebsiteAnalyticsPage() {
 
       <Card className="p-4 md:p-6">
         <h2 className="font-heading text-lg font-bold flex items-center gap-2">
-          <Filter className="w-4 h-4 text-primary" /> Kalkulator Funnel pro Tag
+          <Filter className="w-4 h-4 text-primary" /> {funnelRange === "heute" ? "Stündliche Aktivität" : "Kalkulator Funnel pro Tag"}
         </h2>
-        <p className="text-xs text-muted-foreground mb-4">Letzte 30 Tage</p>
-        <div className="h-[280px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={funnelPerDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Area type="monotone" dataKey="Uploads" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} />
-              <Area type="monotone" dataKey="KI-Chat" stroke="hsl(var(--foreground))" fill="hsl(var(--foreground))" fillOpacity={0.08} strokeWidth={2} />
-              <Area type="monotone" dataKey="Material" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.08} strokeWidth={2} />
-              <Area type="monotone" dataKey="Bestellungen" stroke="hsl(var(--success))" fill="hsl(var(--success))" fillOpacity={0.15} strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <p className="text-xs text-muted-foreground mb-4">{funnelLabel}</p>
+        {funnelRange === "heute" ? (
+          <div className="space-y-2">
+            {stundenData.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Heute noch keine Aktivität.</p>
+            ) : (
+              stundenData.map(d => (
+                <div key={d.stunde} className="flex items-center gap-4 py-1.5 border-b border-border/50 last:border-0">
+                  <span className="text-sm font-medium text-foreground w-14 tabular-nums">{d.stunde}</span>
+                  <div className="flex-1 flex items-center gap-4">
+                    <span className="text-xs text-muted-foreground">Uploads: <span className="font-semibold text-foreground tabular-nums">{d.uploads}</span></span>
+                    <span className="text-xs text-muted-foreground">Bestellungen: <span className="font-semibold text-foreground tabular-nums">{d.bestellungen}</span></span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={funnelPerDay}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Area type="monotone" dataKey="Uploads" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} />
+                <Area type="monotone" dataKey="KI-Chat" stroke="hsl(var(--foreground))" fill="hsl(var(--foreground))" fillOpacity={0.08} strokeWidth={2} />
+                <Area type="monotone" dataKey="Material" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground))" fillOpacity={0.08} strokeWidth={2} />
+                <Area type="monotone" dataKey="Bestellungen" stroke="hsl(var(--success))" fill="hsl(var(--success))" fillOpacity={0.15} strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </Card>
 
       <Card className="p-4 md:p-6">
