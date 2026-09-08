@@ -242,7 +242,7 @@ export default function UeberUnsPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" /> Gartensiedlung 13, 8360 Eschlikon TG</span>
-              <span className="flex items-center gap-2"><Phone className="w-3.5 h-3.5" /> +41 79 839 50 80</span>
+              <span className="flex items-center gap-2"><Phone className="w-3.5 h-3.5" /> +41 77 804 41 22</span>
               <span className="flex items-center gap-2"><Mail className="w-3.5 h-3.5" /> info@3dmuscio.com</span>
               <span className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> Mo–Fr: 08:00–18:00</span>
             </div>

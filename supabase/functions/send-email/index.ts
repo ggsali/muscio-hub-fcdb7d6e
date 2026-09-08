@@ -30,7 +30,7 @@ const PICKUP_ADDRESS_HTML = `<div style="background:#ecfdf3;border:1px solid #00
   <p style="margin:0;font-size:15px;font-weight:600;">3DMuscio</p>
   <p style="margin:2px 0 0;font-size:14px;">Gartensiedlung 13<br/>8360 Eschlikon TG</p>
   <p style="margin:10px 0 0;font-size:12px;color:#047857;"><strong>Öffnungszeiten:</strong> Nach Vereinbarung — bitte vorgängig kurz melden.</p>
-  <p style="margin:6px 0 0;font-size:12px;color:#047857;">📞 +41 79 839 50 80 · ✉️ info@3dmuscio.com</p>
+  <p style="margin:6px 0 0;font-size:12px;color:#047857;">📞 +41 77 804 41 22 · ✉️ info@3dmuscio.com</p>
 </div>`;
 
 const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: string; emoji: string }> = {
@@ -130,7 +130,7 @@ function emailLayout({ title, bodyHtml, emoji = "📧" }: { title: string; bodyH
       <p style="margin:0 0 4px;">3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</p>
       <p style="margin:0;">
         <a href="mailto:info@3dmuscio.com" style="color:#9ca3af;text-decoration:none;">info@3dmuscio.com</a>
-        &nbsp;·&nbsp; +41 79 839 50 80 &nbsp;·&nbsp;
+        &nbsp;·&nbsp; +41 77 804 41 22 &nbsp;·&nbsp;
         <a href="https://3dmuscio.com" style="color:#9ca3af;text-decoration:none;">www.3dmuscio.com</a>
       </p>
     </div>

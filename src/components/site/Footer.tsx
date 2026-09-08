@@ -127,9 +127,9 @@ export const Footer = () => (
               <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/60 group-hover:text-primary transition-colors" />
               <span>Gartensiedlung 13<br />8360 Eschlikon TG</span>
             </a>
-            <a href="tel:+41798395080" className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+            <a href="tel:+41778044122" className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
               <Phone className="w-3.5 h-3.5 shrink-0 text-primary/60 group-hover:text-primary transition-colors" />
-              +41 79 839 50 80
+              +41 77 804 41 22
             </a>
             <a href="mailto:info@3dmuscio.com" className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
               <Mail className="w-3.5 h-3.5 shrink-0 text-primary/60 group-hover:text-primary transition-colors" />

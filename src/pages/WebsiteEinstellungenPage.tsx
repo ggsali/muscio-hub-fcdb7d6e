@@ -279,11 +279,11 @@ export default function WebsiteEinstellungenPage() {
       <AccordionItem value="whatsapp" className="bg-card border border-border rounded-lg px-4 md:px-5">
         <AccordionTrigger className="font-semibold hover:no-underline">WhatsApp</AccordionTrigger>
         <AccordionContent className="space-y-3">
-          <p className="text-xs text-muted-foreground">Nummer für den Chat-Button (Format: 41798395080, ohne + und ohne Leerzeichen). Leer lassen, um WhatsApp im Chat-Button auszublenden.</p>
+          <p className="text-xs text-muted-foreground">Nummer für den Chat-Button (Format: 41778044122, ohne + und ohne Leerzeichen). Leer lassen, um WhatsApp im Chat-Button auszublenden.</p>
           <Input
             value={whatsapp.nummer}
             onChange={e => setWhatsapp({ nummer: e.target.value.replace(/[^0-9]/g, "") })}
-            placeholder="41798395080"
+            placeholder="41778044122"
             className="bg-input border-border w-full"
           />
         </AccordionContent>
