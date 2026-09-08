@@ -618,17 +618,18 @@ export default function AuftragDetailPage() {
   // ── AUSGEWÄHLTE TEILE (für PDF/Mail/Anzeige) ───────────
   const selectedParts = parts.filter(p => p.id && selectedPartIds.has(p.id));
 
-  // Setup-Pauschale: 1× pro ausgewähltem Teil
+  // Setup-Pauschale ist bereits in jedem Teilpreis enthalten (calcUmsatz) –
+  // hier nur zur Anzeige in der Kostenaufschlüsselung ausgewiesen.
   const selectedSetup = selectedParts.reduce((s, _p) => s + activeSettings.setup_pauschale, 0);
 
-  // Teilpreise
+  // Teilpreise (inkl. Setup)
   const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + (p.preis_total || 0), 0);
 
   // Express nur wenn Teile ausgewählt
   const selectedExpressAmount = selectedParts.length > 0 ? expressBetrag : 0;
 
-  // Brutto = Teile + Setup + Express
-  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedSetup + selectedExpressAmount;
+  // Brutto = Teile (inkl. Setup) + Express
+  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedExpressAmount;
 
   // Rabatt auf Brutto
   const selectedRabattBetrag = selectedBruttoUmsatz * (rabattPct / 100);
