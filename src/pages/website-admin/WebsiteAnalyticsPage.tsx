@@ -324,11 +324,37 @@ export default function WebsiteAnalyticsPage() {
         <StatCard icon={BarChart3} label="Ø pro Tag" value={stats.avgPerDay} hint={`${range.label}`} />
       </div>
 
+      const funnelLabel = funnelRange === "heute" ? "Heute" :
+        funnelRange === "7tage" ? "Letzte 7 Tage" : "Letzte 30 Tage";
+
       <Card className="p-4 md:p-6">
-        <h2 className="font-heading text-lg font-bold flex items-center gap-2">
-          <Filter className="w-4 h-4 text-primary" /> Kalkulator Funnel
-        </h2>
-        <p className="text-xs text-muted-foreground mb-4">Letzte 30 Tage</p>
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+          <div>
+            <h2 className="font-heading text-lg font-bold flex items-center gap-2">
+              <Filter className="w-4 h-4 text-primary" /> Kalkulator Funnel
+            </h2>
+            <p className="text-xs text-muted-foreground">{funnelLabel}</p>
+          </div>
+          <div className="flex gap-2">
+            {[
+              { key: "heute", label: "Heute" },
+              { key: "7tage", label: "7 Tage" },
+              { key: "30tage", label: "30 Tage" },
+            ].map(r => (
+              <button
+                key={r.key}
+                onClick={() => setFunnelRange(r.key as any)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  funnelRange === r.key
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {funnel.total < 10 ? (
           <p className="text-sm text-muted-foreground">Noch zu wenig Daten</p>
         ) : (
