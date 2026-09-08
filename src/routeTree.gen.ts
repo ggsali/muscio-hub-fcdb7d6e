@@ -58,6 +58,7 @@ import { Route as AdminFilamenteRouteImport } from './routes/admin/filamente'
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
+import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
@@ -368,6 +369,11 @@ const AdminKalenderRoute = AdminKalenderRouteImport.update({
 const AdminKalkulatorRoute = AdminKalkulatorRouteImport.update({
   id: '/kalkulator',
   path: '/kalkulator',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLagerRoute = AdminLagerRouteImport.update({
+  id: '/lager',
+  path: '/lager',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminNewsletterRoute = AdminNewsletterRouteImport.update({
@@ -764,6 +770,7 @@ export interface FileRoutesByFullPath {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
@@ -877,6 +884,7 @@ export interface FileRoutesByTo {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
@@ -996,6 +1004,7 @@ export interface FileRoutesById {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin_/login': typeof AdminLoginRoute
@@ -1116,6 +1125,7 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/teile'
     | '/admin/login'
@@ -1229,6 +1239,7 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/teile'
     | '/admin/login'
@@ -1347,6 +1358,7 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/teile'
     | '/admin_/login'
@@ -1797,6 +1809,13 @@ declare module '@tanstack/react-router' {
       path: '/kalkulator'
       fullPath: '/admin/kalkulator'
       preLoaderRoute: typeof AdminKalkulatorRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/lager': {
+      id: '/admin/lager'
+      path: '/lager'
+      fullPath: '/admin/lager'
+      preLoaderRoute: typeof AdminLagerRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/newsletter': {
@@ -2372,6 +2391,7 @@ interface AdminRouteChildren {
   AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
+  AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -2399,6 +2419,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
+  AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminIndexRoute: AdminIndexRoute,
