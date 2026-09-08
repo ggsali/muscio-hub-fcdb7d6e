@@ -258,6 +258,7 @@ function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInsta
                     label={item.label}
                     collapsed={collapsed}
                     exact={item.exact}
+                    badge={item.badge}
                   />
                 ))}
               </div>

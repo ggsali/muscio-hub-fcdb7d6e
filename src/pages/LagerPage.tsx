@@ -1,10 +1,11 @@
 import React, { useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ScanLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FilamentBestandPage from "@/pages/filament/FilamentBestandPage";
 import FilamentArtenPage from "@/pages/filament/FilamentArtenPage";
 import FilamentRollenPage from "@/pages/filament/FilamentRollenPage";
 import FilamentEtikettenPage from "@/pages/filament/FilamentEtikettenPage";
-import FilamentScanPage from "@/pages/filament/FilamentScanPage";
 import FilamentLieferungPage from "@/pages/filament/FilamentLieferungPage";
 import VersandScanPage from "@/pages/filament/VersandScanPage";
 
@@ -14,7 +15,6 @@ const TABS = [
   { key: "rollen", label: "➕ Rollen anlegen" },
   { key: "lieferung", label: "🚚 Lieferung einbuchen" },
   { key: "etiketten", label: "🏷️ Etiketten" },
-  { key: "scan", label: "📷 Leer melden" },
   { key: "versand", label: "📦 Versand scannen" },
 ] as const;
 
@@ -28,7 +28,7 @@ export default function LagerPage() {
       <div className="px-4 md:px-6 pt-4 md:pt-6 print:hidden">
         <h1 className="text-xl md:text-2xl font-bold">Lager</h1>
         <p className="text-sm text-muted-foreground">Internes Filamentlager – Rollen, Etiketten und Bestände</p>
-        <div className="mt-4 flex flex-wrap gap-2 border-b border-border pb-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-b border-border pb-2">
           {TABS.map(t => (
             <button
               key={t.key}
@@ -43,6 +43,12 @@ export default function LagerPage() {
               {t.label}
             </button>
           ))}
+          <Link
+            to="/admin/scan"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm text-primary hover:bg-primary/10 transition-colors"
+          >
+            <ScanLine className="w-4 h-4" /> Scanner öffnen →
+          </Link>
         </div>
       </div>
 
@@ -51,7 +57,6 @@ export default function LagerPage() {
       {tab === "rollen" && <FilamentRollenPage />}
       {tab === "lieferung" && <FilamentLieferungPage />}
       {tab === "etiketten" && <FilamentEtikettenPage />}
-      {tab === "scan" && <FilamentScanPage />}
       {tab === "versand" && <VersandScanPage />}
     </div>
   );
