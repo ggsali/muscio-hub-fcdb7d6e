@@ -3031,6 +3031,17 @@ export type Database = {
         Args: { p_herkunft: string; p_inquiry_id: string }
         Returns: undefined
       }
+      validate_gutschein: {
+        Args: { p_code: string; p_subtotal: number }
+        Returns: {
+          error: string
+          id: string
+          mindestbestellwert: number
+          ok: boolean
+          typ: string
+          wert: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "customer"
