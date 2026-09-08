@@ -1,9 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, AlertTriangle } from "lucide-react";
+import { Plus, Search, AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import FilamentTypeForm from "@/components/filament/FilamentTypeForm";
+import FilamentTypeEditDialog from "@/components/filament/FilamentTypeEditDialog";
 import { loadSpools, loadTypes, fullCountByType, type FilamentSpool, type FilamentType } from "@/lib/filamentLager";
 
 export default function FilamentArtenPage() {
@@ -12,6 +24,9 @@ export default function FilamentArtenPage() {
   const [q, setQ] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editType, setEditType] = useState<FilamentType | null>(null);
+  const [deleteType, setDeleteType] = useState<FilamentType | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     try {
@@ -36,6 +51,18 @@ export default function FilamentArtenPage() {
       [t.material, t.farbe, t.hersteller || ""].join(" ").toLowerCase().includes(s)
     );
   }, [types, q]);
+
+  const confirmDelete = async () => {
+    if (!deleteType) return;
+    setDeleting(true);
+    const { error } = await supabase.from("filament_types").delete().eq("id", deleteType.id);
+    setDeleting(false);
+    if (error) { toast.error("Löschen fehlgeschlagen: " + error.message); return; }
+    toast.success(`"${deleteType.material} ${deleteType.farbe}" gelöscht`);
+    setTypes(prev => prev.filter(t => t.id !== deleteType.id));
+    setSpools(prev => prev.filter(s => s.filament_type_id !== deleteType.id));
+    setDeleteType(null);
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -102,11 +129,52 @@ export default function FilamentArtenPage() {
                     <AlertTriangle className="w-3.5 h-3.5" /> knapp – nachbestellen
                   </div>
                 )}
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => setEditType(t)}>
+                    <Pencil className="w-3.5 h-3.5 mr-1.5" /> Bearbeiten
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDeleteType(t)}
+                    aria-label="Filamentart löschen"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
             );
           })}
         </div>
       )}
+
+      <FilamentTypeEditDialog
+        type={editType}
+        open={!!editType}
+        onOpenChange={(v) => { if (!v) setEditType(null); }}
+        onSaved={(t) => setTypes(prev => prev.map(x => (x.id === t.id ? t : x)))}
+      />
+
+      <AlertDialog open={!!deleteType} onOpenChange={(v) => { if (!v) setDeleteType(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wirklich löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Filamentart „{deleteType?.material} {deleteType?.farbe}“ löschen? Alle verknüpften Rollen werden ebenfalls gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Löscht…" : "Löschen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
