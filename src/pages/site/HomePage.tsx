@@ -128,13 +128,28 @@ const HeroBento = () => (
           </span>
 
           <h1 className="font-heading text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.1] tracking-tight text-foreground mb-5">
-            3D-Druck aus der Schweiz.{" "}
-            <span className="text-primary">Datei hochladen, Sofortpreis erhalten</span>, in 48h geliefert.
+            3D-Druckservice Schweiz – <span className="text-primary">FDM &amp; SLA</span> ab 1 Stück.
           </h1>
 
           <p className="text-base md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed">
-            Schweizer 3D-Druckservice für schnelle Prototypen, Ersatzteile und Kleinserien – mit
-            Sofortpreis, persönlichem Service und Produktion in der Schweiz.
+            3DMuscio fertigt in Eschlikon TG Prototypen, Funktionsteile, Ersatzteile und Kleinserien
+            für Privatkunden, Entwickler, Startups und Unternehmen. Datei hochladen, Sofortpreis
+            sehen – Produktion in 48 h versandbereit.
+          </p>
+
+          <p className="text-sm text-muted-foreground mb-8">
+            Verfahren:{" "}
+            <Link to="/leistungen/fdm-3d-druck" className="text-primary hover:underline font-medium">
+              FDM 3D-Druck
+            </Link>{" "}
+            für belastbare Teile ·{" "}
+            <Link to="/leistungen/sla-3d-druck" className="text-primary hover:underline font-medium">
+              SLA / Resin 3D-Druck
+            </Link>{" "}
+            für feine Details ·{" "}
+            <Link to="/3d-druck-schweiz" className="text-primary hover:underline font-medium">
+              Überblick 3D-Druck Schweiz
+            </Link>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -560,8 +575,8 @@ const SEOContent = () => (
 const Index = () => (
   <div>
     <Seo
-      title="3D Druck Schweiz – Sofortpreis & 48h Lieferung | 3DMuscio"
-      description="Datei hochladen, Sofortpreis erhalten, in 48h geliefert. Professioneller 3D-Druck aus der Schweiz für Prototypen, Ersatzteile und Kleinserien. FDM & SLA, 0.1 mm Präzision."
+      title="3D-Druckservice Schweiz – FDM & SLA ab 1 Stück | 3DMuscio"
+      description="Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Produktion in 48 h versandbereit."
       path="/"
       jsonLd={[
         localBusinessJsonLd,
