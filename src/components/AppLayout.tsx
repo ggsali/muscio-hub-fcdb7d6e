@@ -39,7 +39,12 @@ const navGroups: NavGroup[] = [
     label: "Produktion",
     items: [
       { to: "/admin/druckplatten", icon: <Layers className={ic} />, label: "Druckplatten" },
-      { to: "/admin/filamente", icon: <FlaskConical className={ic} />, label: "Filamente" },
+      { to: "/admin/filamente", icon: <FlaskConical className={ic} />, label: "Filamente", exact: true },
+      { to: "/admin/filamente/arten", icon: <Package className={ic} />, label: "Filamentarten" },
+      { to: "/admin/filamente/rollen", icon: <Plus className={ic} />, label: "Rollen anlegen" },
+      { to: "/admin/filamente/etiketten", icon: <Printer className={ic} />, label: "Etiketten drucken" },
+      { to: "/admin/filamente/scan", icon: <ScanLine className={ic} />, label: "Rolle leer melden" },
+      { to: "/admin/filamente/bestand", icon: <Boxes className={ic} />, label: "Bestandsübersicht" },
       { to: "/admin/teile", icon: <Library className={ic} />, label: "Teile-Bibliothek" },
     ],
   },
