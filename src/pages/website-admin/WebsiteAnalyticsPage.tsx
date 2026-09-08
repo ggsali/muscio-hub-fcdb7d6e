@@ -129,9 +129,11 @@ export default function WebsiteAnalyticsPage() {
     return () => clearInterval(interval);
   }, [funnelRange]);
 
+  const funnelDays = funnelRange === "7tage" ? 7 : 30;
+
   const funnelPerDay = useMemo(() => {
     const buckets: Record<string, any> = {};
-    for (let i = 29; i >= 0; i--) {
+    for (let i = funnelDays - 1; i >= 0; i--) {
       const d = startOfDay(subDays(new Date(), i));
       buckets[format(d, "yyyy-MM-dd")] = {
         date: format(d, "dd.MM", { locale: de }),
@@ -154,7 +156,22 @@ export default function WebsiteAnalyticsPage() {
       else if (r.event === "schritt_5_bestellung_abgesendet") b.Bestellungen += 1;
     }
     return Object.values(buckets);
-  }, [calcRows]);
+  }, [calcRows, funnelDays]);
+
+  const stundenData = useMemo(() => {
+    if (funnelRange !== "heute") return [];
+    return Array.from({ length: 24 }, (_, h) => {
+      const uploads = calcRows.filter(e => {
+        const hour = new Date(e.created_at).getHours();
+        return hour === h && e.event === "schritt_1_datei_hochgeladen";
+      }).length;
+      const bestellungen = calcRows.filter(e => {
+        const hour = new Date(e.created_at).getHours();
+        return hour === h && e.event === "schritt_5_bestellung_abgesendet";
+      }).length;
+      return { stunde: `${h}:00`, uploads, bestellungen };
+    }).filter(d => d.uploads > 0 || d.bestellungen > 0);
+  }, [calcRows, funnelRange]);
 
   const herkunftTotal = herkunft.reduce((s, [, n]) => s + n, 0);
 
