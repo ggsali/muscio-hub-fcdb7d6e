@@ -95,7 +95,16 @@ export default function FilamentEtikettenPage() {
           {sorted.map(s => {
             const t = typeMap[s.filament_type_id];
             return (
-              <div key={s.id} className="etikett-seite">
+              <div key={s.id} className="etikett-seite relative">
+                <button
+                  type="button"
+                  onClick={() => markOne(s, "removed")}
+                  title="Aus Druckliste entfernen"
+                  aria-label={`Etikett ${s.spool_code} aus Druckliste entfernen`}
+                  className="print:hidden absolute -top-2 -right-2 z-10 w-6 h-6 rounded-full border border-border bg-card text-destructive flex items-center justify-center hover:bg-destructive/10"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
                 <div className="etikett-qr">
                   <QRCodeSVG value={s.spool_code} size={98} level="M" />
                 </div>
@@ -105,6 +114,13 @@ export default function FilamentEtikettenPage() {
                   <div className="etikett-code">{s.spool_code}</div>
                   <div className="etikett-gewicht">{s.gewicht_g}g</div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => markOne(s, "printed")}
+                  className="print:hidden absolute -bottom-3 left-1/2 -translate-x-1/2 z-10 inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  <Check className="w-3 h-3" /> bedruckt
+                </button>
               </div>
             );
           })}
