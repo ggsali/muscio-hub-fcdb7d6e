@@ -10,11 +10,10 @@ import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
 
 interface NavChild { label: string; path: string; }
-interface NavItem { label: string; path: string; children?: NavChild[]; }
+interface NavItem { label: string; path: string; children?: NavChild[]; isButton?: boolean; }
 
 const DEFAULT_NAV: NavItem[] = [
-  { label: "Home", path: "/" },
-  { label: "Kalkulator", path: "/kalkulator-online" },
+  { label: "Kalkulator", path: "/kalkulator-online", isButton: true },
   {
     label: "Leistungen",
     path: "/leistungen",
@@ -24,64 +23,35 @@ const DEFAULT_NAV: NavItem[] = [
       { label: "Prototypen", path: "/leistungen/3d-druck-prototypen" },
       { label: "Ersatzteile", path: "/leistungen/3d-druck-ersatzteile" },
       { label: "Kleinserien", path: "/leistungen/3d-druck-kleinserien" },
-      { label: "B2B / Firmenkunden", path: "/leistungen/b2b-3d-druck" },
       { label: "Materialien", path: "/materialien" },
     ],
   },
-  { label: "Shop", path: "/shop" },
-  { label: "Materialien", path: "/materialien" },
-  { label: "Blog", path: "/blog" },
+  { label: "Projekte", path: "/projekte" },
   {
     label: "Über uns",
     path: "/ueber-uns",
     children: [
-      { label: "Unsere Geschichte", path: "/ueber-uns#geschichte" },
-      { label: "Zeitleiste", path: "/ueber-uns#zeitleiste" },
-      { label: "Team", path: "/ueber-uns#team" },
-      { label: "Standort", path: "/ueber-uns#standort" },
+      { label: "Über 3DMuscio", path: "/ueber-uns" },
+      { label: "Blog", path: "/blog" },
+      { label: "Kontakt", path: "/kontakt" },
     ],
   },
-  { label: "Kontakt", path: "/kontakt" },
+  { label: "Shop", path: "/shop" },
 ];
+
+const MOBILE_FLAT_LINKS: NavChild[] = DEFAULT_NAV.flatMap((l) => {
+  if (l.children && l.children.length > 0) return l.children;
+  return [{ label: l.label, path: l.path }];
+});
 
 export const Header = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
-  const [navLinks, setNavLinks] = useState<NavItem[]>(DEFAULT_NAV);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [openMobileGroup, setOpenMobileGroup] = useState<string | null>(null);
   const dropdownTimer = useRef<number | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
-
-  useEffect(() => {
-    supabase.from("website_settings").select("value").eq("key", "nav_links").maybeSingle()
-      .then(({ data }) => {
-        const v = (data as any)?.value;
-        if (Array.isArray(v) && v.length) {
-          // Merge children from defaults if admin-defined items match by path
-          const merged: NavItem[] = (v as NavItem[]).map(item => {
-            const def = DEFAULT_NAV.find(d => d.path === item.path);
-            return def?.children ? { ...item, children: item.children || def.children } : item;
-          });
-          // Leistungen-Menü immer verfügbar halten (SEO-Unterseiten)
-          if (!merged.some(m => m.path === "/leistungen")) {
-            const leistungen = DEFAULT_NAV.find(d => d.path === "/leistungen")!;
-            const idx = merged.findIndex(m => m.path === "/kalkulator-online");
-            merged.splice(idx >= 0 ? idx + 1 : merged.length, 0, leistungen);
-          }
-          // Blog-Link immer verfügbar halten
-          if (!merged.some(m => m.path === "/blog")) {
-            const blog = DEFAULT_NAV.find(d => d.path === "/blog")!;
-            const idx = merged.findIndex(m => m.path === "/materialien");
-            merged.splice(idx >= 0 ? idx + 1 : merged.length, 0, blog);
-          }
-          setNavLinks(merged);
-        }
-
-      });
-  }, []);
 
   useEffect(() => { setOpen(false); setOpenDropdown(null); }, [location.pathname]);
 
@@ -144,7 +114,7 @@ export const Header = () => {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {navLinks.map((l) => {
+            {DEFAULT_NAV.map((l) => {
               const active = location.pathname === l.path;
               const hasChildren = l.children && l.children.length > 0;
               return (
@@ -154,32 +124,46 @@ export const Header = () => {
                   onMouseEnter={() => hasChildren && handleEnter(l.path)}
                   onMouseLeave={() => hasChildren && handleLeave()}
                 >
-                  <Link
-                    to={l.path}
-                    className="relative px-4 py-1.5 text-sm font-medium transition-colors group flex items-center gap-1"
-                  >
-                    <motion.span
-                      className="absolute bottom-0 left-4 right-4 h-px bg-primary rounded-full"
-                      initial={false}
-                      animate={{ scaleX: active ? 1 : 0, opacity: active ? 1 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      style={{ transformOrigin: "left" }}
-                    />
-                    <span className="absolute bottom-0 left-4 right-4 h-px rounded-full bg-foreground/20 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
-                    <span className={cn(
-                      "transition-colors duration-150",
-                      active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
-                    )}>
-                      {l.label}
-                    </span>
-                    {hasChildren && (
-                      <ChevronDown className={cn(
-                        "w-3 h-3 transition-transform duration-200",
-                        active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
-                        openDropdown === l.path && "rotate-180"
-                      )} />
-                    )}
-                  </Link>
+                  {l.isButton ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className={cn(
+                        "rounded-full h-8 px-4 text-xs font-bold border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors",
+                        active && "bg-primary text-primary-foreground"
+                      )}
+                    >
+                      <Link to={l.path}>{l.label}</Link>
+                    </Button>
+                  ) : (
+                    <Link
+                      to={l.path}
+                      className="relative px-4 py-1.5 text-sm font-medium transition-colors group flex items-center gap-1"
+                    >
+                      <motion.span
+                        className="absolute bottom-0 left-4 right-4 h-px bg-primary rounded-full"
+                        initial={false}
+                        animate={{ scaleX: active ? 1 : 0, opacity: active ? 1 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ transformOrigin: "left" }}
+                      />
+                      <span className="absolute bottom-0 left-4 right-4 h-px rounded-full bg-foreground/20 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
+                      <span className={cn(
+                        "transition-colors duration-150",
+                        active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                      )}>
+                        {l.label}
+                      </span>
+                      {hasChildren && (
+                        <ChevronDown className={cn(
+                          "w-3 h-3 transition-transform duration-200",
+                          active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+                          openDropdown === l.path && "rotate-180"
+                        )} />
+                      )}
+                    </Link>
+                  )}
 
                   <AnimatePresence>
                     {hasChildren && openDropdown === l.path && (
@@ -295,57 +279,23 @@ export const Header = () => {
               transition={{ duration: 0.2 }}
             >
               <nav className="flex flex-col p-3 gap-0.5">
-                {navLinks.map((l, i) => {
-                  const hasChildren = l.children && l.children.length > 0;
-                  const isExpanded = openMobileGroup === l.path;
+                {MOBILE_FLAT_LINKS.map((l, i) => {
+                  const active = location.pathname === l.path || location.pathname + location.hash === l.path;
                   return (
                     <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                      <div className="flex items-stretch">
-                        <Link
-                          to={l.path}
-                          onClick={() => !hasChildren && setOpen(false)}
-                          className={cn(
-                            "flex-1 flex items-center justify-between px-4 py-3 min-h-[48px] rounded-lg text-sm font-medium transition-colors",
-                            location.pathname === l.path
-                              ? "text-white bg-white/10 font-semibold"
-                              : "text-white/55 hover:text-white hover:bg-white/10"
-                          )}
-                        >
-                          {l.label}
-                          {location.pathname === l.path && !hasChildren && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                        </Link>
-                        {hasChildren && (
-                          <button
-                            onClick={() => setOpenMobileGroup(isExpanded ? null : l.path)}
-                            className="px-3 text-white/55 hover:text-white"
-                            aria-label="Untermenü"
-                          >
-                            <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
-                          </button>
+                      <Link
+                        to={l.path}
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center justify-between px-4 py-3 min-h-[48px] rounded-lg text-sm font-medium transition-colors",
+                          active
+                            ? "text-white bg-white/10 font-semibold"
+                            : "text-white/55 hover:text-white hover:bg-white/10"
                         )}
-                      </div>
-                      <AnimatePresence>
-                        {hasChildren && isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden ml-4 border-l border-white/10 pl-3"
-                          >
-                            {l.children!.map(c => (
-                              <Link
-                                key={c.path}
-                                to={c.path}
-                                onClick={() => setOpen(false)}
-                                className="block px-3 py-3 min-h-[48px] flex items-center text-sm text-white/55 hover:text-white rounded-md"
-                              >
-                                {c.label}
-                              </Link>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      >
+                        {l.label}
+                        {active && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                      </Link>
                     </motion.div>
                   );
                 })}
