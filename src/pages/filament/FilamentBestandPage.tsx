@@ -88,11 +88,10 @@ export default function FilamentBestandPage() {
   );
 
   const setSpoolStatus = async (spool: FilamentSpool, status: string) => {
-    const patch: Record<string, any> = { status };
-    patch.emptied_at = status === "leer" ? new Date().toISOString() : null;
-    const { error } = await supabase.from("filament_spools").update(patch).eq("id", spool.id);
+    const emptied_at = status === "leer" ? new Date().toISOString() : null;
+    const { error } = await supabase.from("filament_spools").update({ status, emptied_at }).eq("id", spool.id);
     if (error) { toast.error("Fehlgeschlagen: " + error.message); return; }
-    setSpools(prev => prev.map(s => (s.id === spool.id ? { ...s, ...patch } as FilamentSpool : s)));
+    setSpools(prev => prev.map(s => (s.id === spool.id ? { ...s, status, emptied_at } : s)));
     toast.success(`${spool.spool_code} als ${status} markiert`);
   };
 
