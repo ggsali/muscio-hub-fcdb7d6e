@@ -8,9 +8,10 @@ interface SidebarNavLinkProps {
   label: string;
   collapsed: boolean;
   exact?: boolean;
+  badge?: string;
 }
 
-export const SidebarNavLink: React.FC<SidebarNavLinkProps> = ({ to, icon, label, collapsed, exact }) => {
+export const SidebarNavLink: React.FC<SidebarNavLinkProps> = ({ to, icon, label, collapsed, exact, badge }) => {
   const location = useLocation();
   const isActive = exact
     ? location.pathname === to
@@ -29,6 +30,11 @@ export const SidebarNavLink: React.FC<SidebarNavLinkProps> = ({ to, icon, label,
       >
         <span className={cn("flex-shrink-0", isActive && "text-primary")}>{icon}</span>
         {!collapsed && <span className="truncate">{label}</span>}
+        {!collapsed && badge && (
+          <span className="ml-auto rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground flex-shrink-0">
+            {badge}
+          </span>
+        )}
       </div>
     </RouterNavLink>
   );
