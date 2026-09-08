@@ -58,6 +58,7 @@ import { Route as AdminFilamenteRouteImport } from './routes/admin/filamente'
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
+import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
@@ -370,6 +371,11 @@ const AdminKalenderRoute = AdminKalenderRouteImport.update({
 const AdminKalkulatorRoute = AdminKalkulatorRouteImport.update({
   id: '/kalkulator',
   path: '/kalkulator',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKiOfferteRoute = AdminKiOfferteRouteImport.update({
+  id: '/ki-offerte',
+  path: '/ki-offerte',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLagerRoute = AdminLagerRouteImport.update({
@@ -776,6 +782,7 @@ export interface FileRoutesByFullPath {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
@@ -891,6 +898,7 @@ export interface FileRoutesByTo {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
@@ -1012,6 +1020,7 @@ export interface FileRoutesById {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
@@ -1134,6 +1143,7 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
@@ -1249,6 +1259,7 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
@@ -1369,6 +1380,7 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
@@ -1821,6 +1833,13 @@ declare module '@tanstack/react-router' {
       path: '/kalkulator'
       fullPath: '/admin/kalkulator'
       preLoaderRoute: typeof AdminKalkulatorRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ki-offerte': {
+      id: '/admin/ki-offerte'
+      path: '/ki-offerte'
+      fullPath: '/admin/ki-offerte'
+      preLoaderRoute: typeof AdminKiOfferteRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/lager': {
@@ -2410,6 +2429,7 @@ interface AdminRouteChildren {
   AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
+  AdminKiOfferteRoute: typeof AdminKiOfferteRoute
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminScanRoute: typeof AdminScanRoute
@@ -2439,6 +2459,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
+  AdminKiOfferteRoute: AdminKiOfferteRoute,
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminScanRoute: AdminScanRoute,

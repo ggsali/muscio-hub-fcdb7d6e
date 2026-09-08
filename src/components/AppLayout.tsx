@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Menu, X, CalendarDays, MessageCircle,
   Mail, Layers, Receipt, Smartphone, ShoppingBag, FileText, PenLine, Star,
-  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes } from "lucide-react";
+  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,6 +31,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/admin/auftraege", icon: <Package className={ic} />, label: "Aufträge" },
       { to: "/admin/kunden", icon: <Users className={ic} />, label: "Kunden" },
+      { to: "/admin/ki-offerte", icon: <Sparkles className={ic} />, label: "KI-Offerte", badge: "NEU" },
       { to: "/admin/anfragen", icon: <MessageSquare className={ic} />, label: "Anfragen" },
       { to: "/admin/website/bestellungen", icon: <ShoppingBag className={ic} />, label: "Bestellungen" },
       { to: "/admin/chat", icon: <MessageCircle className={ic} />, label: "Live-Chat" },
