@@ -1,0 +1,3 @@
+ALTER TABLE public.filament_spools
+  ADD COLUMN IF NOT EXISTS eingelagert BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS eingelagert_at TIMESTAMPTZ;

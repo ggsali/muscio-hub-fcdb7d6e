@@ -776,6 +776,8 @@ export type Database = {
       filament_spools: {
         Row: {
           created_at: string
+          eingelagert: boolean
+          eingelagert_at: string | null
           emptied_at: string | null
           filament_type_id: string
           gewicht_g: number
@@ -786,6 +788,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          eingelagert?: boolean
+          eingelagert_at?: string | null
           emptied_at?: string | null
           filament_type_id: string
           gewicht_g?: number
@@ -796,6 +800,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          eingelagert?: boolean
+          eingelagert_at?: string | null
           emptied_at?: string | null
           filament_type_id?: string
           gewicht_g?: number
