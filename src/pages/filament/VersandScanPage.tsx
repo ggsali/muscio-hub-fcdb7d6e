@@ -95,15 +95,26 @@ export default function VersandScanPage() {
         .or(`name.ilike.%${s}%,beschreibung.ilike.%${s}%`)
         .order("created_at", { ascending: false })
         .limit(20);
-      const { data: byCustomer } = await supabase
-        .from("orders")
-        .select(sel)
-        .or(`vorname.ilike.%${s}%,name.ilike.%${s}%`, { foreignTable: "customers" } as any)
-        .order("created_at", { ascending: false })
+
+      const { data: kunden } = await supabase
+        .from("customers")
+        .select("id")
+        .or(`vorname.ilike.%${s}%,name.ilike.%${s}%,firma.ilike.%${s}%`)
         .limit(20);
+      const kundenIds = (kunden || []).map((k: any) => k.id);
+      let byCustomer: any[] = [];
+      if (kundenIds.length > 0) {
+        const { data } = await supabase
+          .from("orders")
+          .select(sel)
+          .in("customer_id", kundenIds)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        byCustomer = data || [];
+      }
+
       const merged = new Map<string, OrderRow>();
-      for (const row of [...(byName || []), ...(byCustomer || [])] as unknown as OrderRow[]) {
-        if (row.customers === null && (byCustomer || []).includes(row as any)) continue;
+      for (const row of [...(byName || []), ...byCustomer] as unknown as OrderRow[]) {
         merged.set(row.id, row);
       }
       setCandidates([...merged.values()].slice(0, 20));
