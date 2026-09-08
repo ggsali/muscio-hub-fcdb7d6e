@@ -10,32 +10,28 @@ const STEPS_WEBSITE = [
 ] as const;
 
 const STEPS_MANUAL = [
-  { key: 'offen', label: 'Bestellt', icon: ClipboardList },
-  { key: 'bearbeitung', label: 'In Bearbeitung', icon: Cog },
+  { key: 'offen', label: 'Anfrage', icon: ClipboardList },
   { key: 'bezahlt', label: 'Bezahlt', icon: CreditCard },
+  { key: 'bearbeitung', label: 'In Produktion', icon: Cog },
   { key: 'geliefert', label: 'Versandt', icon: Package },
   { key: 'abgeschlossen', label: 'Abgeschlossen', icon: CheckCircle2 },
 ] as const;
 
-function statusToStep(status: string, isWebsite: boolean): number {
-  if (isWebsite) {
-    switch (status) {
-      case 'Offen': return 0
-      case 'Bezahlt': return 1
-      case 'In Bearbeitung': return 2
-      case 'Geliefert': return 3
-      case 'Abgeschlossen': return 4
-      default: return 0
-    }
-  } else {
-    switch (status) {
-      case 'Offen': return 0
-      case 'In Bearbeitung': return 1
-      case 'Bezahlt': return 2
-      case 'Geliefert': return 3
-      case 'Abgeschlossen': return 4
-      default: return 0
-    }
+function statusToStep(status: string): number {
+  switch (status) {
+    // Neuer Workflow
+    case 'Anfrage': return 0
+    case 'Offerte gesendet': return 0
+    case 'Bezahlt': return 1
+    case 'Im Druck': return 2
+    case 'Qualitätsprüfung': return 2
+    case 'Versandt': return 3
+    case 'Abgeschlossen': return 4
+    // Alte Bezeichnungen
+    case 'Offen': return 0
+    case 'In Bearbeitung': return 2
+    case 'Geliefert': return 3
+    default: return 0
   }
 }
 

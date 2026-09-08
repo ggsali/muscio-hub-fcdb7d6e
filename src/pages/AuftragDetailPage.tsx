@@ -2236,8 +2236,8 @@ export default function AuftragDetailPage() {
                   />
                 </div>
                 <div className="md:col-span-2 text-sm space-y-1">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{formatCHF(bruttoUmsatz)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt {rabattPct > 0 ? `(${rabattPct}%)` : ""}</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{formatCHF(selectedBruttoUmsatz)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt {rabattPct > 0 ? `(${rabattPct}%)` : ""}</span><span className="text-destructive">− {formatCHF(selectedRabattBetrag)}</span></div>
                   <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(selectedTotalUmsatz)}</span></div>
                 </div>
               </div>
