@@ -14,7 +14,6 @@ interface NavItem { label: string; path: string; children?: NavChild[]; }
 
 const DEFAULT_NAV: NavItem[] = [
   { label: "Home", path: "/" },
-  { label: "Shop", path: "/shop" },
   { label: "Kalkulator", path: "/kalkulator-online" },
   {
     label: "Leistungen",
@@ -29,8 +28,9 @@ const DEFAULT_NAV: NavItem[] = [
       { label: "Materialien", path: "/materialien" },
     ],
   },
-
+  { label: "Shop", path: "/shop" },
   { label: "Materialien", path: "/materialien" },
+  { label: "Blog", path: "/blog" },
   {
     label: "Über uns",
     path: "/ueber-uns",
@@ -41,7 +41,6 @@ const DEFAULT_NAV: NavItem[] = [
       { label: "Standort", path: "/ueber-uns#standort" },
     ],
   },
-  { label: "Blog", path: "/blog" },
   { label: "Kontakt", path: "/kontakt" },
 ];
 
@@ -71,6 +70,12 @@ export const Header = () => {
             const leistungen = DEFAULT_NAV.find(d => d.path === "/leistungen")!;
             const idx = merged.findIndex(m => m.path === "/kalkulator-online");
             merged.splice(idx >= 0 ? idx + 1 : merged.length, 0, leistungen);
+          }
+          // Blog-Link immer verfügbar halten
+          if (!merged.some(m => m.path === "/blog")) {
+            const blog = DEFAULT_NAV.find(d => d.path === "/blog")!;
+            const idx = merged.findIndex(m => m.path === "/materialien");
+            merged.splice(idx >= 0 ? idx + 1 : merged.length, 0, blog);
           }
           setNavLinks(merged);
         }
