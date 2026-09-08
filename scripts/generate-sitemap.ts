@@ -39,7 +39,6 @@ const lokaleSlugs = [
   "3d-druck-st-gallen",
   "3d-druck-winterthur",
   "3d-druck-zuerich",
-  "3d-druck-bern",
 ];
 
 
@@ -56,6 +55,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/wissen/3d-druck-kosten-schweiz", changefreq: "monthly", priority: "0.9" },
   ...locationSlugs.map((s): SitemapEntry => ({ path: `/standorte/${s}`, changefreq: "monthly", priority: "0.7" })),
   ...lokaleSlugs.map((s): SitemapEntry => ({ path: `/${s}`, changefreq: "monthly", priority: "0.8" })),
+  { path: "/3d-druck-bern", changefreq: "monthly", priority: "0.7" },
   { path: "/shop", changefreq: "weekly", priority: "0.8" },
 
   { path: "/maschinen", changefreq: "monthly", priority: "0.6" },
