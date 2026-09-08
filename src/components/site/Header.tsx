@@ -71,6 +71,12 @@ export const Header = () => {
             const idx = merged.findIndex(m => m.path === "/kalkulator-online");
             merged.splice(idx >= 0 ? idx + 1 : merged.length, 0, leistungen);
           }
+          // Blog-Link immer verfügbar halten
+          if (!merged.some(m => m.path === "/blog")) {
+            const blog = DEFAULT_NAV.find(d => d.path === "/blog")!;
+            const idx = merged.findIndex(m => m.path === "/materialien");
+            merged.splice(idx >= 0 ? idx + 1 : merged.length, 0, blog);
+          }
           setNavLinks(merged);
         }
 
