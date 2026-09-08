@@ -132,6 +132,11 @@ export default function DruckSchweizPage() {
           { label: "Materialien", to: "/materialien", text: "PLA, PETG, ABS, ASA, TPU, Resin im Überblick." },
           { label: "3D-Druck Kosten Schweiz", to: "/wissen/3d-druck-kosten-schweiz", text: "Woraus sich der Preis zusammensetzt." },
           { label: "Preis berechnen", to: "/kalkulator-online", text: "Datei hochladen, Preis sofort sehen." },
+          { label: "3D-Druck Thurgau", to: "/3d-druck-thurgau", text: "Produktionsstandort Eschlikon TG mit Abholung." },
+          { label: "3D-Druck Ostschweiz", to: "/3d-druck-ostschweiz", text: "Übersicht der Ostschweizer Regionen." },
+          { label: "3D-Druck St. Gallen", to: "/3d-druck-st-gallen", text: "Lieferung in die Region St. Gallen." },
+          { label: "3D-Druck Winterthur", to: "/3d-druck-winterthur", text: "Rund 25 km zur Produktion." },
+          { label: "3D-Druck Zürich", to: "/3d-druck-zuerich", text: "Online bestellen, Versand nach Zürich." },
         ]}
       />
     </>

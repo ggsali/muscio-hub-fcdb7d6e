@@ -34,10 +34,11 @@ const comparisonSlugs = [
 ];
 const locationSlugs = ["thurgau", "ostschweiz", "zuerich", "st-gallen"];
 const lokaleSlugs = [
-  "3d-druck-zuerich",
-  "3d-druck-winterthur",
-  "3d-druck-st-gallen",
+  "3d-druck-thurgau",
   "3d-druck-ostschweiz",
+  "3d-druck-st-gallen",
+  "3d-druck-winterthur",
+  "3d-druck-zuerich",
   "3d-druck-bern",
 ];
 

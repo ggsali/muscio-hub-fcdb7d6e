@@ -37,6 +37,7 @@ import { Route as Site3dDruckBernRouteImport } from './routes/_site/3d-druck-ber
 import { Route as Site3dDruckOstschweizRouteImport } from './routes/_site/3d-druck-ostschweiz'
 import { Route as Site3dDruckSchweizRouteImport } from './routes/_site/3d-druck-schweiz'
 import { Route as Site3dDruckStGallenRouteImport } from './routes/_site/3d-druck-st-gallen'
+import { Route as Site3dDruckThurgauRouteImport } from './routes/_site/3d-druck-thurgau'
 import { Route as Site3dDruckWinterthurRouteImport } from './routes/_site/3d-druck-winterthur'
 import { Route as Site3dDruckZuerichRouteImport } from './routes/_site/3d-druck-zuerich'
 import { Route as SiteAgbRouteImport } from './routes/_site/agb'
@@ -266,6 +267,11 @@ const Site3dDruckSchweizRoute = Site3dDruckSchweizRouteImport.update({
 const Site3dDruckStGallenRoute = Site3dDruckStGallenRouteImport.update({
   id: '/3d-druck-st-gallen',
   path: '/3d-druck-st-gallen',
+  getParentRoute: () => SiteRoute,
+} as any)
+const Site3dDruckThurgauRoute = Site3dDruckThurgauRouteImport.update({
+  id: '/3d-druck-thurgau',
+  path: '/3d-druck-thurgau',
   getParentRoute: () => SiteRoute,
 } as any)
 const Site3dDruckWinterthurRoute = Site3dDruckWinterthurRouteImport.update({
@@ -762,6 +768,7 @@ export interface FileRoutesByFullPath {
   '/3d-druck-ostschweiz': typeof Site3dDruckOstschweizRoute
   '/3d-druck-schweiz': typeof Site3dDruckSchweizRoute
   '/3d-druck-st-gallen': typeof Site3dDruckStGallenRoute
+  '/3d-druck-thurgau': typeof Site3dDruckThurgauRoute
   '/3d-druck-winterthur': typeof Site3dDruckWinterthurRoute
   '/3d-druck-zuerich': typeof Site3dDruckZuerichRoute
   '/agb': typeof SiteAgbRoute
@@ -878,6 +885,7 @@ export interface FileRoutesByTo {
   '/3d-druck-ostschweiz': typeof Site3dDruckOstschweizRoute
   '/3d-druck-schweiz': typeof Site3dDruckSchweizRoute
   '/3d-druck-st-gallen': typeof Site3dDruckStGallenRoute
+  '/3d-druck-thurgau': typeof Site3dDruckThurgauRoute
   '/3d-druck-winterthur': typeof Site3dDruckWinterthurRoute
   '/3d-druck-zuerich': typeof Site3dDruckZuerichRoute
   '/agb': typeof SiteAgbRoute
@@ -1000,6 +1008,7 @@ export interface FileRoutesById {
   '/_site/3d-druck-ostschweiz': typeof Site3dDruckOstschweizRoute
   '/_site/3d-druck-schweiz': typeof Site3dDruckSchweizRoute
   '/_site/3d-druck-st-gallen': typeof Site3dDruckStGallenRoute
+  '/_site/3d-druck-thurgau': typeof Site3dDruckThurgauRoute
   '/_site/3d-druck-winterthur': typeof Site3dDruckWinterthurRoute
   '/_site/3d-druck-zuerich': typeof Site3dDruckZuerichRoute
   '/_site/agb': typeof SiteAgbRoute
@@ -1123,6 +1132,7 @@ export interface FileRouteTypes {
     | '/3d-druck-ostschweiz'
     | '/3d-druck-schweiz'
     | '/3d-druck-st-gallen'
+    | '/3d-druck-thurgau'
     | '/3d-druck-winterthur'
     | '/3d-druck-zuerich'
     | '/agb'
@@ -1239,6 +1249,7 @@ export interface FileRouteTypes {
     | '/3d-druck-ostschweiz'
     | '/3d-druck-schweiz'
     | '/3d-druck-st-gallen'
+    | '/3d-druck-thurgau'
     | '/3d-druck-winterthur'
     | '/3d-druck-zuerich'
     | '/agb'
@@ -1360,6 +1371,7 @@ export interface FileRouteTypes {
     | '/_site/3d-druck-ostschweiz'
     | '/_site/3d-druck-schweiz'
     | '/_site/3d-druck-st-gallen'
+    | '/_site/3d-druck-thurgau'
     | '/_site/3d-druck-winterthur'
     | '/_site/3d-druck-zuerich'
     | '/_site/agb'
@@ -1686,6 +1698,13 @@ declare module '@tanstack/react-router' {
       path: '/3d-druck-st-gallen'
       fullPath: '/3d-druck-st-gallen'
       preLoaderRoute: typeof Site3dDruckStGallenRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/3d-druck-thurgau': {
+      id: '/_site/3d-druck-thurgau'
+      path: '/3d-druck-thurgau'
+      fullPath: '/3d-druck-thurgau'
+      preLoaderRoute: typeof Site3dDruckThurgauRouteImport
       parentRoute: typeof SiteRoute
     }
     '/_site/3d-druck-winterthur': {
@@ -2333,6 +2352,7 @@ interface SiteRouteChildren {
   Site3dDruckOstschweizRoute: typeof Site3dDruckOstschweizRoute
   Site3dDruckSchweizRoute: typeof Site3dDruckSchweizRoute
   Site3dDruckStGallenRoute: typeof Site3dDruckStGallenRoute
+  Site3dDruckThurgauRoute: typeof Site3dDruckThurgauRoute
   Site3dDruckWinterthurRoute: typeof Site3dDruckWinterthurRoute
   Site3dDruckZuerichRoute: typeof Site3dDruckZuerichRoute
   SiteAgbRoute: typeof SiteAgbRoute
@@ -2368,6 +2388,7 @@ const SiteRouteChildren: SiteRouteChildren = {
   Site3dDruckOstschweizRoute: Site3dDruckOstschweizRoute,
   Site3dDruckSchweizRoute: Site3dDruckSchweizRoute,
   Site3dDruckStGallenRoute: Site3dDruckStGallenRoute,
+  Site3dDruckThurgauRoute: Site3dDruckThurgauRoute,
   Site3dDruckWinterthurRoute: Site3dDruckWinterthurRoute,
   Site3dDruckZuerichRoute: Site3dDruckZuerichRoute,
   SiteAgbRoute: SiteAgbRoute,

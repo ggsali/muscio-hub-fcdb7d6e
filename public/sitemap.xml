@@ -156,12 +156,12 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://3dmuscio.com/3d-druck-zuerich</loc>
+    <loc>https://3dmuscio.com/3d-druck-thurgau</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://3dmuscio.com/3d-druck-winterthur</loc>
+    <loc>https://3dmuscio.com/3d-druck-ostschweiz</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -171,7 +171,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://3dmuscio.com/3d-druck-ostschweiz</loc>
+    <loc>https://3dmuscio.com/3d-druck-winterthur</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://3dmuscio.com/3d-druck-zuerich</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
