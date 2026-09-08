@@ -577,7 +577,6 @@ export default function AuftragDetailPage() {
         const pct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
         const brutto =
           nextParts.reduce((s, p) => s + (p.preis_total || 0), 0) +
-          nextParts.length * activeSettings.setup_pauschale +
           (nextParts.length > 0 ? Math.max(0, Number(expressKosten) || 0) : 0);
         const neuTotal = brutto - brutto * (pct / 100);
         await supabase.from("orders").update({ umsatz_total: neuTotal }).eq("id", id);
@@ -619,17 +618,18 @@ export default function AuftragDetailPage() {
   // ── AUSGEWÄHLTE TEILE (für PDF/Mail/Anzeige) ───────────
   const selectedParts = parts.filter(p => p.id && selectedPartIds.has(p.id));
 
-  // Setup-Pauschale: 1× pro ausgewähltem Teil
+  // Setup-Pauschale ist bereits in jedem Teilpreis enthalten (calcUmsatz) –
+  // hier nur zur Anzeige in der Kostenaufschlüsselung ausgewiesen.
   const selectedSetup = selectedParts.reduce((s, _p) => s + activeSettings.setup_pauschale, 0);
 
-  // Teilpreise
+  // Teilpreise (inkl. Setup)
   const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + (p.preis_total || 0), 0);
 
   // Express nur wenn Teile ausgewählt
   const selectedExpressAmount = selectedParts.length > 0 ? expressBetrag : 0;
 
-  // Brutto = Teile + Setup + Express
-  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedSetup + selectedExpressAmount;
+  // Brutto = Teile (inkl. Setup) + Express
+  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedExpressAmount;
 
   // Rabatt auf Brutto
   const selectedRabattBetrag = selectedBruttoUmsatz * (rabattPct / 100);
@@ -2236,8 +2236,8 @@ export default function AuftragDetailPage() {
                   />
                 </div>
                 <div className="md:col-span-2 text-sm space-y-1">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{formatCHF(bruttoUmsatz)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt {rabattPct > 0 ? `(${rabattPct}%)` : ""}</span><span className="text-destructive">− {formatCHF(rabattBetrag)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{formatCHF(selectedBruttoUmsatz)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Rabatt {rabattPct > 0 ? `(${rabattPct}%)` : ""}</span><span className="text-destructive">− {formatCHF(selectedRabattBetrag)}</span></div>
                   <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(selectedTotalUmsatz)}</span></div>
                 </div>
               </div>

@@ -33,7 +33,7 @@ export default function PortalLayout() {
         .from("orders")
         .select("id", { count: "exact", head: true })
         .eq("customer_id", cust.id)
-        .not("status", "in", "(Abgeschlossen,Storniert,Geliefert)");
+        .not("status", "in", "(Abgeschlossen,Storniert,Geliefert,Versandt)");
       setOpenOrders(count || 0);
     })();
   }, [session?.user?.id]);
