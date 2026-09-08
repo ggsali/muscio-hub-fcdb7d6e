@@ -100,6 +100,13 @@ const printStyles = `
     @page {
       size: 50mm 30mm;
       margin: 0mm;
+      margin-top: 0mm;
+      margin-bottom: 0mm;
+    }
+
+    html {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     html, body {
