@@ -16,27 +16,42 @@ interface Order {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  "Offen":           "bg-muted text-muted-foreground border-border",
-  "In Bearbeitung":  "bg-warning/20 text-warning border-warning/40",
-  "Geliefert":       "bg-info/20 text-info border-info/40",
-  "Bezahlt":         "bg-success/20 text-success border-success/40",
-  "Abgeschlossen":   "bg-purple/20 text-purple border-purple/40",
+  "Anfrage":           "bg-muted text-muted-foreground border-border",
+  "Offerte gesendet":  "bg-info/20 text-info border-info/40",
+  "Bezahlt":           "bg-success/20 text-success border-success/40",
+  "Im Druck":          "bg-warning/20 text-warning border-warning/40",
+  "Qualitätsprüfung":  "bg-purple/20 text-purple border-purple/40",
+  "Versandt":          "bg-info/20 text-info border-info/40",
+  "Offen":             "bg-muted text-muted-foreground border-border",
+  "In Bearbeitung":    "bg-warning/20 text-warning border-warning/40",
+  "Geliefert":         "bg-info/20 text-info border-info/40",
+  "Abgeschlossen":     "bg-purple/20 text-purple border-purple/40",
 };
 
 const BAR_COLORS: Record<string, string> = {
-  "Offen":           "bg-muted-foreground/40",
-  "In Bearbeitung":  "bg-warning/50",
-  "Geliefert":       "bg-info/50",
-  "Bezahlt":         "bg-success/50",
-  "Abgeschlossen":   "bg-purple/50",
+  "Anfrage":           "bg-muted-foreground/40",
+  "Offerte gesendet":  "bg-info/50",
+  "Bezahlt":           "bg-success/50",
+  "Im Druck":          "bg-warning/50",
+  "Qualitätsprüfung":  "bg-purple/50",
+  "Versandt":          "bg-info/50",
+  "Offen":             "bg-muted-foreground/40",
+  "In Bearbeitung":    "bg-warning/50",
+  "Geliefert":         "bg-info/50",
+  "Abgeschlossen":     "bg-purple/50",
 };
 
 const DOT_COLORS: Record<string, string> = {
-  "Offen":           "bg-muted-foreground",
-  "In Bearbeitung":  "bg-warning",
-  "Geliefert":       "bg-info",
-  "Bezahlt":         "bg-success",
-  "Abgeschlossen":   "bg-purple",
+  "Anfrage":           "bg-muted-foreground",
+  "Offerte gesendet":  "bg-info",
+  "Bezahlt":           "bg-success",
+  "Im Druck":          "bg-warning",
+  "Qualitätsprüfung":  "bg-purple",
+  "Versandt":          "bg-info",
+  "Offen":             "bg-muted-foreground",
+  "In Bearbeitung":    "bg-warning",
+  "Geliefert":         "bg-info",
+  "Abgeschlossen":     "bg-purple",
 };
 
 const MONTHS_DE = [
