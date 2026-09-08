@@ -128,6 +128,7 @@ export default function ServiceDetailPage() {
           { name: service.h1, to: path },
         ]}
         sections={service.sections}
+        table={service.table}
         faqs={service.faqs}
         related={service.related}
       />

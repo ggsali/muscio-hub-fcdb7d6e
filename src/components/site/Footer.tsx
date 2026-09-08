@@ -5,6 +5,7 @@ import logo from "@/assets/logo.jpeg";
 
 const footerLinks = [
   { label: "Kalkulator", path: "/kalkulator-online" },
+  { label: "3D-Druck Schweiz", path: "/3d-druck-schweiz" },
   { label: "Leistungen", path: "/leistungen" },
   { label: "Materialien", path: "/materialien" },
   { label: "3D-Druck Kosten", path: "/wissen/3d-druck-kosten-schweiz" },
