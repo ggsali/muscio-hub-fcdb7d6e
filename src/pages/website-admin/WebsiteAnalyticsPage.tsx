@@ -104,11 +104,11 @@ export default function WebsiteAnalyticsPage() {
   }
 
   async function loadCalcEvents() {
-    const since30 = subDays(new Date(), 30).toISOString();
+    const since = getFunnelFrom();
     const { data } = await supabase
       .from("calc_events")
       .select("event, created_at")
-      .gte("created_at", since30)
+      .gte("created_at", since)
       .limit(20000);
     const rows = (data as { event: string; created_at: string }[]) || [];
     const counts: Record<string, number> = {};
@@ -120,6 +120,14 @@ export default function WebsiteAnalyticsPage() {
   }
 
   useEffect(() => { loadHerkunft(); loadCalcEvents(); }, []);
+
+  useEffect(() => { loadCalcEvents(); }, [funnelRange]);
+
+  useEffect(() => {
+    if (funnelRange !== "heute") return;
+    const interval = setInterval(() => loadCalcEvents(), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [funnelRange]);
 
   const funnelPerDay = useMemo(() => {
     const buckets: Record<string, any> = {};
