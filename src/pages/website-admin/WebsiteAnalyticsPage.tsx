@@ -324,9 +324,6 @@ export default function WebsiteAnalyticsPage() {
         <StatCard icon={BarChart3} label="Ø pro Tag" value={stats.avgPerDay} hint={`${range.label}`} />
       </div>
 
-      const funnelLabel = funnelRange === "heute" ? "Heute" :
-        funnelRange === "7tage" ? "Letzte 7 Tage" : "Letzte 30 Tage";
-
       <Card className="p-4 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
           <div>
