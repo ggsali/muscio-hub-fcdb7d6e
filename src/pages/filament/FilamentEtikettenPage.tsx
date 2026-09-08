@@ -52,12 +52,23 @@ export default function FilamentEtikettenPage() {
     <div className="p-4 md:p-6 space-y-6">
       <style>{`
         @media print {
-          body * { visibility: hidden !important; }
-          #etiketten-druck, #etiketten-druck * { visibility: visible !important; }
-          #etiketten-druck { position: absolute; left: 0; top: 0; width: 50mm; }
-          .fil-label { page-break-after: always; break-after: page; border: none !important; }
+          @page {
+            size: 50mm 30mm;
+            margin: 0;
+          }
+          body * { visibility: hidden; }
+          .etiketten-druck-container,
+          .etiketten-druck-container * { visibility: visible; }
+          .etiketten-druck-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+          }
+          .etikett-print {
+            page-break-after: always;
+            break-after: page;
+          }
         }
-        @page { size: 50mm 30mm; margin: 0; }
       `}</style>
 
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
@@ -80,21 +91,34 @@ export default function FilamentEtikettenPage() {
       ) : sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground print:hidden">Keine unbedruckten Rollen — alle Etiketten sind aktuell.</p>
       ) : (
-        <div id="etiketten-druck" className="flex flex-wrap gap-4 print:block print:gap-0">
+        <div id="etiketten-druck" className="etiketten-druck-container flex flex-wrap gap-4 print:block print:gap-0">
           {sorted.map(s => {
             const t = typeMap[s.filament_type_id];
             return (
               <div
                 key={s.id}
-                className="fil-label border border-border rounded-md bg-white text-black flex items-center gap-2 p-2 overflow-hidden"
+                className="etikett-print bg-white text-black flex items-center overflow-hidden"
                 style={{ width: "50mm", height: "30mm" }}
               >
-                <QRCodeSVG value={s.spool_code} size={80} level="M" style={{ width: "22mm", height: "22mm" }} />
-                <div className="min-w-0 leading-tight">
-                  <p className="text-[10px] font-bold truncate">{t ? t.material : "?"}</p>
-                  <p className="text-[10px] truncate">{t ? t.farbe : ""}</p>
-                  <p className="text-[10px] font-mono">{s.spool_code}</p>
-                  <p className="text-[8px]">{s.gewicht_g} g</p>
+                <div
+                  className="flex items-center justify-center"
+                  style={{ width: "30mm", height: "30mm", flexShrink: 0 }}
+                >
+                  <QRCodeSVG
+                    value={s.spool_code}
+                    size={110}
+                    level="M"
+                    style={{ width: "28mm", height: "28mm" }}
+                  />
+                </div>
+                <div
+                  className="leading-tight flex flex-col justify-center min-w-0"
+                  style={{ width: "20mm", height: "30mm", paddingRight: "1mm" }}
+                >
+                  <p className="text-[9px] font-bold truncate">{t ? t.material : "?"}</p>
+                  <p className="text-[9px] truncate">{t ? t.farbe : ""}</p>
+                  <p className="text-[8px] font-mono truncate">{s.spool_code}</p>
+                  <p className="text-[7px]">{s.gewicht_g}g</p>
                 </div>
               </div>
             );
