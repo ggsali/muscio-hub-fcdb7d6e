@@ -15,13 +15,14 @@ import { cn } from "@/lib/utils";
 
 const ic = "w-[18px] h-[18px]";
 
-type NavItem = { to: string; icon: React.ReactNode; label: string; exact?: boolean };
+type NavItem = { to: string; icon: React.ReactNode; label: string; exact?: boolean; badge?: string };
 type NavGroup = { label: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
   {
     label: "Übersicht",
     items: [
+      { to: "/admin/scan", icon: <ScanLine className={ic} />, label: "Scanner", badge: "NEU" },
       { to: "/admin", icon: <LayoutDashboard className={ic} />, label: "Dashboard", exact: true },
     ],
   },
@@ -153,6 +154,11 @@ function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstal
                         >
                           {item.icon}
                           <span>{item.label}</span>
+                          {item.badge && (
+                            <span className="ml-auto rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
+                              {item.badge}
+                            </span>
+                          )}
                         </NavLink>
                       ))}
                     </div>
