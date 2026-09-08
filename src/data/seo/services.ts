@@ -1,4 +1,4 @@
-import type { AnswerFaq, AnswerSection, RelatedLink } from "@/components/site/AnswerLanding";
+import type { AnswerFaq, AnswerSection, AnswerTable, RelatedLink } from "@/components/site/AnswerLanding";
 
 export interface ServiceContent {
   slug: string;
@@ -8,6 +8,8 @@ export interface ServiceContent {
   description: string;
   shortAnswer: string;
   sections: AnswerSection[];
+  /** Optionale Vergleichstabelle (z. B. FDM vs SLA) */
+  table?: AnswerTable;
   faqs: AnswerFaq[];
   related: RelatedLink[];
 }
@@ -58,6 +60,19 @@ export const services: ServiceContent[] = [
         text: "Lade STL, STEP, 3MF oder OBJ im Online-Kalkulator hoch. Du siehst Gewicht, Druckzeit und Preis direkt und kannst Material und Qualität wählen. Nach der Bestellung produzieren wir in Eschlikon TG und versenden schweizweit – oder du holst das Teil bei uns ab.",
       },
     ],
+    table: {
+      title: "FDM oder SLA – welches Verfahren passt?",
+      headers: ["Kriterium", "FDM", "SLA / Resin"],
+      rows: [
+        ["Stärke", "Belastbare Funktionsteile", "Feine Details, glatte Flächen"],
+        ["Typische Genauigkeit", "±0.2 mm", "Feinere Details als FDM"],
+        ["Sichtbare Schichten", "Sichtbar", "Kaum sichtbar"],
+        ["Materialien", "PLA, PETG, ABS, ASA, TPU, Nylon", "Resin"],
+        ["Mechanische Belastung", "Gut, materialabhängig", "Hart, aber spröder"],
+        ["Grössere Bauteile", "Günstiger", "Weniger geeignet"],
+        ["Typische Einsätze", "Ersatzteile, Gehäuse, Halterungen, Kleinserien", "Miniaturen, Modelle, kleine Sichtteile"],
+      ],
+    },
     faqs: [
       { q: "Welches FDM-Material ist am belastbarsten?", a: "Für hohe Festigkeit und Temperaturbeständigkeit sind ABS, ASA und Nylon geeignet. PETG ist der gute Allrounder für Funktionsteile, PLA eher für Modelle und Prototypen." },
       { q: "Sind FDM-Teile wasserdicht?", a: "Mit angepasster Wandstärke und Materialwahl (z. B. PETG) lassen sich weitgehend dichte Teile drucken. Absolute Dichtheit garantieren wir nicht – für kritische Anwendungen bitte vorher anfragen." },
@@ -108,8 +123,38 @@ export const services: ServiceContent[] = [
         title: "Nachbearbeitung",
         text: "Resin-Teile werden nach dem Druck gewaschen und nachgehärtet, Stützpunkte entfernt und die Flächen kontrolliert. Wir liefern die Teile gereinigt und ausgehärtet – Schleifen oder Lackieren ist auf Anfrage möglich.",
       },
+      {
+        title: "Lieferzeit und Ablauf",
+        text: "Lade STL, STEP, 3MF oder OBJ im Online-Kalkulator hoch und wähle Material und Qualität. Standard-Produktionszeit sind 48 Stunden ab Auftragsbestätigung, danach Versand innerhalb der Schweiz oder Abholung in Eschlikon TG.",
+      },
+      {
+        title: "Preis und Kalkulation",
+        text: "Der Preis richtet sich nach Bauteilvolumen, Materialverbrauch, Druckzeit und Nachbearbeitung. Im Kalkulator siehst du den Preis sofort und ohne Anmeldung – bei mehreren Stücken wird der Mengenrabatt automatisch berücksichtigt.",
+      },
+      {
+        title: "Technische Angaben",
+        text: "Konkrete Schichthöhen, verfügbare Resin-Typen und -Farben sowie die maximale Bauteilgrösse für SLA klären wir direkt in der Anfrage – so erhältst du für dein Bauteil eine verbindliche Auskunft statt einer Pauschalangabe.",
+      },
     ],
+    table: {
+      title: "FDM oder SLA – welches Verfahren passt?",
+      headers: ["Kriterium", "FDM", "SLA / Resin"],
+      rows: [
+        ["Stärke", "Belastbare Funktionsteile", "Feine Details, glatte Flächen"],
+        ["Typische Genauigkeit", "±0.2 mm", "Feinere Details als FDM"],
+        ["Sichtbare Schichten", "Sichtbar", "Kaum sichtbar"],
+        ["Materialien", "PLA, PETG, ABS, ASA, TPU, Nylon", "Resin"],
+        ["Mechanische Belastung", "Gut, materialabhängig", "Hart, aber spröder"],
+        ["Grössere Bauteile", "Günstiger", "Weniger geeignet"],
+        ["Typische Einsätze", "Ersatzteile, Gehäuse, Halterungen, Kleinserien", "Miniaturen, Modelle, kleine Sichtteile"],
+      ],
+    },
     faqs: [
+      { q: "Was ist SLA 3D-Druck?", a: "Beim SLA-Druck wird flüssiges Harz (Resin) schichtweise mit Licht ausgehärtet. Dadurch entstehen sehr feine Details und glatte Oberflächen mit kaum sichtbaren Schichten." },
+      { q: "Was ist der Unterschied zwischen SLA und FDM?", a: "SLA liefert feinere Details und glattere Oberflächen, FDM liefert mechanisch belastbarere Teile mit grösserer Materialauswahl. Beides bieten wir aus einer Hand." },
+      { q: "Welches Verfahren eignet sich für sehr feine Details?", a: "SLA / Resin. Für Miniaturen, Modelle und kleine Sichtteile ist SLA die richtige Wahl." },
+      { q: "Kann ich ein einzelnes Bauteil bestellen?", a: "Ja, wir fertigen ab 1 Stück ohne Mindestbestellmenge." },
+      { q: "Wo wird produziert?", a: "In Eschlikon im Kanton Thurgau, Schweiz. Versand schweizweit oder Abholung nach Absprache." },
       { q: "Ist SLA teurer als FDM?", a: "Bei kleinen, detailreichen Teilen liegen die Kosten oft ähnlich; bei grösseren Volumen ist FDM meist günstiger. Der Kalkulator zeigt beide Varianten transparent." },
       { q: "Wie belastbar sind Resin-Teile?", a: "Resin ist hart, aber spröder als PETG oder ABS. Für mechanisch belastete Bauteile empfehlen wir FDM." },
       { q: "Welche Dateiformate brauche ich?", a: "STL, STEP, 3MF oder OBJ – dieselben Formate wie beim FDM-Druck." },
