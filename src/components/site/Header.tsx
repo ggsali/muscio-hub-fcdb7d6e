@@ -9,7 +9,7 @@ import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
 
-interface NavChild { label: string; path: string; }
+interface NavChild { label: string; path: string; divider?: boolean; }
 interface NavItem { label: string; path: string; children?: NavChild[]; isButton?: boolean; }
 
 const DEFAULT_NAV: NavItem[] = [
@@ -18,6 +18,8 @@ const DEFAULT_NAV: NavItem[] = [
     label: "Leistungen",
     path: "/leistungen",
     children: [
+      { label: "🇨🇭 3D-Druck Schweiz (Übersicht)", path: "/3d-druck-schweiz" },
+      { label: "", path: "", divider: true },
       { label: "FDM 3D-Druck", path: "/leistungen/fdm-3d-druck" },
       { label: "SLA Resin Druck", path: "/leistungen/sla-3d-druck" },
       { label: "Prototypen", path: "/leistungen/3d-druck-prototypen" },
@@ -40,7 +42,7 @@ const DEFAULT_NAV: NavItem[] = [
 ];
 
 const MOBILE_FLAT_LINKS: NavChild[] = DEFAULT_NAV.flatMap((l) => {
-  if (l.children && l.children.length > 0) return l.children;
+  if (l.children && l.children.length > 0) return l.children.filter((c) => !c.divider);
   return [{ label: l.label, path: l.path }];
 });
 
