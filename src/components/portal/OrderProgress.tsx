@@ -42,7 +42,7 @@ export default function OrderProgress({ status, source, lieferart }: { status: s
   const STEPS = baseSteps.map(s =>
     s.key === 'geliefert' && isPickup ? { ...s, label: 'Abholbereit', icon: Home } : s
   )
-  const activeIdx = statusToStep(status, isWebsiteOrder);
+  const activeIdx = statusToStep(status);
 
   return (
     <div className="w-full">
