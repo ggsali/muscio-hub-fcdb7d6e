@@ -9,7 +9,7 @@ import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 import type { Session } from "@supabase/supabase-js";
 
-interface NavChild { label: string; path: string; }
+interface NavChild { label: string; path: string; divider?: boolean; }
 interface NavItem { label: string; path: string; children?: NavChild[]; isButton?: boolean; }
 
 const DEFAULT_NAV: NavItem[] = [
@@ -18,6 +18,8 @@ const DEFAULT_NAV: NavItem[] = [
     label: "Leistungen",
     path: "/leistungen",
     children: [
+      { label: "🇨🇭 3D-Druck Schweiz (Übersicht)", path: "/3d-druck-schweiz" },
+      { label: "", path: "", divider: true },
       { label: "FDM 3D-Druck", path: "/leistungen/fdm-3d-druck" },
       { label: "SLA Resin Druck", path: "/leistungen/sla-3d-druck" },
       { label: "Prototypen", path: "/leistungen/3d-druck-prototypen" },
@@ -40,7 +42,7 @@ const DEFAULT_NAV: NavItem[] = [
 ];
 
 const MOBILE_FLAT_LINKS: NavChild[] = DEFAULT_NAV.flatMap((l) => {
-  if (l.children && l.children.length > 0) return l.children;
+  if (l.children && l.children.length > 0) return l.children.filter((c) => !c.divider);
   return [{ label: l.label, path: l.path }];
 });
 
@@ -175,16 +177,20 @@ export const Header = () => {
                         className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 min-w-[200px]"
                       >
                         <div className="bg-popover border border-border rounded-xl shadow-xl p-1.5">
-                          {l.children!.map(c => (
-                            <Link
-                              key={c.path}
-                              to={c.path}
-                              onClick={() => setOpenDropdown(null)}
-                              className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                            >
-                              {c.label}
-                            </Link>
-                          ))}
+                          {l.children!.map((c, idx) =>
+                            c.divider ? (
+                              <hr key={`divider-${idx}`} className="my-1 border-border" />
+                            ) : (
+                              <Link
+                                key={c.path}
+                                to={c.path}
+                                onClick={() => setOpenDropdown(null)}
+                                className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                              >
+                                {c.label}
+                              </Link>
+                            )
+                          )}
                         </div>
                       </motion.div>
                     )}
