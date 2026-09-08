@@ -14,7 +14,6 @@ interface NavItem { label: string; path: string; children?: NavChild[]; }
 
 const DEFAULT_NAV: NavItem[] = [
   { label: "Home", path: "/" },
-  { label: "Shop", path: "/shop" },
   { label: "Kalkulator", path: "/kalkulator-online" },
   {
     label: "Leistungen",
@@ -29,8 +28,9 @@ const DEFAULT_NAV: NavItem[] = [
       { label: "Materialien", path: "/materialien" },
     ],
   },
-
+  { label: "Shop", path: "/shop" },
   { label: "Materialien", path: "/materialien" },
+  { label: "Blog", path: "/blog" },
   {
     label: "Über uns",
     path: "/ueber-uns",
@@ -41,7 +41,6 @@ const DEFAULT_NAV: NavItem[] = [
       { label: "Standort", path: "/ueber-uns#standort" },
     ],
   },
-  { label: "Blog", path: "/blog" },
   { label: "Kontakt", path: "/kontakt" },
 ];
 
