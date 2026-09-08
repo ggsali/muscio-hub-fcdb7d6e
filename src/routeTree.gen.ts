@@ -60,6 +60,7 @@ import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
+import { Route as AdminScanRouteImport } from './routes/admin/scan'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
@@ -379,6 +380,11 @@ const AdminLagerRoute = AdminLagerRouteImport.update({
 const AdminNewsletterRoute = AdminNewsletterRouteImport.update({
   id: '/newsletter',
   path: '/newsletter',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminScanRoute = AdminScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTeileRoute = AdminTeileRouteImport.update({
@@ -772,6 +778,7 @@ export interface FileRoutesByFullPath {
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
+  '/admin/scan': typeof AdminScanRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -886,6 +893,7 @@ export interface FileRoutesByTo {
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
+  '/admin/scan': typeof AdminScanRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1006,6 +1014,7 @@ export interface FileRoutesById {
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
+  '/admin/scan': typeof AdminScanRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1127,6 +1136,7 @@ export interface FileRouteTypes {
     | '/admin/kalkulator'
     | '/admin/lager'
     | '/admin/newsletter'
+    | '/admin/scan'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1241,6 +1251,7 @@ export interface FileRouteTypes {
     | '/admin/kalkulator'
     | '/admin/lager'
     | '/admin/newsletter'
+    | '/admin/scan'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1360,6 +1371,7 @@ export interface FileRouteTypes {
     | '/admin/kalkulator'
     | '/admin/lager'
     | '/admin/newsletter'
+    | '/admin/scan'
     | '/admin/teile'
     | '/admin_/login'
     | '/auftraege/$id'
@@ -1823,6 +1835,13 @@ declare module '@tanstack/react-router' {
       path: '/newsletter'
       fullPath: '/admin/newsletter'
       preLoaderRoute: typeof AdminNewsletterRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/scan': {
+      id: '/admin/scan'
+      path: '/scan'
+      fullPath: '/admin/scan'
+      preLoaderRoute: typeof AdminScanRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/teile': {
@@ -2393,6 +2412,7 @@ interface AdminRouteChildren {
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
+  AdminScanRoute: typeof AdminScanRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
@@ -2421,6 +2441,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminKalkulatorRoute: AdminKalkulatorRoute,
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
+  AdminScanRoute: AdminScanRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,
