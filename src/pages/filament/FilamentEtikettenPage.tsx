@@ -126,7 +126,7 @@ export default function FilamentEtikettenPage() {
             </div>
           </div>
 
-          <div id="etiketten-print-container" className="flex flex-wrap gap-4 print:block">
+          <div id="etiketten-print-container" className="hidden print:block">
             {sorted.map(s => {
               const t = typeMap[s.filament_type_id];
               const isSelected = selectedSpools.has(s.id);
