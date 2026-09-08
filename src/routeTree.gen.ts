@@ -106,6 +106,11 @@ import { Route as SiteVergleichIndexRouteImport } from './routes/_site/vergleich
 import { Route as SiteVergleichSlugRouteImport } from './routes/_site/vergleich.$slug'
 import { Route as SiteWissen3dDruckKostenSchweizRouteImport } from './routes/_site/wissen.3d-druck-kosten-schweiz'
 import { Route as AdminAuftraegeIndexRouteImport } from './routes/admin/auftraege.index'
+import { Route as AdminFilamenteArtenRouteImport } from './routes/admin/filamente.arten'
+import { Route as AdminFilamenteBestandRouteImport } from './routes/admin/filamente.bestand'
+import { Route as AdminFilamenteEtikettenRouteImport } from './routes/admin/filamente.etiketten'
+import { Route as AdminFilamenteRollenRouteImport } from './routes/admin/filamente.rollen'
+import { Route as AdminFilamenteScanRouteImport } from './routes/admin/filamente.scan'
 import { Route as AdminFinanzenIndexRouteImport } from './routes/admin/finanzen.index'
 import { Route as AdminFinanzenNeueRechnungRouteImport } from './routes/admin/finanzen.neue-rechnung'
 import { Route as AdminKundenIndexRouteImport } from './routes/admin/kunden.index'
@@ -608,6 +613,31 @@ const AdminAuftraegeIndexRoute = AdminAuftraegeIndexRouteImport.update({
   path: '/auftraege/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminFilamenteArtenRoute = AdminFilamenteArtenRouteImport.update({
+  id: '/arten',
+  path: '/arten',
+  getParentRoute: () => AdminFilamenteRoute,
+} as any)
+const AdminFilamenteBestandRoute = AdminFilamenteBestandRouteImport.update({
+  id: '/bestand',
+  path: '/bestand',
+  getParentRoute: () => AdminFilamenteRoute,
+} as any)
+const AdminFilamenteEtikettenRoute = AdminFilamenteEtikettenRouteImport.update({
+  id: '/etiketten',
+  path: '/etiketten',
+  getParentRoute: () => AdminFilamenteRoute,
+} as any)
+const AdminFilamenteRollenRoute = AdminFilamenteRollenRouteImport.update({
+  id: '/rollen',
+  path: '/rollen',
+  getParentRoute: () => AdminFilamenteRoute,
+} as any)
+const AdminFilamenteScanRoute = AdminFilamenteScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => AdminFilamenteRoute,
+} as any)
 const AdminFinanzenIndexRoute = AdminFinanzenIndexRouteImport.update({
   id: '/finanzen/',
   path: '/finanzen/',
@@ -730,7 +760,7 @@ export interface FileRoutesByFullPath {
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
-  '/admin/filamente': typeof AdminFilamenteRoute
+  '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
@@ -776,6 +806,11 @@ export interface FileRoutesByFullPath {
   '/standorte/$slug': typeof SiteStandorteSlugRoute
   '/vergleich/$slug': typeof SiteVergleichSlugRoute
   '/wissen/3d-druck-kosten-schweiz': typeof SiteWissen3dDruckKostenSchweizRoute
+  '/admin/filamente/arten': typeof AdminFilamenteArtenRoute
+  '/admin/filamente/bestand': typeof AdminFilamenteBestandRoute
+  '/admin/filamente/etiketten': typeof AdminFilamenteEtikettenRoute
+  '/admin/filamente/rollen': typeof AdminFilamenteRollenRoute
+  '/admin/filamente/scan': typeof AdminFilamenteScanRoute
   '/admin/finanzen/neue-rechnung': typeof AdminFinanzenNeueRechnungRoute
   '/admin/kunden/$id': typeof AdminKundenIdRoute
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
@@ -838,7 +873,7 @@ export interface FileRoutesByTo {
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
-  '/admin/filamente': typeof AdminFilamenteRoute
+  '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
@@ -885,6 +920,11 @@ export interface FileRoutesByTo {
   '/standorte/$slug': typeof SiteStandorteSlugRoute
   '/vergleich/$slug': typeof SiteVergleichSlugRoute
   '/wissen/3d-druck-kosten-schweiz': typeof SiteWissen3dDruckKostenSchweizRoute
+  '/admin/filamente/arten': typeof AdminFilamenteArtenRoute
+  '/admin/filamente/bestand': typeof AdminFilamenteBestandRoute
+  '/admin/filamente/etiketten': typeof AdminFilamenteEtikettenRoute
+  '/admin/filamente/rollen': typeof AdminFilamenteRollenRoute
+  '/admin/filamente/scan': typeof AdminFilamenteScanRoute
   '/admin/finanzen/neue-rechnung': typeof AdminFinanzenNeueRechnungRoute
   '/admin/kunden/$id': typeof AdminKundenIdRoute
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
@@ -952,7 +992,7 @@ export interface FileRoutesById {
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
-  '/admin/filamente': typeof AdminFilamenteRoute
+  '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
@@ -999,6 +1039,11 @@ export interface FileRoutesById {
   '/_site/standorte/$slug': typeof SiteStandorteSlugRoute
   '/_site/vergleich/$slug': typeof SiteVergleichSlugRoute
   '/_site/wissen/3d-druck-kosten-schweiz': typeof SiteWissen3dDruckKostenSchweizRoute
+  '/admin/filamente/arten': typeof AdminFilamenteArtenRoute
+  '/admin/filamente/bestand': typeof AdminFilamenteBestandRoute
+  '/admin/filamente/etiketten': typeof AdminFilamenteEtikettenRoute
+  '/admin/filamente/rollen': typeof AdminFilamenteRollenRoute
+  '/admin/filamente/scan': typeof AdminFilamenteScanRoute
   '/admin/finanzen/neue-rechnung': typeof AdminFinanzenNeueRechnungRoute
   '/admin/kunden/$id': typeof AdminKundenIdRoute
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
@@ -1113,6 +1158,11 @@ export interface FileRouteTypes {
     | '/standorte/$slug'
     | '/vergleich/$slug'
     | '/wissen/3d-druck-kosten-schweiz'
+    | '/admin/filamente/arten'
+    | '/admin/filamente/bestand'
+    | '/admin/filamente/etiketten'
+    | '/admin/filamente/rollen'
+    | '/admin/filamente/scan'
     | '/admin/finanzen/neue-rechnung'
     | '/admin/kunden/$id'
     | '/admin/website/bestellungen'
@@ -1222,6 +1272,11 @@ export interface FileRouteTypes {
     | '/standorte/$slug'
     | '/vergleich/$slug'
     | '/wissen/3d-druck-kosten-schweiz'
+    | '/admin/filamente/arten'
+    | '/admin/filamente/bestand'
+    | '/admin/filamente/etiketten'
+    | '/admin/filamente/rollen'
+    | '/admin/filamente/scan'
     | '/admin/finanzen/neue-rechnung'
     | '/admin/kunden/$id'
     | '/admin/website/bestellungen'
@@ -1335,6 +1390,11 @@ export interface FileRouteTypes {
     | '/_site/standorte/$slug'
     | '/_site/vergleich/$slug'
     | '/_site/wissen/3d-druck-kosten-schweiz'
+    | '/admin/filamente/arten'
+    | '/admin/filamente/bestand'
+    | '/admin/filamente/etiketten'
+    | '/admin/filamente/rollen'
+    | '/admin/filamente/scan'
     | '/admin/finanzen/neue-rechnung'
     | '/admin/kunden/$id'
     | '/admin/website/bestellungen'
@@ -2075,6 +2135,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuftraegeIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/filamente/arten': {
+      id: '/admin/filamente/arten'
+      path: '/arten'
+      fullPath: '/admin/filamente/arten'
+      preLoaderRoute: typeof AdminFilamenteArtenRouteImport
+      parentRoute: typeof AdminFilamenteRoute
+    }
+    '/admin/filamente/bestand': {
+      id: '/admin/filamente/bestand'
+      path: '/bestand'
+      fullPath: '/admin/filamente/bestand'
+      preLoaderRoute: typeof AdminFilamenteBestandRouteImport
+      parentRoute: typeof AdminFilamenteRoute
+    }
+    '/admin/filamente/etiketten': {
+      id: '/admin/filamente/etiketten'
+      path: '/etiketten'
+      fullPath: '/admin/filamente/etiketten'
+      preLoaderRoute: typeof AdminFilamenteEtikettenRouteImport
+      parentRoute: typeof AdminFilamenteRoute
+    }
+    '/admin/filamente/rollen': {
+      id: '/admin/filamente/rollen'
+      path: '/rollen'
+      fullPath: '/admin/filamente/rollen'
+      preLoaderRoute: typeof AdminFilamenteRollenRouteImport
+      parentRoute: typeof AdminFilamenteRoute
+    }
+    '/admin/filamente/scan': {
+      id: '/admin/filamente/scan'
+      path: '/scan'
+      fullPath: '/admin/filamente/scan'
+      preLoaderRoute: typeof AdminFilamenteScanRouteImport
+      parentRoute: typeof AdminFilamenteRoute
+    }
     '/admin/finanzen/': {
       id: '/admin/finanzen/'
       path: '/finanzen'
@@ -2248,12 +2343,32 @@ const SiteRouteChildren: SiteRouteChildren = {
 
 const SiteRouteWithChildren = SiteRoute._addFileChildren(SiteRouteChildren)
 
+interface AdminFilamenteRouteChildren {
+  AdminFilamenteArtenRoute: typeof AdminFilamenteArtenRoute
+  AdminFilamenteBestandRoute: typeof AdminFilamenteBestandRoute
+  AdminFilamenteEtikettenRoute: typeof AdminFilamenteEtikettenRoute
+  AdminFilamenteRollenRoute: typeof AdminFilamenteRollenRoute
+  AdminFilamenteScanRoute: typeof AdminFilamenteScanRoute
+}
+
+const AdminFilamenteRouteChildren: AdminFilamenteRouteChildren = {
+  AdminFilamenteArtenRoute: AdminFilamenteArtenRoute,
+  AdminFilamenteBestandRoute: AdminFilamenteBestandRoute,
+  AdminFilamenteEtikettenRoute: AdminFilamenteEtikettenRoute,
+  AdminFilamenteRollenRoute: AdminFilamenteRollenRoute,
+  AdminFilamenteScanRoute: AdminFilamenteScanRoute,
+}
+
+const AdminFilamenteRouteWithChildren = AdminFilamenteRoute._addFileChildren(
+  AdminFilamenteRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminAnfragenRoute: typeof AdminAnfragenRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminDruckplattenRoute: typeof AdminDruckplattenRoute
   AdminEinstellungenRoute: typeof AdminEinstellungenRoute
-  AdminFilamenteRoute: typeof AdminFilamenteRoute
+  AdminFilamenteRoute: typeof AdminFilamenteRouteWithChildren
   AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
@@ -2280,7 +2395,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminChatRoute: AdminChatRoute,
   AdminDruckplattenRoute: AdminDruckplattenRoute,
   AdminEinstellungenRoute: AdminEinstellungenRoute,
-  AdminFilamenteRoute: AdminFilamenteRoute,
+  AdminFilamenteRoute: AdminFilamenteRouteWithChildren,
   AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
