@@ -773,6 +773,77 @@ export type Database = {
         }
         Relationships: []
       }
+      filament_spools: {
+        Row: {
+          created_at: string
+          emptied_at: string | null
+          filament_type_id: string
+          gewicht_g: number
+          id: string
+          printed: boolean
+          spool_code: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          emptied_at?: string | null
+          filament_type_id: string
+          gewicht_g?: number
+          id?: string
+          printed?: boolean
+          spool_code: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          emptied_at?: string | null
+          filament_type_id?: string
+          gewicht_g?: number
+          id?: string
+          printed?: boolean
+          spool_code?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "filament_spools_filament_type_id_fkey"
+            columns: ["filament_type_id"]
+            isOneToOne: false
+            referencedRelation: "filament_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      filament_types: {
+        Row: {
+          created_at: string
+          farbcode: string | null
+          farbe: string
+          hersteller: string | null
+          id: string
+          material: string
+          mindestbestand: number
+        }
+        Insert: {
+          created_at?: string
+          farbcode?: string | null
+          farbe: string
+          hersteller?: string | null
+          id?: string
+          material: string
+          mindestbestand?: number
+        }
+        Update: {
+          created_at?: string
+          farbcode?: string | null
+          farbe?: string
+          hersteller?: string | null
+          id?: string
+          material?: string
+          mindestbestand?: number
+        }
+        Relationships: []
+      }
       filaments: {
         Row: {
           aktiv: boolean | null
