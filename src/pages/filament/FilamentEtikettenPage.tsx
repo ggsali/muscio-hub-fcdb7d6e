@@ -218,6 +218,7 @@ const printStyles = `
     }
 
     #etiketten-print-container {
+      display: block !important;
       position: fixed;
       top: 0;
       left: 0;
