@@ -50,26 +50,7 @@ export default function FilamentEtikettenPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <style>{`
-        @media print {
-          @page {
-            size: 50mm 30mm;
-            margin: 0;
-          }
-          body * { visibility: hidden; }
-          .etiketten-druck-container,
-          .etiketten-druck-container * { visibility: visible; }
-          .etiketten-druck-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-          }
-          .etikett-print {
-            page-break-after: always;
-            break-after: page;
-          }
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{ __html: printStyles }} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div>
@@ -91,34 +72,19 @@ export default function FilamentEtikettenPage() {
       ) : sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground print:hidden">Keine unbedruckten Rollen — alle Etiketten sind aktuell.</p>
       ) : (
-        <div id="etiketten-druck" className="etiketten-druck-container flex flex-wrap gap-4 print:block print:gap-0">
+        <div id="etiketten-print-container" className="flex flex-wrap gap-4 print:block">
           {sorted.map(s => {
             const t = typeMap[s.filament_type_id];
             return (
-              <div
-                key={s.id}
-                className="etikett-print bg-white text-black flex items-center overflow-hidden"
-                style={{ width: "50mm", height: "30mm" }}
-              >
-                <div
-                  className="flex items-center justify-center"
-                  style={{ width: "30mm", height: "30mm", flexShrink: 0 }}
-                >
-                  <QRCodeSVG
-                    value={s.spool_code}
-                    size={110}
-                    level="M"
-                    style={{ width: "28mm", height: "28mm" }}
-                  />
+              <div key={s.id} className="etikett-seite">
+                <div className="etikett-qr">
+                  <QRCodeSVG value={s.spool_code} size={98} level="M" />
                 </div>
-                <div
-                  className="leading-tight flex flex-col justify-center min-w-0"
-                  style={{ width: "20mm", height: "30mm", paddingRight: "1mm" }}
-                >
-                  <p className="text-[9px] font-bold truncate">{t ? t.material : "?"}</p>
-                  <p className="text-[9px] truncate">{t ? t.farbe : ""}</p>
-                  <p className="text-[8px] font-mono truncate">{s.spool_code}</p>
-                  <p className="text-[7px]">{s.gewicht_g}g</p>
+                <div className="etikett-text">
+                  <div className="etikett-material">{t ? t.material : "?"}</div>
+                  <div className="etikett-farbe">{t ? t.farbe : ""}</div>
+                  <div className="etikett-code">{s.spool_code}</div>
+                  <div className="etikett-gewicht">{s.gewicht_g}g</div>
                 </div>
               </div>
             );
@@ -128,3 +94,103 @@ export default function FilamentEtikettenPage() {
     </div>
   );
 }
+
+const printStyles = `
+  @media print {
+    @page {
+      size: 50mm 30mm;
+      margin: 0mm;
+    }
+
+    html, body {
+      width: 50mm;
+      height: 30mm;
+      margin: 0;
+      padding: 0;
+    }
+
+    body * { visibility: hidden !important; }
+
+    #etiketten-print-container,
+    #etiketten-print-container * {
+      visibility: visible !important;
+    }
+
+    #etiketten-print-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 50mm;
+    }
+
+    .etikett-seite {
+      width: 50mm;
+      height: 30mm;
+      page-break-after: always;
+      break-after: page;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 1.5mm;
+      gap: 2mm;
+      box-sizing: border-box;
+      background: white;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .etikett-seite:last-child {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .etikett-qr {
+      flex-shrink: 0;
+      width: 26mm;
+      height: 26mm;
+    }
+
+    .etikett-qr svg {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .etikett-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.8mm;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .etikett-material {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #000;
+      line-height: 1.2;
+    }
+
+    .etikett-farbe {
+      font-size: 8pt;
+      color: #333;
+      line-height: 1.2;
+    }
+
+    .etikett-code {
+      font-size: 8pt;
+      font-weight: 700;
+      color: #00a651;
+      font-family: monospace;
+      line-height: 1.2;
+    }
+
+    .etikett-gewicht {
+      font-size: 7pt;
+      color: #888;
+      line-height: 1.2;
+    }
+  }
+`;
