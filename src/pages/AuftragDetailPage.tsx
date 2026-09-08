@@ -577,7 +577,6 @@ export default function AuftragDetailPage() {
         const pct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
         const brutto =
           nextParts.reduce((s, p) => s + (p.preis_total || 0), 0) +
-          nextParts.length * activeSettings.setup_pauschale +
           (nextParts.length > 0 ? Math.max(0, Number(expressKosten) || 0) : 0);
         const neuTotal = brutto - brutto * (pct / 100);
         await supabase.from("orders").update({ umsatz_total: neuTotal }).eq("id", id);
