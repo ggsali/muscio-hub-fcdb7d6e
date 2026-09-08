@@ -57,13 +57,18 @@ export default function FilamentEtikettenPage() {
           <h1 className="text-xl md:text-2xl font-bold">Etiketten drucken</h1>
           <p className="text-sm text-muted-foreground">Unbedruckte Rollen – 50 × 30 mm Endlospapier</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => window.print()} disabled={sorted.length === 0}>
-            <Printer className="w-4 h-4 mr-1.5" /> Etiketten drucken
-          </Button>
-          <Button variant="outline" onClick={markPrinted} disabled={working || sorted.length === 0}>
-            <CheckCheck className="w-4 h-4 mr-1.5" /> Alle als bedruckt markieren
-          </Button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-2">
+            <Button onClick={() => window.print()} disabled={sorted.length === 0}>
+              <Printer className="w-4 h-4 mr-1.5" /> Etiketten drucken
+            </Button>
+            <Button variant="outline" onClick={markPrinted} disabled={working || sorted.length === 0}>
+              <CheckCheck className="w-4 h-4 mr-1.5" /> Alle als bedruckt markieren
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            💡 Tipp: Im Druckdialog unter "Weitere Einstellungen" → "Kopf- und Fusszeilen" deaktivieren
+          </p>
         </div>
       </div>
 
@@ -100,6 +105,13 @@ const printStyles = `
     @page {
       size: 50mm 30mm;
       margin: 0mm;
+      margin-top: 0mm;
+      margin-bottom: 0mm;
+    }
+
+    html {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     html, body {
