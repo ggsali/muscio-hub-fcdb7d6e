@@ -48,6 +48,20 @@ export default function FilamentEtikettenPage() {
     setSpools([]);
   };
 
+  const markOne = async (spool: FilamentSpool, mode: "printed" | "removed") => {
+    const { error } = await supabase
+      .from("filament_spools")
+      .update({ printed: true })
+      .eq("id", spool.id);
+    if (error) { toast.error("Fehlgeschlagen: " + error.message); return; }
+    setSpools(prev => prev.filter(s => s.id !== spool.id));
+    toast.success(
+      mode === "printed"
+        ? `${spool.spool_code} als bedruckt markiert`
+        : `${spool.spool_code} aus der Druckliste entfernt`
+    );
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       <style dangerouslySetInnerHTML={{ __html: printStyles }} />
