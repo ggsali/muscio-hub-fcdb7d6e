@@ -199,6 +199,9 @@ export default function WebsiteAnalyticsPage() {
     };
   }, [calcCounts]);
 
+  const funnelLabel = funnelRange === "heute" ? "Heute" :
+    funnelRange === "7tage" ? "Letzte 7 Tage" : "Letzte 30 Tage";
+
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [rangeKey]);
 
   const stats = useMemo(() => {
