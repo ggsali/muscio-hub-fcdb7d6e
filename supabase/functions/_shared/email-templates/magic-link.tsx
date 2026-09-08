@@ -26,7 +26,7 @@ export const MagicLinkEmail = ({ confirmationUrl }: MagicLinkEmailProps) => (
         <Hr style={divider} />
         <Text style={footerText}>
           <a href="mailto:info@3dmuscio.com" style={footerLink}>info@3dmuscio.com</a>
-          {'  ·  '}<span>+41 79 839 50 80</span>{'  ·  '}
+          {'  ·  '}<span>+41 77 804 41 22</span>{'  ·  '}
           <a href="https://3dmuscio.com" style={footerLink}>3dmuscio.com</a>
         </Text>
       </Container>

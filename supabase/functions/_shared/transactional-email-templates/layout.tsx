@@ -40,7 +40,7 @@ export const EmailFooter = () => (
     <Text style={footerAddress}>3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</Text>
     <Text style={footerText}>
       <Link href="mailto:info@3dmuscio.com" style={footerLink}>info@3dmuscio.com</Link>
-      {'  ·  '}+41 79 839 50 80{'  ·  '}
+      {'  ·  '}+41 77 804 41 22{'  ·  '}
       <Link href={SITE_URL} style={footerLink}>www.3dmuscio.com</Link>
     </Text>
   </Section>
