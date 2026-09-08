@@ -52,7 +52,7 @@ export function berechneRabatt(
   return { rabatt: Math.min(Number(g.wert), subtotal), versandGratis: false };
 }
 
-/** Gutschein-Code gegen die Datenbank prüfen. */
+/** Gutschein-Code serverseitig prüfen (Codes sind nicht öffentlich lesbar). */
 export async function pruefeGutschein(
   code: string,
   subtotal: number,
@@ -60,28 +60,30 @@ export async function pruefeGutschein(
   const clean = code.trim().toUpperCase();
   if (!clean) return { ok: false, error: "Bitte Code eingeben." };
 
-  const { data, error } = await supabase
-    .from("gutscheine")
-    .select("*")
-    .eq("code", clean)
-    .maybeSingle();
+  const { data, error } = await (supabase.rpc as any)("validate_gutschein", {
+    p_code: clean,
+    p_subtotal: subtotal,
+  });
 
   if (error) return { ok: false, error: "Code konnte nicht geprüft werden." };
-  if (!data) return { ok: false, error: "Dieser Code existiert nicht." };
 
-  const g = data as unknown as Gutschein;
-  if (!g.aktiv) return { ok: false, error: "Dieser Code ist nicht mehr aktiv." };
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return { ok: false, error: "Dieser Code existiert nicht." };
+  if (!row.ok) return { ok: false, error: row.error || "Dieser Code ist ungültig." };
 
-  const heute = new Date().toISOString().slice(0, 10);
-  if (g.gueltig_ab && heute < g.gueltig_ab) return { ok: false, error: "Dieser Code ist noch nicht gültig." };
-  if (g.gueltig_bis && heute > g.gueltig_bis) return { ok: false, error: "Dieser Code ist abgelaufen." };
-  if (g.max_verwendungen !== null && (g.verwendungen ?? 0) >= (g.max_verwendungen ?? 0)) {
-    return { ok: false, error: "Dieser Code wurde bereits vollständig eingelöst." };
-  }
-  if ((g.mindestbestellwert ?? 0) > subtotal) {
-    return { ok: false, error: `Mindestbestellwert CHF ${Number(g.mindestbestellwert).toFixed(2)} nicht erreicht.` };
-  }
-  return { ok: true, gutschein: g };
+  const gutschein: Gutschein = {
+    id: row.id,
+    code: clean,
+    typ: row.typ as GutscheinTyp,
+    wert: Number(row.wert),
+    mindestbestellwert: row.mindestbestellwert === null ? null : Number(row.mindestbestellwert),
+    max_verwendungen: null,
+    verwendungen: null,
+    gueltig_ab: null,
+    gueltig_bis: null,
+    aktiv: true,
+  };
+  return { ok: true, gutschein };
 }
 
 /** Einlösung protokollieren und Zähler erhöhen (serverseitig geprüft). */
