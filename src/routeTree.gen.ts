@@ -96,6 +96,7 @@ import { Route as SiteLeistungenSlugRouteImport } from './routes/_site/leistunge
 import { Route as SiteMaterialienIndexRouteImport } from './routes/_site/materialien.index'
 import { Route as SiteMaterialienSlugRouteImport } from './routes/_site/materialien.$slug'
 import { Route as SiteNewsletterAbmeldenRouteImport } from './routes/_site/newsletter.abmelden'
+import { Route as SiteProjekteIndexRouteImport } from './routes/_site/projekte.index'
 import { Route as SiteProjekteSlugRouteImport } from './routes/_site/projekte.$slug'
 import { Route as SiteShopIndexRouteImport } from './routes/_site/shop.index'
 import { Route as SiteShopSlugRouteImport } from './routes/_site/shop.$slug'
@@ -555,6 +556,11 @@ const SiteNewsletterAbmeldenRoute = SiteNewsletterAbmeldenRouteImport.update({
   path: '/newsletter/abmelden',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteProjekteIndexRoute = SiteProjekteIndexRouteImport.update({
+  id: '/projekte/',
+  path: '/projekte/',
+  getParentRoute: () => SiteRoute,
+} as any)
 const SiteProjekteSlugRoute = SiteProjekteSlugRouteImport.update({
   id: '/projekte/$slug',
   path: '/projekte/$slug',
@@ -772,6 +778,7 @@ export interface FileRoutesByFullPath {
   '/blog/': typeof SiteBlogIndexRoute
   '/leistungen/': typeof SiteLeistungenIndexRoute
   '/materialien/': typeof SiteMaterialienIndexRoute
+  '/projekte/': typeof SiteProjekteIndexRoute
   '/shop/': typeof SiteShopIndexRoute
   '/vergleich/': typeof SiteVergleichIndexRoute
   '/admin/auftraege/': typeof AdminAuftraegeIndexRoute
@@ -879,6 +886,7 @@ export interface FileRoutesByTo {
   '/blog': typeof SiteBlogIndexRoute
   '/leistungen': typeof SiteLeistungenIndexRoute
   '/materialien': typeof SiteMaterialienIndexRoute
+  '/projekte': typeof SiteProjekteIndexRoute
   '/shop': typeof SiteShopIndexRoute
   '/vergleich': typeof SiteVergleichIndexRoute
   '/admin/auftraege': typeof AdminAuftraegeIndexRoute
@@ -991,6 +999,7 @@ export interface FileRoutesById {
   '/_site/blog/': typeof SiteBlogIndexRoute
   '/_site/leistungen/': typeof SiteLeistungenIndexRoute
   '/_site/materialien/': typeof SiteMaterialienIndexRoute
+  '/_site/projekte/': typeof SiteProjekteIndexRoute
   '/_site/shop/': typeof SiteShopIndexRoute
   '/_site/vergleich/': typeof SiteVergleichIndexRoute
   '/admin/auftraege/': typeof AdminAuftraegeIndexRoute
@@ -1103,6 +1112,7 @@ export interface FileRouteTypes {
     | '/blog/'
     | '/leistungen/'
     | '/materialien/'
+    | '/projekte/'
     | '/shop/'
     | '/vergleich/'
     | '/admin/auftraege/'
@@ -1210,6 +1220,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/leistungen'
     | '/materialien'
+    | '/projekte'
     | '/shop'
     | '/vergleich'
     | '/admin/auftraege'
@@ -1321,6 +1332,7 @@ export interface FileRouteTypes {
     | '/_site/blog/'
     | '/_site/leistungen/'
     | '/_site/materialien/'
+    | '/_site/projekte/'
     | '/_site/shop/'
     | '/_site/vergleich/'
     | '/admin/auftraege/'
@@ -1981,6 +1993,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteNewsletterAbmeldenRouteImport
       parentRoute: typeof SiteRoute
     }
+    '/_site/projekte/': {
+      id: '/_site/projekte/'
+      path: '/projekte'
+      fullPath: '/projekte/'
+      preLoaderRoute: typeof SiteProjekteIndexRouteImport
+      parentRoute: typeof SiteRoute
+    }
     '/_site/projekte/$slug': {
       id: '/_site/projekte/$slug'
       path: '/projekte/$slug'
@@ -2167,6 +2186,7 @@ interface SiteRouteChildren {
   SiteBlogIndexRoute: typeof SiteBlogIndexRoute
   SiteLeistungenIndexRoute: typeof SiteLeistungenIndexRoute
   SiteMaterialienIndexRoute: typeof SiteMaterialienIndexRoute
+  SiteProjekteIndexRoute: typeof SiteProjekteIndexRoute
   SiteShopIndexRoute: typeof SiteShopIndexRoute
   SiteVergleichIndexRoute: typeof SiteVergleichIndexRoute
 }
@@ -2200,6 +2220,7 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteBlogIndexRoute: SiteBlogIndexRoute,
   SiteLeistungenIndexRoute: SiteLeistungenIndexRoute,
   SiteMaterialienIndexRoute: SiteMaterialienIndexRoute,
+  SiteProjekteIndexRoute: SiteProjekteIndexRoute,
   SiteShopIndexRoute: SiteShopIndexRoute,
   SiteVergleichIndexRoute: SiteVergleichIndexRoute,
 }
