@@ -45,6 +45,7 @@ const lokaleSlugs = [
 const staticEntries: SitemapEntry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/kalkulator-online", changefreq: "weekly", priority: "0.9" },
+  { path: "/3d-druck-schweiz", changefreq: "monthly", priority: "0.9" },
   { path: "/leistungen", changefreq: "monthly", priority: "0.9" },
   ...serviceSlugs.map((s): SitemapEntry => ({ path: `/leistungen/${s}`, changefreq: "monthly", priority: "0.9" })),
   { path: "/materialien", changefreq: "monthly", priority: "0.9" },
