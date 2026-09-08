@@ -137,6 +137,7 @@ export default function DruckSchweizPage() {
           { label: "3D-Druck St. Gallen", to: "/3d-druck-st-gallen", text: "Lieferung in die Region St. Gallen." },
           { label: "3D-Druck Winterthur", to: "/3d-druck-winterthur", text: "Rund 25 km zur Produktion." },
           { label: "3D-Druck Zürich", to: "/3d-druck-zuerich", text: "Online bestellen, Versand nach Zürich." },
+          { label: "3D-Druck Bern", to: "/3d-druck-bern", text: "Lieferung in die Region Bern." },
         ]}
       />
     </>
