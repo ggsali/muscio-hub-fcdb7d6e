@@ -54,6 +54,32 @@ export const Header = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownTimer = useRef<number | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
+  const [navItems, setNavItems] = useState<NavItem[]>(DEFAULT_NAV);
+
+  // Gespeicherte Navigation aus dem Admin (website_settings.nav_links) erst
+  // nach der Hydration laden – SSR rendert immer DEFAULT_NAV (kein Mismatch).
+  useEffect(() => {
+    let cancelled = false;
+    supabase.from("website_settings").select("value").eq("key", "nav_links").maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const v = (data as { value?: unknown } | null)?.value;
+        if (!Array.isArray(v) || v.length === 0) return;
+        const items: NavItem[] = v
+          .filter((i): i is { label: string; path: string; children?: NavChild[] } =>
+            !!i && typeof i === "object" &&
+            typeof (i as { label?: unknown }).label === "string" &&
+            typeof (i as { path?: unknown }).path === "string")
+          .map((i) => ({
+            label: i.label,
+            path: i.path,
+            children: Array.isArray(i.children) ? i.children : undefined,
+            isButton: i.path === "/kalkulator-online",
+          }));
+        if (items.length > 0) setNavItems(items);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => { setOpen(false); setOpenDropdown(null); }, [location.pathname]);
 
