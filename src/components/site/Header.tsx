@@ -166,7 +166,7 @@ export const Header = () => {
                       <Link to={l.path}>{l.label}</Link>
                     </Button>
                   ) : (
-                    <Link
+                    <NavEntry
                       to={l.path}
                       className="relative px-4 py-1.5 text-sm font-medium transition-colors group flex items-center gap-1"
                     >
