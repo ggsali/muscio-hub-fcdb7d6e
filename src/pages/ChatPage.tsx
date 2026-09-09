@@ -40,22 +40,61 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // Realtime + Polling kombinieren
   useEffect(() => {
     loadSessions();
 
     const channel = supabase
-      .channel("admin-chat-dashboard")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => {
+      .channel("admin-chat-realtime")
+      .on("postgres_changes", { 
+        event: "*",  // INSERT, UPDATE, DELETE
+        schema: "public", 
+        table: "chat_sessions" 
+      }, () => {
+        loadSessions();
+      })
+      .on("postgres_changes", { 
+        event: "INSERT", 
+        schema: "public", 
+        table: "chat_messages" 
+      }, () => {
         loadSessions();
         if (selectedSession) loadMessages(selectedSession);
       })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_sessions" }, () => {
-        loadSessions();
-      })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    const interval = setInterval(() => {
+      loadSessions();
+      if (selectedSession) loadMessages(selectedSession);
+    }, 10000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [selectedSession]);
+
+  // Benachrichtigung bei neuer Chat-Anfrage
+  useEffect(() => {
+    if (sessions.length > prevSessionCount.current && prevSessionCount.current > 0) {
+      toast.info("💬 Neue Chat-Anfrage eingegangen!");
+      if (typeof window !== "undefined" && Notification.permission === "granted") {
+        new Notification("3DMuscio Admin", {
+          body: "Neue Chat-Anfrage von der Website",
+          icon: "/favicon.ico",
+        });
+      }
+    }
+    prevSessionCount.current = sessions.length;
+  }, [sessions.length]);
+
+  // Notification Permission anfragen beim ersten Öffnen
+  useEffect(() => {
+    if (typeof window !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
