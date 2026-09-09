@@ -9,9 +9,10 @@ interface SidebarNavLinkProps {
   collapsed: boolean;
   exact?: boolean;
   badge?: string;
+  badgeVariant?: "primary" | "destructive";
 }
 
-export const SidebarNavLink: React.FC<SidebarNavLinkProps> = ({ to, icon, label, collapsed, exact, badge }) => {
+export const SidebarNavLink: React.FC<SidebarNavLinkProps> = ({ to, icon, label, collapsed, exact, badge, badgeVariant }) => {
   const location = useLocation();
   const isActive = exact
     ? location.pathname === to
