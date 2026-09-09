@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Printer, User, ShoppingCart, ChevronDown } from "lucide-react";
@@ -41,10 +41,30 @@ const DEFAULT_NAV: NavItem[] = [
   { label: "Shop", path: "/shop" },
 ];
 
-const MOBILE_FLAT_LINKS: NavChild[] = DEFAULT_NAV.flatMap((l) => {
-  if (l.children && l.children.length > 0) return l.children.filter((c) => !c.divider);
-  return [{ label: l.label, path: l.path }];
-});
+const flattenNav = (items: NavItem[]): NavChild[] =>
+  items.flatMap((l) => {
+    if (l.children && l.children.length > 0) return l.children.filter((c) => !c.divider);
+    return [{ label: l.label, path: l.path }];
+  });
+
+const isExternal = (path: string) => /^https?:\/\//.test(path);
+
+// Interne Links über den Router, externe über <a href> (Admin erlaubt beides).
+const NavEntry = ({ to, className, children, onClick }: {
+  to: string;
+  className?: string;
+  children: ReactNode;
+  onClick?: () => void;
+}) =>
+  isExternal(to) ? (
+    <a href={to} target="_blank" rel="noopener noreferrer" className={className} onClick={onClick}>
+      {children}
+    </a>
+  ) : (
+    <Link to={to} className={className} onClick={onClick}>
+      {children}
+    </Link>
+  );
 
 export const Header = () => {
   const [open, setOpen] = useState(false);
@@ -54,6 +74,32 @@ export const Header = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownTimer = useRef<number | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
+  const [navItems, setNavItems] = useState<NavItem[]>(DEFAULT_NAV);
+
+  // Gespeicherte Navigation aus dem Admin (website_settings.nav_links) erst
+  // nach der Hydration laden – SSR rendert immer DEFAULT_NAV (kein Mismatch).
+  useEffect(() => {
+    let cancelled = false;
+    supabase.from("website_settings").select("value").eq("key", "nav_links").maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const v = (data as { value?: unknown } | null)?.value;
+        if (!Array.isArray(v) || v.length === 0) return;
+        const items: NavItem[] = v
+          .filter((i): i is { label: string; path: string; children?: NavChild[] } =>
+            !!i && typeof i === "object" &&
+            typeof (i as { label?: unknown }).label === "string" &&
+            typeof (i as { path?: unknown }).path === "string")
+          .map((i) => ({
+            label: i.label,
+            path: i.path,
+            children: Array.isArray(i.children) ? i.children : undefined,
+            isButton: i.path === "/kalkulator-online",
+          }));
+        if (items.length > 0) setNavItems(items);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => { setOpen(false); setOpenDropdown(null); }, [location.pathname]);
 
@@ -116,7 +162,7 @@ export const Header = () => {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {DEFAULT_NAV.map((l) => {
+            {navItems.map((l) => {
               const active = location.pathname === l.path;
               const hasChildren = l.children && l.children.length > 0;
               return (
@@ -136,10 +182,10 @@ export const Header = () => {
                         active && "bg-primary text-primary-foreground"
                       )}
                     >
-                      <Link to={l.path}>{l.label}</Link>
+                      <NavEntry to={l.path}>{l.label}</NavEntry>
                     </Button>
                   ) : (
-                    <Link
+                    <NavEntry
                       to={l.path}
                       className="relative px-4 py-1.5 text-sm font-medium transition-colors group flex items-center gap-1"
                     >
@@ -164,7 +210,7 @@ export const Header = () => {
                           openDropdown === l.path && "rotate-180"
                         )} />
                       )}
-                    </Link>
+                    </NavEntry>
                   )}
 
                   <AnimatePresence>
@@ -181,14 +227,14 @@ export const Header = () => {
                             c.divider ? (
                               <hr key={`divider-${idx}`} className="my-1 border-border" />
                             ) : (
-                              <Link
+                              <NavEntry
                                 key={c.path}
                                 to={c.path}
                                 onClick={() => setOpenDropdown(null)}
                                 className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                               >
                                 {c.label}
-                              </Link>
+                              </NavEntry>
                             )
                           )}
                         </div>
@@ -285,11 +331,11 @@ export const Header = () => {
               transition={{ duration: 0.2 }}
             >
               <nav className="flex flex-col p-3 gap-0.5">
-                {MOBILE_FLAT_LINKS.map((l, i) => {
+                {flattenNav(navItems).map((l: NavChild, i: number) => {
                   const active = location.pathname === l.path || location.pathname + location.hash === l.path;
                   return (
                     <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                      <Link
+                      <NavEntry
                         to={l.path}
                         onClick={() => setOpen(false)}
                         className={cn(
@@ -301,7 +347,7 @@ export const Header = () => {
                       >
                         {l.label}
                         {active && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                      </Link>
+                      </NavEntry>
                     </motion.div>
                   );
                 })}
