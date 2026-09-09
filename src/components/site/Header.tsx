@@ -335,7 +335,7 @@ export const Header = () => {
                   const active = location.pathname === l.path || location.pathname + location.hash === l.path;
                   return (
                     <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                      <Link
+                      <NavEntry
                         to={l.path}
                         onClick={() => setOpen(false)}
                         className={cn(
@@ -347,7 +347,7 @@ export const Header = () => {
                       >
                         {l.label}
                         {active && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
-                      </Link>
+                      </NavEntry>
                     </motion.div>
                   );
                 })}
