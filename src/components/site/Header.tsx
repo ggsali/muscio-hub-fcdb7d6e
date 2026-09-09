@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Printer, User, ShoppingCart, ChevronDown } from "lucide-react";
@@ -53,7 +53,7 @@ const isExternal = (path: string) => /^https?:\/\//.test(path);
 const NavEntry = ({ to, className, children, onClick }: {
   to: string;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   onClick?: () => void;
 }) =>
   isExternal(to) ? (
