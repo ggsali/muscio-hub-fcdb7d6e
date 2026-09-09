@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useLocation } from "@/lib/router-compat";
 import {
   LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
