@@ -47,6 +47,25 @@ const flattenNav = (items: NavItem[]): NavChild[] =>
     return [{ label: l.label, path: l.path }];
   });
 
+const isExternal = (path: string) => /^https?:\/\//.test(path);
+
+// Interne Links über den Router, externe über <a href> (Admin erlaubt beides).
+const NavEntry = ({ to, className, children, onClick }: {
+  to: string;
+  className?: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) =>
+  isExternal(to) ? (
+    <a href={to} target="_blank" rel="noopener noreferrer" className={className} onClick={onClick}>
+      {children}
+    </a>
+  ) : (
+    <Link to={to} className={className} onClick={onClick}>
+      {children}
+    </Link>
+  );
+
 export const Header = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -191,7 +210,7 @@ export const Header = () => {
                           openDropdown === l.path && "rotate-180"
                         )} />
                       )}
-                    </Link>
+                    </NavEntry>
                   )}
 
                   <AnimatePresence>
