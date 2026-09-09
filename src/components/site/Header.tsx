@@ -312,7 +312,7 @@ export const Header = () => {
               transition={{ duration: 0.2 }}
             >
               <nav className="flex flex-col p-3 gap-0.5">
-                {MOBILE_FLAT_LINKS.map((l, i) => {
+                {flattenNav(navItems).map((l: NavChild, i: number) => {
                   const active = location.pathname === l.path || location.pathname + location.hash === l.path;
                   return (
                     <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
