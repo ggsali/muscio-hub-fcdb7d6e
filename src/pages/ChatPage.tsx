@@ -103,10 +103,12 @@ export default function ChatPage() {
   }, [messages]);
 
   const loadSessions = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("chat_sessions")
       .select("*")
       .order("updated_at", { ascending: false });
+
+    console.log("[ChatPage] Sessions geladen:", data?.length, error);
 
     if (data) {
       const enriched = await Promise.all((data as ChatSession[]).map(async (s) => {
@@ -131,6 +133,7 @@ export default function ChatPage() {
       setSessions(enriched);
     }
   };
+
 
   const loadMessages = async (sid: string) => {
     const { data } = await supabase
