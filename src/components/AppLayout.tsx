@@ -304,7 +304,23 @@ export default function AppLayout() {
   const isMobile = useIsMobile();
   // AppLayout wird nur für eingeloggte Admins gerendert (AdminGate)
   const { canInstall, install } = useAdminPwaInstall(true);
+  const [unreadChatCount, setUnreadChatCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadUnread = async () => {
+      const { count, error } = await supabase
+        .from("chat_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("is_read", false)
+        .eq("role", "user");
+      if (!error) setUnreadChatCount(count || 0);
+    };
+    loadUnread();
+    const interval = setInterval(loadUnread, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   return isMobile
-    ? <MobileLayout canInstall={canInstall} onInstall={install} />
-    : <DesktopLayout canInstall={canInstall} onInstall={install} />;
+    ? <MobileLayout canInstall={canInstall} onInstall={install} unreadChatCount={unreadChatCount} />
+    : <DesktopLayout canInstall={canInstall} onInstall={install} unreadChatCount={unreadChatCount} />;
 }
