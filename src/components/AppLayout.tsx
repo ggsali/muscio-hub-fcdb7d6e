@@ -261,17 +261,22 @@ function DesktopLayout({ canInstall, onInstall, unreadChatCount }: { canInstall:
                 <p className={GROUP_LABEL}>{group.label}</p>
               )}
               <div className="space-y-0.5">
-                {group.items.map(item => (
-                  <SidebarNavLink
-                    key={item.to}
-                    to={item.to}
-                    icon={item.icon}
-                    label={item.label}
-                    collapsed={collapsed}
-                    exact={item.exact}
-                    badge={item.badge}
-                  />
-                ))}
+                {group.items.map(item => {
+                  const isChat = item.to === "/admin/chat";
+                  const badge = isChat && unreadChatCount ? String(unreadChatCount) : item.badge;
+                  return (
+                    <SidebarNavLink
+                      key={item.to}
+                      to={item.to}
+                      icon={item.icon}
+                      label={item.label}
+                      collapsed={collapsed}
+                      exact={item.exact}
+                      badge={badge}
+                      badgeVariant={isChat && unreadChatCount ? "destructive" : undefined}
+                    />
+                  );
+                })}
               </div>
             </div>
           ))}
