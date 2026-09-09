@@ -155,11 +155,21 @@ function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: 
                         >
                           {item.icon}
                           <span>{item.label}</span>
-                          {item.badge && (
-                            <span className="ml-auto rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
-                              {item.badge}
-                            </span>
-                          )}
+                          {(() => {
+                            const isChat = item.to === "/admin/chat";
+                            const badgeText = isChat && unreadChatCount ? String(unreadChatCount) : item.badge;
+                            if (!badgeText) return null;
+                            return (
+                              <span className={cn(
+                                "ml-auto px-1.5 py-0.5 text-[9px] font-bold flex-shrink-0",
+                                isChat && unreadChatCount
+                                  ? "rounded-full bg-destructive text-white min-w-[18px] text-center"
+                                  : "rounded-md bg-primary text-primary-foreground"
+                              )}>
+                                {badgeText}
+                              </span>
+                            );
+                          })()}
                         </NavLink>
                       ))}
                     </div>
