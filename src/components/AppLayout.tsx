@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useLocation } from "@/lib/router-compat";
 import {
   LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
@@ -93,7 +93,7 @@ const mobileBottomNav = [
 
 const GROUP_LABEL = "text-[10px] uppercase tracking-widest text-muted-foreground px-3 mb-1 mt-4";
 
-function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
+function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: boolean; onInstall: () => void; unreadChatCount: number | null }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -155,11 +155,21 @@ function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstal
                         >
                           {item.icon}
                           <span>{item.label}</span>
-                          {item.badge && (
-                            <span className="ml-auto rounded-md bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
-                              {item.badge}
-                            </span>
-                          )}
+                          {(() => {
+                            const isChat = item.to === "/admin/chat";
+                            const badgeText = isChat && unreadChatCount ? String(unreadChatCount) : item.badge;
+                            if (!badgeText) return null;
+                            return (
+                              <span className={cn(
+                                "ml-auto px-1.5 py-0.5 text-[9px] font-bold flex-shrink-0",
+                                isChat && unreadChatCount
+                                  ? "rounded-full bg-destructive text-white min-w-[18px] text-center"
+                                  : "rounded-md bg-primary text-primary-foreground"
+                              )}>
+                                {badgeText}
+                              </span>
+                            );
+                          })()}
                         </NavLink>
                       ))}
                     </div>
@@ -218,7 +228,7 @@ function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstal
   );
 }
 
-function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
+function DesktopLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: boolean; onInstall: () => void; unreadChatCount: number | null }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
@@ -251,17 +261,22 @@ function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInsta
                 <p className={GROUP_LABEL}>{group.label}</p>
               )}
               <div className="space-y-0.5">
-                {group.items.map(item => (
-                  <SidebarNavLink
-                    key={item.to}
-                    to={item.to}
-                    icon={item.icon}
-                    label={item.label}
-                    collapsed={collapsed}
-                    exact={item.exact}
-                    badge={item.badge}
-                  />
-                ))}
+                {group.items.map(item => {
+                  const isChat = item.to === "/admin/chat";
+                  const badge = isChat && unreadChatCount ? String(unreadChatCount) : item.badge;
+                  return (
+                    <SidebarNavLink
+                      key={item.to}
+                      to={item.to}
+                      icon={item.icon}
+                      label={item.label}
+                      collapsed={collapsed}
+                      exact={item.exact}
+                      badge={badge}
+                      badgeVariant={isChat && unreadChatCount ? "destructive" : undefined}
+                    />
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -304,7 +319,23 @@ export default function AppLayout() {
   const isMobile = useIsMobile();
   // AppLayout wird nur für eingeloggte Admins gerendert (AdminGate)
   const { canInstall, install } = useAdminPwaInstall(true);
+  const [unreadChatCount, setUnreadChatCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadUnread = async () => {
+      const { count, error } = await supabase
+        .from("chat_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("is_read", false)
+        .eq("role", "user");
+      if (!error) setUnreadChatCount(count || 0);
+    };
+    loadUnread();
+    const interval = setInterval(loadUnread, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   return isMobile
-    ? <MobileLayout canInstall={canInstall} onInstall={install} />
-    : <DesktopLayout canInstall={canInstall} onInstall={install} />;
+    ? <MobileLayout canInstall={canInstall} onInstall={install} unreadChatCount={unreadChatCount} />
+    : <DesktopLayout canInstall={canInstall} onInstall={install} unreadChatCount={unreadChatCount} />;
 }
