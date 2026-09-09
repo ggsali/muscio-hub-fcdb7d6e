@@ -218,7 +218,7 @@ function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: 
   );
 }
 
-function DesktopLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
+function DesktopLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: boolean; onInstall: () => void; unreadChatCount: number | null }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
