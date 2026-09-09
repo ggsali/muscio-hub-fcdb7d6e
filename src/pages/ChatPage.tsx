@@ -39,6 +39,8 @@ export default function ChatPage() {
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevSessionCount = useRef(0);
+
 
   // Realtime + Polling kombinieren
   useEffect(() => {
