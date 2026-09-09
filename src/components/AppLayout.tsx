@@ -93,7 +93,7 @@ const mobileBottomNav = [
 
 const GROUP_LABEL = "text-[10px] uppercase tracking-widest text-muted-foreground px-3 mb-1 mt-4";
 
-function MobileLayout({ canInstall, onInstall }: { canInstall: boolean; onInstall: () => void }) {
+function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: boolean; onInstall: () => void; unreadChatCount: number | null }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
