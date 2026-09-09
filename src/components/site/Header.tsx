@@ -182,7 +182,7 @@ export const Header = () => {
                         active && "bg-primary text-primary-foreground"
                       )}
                     >
-                      <Link to={l.path}>{l.label}</Link>
+                      <NavEntry to={l.path}>{l.label}</NavEntry>
                     </Button>
                   ) : (
                     <NavEntry
@@ -227,14 +227,14 @@ export const Header = () => {
                             c.divider ? (
                               <hr key={`divider-${idx}`} className="my-1 border-border" />
                             ) : (
-                              <Link
+                              <NavEntry
                                 key={c.path}
                                 to={c.path}
                                 onClick={() => setOpenDropdown(null)}
                                 className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                               >
                                 {c.label}
-                              </Link>
+                              </NavEntry>
                             )
                           )}
                         </div>
