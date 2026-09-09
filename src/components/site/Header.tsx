@@ -41,10 +41,11 @@ const DEFAULT_NAV: NavItem[] = [
   { label: "Shop", path: "/shop" },
 ];
 
-const MOBILE_FLAT_LINKS: NavChild[] = DEFAULT_NAV.flatMap((l) => {
-  if (l.children && l.children.length > 0) return l.children.filter((c) => !c.divider);
-  return [{ label: l.label, path: l.path }];
-});
+const flattenNav = (items: NavItem[]): NavChild[] =>
+  items.flatMap((l) => {
+    if (l.children && l.children.length > 0) return l.children.filter((c) => !c.divider);
+    return [{ label: l.label, path: l.path }];
+  });
 
 export const Header = () => {
   const [open, setOpen] = useState(false);
@@ -142,7 +143,7 @@ export const Header = () => {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {DEFAULT_NAV.map((l) => {
+            {navItems.map((l) => {
               const active = location.pathname === l.path;
               const hasChildren = l.children && l.children.length > 0;
               return (
