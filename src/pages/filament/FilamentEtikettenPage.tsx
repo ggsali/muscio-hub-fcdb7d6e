@@ -64,7 +64,7 @@ export default function FilamentEtikettenPage() {
 
       return `
         <div class="etikett">
-          ${qrDataUrl ? `<img src="${qrDataUrl}" width="26mm" height="26mm" />` : ""}
+          ${qrDataUrl ? `<img src="${qrDataUrl}" width="91" height="91" />` : ""}
           <div class="text">
             <div class="material">${t ? t.material : "?"}</div>
             <div class="farbe">${t ? t.farbe : ""}</div>
