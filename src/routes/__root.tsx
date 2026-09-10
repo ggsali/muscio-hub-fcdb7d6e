@@ -230,6 +230,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Dark Mode ist nur für das Admin-Panel erlaubt – öffentliche Website bleibt immer hell
+  useEffect(() => {
+    const isAdminArea = window.location.pathname.startsWith("/admin") || window.location.pathname.startsWith("/website-admin");
+    if (!isAdminArea) {
+      document.documentElement.classList.remove("dark");
+    } else if (localStorage.getItem("admin-theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+  });
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>

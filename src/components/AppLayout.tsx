@@ -4,11 +4,12 @@ import {
   LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Menu, X, CalendarDays, MessageCircle,
   Mail, Layers, Receipt, Smartphone, ShoppingBag, FileText, PenLine, Star,
-  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles } from "lucide-react";
+  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles, Sun, Moon } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAdminPwaInstall } from "@/hooks/useAdminPwaInstall";
+import { useDarkMode } from "@/hooks/useDarkMode";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavLink } from "@/lib/router-compat";
 import { cn } from "@/lib/utils";
@@ -96,6 +97,7 @@ const GROUP_LABEL = "text-[10px] uppercase tracking-widest text-muted-foreground
 function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: boolean; onInstall: () => void; unreadChatCount: number | null }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const { isDark, toggle } = useDarkMode();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -187,6 +189,14 @@ function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: 
                   </button>
                 )}
                 <button
+                  onClick={toggle}
+                  title={isDark ? "Hell-Modus" : "Dunkel-Modus"}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full"
+                >
+                  {isDark ? <Sun className={cn(ic, "flex-shrink-0")} /> : <Moon className={cn(ic, "flex-shrink-0")} />}
+                  <span>{isDark ? "Hell" : "Dunkel"}</span>
+                </button>
+                <button
                   onClick={handleLogout}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full"
                 >
@@ -230,6 +240,7 @@ function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: 
 
 function DesktopLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: boolean; onInstall: () => void; unreadChatCount: number | null }) {
   const [collapsed, setCollapsed] = useState(false);
+  const { isDark, toggle } = useDarkMode();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -292,6 +303,14 @@ function DesktopLayout({ canInstall, onInstall, unreadChatCount }: { canInstall:
               {!collapsed && <span>Als App installieren</span>}
             </button>
           )}
+          <button
+            onClick={toggle}
+            title={isDark ? "Hell-Modus" : "Dunkel-Modus"}
+            className={`flex items-center gap-3 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
+          >
+            {isDark ? <Sun className={cn(ic, "flex-shrink-0")} /> : <Moon className={cn(ic, "flex-shrink-0")} />}
+            {!collapsed && <span>{isDark ? "Hell" : "Dunkel"}</span>}
+          </button>
           <button
             onClick={handleLogout}
             className={`flex items-center gap-3 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
