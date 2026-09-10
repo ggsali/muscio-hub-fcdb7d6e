@@ -92,8 +92,8 @@ export default function FilamentEtikettenPage() {
             display: flex;
             flex-direction: row;
             align-items: center;
-            padding: 2mm;
-            gap: 2mm;
+            padding: 1mm;
+            gap: 1.5mm;
             box-sizing: border-box;
             page-break-after: always;
             break-after: page;
@@ -102,12 +102,22 @@ export default function FilamentEtikettenPage() {
             page-break-after: avoid;
             break-after: avoid;
           }
-          img { display: block; flex-shrink: 0; }
-          .text { display: flex; flex-direction: column; gap: 0.5mm; font-family: Arial, sans-serif; }
-          .material { font-size: 9pt; font-weight: 700; color: #000; }
-          .farbe { font-size: 7pt; color: #333; }
-          .code { font-size: 8pt; font-weight: 700; color: #00a651; font-family: monospace; }
-          .gewicht { font-size: 6pt; color: #888; }
+          img { 
+            display: block; 
+            flex-shrink: 0;
+            width: 24mm;
+            height: 24mm;
+          }
+          .text { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.8mm;
+            font-family: Arial, sans-serif;
+          }
+          .material { font-size: 10pt; font-weight: 700; color: #000; }
+          .farbe { font-size: 8.5pt; color: #333; }
+          .code { font-size: 9pt; font-weight: 700; color: #00a651; font-family: monospace; }
+          .gewicht { font-size: 7pt; color: #888; }
         </style>
       </head>
       <body>
