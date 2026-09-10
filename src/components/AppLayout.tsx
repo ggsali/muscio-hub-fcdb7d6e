@@ -97,6 +97,7 @@ const GROUP_LABEL = "text-[10px] uppercase tracking-widest text-muted-foreground
 function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: boolean; onInstall: () => void; unreadChatCount: number | null }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const { isDark, toggle } = useDarkMode();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -231,6 +232,7 @@ function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: 
 
 function DesktopLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: boolean; onInstall: () => void; unreadChatCount: number | null }) {
   const [collapsed, setCollapsed] = useState(false);
+  const { isDark, toggle } = useDarkMode();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
