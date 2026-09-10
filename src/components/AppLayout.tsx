@@ -189,6 +189,14 @@ function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: 
                   </button>
                 )}
                 <button
+                  onClick={toggle}
+                  title={isDark ? "Hell-Modus" : "Dunkel-Modus"}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full"
+                >
+                  {isDark ? <Sun className={cn(ic, "flex-shrink-0")} /> : <Moon className={cn(ic, "flex-shrink-0")} />}
+                  <span>{isDark ? "Hell" : "Dunkel"}</span>
+                </button>
+                <button
                   onClick={handleLogout}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full"
                 >
@@ -295,6 +303,14 @@ function DesktopLayout({ canInstall, onInstall, unreadChatCount }: { canInstall:
               {!collapsed && <span>Als App installieren</span>}
             </button>
           )}
+          <button
+            onClick={toggle}
+            title={isDark ? "Hell-Modus" : "Dunkel-Modus"}
+            className={`flex items-center gap-3 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
+          >
+            {isDark ? <Sun className={cn(ic, "flex-shrink-0")} /> : <Moon className={cn(ic, "flex-shrink-0")} />}
+            {!collapsed && <span>{isDark ? "Hell" : "Dunkel"}</span>}
+          </button>
           <button
             onClick={handleLogout}
             className={`flex items-center gap-3 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full ${collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"}`}
