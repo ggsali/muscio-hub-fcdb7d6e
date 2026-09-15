@@ -435,6 +435,25 @@ export async function exportOrderPDF(data: OrderExportData) {
         formatCHF(data.expressKosten!),
       ]);
     }
+    if (versandBetrag > 0) {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        versandLabel,
+        "—",
+        "1×",
+        formatCHF(versandBetrag),
+        formatCHF(versandBetrag),
+      ]);
+    } else if (data.lieferart === "abholung") {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        "Abholung in Eschlikon TG",
+        "—",
+        "1×",
+        "gratis",
+        "CHF 0.00",
+      ]);
+    }
     autoTable(doc, {
       startY: tableY,
       margin: { left: margin, right: margin },
@@ -488,12 +507,15 @@ export async function exportOrderPDF(data: OrderExportData) {
   sumY += 6;
 
   // Zeilen
-  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0);
+  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0) - versandBetrag;
   const sumRows: [string, string][] = [
     ["Zwischensumme", formatCHF(partsSubtotal)],
   ];
   if ((data.expressKosten ?? 0) > 0) {
     sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  if (versandBetrag > 0) {
+    sumRows.push([versandLabel, formatCHF(versandBetrag)]);
   }
   if (rabattBetrag > 0) {
     sumRows.push([`Rabatt (${rabattProzent}%)`, `- ${formatCHF(rabattBetrag)}`]);
