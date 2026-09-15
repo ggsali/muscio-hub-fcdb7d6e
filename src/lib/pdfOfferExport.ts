@@ -406,13 +406,17 @@ export async function exportOfferPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetrag;
   const offerSumRows: [string, string][] = [["Zwischensumme", formatCHF(partsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     offerSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
   }
+  if (versandBetrag > 0) {
+    offerSumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetrag)]);
+  }
   const offerRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const offerRabatt = data.umsatz_total * (offerRabattPct / 100);
+  const offerRabatt = (data.umsatz_total - versandBetrag) * (offerRabattPct / 100);
   if (offerRabatt > 0) {
     offerSumRows.push([`Rabatt (${offerRabattPct}%)`, `- ${formatCHF(offerRabatt)}`]);
   }
@@ -527,13 +531,17 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const versandBetragAb = Math.max(0, Number(data.versandkosten) || 0);
+  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragAb;
   const abSumRows: [string, string][] = [["Zwischensumme", formatCHF(abPartsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     abSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
   }
+  if (versandBetragAb > 0) {
+    abSumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragAb)]);
+  }
   const abRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const abRabatt = data.umsatz_total * (abRabattPct / 100);
+  const abRabatt = (data.umsatz_total - versandBetragAb) * (abRabattPct / 100);
   if (abRabatt > 0) {
     abSumRows.push([`Rabatt (${abRabattPct}%)`, `- ${formatCHF(abRabatt)}`]);
   }
