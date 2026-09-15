@@ -45,7 +45,13 @@ interface OfferExportData {
   expressKosten?: number;
   expressLabel?: string;
   rabattProzent?: number;
+  versandkosten?: number;
+  paket_groesse?: string;
+  lieferart?: string;
 }
+
+const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
+const paketLabel = (id?: string) => `PostPac Priority${id ? ` (${PAKET_BEZ[id] ?? id})` : ""}`;
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
 const BLACK  = [30, 30, 30]   as [number, number, number];
@@ -313,6 +319,28 @@ export async function exportOfferPDF(data: OfferExportData) {
       ]);
     }
 
+    // Versand / Abholung (Details-Modus)
+    const versandBetragD = Math.max(0, Number(data.versandkosten) || 0);
+    if (versandBetragD > 0) {
+      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: paketLabel(data.paket_groesse), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: formatCHF(versandBetragD), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(versandBetragD), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    } else if (data.lieferart === "abholung") {
+      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "Abholung in Eschlikon TG", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: "gratis", styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: "CHF 0.00", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
+
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
       head: [["Nr.", "Leistung / Beschreibung", "Menge", "Einzelpreis", "Total"]],
@@ -339,6 +367,20 @@ export async function exportOfferPDF(data: OfferExportData) {
         String(tableBody.length + 1).padStart(2, "0"),
         exLabel, "—", "1×",
         formatCHF(data.expressKosten!), formatCHF(data.expressKosten!),
+      ]);
+    }
+    const versandBetragS = Math.max(0, Number(data.versandkosten) || 0);
+    if (versandBetragS > 0) {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        paketLabel(data.paket_groesse), "—", "1×",
+        formatCHF(versandBetragS), formatCHF(versandBetragS),
+      ]);
+    } else if (data.lieferart === "abholung") {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        "Abholung in Eschlikon TG", "—", "1×",
+        "gratis", "CHF 0.00",
       ]);
     }
     autoTable(doc, {
