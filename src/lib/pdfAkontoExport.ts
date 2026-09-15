@@ -452,12 +452,16 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const versandBetragR = Math.max(0, Number(data.versandkosten) || 0);
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragR;
   const sumRows: [string, string][] = [
     ["Teile/Leistungen", formatCHF(partsSubtotal)],
   ];
   if ((data.expressKosten ?? 0) > 0) {
     sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  if (versandBetragR > 0) {
+    sumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragR)]);
   }
   sumRows.push(["Gesamtbetrag", formatCHF(data.umsatz_total)]);
   sumRows.push([`Abzüglich Akonto (${data.akontoPercent}%)`, `- ${formatCHF(data.akontoBetrag)}`]);
