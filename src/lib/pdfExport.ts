@@ -351,6 +351,20 @@ export async function exportOrderPDF(data: OrderExportData) {
       }
     });
 
+    // Express-Lieferung als zusätzliche Hauptzeile am Ende
+    if ((data.expressKosten ?? 0) > 0) {
+      const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
+      const nr = String(data.parts.length + 1).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: exLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: "", styles: { fillColor: BLACK } },
+        { content: "", styles: { fillColor: BLACK } },
+        { content: formatCHF(data.expressKosten!), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
+
     // Versand / Abholung als zusätzliche Hauptzeile am Ende
     if (versandBetrag > 0) {
       const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
@@ -371,20 +385,6 @@ export async function exportOrderPDF(data: OrderExportData) {
         { content: "", styles: { fillColor: BLACK } },
         { content: "", styles: { fillColor: BLACK } },
         { content: "CHF 0.00", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
-      ]);
-    }
-
-    // Express-Lieferung als zusätzliche Hauptzeile am Ende
-    if ((data.expressKosten ?? 0) > 0) {
-      const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
-      const nr = String(data.parts.length + 1).padStart(2, "0");
-      detailBody.push([
-        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
-        { content: exLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
-        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
-        { content: "", styles: { fillColor: BLACK } },
-        { content: "", styles: { fillColor: BLACK } },
-        { content: formatCHF(data.expressKosten!), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
     }
 
