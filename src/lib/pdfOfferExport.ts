@@ -509,6 +509,20 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
       formatCHF(data.expressKosten!), formatCHF(data.expressKosten!),
     ]);
   }
+  const versandBetragAbRow = Math.max(0, Number(data.versandkosten) || 0);
+  if (versandBetragAbRow > 0) {
+    abTableBody.push([
+      String(abTableBody.length + 1).padStart(2, "0"),
+      paketLabel(data.paket_groesse), "—", "1×",
+      formatCHF(versandBetragAbRow), formatCHF(versandBetragAbRow),
+    ]);
+  } else if (data.lieferart === "abholung") {
+    abTableBody.push([
+      String(abTableBody.length + 1).padStart(2, "0"),
+      "Abholung in Eschlikon TG", "—", "1×",
+      "gratis", "CHF 0.00",
+    ]);
+  }
   autoTable(doc, {
     startY: 118, margin: { left: margin, right: margin },
     head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],

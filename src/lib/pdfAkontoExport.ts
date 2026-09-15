@@ -32,7 +32,13 @@ export interface AkontoExportData {
   returnBase64?: boolean;
   expressKosten?: number;
   expressLabel?: string;
+  versandkosten?: number;
+  paket_groesse?: string;
+  lieferart?: string;
 }
+
+const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
+const paketLabel = (id?: string) => `PostPac Priority${id ? ` (${PAKET_BEZ[id] ?? id})` : ""}`;
 
 export interface RestbetragExportData extends Omit<AkontoExportData, 'akontoPercent' | 'akontoBetrag'> {
   akontoPercent: number;
