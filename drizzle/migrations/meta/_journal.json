@@ -8,6 +8,13 @@
       "when": 1789123175389,
       "tag": "0000_restore_public_reviews_read_access",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789491707486,
+      "tag": "0001_orders_add_versandkosten_paketgroesse",
+      "breakpoints": true
     }
   ]
 }

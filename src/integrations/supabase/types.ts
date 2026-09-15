@@ -1583,6 +1583,7 @@ export type Database = {
           marge: number | null
           name: string | null
           notes_internal: string | null
+          paket_groesse: string | null
           preset_id: string | null
           rabatt_prozent: number
           source: string
@@ -1590,6 +1591,7 @@ export type Database = {
           tracking_nr: string | null
           umsatz_total: number | null
           updated_at: string | null
+          versandkosten: number | null
         }
         Insert: {
           beschreibung?: string | null
@@ -1610,6 +1612,7 @@ export type Database = {
           marge?: number | null
           name?: string | null
           notes_internal?: string | null
+          paket_groesse?: string | null
           preset_id?: string | null
           rabatt_prozent?: number
           source?: string
@@ -1617,6 +1620,7 @@ export type Database = {
           tracking_nr?: string | null
           umsatz_total?: number | null
           updated_at?: string | null
+          versandkosten?: number | null
         }
         Update: {
           beschreibung?: string | null
@@ -1637,6 +1641,7 @@ export type Database = {
           marge?: number | null
           name?: string | null
           notes_internal?: string | null
+          paket_groesse?: string | null
           preset_id?: string | null
           rabatt_prozent?: number
           source?: string
@@ -1644,6 +1649,7 @@ export type Database = {
           tracking_nr?: string | null
           umsatz_total?: number | null
           updated_at?: string | null
+          versandkosten?: number | null
         }
         Relationships: [
           {
