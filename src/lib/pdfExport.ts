@@ -23,6 +23,8 @@ interface PartRow {
 
 const MATERIAL_AUFSCHLAG = 3.0;
 
+const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
+
 function effectiveMaterialPricePerG(p: PartRow, fallback: number): number {
   if (p.filament_verkauf_pro_g != null) return Number(p.filament_verkauf_pro_g);
   if (p.filament_einkauf_pro_kg != null) return (Number(p.filament_einkauf_pro_kg) / 1000) * MATERIAL_AUFSCHLAG;
@@ -51,6 +53,9 @@ interface OrderExportData {
   expressKosten?: number;
   expressLabel?: string;
   rabattProzent?: number;
+  versandkosten?: number;
+  paket_groesse?: string;
+  lieferart?: string;
 }
 
 const BLACK = [30, 30, 30] as [number, number, number];
@@ -247,11 +252,13 @@ export async function exportOrderPDF(data: OrderExportData) {
       (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
       (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h * p.menge : 0);
   }, 0);
+  const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
+  const versandLabel = `PostPac Priority${data.paket_groesse ? ` (${PAKET_BEZ[data.paket_groesse] ?? data.paket_groesse})` : ""}`;
   const effectiveTotal = data.withDetails
-    ? computedPartsTotal + (data.expressKosten ?? 0)
+    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag
     : data.umsatz_total;
   const rabattProzent = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const rabattBetrag = effectiveTotal * (rabattProzent / 100);
+  const rabattBetrag = (effectiveTotal - versandBetrag) * (rabattProzent / 100);
   const netTotal = effectiveTotal - rabattBetrag;
 
   if (data.withDetails) {
