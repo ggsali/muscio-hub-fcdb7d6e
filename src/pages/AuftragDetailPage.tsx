@@ -18,6 +18,12 @@ import PartFileUpload from "@/components/PartFileUpload";
 import StlViewer from "@/components/site/StlViewer";
 import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
+
+const POST_PRIORITY_PREISE = [
+  { id: "s", label: "Klein", beschreibung: "bis 2 kg", beispiel: "Kleine Teile, Clips, Halterungen", preis: 10.50 },
+  { id: "m", label: "Mittel", beschreibung: "bis 10 kg", beispiel: "Normale Aufträge, Prototypen", preis: 13.50 },
+  { id: "l", label: "Gross", beschreibung: "bis 30 kg", beispiel: "Grosse Teile, Mehrere Artikel", preis: 22.50 },
+];
 import TimeTracker from "@/components/TimeTracker";
 import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
@@ -126,6 +132,9 @@ export default function AuftragDetailPage() {
   const [geplantBis, setGeplantBis] = useState("");
   const [expressKosten, setExpressKosten] = useState<number>(0);
   const [expressLabel, setExpressLabel] = useState<string>("");
+  const [showVersandModal, setShowVersandModal] = useState(false);
+  const [paketGroesse, setPaketGroesse] = useState<string>("");
+  const [versandkosten, setVersandkosten] = useState(0);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
   const [notesInternal, setNotesInternal] = useState<string>("");
@@ -351,6 +360,8 @@ export default function AuftragDetailPage() {
           setExpressKosten(Number((o as any).express_kosten) || 0);
           setExpressLabel((o as any).express_label || "");
           setRabattProzent(Number((o as any).rabatt_prozent) || 0);
+          setVersandkosten(Number((o as any).versandkosten) || 0);
+          setPaketGroesse((o as any).paket_groesse || "");
           setSource((o as any).source || "manual");
           setNotesInternal((o as any).notes_internal || "");
           // Restore preset if saved
@@ -578,8 +589,8 @@ export default function AuftragDetailPage() {
         const brutto =
           nextParts.reduce((s, p) => s + (p.preis_total || 0), 0) +
           (nextParts.length > 0 ? Math.max(0, Number(expressKosten) || 0) : 0);
-        const neuTotal = brutto - brutto * (pct / 100);
-        await supabase.from("orders").update({ umsatz_total: neuTotal }).eq("id", id);
+        const neuTotal = brutto - brutto * (pct / 100) + versandkosten;
+        await supabase.from("orders").update({ umsatz_total: neuTotal, versandkosten, paket_groesse: paketGroesse || null }).eq("id", id);
       }
     } catch (err: any) {
       console.error("Fehler beim Speichern der Teilauswahl:", err);
@@ -636,6 +647,7 @@ export default function AuftragDetailPage() {
 
   // Netto = nach Rabatt
   const selectedTotalUmsatz = selectedBruttoUmsatz - selectedRabattBetrag;
+  const totalMitVersand = selectedTotalUmsatz + versandkosten;
 
   // Kosten
   const selectedTotalKosten = selectedParts.reduce((s, p) => {
@@ -709,7 +721,8 @@ export default function AuftragDetailPage() {
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: selectedTotalUmsatz, kosten_total: selectedTotalKosten,
+            parts: selectedParts, umsatz_total: totalMitVersand, kosten_total: selectedTotalKosten,
+            versandkosten, paket_groesse: paketGroesse, lieferart,
             gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
             settings: activeSettings, company, returnBase64: true, withDetails,
             expressKosten: selectedExpressAmount, expressLabel,
@@ -719,7 +732,8 @@ export default function AuftragDetailPage() {
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: selectedTotalUmsatz, settings: activeSettings, company, returnBase64: true, withDetails,
+            parts: selectedParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true, withDetails,
+            versandkosten, paket_groesse: paketGroesse, lieferart,
             expressKosten: selectedExpressAmount, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
@@ -730,7 +744,8 @@ export default function AuftragDetailPage() {
           const result = await exportAuftragsbestaetiguungPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: selectedTotalUmsatz, settings: activeSettings, company, returnBase64: true,
+            parts: selectedParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true,
+            versandkosten, paket_groesse: paketGroesse, lieferart,
             expressKosten: selectedExpressAmount, expressLabel,
             rabattProzent: rabattPct,
           });
@@ -819,11 +834,12 @@ export default function AuftragDetailPage() {
     setSendingAkonto(true);
     try {
       const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-      const akontoBetrag = Math.round(selectedTotalUmsatz * akontoPercent) / 100;
+      const akontoBetrag = Math.round(totalMitVersand * akontoPercent) / 100;
       const result = await exportAkontoPDF({
         orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-        parts: selectedParts, umsatz_total: selectedTotalUmsatz, akontoPercent, akontoBetrag,
+        parts: selectedParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag,
+        versandkosten, paket_groesse: paketGroesse, lieferart,
         settings: activeSettings, company, returnBase64: !download,
         expressKosten: selectedExpressAmount, expressLabel,
       });
@@ -868,12 +884,13 @@ export default function AuftragDetailPage() {
     setSendingAkonto(true);
     try {
       const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-      const akontoBetrag = Math.round(selectedTotalUmsatz * akontoPercent) / 100;
-      const restbetrag = selectedTotalUmsatz - akontoBetrag;
+      const akontoBetrag = Math.round(totalMitVersand * akontoPercent) / 100;
+      const restbetrag = totalMitVersand - akontoBetrag;
       const result = await exportRestbetragPDF({
         orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-        parts: selectedParts, umsatz_total: selectedTotalUmsatz, akontoPercent, akontoBetrag, restbetrag,
+        parts: selectedParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag, restbetrag,
+        versandkosten, paket_groesse: paketGroesse, lieferart,
         settings: activeSettings, company, returnBase64: !download,
         expressKosten: selectedExpressAmount, expressLabel,
       });
@@ -926,7 +943,10 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts: selectedParts,
-      umsatz_total: selectedTotalUmsatz,
+      umsatz_total: totalMitVersand,
+      versandkosten,
+      paket_groesse: paketGroesse,
+      lieferart,
       kosten_total: selectedTotalKosten,
       gewinn_total: selectedTotalGewinn,
       marge: selectedTotalMarge,
@@ -951,7 +971,10 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts: selectedParts,
-      umsatz_total: selectedTotalUmsatz,
+      umsatz_total: totalMitVersand,
+      versandkosten,
+      paket_groesse: paketGroesse,
+      lieferart,
       settings: activeSettings,
       company,
       withDetails: details,
@@ -973,7 +996,10 @@ export default function AuftragDetailPage() {
       customerTelefon,
       customerAdresse,
       parts: selectedParts,
-      umsatz_total: selectedTotalUmsatz,
+      umsatz_total: totalMitVersand,
+      versandkosten,
+      paket_groesse: paketGroesse,
+      lieferart,
       settings: activeSettings,
       company,
       expressKosten: selectedExpressAmount,
@@ -1003,7 +1029,7 @@ export default function AuftragDetailPage() {
       beschreibung,
       datum,
       status,
-      umsatz_total: selectedTotalUmsatz,
+      umsatz_total: totalMitVersand,
       kosten_total: totalKosten,
       gewinn_total: totalGewinn,
       marge: totalMarge,
@@ -1015,6 +1041,8 @@ export default function AuftragDetailPage() {
       rabatt_prozent: rabattPct,
       notes_internal: notesInternal || null,
       lieferart,
+      versandkosten,
+      paket_groesse: paketGroesse || null,
     };
 
     let orderId = id === "neu" ? null : id;
@@ -1423,7 +1451,7 @@ export default function AuftragDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Teilrechnung / Schlussrechnung</AlertDialogTitle>
             <AlertDialogDescription>
-              Gesamtbetrag: <strong>{formatCHF(selectedTotalUmsatz)}</strong>
+              Gesamtbetrag: <strong>{formatCHF(totalMitVersand)}</strong>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-2">
@@ -1479,28 +1507,28 @@ export default function AuftragDetailPage() {
             <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-1.5">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Gesamtbetrag</span>
-                <span>{formatCHF(selectedTotalUmsatz)}</span>
+                <span>{formatCHF(totalMitVersand)}</span>
               </div>
               {akontoMode === "akonto" ? (
                 <>
                   <div className="flex justify-between text-sm font-semibold text-primary">
                     <span>Akontozahlung ({akontoPercent}%)</span>
-                    <span>{formatCHF(Math.round(selectedTotalUmsatz * akontoPercent) / 100)}</span>
+                    <span>{formatCHF(Math.round(totalMitVersand * akontoPercent) / 100)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground border-t border-border pt-1.5">
                     <span>Verbleibender Restbetrag</span>
-                    <span>{formatCHF(selectedTotalUmsatz - Math.round(selectedTotalUmsatz * akontoPercent) / 100)}</span>
+                    <span>{formatCHF(totalMitVersand - Math.round(totalMitVersand * akontoPercent) / 100)}</span>
                   </div>
                 </>
               ) : (
                 <>
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Abzüglich Akonto ({akontoPercent}%)</span>
-                    <span>- {formatCHF(Math.round(selectedTotalUmsatz * akontoPercent) / 100)}</span>
+                    <span>- {formatCHF(Math.round(totalMitVersand * akontoPercent) / 100)}</span>
                   </div>
                   <div className="flex justify-between text-sm font-semibold text-primary border-t border-border pt-1.5">
                     <span>Restbetrag (fällig)</span>
-                    <span>{formatCHF(selectedTotalUmsatz - Math.round(selectedTotalUmsatz * akontoPercent) / 100)}</span>
+                    <span>{formatCHF(totalMitVersand - Math.round(totalMitVersand * akontoPercent) / 100)}</span>
                   </div>
                 </>
               )}
@@ -1668,7 +1696,7 @@ export default function AuftragDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-card border border-border rounded-lg p-4">
                 <div className="text-xs text-muted-foreground mb-1">Umsatz</div>
-                <div className="text-xl font-bold text-success">{formatCHF(selectedTotalUmsatz)}</div>
+                <div className="text-xl font-bold text-success">{formatCHF(totalMitVersand)}</div>
               </div>
               <div className="bg-card border border-border rounded-lg p-4">
                 <div className="text-xs text-muted-foreground mb-1">Gewinn</div>
@@ -1701,7 +1729,26 @@ export default function AuftragDetailPage() {
               <ToggleGroup
                 type="single"
                 value={lieferart}
-                onValueChange={(v) => v && setLieferart(v as "versand" | "abholung")}
+                onValueChange={(v) => {
+                  if (!v) return;
+                  if (v === "versand") {
+                    setLieferart("versand");
+                    setShowVersandModal(true);
+                  } else if (v === "abholung") {
+                    setLieferart("abholung");
+                    setVersandkosten(0);
+                    setPaketGroesse("");
+                    if (id && !isNew) {
+                      supabase.from("orders").update({
+                        lieferart: "abholung",
+                        versandkosten: 0,
+                        paket_groesse: null,
+                        umsatz_total: selectedTotalUmsatz,
+                      } as any).eq("id", id).then(() => {});
+                    }
+                    toast({ title: "Abholung in Eschlikon TG – kostenlos ✓" });
+                  }
+                }}
                 className="border border-border rounded-md p-0.5"
               >
                 <ToggleGroupItem value="versand" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">📦 Versand</ToggleGroupItem>
@@ -1713,8 +1760,72 @@ export default function AuftragDetailPage() {
             </div>
           </div>
 
-
-          {/* 2-column grid: Auftragsinfo + Beschreibung/Notizen */}
+          {/* Paketgrösse-Dialog (PostPac Priority) */}
+          {showVersandModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-background rounded-2xl p-6 max-w-md w-full shadow-xl">
+                <h3 className="font-bold text-lg mb-1">Paketgrösse wählen</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  PostPac Priority · Lieferung nächster Werktag
+                </p>
+                <div className="space-y-2 mb-6">
+                  {POST_PRIORITY_PREISE.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setPaketGroesse(p.id)}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                        paketGroesse === p.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold">{p.label} ({p.beschreibung})</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{p.beispiel}</p>
+                        </div>
+                        <p className="font-bold text-primary">CHF {p.preis.toFixed(2)}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowVersandModal(false);
+                      if (versandkosten <= 0) setLieferart("abholung");
+                    }}
+                    className="flex-1 border border-border rounded-xl py-2.5 text-sm"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const selected = POST_PRIORITY_PREISE.find(p => p.id === paketGroesse);
+                      if (!selected) return;
+                      const kosten = selected.preis;
+                      setVersandkosten(kosten);
+                      setShowVersandModal(false);
+                      const neuesTotal = selectedTotalUmsatz + kosten;
+                      if (id && !isNew) {
+                        await supabase.from("orders").update({
+                          lieferart: "versand",
+                          versandkosten: kosten,
+                          paket_groesse: paketGroesse,
+                          umsatz_total: neuesTotal,
+                        } as any).eq("id", id);
+                      }
+                      toast({ title: `PostPac Priority ${selected.label} · CHF ${kosten.toFixed(2)} hinzugefügt ✓` });
+                    }}
+                    disabled={!paketGroesse}
+                    className="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
+                  >
+                    Übernehmen
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
               <h3 className="font-semibold text-sm">Auftragsinfo</h3>
@@ -2238,7 +2349,13 @@ export default function AuftragDetailPage() {
                 <div className="md:col-span-2 text-sm space-y-1">
                   <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{formatCHF(selectedBruttoUmsatz)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Rabatt {rabattPct > 0 ? `(${rabattPct}%)` : ""}</span><span className="text-destructive">− {formatCHF(selectedRabattBetrag)}</span></div>
-                  <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(selectedTotalUmsatz)}</span></div>
+                  {versandkosten > 0 && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">PostPac Priority ({POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})</span><span>{formatCHF(versandkosten)}</span></div>
+                  )}
+                  {lieferart === "abholung" && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">Lieferart</span><span className="text-success font-medium">🏠 Abholung – kostenlos</span></div>
+                  )}
+                  <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(totalMitVersand)}</span></div>
                 </div>
               </div>
             </div>
@@ -2254,7 +2371,7 @@ export default function AuftragDetailPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Konstruktion</span><span>{formatCHF(konstrKosten)}</span></div>
-                <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(selectedTotalUmsatz)}</span></div>
+                <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(totalMitVersand)}</span></div>
               </div>
               {selectedPartIds.size < parts.filter(p => p.id).length && (
                 <p className="text-xs text-muted-foreground mt-2">
@@ -2390,8 +2507,14 @@ export default function AuftragDetailPage() {
               {selectedRabattBetrag > 0 && (
                 <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(selectedRabattBetrag)}</span></div>
               )}
+              {versandkosten > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">PostPac Priority ({POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})</span><span>{formatCHF(versandkosten)}</span></div>
+              )}
+              {lieferart === "abholung" && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Lieferart</span><span className="text-success font-medium">🏠 Abholung – kostenlos</span></div>
+              )}
               <div className="border-t border-border my-2" />
-              <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(selectedTotalUmsatz)}</span></div>
+              <div className="flex justify-between font-bold"><span>Total Umsatz</span><span className="text-primary">{formatCHF(totalMitVersand)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Meine Kosten</span><span className="text-destructive">{formatCHF(selectedTotalKosten)}</span></div>
               <div className="flex justify-between font-bold"><span>Reingewinn</span><span className="text-success">{formatCHF(selectedTotalGewinn)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Marge</span><span>{formatPct(selectedTotalMarge)}</span></div>

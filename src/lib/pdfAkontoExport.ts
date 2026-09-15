@@ -32,7 +32,13 @@ export interface AkontoExportData {
   returnBase64?: boolean;
   expressKosten?: number;
   expressLabel?: string;
+  versandkosten?: number;
+  paket_groesse?: string;
+  lieferart?: string;
 }
+
+const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
+const paketLabel = (id?: string) => `PostPac Priority${id ? ` (${PAKET_BEZ[id] ?? id})` : ""}`;
 
 export interface RestbetragExportData extends Omit<AkontoExportData, 'akontoPercent' | 'akontoBetrag'> {
   akontoPercent: number;
@@ -196,7 +202,7 @@ function drawFooter(doc: jsPDF, company: CompanySettings, ACCENT: [number, numbe
 }
 
 /** Gemeinsame Positionen-Tabelle */
-function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string) {
+function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string, versandkosten?: number, paketGroesse?: string, lieferart?: string) {
   const body: any[][] = parts.map((p, i) => [
     String(i + 1).padStart(2, "0"),
     p.teilname || "—",
@@ -213,6 +219,26 @@ function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKos
       "1×",
       formatCHF(expressKosten!),
       formatCHF(expressKosten!),
+    ]);
+  }
+  const versandBetrag = Math.max(0, Number(versandkosten) || 0);
+  if (versandBetrag > 0) {
+    body.push([
+      String(body.length + 1).padStart(2, "0"),
+      paketLabel(paketGroesse),
+      "—",
+      "1×",
+      formatCHF(versandBetrag),
+      formatCHF(versandBetrag),
+    ]);
+  } else if (lieferart === "abholung") {
+    body.push([
+      String(body.length + 1).padStart(2, "0"),
+      "Abholung in Eschlikon TG",
+      "—",
+      "1×",
+      "gratis",
+      "CHF 0.00",
     ]);
   }
   autoTable(doc, {
@@ -328,18 +354,22 @@ export async function exportAkontoPDF(data: AkontoExportData) {
   const descLines = rawDesc.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const versandBetragA = Math.max(0, Number(data.versandkosten) || 0);
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragA;
   const sumRows: [string, string][] = [
     ["Teile/Leistungen", formatCHF(partsSubtotal)],
   ];
   if ((data.expressKosten ?? 0) > 0) {
     sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  if (versandBetragA > 0) {
+    sumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragA)]);
   }
   sumRows.push(["Gesamtbetrag (Referenz)", formatCHF(data.umsatz_total)]);
   sumRows.push([`Akontozahlung (${data.akontoPercent}%)`, formatCHF(data.akontoBetrag)]);
@@ -416,18 +446,22 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
   const descLines = rawDesc2.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const versandBetragR = Math.max(0, Number(data.versandkosten) || 0);
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragR;
   const sumRows: [string, string][] = [
     ["Teile/Leistungen", formatCHF(partsSubtotal)],
   ];
   if ((data.expressKosten ?? 0) > 0) {
     sumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
+  }
+  if (versandBetragR > 0) {
+    sumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragR)]);
   }
   sumRows.push(["Gesamtbetrag", formatCHF(data.umsatz_total)]);
   sumRows.push([`Abzüglich Akonto (${data.akontoPercent}%)`, `- ${formatCHF(data.akontoBetrag)}`]);

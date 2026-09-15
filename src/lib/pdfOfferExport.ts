@@ -45,7 +45,13 @@ interface OfferExportData {
   expressKosten?: number;
   expressLabel?: string;
   rabattProzent?: number;
+  versandkosten?: number;
+  paket_groesse?: string;
+  lieferart?: string;
 }
+
+const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
+const paketLabel = (id?: string) => `PostPac Priority${id ? ` (${PAKET_BEZ[id] ?? id})` : ""}`;
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
 const BLACK  = [30, 30, 30]   as [number, number, number];
@@ -313,6 +319,28 @@ export async function exportOfferPDF(data: OfferExportData) {
       ]);
     }
 
+    // Versand / Abholung (Details-Modus)
+    const versandBetragD = Math.max(0, Number(data.versandkosten) || 0);
+    if (versandBetragD > 0) {
+      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: paketLabel(data.paket_groesse), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: formatCHF(versandBetragD), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(versandBetragD), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    } else if (data.lieferart === "abholung") {
+      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "Abholung in Eschlikon TG", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: "gratis", styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: "CHF 0.00", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
+
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
       head: [["Nr.", "Leistung / Beschreibung", "Menge", "Einzelpreis", "Total"]],
@@ -341,6 +369,20 @@ export async function exportOfferPDF(data: OfferExportData) {
         formatCHF(data.expressKosten!), formatCHF(data.expressKosten!),
       ]);
     }
+    const versandBetragS = Math.max(0, Number(data.versandkosten) || 0);
+    if (versandBetragS > 0) {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        paketLabel(data.paket_groesse), "—", "1×",
+        formatCHF(versandBetragS), formatCHF(versandBetragS),
+      ]);
+    } else if (data.lieferart === "abholung") {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        "Abholung in Eschlikon TG", "—", "1×",
+        "gratis", "CHF 0.00",
+      ]);
+    }
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
       head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
@@ -364,13 +406,17 @@ export async function exportOfferPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetrag;
   const offerSumRows: [string, string][] = [["Zwischensumme", formatCHF(partsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     offerSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
   }
+  if (versandBetrag > 0) {
+    offerSumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetrag)]);
+  }
   const offerRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const offerRabatt = data.umsatz_total * (offerRabattPct / 100);
+  const offerRabatt = (data.umsatz_total - versandBetrag) * (offerRabattPct / 100);
   if (offerRabatt > 0) {
     offerSumRows.push([`Rabatt (${offerRabattPct}%)`, `- ${formatCHF(offerRabatt)}`]);
   }
@@ -463,6 +509,20 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
       formatCHF(data.expressKosten!), formatCHF(data.expressKosten!),
     ]);
   }
+  const versandBetragAbRow = Math.max(0, Number(data.versandkosten) || 0);
+  if (versandBetragAbRow > 0) {
+    abTableBody.push([
+      String(abTableBody.length + 1).padStart(2, "0"),
+      paketLabel(data.paket_groesse), "—", "1×",
+      formatCHF(versandBetragAbRow), formatCHF(versandBetragAbRow),
+    ]);
+  } else if (data.lieferart === "abholung") {
+    abTableBody.push([
+      String(abTableBody.length + 1).padStart(2, "0"),
+      "Abholung in Eschlikon TG", "—", "1×",
+      "gratis", "CHF 0.00",
+    ]);
+  }
   autoTable(doc, {
     startY: 118, margin: { left: margin, right: margin },
     head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
@@ -485,13 +545,17 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0);
+  const versandBetragAb = Math.max(0, Number(data.versandkosten) || 0);
+  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragAb;
   const abSumRows: [string, string][] = [["Zwischensumme", formatCHF(abPartsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     abSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
   }
+  if (versandBetragAb > 0) {
+    abSumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragAb)]);
+  }
   const abRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const abRabatt = data.umsatz_total * (abRabattPct / 100);
+  const abRabatt = (data.umsatz_total - versandBetragAb) * (abRabattPct / 100);
   if (abRabatt > 0) {
     abSumRows.push([`Rabatt (${abRabattPct}%)`, `- ${formatCHF(abRabatt)}`]);
   }
