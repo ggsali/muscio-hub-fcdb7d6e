@@ -202,7 +202,7 @@ function drawFooter(doc: jsPDF, company: CompanySettings, ACCENT: [number, numbe
 }
 
 /** Gemeinsame Positionen-Tabelle */
-function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string) {
+function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string, versandkosten?: number, paketGroesse?: string, lieferart?: string) {
   const body: any[][] = parts.map((p, i) => [
     String(i + 1).padStart(2, "0"),
     p.teilname || "—",
