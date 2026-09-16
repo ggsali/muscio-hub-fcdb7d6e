@@ -486,7 +486,7 @@ const CalculatorOnlinePage = () => {
   const loadMaterials = useCallback(async () => {
     const { data: filaments, error } = await supabase
       .from("filaments")
-      .select("id, name, material, farbe, farben, verkaufspreis_pro_g, dichte_g_cm3, aktiv")
+      .select("id, name, material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g, dichte_g_cm3, aktiv")
       .eq("aktiv", true)
       .order("material", { ascending: true });
 
@@ -528,11 +528,7 @@ const CalculatorOnlinePage = () => {
 
     // Filamente mit Preis 0 oder fehlendem Preis filtern
     const validFilaments = filaments.filter((f: any) => {
-      const preis = f.verkaufspreis_pro_g
-        ? Number(f.verkaufspreis_pro_g)
-        : f.preis_pro_kg
-          ? (Number(f.preis_pro_kg) / 1000) * 2.5
-          : 0;
+      const preis = Number(f.verkaufspreis_pro_g ?? f.public_preis_pro_g ?? 0);
       return preis > 0;
     });
 
@@ -556,9 +552,7 @@ const CalculatorOnlinePage = () => {
           id: f.id,
           name: f.name,
           materialType: f.material,
-          pricePerGram: f.verkaufspreis_pro_g
-            ? Number(f.verkaufspreis_pro_g)
-            : (Number(f.preis_pro_kg) / 1000) * 2.5,
+          pricePerGram: Number(f.verkaufspreis_pro_g ?? f.public_preis_pro_g ?? 0),
           density: Number(f.dichte_g_cm3) || 1.24,
           farbe: list[0]?.hex || f.farbe,
           hersteller: f.hersteller,

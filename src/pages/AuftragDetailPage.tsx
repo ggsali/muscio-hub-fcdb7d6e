@@ -134,6 +134,7 @@ export default function AuftragDetailPage() {
   const [expressLabel, setExpressLabel] = useState<string>("");
   const [showVersandModal, setShowVersandModal] = useState(false);
   const [paketGroesse, setPaketGroesse] = useState<string>("");
+  const [paketGroesseDraft, setPaketGroesseDraft] = useState<string>("");
   const [versandkosten, setVersandkosten] = useState(0);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
@@ -210,12 +211,12 @@ export default function AuftragDetailPage() {
 
 
   const handleCreatePaymentLink = async () => {
-    if (!id || selectedTotalUmsatz <= 0) return;
+    if (!id || totalMitVersand <= 0) return;
     setCreatingPaymentLink(true);
     try {
       const { customerEmail } = await getCustomerData();
       const { data, error } = await supabase.functions.invoke("create-stripe-payment-link", {
-        body: { orderId: id, betrag: selectedTotalUmsatz, orderName, customerEmail },
+        body: { orderId: id, betrag: totalMitVersand, orderName, customerEmail },
       });
       if (error || data?.error) {
         toast({ title: "Stripe Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -701,10 +702,10 @@ export default function AuftragDetailPage() {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
         if (type === "rechnung") {
           // Optionally generate Stripe payment link
-          if (withPaymentLink && selectedTotalUmsatz > 0) {
+          if (withPaymentLink && totalMitVersand > 0) {
             try {
               const { data: plData, error: plErr } = await supabase.functions.invoke("create-stripe-payment-link", {
-                body: { orderId: id, betrag: selectedTotalUmsatz, orderName, customerEmail },
+                body: { orderId: id, betrag: totalMitVersand, orderName, customerEmail },
               });
               if (plErr || plData?.error) {
                 setSendingEmail(null);
@@ -791,7 +792,7 @@ export default function AuftragDetailPage() {
               console.error("Upload catch error:", e);
             }
           }
-          const betragValue = type === "rechnung" ? selectedTotalUmsatz : type === "offerte" ? selectedTotalUmsatz : 0;
+          const betragValue = type === "rechnung" ? totalMitVersand : type === "offerte" ? totalMitVersand : 0;
           const faelligAm = type === "rechnung" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] : null;
           await supabase.from("bills" as any).insert({
             order_id: id,
@@ -864,7 +865,7 @@ export default function AuftragDetailPage() {
             await supabase.from("bills" as any).insert({
               order_id: id,
               titel: `Akontorechnung (${akontoPercent}%) per E-Mail gesendet`,
-              betrag: Math.round(selectedTotalUmsatz * akontoPercent) / 100,
+              betrag: Math.round(totalMitVersand * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
               file_path: storedPath,
@@ -914,7 +915,7 @@ export default function AuftragDetailPage() {
             await supabase.from("bills" as any).insert({
               order_id: id,
               titel: `Schlussrechnung per E-Mail gesendet`,
-              betrag: selectedTotalUmsatz - Math.round(selectedTotalUmsatz * akontoPercent) / 100,
+              betrag: totalMitVersand - Math.round(totalMitVersand * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
               file_path: storedPath,
@@ -1225,7 +1226,7 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => { setManualStatus(status || ""); setShowStatusDialog(true); }} className="gap-2">
                     <Settings2 className="w-4 h-4" /> Status korrigieren
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} className="gap-2">
+                  <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} className="gap-2">
                     <Link2 className="w-4 h-4" /> Zahlungslink senden
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="gap-2">
@@ -1326,7 +1327,7 @@ export default function AuftragDetailPage() {
                     <DropdownMenuItem onClick={() => handleExportPDF(false)} className="gap-2">
                       <FileDown className="w-4 h-4" /> Rechnung neu generieren
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} className="gap-2">
+                    <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} className="gap-2">
                       <Link2 className="w-4 h-4" /> Zahlungslink neu senden
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -1420,7 +1421,7 @@ export default function AuftragDetailPage() {
                 />
                 <span>Mit Details <span className="text-muted-foreground text-xs">(Gewicht, Druckzeit, Konstruktion, Nachbearbeitung)</span></span>
               </label>
-              {confirmEmailType === "rechnung" && selectedTotalUmsatz > 0 && (
+              {confirmEmailType === "rechnung" && totalMitVersand > 0 && (
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input
                     type="checkbox"
@@ -1430,7 +1431,7 @@ export default function AuftragDetailPage() {
                   />
                   <span>
                     💳 Stripe Zahlungslink hinzufügen{" "}
-                    <span className="text-muted-foreground text-xs">(CHF {selectedTotalUmsatz.toFixed(2)} – Kunde kann online bezahlen)</span>
+                    <span className="text-muted-foreground text-xs">(CHF {totalMitVersand.toFixed(2)} – Kunde kann online bezahlen)</span>
                   </span>
                 </label>
               )}
@@ -1733,6 +1734,7 @@ export default function AuftragDetailPage() {
                   if (!v) return;
                   if (v === "versand") {
                     setLieferart("versand");
+                    setPaketGroesseDraft(paketGroesse);
                     setShowVersandModal(true);
                   } else if (v === "abholung") {
                     setLieferart("abholung");
@@ -1751,7 +1753,16 @@ export default function AuftragDetailPage() {
                 }}
                 className="border border-border rounded-md p-0.5"
               >
-                <ToggleGroupItem value="versand" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">📦 Versand</ToggleGroupItem>
+                <ToggleGroupItem
+                  value="versand"
+                  onClick={() => {
+                    if (lieferart === "versand") {
+                      setPaketGroesseDraft(paketGroesse);
+                      setShowVersandModal(true);
+                    }
+                  }}
+                  className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                >📦 Versand</ToggleGroupItem>
                 <ToggleGroupItem value="abholung" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">🏠 Abholung</ToggleGroupItem>
               </ToggleGroup>
               {lieferart === "abholung" && (
@@ -1772,9 +1783,9 @@ export default function AuftragDetailPage() {
                   {POST_PRIORITY_PREISE.map(p => (
                     <button
                       key={p.id}
-                      onClick={() => setPaketGroesse(p.id)}
+                      onClick={() => setPaketGroesseDraft(p.id)}
                       className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                        paketGroesse === p.id
+                        paketGroesseDraft === p.id
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/40"
                       }`}
@@ -1793,6 +1804,7 @@ export default function AuftragDetailPage() {
                   <button
                     onClick={() => {
                       setShowVersandModal(false);
+                      setPaketGroesseDraft(paketGroesse);
                       if (versandkosten <= 0) setLieferart("abholung");
                     }}
                     className="flex-1 border border-border rounded-xl py-2.5 text-sm"
@@ -1801,9 +1813,10 @@ export default function AuftragDetailPage() {
                   </button>
                   <button
                     onClick={async () => {
-                      const selected = POST_PRIORITY_PREISE.find(p => p.id === paketGroesse);
+                      const selected = POST_PRIORITY_PREISE.find(p => p.id === paketGroesseDraft);
                       if (!selected) return;
                       const kosten = selected.preis;
+                      setPaketGroesse(selected.id);
                       setVersandkosten(kosten);
                       setShowVersandModal(false);
                       const neuesTotal = selectedTotalUmsatz + kosten;
@@ -1811,13 +1824,13 @@ export default function AuftragDetailPage() {
                         await supabase.from("orders").update({
                           lieferart: "versand",
                           versandkosten: kosten,
-                          paket_groesse: paketGroesse,
+                          paket_groesse: selected.id,
                           umsatz_total: neuesTotal,
                         } as any).eq("id", id);
                       }
                       toast({ title: `PostPac Priority ${selected.label} · CHF ${kosten.toFixed(2)} hinzugefügt ✓` });
                     }}
-                    disabled={!paketGroesse}
+                    disabled={!paketGroesseDraft}
                     className="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
                   >
                     Übernehmen
@@ -1942,7 +1955,7 @@ export default function AuftragDetailPage() {
                 <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border">
                   <Mail className="w-4 h-4" /> Rechnung senden
                 </Button>
-                <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
+                <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} variant="outline" className="justify-start gap-2 border-border">
                   {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} Zahlungslink senden
                 </Button>
                 <Button onClick={() => navigate(`/admin/auftraege/${id}/platten`)} variant="outline" className="justify-start gap-2 border-border">
@@ -2554,7 +2567,7 @@ export default function AuftragDetailPage() {
               <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte senden</Button>
               <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung senden</Button>
               <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung erstellen</Button>
-              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
+              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} variant="outline" className="justify-start gap-2 border-border">
                 {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Stripe Zahlungslink erstellen
               </Button>
             </div>

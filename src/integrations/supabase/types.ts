@@ -863,6 +863,7 @@ export type Database = {
           name: string
           notizen: string | null
           preis_pro_kg: number
+          public_preis_pro_g: number | null
           verkaufspreis_pro_g: number | null
         }
         Insert: {
@@ -877,6 +878,7 @@ export type Database = {
           name: string
           notizen?: string | null
           preis_pro_kg?: number
+          public_preis_pro_g?: number | null
           verkaufspreis_pro_g?: number | null
         }
         Update: {
@@ -891,6 +893,7 @@ export type Database = {
           name?: string
           notizen?: string | null
           preis_pro_kg?: number
+          public_preis_pro_g?: number | null
           verkaufspreis_pro_g?: number | null
         }
         Relationships: []
