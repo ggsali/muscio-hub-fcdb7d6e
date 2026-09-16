@@ -2426,9 +2426,20 @@ const CalculatorOnlinePage = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 bg-success/10 border border-success/30 rounded-xl px-4 py-2.5 text-sm mt-3">
-                    <span className="text-success">⚡</span>
-                    <span className="text-foreground font-medium">{getDeliveryText()}</span>
+                  <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mt-4">
+                    <span className="text-lg">📦</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-emerald-800">
+                        Angestrebte Lieferung: {lieferdatum?.toLocaleDateString("de-CH", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long"
+                        })}
+                      </p>
+                      <p className="text-xs text-emerald-600 mt-0.5">
+                        Richtwert · abhängig von aktueller Auftragslage · nicht verbindlich
+                      </p>
+                    </div>
                   </div>
 
 
