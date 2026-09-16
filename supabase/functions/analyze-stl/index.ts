@@ -22,21 +22,25 @@ function densityFor(material: string): number {
 }
 
 /** Grenzen, damit der Edge-Worker nicht am Speicher-/CPU-Limit abbricht */
-const MAX_BASE64_LEN = 24 * 1024 * 1024; // ~18 MB Datei
-const MAX_TRIS = 300_000;
+const MAX_BASE64_LEN = 9 * 1024 * 1024; // ~6.7 MB Datei
+const MAX_TRIS = 120_000;
 
-/** Base64 blockweise dekodieren (kein zeichenweiser Aufbau über die ganze Datei) */
+/**
+ * Base64 blockweise dekodieren – atob() wird nur auf kleine Stücke angewandt,
+ * damit kein zweiter grosser String (UTF-16 = 2 Bytes/Zeichen) im Speicher liegt.
+ */
 function base64ToBytes(b64: string): Uint8Array {
-  const clean = b64.includes(",") ? b64.split(",")[1] : b64;
-  const bin = atob(clean);
-  const out = new Uint8Array(bin.length);
-  const CHUNK = 65536;
-  for (let start = 0; start < bin.length; start += CHUNK) {
-    const end = Math.min(start + CHUNK, bin.length);
-    for (let i = start; i < end; i++) out[i] = bin.charCodeAt(i);
+  const clean = b64.includes(",") ? b64.slice(b64.indexOf(",") + 1) : b64;
+  const CHUNK = 32768; // Vielfaches von 4 → gültige Base64-Blöcke
+  const out = new Uint8Array(Math.floor((clean.length * 3) / 4) + 4);
+  let pos = 0;
+  for (let start = 0; start < clean.length; start += CHUNK) {
+    const bin = atob(clean.slice(start, Math.min(start + CHUNK, clean.length)));
+    for (let i = 0; i < bin.length; i++) out[pos++] = bin.charCodeAt(i);
   }
-  return out;
+  return out.subarray(0, pos);
 }
+
 
 
 function parseStl(bytes: Uint8Array) {
@@ -136,9 +140,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Zu grosse Requests gar nicht erst in den Speicher laden
+    const declaredLen = Number(req.headers.get("content-length") || 0);
+    if (declaredLen > MAX_BASE64_LEN + 4096) {
+      return json({ error: "Datei zu gross für die Serveranalyse (max. ca. 6 MB)" }, 413);
+    }
+
     const body = await req.json();
     const {
-      stlBase64, fileName,
+      fileName,
       material = "PLA", pricePerGram = 0.055,
       qualityKey = "standard", layerHeight = 0.2, infill = 20, speedFactor = 1.0,
       quantity = 1,
@@ -150,17 +160,22 @@ Deno.serve(async (req) => {
       versandkostenfrei_ab = 65,
     } = body ?? {};
 
+    const stlBase64 = body?.stlBase64;
     if (typeof stlBase64 !== "string" || stlBase64.length < 100) {
       return json({ error: "stlBase64 fehlt oder ist ungültig" }, 400);
     }
     if (stlBase64.length > MAX_BASE64_LEN) {
-      return json({ error: "Datei zu gross für die Serveranalyse (max. ca. 18 MB)" }, 413);
+      return json({ error: "Datei zu gross für die Serveranalyse (max. ca. 6 MB)" }, 413);
     }
 
-    const geo = parseStl(base64ToBytes(stlBase64));
+    const bytes = base64ToBytes(stlBase64);
+    // Referenz auf den grossen Base64-String freigeben, bevor geparst wird
+    if (body) body.stlBase64 = null;
+    const geo = parseStl(bytes);
     if (geo.volumeMm3 <= 0 || geo.triCount === 0) {
       return json({ error: "STL konnte nicht gelesen werden" }, 422);
     }
+
 
     const volumeCm3 = geo.volumeMm3 / 1000;
 
