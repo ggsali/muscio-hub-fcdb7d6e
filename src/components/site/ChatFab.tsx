@@ -7,7 +7,7 @@ import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 
 export function ChatFab() {
   const [open, setOpen] = useState(false);
-  const [whatsapp, setWhatsapp] = useState<string>("");
+  const [whatsapp, setWhatsapp] = useState<string>("41778044122");
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useCustomerAuth();
