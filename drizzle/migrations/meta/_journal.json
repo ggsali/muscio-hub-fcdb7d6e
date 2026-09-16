@@ -15,6 +15,13 @@
       "when": 1789491707486,
       "tag": "0001_orders_add_versandkosten_paketgroesse",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789538520711,
+      "tag": "0002_filaments_public_price_per_gram",
+      "breakpoints": true
     }
   ]
 }
