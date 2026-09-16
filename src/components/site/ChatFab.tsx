@@ -19,7 +19,11 @@ export function ChatFab() {
       .eq("key", "whatsapp")
       .maybeSingle()
       .then(({ data }) => {
-        const num = (data?.value as any)?.nummer?.toString().trim() || "";
+        const val = data?.value as any;
+        const num =
+          (typeof val === "string" && val.trim()) ||
+          val?.nummer?.toString().trim() ||
+          "41778044122";
         setWhatsapp(num);
       });
   }, []);
