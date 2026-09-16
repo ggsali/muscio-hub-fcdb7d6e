@@ -1931,9 +1931,8 @@ const CalculatorOnlinePage = () => {
                         <div key={typ}>
                           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {items.map((m, index) => {
+                            {items.map((m) => {
                               const sel = materialId === m.id;
-                              const isFirst = gIdx === 0 && index === 0;
                               const hint = MATERIAL_HINTS[m.materialType || m.name.split(" ")[0]];
                               const costPreview = materialCostPreview(m);
                               return (
@@ -1945,11 +1944,6 @@ const CalculatorOnlinePage = () => {
                                     sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
                                   }`}
                                 >
-                                  {isFirst && !sel && (
-                                    <span className="absolute top-2 right-2 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-semibold">
-                                      Empfohlen
-                                    </span>
-                                  )}
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
                                   <p className="font-bold text-sm leading-tight">{m.name}</p>
                                   {hint && (
@@ -1970,9 +1964,10 @@ const CalculatorOnlinePage = () => {
                                       </span>
                                     </div>
                                   )}
-                                  {costPreview !== null && (
+                                  {m.pricePerGram > 0 && (
                                     <p className="text-xs text-primary font-medium mt-1">
-                                      ~CHF {costPreview.toFixed(2)} Materialkosten
+                                      CHF {m.pricePerGram.toFixed(2)}/g
+                                      {costPreview !== null && <> · ~CHF {costPreview.toFixed(2)} Materialkosten</>}
                                     </p>
                                   )}
 
@@ -1992,10 +1987,9 @@ const CalculatorOnlinePage = () => {
                         <div key={typ}>
                           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {items.map((m, index) => {
+                            {items.map((m) => {
                               const sel = materialId === m.id;
                               const rec = recommendedMaterial?.id === m.id;
-                              const isFirst = gIdx === 0 && index === 0;
                               const hint = MATERIAL_HINTS[m.materialType || m.name.split(" ")[0]];
                               const costPreview = materialCostPreview(m);
                               return (
@@ -2007,14 +2001,6 @@ const CalculatorOnlinePage = () => {
                                     sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
                                   }`}
                                 >
-                                  {isFirst && !sel && !rec && (
-                                    <span className="absolute top-2 right-2 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-semibold">
-                                      Empfohlen
-                                    </span>
-                                  )}
-                                  {rec && !sel && (
-                                    <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
-                                  )}
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
                                   <p className="font-bold text-sm leading-tight">{m.name}</p>
                                   {hint && (
@@ -2035,12 +2021,12 @@ const CalculatorOnlinePage = () => {
                                       </span>
                                     </div>
                                   )}
-                                  {costPreview !== null && (
+                                  {m.pricePerGram > 0 && (
                                     <p className="text-xs text-primary font-medium mt-1">
-                                      ~CHF {costPreview.toFixed(2)} Materialkosten
+                                      CHF {m.pricePerGram.toFixed(2)}/g
+                                      {costPreview !== null && <> · ~CHF {costPreview.toFixed(2)} Materialkosten</>}
                                     </p>
                                   )}
-
                                 </button>
                               );
                             })}
