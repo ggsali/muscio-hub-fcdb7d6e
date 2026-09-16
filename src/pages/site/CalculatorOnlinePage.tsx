@@ -1970,6 +1970,11 @@ const CalculatorOnlinePage = () => {
                                       </span>
                                     </div>
                                   )}
+                                  {costPreview !== null && (
+                                    <p className="text-xs text-primary font-medium mt-1">
+                                      ~CHF {costPreview.toFixed(2)} Materialkosten
+                                    </p>
+                                  )}
 
                                 </button>
                               );
