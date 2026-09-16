@@ -1112,6 +1112,18 @@ const CalculatorOnlinePage = () => {
     [materials],
   );
 
+  // Geschätzte Materialkosten pro Material: Slicer-Ergebnis falls vorhanden,
+  // sonst geometrische Schätzung (Summe über alle Teile).
+  const materialCostPreview = (mat: Material): number | null => {
+    if (!mat.pricePerGram) return null;
+    const relevant = parts.filter((p) => p.slicerResult || p.volumeCm3 > 0);
+    if (relevant.length === 0) return null;
+    return relevant.reduce(
+      (sum, p) => sum + (p.slicerResult?.filamentGrams || p.estimatedWeight) * mat.pricePerGram,
+      0,
+    );
+  };
+
   // Schritt 1 wechselt NICHT automatisch — der Nutzer kann beliebig viele Teile
   // hinzufügen und klickt selbst auf "Weiter".
 
