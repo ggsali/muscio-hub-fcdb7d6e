@@ -98,7 +98,7 @@ export const Header = () => {
   };
   const handleLeave = () => {
     if (dropdownTimer.current) window.clearTimeout(dropdownTimer.current);
-    dropdownTimer.current = window.setTimeout(() => setOpenDropdown(null), 120);
+    dropdownTimer.current = window.setTimeout(() => setOpenDropdown(null), 300);
   };
 
   return (
