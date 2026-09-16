@@ -1733,6 +1733,7 @@ export default function AuftragDetailPage() {
                   if (!v) return;
                   if (v === "versand") {
                     setLieferart("versand");
+                    setPaketGroesseDraft(paketGroesse);
                     setShowVersandModal(true);
                   } else if (v === "abholung") {
                     setLieferart("abholung");
@@ -1751,7 +1752,16 @@ export default function AuftragDetailPage() {
                 }}
                 className="border border-border rounded-md p-0.5"
               >
-                <ToggleGroupItem value="versand" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">📦 Versand</ToggleGroupItem>
+                <ToggleGroupItem
+                  value="versand"
+                  onClick={() => {
+                    if (lieferart === "versand") {
+                      setPaketGroesseDraft(paketGroesse);
+                      setShowVersandModal(true);
+                    }
+                  }}
+                  className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                >📦 Versand</ToggleGroupItem>
                 <ToggleGroupItem value="abholung" className="text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">🏠 Abholung</ToggleGroupItem>
               </ToggleGroup>
               {lieferart === "abholung" && (
