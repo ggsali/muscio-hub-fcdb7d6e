@@ -1226,7 +1226,7 @@ export default function AuftragDetailPage() {
                   <DropdownMenuItem onClick={() => { setManualStatus(status || ""); setShowStatusDialog(true); }} className="gap-2">
                     <Settings2 className="w-4 h-4" /> Status korrigieren
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} className="gap-2">
+                  <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} className="gap-2">
                     <Link2 className="w-4 h-4" /> Zahlungslink senden
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleDuplicate} disabled={duplicating} className="gap-2">
@@ -1327,7 +1327,7 @@ export default function AuftragDetailPage() {
                     <DropdownMenuItem onClick={() => handleExportPDF(false)} className="gap-2">
                       <FileDown className="w-4 h-4" /> Rechnung neu generieren
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} className="gap-2">
+                    <DropdownMenuItem onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} className="gap-2">
                       <Link2 className="w-4 h-4" /> Zahlungslink neu senden
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -1421,7 +1421,7 @@ export default function AuftragDetailPage() {
                 />
                 <span>Mit Details <span className="text-muted-foreground text-xs">(Gewicht, Druckzeit, Konstruktion, Nachbearbeitung)</span></span>
               </label>
-              {confirmEmailType === "rechnung" && selectedTotalUmsatz > 0 && (
+              {confirmEmailType === "rechnung" && totalMitVersand > 0 && (
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input
                     type="checkbox"
@@ -1431,7 +1431,7 @@ export default function AuftragDetailPage() {
                   />
                   <span>
                     💳 Stripe Zahlungslink hinzufügen{" "}
-                    <span className="text-muted-foreground text-xs">(CHF {selectedTotalUmsatz.toFixed(2)} – Kunde kann online bezahlen)</span>
+                    <span className="text-muted-foreground text-xs">(CHF {totalMitVersand.toFixed(2)} – Kunde kann online bezahlen)</span>
                   </span>
                 </label>
               )}
@@ -1955,7 +1955,7 @@ export default function AuftragDetailPage() {
                 <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border">
                   <Mail className="w-4 h-4" /> Rechnung senden
                 </Button>
-                <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
+                <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} variant="outline" className="justify-start gap-2 border-border">
                   {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} Zahlungslink senden
                 </Button>
                 <Button onClick={() => navigate(`/admin/auftraege/${id}/platten`)} variant="outline" className="justify-start gap-2 border-border">
@@ -2567,7 +2567,7 @@ export default function AuftragDetailPage() {
               <Button onClick={() => setConfirmEmailType("offerte")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Offerte senden</Button>
               <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung senden</Button>
               <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung erstellen</Button>
-              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || selectedTotalUmsatz <= 0} variant="outline" className="justify-start gap-2 border-border">
+              <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} variant="outline" className="justify-start gap-2 border-border">
                 {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Stripe Zahlungslink erstellen
               </Button>
             </div>
