@@ -7,7 +7,7 @@ import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
 
 export function ChatFab() {
   const [open, setOpen] = useState(false);
-  const [whatsapp, setWhatsapp] = useState<string>("");
+  const [whatsapp, setWhatsapp] = useState<string>("41778044122");
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useCustomerAuth();
@@ -19,7 +19,11 @@ export function ChatFab() {
       .eq("key", "whatsapp")
       .maybeSingle()
       .then(({ data }) => {
-        const num = (data?.value as any)?.nummer?.toString().trim() || "";
+        const val = data?.value as any;
+        const num =
+          (typeof val === "string" && val.trim()) ||
+          val?.nummer?.toString().trim() ||
+          "41778044122";
         setWhatsapp(num);
       });
   }, []);
