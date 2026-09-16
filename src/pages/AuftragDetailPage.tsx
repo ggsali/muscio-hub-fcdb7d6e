@@ -134,6 +134,7 @@ export default function AuftragDetailPage() {
   const [expressLabel, setExpressLabel] = useState<string>("");
   const [showVersandModal, setShowVersandModal] = useState(false);
   const [paketGroesse, setPaketGroesse] = useState<string>("");
+  const [paketGroesseDraft, setPaketGroesseDraft] = useState<string>("");
   const [versandkosten, setVersandkosten] = useState(0);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
