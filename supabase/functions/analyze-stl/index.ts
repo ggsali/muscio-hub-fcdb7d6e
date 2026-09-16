@@ -140,9 +140,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Zu grosse Requests gar nicht erst in den Speicher laden
+    const declaredLen = Number(req.headers.get("content-length") || 0);
+    if (declaredLen > MAX_BASE64_LEN + 4096) {
+      return json({ error: "Datei zu gross für die Serveranalyse (max. ca. 6 MB)" }, 413);
+    }
+
     const body = await req.json();
     const {
-      stlBase64, fileName,
+      fileName,
       material = "PLA", pricePerGram = 0.055,
       qualityKey = "standard", layerHeight = 0.2, infill = 20, speedFactor = 1.0,
       quantity = 1,
@@ -154,17 +160,22 @@ Deno.serve(async (req) => {
       versandkostenfrei_ab = 65,
     } = body ?? {};
 
+    const stlBase64 = body?.stlBase64;
     if (typeof stlBase64 !== "string" || stlBase64.length < 100) {
       return json({ error: "stlBase64 fehlt oder ist ungültig" }, 400);
     }
     if (stlBase64.length > MAX_BASE64_LEN) {
-      return json({ error: "Datei zu gross für die Serveranalyse (max. ca. 18 MB)" }, 413);
+      return json({ error: "Datei zu gross für die Serveranalyse (max. ca. 6 MB)" }, 413);
     }
 
-    const geo = parseStl(base64ToBytes(stlBase64));
+    const bytes = base64ToBytes(stlBase64);
+    // Referenz auf den grossen Base64-String freigeben, bevor geparst wird
+    if (body) body.stlBase64 = null;
+    const geo = parseStl(bytes);
     if (geo.volumeMm3 <= 0 || geo.triCount === 0) {
       return json({ error: "STL konnte nicht gelesen werden" }, 422);
     }
+
 
     const volumeCm3 = geo.volumeMm3 / 1000;
 
