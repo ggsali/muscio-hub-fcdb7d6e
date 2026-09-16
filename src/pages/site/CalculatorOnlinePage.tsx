@@ -2035,6 +2035,11 @@ const CalculatorOnlinePage = () => {
                                       </span>
                                     </div>
                                   )}
+                                  {costPreview !== null && (
+                                    <p className="text-xs text-primary font-medium mt-1">
+                                      ~CHF {costPreview.toFixed(2)} Materialkosten
+                                    </p>
+                                  )}
 
                                 </button>
                               );
@@ -2052,7 +2057,7 @@ const CalculatorOnlinePage = () => {
                       <Button
                         onClick={goNext}
                         disabled={!canGoNext}
-                        className="w-full lg:w-auto"
+                        className="w-full lg:w-auto text-base py-4 font-bold"
                         size="lg"
                       >
                         Weiter → {STEPS[step] || ""}
