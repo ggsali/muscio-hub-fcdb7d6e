@@ -52,6 +52,7 @@ import { Route as SiteUeberKiRouteImport } from './routes/_site/ueber-ki'
 import { Route as SiteUeberUnsRouteImport } from './routes/_site/ueber-uns'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnfragenRouteImport } from './routes/admin/anfragen'
+import { Route as AdminBewertungenRouteImport } from './routes/admin/bewertungen'
 import { Route as AdminChatRouteImport } from './routes/admin/chat'
 import { Route as AdminDruckplattenRouteImport } from './routes/admin/druckplatten'
 import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellungen'
@@ -342,6 +343,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminAnfragenRoute = AdminAnfragenRouteImport.update({
   id: '/anfragen',
   path: '/anfragen',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBewertungenRoute = AdminBewertungenRouteImport.update({
+  id: '/bewertungen',
+  path: '/bewertungen',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminChatRoute = AdminChatRouteImport.update({
@@ -782,6 +788,7 @@ export interface FileRoutesByFullPath {
   '/ueber-ki': typeof SiteUeberKiRoute
   '/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
+  '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -899,6 +906,7 @@ export interface FileRoutesByTo {
   '/ueber-ki': typeof SiteUeberKiRoute
   '/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
+  '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1022,6 +1030,7 @@ export interface FileRoutesById {
   '/_site/ueber-ki': typeof SiteUeberKiRoute
   '/_site/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
+  '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1146,6 +1155,7 @@ export interface FileRouteTypes {
     | '/ueber-ki'
     | '/ueber-uns'
     | '/admin/anfragen'
+    | '/admin/bewertungen'
     | '/admin/chat'
     | '/admin/druckplatten'
     | '/admin/einstellungen'
@@ -1263,6 +1273,7 @@ export interface FileRouteTypes {
     | '/ueber-ki'
     | '/ueber-uns'
     | '/admin/anfragen'
+    | '/admin/bewertungen'
     | '/admin/chat'
     | '/admin/druckplatten'
     | '/admin/einstellungen'
@@ -1385,6 +1396,7 @@ export interface FileRouteTypes {
     | '/_site/ueber-ki'
     | '/_site/ueber-uns'
     | '/admin/anfragen'
+    | '/admin/bewertungen'
     | '/admin/chat'
     | '/admin/druckplatten'
     | '/admin/einstellungen'
@@ -1803,6 +1815,13 @@ declare module '@tanstack/react-router' {
       path: '/anfragen'
       fullPath: '/admin/anfragen'
       preLoaderRoute: typeof AdminAnfragenRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bewertungen': {
+      id: '/admin/bewertungen'
+      path: '/bewertungen'
+      fullPath: '/admin/bewertungen'
+      preLoaderRoute: typeof AdminBewertungenRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/chat': {
@@ -2443,6 +2462,7 @@ const AdminFilamenteRouteWithChildren = AdminFilamenteRoute._addFileChildren(
 
 interface AdminRouteChildren {
   AdminAnfragenRoute: typeof AdminAnfragenRoute
+  AdminBewertungenRoute: typeof AdminBewertungenRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminDruckplattenRoute: typeof AdminDruckplattenRoute
   AdminEinstellungenRoute: typeof AdminEinstellungenRoute
@@ -2473,6 +2493,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnfragenRoute: AdminAnfragenRoute,
+  AdminBewertungenRoute: AdminBewertungenRoute,
   AdminChatRoute: AdminChatRoute,
   AdminDruckplattenRoute: AdminDruckplattenRoute,
   AdminEinstellungenRoute: AdminEinstellungenRoute,
