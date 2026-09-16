@@ -12,33 +12,32 @@ import type { Session } from "@supabase/supabase-js";
 interface NavChild { label: string; path: string; divider?: boolean; }
 interface NavItem { label: string; path: string; children?: NavChild[]; isButton?: boolean; }
 
-const DEFAULT_NAV: NavItem[] = [
+const NAV_ITEMS: NavItem[] = [
   { label: "Kalkulator", path: "/kalkulator-online", isButton: true },
   {
     label: "Leistungen",
     path: "/leistungen",
     children: [
-      { label: "🇨🇭 3D-Druck Schweiz (Übersicht)", path: "/3d-druck-schweiz" },
-      { label: "", path: "", divider: true },
       { label: "FDM 3D-Druck", path: "/leistungen/fdm-3d-druck" },
       { label: "SLA Resin Druck", path: "/leistungen/sla-3d-druck" },
       { label: "Prototypen", path: "/leistungen/3d-druck-prototypen" },
       { label: "Ersatzteile", path: "/leistungen/3d-druck-ersatzteile" },
       { label: "Kleinserien", path: "/leistungen/3d-druck-kleinserien" },
-      { label: "Materialien", path: "/materialien" },
+      { label: "3D-Druck Schweiz", path: "/3d-druck-schweiz" },
     ],
   },
+  { label: "Materialien", path: "/materialien" },
+  { label: "Shop", path: "/shop" },
   { label: "Projekte", path: "/projekte" },
+  { label: "Blog", path: "/blog" },
   {
     label: "Über uns",
     path: "/ueber-uns",
     children: [
       { label: "Über 3DMuscio", path: "/ueber-uns" },
-      { label: "Blog", path: "/blog" },
       { label: "Kontakt", path: "/kontakt" },
     ],
   },
-  { label: "Shop", path: "/shop" },
 ];
 
 const flattenNav = (items: NavItem[]): NavChild[] =>
@@ -74,32 +73,7 @@ export const Header = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownTimer = useRef<number | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
-  const [navItems, setNavItems] = useState<NavItem[]>(DEFAULT_NAV);
-
-  // Gespeicherte Navigation aus dem Admin (website_settings.nav_links) erst
-  // nach der Hydration laden – SSR rendert immer DEFAULT_NAV (kein Mismatch).
-  useEffect(() => {
-    let cancelled = false;
-    supabase.from("website_settings").select("value").eq("key", "nav_links").maybeSingle()
-      .then(({ data }) => {
-        if (cancelled) return;
-        const v = (data as { value?: unknown } | null)?.value;
-        if (!Array.isArray(v) || v.length === 0) return;
-        const items: NavItem[] = v
-          .filter((i): i is { label: string; path: string; children?: NavChild[] } =>
-            !!i && typeof i === "object" &&
-            typeof (i as { label?: unknown }).label === "string" &&
-            typeof (i as { path?: unknown }).path === "string")
-          .map((i) => ({
-            label: i.label,
-            path: i.path,
-            children: Array.isArray(i.children) ? i.children : undefined,
-            isButton: i.path === "/kalkulator-online",
-          }));
-        if (items.length > 0) setNavItems(items);
-      });
-    return () => { cancelled = true; };
-  }, []);
+  const navItems = NAV_ITEMS;
 
   useEffect(() => { setOpen(false); setOpenDropdown(null); }, [location.pathname]);
 
@@ -124,7 +98,7 @@ export const Header = () => {
   };
   const handleLeave = () => {
     if (dropdownTimer.current) window.clearTimeout(dropdownTimer.current);
-    dropdownTimer.current = window.setTimeout(() => setOpenDropdown(null), 120);
+    dropdownTimer.current = window.setTimeout(() => setOpenDropdown(null), 300);
   };
 
   return (
