@@ -12,33 +12,32 @@ import type { Session } from "@supabase/supabase-js";
 interface NavChild { label: string; path: string; divider?: boolean; }
 interface NavItem { label: string; path: string; children?: NavChild[]; isButton?: boolean; }
 
-const DEFAULT_NAV: NavItem[] = [
+const NAV_ITEMS: NavItem[] = [
   { label: "Kalkulator", path: "/kalkulator-online", isButton: true },
   {
     label: "Leistungen",
     path: "/leistungen",
     children: [
-      { label: "🇨🇭 3D-Druck Schweiz (Übersicht)", path: "/3d-druck-schweiz" },
-      { label: "", path: "", divider: true },
       { label: "FDM 3D-Druck", path: "/leistungen/fdm-3d-druck" },
       { label: "SLA Resin Druck", path: "/leistungen/sla-3d-druck" },
       { label: "Prototypen", path: "/leistungen/3d-druck-prototypen" },
       { label: "Ersatzteile", path: "/leistungen/3d-druck-ersatzteile" },
       { label: "Kleinserien", path: "/leistungen/3d-druck-kleinserien" },
-      { label: "Materialien", path: "/materialien" },
+      { label: "3D-Druck Schweiz", path: "/3d-druck-schweiz" },
     ],
   },
+  { label: "Materialien", path: "/materialien" },
+  { label: "Shop", path: "/shop" },
   { label: "Projekte", path: "/projekte" },
+  { label: "Blog", path: "/blog" },
   {
     label: "Über uns",
     path: "/ueber-uns",
     children: [
       { label: "Über 3DMuscio", path: "/ueber-uns" },
-      { label: "Blog", path: "/blog" },
       { label: "Kontakt", path: "/kontakt" },
     ],
   },
-  { label: "Shop", path: "/shop" },
 ];
 
 const flattenNav = (items: NavItem[]): NavChild[] =>
