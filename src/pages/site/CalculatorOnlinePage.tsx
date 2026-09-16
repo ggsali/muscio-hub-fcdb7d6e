@@ -2033,9 +2033,6 @@ const CalculatorOnlinePage = () => {
                           </div>
                         </div>
                       ))}
-                          </div>
-                        </div>
-                      ))}
                     </div>
                   )}
 
