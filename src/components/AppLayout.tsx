@@ -61,7 +61,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/admin/newsletter", icon: <Mail className={ic} />, label: "Newsletter" },
       { to: "/admin/gutscheine", icon: <Ticket className={ic} />, label: "Gutscheine" },
-      { to: "/website-admin/reviews", icon: <Star className={ic} />, label: "Bewertungen" },
+      { to: "/admin/bewertungen", icon: <Star className={ic} />, label: "Bewertungen" },
       { to: "/website-admin/blog", icon: <FileText className={ic} />, label: "Blog" },
     ],
   },
