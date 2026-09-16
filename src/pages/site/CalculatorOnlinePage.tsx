@@ -616,9 +616,18 @@ const CalculatorOnlinePage = () => {
     if (!mat) return;
     const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
 
+    // Sehr grosse Dateien überschreiten das Speicherlimit der Serveranalyse
+    if (part.stlBase64.length > 9 * 1024 * 1024) {
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, kiAnalysisLoading: false, kiAnalysisError: "Datei zu gross für die Detailanalyse – wir verwenden eine Schätzung" }
+        : p));
+      return;
+    }
+
     setParts((prev) => prev.map((p) => p.id === partId
       ? { ...p, kiAnalysisLoading: true, kiAnalysisError: null }
       : p));
+
 
     const { data, error } = await supabase.functions.invoke("analyze-stl", {
       body: {
