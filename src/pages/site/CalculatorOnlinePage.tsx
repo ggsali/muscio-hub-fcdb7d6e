@@ -306,6 +306,7 @@ const CalculatorOnlinePage = () => {
   const [materialId, setMaterialId] = useState("");
   const [color, setColor] = useState("");
   const [qualityKey, setQualityKey] = useState("standard");
+  const qualityTracked = useRef(false);
   const [kiResult, setKiResult] = useState<KiResult | null>(null);
   const [materialMode, setMaterialMode] = useState<null | "ki" | "manual">(null);
   const [kiChatOpen, setKiChatOpen] = useState(true);
