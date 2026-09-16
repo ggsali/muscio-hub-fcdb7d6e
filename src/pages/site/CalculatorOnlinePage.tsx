@@ -552,9 +552,7 @@ const CalculatorOnlinePage = () => {
           id: f.id,
           name: f.name,
           materialType: f.material,
-          pricePerGram: f.verkaufspreis_pro_g
-            ? Number(f.verkaufspreis_pro_g)
-            : (Number(f.preis_pro_kg) / 1000) * 2.5,
+          pricePerGram: Number(f.verkaufspreis_pro_g ?? f.public_preis_pro_g ?? 0),
           density: Number(f.dichte_g_cm3) || 1.24,
           farbe: list[0]?.hex || f.farbe,
           hersteller: f.hersteller,
