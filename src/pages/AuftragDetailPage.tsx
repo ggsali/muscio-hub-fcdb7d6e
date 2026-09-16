@@ -211,12 +211,12 @@ export default function AuftragDetailPage() {
 
 
   const handleCreatePaymentLink = async () => {
-    if (!id || selectedTotalUmsatz <= 0) return;
+    if (!id || totalMitVersand <= 0) return;
     setCreatingPaymentLink(true);
     try {
       const { customerEmail } = await getCustomerData();
       const { data, error } = await supabase.functions.invoke("create-stripe-payment-link", {
-        body: { orderId: id, betrag: selectedTotalUmsatz, orderName, customerEmail },
+        body: { orderId: id, betrag: totalMitVersand, orderName, customerEmail },
       });
       if (error || data?.error) {
         toast({ title: "Stripe Fehler", description: data?.error || error?.message, variant: "destructive" });
@@ -702,10 +702,10 @@ export default function AuftragDetailPage() {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
         if (type === "rechnung") {
           // Optionally generate Stripe payment link
-          if (withPaymentLink && selectedTotalUmsatz > 0) {
+          if (withPaymentLink && totalMitVersand > 0) {
             try {
               const { data: plData, error: plErr } = await supabase.functions.invoke("create-stripe-payment-link", {
-                body: { orderId: id, betrag: selectedTotalUmsatz, orderName, customerEmail },
+                body: { orderId: id, betrag: totalMitVersand, orderName, customerEmail },
               });
               if (plErr || plData?.error) {
                 setSendingEmail(null);
@@ -792,7 +792,7 @@ export default function AuftragDetailPage() {
               console.error("Upload catch error:", e);
             }
           }
-          const betragValue = type === "rechnung" ? selectedTotalUmsatz : type === "offerte" ? selectedTotalUmsatz : 0;
+          const betragValue = type === "rechnung" ? totalMitVersand : type === "offerte" ? totalMitVersand : 0;
           const faelligAm = type === "rechnung" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] : null;
           await supabase.from("bills" as any).insert({
             order_id: id,
@@ -865,7 +865,7 @@ export default function AuftragDetailPage() {
             await supabase.from("bills" as any).insert({
               order_id: id,
               titel: `Akontorechnung (${akontoPercent}%) per E-Mail gesendet`,
-              betrag: Math.round(selectedTotalUmsatz * akontoPercent) / 100,
+              betrag: Math.round(totalMitVersand * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
               file_path: storedPath,
@@ -915,7 +915,7 @@ export default function AuftragDetailPage() {
             await supabase.from("bills" as any).insert({
               order_id: id,
               titel: `Schlussrechnung per E-Mail gesendet`,
-              betrag: selectedTotalUmsatz - Math.round(selectedTotalUmsatz * akontoPercent) / 100,
+              betrag: totalMitVersand - Math.round(totalMitVersand * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
               file_path: storedPath,
