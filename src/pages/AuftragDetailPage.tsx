@@ -1783,9 +1783,9 @@ export default function AuftragDetailPage() {
                   {POST_PRIORITY_PREISE.map(p => (
                     <button
                       key={p.id}
-                      onClick={() => setPaketGroesse(p.id)}
+                      onClick={() => setPaketGroesseDraft(p.id)}
                       className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                        paketGroesse === p.id
+                        paketGroesseDraft === p.id
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/40"
                       }`}
@@ -1804,6 +1804,7 @@ export default function AuftragDetailPage() {
                   <button
                     onClick={() => {
                       setShowVersandModal(false);
+                      setPaketGroesseDraft(paketGroesse);
                       if (versandkosten <= 0) setLieferart("abholung");
                     }}
                     className="flex-1 border border-border rounded-xl py-2.5 text-sm"
@@ -1812,9 +1813,10 @@ export default function AuftragDetailPage() {
                   </button>
                   <button
                     onClick={async () => {
-                      const selected = POST_PRIORITY_PREISE.find(p => p.id === paketGroesse);
+                      const selected = POST_PRIORITY_PREISE.find(p => p.id === paketGroesseDraft);
                       if (!selected) return;
                       const kosten = selected.preis;
+                      setPaketGroesse(selected.id);
                       setVersandkosten(kosten);
                       setShowVersandModal(false);
                       const neuesTotal = selectedTotalUmsatz + kosten;
@@ -1822,13 +1824,13 @@ export default function AuftragDetailPage() {
                         await supabase.from("orders").update({
                           lieferart: "versand",
                           versandkosten: kosten,
-                          paket_groesse: paketGroesse,
+                          paket_groesse: selected.id,
                           umsatz_total: neuesTotal,
                         } as any).eq("id", id);
                       }
                       toast({ title: `PostPac Priority ${selected.label} · CHF ${kosten.toFixed(2)} hinzugefügt ✓` });
                     }}
-                    disabled={!paketGroesse}
+                    disabled={!paketGroesseDraft}
                     className="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
                   >
                     Übernehmen
