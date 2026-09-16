@@ -278,6 +278,16 @@ const formatDuration = (seconds: number): string => {
   return h > 0 ? `${h} h ${m} min` : `${m} min`;
 };
 
+/** Kurze Eigenschaft pro Materialtyp (Schritt 3) */
+const MATERIAL_HINTS: Record<string, string> = {
+  "PLA": "Günstig · Innenbereich · Einfach zu drucken",
+  "PETG": "Feuchtigkeitsbeständig · Vielseitig",
+  "ABS": "Hitzebeständig bis 100°C · Schlagfest",
+  "ASA": "UV-beständig · Aussenbereich",
+  "TPU": "Flexibel · Gummiartig",
+  "Resin": "Hochauflösend · Glatte Oberfläche",
+};
+
 const CalculatorOnlinePage = () => {
   const [step, setStep] = useState(1);
   const [parts, setParts] = useState<Part[]>([]);
@@ -296,6 +306,7 @@ const CalculatorOnlinePage = () => {
   const [materialId, setMaterialId] = useState("");
   const [color, setColor] = useState("");
   const [qualityKey, setQualityKey] = useState("standard");
+  const qualityTracked = useRef(false);
   const [kiResult, setKiResult] = useState<KiResult | null>(null);
   const [materialMode, setMaterialMode] = useState<null | "ki" | "manual">(null);
   const [kiChatOpen, setKiChatOpen] = useState(true);
@@ -954,7 +965,13 @@ const CalculatorOnlinePage = () => {
   };
 
   const confirmQuality = (key: string, infill: number) => {
-    trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
+    if (!qualityTracked.current) {
+      qualityTracked.current = true;
+      trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
+    }
+    if (key !== qualityKey) {
+      trackCalc("qualitaet_gewechselt", { von: qualityKey, zu: key });
+    }
     setQualityKey(key);
     applyAll({ infill });
     startProgress();
@@ -1094,6 +1111,18 @@ const CalculatorOnlinePage = () => {
       }, {} as Record<string, Material[]>),
     [materials],
   );
+
+  // Geschätzte Materialkosten pro Material: Slicer-Ergebnis falls vorhanden,
+  // sonst geometrische Schätzung (Summe über alle Teile).
+  const materialCostPreview = (mat: Material): number | null => {
+    if (!mat.pricePerGram) return null;
+    const relevant = parts.filter((p) => p.slicerResult || p.volumeCm3 > 0);
+    if (relevant.length === 0) return null;
+    return relevant.reduce(
+      (sum, p) => sum + (p.slicerResult?.filamentGrams || p.estimatedWeight) * mat.pricePerGram,
+      0,
+    );
+  };
 
   // Schritt 1 wechselt NICHT automatisch — der Nutzer kann beliebig viele Teile
   // hinzufügen und klickt selbst auf "Weiter".
@@ -1898,12 +1927,15 @@ const CalculatorOnlinePage = () => {
                   {materialMode === "manual" && (
                     <div className="px-1 space-y-4">
                       <p className="text-sm font-semibold">Material direkt wählen</p>
-                      {Object.entries(groupedMaterials).map(([typ, items]) => (
+                      {Object.entries(groupedMaterials).map(([typ, items], gIdx) => (
                         <div key={typ}>
                           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {items.map((m) => {
+                            {items.map((m, index) => {
                               const sel = materialId === m.id;
+                              const isFirst = gIdx === 0 && index === 0;
+                              const hint = MATERIAL_HINTS[m.materialType || m.name.split(" ")[0]];
+                              const costPreview = materialCostPreview(m);
                               return (
                                 <button
                                   key={m.id}
@@ -1913,8 +1945,16 @@ const CalculatorOnlinePage = () => {
                                     sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
                                   }`}
                                 >
+                                  {isFirst && !sel && (
+                                    <span className="absolute top-2 right-2 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-semibold">
+                                      Empfohlen
+                                    </span>
+                                  )}
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                                  <p className="font-bold text-sm leading-tight mb-1">{m.name}</p>
+                                  <p className="font-bold text-sm leading-tight">{m.name}</p>
+                                  {hint && (
+                                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{hint}</p>
+                                  )}
                                   {m.farben.length > 0 && (
                                     <div className="flex items-center gap-1 flex-wrap">
                                       {m.farben.slice(0, 8).map((cn) => (
@@ -1929,6 +1969,11 @@ const CalculatorOnlinePage = () => {
                                         {m.farben.length} {m.farben.length === 1 ? "Farbe" : "Farben"}
                                       </span>
                                     </div>
+                                  )}
+                                  {costPreview !== null && (
+                                    <p className="text-xs text-primary font-medium mt-1">
+                                      ~CHF {costPreview.toFixed(2)} Materialkosten
+                                    </p>
                                   )}
 
                                 </button>
@@ -1943,13 +1988,16 @@ const CalculatorOnlinePage = () => {
                   {materialMode === "ki" && (!isMobile || !kiChatOpen) && (
                     <div className="px-1 space-y-4">
                       <p className="text-sm font-semibold">Alle Materialien</p>
-                      {Object.entries(groupedMaterials).map(([typ, items]) => (
+                      {Object.entries(groupedMaterials).map(([typ, items], gIdx) => (
                         <div key={typ}>
                           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {items.map((m) => {
+                            {items.map((m, index) => {
                               const sel = materialId === m.id;
                               const rec = recommendedMaterial?.id === m.id;
+                              const isFirst = gIdx === 0 && index === 0;
+                              const hint = MATERIAL_HINTS[m.materialType || m.name.split(" ")[0]];
+                              const costPreview = materialCostPreview(m);
                               return (
                                 <button
                                   key={m.id}
@@ -1959,11 +2007,19 @@ const CalculatorOnlinePage = () => {
                                     sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
                                   }`}
                                 >
+                                  {isFirst && !sel && !rec && (
+                                    <span className="absolute top-2 right-2 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-semibold">
+                                      Empfohlen
+                                    </span>
+                                  )}
                                   {rec && !sel && (
                                     <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
                                   )}
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                                  <p className="font-bold text-sm leading-tight mb-1">{m.name}</p>
+                                  <p className="font-bold text-sm leading-tight">{m.name}</p>
+                                  {hint && (
+                                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{hint}</p>
+                                  )}
                                   {m.farben.length > 0 && (
                                     <div className="flex items-center gap-1 flex-wrap">
                                       {m.farben.slice(0, 8).map((cn) => (
@@ -1978,6 +2034,11 @@ const CalculatorOnlinePage = () => {
                                         {m.farben.length} {m.farben.length === 1 ? "Farbe" : "Farben"}
                                       </span>
                                     </div>
+                                  )}
+                                  {costPreview !== null && (
+                                    <p className="text-xs text-primary font-medium mt-1">
+                                      ~CHF {costPreview.toFixed(2)} Materialkosten
+                                    </p>
                                   )}
 
                                 </button>
@@ -1996,7 +2057,7 @@ const CalculatorOnlinePage = () => {
                       <Button
                         onClick={goNext}
                         disabled={!canGoNext}
-                        className="w-full lg:w-auto"
+                        className="w-full lg:w-auto text-base py-4 font-bold"
                         size="lg"
                       >
                         Weiter → {STEPS[step] || ""}
