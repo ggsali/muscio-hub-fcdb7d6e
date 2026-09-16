@@ -1988,13 +1988,16 @@ const CalculatorOnlinePage = () => {
                   {materialMode === "ki" && (!isMobile || !kiChatOpen) && (
                     <div className="px-1 space-y-4">
                       <p className="text-sm font-semibold">Alle Materialien</p>
-                      {Object.entries(groupedMaterials).map(([typ, items]) => (
+                      {Object.entries(groupedMaterials).map(([typ, items], gIdx) => (
                         <div key={typ}>
                           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {items.map((m) => {
+                            {items.map((m, index) => {
                               const sel = materialId === m.id;
                               const rec = recommendedMaterial?.id === m.id;
+                              const isFirst = gIdx === 0 && index === 0;
+                              const hint = MATERIAL_HINTS[m.materialType || m.name.split(" ")[0]];
+                              const costPreview = materialCostPreview(m);
                               return (
                                 <button
                                   key={m.id}
@@ -2004,11 +2007,19 @@ const CalculatorOnlinePage = () => {
                                     sel ? "border-primary bg-primary/5" : rec ? "border-primary/40 bg-card" : "border-border bg-card hover:border-primary/40"
                                   }`}
                                 >
+                                  {isFirst && !sel && !rec && (
+                                    <span className="absolute top-2 right-2 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full font-semibold">
+                                      Empfohlen
+                                    </span>
+                                  )}
                                   {rec && !sel && (
                                     <span className="absolute top-2 right-2 text-[10px] font-bold text-primary uppercase">Empfohlen</span>
                                   )}
                                   {sel && <Check className="absolute top-2 right-2 w-4 h-4 text-primary" />}
-                                  <p className="font-bold text-sm leading-tight mb-1">{m.name}</p>
+                                  <p className="font-bold text-sm leading-tight">{m.name}</p>
+                                  {hint && (
+                                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{hint}</p>
+                                  )}
                                   {m.farben.length > 0 && (
                                     <div className="flex items-center gap-1 flex-wrap">
                                       {m.farben.slice(0, 8).map((cn) => (
