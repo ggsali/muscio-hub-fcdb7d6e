@@ -278,6 +278,16 @@ const formatDuration = (seconds: number): string => {
   return h > 0 ? `${h} h ${m} min` : `${m} min`;
 };
 
+/** Kurze Eigenschaft pro Materialtyp (Schritt 3) */
+const MATERIAL_HINTS: Record<string, string> = {
+  "PLA": "Günstig · Innenbereich · Einfach zu drucken",
+  "PETG": "Feuchtigkeitsbeständig · Vielseitig",
+  "ABS": "Hitzebeständig bis 100°C · Schlagfest",
+  "ASA": "UV-beständig · Aussenbereich",
+  "TPU": "Flexibel · Gummiartig",
+  "Resin": "Hochauflösend · Glatte Oberfläche",
+};
+
 const CalculatorOnlinePage = () => {
   const [step, setStep] = useState(1);
   const [parts, setParts] = useState<Part[]>([]);
