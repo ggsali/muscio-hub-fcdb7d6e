@@ -964,7 +964,13 @@ const CalculatorOnlinePage = () => {
   };
 
   const confirmQuality = (key: string, infill: number) => {
-    trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
+    if (!qualityTracked.current) {
+      qualityTracked.current = true;
+      trackCalc("schritt_4_qualitaet_gewaehlt", { qualitaet: qualityPresets.find(q => q.key === key)?.label || key });
+    }
+    if (key !== qualityKey) {
+      trackCalc("qualitaet_gewechselt", { von: qualityKey, zu: key });
+    }
     setQualityKey(key);
     applyAll({ infill });
     startProgress();
