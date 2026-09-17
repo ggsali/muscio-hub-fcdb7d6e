@@ -393,6 +393,7 @@ export default function AuftragDetailPage() {
           const partsWithOrder = (p as PartRow[]).map((part, index) => ({
             ...part,
             sort_order: part.sort_order ?? index,
+            setup_pauschale_anzahl: part.setup_pauschale_anzahl || 1,
           }));
           setParts(partsWithOrder);
           const selected = new Set(
@@ -1159,6 +1160,7 @@ export default function AuftragDetailPage() {
         const partsWithOrder = (freshParts as PartRow[]).map((part, index) => ({
           ...part,
           sort_order: part.sort_order ?? index,
+          setup_pauschale_anzahl: part.setup_pauschale_anzahl || 1,
         }));
         setParts(applyFilamentPrices(partsWithOrder));
         const selected = new Set(
