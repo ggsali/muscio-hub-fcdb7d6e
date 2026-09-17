@@ -569,6 +569,7 @@ export default function AuftragDetailPage() {
         preis_total: newPart.preis_total,
         status: newPart.status,
         notizen: newPart.notizen,
+        setup_pauschale_anzahl: newPart.setup_pauschale_anzahl || 1,
       }).select().single();
       if (data) {
         const inserted = { ...newPart, id: data.id, in_rechnung: true };
@@ -646,9 +647,12 @@ export default function AuftragDetailPage() {
   // ── AUSGEWÄHLTE TEILE (für PDF/Mail/Anzeige) ───────────
   const selectedParts = parts.filter(p => p.id && selectedPartIds.has(p.id));
 
-  // Setup-Pauschale ist bereits in jedem Teilpreis enthalten (calcUmsatz) –
-  // hier nur zur Anzeige in der Kostenaufschlüsselung ausgewiesen.
-  const selectedSetup = selectedParts.reduce((s, _p) => s + activeSettings.setup_pauschale, 0);
+  // Setup-Pauschale: 1× pro Teilart (bzw. so viele Rüstvorgänge wie erfasst) –
+  // bereits in preis_total enthalten, hier nur zur Anzeige ausgewiesen.
+  const selectedSetup = selectedParts.reduce(
+    (s, p) => s + (p.setup_pauschale_anzahl || 1) * activeSettings.setup_pauschale,
+    0
+  );
 
   // Teilpreise (inkl. Setup)
   const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + (p.preis_total || 0), 0);
@@ -1094,6 +1098,7 @@ export default function AuftragDetailPage() {
         slicer_layer_anzahl: p.slicer_layer_anzahl ?? null,
         sort_order: index,
         in_rechnung: p.id ? selectedPartIds.has(p.id) : true,
+        setup_pauschale_anzahl: p.setup_pauschale_anzahl || 1,
       });
 
       if (isNew) {
