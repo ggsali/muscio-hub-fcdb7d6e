@@ -237,21 +237,50 @@ export async function exportOfferPDF(data: OfferExportData) {
   doc.text(descLines.slice(0, 5), colR, 83);
 
   // ── Positionstabelle ────────────────────────────────────────────
+  const s = data.settings;
+  const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
+
+  // Berechne den effektiven Gesamtbetrag aus den angezeigten Komponenten,
+  // damit Zwischensumme/Gesamtbetrag immer mit der Positionstabelle übereinstimmen.
+  const computedPartsTotal = data.parts.reduce((sum, p) => {
+    const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
+    const setupA = (p as any).setup_pauschale_anzahl || 1;
+    // Einzelpreis OHNE Setup:
+    const ep =
+      ((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
+      ((p.druckzeit_h ?? 0) > 0 ? (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h : 0) +
+      ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
+      ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0);
+    // Teilpreis = Einzelpreis × Menge + Setup einmalig:
+    return sum + ep * p.menge + setupA * s.setup_pauschale;
+  }, 0);
+  const effectiveTotal = data.withDetails
+    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag
+    : data.umsatz_total;
+
   if (data.withDetails) {
     const detailBody: any[][] = [];
-    const s = data.settings;
     data.parts.forEach((p, i) => {
       const nr = String(i + 1).padStart(2, "0");
       const rowBg = i % 2 === 0 ? WHITE : XLGRAY;
+      const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
+      const setupAnzahl = (p as any).setup_pauschale_anzahl || 1;
+      const setupTotal = setupAnzahl * s.setup_pauschale;
+      // Einzelpreis OHNE Setup (Setup wird 1× pro Teilart verrechnet):
+      const einzelpreis =
+        ((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
+        ((p.druckzeit_h ?? 0) > 0 ? (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h : 0) +
+        ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
+        ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0);
+      // Teilpreis = Einzelpreis × Menge + Setup einmalig:
+      const teilTotal = einzelpreis * p.menge + setupTotal;
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: p.teilname || "—", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: `${p.menge}×`, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
-        { content: formatCHF(p.preis_pro_stueck), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
-        { content: formatCHF(p.preis_total), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(einzelpreis), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(teilTotal), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
-      const setupAnzahl = (p as any).setup_pauschale_anzahl || 1;
-      const setupTotal = setupAnzahl * s.setup_pauschale;
       if (setupTotal > 0) {
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
@@ -263,7 +292,6 @@ export async function exportOfferPDF(data: OfferExportData) {
         ]);
       }
       if ((p.gewicht_g ?? 0) > 0) {
-        const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
         const matTotal = (p.gewicht_g ?? 0) * matRate * p.menge;
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
@@ -408,8 +436,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetrag;
+  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0) - versandBetrag;
   const offerSumRows: [string, string][] = [["Zwischensumme", formatCHF(partsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     offerSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
@@ -418,7 +445,7 @@ export async function exportOfferPDF(data: OfferExportData) {
     offerSumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetrag)]);
   }
   const offerRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const offerRabatt = (data.umsatz_total - versandBetrag) * (offerRabattPct / 100);
+  const offerRabatt = (effectiveTotal - versandBetrag) * (offerRabattPct / 100);
   if (offerRabatt > 0) {
     offerSumRows.push([`Rabatt (${offerRabattPct}%)`, `- ${formatCHF(offerRabatt)}`]);
   }
@@ -427,7 +454,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   const totalBoxBottom = drawSummary(
     doc,
     offerSumRows,
-    "ANGEBOTSSUMME", formatCHF(data.umsatz_total - offerRabatt),
+    "ANGEBOTSSUMME", formatCHF(effectiveTotal - offerRabatt),
     ACCENT, sumX, afterTable, pageW, margin,
   );
 
