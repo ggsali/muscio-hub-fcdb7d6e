@@ -65,6 +65,7 @@ interface PartRow {
   notizen: string;
   sort_order?: number | null;
   in_rechnung?: boolean;
+  setup_pauschale_anzahl?: number;
 }
 
 const emptyPart = (): PartRow => ({
@@ -72,6 +73,7 @@ const emptyPart = (): PartRow => ({
   gewicht_g: 0, druckzeit_h: 0, nachbearbeitung_h: 0, konstruktion_h: 0,
   preis_pro_stueck: 0, preis_total: 0,
   status: "Ausstehend", notizen: "",
+  setup_pauschale_anzahl: 1,
 });
 
 interface Preset {
