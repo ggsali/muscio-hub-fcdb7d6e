@@ -952,8 +952,38 @@ export default function AuftragDetailPage() {
     setSendingAkonto(false);
   };
 
+  // Lädt die aktuellen Kalkulations-Settings frisch aus der DB und merged
+  // maschinenzeit_pro_h + setup_pauschale, damit die Rechnung dieselben
+  // Werte verwendet wie die Offerte (Presets könnten sie überschrieben haben).
+  const getFreshPdfSettings = async (): Promise<Settings> => {
+    console.log("[Rechnung] Settings vor Export:", {
+      maschinenzeit: activeSettings.maschinenzeit_pro_h,
+      setup: activeSettings.setup_pauschale,
+    });
+    try {
+      const { data: freshCalc } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", "calc_params")
+        .single();
+      const freshSettings: Settings = {
+        ...activeSettings,
+        maschinenzeit_pro_h: Number((freshCalc?.value as any)?.maschinenzeit_pro_h) || activeSettings.maschinenzeit_pro_h,
+        setup_pauschale: Number((freshCalc?.value as any)?.fix_cost) || activeSettings.setup_pauschale,
+      };
+      console.log("[Rechnung] Settings frisch geladen:", {
+        maschinenzeit: freshSettings.maschinenzeit_pro_h,
+        setup: freshSettings.setup_pauschale,
+      });
+      return freshSettings;
+    } catch {
+      return activeSettings;
+    }
+  };
+
   const handleExportPDF = async (details = false) => {
     const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+    const pdfSettings = await getFreshPdfSettings();
     exportOrderPDF({
       orderId: id || "neu",
       datum,
