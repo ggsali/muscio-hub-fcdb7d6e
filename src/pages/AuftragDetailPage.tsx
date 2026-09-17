@@ -138,6 +138,7 @@ export default function AuftragDetailPage() {
   const [paketGroesse, setPaketGroesse] = useState<string>("");
   const [paketGroesseDraft, setPaketGroesseDraft] = useState<string>("");
   const [versandkosten, setVersandkosten] = useState(0);
+  const [setupDialog, setSetupDialog] = useState<{ idx: number; menge: number } | null>(null);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
   const [notesInternal, setNotesInternal] = useState<string>("");
