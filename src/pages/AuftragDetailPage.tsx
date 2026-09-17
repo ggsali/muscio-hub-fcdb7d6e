@@ -1002,7 +1002,7 @@ export default function AuftragDetailPage() {
       kosten_total: selectedTotalKosten,
       gewinn_total: selectedTotalGewinn,
       marge: selectedTotalMarge,
-      settings: activeSettings,
+      settings: pdfSettings,
       company,
       withDetails: details,
       expressKosten: selectedExpressAmount,
