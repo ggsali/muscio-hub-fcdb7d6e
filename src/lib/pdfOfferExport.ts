@@ -250,13 +250,15 @@ export async function exportOfferPDF(data: OfferExportData) {
         { content: formatCHF(p.preis_pro_stueck), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
         { content: formatCHF(p.preis_total), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
-      if (s.setup_pauschale > 0) {
+      const setupAnzahl = (p as any).setup_pauschale_anzahl || 1;
+      const setupTotal = setupAnzahl * s.setup_pauschale;
+      if (setupTotal > 0) {
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
           { content: "Setup-Pauschale", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
-          { content: `1×`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: `${setupAnzahl}×`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
           { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
-          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+          { content: formatCHF(setupTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
 
         ]);
       }
