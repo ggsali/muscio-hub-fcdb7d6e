@@ -740,13 +740,14 @@ export default function AuftragDetailPage() {
               return;
             }
           }
+          const pdfSettings = await getFreshPdfSettings();
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts: selectedParts, umsatz_total: totalMitVersand, kosten_total: selectedTotalKosten,
             versandkosten, paket_groesse: paketGroesse, lieferart,
             gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
-            settings: activeSettings, company, returnBase64: true, withDetails,
+            settings: pdfSettings, company, returnBase64: true, withDetails,
             expressKosten: selectedExpressAmount, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
