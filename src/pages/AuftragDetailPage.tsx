@@ -2279,7 +2279,21 @@ export default function AuftragDetailPage() {
                               </select>
                             )}
                           </td>
-                          <td className="px-2 py-2"><Input type="number" value={part.menge} onChange={e => updatePart(idx, "menge", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" /></td>
+                          <td className="px-2 py-2">
+                            <div className="flex flex-col gap-0.5">
+                              <Input type="number" value={part.menge} onChange={e => handleMengeChange(idx, parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" />
+                              <button
+                                type="button"
+                                onClick={() => setSetupDialog({ idx, menge: part.menge })}
+                                className="text-xs text-muted-foreground underline hover:text-foreground text-left"
+                              >
+                                Setup: {part.setup_pauschale_anzahl || 1}×
+                              </button>
+                              {(part.setup_pauschale_anzahl || 1) > 1 && (
+                                <span className="text-xs text-amber-600">{part.setup_pauschale_anzahl}× Setup</span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-2 py-2"><Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
                           <td className="px-2 py-2"><Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
                           <td className="px-2 py-2"><Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
