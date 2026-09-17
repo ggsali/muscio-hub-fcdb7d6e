@@ -271,30 +271,33 @@ export async function exportOrderPDF(data: OrderExportData) {
       // Berechne Part-Total aus Komponenten, damit die Summe der Unterzeilen
       // immer mit dem angezeigten Hauptzeilen-Total übereinstimmt.
       const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-      const componentTotal =
-        (s.setup_pauschale > 0 ? s.setup_pauschale : 0) +
-        (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
-        (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h * p.menge : 0) +
-        (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
-        (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h * p.menge : 0);
+      const setupAnzahl = (p as any).setup_pauschale_anzahl || 1;
+      const setupTotal = s.setup_pauschale > 0 ? setupAnzahl * s.setup_pauschale : 0;
+      // Einzelpreis ohne Setup (Setup wird 1× pro Teilart verrechnet)
+      const einzelpreis =
+        (p.gewicht_g > 0 ? p.gewicht_g * matRate : 0) +
+        (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h : 0) +
+        (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h : 0) +
+        (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h : 0);
+      const componentTotal = einzelpreis * p.menge + setupTotal;
       // Header row for the part
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: p.teilname || "—", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: `${p.menge}×`, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
-        { content: "", styles: { fillColor: BLACK } },
+        { content: formatCHF(einzelpreis), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
         { content: "", styles: { fillColor: BLACK } },
         { content: formatCHF(componentTotal), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
       // Cost breakdown sub-rows
-      if (s.setup_pauschale > 0) {
+      if (setupTotal > 0) {
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
           { content: "Setup-Pauschale", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
-          { content: `1×`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: `${setupAnzahl}×`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
           { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
           { content: `×1`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
-          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+          { content: formatCHF(setupTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
 
         ]);
       }
