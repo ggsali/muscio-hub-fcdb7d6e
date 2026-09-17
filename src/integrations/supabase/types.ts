@@ -1821,6 +1821,7 @@ export type Database = {
           order_id: string | null
           preis_pro_stueck: number | null
           preis_total: number | null
+          setup_pauschale_anzahl: number | null
           slicer_druckzeit_sekunden: number | null
           slicer_filament_gramm: number | null
           slicer_hat_supports: boolean | null
@@ -1848,6 +1849,7 @@ export type Database = {
           order_id?: string | null
           preis_pro_stueck?: number | null
           preis_total?: number | null
+          setup_pauschale_anzahl?: number | null
           slicer_druckzeit_sekunden?: number | null
           slicer_filament_gramm?: number | null
           slicer_hat_supports?: boolean | null
@@ -1875,6 +1877,7 @@ export type Database = {
           order_id?: string | null
           preis_pro_stueck?: number | null
           preis_total?: number | null
+          setup_pauschale_anzahl?: number | null
           slicer_druckzeit_sekunden?: number | null
           slicer_filament_gramm?: number | null
           slicer_hat_supports?: boolean | null

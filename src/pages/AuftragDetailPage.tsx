@@ -65,6 +65,7 @@ interface PartRow {
   notizen: string;
   sort_order?: number | null;
   in_rechnung?: boolean;
+  setup_pauschale_anzahl?: number;
 }
 
 const emptyPart = (): PartRow => ({
@@ -72,6 +73,7 @@ const emptyPart = (): PartRow => ({
   gewicht_g: 0, druckzeit_h: 0, nachbearbeitung_h: 0, konstruktion_h: 0,
   preis_pro_stueck: 0, preis_total: 0,
   status: "Ausstehend", notizen: "",
+  setup_pauschale_anzahl: 1,
 });
 
 interface Preset {
@@ -136,6 +138,7 @@ export default function AuftragDetailPage() {
   const [paketGroesse, setPaketGroesse] = useState<string>("");
   const [paketGroesseDraft, setPaketGroesseDraft] = useState<string>("");
   const [versandkosten, setVersandkosten] = useState(0);
+  const [setupDialog, setSetupDialog] = useState<{ idx: number; menge: number } | null>(null);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
   const [notesInternal, setNotesInternal] = useState<string>("");
@@ -390,6 +393,7 @@ export default function AuftragDetailPage() {
           const partsWithOrder = (p as PartRow[]).map((part, index) => ({
             ...part,
             sort_order: part.sort_order ?? index,
+            setup_pauschale_anzahl: part.setup_pauschale_anzahl || 1,
           }));
           setParts(partsWithOrder);
           const selected = new Set(
@@ -446,9 +450,14 @@ export default function AuftragDetailPage() {
       ...activeSettings,
       material_einkauf_pro_kg: part.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg,
       material_verkauf_pro_g: effectiveVerkaufProG,
+      // Setup-Pauschale wird NICHT pro Stück, sondern 1× pro Teilart verrechnet
+      setup_pauschale: 0,
     };
+    // Einzelpreis = Material + Maschine + Nachbearbeitung + Konstruktion (ohne Setup)
     const preis_pro_stueck = calcUmsatz(settingsForPart, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
-    return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge };
+    const setupAnzahl = part.setup_pauschale_anzahl || 1;
+    const setupKosten = setupAnzahl * (activeSettings.setup_pauschale || 0);
+    return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge + setupKosten };
   };
 
   const updatePart = (idx: number, field: keyof PartRow, value: string | number) => {
@@ -458,6 +467,14 @@ export default function AuftragDetailPage() {
       updated[idx] = recalcPart(part);
       return updated;
     });
+  };
+
+  // Menge ändern – ab 5 Stück fragen, wie viele Setup-Pauschalen verrechnet werden
+  const handleMengeChange = (idx: number, neueMenge: number) => {
+    updatePart(idx, "menge", neueMenge);
+    if (neueMenge >= 5) {
+      setSetupDialog({ idx, menge: neueMenge });
+    }
   };
 
   // Alle Teile neu kalkulieren wenn sich activeSettings oder das Preset ändert
@@ -553,6 +570,7 @@ export default function AuftragDetailPage() {
         preis_total: newPart.preis_total,
         status: newPart.status,
         notizen: newPart.notizen,
+        setup_pauschale_anzahl: newPart.setup_pauschale_anzahl || 1,
       }).select().single();
       if (data) {
         const inserted = { ...newPart, id: data.id, in_rechnung: true };
@@ -630,9 +648,12 @@ export default function AuftragDetailPage() {
   // ── AUSGEWÄHLTE TEILE (für PDF/Mail/Anzeige) ───────────
   const selectedParts = parts.filter(p => p.id && selectedPartIds.has(p.id));
 
-  // Setup-Pauschale ist bereits in jedem Teilpreis enthalten (calcUmsatz) –
-  // hier nur zur Anzeige in der Kostenaufschlüsselung ausgewiesen.
-  const selectedSetup = selectedParts.reduce((s, _p) => s + activeSettings.setup_pauschale, 0);
+  // Setup-Pauschale: 1× pro Teilart (bzw. so viele Rüstvorgänge wie erfasst) –
+  // bereits in preis_total enthalten, hier nur zur Anzeige ausgewiesen.
+  const selectedSetup = selectedParts.reduce(
+    (s, p) => s + (p.setup_pauschale_anzahl || 1) * activeSettings.setup_pauschale,
+    0
+  );
 
   // Teilpreise (inkl. Setup)
   const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + (p.preis_total || 0), 0);
@@ -1078,6 +1099,7 @@ export default function AuftragDetailPage() {
         slicer_layer_anzahl: p.slicer_layer_anzahl ?? null,
         sort_order: index,
         in_rechnung: p.id ? selectedPartIds.has(p.id) : true,
+        setup_pauschale_anzahl: p.setup_pauschale_anzahl || 1,
       });
 
       if (isNew) {
@@ -1138,6 +1160,7 @@ export default function AuftragDetailPage() {
         const partsWithOrder = (freshParts as PartRow[]).map((part, index) => ({
           ...part,
           sort_order: part.sort_order ?? index,
+          setup_pauschale_anzahl: part.setup_pauschale_anzahl || 1,
         }));
         setParts(applyFilamentPrices(partsWithOrder));
         const selected = new Set(
@@ -1771,6 +1794,49 @@ export default function AuftragDetailPage() {
             </div>
           </div>
 
+          {/* Setup-Pauschale-Dialog (ab 5 Stück) */}
+          {setupDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-xl">
+                <h3 className="font-bold text-lg mb-1">Setup-Pauschale</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Du hast {setupDialog.menge} Stück eingetragen. Wie viele Setup-Pauschalen möchtest du verrechnen?
+                </p>
+                <div className="space-y-2 mb-4">
+                  {[1, 2, 3].map(anzahl => {
+                    const active = (parts[setupDialog.idx]?.setup_pauschale_anzahl || 1) === anzahl;
+                    return (
+                      <button
+                        key={anzahl}
+                        type="button"
+                        onClick={() => {
+                          updatePart(setupDialog.idx, "setup_pauschale_anzahl", anzahl);
+                          setSetupDialog(null);
+                        }}
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-sm">{anzahl}×</div>
+                            <div className="text-xs text-muted-foreground">
+                              {anzahl === 1 ? "Standard – 1 Rüstung" : `${anzahl} Rüstvorgänge`}
+                            </div>
+                          </div>
+                          <div className="font-bold text-sm">
+                            CHF {(anzahl * (activeSettings.setup_pauschale || 20)).toFixed(2)}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button variant="outline" className="w-full" onClick={() => setSetupDialog(null)}>
+                  Schliessen
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Paketgrösse-Dialog (PostPac Priority) */}
           {showVersandModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -2256,7 +2322,21 @@ export default function AuftragDetailPage() {
                               </select>
                             )}
                           </td>
-                          <td className="px-2 py-2"><Input type="number" value={part.menge} onChange={e => updatePart(idx, "menge", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" /></td>
+                          <td className="px-2 py-2">
+                            <div className="flex flex-col gap-0.5">
+                              <Input type="number" value={part.menge} onChange={e => handleMengeChange(idx, parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" />
+                              <button
+                                type="button"
+                                onClick={() => setSetupDialog({ idx, menge: part.menge })}
+                                className="text-xs text-muted-foreground underline hover:text-foreground text-left"
+                              >
+                                Setup: {part.setup_pauschale_anzahl || 1}×
+                              </button>
+                              {(part.setup_pauschale_anzahl || 1) > 1 && (
+                                <span className="text-xs text-amber-600">{part.setup_pauschale_anzahl}× Setup</span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-2 py-2"><Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
                           <td className="px-2 py-2"><Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
                           <td className="px-2 py-2"><Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
