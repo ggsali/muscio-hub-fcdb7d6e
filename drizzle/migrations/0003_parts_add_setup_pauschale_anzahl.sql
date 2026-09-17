@@ -1,0 +1,1 @@
+ALTER TABLE public.parts ADD COLUMN IF NOT EXISTS setup_pauschale_anzahl INTEGER DEFAULT 1;
