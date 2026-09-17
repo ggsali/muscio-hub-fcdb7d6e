@@ -1794,6 +1794,49 @@ export default function AuftragDetailPage() {
             </div>
           </div>
 
+          {/* Setup-Pauschale-Dialog (ab 5 Stück) */}
+          {setupDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-xl">
+                <h3 className="font-bold text-lg mb-1">Setup-Pauschale</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Du hast {setupDialog.menge} Stück eingetragen. Wie viele Setup-Pauschalen möchtest du verrechnen?
+                </p>
+                <div className="space-y-2 mb-4">
+                  {[1, 2, 3].map(anzahl => {
+                    const active = (parts[setupDialog.idx]?.setup_pauschale_anzahl || 1) === anzahl;
+                    return (
+                      <button
+                        key={anzahl}
+                        type="button"
+                        onClick={() => {
+                          updatePart(setupDialog.idx, "setup_pauschale_anzahl", anzahl);
+                          setSetupDialog(null);
+                        }}
+                        className={`w-full text-left p-4 rounded-xl border-2 transition-all ${active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-sm">{anzahl}×</div>
+                            <div className="text-xs text-muted-foreground">
+                              {anzahl === 1 ? "Standard – 1 Rüstung" : `${anzahl} Rüstvorgänge`}
+                            </div>
+                          </div>
+                          <div className="font-bold text-sm">
+                            CHF {(anzahl * (activeSettings.setup_pauschale || 20)).toFixed(2)}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button variant="outline" className="w-full" onClick={() => setSetupDialog(null)}>
+                  Schliessen
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Paketgrösse-Dialog (PostPac Priority) */}
           {showVersandModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
