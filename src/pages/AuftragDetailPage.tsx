@@ -446,9 +446,14 @@ export default function AuftragDetailPage() {
       ...activeSettings,
       material_einkauf_pro_kg: part.filament_einkauf_pro_kg ?? activeSettings.material_einkauf_pro_kg,
       material_verkauf_pro_g: effectiveVerkaufProG,
+      // Setup-Pauschale wird NICHT pro Stück, sondern 1× pro Teilart verrechnet
+      setup_pauschale: 0,
     };
+    // Einzelpreis = Material + Maschine + Nachbearbeitung + Konstruktion (ohne Setup)
     const preis_pro_stueck = calcUmsatz(settingsForPart, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
-    return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge };
+    const setupAnzahl = part.setup_pauschale_anzahl || 1;
+    const setupKosten = setupAnzahl * (activeSettings.setup_pauschale || 0);
+    return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge + setupKosten };
   };
 
   const updatePart = (idx: number, field: keyof PartRow, value: string | number) => {
@@ -458,6 +463,14 @@ export default function AuftragDetailPage() {
       updated[idx] = recalcPart(part);
       return updated;
     });
+  };
+
+  // Menge ändern – ab 5 Stück fragen, wie viele Setup-Pauschalen verrechnet werden
+  const handleMengeChange = (idx: number, neueMenge: number) => {
+    updatePart(idx, "menge", neueMenge);
+    if (neueMenge >= 5) {
+      setSetupDialog({ idx, menge: neueMenge });
+    }
   };
 
   // Alle Teile neu kalkulieren wenn sich activeSettings oder das Preset ändert
