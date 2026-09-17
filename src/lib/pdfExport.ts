@@ -244,9 +244,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   const s = data.settings;
   const computedPartsTotal = data.parts.reduce((sum, p) => {
     const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
+    const setupA = (p as any).setup_pauschale_anzahl || 1;
     return sum +
-      (s.setup_pauschale > 0 ? s.setup_pauschale : 0) +
-
+      (s.setup_pauschale > 0 ? setupA * s.setup_pauschale : 0) +
       (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
       (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h * p.menge : 0) +
       (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
