@@ -33,6 +33,9 @@ import { sendReviewRequestForOrder } from "@/lib/reviewEmail";
 
 
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useServerFn } from "@tanstack/react-start";
+import { trackShipment } from "@/lib/tracking.functions";
+import { TrackingBadge, relativeZeit } from "@/components/TrackingBadge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -150,6 +153,11 @@ export default function AuftragDetailPage() {
   const [status, setStatus] = useState("Offen");
   const [trackingNr, setTrackingNr] = useState("");
   const [lieferart, setLieferart] = useState<"versand" | "abholung">("versand");
+  const [trackingStatus, setTrackingStatus] = useState<string | null>(null);
+  const [trackingDetail, setTrackingDetail] = useState<string | null>(null);
+  const [trackingGeprueft, setTrackingGeprueft] = useState<string | null>(null);
+  const [trackingZugestellt, setTrackingZugestellt] = useState(false);
+  const [trackingLoading, setTrackingLoading] = useState(false);
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
   const [expressKosten, setExpressKosten] = useState<number>(0);
@@ -379,6 +387,10 @@ export default function AuftragDetailPage() {
           setStatus(o.status ?? "");
           setTrackingNr((o as any).tracking_nr || "");
           setLieferart(((o as any).lieferart === "abholung") ? "abholung" : "versand");
+          setTrackingStatus((o as any).tracking_status || null);
+          setTrackingDetail((o as any).tracking_status_detail || null);
+          setTrackingGeprueft((o as any).tracking_zuletzt_geprueft || null);
+          setTrackingZugestellt(!!(o as any).tracking_zugestellt);
           setGeplantVon((o as any).geplant_von || "");
           setGeplantBis((o as any).geplant_bis || "");
           setExpressKosten(Number((o as any).express_kosten) || 0);
@@ -1255,6 +1267,26 @@ export default function AuftragDetailPage() {
       company,
       trackingNr,
     });
+  };
+
+  const runTracking = useServerFn(trackShipment);
+
+  const handleTrackingRefresh = async (nr: string) => {
+    if (!nr || !id || isNew) return;
+    setTrackingLoading(true);
+    try {
+      const res = await runTracking({ data: { orderId: id, trackingNr: nr } });
+      setTrackingStatus(res.status);
+      setTrackingDetail(res.detail);
+      setTrackingGeprueft(res.geprueftAm);
+      setTrackingZugestellt(res.zugestellt);
+      toast({ title: "📦 Sendung wird verfolgt", description: res.status });
+    } catch (e) {
+      console.error("tracking failed", e);
+      toast({ title: "Status konnte nicht abgerufen werden", variant: "destructive" });
+    } finally {
+      setTrackingLoading(false);
+    }
   };
 
   const handleSave = async () => {
