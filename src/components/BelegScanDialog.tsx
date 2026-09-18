@@ -36,6 +36,7 @@ interface Props {
 export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [optimising, setOptimising] = useState(false);
   const [analysing, setAnalysing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -47,6 +48,13 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const setPreview = (blob: Blob | null) => {
+    setPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return blob ? URL.createObjectURL(blob) : null;
+    });
+  };
 
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -103,16 +111,56 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
       reader.readAsDataURL(f);
     });
 
+  const compressImage = (f: File): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(f);
+      img.onload = () => {
+        const MAX_WIDTH = 1200;
+        const scale = Math.min(1, MAX_WIDTH / img.naturalWidth);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { URL.revokeObjectURL(url); reject(new Error("Canvas nicht verfügbar")); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(
+          blob => (blob ? resolve(blob) : reject(new Error("Komprimierung fehlgeschlagen"))),
+          "image/jpeg",
+          0.8
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Bild konnte nicht gelesen werden")); };
+      img.src = url;
+    });
+
   const handleFile = async (f: File | undefined | null) => {
     if (!f) return;
     if (f.size > MAX_BYTES) { toast.error("Bild zu gross, max. 10MB"); return; }
-    setFile(f);
-    setPreviewUrl(f.type.startsWith("image/") ? URL.createObjectURL(f) : null);
     setShowForm(true);
+
+    let workFile = f;
+    const isImage = f.type.startsWith("image/");
+    if (isImage) {
+      setOptimising(true);
+      try {
+        const compressed = await compressImage(f);
+        workFile = new File([compressed], `${f.name.replace(/\.[^.]+$/, "") || "beleg"}.jpg`, { type: "image/jpeg" });
+      } catch (e) {
+        console.error("[BelegScan] Komprimierung", e);
+        workFile = f; // Fallback: Original verwenden
+      } finally {
+        setOptimising(false);
+      }
+    }
+
+    setFile(workFile);
+    setPreview(isImage ? workFile : null);
     setAnalysing(true);
     try {
-      const base64 = await toBase64(f);
-      const result = await scanBeleg({ data: { fileBase64: base64, mimeType: f.type || "image/jpeg" } });
+      const base64 = await toBase64(workFile);
+      const result = await scanBeleg({ data: { fileBase64: base64, mimeType: workFile.type || "image/jpeg" } });
       setForm(prev => ({
         ...prev,
         datum: result.datum ?? prev.datum,
@@ -233,7 +281,11 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
                 <div className="rounded-xl border border-border bg-muted p-3 text-sm text-muted-foreground">{file.name}</div>
               )}
 
-              {analysing ? (
+              {optimising ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Bild wird optimiert…
+                </div>
+              ) : analysing ? (
                 <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" /> Beleg wird analysiert…
                 </div>
@@ -283,7 +335,7 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
         {showForm && (
           <div className="flex gap-2 px-4 py-3 border-t border-border">
             <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>Abbrechen</Button>
-            <Button className="flex-1" onClick={() => void buchen()} disabled={analysing || saving}>
+            <Button className="flex-1" onClick={() => void buchen()} disabled={optimising || analysing || saving}>
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Buchen
             </Button>
           </div>
