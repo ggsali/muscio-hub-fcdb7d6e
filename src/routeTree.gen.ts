@@ -124,6 +124,7 @@ import { Route as AdminKundenIdRouteImport } from './routes/admin/kunden.$id'
 import { Route as AdminWebsiteBestellungenRouteImport } from './routes/admin/website.bestellungen'
 import { Route as AdminWebsiteEinstellungenRouteImport } from './routes/admin/website.einstellungen'
 import { Route as AdminWebsiteKundenRouteImport } from './routes/admin/website.kunden'
+import { Route as ApiPublicTrackEmailRouteImport } from './routes/api/public/track-email'
 import { Route as WebsiteAdminBestellungenIndexRouteImport } from './routes/website-admin/bestellungen.index'
 import { Route as WebsiteAdminBestellungenIdRouteImport } from './routes/website-admin/bestellungen.$id'
 import { Route as AdminAuftraegeIdIndexRouteImport } from './routes/admin/auftraege.$id.index'
@@ -712,6 +713,11 @@ const AdminWebsiteKundenRoute = AdminWebsiteKundenRouteImport.update({
   path: '/website/kunden',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPublicTrackEmailRoute = ApiPublicTrackEmailRouteImport.update({
+  id: '/api/public/track-email',
+  path: '/api/public/track-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WebsiteAdminBestellungenIndexRoute =
   WebsiteAdminBestellungenIndexRouteImport.update({
     id: '/bestellungen/',
@@ -858,6 +864,7 @@ export interface FileRoutesByFullPath {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
+  '/api/public/track-email': typeof ApiPublicTrackEmailRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/blog/': typeof SiteBlogIndexRoute
   '/leistungen/': typeof SiteLeistungenIndexRoute
@@ -978,6 +985,7 @@ export interface FileRoutesByTo {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
+  '/api/public/track-email': typeof ApiPublicTrackEmailRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/blog': typeof SiteBlogIndexRoute
   '/leistungen': typeof SiteLeistungenIndexRoute
@@ -1103,6 +1111,7 @@ export interface FileRoutesById {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
+  '/api/public/track-email': typeof ApiPublicTrackEmailRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/_site/blog/': typeof SiteBlogIndexRoute
   '/_site/leistungen/': typeof SiteLeistungenIndexRoute
@@ -1228,6 +1237,7 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
+    | '/api/public/track-email'
     | '/website-admin/bestellungen/$id'
     | '/blog/'
     | '/leistungen/'
@@ -1348,6 +1358,7 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
+    | '/api/public/track-email'
     | '/website-admin/bestellungen/$id'
     | '/blog'
     | '/leistungen'
@@ -1472,6 +1483,7 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
+    | '/api/public/track-email'
     | '/website-admin/bestellungen/$id'
     | '/_site/blog/'
     | '/_site/leistungen/'
@@ -1524,6 +1536,7 @@ export interface RootRouteChildren {
   BewertungIndexRoute: typeof BewertungIndexRoute
   KundenIndexRoute: typeof KundenIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  ApiPublicTrackEmailRoute: typeof ApiPublicTrackEmailRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2333,6 +2346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWebsiteKundenRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/public/track-email': {
+      id: '/api/public/track-email'
+      path: '/api/public/track-email'
+      fullPath: '/api/public/track-email'
+      preLoaderRoute: typeof ApiPublicTrackEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/website-admin/bestellungen/': {
       id: '/website-admin/bestellungen/'
       path: '/bestellungen'
@@ -2642,6 +2662,7 @@ const rootRouteChildren: RootRouteChildren = {
   BewertungIndexRoute: BewertungIndexRoute,
   KundenIndexRoute: KundenIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  ApiPublicTrackEmailRoute: ApiPublicTrackEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

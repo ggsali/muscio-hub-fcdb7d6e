@@ -51,6 +51,9 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
   const [tplBody, setTplBody] = useState<string>("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [mailGesendet, setMailGesendet] = useState<string | null>(null);
+  const [mailGeoeffnet, setMailGeoeffnet] = useState<string | null>(null);
+  const [linkGeklickt, setLinkGeklickt] = useState<string | null>(null);
 
   const visible = status === "Abgeschlossen" || status === "Geliefert";
 
@@ -66,6 +69,16 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
       setLogStatus(log?.status || null);
       setLogNote(log?.notiz || null);
     });
+    supabase
+      .from("orders")
+      .select("bewertungsmail_gesendet_at, bewertungsmail_geoeffnet_at, bewertungslink_geklickt_at")
+      .eq("id", orderId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setMailGesendet((data as any)?.bewertungsmail_gesendet_at || null);
+        setMailGeoeffnet((data as any)?.bewertungsmail_geoeffnet_at || null);
+        setLinkGeklickt((data as any)?.bewertungslink_geklickt_at || null);
+      });
     if (customerId) {
       supabase.from("customers").select("vorname, name, firma, email").eq("id", customerId).maybeSingle()
         .then(({ data }) => {
@@ -112,6 +125,12 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
         setAlreadySentAt(new Date().toISOString());
         setLogStatus("review_request");
         setLogNote(null);
+        const nowIso = new Date().toISOString();
+        if (!mailGesendet) {
+          await supabase.from("orders").update({ bewertungsmail_gesendet_at: nowIso } as any).eq("id", orderId);
+          setMailGesendet(nowIso);
+        }
+
 
         setOpen(false);
       }
@@ -149,6 +168,29 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
           {!alreadySentAt && (
             <p className="text-xs text-muted-foreground mt-1">Noch nicht versendet</p>
           )}
+
+          {/* Tracking-Status des Bewertungs-Mails */}
+          <div className="mt-3 space-y-1">
+            {([
+              { icon: "📧", label: "Bewertungsmail gesendet", at: mailGesendet },
+              { icon: "👁", label: "Email geöffnet", at: mailGeoeffnet },
+              { icon: "🔗", label: "Link angeklickt", at: linkGeklickt },
+            ] as const).map(row => (
+              <div key={row.label} className="flex items-center gap-2 text-xs">
+                <span className={row.at ? "" : "opacity-40 grayscale"}>{row.icon}</span>
+                <span className={row.at ? "text-foreground" : "text-muted-foreground"}>{row.label}</span>
+                <span className="flex-1" />
+                {row.at ? (
+                  <span className="text-success tabular-nums flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {new Date(row.at).toLocaleString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">— noch nicht</span>
+                )}
+              </div>
+            ))}
+          </div>
 
         </div>
         <Button onClick={openModal} variant="outline" className="gap-2 border-border">

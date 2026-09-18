@@ -1651,6 +1651,9 @@ export type Database = {
         Row: {
           beschreibung: string | null
           bewertungs_token: string | null
+          bewertungslink_geklickt_at: string | null
+          bewertungsmail_geoeffnet_at: string | null
+          bewertungsmail_gesendet_at: string | null
           created_at: string | null
           customer_id: string | null
           datum: string | null
@@ -1684,6 +1687,9 @@ export type Database = {
         Insert: {
           beschreibung?: string | null
           bewertungs_token?: string | null
+          bewertungslink_geklickt_at?: string | null
+          bewertungsmail_geoeffnet_at?: string | null
+          bewertungsmail_gesendet_at?: string | null
           created_at?: string | null
           customer_id?: string | null
           datum?: string | null
@@ -1717,6 +1723,9 @@ export type Database = {
         Update: {
           beschreibung?: string | null
           bewertungs_token?: string | null
+          bewertungslink_geklickt_at?: string | null
+          bewertungsmail_geoeffnet_at?: string | null
+          bewertungsmail_gesendet_at?: string | null
           created_at?: string | null
           customer_id?: string | null
           datum?: string | null
