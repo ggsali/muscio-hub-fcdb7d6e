@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Camera, FolderOpen, Loader2, X, Sparkles } from "lucide-react";
+import { Camera, FolderOpen, Loader2, X, Sparkles, CameraOff } from "lucide-react";
 import { scanBeleg } from "@/lib/belegScan.functions";
 import { cn } from "@/lib/utils";
 
@@ -42,8 +42,58 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
   const [bildSpeichern, setBildSpeichern] = useState(true);
   const [form, setForm] = useState({ datum: heute(), text: "", beleg: "", betrag: "", kategorie });
   const [dragOver, setDragOver] = useState(false);
+  const [cameraOn, setCameraOn] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const stopCamera = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    setCameraOn(false);
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setCameraOn(true);
+      // Video-Element wird im selben Render gesetzt
+      requestAnimationFrame(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          void videoRef.current.play().catch(() => {});
+        }
+      });
+    } catch (e) {
+      console.error("[BelegScan] Kamera", e);
+      toast.error("Kamera nicht verfügbar – bitte Berechtigung erlauben oder Datei wählen");
+      cameraRef.current?.click();
+    }
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) { toast.error("Kamera noch nicht bereit"); return; }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d")?.drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+      if (!blob) { toast.error("Foto fehlgeschlagen"); return; }
+      const f = new File([blob], `beleg_${Date.now()}.jpg`, { type: "image/jpeg" });
+      stopCamera();
+      void handleFile(f);
+    }, "image/jpeg", 0.92);
+  };
+
+  React.useEffect(() => () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+  }, []);
 
   const toBase64 = (f: File) =>
     new Promise<string>((resolve, reject) => {
