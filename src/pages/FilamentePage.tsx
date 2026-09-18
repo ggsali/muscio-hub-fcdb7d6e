@@ -26,7 +26,8 @@ export interface Filament {
   nur_intern: boolean;
 }
 
-const MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "Resin", "Sonstige"];
+const DEFAULT_MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "PVA", "Resin", "Sonstige"];
+const MATERIALS_SETTINGS_KEY = "filament_materials";
 
 const emptyFilament = (): Omit<Filament, "id"> => ({
   name: "",
