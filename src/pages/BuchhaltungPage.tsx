@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, ArrowDown, Camera, ReceiptText } from "lucide-react";
+import BelegScanDialog from "@/components/BelegScanDialog";
 import { cn } from "@/lib/utils";
 
 type Kategorie =
@@ -93,6 +94,8 @@ export default function BuchhaltungPage() {
 
   const [editId, setEditId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DraftBuchung | null>(null);
+  const [scanKategorie, setScanKategorie] = useState<Kategorie | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
