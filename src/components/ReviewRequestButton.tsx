@@ -125,6 +125,12 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
         setAlreadySentAt(new Date().toISOString());
         setLogStatus("review_request");
         setLogNote(null);
+        const nowIso = new Date().toISOString();
+        if (!mailGesendet) {
+          await supabase.from("orders").update({ bewertungsmail_gesendet_at: nowIso } as any).eq("id", orderId);
+          setMailGesendet(nowIso);
+        }
+
 
         setOpen(false);
       }
