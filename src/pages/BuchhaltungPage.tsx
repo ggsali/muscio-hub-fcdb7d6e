@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, ArrowDown, Camera, ReceiptText } from "lucide-react";
+import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, ArrowDown, Camera, ReceiptText, RefreshCw } from "lucide-react";
 import BelegScanDialog from "@/components/BelegScanDialog";
 import { cn } from "@/lib/utils";
 
@@ -96,6 +96,58 @@ export default function BuchhaltungPage() {
   const [draft, setDraft] = useState<DraftBuchung | null>(null);
   const [scanKategorie, setScanKategorie] = useState<Kategorie | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [pendingSync, setPendingSync] = useState<number | null>(null);
+
+  const syncableOrders = useCallback(async () => {
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("id, name, beschreibung, datum, created_at, umsatz_total, status")
+      .in("status", ["Bezahlt", "Abgeschlossen"]);
+    const list = (orders ?? []).filter(o => {
+      const d = (o.datum || o.created_at || "").slice(0, 10);
+      return d.startsWith(String(jahr));
+    });
+    const vorhanden = new Set(
+      buchungen.filter(b => b.kategorie === "einnahmen" && b.beleg).map(b => b.beleg as string)
+    );
+    return list.filter(o => !vorhanden.has(o.id.slice(0, 8)));
+  }, [buchungen, jahr]);
+
+  useEffect(() => {
+    if (tab !== "einnahmen" || loading) { setPendingSync(null); return; }
+    let alive = true;
+    void syncableOrders().then(list => { if (alive) setPendingSync(list.length); });
+    return () => { alive = false; };
+  }, [tab, loading, syncableOrders]);
+
+  const syncEinnahmen = async () => {
+    setSyncBusy(true);
+    try {
+      const offene = await syncableOrders();
+      if (offene.length === 0) {
+        toast("Alles aktuell — 0 neue Einnahmen");
+        return;
+      }
+      const rows = offene.map(o => ({
+        jahr,
+        datum: (o.datum || o.created_at || "").slice(0, 10) || null,
+        text: o.name || o.beschreibung || `Auftrag ${o.id.slice(0, 8)}`,
+        beleg: o.id.slice(0, 8),
+        einnahmen: n(o.umsatz_total),
+        ausgaben: 0,
+        kategorie: "einnahmen" as const,
+      }));
+      const { error } = await supabase.from("ear_buchungen").insert(rows);
+      if (error) throw error;
+      toast.success(`${rows.length} Einnahmen synchronisiert`);
+      await load();
+    } catch (e: any) {
+      toast.error("Synchronisation fehlgeschlagen", { description: e?.message });
+    } finally {
+      setSyncBusy(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
