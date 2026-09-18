@@ -1001,18 +1001,20 @@ export default function AuftragDetailPage() {
               return;
             }
           }
-          const pdfSettings = await getFreshPdfSettings();
+          const freshSettings = await getFreshPdfSettings();
+          const base = invoiceBase();
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: totalMitVersand, kosten_total: selectedTotalKosten,
-            versandkosten, paket_groesse: paketGroesse, lieferart,
+            parts: base.parts, umsatz_total: base.umsatz_total, kosten_total: selectedTotalKosten,
+            versandkosten: base.versandkosten, paket_groesse: base.paket_groesse, lieferart: base.lieferart,
             gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
-            settings: pdfSettings, company, returnBase64: true, withDetails,
-            expressKosten: selectedExpressAmount, expressLabel,
+            settings: base.settings || freshSettings, company, returnBase64: true, withDetails,
+            expressKosten: base.expressKosten, expressLabel: base.expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
+          await saveOfferteSnapshot();
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
@@ -1241,7 +1243,8 @@ export default function AuftragDetailPage() {
 
   const handleExportPDF = async (details = false) => {
     const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-    const pdfSettings = await getFreshPdfSettings();
+    const freshSettings = await getFreshPdfSettings();
+    const base = invoiceBase();
     exportOrderPDF({
       orderId: id || "neu",
       datum,
@@ -1252,25 +1255,26 @@ export default function AuftragDetailPage() {
       customerEmail,
       customerTelefon,
       customerAdresse,
-      parts: selectedParts,
-      umsatz_total: totalMitVersand,
-      versandkosten,
-      paket_groesse: paketGroesse,
-      lieferart,
+      parts: base.parts,
+      umsatz_total: base.umsatz_total,
+      versandkosten: base.versandkosten,
+      paket_groesse: base.paket_groesse,
+      lieferart: base.lieferart,
       kosten_total: selectedTotalKosten,
       gewinn_total: selectedTotalGewinn,
       marge: selectedTotalMarge,
-      settings: pdfSettings,
+      settings: base.settings || freshSettings,
       company,
       withDetails: details,
-      expressKosten: selectedExpressAmount,
-      expressLabel,
-      rabattProzent: rabattPct,
+      expressKosten: base.expressKosten,
+      expressLabel: base.expressLabel,
+      rabattProzent: base.rabattProzent,
     });
   };
 
   const handleExportOffer = async (details = false) => {
     const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+    await saveOfferteSnapshot();
     exportOfferPDF({
       orderId: id || "neu",
       datum,
