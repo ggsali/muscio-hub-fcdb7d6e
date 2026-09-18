@@ -36,6 +36,7 @@ interface Props {
 export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [optimising, setOptimising] = useState(false);
   const [analysing, setAnalysing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -47,6 +48,13 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
   const fileRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const setPreview = (blob: Blob | null) => {
+    setPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return blob ? URL.createObjectURL(blob) : null;
+    });
+  };
 
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
