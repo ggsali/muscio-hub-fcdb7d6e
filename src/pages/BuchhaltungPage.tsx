@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, ArrowDown, Camera, ReceiptText } from "lucide-react";
+import BelegScanDialog from "@/components/BelegScanDialog";
 import { cn } from "@/lib/utils";
 
 type Kategorie =
@@ -17,6 +18,8 @@ interface Buchung {
   datum: string | null;
   text: string | null;
   beleg: string | null;
+  beleg_url: string | null;
+  beleg_storage_path: string | null;
   einnahmen: number | null;
   ausgaben: number | null;
   kategorie: Kategorie;
@@ -91,6 +94,8 @@ export default function BuchhaltungPage() {
 
   const [editId, setEditId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DraftBuchung | null>(null);
+  const [scanKategorie, setScanKategorie] = useState<Kategorie | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -345,9 +350,14 @@ export default function BuchhaltungPage() {
       <Card className="p-0 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h2 className="font-semibold">{label} {jahr}</h2>
-          <Button size="sm" onClick={() => startNew(kategorie)} disabled={editId === "new"}>
-            <Plus className="w-4 h-4 mr-1" /> Eintrag hinzufügen
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => setScanKategorie(kategorie)}>
+              <Camera className="w-4 h-4 mr-1" /> Beleg scannen
+            </Button>
+            <Button size="sm" onClick={() => startNew(kategorie)} disabled={editId === "new"}>
+              <Plus className="w-4 h-4 mr-1" /> Eintrag hinzufügen
+            </Button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -370,7 +380,16 @@ export default function BuchhaltungPage() {
                 <tr key={r.id} className={cn("border-t border-border", r.saldo < 0 && "bg-destructive/10")}>
                   <td className="p-2 tabular-nums">{r.datum ?? "–"}</td>
                   <td className="p-2">{r.text}</td>
-                  <td className="p-2 text-muted-foreground">{r.beleg ?? "–"}</td>
+                  <td className="p-2 text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      {r.beleg ?? "–"}
+                      {r.beleg_url && (
+                        <button onClick={() => setLightbox(r.beleg_url!)} title="Beleg ansehen" className="text-primary hover:opacity-70">
+                          <ReceiptText className="w-4 h-4" />
+                        </button>
+                      )}
+                    </span>
+                  </td>
                   <td className="p-2 text-right"><Num value={n(r.einnahmen)} /></td>
                   <td className="p-2 text-right"><Num value={n(r.ausgaben)} /></td>
                   <td className="p-2 text-right"><Num value={r.saldo} bold /></td>
@@ -593,6 +612,24 @@ export default function BuchhaltungPage() {
         : tab === "anlagen" ? renderAnlagen()
         : tab === "export" ? renderExport()
         : renderBlatt(tab as Kategorie)}
+
+      {scanKategorie && (
+        <BelegScanDialog
+          jahr={jahr}
+          kategorie={scanKategorie}
+          onClose={() => setScanKategorie(null)}
+          onSaved={load}
+        />
+      )}
+
+      {lightbox && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
+          <button className="absolute top-4 right-4 p-2 rounded-lg bg-background/90" onClick={() => setLightbox(null)}>
+            <X className="w-5 h-5" />
+          </button>
+          <img src={lightbox} alt="Beleg" className="max-h-[90vh] max-w-full rounded-xl object-contain" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }

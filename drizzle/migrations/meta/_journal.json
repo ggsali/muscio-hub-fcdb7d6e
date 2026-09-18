@@ -50,6 +50,13 @@
       "when": 1789720310757,
       "tag": "0006_create_ear_buchhaltung",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789720930079,
+      "tag": "0007_ear_buchungen_beleg_bild",
+      "breakpoints": true
     }
   ]
 }
