@@ -69,6 +69,16 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
       setLogStatus(log?.status || null);
       setLogNote(log?.notiz || null);
     });
+    supabase
+      .from("orders")
+      .select("bewertungsmail_gesendet_at, bewertungsmail_geoeffnet_at, bewertungslink_geklickt_at")
+      .eq("id", orderId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setMailGesendet((data as any)?.bewertungsmail_gesendet_at || null);
+        setMailGeoeffnet((data as any)?.bewertungsmail_geoeffnet_at || null);
+        setLinkGeklickt((data as any)?.bewertungslink_geklickt_at || null);
+      });
     if (customerId) {
       supabase.from("customers").select("vorname, name, firma, email").eq("id", customerId).maybeSingle()
         .then(({ data }) => {
