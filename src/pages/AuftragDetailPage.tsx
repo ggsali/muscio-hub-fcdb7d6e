@@ -151,11 +151,6 @@ export default function AuftragDetailPage() {
   const [status, setStatus] = useState("Offen");
   const [trackingNr, setTrackingNr] = useState("");
   const [lieferart, setLieferart] = useState<"versand" | "abholung">("versand");
-  const [trackingStatus, setTrackingStatus] = useState<string | null>(null);
-  const [trackingDetail, setTrackingDetail] = useState<string | null>(null);
-  const [trackingGeprueft, setTrackingGeprueft] = useState<string | null>(null);
-  const [trackingZugestellt, setTrackingZugestellt] = useState(false);
-  const [trackingLoading, setTrackingLoading] = useState(false);
   const [geplantVon, setGeplantVon] = useState("");
   const [geplantBis, setGeplantBis] = useState("");
   const [expressKosten, setExpressKosten] = useState<number>(0);
