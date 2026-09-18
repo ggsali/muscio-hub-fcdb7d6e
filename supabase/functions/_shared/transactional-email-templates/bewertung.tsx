@@ -89,5 +89,5 @@ export const template: TemplateEntry = {
   component: Email,
   subject: 'Danke für Ihre Bewertung',
   displayName: 'Bewertungsbestätigung',
-  previewData: { name: 'Max Muster' },
+  previewData: { name: 'Max Muster', bewertungsLink: 'https://3dmuscio.com/bewertung/demo', orderId: '00000000-0000-0000-0000-000000000000' },
 }
