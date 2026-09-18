@@ -43,6 +43,13 @@
       "when": 1789711909241,
       "tag": "0005_filaments_public_policy_exclude_intern",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789720310757,
+      "tag": "0006_create_ear_buchhaltung",
+      "breakpoints": true
     }
   ]
 }

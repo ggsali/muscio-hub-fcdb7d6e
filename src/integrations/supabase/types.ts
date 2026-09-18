@@ -638,6 +638,78 @@ export type Database = {
         }
         Relationships: []
       }
+      ear_anlagevermoegen: {
+        Row: {
+          abgaenge: number | null
+          abschreibungen_chf: number | null
+          abschreibungen_pct: number | null
+          anfangsbestand: number | null
+          created_at: string
+          id: string
+          jahr: number
+          konto: string
+          zugaenge: number | null
+        }
+        Insert: {
+          abgaenge?: number | null
+          abschreibungen_chf?: number | null
+          abschreibungen_pct?: number | null
+          anfangsbestand?: number | null
+          created_at?: string
+          id?: string
+          jahr?: number
+          konto: string
+          zugaenge?: number | null
+        }
+        Update: {
+          abgaenge?: number | null
+          abschreibungen_chf?: number | null
+          abschreibungen_pct?: number | null
+          anfangsbestand?: number | null
+          created_at?: string
+          id?: string
+          jahr?: number
+          konto?: string
+          zugaenge?: number | null
+        }
+        Relationships: []
+      }
+      ear_buchungen: {
+        Row: {
+          ausgaben: number | null
+          beleg: string | null
+          created_at: string
+          datum: string | null
+          einnahmen: number | null
+          id: string
+          jahr: number
+          kategorie: string
+          text: string | null
+        }
+        Insert: {
+          ausgaben?: number | null
+          beleg?: string | null
+          created_at?: string
+          datum?: string | null
+          einnahmen?: number | null
+          id?: string
+          jahr?: number
+          kategorie: string
+          text?: string | null
+        }
+        Update: {
+          ausgaben?: number | null
+          beleg?: string | null
+          created_at?: string
+          datum?: string | null
+          einnahmen?: number | null
+          id?: string
+          jahr?: number
+          kategorie?: string
+          text?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
