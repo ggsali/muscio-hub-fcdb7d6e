@@ -206,14 +206,19 @@ export default function OrderStatusWorkflow({
             idempotencyKey: `bewertung-${orderId}`,
             templateData: {
               name: customerName,
+              orderId,
               bewertungsLink: `https://3dmuscio.com/bewertung/${token}`,
             },
           },
         });
+        await supabase
+          .from("orders")
+          .update({ bewertungsmail_gesendet_at: new Date().toISOString() } as any)
+          .eq("id", orderId);
         await (supabase.from as any)("order_status_log").insert({
           order_id: orderId,
-          status: "Abgeschlossen",
-          notiz: `✉️ Bewertungsanfrage automatisch gesendet an ${customerEmail}`,
+          status: "bewertungsmail_gesendet",
+          notiz: `📧 Bewertungsmail gesendet an ${customerEmail}`,
           created_at: new Date().toISOString(),
         });
         loadLog?.();
