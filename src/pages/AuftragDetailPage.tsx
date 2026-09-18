@@ -159,6 +159,8 @@ export default function AuftragDetailPage() {
   const [paketGroesse, setPaketGroesse] = useState<string>("");
   const [paketGroesseDraft, setPaketGroesseDraft] = useState<string>("");
   const [versandkosten, setVersandkosten] = useState(0);
+  // Eingemauerte Offerten-Positionen (Preise zum Zeitpunkt der Offerte)
+  const [offerteSnapshot, setOfferteSnapshot] = useState<any | null>(null);
   const [setupDialog, setSetupDialog] = useState<{ idx: number; menge: number } | null>(null);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
@@ -387,6 +389,7 @@ export default function AuftragDetailPage() {
           setRabattProzent(Number((o as any).rabatt_prozent) || 0);
           setVersandkosten(Number((o as any).versandkosten) || 0);
           setPaketGroesse((o as any).paket_groesse || "");
+          setOfferteSnapshot((o as any).offerte_snapshot || null);
           setSource((o as any).source || "manual");
           setNotesInternal((o as any).notes_internal || "");
           // Restore preset if saved
@@ -882,6 +885,76 @@ export default function AuftragDetailPage() {
 
   // Auftragsname immer in der Beschreibung voranstellen
   const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
+
+  // ── OFFERTEN-SNAPSHOT: Preise einmauern ────────────────
+  const frozenMaterialRate = (p: PartRow): number =>
+    p.filament_verkauf_pro_g != null
+      ? Number(p.filament_verkauf_pro_g)
+      : p.filament_einkauf_pro_kg != null
+        ? (Number(p.filament_einkauf_pro_kg) / 1000) * MATERIAL_AUFSCHLAG
+        : activeSettings.material_verkauf_pro_g;
+
+  const buildOfferteSnapshot = () => ({
+    version: 1,
+    erstellt_am: new Date().toISOString(),
+    settings: activeSettings,
+    versandkosten,
+    paket_groesse: paketGroesse,
+    lieferart,
+    rabatt_prozent: rabattPct,
+    express_kosten: selectedExpressAmount,
+    express_label: expressLabel,
+    umsatz_total: totalMitVersand,
+    parts: selectedParts.map(p => ({
+      ...recalcPart(p),
+      preis_eingefroren: true,
+      material_rate_frozen: frozenMaterialRate(p),
+      support_preis_pro_g: supportPreisProG(p),
+    })),
+  });
+
+  const saveOfferteSnapshot = async () => {
+    const snap = buildOfferteSnapshot();
+    setOfferteSnapshot(snap);
+    if (id && !isNew) {
+      await supabase
+        .from("orders")
+        .update({ offerte_snapshot: snap as any, offerte_snapshot_at: snap.erstellt_am } as any)
+        .eq("id", id);
+    }
+    return snap;
+  };
+
+  // Rechnung: gespeicherte Offerten-Positionen verwenden, falls vorhanden
+  const invoiceBase = () => {
+    const snap = offerteSnapshot;
+    if (snap && Array.isArray(snap.parts) && snap.parts.length > 0) {
+      return {
+        parts: snap.parts as PartRow[],
+        umsatz_total: Number(snap.umsatz_total) || totalMitVersand,
+        versandkosten: Number(snap.versandkosten) || 0,
+        paket_groesse: snap.paket_groesse || "",
+        lieferart: snap.lieferart || lieferart,
+        rabattProzent: Number(snap.rabatt_prozent) || 0,
+        expressKosten: Number(snap.express_kosten) || 0,
+        expressLabel: snap.express_label || "",
+        settings: snap.settings,
+        fromSnapshot: true,
+      };
+    }
+    return {
+      parts: selectedParts,
+      umsatz_total: totalMitVersand,
+      versandkosten,
+      paket_groesse: paketGroesse,
+      lieferart,
+      rabattProzent: rabattPct,
+      expressKosten: selectedExpressAmount,
+      expressLabel,
+      settings: null,
+      fromSnapshot: false,
+    };
+  };
 
   const handleSendTestEmail = async () => {
     setSendingEmail("test" as any);
