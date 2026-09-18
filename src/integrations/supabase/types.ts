@@ -1673,6 +1673,10 @@ export type Database = {
           source: string
           status: string | null
           tracking_nr: string | null
+          tracking_status: string | null
+          tracking_status_detail: string | null
+          tracking_zugestellt: boolean | null
+          tracking_zuletzt_geprueft: string | null
           umsatz_total: number | null
           updated_at: string | null
           versandkosten: number | null
@@ -1702,6 +1706,10 @@ export type Database = {
           source?: string
           status?: string | null
           tracking_nr?: string | null
+          tracking_status?: string | null
+          tracking_status_detail?: string | null
+          tracking_zugestellt?: boolean | null
+          tracking_zuletzt_geprueft?: string | null
           umsatz_total?: number | null
           updated_at?: string | null
           versandkosten?: number | null
@@ -1731,6 +1739,10 @@ export type Database = {
           source?: string
           status?: string | null
           tracking_nr?: string | null
+          tracking_status?: string | null
+          tracking_status_detail?: string | null
+          tracking_zugestellt?: boolean | null
+          tracking_zuletzt_geprueft?: string | null
           umsatz_total?: number | null
           updated_at?: string | null
           versandkosten?: number | null
