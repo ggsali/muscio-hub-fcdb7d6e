@@ -64,6 +64,13 @@
       "when": 1789724183692,
       "tag": "0008_orders_add_tracking_status",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789725941185,
+      "tag": "0009_orders_bewertungsmail_tracking",
+      "breakpoints": true
     }
   ]
 }
