@@ -26,7 +26,8 @@ export interface Filament {
   nur_intern: boolean;
 }
 
-const MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "Resin", "Sonstige"];
+const DEFAULT_MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "PVA", "Resin", "Sonstige"];
+const MATERIALS_SETTINGS_KEY = "filament_materials";
 
 const emptyFilament = (): Omit<Filament, "id"> => ({
   name: "",
@@ -48,6 +49,45 @@ export default function FilamentePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<(Partial<Filament> & { isNew?: boolean }) | null>(null);
   const [saving, setSaving] = useState(false);
+  const [customMaterials, setCustomMaterials] = useState<string[]>([]);
+  const [newMaterial, setNewMaterial] = useState("");
+  const [showNewMaterial, setShowNewMaterial] = useState(false);
+
+  const MATERIAL_OPTIONS = React.useMemo(() => {
+    const all = [...DEFAULT_MATERIAL_OPTIONS.filter(m => m !== "Sonstige"), ...customMaterials];
+    return [...Array.from(new Set(all)), "Sonstige"];
+  }, [customMaterials]);
+
+  const loadMaterials = async () => {
+    const { data } = await supabase.from("settings").select("value").eq("key", MATERIALS_SETTINGS_KEY).maybeSingle();
+    try {
+      const parsed = data?.value ? JSON.parse(String(data.value)) : [];
+      if (Array.isArray(parsed)) setCustomMaterials(parsed.map(String).filter(Boolean));
+    } catch { /* ignoriert */ }
+  };
+
+  const addMaterial = async () => {
+    const name = newMaterial.trim();
+    if (!name) return;
+    if (MATERIAL_OPTIONS.some(m => m.toLowerCase() === name.toLowerCase())) {
+      setEditing(e => (e ? { ...e, material: name } : e));
+      setNewMaterial("");
+      setShowNewMaterial(false);
+      return;
+    }
+    const next = [...customMaterials, name];
+    setCustomMaterials(next);
+    setEditing(e => (e ? { ...e, material: name } : e));
+    setNewMaterial("");
+    setShowNewMaterial(false);
+    await supabase.from("settings").upsert({ key: MATERIALS_SETTINGS_KEY, value: JSON.stringify(next) } as any, { onConflict: "key" });
+  };
+
+  const removeMaterial = async (name: string) => {
+    const next = customMaterials.filter(m => m !== name);
+    setCustomMaterials(next);
+    await supabase.from("settings").upsert({ key: MATERIALS_SETTINGS_KEY, value: JSON.stringify(next) } as any, { onConflict: "key" });
+  };
 
   const normalize = (rows: any[]): Filament[] =>
     rows.map((r) => ({
@@ -69,7 +109,7 @@ export default function FilamentePage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadMaterials(); }, []);
 
   const colors: FilamentColor[] = editing?.farben ?? [];
   const setColors = (farben: FilamentColor[]) =>
@@ -102,7 +142,7 @@ export default function FilamentePage() {
     await load();
   };
 
-  const grouped = MATERIAL_OPTIONS.reduce((acc, mat) => {
+  const grouped = MATERIAL_OPTIONS.reduce((acc: Record<string, Filament[]>, mat: string) => {
     const items = filaments.filter(f => f.material === mat);
     if (items.length) acc[mat] = items;
     return acc;
@@ -133,9 +173,41 @@ export default function FilamentePage() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Material *</Label>
-              <select value={editing.material ?? "PLA"} onChange={e => setEditing({ ...editing, material: e.target.value })} className="w-full h-8 px-2 rounded-md bg-input border border-border text-sm text-foreground">
-                {MATERIAL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
+              {showNewMaterial ? (
+                <div className="flex gap-2">
+                  <Input
+                    autoFocus
+                    value={newMaterial}
+                    onChange={e => setNewMaterial(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addMaterial(); } }}
+                    placeholder="z.B. PVA, PP, PEEK"
+                    className="bg-input border-border h-8 text-sm"
+                  />
+                  <Button size="sm" className="h-8" onClick={addMaterial} disabled={!newMaterial.trim()}>Speichern</Button>
+                  <Button size="sm" variant="ghost" className="h-8" onClick={() => { setShowNewMaterial(false); setNewMaterial(""); }}><X className="w-4 h-4" /></Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <select value={editing.material ?? "PLA"} onChange={e => setEditing({ ...editing, material: e.target.value })} className="w-full h-8 px-2 rounded-md bg-input border border-border text-sm text-foreground">
+                    {MATERIAL_OPTIONS.map((m: string) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  <Button size="sm" variant="outline" className="h-8 gap-1 shrink-0" onClick={() => setShowNewMaterial(true)}>
+                    <Plus className="w-3.5 h-3.5" /> Neue Art
+                  </Button>
+                </div>
+              )}
+              {customMaterials.length > 0 && !showNewMaterial && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {customMaterials.map(m => (
+                    <span key={m} className="inline-flex items-center gap-1 text-[11px] bg-muted rounded px-1.5 py-0.5">
+                      {m}
+                      <button type="button" onClick={() => removeMaterial(m)} className="text-muted-foreground hover:text-destructive" title="Filamentart entfernen">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="space-y-1.5 md:col-span-3">
               <Label className="text-xs">Farben ({colors.length}) – erscheinen direkt im Kalkulator</Label>
