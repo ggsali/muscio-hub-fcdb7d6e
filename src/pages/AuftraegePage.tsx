@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TrackingBadge } from "@/components/TrackingBadge";
 
 interface Order {
   id: string;
@@ -25,6 +26,10 @@ interface Order {
   status: string;
   source: string;
   customer_name: string;
+  tracking_nr: string | null;
+  tracking_status: string | null;
+  tracking_zugestellt: boolean | null;
+  lieferart: string | null;
 }
 
 const STATUS_OPTIONS = ["Alle", "Anfrage", "Offen", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert", "Abgeschlossen", "Storniert"] as const;
