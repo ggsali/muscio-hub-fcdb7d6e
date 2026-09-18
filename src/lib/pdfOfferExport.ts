@@ -334,7 +334,19 @@ export async function exportOfferPDF(data: OfferExportData) {
           { content: formatCHF(konstrTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
         ]);
       }
-      if ((p.nachbearbeitung_h ?? 0) > 0) {
+      const nbSchritte = nbSchritteOf(p);
+      if (nbSchritte.length > 0) {
+        nbSchritte.forEach(schritt => {
+          const stundenTotal = schritt.stunden * s.nachbearbeitung_pro_h * p.menge;
+          detailBody.push([
+            { content: "", styles: { fillColor: rowBg } },
+            { content: `Nachbearb: ${schritt.name || "Finishing"}`, styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
+            { content: `${schritt.stunden.toFixed(1)}h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+            { content: `${formatCHF(s.nachbearbeitung_pro_h)}/h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+            { content: formatCHF(stundenTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+          ]);
+        });
+      } else if ((p.nachbearbeitung_h ?? 0) > 0) {
         const nbTotal = (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h * p.menge;
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
@@ -342,6 +354,15 @@ export async function exportOfferPDF(data: OfferExportData) {
           { content: `${(p.nachbearbeitung_h ?? 0).toFixed(1)}h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
           { content: `${formatCHF(s.nachbearbeitung_pro_h)}/h`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
           { content: formatCHF(nbTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
+        ]);
+      }
+      if (supportTotal > 0) {
+        detailBody.push([
+          { content: "", styles: { fillColor: rowBg } },
+          { content: `Support (${supportNameOf(p)})`, styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
+          { content: `${Number((p as any).support_gewicht_g) || 0}g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
+          { content: `${formatCHF(supportRateOf(p))}/g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
+          { content: formatCHF(supportTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
         ]);
       }
       if (i < data.parts.length - 1) {
