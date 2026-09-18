@@ -264,7 +264,7 @@ export async function exportOfferPDF(data: OfferExportData) {
       ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
       ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0);
     // Teilpreis = Einzelpreis × Menge + Setup einmalig:
-    return sum + ep * p.menge + setupA * s.setup_pauschale;
+    return sum + ep * p.menge + setupA * s.setup_pauschale + supportTotalOf(p);
   }, 0);
   const effectiveTotal = data.withDetails
     ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag
