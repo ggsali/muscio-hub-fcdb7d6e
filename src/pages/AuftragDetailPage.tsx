@@ -74,6 +74,8 @@ interface PartRow {
   nachbearbeitungs_schritte?: NbSchritt[];
   support_filament_id?: string | null;
   support_gewicht_g?: number;
+  support_preis_pro_g?: number;
+  support_name?: string;
 }
 
 const emptyPart = (): PartRow => ({
@@ -491,7 +493,17 @@ export default function AuftragDetailPage() {
     const setupAnzahl = part.setup_pauschale_anzahl || 1;
     const setupKosten = setupAnzahl * (activeSettings.setup_pauschale || 0);
     const supportKosten = supportKostenFor(part);
-    return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge + setupKosten + supportKosten };
+    const supportFil = part.support_filament_id
+      ? internFilamente.find(x => x.id === part.support_filament_id)
+      : null;
+    return {
+      ...part,
+      preis_pro_stueck,
+      preis_total: preis_pro_stueck * part.menge + setupKosten + supportKosten,
+      // nur für PDF/Anzeige, nicht in der DB gespeichert
+      support_preis_pro_g: supportPreisProG(part),
+      support_name: supportFil?.name || supportFil?.material || undefined,
+    } as PartRow;
   };
 
   const updatePart = (idx: number, field: keyof PartRow, value: any) => {
