@@ -2960,6 +2960,47 @@ export default function AuftragDetailPage() {
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
             <h3 className="font-semibold text-sm mb-2">PDF herunterladen</h3>
+            {offerteSnapshot?.parts?.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
+                <span className="text-amber-600 dark:text-amber-400">
+                  🔒 Rechnung verwendet die eingemauerten Offerten-Preise vom{" "}
+                  {offerteSnapshot.erstellt_am
+                    ? new Date(offerteSnapshot.erstellt_am).toLocaleDateString("de-CH")
+                    : "—"}
+                  {typeof offerteSnapshot.umsatz_total === "number"
+                    ? ` · CHF ${Number(offerteSnapshot.umsatz_total).toFixed(2)}`
+                    : ""}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-border"
+                  onClick={async () => {
+                    setOfferteSnapshot(null);
+                    if (id && !isNew) {
+                      await supabase
+                        .from("orders")
+                        .update({ offerte_snapshot: null, offerte_snapshot_at: null } as any)
+                        .eq("id", id);
+                    }
+                    toast({ title: "Preise aktualisiert", description: "Die Rechnung rechnet wieder mit den aktuellen Preisen." });
+                  }}
+                >
+                  Aktuelle Preise verwenden
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-border"
+                  onClick={async () => {
+                    await saveOfferteSnapshot();
+                    toast({ title: "Offerten-Preise neu eingemauert" });
+                  }}
+                >
+                  Neu einmauern
+                </Button>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Button onClick={() => handleExportPDF(false)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung</Button>
               <Button onClick={() => handleExportPDF(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung (mit Details)</Button>
