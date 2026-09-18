@@ -124,7 +124,6 @@ import { Route as AdminKundenIdRouteImport } from './routes/admin/kunden.$id'
 import { Route as AdminWebsiteBestellungenRouteImport } from './routes/admin/website.bestellungen'
 import { Route as AdminWebsiteEinstellungenRouteImport } from './routes/admin/website.einstellungen'
 import { Route as AdminWebsiteKundenRouteImport } from './routes/admin/website.kunden'
-import { Route as ApiPublicTrackShipmentsCronRouteImport } from './routes/api/public/track-shipments-cron'
 import { Route as WebsiteAdminBestellungenIndexRouteImport } from './routes/website-admin/bestellungen.index'
 import { Route as WebsiteAdminBestellungenIdRouteImport } from './routes/website-admin/bestellungen.$id'
 import { Route as AdminAuftraegeIdIndexRouteImport } from './routes/admin/auftraege.$id.index'
@@ -713,12 +712,6 @@ const AdminWebsiteKundenRoute = AdminWebsiteKundenRouteImport.update({
   path: '/website/kunden',
   getParentRoute: () => AdminRoute,
 } as any)
-const ApiPublicTrackShipmentsCronRoute =
-  ApiPublicTrackShipmentsCronRouteImport.update({
-    id: '/api/public/track-shipments-cron',
-    path: '/api/public/track-shipments-cron',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const WebsiteAdminBestellungenIndexRoute =
   WebsiteAdminBestellungenIndexRouteImport.update({
     id: '/bestellungen/',
@@ -865,7 +858,6 @@ export interface FileRoutesByFullPath {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
-  '/api/public/track-shipments-cron': typeof ApiPublicTrackShipmentsCronRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/blog/': typeof SiteBlogIndexRoute
   '/leistungen/': typeof SiteLeistungenIndexRoute
@@ -986,7 +978,6 @@ export interface FileRoutesByTo {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
-  '/api/public/track-shipments-cron': typeof ApiPublicTrackShipmentsCronRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/blog': typeof SiteBlogIndexRoute
   '/leistungen': typeof SiteLeistungenIndexRoute
@@ -1112,7 +1103,6 @@ export interface FileRoutesById {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
-  '/api/public/track-shipments-cron': typeof ApiPublicTrackShipmentsCronRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/_site/blog/': typeof SiteBlogIndexRoute
   '/_site/leistungen/': typeof SiteLeistungenIndexRoute
@@ -1238,7 +1228,6 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
-    | '/api/public/track-shipments-cron'
     | '/website-admin/bestellungen/$id'
     | '/blog/'
     | '/leistungen/'
@@ -1359,7 +1348,6 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
-    | '/api/public/track-shipments-cron'
     | '/website-admin/bestellungen/$id'
     | '/blog'
     | '/leistungen'
@@ -1484,7 +1472,6 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
-    | '/api/public/track-shipments-cron'
     | '/website-admin/bestellungen/$id'
     | '/_site/blog/'
     | '/_site/leistungen/'
@@ -1537,7 +1524,6 @@ export interface RootRouteChildren {
   BewertungIndexRoute: typeof BewertungIndexRoute
   KundenIndexRoute: typeof KundenIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
-  ApiPublicTrackShipmentsCronRoute: typeof ApiPublicTrackShipmentsCronRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2347,13 +2333,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWebsiteKundenRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/api/public/track-shipments-cron': {
-      id: '/api/public/track-shipments-cron'
-      path: '/api/public/track-shipments-cron'
-      fullPath: '/api/public/track-shipments-cron'
-      preLoaderRoute: typeof ApiPublicTrackShipmentsCronRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/website-admin/bestellungen/': {
       id: '/website-admin/bestellungen/'
       path: '/bestellungen'
@@ -2663,7 +2642,6 @@ const rootRouteChildren: RootRouteChildren = {
   BewertungIndexRoute: BewertungIndexRoute,
   KundenIndexRoute: KundenIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
-  ApiPublicTrackShipmentsCronRoute: ApiPublicTrackShipmentsCronRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
