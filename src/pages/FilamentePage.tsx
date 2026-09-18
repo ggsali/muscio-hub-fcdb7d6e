@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Save, X, Pencil } from "lucide-react";
 
 export interface FilamentColor {
@@ -22,6 +23,7 @@ export interface Filament {
   verkaufspreis_pro_g: number | null;
   notizen: string;
   aktiv: boolean;
+  nur_intern: boolean;
 }
 
 const MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "Resin", "Sonstige"];
@@ -37,6 +39,7 @@ const emptyFilament = (): Omit<Filament, "id"> => ({
   verkaufspreis_pro_g: null,
   notizen: "",
   aktiv: true,
+  nur_intern: false,
 });
 
 
@@ -189,6 +192,18 @@ export default function FilamentePage() {
               <Label className="text-xs">Notizen</Label>
               <Input value={editing.notizen ?? ""} onChange={e => setEditing({ ...editing, notizen: e.target.value })} className="bg-input border-border h-8 text-sm" placeholder="Besonderheiten, Drucktemperatur…" />
             </div>
+            <div className="col-span-2 md:col-span-3 flex items-center justify-between rounded-md border border-border p-3">
+              <div>
+                <Label>Nur intern (Support-Material)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Nicht auf der öffentlichen Website anzeigen
+                </p>
+              </div>
+              <Switch
+                checked={editing.nur_intern || false}
+                onCheckedChange={v => setEditing(prev => (prev ? { ...prev, nur_intern: v } : prev))}
+              />
+            </div>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={saving || !editing.name} className="bg-primary hover:bg-primary/90 gap-2">
@@ -229,7 +244,12 @@ export default function FilamentePage() {
                   <tbody>
                     {items.map(f => (
                       <tr key={f.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/20 ${!f.aktiv ? "opacity-50" : ""}`}>
-                        <td className="px-4 py-2.5 font-medium">{f.name}</td>
+                        <td className="px-4 py-2.5 font-medium">
+                          {f.name}
+                          {f.nur_intern && (
+                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 align-middle">🔒 Intern</span>
+                          )}
+                        </td>
                         <td className="px-4 py-2.5">
                           {f.farben.length === 0 ? (
                             <span className="text-muted-foreground text-xs">—</span>

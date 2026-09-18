@@ -862,6 +862,7 @@ export type Database = {
           material: string
           name: string
           notizen: string | null
+          nur_intern: boolean | null
           preis_pro_kg: number
           public_preis_pro_g: number | null
           verkaufspreis_pro_g: number | null
@@ -877,6 +878,7 @@ export type Database = {
           material?: string
           name: string
           notizen?: string | null
+          nur_intern?: boolean | null
           preis_pro_kg?: number
           public_preis_pro_g?: number | null
           verkaufspreis_pro_g?: number | null
@@ -892,6 +894,7 @@ export type Database = {
           material?: string
           name?: string
           notizen?: string | null
+          nur_intern?: boolean | null
           preis_pro_kg?: number
           public_preis_pro_g?: number | null
           verkaufspreis_pro_g?: number | null
@@ -1817,6 +1820,7 @@ export type Database = {
           material: string | null
           menge: number | null
           nachbearbeitung_h: number | null
+          nachbearbeitungs_schritte: Json | null
           notizen: string | null
           order_id: string | null
           preis_pro_stueck: number | null
@@ -1828,6 +1832,8 @@ export type Database = {
           slicer_layer_anzahl: number | null
           sort_order: number | null
           status: string | null
+          support_filament_id: string | null
+          support_gewicht_g: number | null
           teilname: string
         }
         Insert: {
@@ -1845,6 +1851,7 @@ export type Database = {
           material?: string | null
           menge?: number | null
           nachbearbeitung_h?: number | null
+          nachbearbeitungs_schritte?: Json | null
           notizen?: string | null
           order_id?: string | null
           preis_pro_stueck?: number | null
@@ -1856,6 +1863,8 @@ export type Database = {
           slicer_layer_anzahl?: number | null
           sort_order?: number | null
           status?: string | null
+          support_filament_id?: string | null
+          support_gewicht_g?: number | null
           teilname: string
         }
         Update: {
@@ -1873,6 +1882,7 @@ export type Database = {
           material?: string | null
           menge?: number | null
           nachbearbeitung_h?: number | null
+          nachbearbeitungs_schritte?: Json | null
           notizen?: string | null
           order_id?: string | null
           preis_pro_stueck?: number | null
@@ -1884,6 +1894,8 @@ export type Database = {
           slicer_layer_anzahl?: number | null
           sort_order?: number | null
           status?: string | null
+          support_filament_id?: string | null
+          support_gewicht_g?: number | null
           teilname?: string
         }
         Relationships: [
@@ -1899,6 +1911,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parts_support_filament_id_fkey"
+            columns: ["support_filament_id"]
+            isOneToOne: false
+            referencedRelation: "filaments"
             referencedColumns: ["id"]
           },
         ]

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
@@ -42,6 +42,11 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+export interface NbSchritt {
+  name: string;
+  stunden: number;
+}
+
 interface PartRow {
   id?: string;
   teilname: string;
@@ -66,6 +71,9 @@ interface PartRow {
   sort_order?: number | null;
   in_rechnung?: boolean;
   setup_pauschale_anzahl?: number;
+  nachbearbeitungs_schritte?: NbSchritt[];
+  support_filament_id?: string | null;
+  support_gewicht_g?: number;
 }
 
 const emptyPart = (): PartRow => ({
@@ -74,7 +82,16 @@ const emptyPart = (): PartRow => ({
   preis_pro_stueck: 0, preis_total: 0,
   status: "Ausstehend", notizen: "",
   setup_pauschale_anzahl: 1,
+  nachbearbeitungs_schritte: [],
+  support_filament_id: null,
+  support_gewicht_g: 0,
 });
+
+const normalizeNbSchritte = (raw: any): NbSchritt[] =>
+  Array.isArray(raw)
+    ? raw
+        .map((s: any) => ({ name: String(s?.name ?? ""), stunden: Number(s?.stunden) || 0 }))
+    : [];
 
 interface Preset {
   id: string;
@@ -116,6 +133,7 @@ export default function AuftragDetailPage() {
   }[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [filaments, setFilaments] = useState<Filament[]>([]);
+  const [internFilamente, setInternFilamente] = useState<any[]>([]);
   const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
   const [partsWithFiles, setPartsWithFiles] = useState<string[]>([]);
   const [partFiles, setPartFiles] = useState<{ part_id: string; storage_path: string; filename?: string; file_type?: string }[]>([]);
@@ -390,10 +408,12 @@ export default function AuftragDetailPage() {
           }
         }
         if (p && p.length > 0) {
-          const partsWithOrder = (p as PartRow[]).map((part, index) => ({
+          const partsWithOrder = (p as unknown as PartRow[]).map((part, index) => ({
             ...part,
             sort_order: part.sort_order ?? index,
             setup_pauschale_anzahl: part.setup_pauschale_anzahl || 1,
+            nachbearbeitungs_schritte: normalizeNbSchritte(part.nachbearbeitungs_schritte),
+            support_gewicht_g: Number(part.support_gewicht_g) || 0,
           }));
           setParts(partsWithOrder);
           const selected = new Set(
@@ -437,6 +457,19 @@ export default function AuftragDetailPage() {
   // Aufschlag-Faktor: Verkaufspreis = Einkaufspreis * Aufschlag (Standard 3×)
   const MATERIAL_AUFSCHLAG = 3.0;
 
+  // Support-Material (nur interne Filamente) – Verkaufspreis pro Gramm
+  const supportPreisProG = (part: PartRow): number => {
+    if (!part.support_filament_id) return 0;
+    const f = internFilamente.find(x => x.id === part.support_filament_id);
+    if (!f) return 0;
+    const vk = Number(f.verkaufspreis_pro_g);
+    if (vk > 0) return vk;
+    return ((Number(f.preis_pro_kg) || 0) / 1000) * MATERIAL_AUFSCHLAG;
+  };
+
+  const supportKostenFor = (part: PartRow): number =>
+    (Number(part.support_gewicht_g) || 0) * supportPreisProG(part) * (part.menge || 0);
+
   const recalcPart = (part: PartRow): PartRow => {
     // Filament-Verkaufspreis hat IMMER Vorrang (auch wenn Preset aktiv ist),
     // damit Kalkulator und PDF identische Beträge zeigen.
@@ -457,10 +490,11 @@ export default function AuftragDetailPage() {
     const preis_pro_stueck = calcUmsatz(settingsForPart, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
     const setupAnzahl = part.setup_pauschale_anzahl || 1;
     const setupKosten = setupAnzahl * (activeSettings.setup_pauschale || 0);
-    return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge + setupKosten };
+    const supportKosten = supportKostenFor(part);
+    return { ...part, preis_pro_stueck, preis_total: preis_pro_stueck * part.menge + setupKosten + supportKosten };
   };
 
-  const updatePart = (idx: number, field: keyof PartRow, value: string | number) => {
+  const updatePart = (idx: number, field: keyof PartRow, value: any) => {
     setParts(prev => {
       const updated = [...prev];
       const part = { ...updated[idx], [field]: value };
@@ -477,10 +511,151 @@ export default function AuftragDetailPage() {
     }
   };
 
+  // Interne Filamente (Support-Material) laden
+  useEffect(() => {
+    supabase
+      .from("filaments")
+      .select("id, name, material, verkaufspreis_pro_g, preis_pro_kg")
+      .eq("aktiv", true)
+      .eq("nur_intern", true)
+      .then(({ data }) => setInternFilamente(data || []));
+  }, []);
+
   // Alle Teile neu kalkulieren wenn sich activeSettings oder das Preset ändert
   useEffect(() => {
     setParts(prev => prev.map(p => recalcPart(p)));
-  }, [activeSettings, selectedPresetId]);
+  }, [activeSettings, selectedPresetId, internFilamente]);
+
+  // Nachbearbeitungsschritte eines Teils setzen (Gesamtstunden mitberechnen)
+  const setNbSchritte = (idx: number, updated: NbSchritt[]) => {
+    setParts(prev => {
+      const list = [...prev];
+      list[idx] = recalcPart({
+        ...list[idx],
+        nachbearbeitungs_schritte: updated,
+        nachbearbeitung_h: updated.reduce((s, x) => s + (Number(x.stunden) || 0), 0),
+      });
+      return list;
+    });
+  };
+
+  const NB_VORSCHLAEGE = ["Stützen entfernen", "IPA-Reinigung", "Schleifen", "Lackieren", "Montage"];
+
+  // Nachbearbeitungsschritte + Support-Material eines Teils bearbeiten
+  const renderNbUndSupport = (part: PartRow, idx: number) => {
+    const nbSchritte = part.nachbearbeitungs_schritte || [];
+    const nbTotal = nbSchritte.reduce((s, x) => s + (Number(x.stunden) || 0), 0);
+    const supPreis = supportPreisProG(part);
+    return (
+      <div className="space-y-4">
+        <div>
+          <Label className="text-sm">Nachbearbeitungsschritte</Label>
+          {nbSchritte.map((s, i) => (
+            <div key={i} className="flex items-center gap-2 mt-1">
+              <Input
+                value={s.name}
+                onChange={e => {
+                  const updated = [...nbSchritte];
+                  updated[i] = { ...s, name: e.target.value };
+                  setNbSchritte(idx, updated);
+                }}
+                placeholder="z.B. IPA-Reinigung"
+                className="flex-1 h-7 text-sm bg-input border-border"
+              />
+              <Input
+                type="number"
+                value={s.stunden}
+                onChange={e => {
+                  const updated = [...nbSchritte];
+                  updated[i] = { ...s, stunden: Number(e.target.value) || 0 };
+                  setNbSchritte(idx, updated);
+                }}
+                className="w-16 h-7 text-sm text-right bg-input border-border"
+                step="0.1"
+                min="0"
+              />
+              <span className="text-xs text-muted-foreground">h</span>
+              <button
+                type="button"
+                onClick={() => setNbSchritte(idx, nbSchritte.filter((_, j) => j !== i))}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+
+          <div className="flex gap-1 flex-wrap mt-1">
+            {NB_VORSCHLAEGE.map(name => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setNbSchritte(idx, [...nbSchritte, { name, stunden: 0.1 }])}
+                className="text-xs px-2 py-0.5 rounded-full border border-border hover:border-primary/40 hover:bg-primary/5"
+              >
+                + {name}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setNbSchritte(idx, [...nbSchritte, { name: "", stunden: 0.1 }])}
+            className="text-xs text-primary underline mt-1"
+          >
+            + Schritt hinzufügen
+          </button>
+
+          {nbSchritte.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Total: {nbTotal.toFixed(1)}h × CHF {activeSettings.nachbearbeitung_pro_h}/h ={" "}
+              CHF {(nbTotal * activeSettings.nachbearbeitung_pro_h * part.menge).toFixed(2)}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <Label className="text-sm">Support-Material (optional)</Label>
+          <div className="flex gap-2 mt-1">
+            <select
+              value={part.support_filament_id || ""}
+              onChange={e => updatePart(idx, "support_filament_id", e.target.value || null)}
+              className="flex-1 h-8 text-sm bg-input border border-border rounded-lg px-2 text-foreground"
+            >
+              <option value="">Kein Support-Material</option>
+              {internFilamente.map(f => (
+                <option key={f.id} value={f.id}>
+                  {f.name} – CHF {Number(f.verkaufspreis_pro_g || (Number(f.preis_pro_kg) || 0) / 1000 * MATERIAL_AUFSCHLAG).toFixed(3)}/g
+                </option>
+              ))}
+            </select>
+            <Input
+              type="number"
+              value={part.support_gewicht_g || ""}
+              onChange={e => updatePart(idx, "support_gewicht_g", Number(e.target.value) || 0)}
+              placeholder="g"
+              className="w-16 h-8 text-sm bg-input border-border"
+              disabled={!part.support_filament_id}
+              step="0.1"
+              min="0"
+            />
+            <span className="text-xs text-muted-foreground self-center">g</span>
+          </div>
+          {internFilamente.length === 0 && (
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Keine internen Filamente hinterlegt – im Admin unter Filamente „Nur intern“ aktivieren.
+            </p>
+          )}
+          {part.support_filament_id && (Number(part.support_gewicht_g) || 0) > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {part.support_gewicht_g}g × CHF {supPreis.toFixed(3)}/g × {part.menge} ={" "}
+              CHF {supportKostenFor(part).toFixed(2)}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   // Filamentpreise aus der Bibliothek übernehmen (aktuelle Werte gewinnen),
   // damit Preisänderungen in der Filament-Bibliothek sofort im Auftrag greifen.
@@ -683,7 +858,7 @@ export default function AuftragDetailPage() {
   const setupKosten = selectedSetup;
   const matKosten = selectedParts.reduce((s, p) => {
     const vk = p.filament_verkauf_pro_g ?? activeSettings.material_verkauf_pro_g;
-    return s + p.gewicht_g * vk * p.menge;
+    return s + p.gewicht_g * vk * p.menge + supportKostenFor(p);
   }, 0);
   const maschKosten = selectedParts.reduce((s, p) =>
     s + p.druckzeit_h * activeSettings.maschinenzeit_pro_h * p.menge, 0);
@@ -1127,6 +1302,9 @@ export default function AuftragDetailPage() {
         sort_order: index,
         in_rechnung: p.id ? selectedPartIds.has(p.id) : true,
         setup_pauschale_anzahl: p.setup_pauschale_anzahl || 1,
+        nachbearbeitungs_schritte: (p.nachbearbeitungs_schritte || []) as any,
+        support_filament_id: p.support_filament_id || null,
+        support_gewicht_g: Number(p.support_gewicht_g) || 0,
       });
 
       if (isNew) {
@@ -1184,10 +1362,12 @@ export default function AuftragDetailPage() {
       // Reload parts from DB to sync IDs, without losing local UI state
       const { data: freshParts } = await supabase.from("parts").select("*").eq("order_id", id!).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
       if (freshParts) {
-        const partsWithOrder = (freshParts as PartRow[]).map((part, index) => ({
+        const partsWithOrder = (freshParts as unknown as PartRow[]).map((part, index) => ({
           ...part,
           sort_order: part.sort_order ?? index,
           setup_pauschale_anzahl: part.setup_pauschale_anzahl || 1,
+          nachbearbeitungs_schritte: normalizeNbSchritte(part.nachbearbeitungs_schritte),
+          support_gewicht_g: Number(part.support_gewicht_g) || 0,
         }));
         setParts(applyFilamentPrices(partsWithOrder));
         const selected = new Set(
@@ -2161,7 +2341,6 @@ export default function AuftragDetailPage() {
                         { label: "Menge", field: "menge" as keyof PartRow, step: "1" },
                         { label: "Gewicht (g)", field: "gewicht_g" as keyof PartRow, step: "0.1" },
                         { label: "Druckzeit (h)", field: "druckzeit_h" as keyof PartRow, step: "0.1" },
-                        { label: "Nachbearb. (h)", field: "nachbearbeitung_h" as keyof PartRow, step: "0.1" },
                         { label: "Konstruktion (h)", field: "konstruktion_h" as keyof PartRow, step: "0.1" },
                       ].map(({ label, field, step }) => (
                         <div key={field} className="space-y-1">
@@ -2189,6 +2368,9 @@ export default function AuftragDetailPage() {
                           {PART_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
+                    </div>
+                    <div className="rounded-lg border border-border/60 p-3">
+                      {renderNbUndSupport(part, idx)}
                     </div>
                     {(part.slicer_druckzeit_sekunden != null || part.slicer_filament_gramm != null) && (
                       <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 space-y-0.5">
@@ -2331,7 +2513,19 @@ export default function AuftragDetailPage() {
                           </td>
                           <td className="px-2 py-2"><Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
                           <td className="px-2 py-2"><Input type="number" value={part.druckzeit_h} onChange={e => updatePart(idx, "druckzeit_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
-                          <td className="px-2 py-2"><Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
+                          <td className="px-2 py-2">
+                            {(part.nachbearbeitungs_schritte || []).length > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedPartIdx(expandedPartIdx === idx ? null : idx)}
+                                className="text-xs underline text-muted-foreground hover:text-foreground w-20 text-left"
+                              >
+                                {part.nachbearbeitung_h.toFixed(1)}h · {(part.nachbearbeitungs_schritte || []).length} Schritte
+                              </button>
+                            ) : (
+                              <Input type="number" value={part.nachbearbeitung_h} onChange={e => updatePart(idx, "nachbearbeitung_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" />
+                            )}
+                          </td>
                           <td className="px-2 py-2"><Input type="number" value={part.konstruktion_h} onChange={e => updatePart(idx, "konstruktion_h", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
                           <td className="px-2 py-2 text-right font-medium text-primary whitespace-nowrap">{formatCHF(part.preis_pro_stueck)}</td>
                           <td className="px-2 py-2 text-right font-medium whitespace-nowrap">{formatCHF(part.preis_total)}</td>
@@ -2372,7 +2566,8 @@ export default function AuftragDetailPage() {
                               )}
                               {expandedPartIdx === idx && part.id && (
                                 <tr className="bg-muted/10 border-b border-border/50">
-                                  <td colSpan={12} className="px-4 py-3">
+                                  <td colSpan={12} className="px-4 py-3 space-y-4">
+                                    {renderNbUndSupport(part, idx)}
                                     <PartFileUpload partId={part.id} orderId={typeof id === "string" && id !== "neu" ? id : undefined} customerId={customerId || undefined} />
                                   </td>
                                 </tr>

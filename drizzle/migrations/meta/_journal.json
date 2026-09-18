@@ -29,6 +29,20 @@
       "when": 1789663991876,
       "tag": "0003_parts_add_setup_pauschale_anzahl",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789711878878,
+      "tag": "0004_filaments_nur_intern_and_parts_nachbearbeitung",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789711909241,
+      "tag": "0005_filaments_public_policy_exclude_intern",
+      "breakpoints": true
     }
   ]
 }

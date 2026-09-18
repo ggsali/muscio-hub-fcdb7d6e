@@ -488,6 +488,7 @@ const CalculatorOnlinePage = () => {
       .from("filaments")
       .select("id, name, material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g, dichte_g_cm3, aktiv")
       .eq("aktiv", true)
+      .eq("nur_intern", false) // Interne Filamente (Support-Material) ausblenden
       .order("material", { ascending: true });
 
     console.log("[Kalkulator] Filamente geladen:", filaments?.length, filaments);

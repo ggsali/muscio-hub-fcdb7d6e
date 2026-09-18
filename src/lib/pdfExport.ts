@@ -25,6 +25,18 @@ const MATERIAL_AUFSCHLAG = 3.0;
 
 const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
 
+// Nachbearbeitungsschritte / Support-Material (optional pro Teil)
+const nbSchritteOf = (p: any): { name: string; stunden: number }[] =>
+  Array.isArray(p?.nachbearbeitungs_schritte)
+    ? p.nachbearbeitungs_schritte
+        .map((x: any) => ({ name: String(x?.name || "").trim(), stunden: Number(x?.stunden) || 0 }))
+        .filter((x: any) => x.stunden > 0)
+    : [];
+const supportRateOf = (p: any): number => Number(p?.support_preis_pro_g) || 0;
+const supportTotalOf = (p: any): number =>
+  (Number(p?.support_gewicht_g) || 0) * supportRateOf(p) * (Number(p?.menge) || 0);
+const supportNameOf = (p: any): string => String(p?.support_name || "Support-Material");
+
 function effectiveMaterialPricePerG(p: PartRow, fallback: number): number {
   if (p.filament_verkauf_pro_g != null) return Number(p.filament_verkauf_pro_g);
   if (p.filament_einkauf_pro_kg != null) return (Number(p.filament_einkauf_pro_kg) / 1000) * MATERIAL_AUFSCHLAG;
@@ -250,7 +262,8 @@ export async function exportOrderPDF(data: OrderExportData) {
       (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
       (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h * p.menge : 0) +
       (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
-      (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h * p.menge : 0);
+      (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h * p.menge : 0) +
+      supportTotalOf(p);
   }, 0);
   const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
   const versandLabel = `PostPac Priority${data.paket_groesse ? ` (${PAKET_BEZ[data.paket_groesse] ?? data.paket_groesse})` : ""}`;
@@ -279,7 +292,8 @@ export async function exportOrderPDF(data: OrderExportData) {
         (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h : 0) +
         (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h : 0) +
         (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h : 0);
-      const componentTotal = einzelpreis * p.menge + setupTotal;
+      const supportTotal = supportTotalOf(p);
+      const componentTotal = einzelpreis * p.menge + setupTotal + supportTotal;
       // Header row for the part
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },

@@ -51,6 +51,18 @@ interface OfferExportData {
 }
 
 const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
+
+// Nachbearbeitungsschritte / Support-Material (optional pro Teil)
+const nbSchritteOf = (p: any): { name: string; stunden: number }[] =>
+  Array.isArray(p?.nachbearbeitungs_schritte)
+    ? p.nachbearbeitungs_schritte
+        .map((x: any) => ({ name: String(x?.name || "").trim(), stunden: Number(x?.stunden) || 0 }))
+        .filter((x: any) => x.stunden > 0)
+    : [];
+const supportRateOf = (p: any): number => Number(p?.support_preis_pro_g) || 0;
+const supportTotalOf = (p: any): number =>
+  (Number(p?.support_gewicht_g) || 0) * supportRateOf(p) * (Number(p?.menge) || 0);
+const supportNameOf = (p: any): string => String(p?.support_name || "Support-Material");
 const paketLabel = (id?: string) => `PostPac Priority${id ? ` (${PAKET_BEZ[id] ?? id})` : ""}`;
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
