@@ -284,8 +284,9 @@ export async function exportOfferPDF(data: OfferExportData) {
         ((p.druckzeit_h ?? 0) > 0 ? (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h : 0) +
         ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
         ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0);
-      // Teilpreis = Einzelpreis × Menge + Setup einmalig:
-      const teilTotal = einzelpreis * p.menge + setupTotal;
+      // Teilpreis = Einzelpreis × Menge + Setup einmalig + Support-Material:
+      const supportTotal = supportTotalOf(p);
+      const teilTotal = einzelpreis * p.menge + setupTotal + supportTotal;
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: p.teilname || "—", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
