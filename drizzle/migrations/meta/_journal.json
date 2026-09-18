@@ -57,6 +57,13 @@
       "when": 1789720930079,
       "tag": "0007_ear_buchungen_beleg_bild",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789724183692,
+      "tag": "0008_orders_add_tracking_status",
+      "breakpoints": true
     }
   ]
 }
