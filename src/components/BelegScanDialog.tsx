@@ -103,6 +103,14 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
     streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
+  const toBase64 = (f: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+      reader.onerror = () => reject(new Error("Datei konnte nicht gelesen werden"));
+      reader.readAsDataURL(f);
+    });
+
   const compressImage = (f: File): Promise<Blob> =>
     new Promise((resolve, reject) => {
       const img = new Image();
