@@ -1285,6 +1285,14 @@ export default function AuftragDetailPage() {
 
     let orderId = id === "neu" ? null : id;
 
+    // Vorheriger Auftragsstatus – die Rezensions-Mail darf nur beim Übergang
+    // auf "Abgeschlossen" ausgelöst werden, nicht bei jedem Speichern.
+    let prevStatus: string | null = null;
+    if (!isNew && orderId) {
+      const { data: prev } = await supabase.from("orders").select("status").eq("id", orderId).maybeSingle();
+      prevStatus = ((prev as any)?.status ?? null) as string | null;
+    }
+
     if (isNew) {
       const { data } = await supabase.from("orders").insert(orderData as any).select().single();
       orderId = data?.id;
@@ -1356,9 +1364,18 @@ export default function AuftragDetailPage() {
       }
     }
 
-    // Auto: Dankes-/Rezensions-Mail beim Abschluss des Auftrags (einmal pro Auftrag)
+    // Auto: Dankes-/Rezensions-Mail NUR beim Übergang auf "Abgeschlossen"
+    // und nur wenn ALLE Teile fertig sind (nie beim Speichern eines einzelnen Teils).
+    const alleTeileFertig =
+      parts.length > 0 && parts.every(p => p.status === "Fertig" || p.status === "Geliefert");
     let reviewInfo: string | null = null;
-    if (orderId && status === "Abgeschlossen") {
+    if (
+      orderId &&
+      !isNew &&
+      status === "Abgeschlossen" &&
+      prevStatus !== "Abgeschlossen" &&
+      alleTeileFertig
+    ) {
       try {
         const res = await sendReviewRequestForOrder(orderId, customerId || null, { auto: true });
         if (res.sent) reviewInfo = "Rezensions-Anfrage per E-Mail versendet";
