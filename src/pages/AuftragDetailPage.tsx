@@ -1364,9 +1364,18 @@ export default function AuftragDetailPage() {
       }
     }
 
-    // Auto: Dankes-/Rezensions-Mail beim Abschluss des Auftrags (einmal pro Auftrag)
+    // Auto: Dankes-/Rezensions-Mail NUR beim Übergang auf "Abgeschlossen"
+    // und nur wenn ALLE Teile fertig sind (nie beim Speichern eines einzelnen Teils).
+    const alleTeileFertig =
+      parts.length > 0 && parts.every(p => p.status === "Fertig" || p.status === "Geliefert");
     let reviewInfo: string | null = null;
-    if (orderId && status === "Abgeschlossen") {
+    if (
+      orderId &&
+      !isNew &&
+      status === "Abgeschlossen" &&
+      prevStatus !== "Abgeschlossen" &&
+      alleTeileFertig
+    ) {
       try {
         const res = await sendReviewRequestForOrder(orderId, customerId || null, { auto: true });
         if (res.sent) reviewInfo = "Rezensions-Anfrage per E-Mail versendet";
