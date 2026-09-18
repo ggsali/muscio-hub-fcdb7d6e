@@ -7,15 +7,16 @@ import { MailX, Loader2 } from "lucide-react";
 export default function NewsletterAbmeldenPage() {
   const [params] = useSearchParams();
   const email = params.get("email") ?? "";
+  const token = params.get("token") ?? "";
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
 
   useEffect(() => {
     (async () => {
-      if (!email) { setState("error"); return; }
-      const { data, error } = await supabase.functions.invoke("newsletter-unsubscribe", { body: { email } });
+      if (!email || !token) { setState("error"); return; }
+      const { data, error } = await supabase.functions.invoke("newsletter-unsubscribe", { body: { email, token } });
       setState(error || (data as any)?.error ? "error" : "ok");
     })();
-  }, [email]);
+  }, [email, token]);
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
