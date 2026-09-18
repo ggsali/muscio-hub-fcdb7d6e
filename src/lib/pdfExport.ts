@@ -38,6 +38,11 @@ const supportTotalOf = (p: any): number =>
 const supportNameOf = (p: any): string => String(p?.support_name || "Support-Material");
 
 function effectiveMaterialPricePerG(p: PartRow, fallback: number): number {
+  // Eingefrorene Offerten-Preise haben immer Vorrang (keine Neuberechnung mit aktuellen DB-Preisen)
+  if ((p as any).preis_eingefroren) {
+    const frozen = Number((p as any).material_rate_frozen);
+    if (Number.isFinite(frozen) && frozen > 0) return frozen;
+  }
   if (p.filament_verkauf_pro_g != null) return Number(p.filament_verkauf_pro_g);
   if (p.filament_einkauf_pro_kg != null) return (Number(p.filament_einkauf_pro_kg) / 1000) * MATERIAL_AUFSCHLAG;
   return fallback;

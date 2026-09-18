@@ -1670,6 +1670,8 @@ export type Database = {
           marge: number | null
           name: string | null
           notes_internal: string | null
+          offerte_snapshot: Json | null
+          offerte_snapshot_at: string | null
           paket_groesse: string | null
           preset_id: string | null
           rabatt_prozent: number
@@ -1706,6 +1708,8 @@ export type Database = {
           marge?: number | null
           name?: string | null
           notes_internal?: string | null
+          offerte_snapshot?: Json | null
+          offerte_snapshot_at?: string | null
           paket_groesse?: string | null
           preset_id?: string | null
           rabatt_prozent?: number
@@ -1742,6 +1746,8 @@ export type Database = {
           marge?: number | null
           name?: string | null
           notes_internal?: string | null
+          offerte_snapshot?: Json | null
+          offerte_snapshot_at?: string | null
           paket_groesse?: string | null
           preset_id?: string | null
           rabatt_prozent?: number

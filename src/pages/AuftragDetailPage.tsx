@@ -159,6 +159,8 @@ export default function AuftragDetailPage() {
   const [paketGroesse, setPaketGroesse] = useState<string>("");
   const [paketGroesseDraft, setPaketGroesseDraft] = useState<string>("");
   const [versandkosten, setVersandkosten] = useState(0);
+  // Eingemauerte Offerten-Positionen (Preise zum Zeitpunkt der Offerte)
+  const [offerteSnapshot, setOfferteSnapshot] = useState<any | null>(null);
   const [setupDialog, setSetupDialog] = useState<{ idx: number; menge: number } | null>(null);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
@@ -387,6 +389,7 @@ export default function AuftragDetailPage() {
           setRabattProzent(Number((o as any).rabatt_prozent) || 0);
           setVersandkosten(Number((o as any).versandkosten) || 0);
           setPaketGroesse((o as any).paket_groesse || "");
+          setOfferteSnapshot((o as any).offerte_snapshot || null);
           setSource((o as any).source || "manual");
           setNotesInternal((o as any).notes_internal || "");
           // Restore preset if saved
@@ -883,6 +886,76 @@ export default function AuftragDetailPage() {
   // Auftragsname immer in der Beschreibung voranstellen
   const fullBeschreibung = [orderName, beschreibung].filter(Boolean).join("\n");
 
+  // ── OFFERTEN-SNAPSHOT: Preise einmauern ────────────────
+  const frozenMaterialRate = (p: PartRow): number =>
+    p.filament_verkauf_pro_g != null
+      ? Number(p.filament_verkauf_pro_g)
+      : p.filament_einkauf_pro_kg != null
+        ? (Number(p.filament_einkauf_pro_kg) / 1000) * MATERIAL_AUFSCHLAG
+        : activeSettings.material_verkauf_pro_g;
+
+  const buildOfferteSnapshot = () => ({
+    version: 1,
+    erstellt_am: new Date().toISOString(),
+    settings: activeSettings,
+    versandkosten,
+    paket_groesse: paketGroesse,
+    lieferart,
+    rabatt_prozent: rabattPct,
+    express_kosten: selectedExpressAmount,
+    express_label: expressLabel,
+    umsatz_total: totalMitVersand,
+    parts: selectedParts.map(p => ({
+      ...recalcPart(p),
+      preis_eingefroren: true,
+      material_rate_frozen: frozenMaterialRate(p),
+      support_preis_pro_g: supportPreisProG(p),
+    })),
+  });
+
+  const saveOfferteSnapshot = async () => {
+    const snap = buildOfferteSnapshot();
+    setOfferteSnapshot(snap);
+    if (id && !isNew) {
+      await supabase
+        .from("orders")
+        .update({ offerte_snapshot: snap as any, offerte_snapshot_at: snap.erstellt_am } as any)
+        .eq("id", id);
+    }
+    return snap;
+  };
+
+  // Rechnung: gespeicherte Offerten-Positionen verwenden, falls vorhanden
+  const invoiceBase = () => {
+    const snap = offerteSnapshot;
+    if (snap && Array.isArray(snap.parts) && snap.parts.length > 0) {
+      return {
+        parts: snap.parts as PartRow[],
+        umsatz_total: Number(snap.umsatz_total) || totalMitVersand,
+        versandkosten: Number(snap.versandkosten) || 0,
+        paket_groesse: snap.paket_groesse || "",
+        lieferart: snap.lieferart || lieferart,
+        rabattProzent: Number(snap.rabatt_prozent) || 0,
+        expressKosten: Number(snap.express_kosten) || 0,
+        expressLabel: snap.express_label || "",
+        settings: snap.settings,
+        fromSnapshot: true,
+      };
+    }
+    return {
+      parts: selectedParts,
+      umsatz_total: totalMitVersand,
+      versandkosten,
+      paket_groesse: paketGroesse,
+      lieferart,
+      rabattProzent: rabattPct,
+      expressKosten: selectedExpressAmount,
+      expressLabel,
+      settings: null,
+      fromSnapshot: false,
+    };
+  };
+
   const handleSendTestEmail = async () => {
     setSendingEmail("test" as any);
     try {
@@ -928,18 +1001,20 @@ export default function AuftragDetailPage() {
               return;
             }
           }
-          const pdfSettings = await getFreshPdfSettings();
+          const freshSettings = await getFreshPdfSettings();
+          const base = invoiceBase();
           const result = await exportOrderPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: totalMitVersand, kosten_total: selectedTotalKosten,
-            versandkosten, paket_groesse: paketGroesse, lieferart,
+            parts: base.parts, umsatz_total: base.umsatz_total, kosten_total: selectedTotalKosten,
+            versandkosten: base.versandkosten, paket_groesse: base.paket_groesse, lieferart: base.lieferart,
             gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
-            settings: pdfSettings, company, returnBase64: true, withDetails,
-            expressKosten: selectedExpressAmount, expressLabel,
+            settings: base.settings || freshSettings, company, returnBase64: true, withDetails,
+            expressKosten: base.expressKosten, expressLabel: base.expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
+          await saveOfferteSnapshot();
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
@@ -1168,7 +1243,8 @@ export default function AuftragDetailPage() {
 
   const handleExportPDF = async (details = false) => {
     const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
-    const pdfSettings = await getFreshPdfSettings();
+    const freshSettings = await getFreshPdfSettings();
+    const base = invoiceBase();
     exportOrderPDF({
       orderId: id || "neu",
       datum,
@@ -1179,25 +1255,26 @@ export default function AuftragDetailPage() {
       customerEmail,
       customerTelefon,
       customerAdresse,
-      parts: selectedParts,
-      umsatz_total: totalMitVersand,
-      versandkosten,
-      paket_groesse: paketGroesse,
-      lieferart,
+      parts: base.parts,
+      umsatz_total: base.umsatz_total,
+      versandkosten: base.versandkosten,
+      paket_groesse: base.paket_groesse,
+      lieferart: base.lieferart,
       kosten_total: selectedTotalKosten,
       gewinn_total: selectedTotalGewinn,
       marge: selectedTotalMarge,
-      settings: pdfSettings,
+      settings: base.settings || freshSettings,
       company,
       withDetails: details,
-      expressKosten: selectedExpressAmount,
-      expressLabel,
-      rabattProzent: rabattPct,
+      expressKosten: base.expressKosten,
+      expressLabel: base.expressLabel,
+      rabattProzent: base.rabattProzent,
     });
   };
 
   const handleExportOffer = async (details = false) => {
     const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
+    await saveOfferteSnapshot();
     exportOfferPDF({
       orderId: id || "neu",
       datum,
@@ -2883,6 +2960,47 @@ export default function AuftragDetailPage() {
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
             <h3 className="font-semibold text-sm mb-2">PDF herunterladen</h3>
+            {offerteSnapshot?.parts?.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs">
+                <span className="text-amber-600 dark:text-amber-400">
+                  🔒 Rechnung verwendet die eingemauerten Offerten-Preise vom{" "}
+                  {offerteSnapshot.erstellt_am
+                    ? new Date(offerteSnapshot.erstellt_am).toLocaleDateString("de-CH")
+                    : "—"}
+                  {typeof offerteSnapshot.umsatz_total === "number"
+                    ? ` · CHF ${Number(offerteSnapshot.umsatz_total).toFixed(2)}`
+                    : ""}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-border"
+                  onClick={async () => {
+                    setOfferteSnapshot(null);
+                    if (id && !isNew) {
+                      await supabase
+                        .from("orders")
+                        .update({ offerte_snapshot: null, offerte_snapshot_at: null } as any)
+                        .eq("id", id);
+                    }
+                    toast({ title: "Preise aktualisiert", description: "Die Rechnung rechnet wieder mit den aktuellen Preisen." });
+                  }}
+                >
+                  Aktuelle Preise verwenden
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-border"
+                  onClick={async () => {
+                    await saveOfferteSnapshot();
+                    toast({ title: "Offerten-Preise neu eingemauert" });
+                  }}
+                >
+                  Neu einmauern
+                </Button>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Button onClick={() => handleExportPDF(false)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung</Button>
               <Button onClick={() => handleExportPDF(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Rechnung (mit Details)</Button>
