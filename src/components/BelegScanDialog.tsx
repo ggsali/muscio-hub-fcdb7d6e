@@ -101,6 +101,7 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
 
   React.useEffect(() => () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
+    setPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
   }, []);
 
   const toBase64 = (f: File) =>
@@ -335,7 +336,7 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
         {showForm && (
           <div className="flex gap-2 px-4 py-3 border-t border-border">
             <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>Abbrechen</Button>
-            <Button className="flex-1" onClick={() => void buchen()} disabled={analysing || saving}>
+            <Button className="flex-1" onClick={() => void buchen()} disabled={optimising || analysing || saving}>
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null} Buchen
             </Button>
           </div>
