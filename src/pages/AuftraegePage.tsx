@@ -164,6 +164,7 @@ export default function AuftraegePage() {
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-semibold text-sm truncate">{o.customer_name}</span>
                       <StatusBadge status={o.status} />
+                      <TrackingBadge trackingNr={o.tracking_nr} status={o.tracking_status} zugestellt={o.tracking_zugestellt} lieferart={o.lieferart} />
                       {o.source === "website" && (
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Website</span>
                       )}
@@ -203,7 +204,7 @@ export default function AuftraegePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  {["Datum", "Auftrag", "Kunde", "Quelle", "Umsatz", "Kosten", "Gewinn", "Marge", "Status", ""].map(h => (
+                  {["Datum", "Auftrag", "Kunde", "Quelle", "Umsatz", "Kosten", "Gewinn", "Marge", "Versand", "Status", ""].map(h => (
                     <th key={h} className={`px-4 py-3 text-muted-foreground font-medium ${["Umsatz", "Kosten", "Gewinn", "Marge"].includes(h) ? "text-right" : "text-left"}`}>
                       {h}
                     </th>
@@ -231,6 +232,9 @@ export default function AuftraegePage() {
                     <td className="px-4 py-3 num-right text-destructive">{formatCHF(o.kosten_total)}</td>
                     <td className="px-4 py-3 num-right text-success">{formatCHF(o.gewinn_total)}</td>
                     <td className="px-4 py-3 num-right">{formatPct(o.marge)}</td>
+                    <td className="px-4 py-3">
+                      <TrackingBadge trackingNr={o.tracking_nr} status={o.tracking_status} zugestellt={o.tracking_zugestellt} lieferart={o.lieferart} />
+                    </td>
                     <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
                     <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                       <button
