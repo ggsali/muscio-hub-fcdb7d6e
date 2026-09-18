@@ -1285,6 +1285,14 @@ export default function AuftragDetailPage() {
 
     let orderId = id === "neu" ? null : id;
 
+    // Vorheriger Auftragsstatus – die Rezensions-Mail darf nur beim Übergang
+    // auf "Abgeschlossen" ausgelöst werden, nicht bei jedem Speichern.
+    let prevStatus: string | null = null;
+    if (!isNew && orderId) {
+      const { data: prev } = await supabase.from("orders").select("status").eq("id", orderId).maybeSingle();
+      prevStatus = ((prev as any)?.status ?? null) as string | null;
+    }
+
     if (isNew) {
       const { data } = await supabase.from("orders").insert(orderData as any).select().single();
       orderId = data?.id;
