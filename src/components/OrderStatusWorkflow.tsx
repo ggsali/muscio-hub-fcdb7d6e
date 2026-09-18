@@ -182,7 +182,8 @@ export default function OrderStatusWorkflow({
       } catch (e) { console.error("send-email status failed", e); }
     }
 
-    if (newStatus === "Abgeschlossen") {
+    // Bewertungsmail nur beim Abschluss des GESAMTEN Auftrags: alle Teile fertig.
+    if (newStatus === "Abgeschlossen" && allFertig) {
       try {
         const { data: order } = await supabase
           .from("orders")
