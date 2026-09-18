@@ -51,6 +51,9 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
   const [tplBody, setTplBody] = useState<string>("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [mailGesendet, setMailGesendet] = useState<string | null>(null);
+  const [mailGeoeffnet, setMailGeoeffnet] = useState<string | null>(null);
+  const [linkGeklickt, setLinkGeklickt] = useState<string | null>(null);
 
   const visible = status === "Abgeschlossen" || status === "Geliefert";
 
