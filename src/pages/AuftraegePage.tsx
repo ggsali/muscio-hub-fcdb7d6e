@@ -200,7 +200,7 @@ export default function AuftraegePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  {["Datum", "Auftrag", "Kunde", "Quelle", "Umsatz", "Kosten", "Gewinn", "Marge", "Versand", "Status", ""].map(h => (
+                  {["Datum", "Auftrag", "Kunde", "Quelle", "Umsatz", "Kosten", "Gewinn", "Marge", "Status", ""].map(h => (
                     <th key={h} className={`px-4 py-3 text-muted-foreground font-medium ${["Umsatz", "Kosten", "Gewinn", "Marge"].includes(h) ? "text-right" : "text-left"}`}>
                       {h}
                     </th>
