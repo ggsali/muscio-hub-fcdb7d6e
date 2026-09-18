@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
-import { calcUmsatz, calcKosten, calcGewinn, calcMarge, formatCHF, formatPct, Settings } from "@/lib/calc";
+import { calcUmsatz, calcKosten, calcGewinn, calcMarge, formatCHF, formatPct, loadSettings, Settings } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -962,15 +962,11 @@ export default function AuftragDetailPage() {
       setup: activeSettings.setup_pauschale,
     });
     try {
-      const { data: freshCalc } = await supabase
-        .from("settings")
-        .select("value")
-        .eq("key", "calc_params")
-        .single();
+      const dbSettings = await loadSettings();
       const freshSettings: Settings = {
         ...activeSettings,
-        maschinenzeit_pro_h: Number((freshCalc?.value as any)?.maschinenzeit_pro_h) || activeSettings.maschinenzeit_pro_h,
-        setup_pauschale: Number((freshCalc?.value as any)?.fix_cost) || activeSettings.setup_pauschale,
+        maschinenzeit_pro_h: dbSettings.maschinenzeit_pro_h,
+        setup_pauschale: dbSettings.setup_pauschale,
       };
       console.log("[Rechnung] Settings frisch geladen:", {
         maschinenzeit: freshSettings.maschinenzeit_pro_h,

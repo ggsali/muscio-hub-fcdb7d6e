@@ -73,9 +73,39 @@ export const Header = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownTimer = useRef<number | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
-  const navItems = NAV_ITEMS;
+  const [navItems, setNavItems] = useState<NavItem[]>(NAV_ITEMS);
 
   useEffect(() => { setOpen(false); setOpenDropdown(null); }, [location.pathname]);
+
+  // Vom Admin gespeicherte Navigation (website_settings.nav_links) übernimmt,
+  // sofern vorhanden – sonst bleibt die Standard-Navigation aktiv.
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("website_settings")
+      .select("value")
+      .eq("key", "nav_links")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        const v = (data as any)?.value;
+        if (!Array.isArray(v) || v.length === 0) return;
+        const items: NavItem[] = v
+          .filter((i: any) => i && typeof i.label === "string" && typeof i.path === "string" && i.label.trim() && i.path.trim())
+          .map((i: any) => ({
+            label: String(i.label),
+            path: String(i.path),
+            isButton: Boolean(i.isButton),
+            children: Array.isArray(i.children)
+              ? i.children
+                  .filter((c: any) => c && c.label && c.path)
+                  .map((c: any) => ({ label: String(c.label), path: String(c.path) }))
+              : undefined,
+          }));
+        if (items.length > 0) setNavItems(items);
+      });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
