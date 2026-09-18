@@ -205,7 +205,8 @@ export default function BuchhaltungPage() {
   const updateAnlage = async (id: string, field: keyof Anlage, value: string) => {
     const val = field === "konto" ? value : Number(value || 0);
     setAnlagen(prevA => prevA.map(a => a.id === id ? { ...a, [field]: val } as Anlage : a));
-    await supabase.from("ear_anlagevermoegen").update({ [field]: val }).eq("id", id);
+    const patch = { [field]: val } as unknown as Partial<Anlage>;
+    await supabase.from("ear_anlagevermoegen").update(patch).eq("id", id);
   };
 
   const addAnlage = async () => {

@@ -53,6 +53,7 @@ import { Route as SiteUeberUnsRouteImport } from './routes/_site/ueber-uns'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnfragenRouteImport } from './routes/admin/anfragen'
 import { Route as AdminBewertungenRouteImport } from './routes/admin/bewertungen'
+import { Route as AdminBuchhaltungRouteImport } from './routes/admin/buchhaltung'
 import { Route as AdminChatRouteImport } from './routes/admin/chat'
 import { Route as AdminDruckplattenRouteImport } from './routes/admin/druckplatten'
 import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellungen'
@@ -348,6 +349,11 @@ const AdminAnfragenRoute = AdminAnfragenRouteImport.update({
 const AdminBewertungenRoute = AdminBewertungenRouteImport.update({
   id: '/bewertungen',
   path: '/bewertungen',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBuchhaltungRoute = AdminBuchhaltungRouteImport.update({
+  id: '/buchhaltung',
+  path: '/buchhaltung',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminChatRoute = AdminChatRouteImport.update({
@@ -789,6 +795,7 @@ export interface FileRoutesByFullPath {
   '/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
+  '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -907,6 +914,7 @@ export interface FileRoutesByTo {
   '/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
+  '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1031,6 +1039,7 @@ export interface FileRoutesById {
   '/_site/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
+  '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1156,6 +1165,7 @@ export interface FileRouteTypes {
     | '/ueber-uns'
     | '/admin/anfragen'
     | '/admin/bewertungen'
+    | '/admin/buchhaltung'
     | '/admin/chat'
     | '/admin/druckplatten'
     | '/admin/einstellungen'
@@ -1274,6 +1284,7 @@ export interface FileRouteTypes {
     | '/ueber-uns'
     | '/admin/anfragen'
     | '/admin/bewertungen'
+    | '/admin/buchhaltung'
     | '/admin/chat'
     | '/admin/druckplatten'
     | '/admin/einstellungen'
@@ -1397,6 +1408,7 @@ export interface FileRouteTypes {
     | '/_site/ueber-uns'
     | '/admin/anfragen'
     | '/admin/bewertungen'
+    | '/admin/buchhaltung'
     | '/admin/chat'
     | '/admin/druckplatten'
     | '/admin/einstellungen'
@@ -1822,6 +1834,13 @@ declare module '@tanstack/react-router' {
       path: '/bewertungen'
       fullPath: '/admin/bewertungen'
       preLoaderRoute: typeof AdminBewertungenRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/buchhaltung': {
+      id: '/admin/buchhaltung'
+      path: '/buchhaltung'
+      fullPath: '/admin/buchhaltung'
+      preLoaderRoute: typeof AdminBuchhaltungRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/chat': {
@@ -2463,6 +2482,7 @@ const AdminFilamenteRouteWithChildren = AdminFilamenteRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminAnfragenRoute: typeof AdminAnfragenRoute
   AdminBewertungenRoute: typeof AdminBewertungenRoute
+  AdminBuchhaltungRoute: typeof AdminBuchhaltungRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminDruckplattenRoute: typeof AdminDruckplattenRoute
   AdminEinstellungenRoute: typeof AdminEinstellungenRoute
@@ -2494,6 +2514,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnfragenRoute: AdminAnfragenRoute,
   AdminBewertungenRoute: AdminBewertungenRoute,
+  AdminBuchhaltungRoute: AdminBuchhaltungRoute,
   AdminChatRoute: AdminChatRoute,
   AdminDruckplattenRoute: AdminDruckplattenRoute,
   AdminEinstellungenRoute: AdminEinstellungenRoute,
