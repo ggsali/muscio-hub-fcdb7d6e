@@ -49,6 +49,45 @@ export default function FilamentePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<(Partial<Filament> & { isNew?: boolean }) | null>(null);
   const [saving, setSaving] = useState(false);
+  const [customMaterials, setCustomMaterials] = useState<string[]>([]);
+  const [newMaterial, setNewMaterial] = useState("");
+  const [showNewMaterial, setShowNewMaterial] = useState(false);
+
+  const MATERIAL_OPTIONS = React.useMemo(() => {
+    const all = [...DEFAULT_MATERIAL_OPTIONS.filter(m => m !== "Sonstige"), ...customMaterials];
+    return [...Array.from(new Set(all)), "Sonstige"];
+  }, [customMaterials]);
+
+  const loadMaterials = async () => {
+    const { data } = await supabase.from("settings").select("value").eq("key", MATERIALS_SETTINGS_KEY).maybeSingle();
+    try {
+      const parsed = data?.value ? JSON.parse(String(data.value)) : [];
+      if (Array.isArray(parsed)) setCustomMaterials(parsed.map(String).filter(Boolean));
+    } catch { /* ignoriert */ }
+  };
+
+  const addMaterial = async () => {
+    const name = newMaterial.trim();
+    if (!name) return;
+    if (MATERIAL_OPTIONS.some(m => m.toLowerCase() === name.toLowerCase())) {
+      setEditing(e => (e ? { ...e, material: name } : e));
+      setNewMaterial("");
+      setShowNewMaterial(false);
+      return;
+    }
+    const next = [...customMaterials, name];
+    setCustomMaterials(next);
+    setEditing(e => (e ? { ...e, material: name } : e));
+    setNewMaterial("");
+    setShowNewMaterial(false);
+    await supabase.from("settings").upsert({ key: MATERIALS_SETTINGS_KEY, value: JSON.stringify(next) } as any, { onConflict: "key" });
+  };
+
+  const removeMaterial = async (name: string) => {
+    const next = customMaterials.filter(m => m !== name);
+    setCustomMaterials(next);
+    await supabase.from("settings").upsert({ key: MATERIALS_SETTINGS_KEY, value: JSON.stringify(next) } as any, { onConflict: "key" });
+  };
 
   const normalize = (rows: any[]): Filament[] =>
     rows.map((r) => ({
