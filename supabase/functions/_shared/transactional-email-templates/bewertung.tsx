@@ -8,10 +8,14 @@ const LOGO = 'https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/
 
 interface Props {
   name?: string
+  bewertungsLink?: string
+  orderId?: string
   [key: string]: any
 }
 
-const Email = ({ name }: Props) => (
+const TRACK_BASE = 'https://3dmuscio.com/api/public/track-email'
+
+const Email = ({ name, bewertungsLink, orderId }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
     <Preview>Danke für Ihre Bewertung</Preview>
