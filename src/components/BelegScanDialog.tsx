@@ -103,24 +103,56 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
     streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
-  const toBase64 = (f: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
-      reader.onerror = () => reject(new Error("Datei konnte nicht gelesen werden"));
-      reader.readAsDataURL(f);
+  const compressImage = (f: File): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(f);
+      img.onload = () => {
+        const MAX_WIDTH = 1200;
+        const scale = Math.min(1, MAX_WIDTH / img.naturalWidth);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { URL.revokeObjectURL(url); reject(new Error("Canvas nicht verfügbar")); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(
+          blob => (blob ? resolve(blob) : reject(new Error("Komprimierung fehlgeschlagen"))),
+          "image/jpeg",
+          0.8
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Bild konnte nicht gelesen werden")); };
+      img.src = url;
     });
 
   const handleFile = async (f: File | undefined | null) => {
     if (!f) return;
     if (f.size > MAX_BYTES) { toast.error("Bild zu gross, max. 10MB"); return; }
-    setFile(f);
-    setPreviewUrl(f.type.startsWith("image/") ? URL.createObjectURL(f) : null);
     setShowForm(true);
+
+    let workFile = f;
+    const isImage = f.type.startsWith("image/");
+    if (isImage) {
+      setOptimising(true);
+      try {
+        const compressed = await compressImage(f);
+        workFile = new File([compressed], `${f.name.replace(/\.[^.]+$/, "") || "beleg"}.jpg`, { type: "image/jpeg" });
+      } catch (e) {
+        console.error("[BelegScan] Komprimierung", e);
+        workFile = f; // Fallback: Original verwenden
+      } finally {
+        setOptimising(false);
+      }
+    }
+
+    setFile(workFile);
+    setPreview(isImage ? workFile : null);
     setAnalysing(true);
     try {
-      const base64 = await toBase64(f);
-      const result = await scanBeleg({ data: { fileBase64: base64, mimeType: f.type || "image/jpeg" } });
+      const base64 = await toBase64(workFile);
+      const result = await scanBeleg({ data: { fileBase64: base64, mimeType: workFile.type || "image/jpeg" } });
       setForm(prev => ({
         ...prev,
         datum: result.datum ?? prev.datum,
