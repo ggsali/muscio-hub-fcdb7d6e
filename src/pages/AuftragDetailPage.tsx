@@ -380,10 +380,6 @@ export default function AuftragDetailPage() {
           setStatus(o.status ?? "");
           setTrackingNr((o as any).tracking_nr || "");
           setLieferart(((o as any).lieferart === "abholung") ? "abholung" : "versand");
-          setTrackingStatus((o as any).tracking_status || null);
-          setTrackingDetail((o as any).tracking_status_detail || null);
-          setTrackingGeprueft((o as any).tracking_zuletzt_geprueft || null);
-          setTrackingZugestellt(!!(o as any).tracking_zugestellt);
           setGeplantVon((o as any).geplant_von || "");
           setGeplantBis((o as any).geplant_bis || "");
           setExpressKosten(Number((o as any).express_kosten) || 0);
@@ -2750,8 +2746,8 @@ export default function AuftragDetailPage() {
                 <div className="flex gap-2">
                   <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value.replace(/\s/g, ""))} className="bg-input border-border font-mono" placeholder="z.B. 98.44.123456.78901234" />
                   <Button
-                    onClick={async () => { await handleSave(); await handleTrackingRefresh(trackingNr); }}
-                    disabled={saving || trackingLoading}
+                    onClick={handleSave}
+                    disabled={saving}
                     variant="outline"
                     className="border-border gap-2"
                   >
