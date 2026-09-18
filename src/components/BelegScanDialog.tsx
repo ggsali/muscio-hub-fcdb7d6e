@@ -177,7 +177,7 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
       <div className="bg-background w-full sm:max-w-lg sm:rounded-2xl shadow-xl flex flex-col max-h-screen sm:max-h-[90vh]">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Beleg scannen</h3>
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onClose}><X className="w-4 h-4" /></Button>
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { stopCamera(); onClose(); }}><X className="w-4 h-4" /></Button>
         </div>
 
         <div className="p-4 space-y-4 overflow-y-auto">
