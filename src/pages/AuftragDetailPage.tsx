@@ -2215,7 +2215,14 @@ export default function AuftragDetailPage() {
                           <Input
                             type="number"
                             value={part[field] as number}
-                            onChange={e => updatePart(idx, field, parseFloat(e.target.value) || 0)}
+                            onChange={e => {
+                              const val = parseFloat(e.target.value) || 0;
+                              if (field === "menge") {
+                                handleMengeChange(idx, val);
+                              } else {
+                                updatePart(idx, field, val);
+                              }
+                            }}
                             className="bg-input border-border h-9 text-sm"
                             step={step}
                             inputMode="decimal"
