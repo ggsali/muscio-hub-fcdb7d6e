@@ -485,14 +485,38 @@ export default function OrderStatusWorkflow({
           <p className="text-xs text-muted-foreground font-medium mb-2">Aktivitäts-Verlauf</p>
           {log.map(entry => {
             const kind = logKind(entry);
+            const isOpen = openLogId === entry.id;
+            const plattform = /google/i.test(entry.notiz ?? "")
+              ? "Google"
+              : /bewertungslink|bewertungsseite/i.test(`${entry.status} ${entry.notiz ?? ""}`)
+                ? "Bewertungsseite 3DMuscio"
+                : null;
             return (
-              <div key={entry.id} className={`flex items-start gap-2 text-xs rounded-lg px-2 py-1.5 ${kind.bg}`}>
-                <span className={`shrink-0 mt-0.5 ${kind.color}`}>{kind.icon}</span>
-                <span className="text-muted-foreground tabular-nums shrink-0">
-                  {new Date(entry.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                </span>
-                <span className="text-foreground font-medium">{entry.status}</span>
-                {entry.notiz && <span className="text-muted-foreground">· {entry.notiz}</span>}
+              <div key={entry.id} className={`text-xs rounded-lg px-2 py-1.5 ${kind.bg}`}>
+                <button
+                  type="button"
+                  onClick={() => setOpenLogId(isOpen ? null : entry.id)}
+                  className="w-full text-left flex items-start gap-2"
+                >
+                  <span className={`shrink-0 mt-0.5 ${kind.color}`}>{kind.icon}</span>
+                  <span className="text-muted-foreground tabular-nums shrink-0">
+                    {new Date(entry.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <span className="text-foreground font-medium">{entry.status}</span>
+                  {entry.notiz && <span className="text-muted-foreground">· {entry.notiz}</span>}
+                </button>
+                {isOpen && (
+                  <div className="mt-1.5 ml-6 border-l-2 border-border pl-2 space-y-0.5 text-[11px] text-muted-foreground">
+                    <p>
+                      {new Date(entry.created_at).toLocaleString("de-CH", {
+                        weekday: "long", day: "2-digit", month: "2-digit", year: "numeric",
+                        hour: "2-digit", minute: "2-digit", second: "2-digit",
+                      })}
+                    </p>
+                    {entry.notiz && <p>{entry.notiz}</p>}
+                    {plattform && <p>Bewertungsplattform: {plattform}</p>}
+                  </div>
+                )}
               </div>
             );
           })}
