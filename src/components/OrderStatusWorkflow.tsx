@@ -97,6 +97,7 @@ export default function OrderStatusWorkflow({
   const [editingTracking, setEditingTracking] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
+  const [openLogId, setOpenLogId] = useState<string | null>(null);
 
   const loadLog = async () => {
     const { data } = await (supabase.from as any)("order_status_log")
