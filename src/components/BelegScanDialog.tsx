@@ -281,7 +281,11 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
                 <div className="rounded-xl border border-border bg-muted p-3 text-sm text-muted-foreground">{file.name}</div>
               )}
 
-              {analysing ? (
+              {optimising ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Bild wird optimiert…
+                </div>
+              ) : analysing ? (
                 <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" /> Beleg wird analysiert…
                 </div>
