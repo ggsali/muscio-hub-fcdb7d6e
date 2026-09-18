@@ -678,6 +678,8 @@ export type Database = {
         Row: {
           ausgaben: number | null
           beleg: string | null
+          beleg_storage_path: string | null
+          beleg_url: string | null
           created_at: string
           datum: string | null
           einnahmen: number | null
@@ -689,6 +691,8 @@ export type Database = {
         Insert: {
           ausgaben?: number | null
           beleg?: string | null
+          beleg_storage_path?: string | null
+          beleg_url?: string | null
           created_at?: string
           datum?: string | null
           einnahmen?: number | null
@@ -700,6 +704,8 @@ export type Database = {
         Update: {
           ausgaben?: number | null
           beleg?: string | null
+          beleg_storage_path?: string | null
+          beleg_url?: string | null
           created_at?: string
           datum?: string | null
           einnahmen?: number | null
