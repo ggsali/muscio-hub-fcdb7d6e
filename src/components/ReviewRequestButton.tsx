@@ -150,6 +150,29 @@ export default function ReviewRequestButton({ orderId, status, customerId }: Pro
             <p className="text-xs text-muted-foreground mt-1">Noch nicht versendet</p>
           )}
 
+          {/* Tracking-Status des Bewertungs-Mails */}
+          <div className="mt-3 space-y-1">
+            {([
+              { icon: "📧", label: "Bewertungsmail gesendet", at: mailGesendet },
+              { icon: "👁", label: "Email geöffnet", at: mailGeoeffnet },
+              { icon: "🔗", label: "Link angeklickt", at: linkGeklickt },
+            ] as const).map(row => (
+              <div key={row.label} className="flex items-center gap-2 text-xs">
+                <span className={row.at ? "" : "opacity-40 grayscale"}>{row.icon}</span>
+                <span className={row.at ? "text-foreground" : "text-muted-foreground"}>{row.label}</span>
+                <span className="flex-1" />
+                {row.at ? (
+                  <span className="text-success tabular-nums flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    {new Date(row.at).toLocaleString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">— noch nicht</span>
+                )}
+              </div>
+            ))}
+          </div>
+
         </div>
         <Button onClick={openModal} variant="outline" className="gap-2 border-border">
           <Star className="w-4 h-4" /> Rezension anfragen
