@@ -1267,25 +1267,6 @@ export default function AuftragDetailPage() {
     });
   };
 
-  const runTracking = useServerFn(trackShipment);
-
-  const handleTrackingRefresh = async (nr: string) => {
-    if (!nr || !id || isNew) return;
-    setTrackingLoading(true);
-    try {
-      const res = await runTracking({ data: { orderId: id, trackingNr: nr } });
-      setTrackingStatus(res.status);
-      setTrackingDetail(res.detail);
-      setTrackingGeprueft(res.geprueftAm);
-      setTrackingZugestellt(res.zugestellt);
-      toast({ title: "📦 Sendung wird verfolgt", description: res.status });
-    } catch (e) {
-      console.error("tracking failed", e);
-      toast({ title: "Status konnte nicht abgerufen werden", variant: "destructive" });
-    } finally {
-      setTrackingLoading(false);
-    }
-  };
 
   const handleSave = async () => {
     setSaving(true);
