@@ -187,12 +187,30 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
                 onChange={e => void handleFile(e.target.files?.[0])} />
               <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden"
                 onChange={e => void handleFile(e.target.files?.[0])} />
-              <Button className="w-full min-h-[52px] text-base" onClick={() => cameraRef.current?.click()}>
-                <Camera className="w-5 h-5 mr-2" /> Foto aufnehmen
-              </Button>
-              <Button variant="outline" className="w-full min-h-[48px]" onClick={() => fileRef.current?.click()}>
-                <FolderOpen className="w-5 h-5 mr-2" /> Datei wählen
-              </Button>
+              {cameraOn ? (
+                <div className="space-y-3">
+                  <video ref={videoRef} playsInline muted autoPlay
+                    className="w-full rounded-xl border border-border bg-black aspect-[3/4] object-cover" />
+                  <Button className="w-full min-h-[52px] text-base" onClick={capturePhoto}>
+                    <Camera className="w-5 h-5 mr-2" /> Foto aufnehmen
+                  </Button>
+                  <Button variant="outline" className="w-full min-h-[44px]" onClick={stopCamera}>
+                    <CameraOff className="w-4 h-4 mr-2" /> Kamera schliessen
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button className="w-full min-h-[52px] text-base" onClick={() => void startCamera()}>
+                    <Camera className="w-5 h-5 mr-2" /> Kamera öffnen &amp; scannen
+                  </Button>
+                  <Button variant="outline" className="w-full min-h-[48px]" onClick={() => cameraRef.current?.click()}>
+                    <Camera className="w-5 h-5 mr-2" /> Foto-App öffnen
+                  </Button>
+                  <Button variant="outline" className="w-full min-h-[48px]" onClick={() => fileRef.current?.click()}>
+                    <FolderOpen className="w-5 h-5 mr-2" /> Datei wählen
+                  </Button>
+                </>
+              )}
               <div
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
