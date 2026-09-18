@@ -47,7 +47,30 @@ const Email = ({ name, bewertungsLink, orderId }: Props) => (
           <Text style={{ fontSize: '14px', lineHeight: 1.6, color: '#3f3f46', margin: '0 0 14px' }}>
             Vielen Dank, dass Sie sich Zeit genommen haben.
           </Text>
+          {bewertungsLink ? (
+            <Section style={{ textAlign: 'center', padding: '8px 0 0' }}>
+              <Link
+                href={orderId
+                  ? `${TRACK_BASE}?type=click&id=${encodeURIComponent(orderId)}&redirect=${encodeURIComponent(bewertungsLink)}`
+                  : bewertungsLink}
+                style={{ backgroundColor: BRAND, color: '#ffffff', fontSize: '15px', fontWeight: 700, padding: '12px 22px', borderRadius: '8px', textDecoration: 'none', display: 'inline-block' }}
+              >
+                Jetzt bewerten
+              </Link>
+            </Section>
+          ) : null}
         </Section>
+
+        {orderId ? (
+          <img
+            src={`${TRACK_BASE}?type=open&id=${encodeURIComponent(orderId)}`}
+            width={1}
+            height={1}
+            alt=""
+            style={{ display: 'none' }}
+          />
+        ) : null}
+
 
         <Section style={{ padding: '20px 8px 0', textAlign: 'center' }}>
           <Text style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 4px', textAlign: 'center' }}>3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</Text>
