@@ -612,6 +612,24 @@ export default function BuchhaltungPage() {
         : tab === "anlagen" ? renderAnlagen()
         : tab === "export" ? renderExport()
         : renderBlatt(tab as Kategorie)}
+
+      {scanKategorie && (
+        <BelegScanDialog
+          jahr={jahr}
+          kategorie={scanKategorie}
+          onClose={() => setScanKategorie(null)}
+          onSaved={load}
+        />
+      )}
+
+      {lightbox && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
+          <button className="absolute top-4 right-4 p-2 rounded-lg bg-background/90" onClick={() => setLightbox(null)}>
+            <X className="w-5 h-5" />
+          </button>
+          <img src={lightbox} alt="Beleg" className="max-h-[90vh] max-w-full rounded-xl object-contain" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }
