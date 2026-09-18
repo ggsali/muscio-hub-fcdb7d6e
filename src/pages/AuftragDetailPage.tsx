@@ -2775,22 +2775,49 @@ export default function AuftragDetailPage() {
                 <Label>Tracking-Nummer (Post CH)</Label>
                 <div className="flex gap-2">
                   <Input value={trackingNr} onChange={e => setTrackingNr(e.target.value.replace(/\s/g, ""))} className="bg-input border-border font-mono" placeholder="z.B. 98.44.123456.78901234" />
-                  <Button onClick={handleSave} disabled={saving} variant="outline" className="border-border gap-2">
+                  <Button
+                    onClick={async () => { await handleSave(); await handleTrackingRefresh(trackingNr); }}
+                    disabled={saving || trackingLoading}
+                    variant="outline"
+                    className="border-border gap-2"
+                  >
                     <Save className="w-4 h-4" /> Speichern
                   </Button>
                 </div>
                 {trackingNr && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="font-mono text-sm">{trackingNr}</span>
-                    <a
-                      href={`https://www.post.ch/swisspost-tracking?formattedParcelCodes=${trackingNr}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary underline flex items-center gap-1"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      Post CH verfolgen →
-                    </a>
+                  <div className="mt-3 border border-border rounded-lg p-3 space-y-2 bg-muted/20">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <span>📦</span> Sendungsverfolgung
+                    </div>
+                    <p className="font-mono text-sm">{trackingNr}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-muted-foreground">Status:</span>
+                      <TrackingBadge trackingNr={trackingNr} status={trackingStatus} zugestellt={trackingZugestellt} lieferart={lieferart} />
+                    </div>
+                    {trackingDetail && <p className="text-xs text-muted-foreground">{trackingDetail}</p>}
+                    <p className="text-xs text-muted-foreground">Zuletzt geprüft: {relativeZeit(trackingGeprueft)}</p>
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="border-border gap-2"
+                        disabled={trackingLoading}
+                        onClick={() => handleTrackingRefresh(trackingNr)}
+                      >
+                        {trackingLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span>🔄</span>}
+                        Jetzt aktualisieren
+                      </Button>
+                      <a
+                        href={`https://www.post.ch/de/empfangen/sendungsverfolgung?itemid=${trackingNr}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary underline flex items-center gap-1"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Post CH öffnen
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
