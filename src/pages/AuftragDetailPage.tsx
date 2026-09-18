@@ -2809,7 +2809,7 @@ export default function AuftragDetailPage() {
                         Jetzt aktualisieren
                       </Button>
                       <a
-                        href={`https://www.post.ch/de/empfangen/sendungsverfolgung?itemid=${trackingNr}`}
+                        href={`https://www.post.ch/de/empfangen/sendungen-verfolgen?itemid=${trackingNr}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-primary underline flex items-center gap-1"

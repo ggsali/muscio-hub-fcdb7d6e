@@ -36,7 +36,7 @@ async function fetchPostStatus(nr: string): Promise<{ status: string; detail: st
       }
     } else {
       const pageRes = await fetch(
-        `https://www.post.ch/de/empfangen/sendungsverfolgung?itemid=${encodeURIComponent(nr)}`,
+        `https://www.post.ch/de/empfangen/sendungen-verfolgen?itemid=${encodeURIComponent(nr)}`,
         { headers: { "User-Agent": "Mozilla/5.0" } },
       );
       const html = await pageRes.text();
