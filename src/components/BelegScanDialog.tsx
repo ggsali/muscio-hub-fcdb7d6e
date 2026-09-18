@@ -101,7 +101,6 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
 
   React.useEffect(() => () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
-    setPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
   }, []);
 
   const toBase64 = (f: File) =>
