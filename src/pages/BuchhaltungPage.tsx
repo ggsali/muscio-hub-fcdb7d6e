@@ -400,9 +400,21 @@ export default function BuchhaltungPage() {
     const label = KATEGORIEN.find(k => k.key === kategorie)?.label ?? "";
     return (
       <Card className="p-0 overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="font-semibold">{label} {jahr}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-border">
+          <div>
+            <h2 className="font-semibold">{label} {jahr}</h2>
+            {kategorie === "einnahmen" && pendingSync !== null && (
+              <p className={cn("text-xs mt-0.5", pendingSync > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")}>
+                {pendingSync} nicht synchronisierte Aufträge
+              </p>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
+            {kategorie === "einnahmen" && (
+              <Button size="sm" variant="outline" onClick={() => void syncEinnahmen()} disabled={syncBusy}>
+                <RefreshCw className={cn("w-4 h-4 mr-1", syncBusy && "animate-spin")} /> Einnahmen aus Aufträgen synchronisieren
+              </Button>
+            )}
             <Button size="sm" variant="outline" onClick={() => setScanKategorie(kategorie)}>
               <Camera className="w-4 h-4 mr-1" /> Beleg scannen
             </Button>
