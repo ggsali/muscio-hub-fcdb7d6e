@@ -50,7 +50,7 @@ export function buildAbrechnungPdf(d: AbrechnungPdfData): { doc: jsPDF; base64: 
   doc.setFontSize(8.5);
   doc.setTextColor(120, 120, 120);
   doc.text(
-    [`${company.address.street}`, `${company.address.postalCode} ${company.address.city}`, company.email],
+    [`${company.address.city} ${company.address.regionCode}`, company.email],
     M, 27,
   );
 
@@ -148,7 +148,7 @@ export function buildAbrechnungPdf(d: AbrechnungPdfData): { doc: jsPDF; base64: 
     doc.setFontSize(8);
     doc.setTextColor(140, 140, 140);
     doc.text(
-      `3DMuscio | ${company.address.street}, ${company.address.postalCode} ${company.address.city} ${company.address.regionCode} | ${company.email} | www.3dmuscio.com`,
+      `3DMuscio | ${company.address.city} ${company.address.regionCode} | ${company.email} | www.3dmuscio.com`,
       pageW / 2, pageH - 13, { align: "center" },
     );
     doc.text("Hinweis: MwSt-Angaben bitte beim Treuhänder/Steuerberater prüfen.", pageW / 2, pageH - 9, { align: "center" });

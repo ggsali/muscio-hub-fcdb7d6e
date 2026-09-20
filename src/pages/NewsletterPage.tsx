@@ -142,7 +142,7 @@ function renderHtmlPreview(betreff: string, inhalt: string, blogUrl: string, blo
           ${blogBlock}
           <tr><td style="padding:20px 32px 28px;border-top:1px solid #e4e4e7;">
             <p style="margin:0 0 10px;font-size:12px;line-height:1.6;color:#71717a;">
-              3DMuscio | Gartensiedlung 13, 8360 Eschlikon TG | info@3dmuscio.com | www.3dmuscio.com
+              3DMuscio | Eschlikon TG | info@3dmuscio.com | www.3dmuscio.com
             </p>
             <p style="margin:0;font-size:12px;color:#a1a1aa;"><span style="text-decoration:underline;">Vom Newsletter abmelden</span></p>
           </td></tr>
@@ -193,7 +193,7 @@ function NewsletterPreview({
         </div>
       )}
       <div className="px-6 py-5 border-t border-zinc-200 text-[12px] text-zinc-500">
-        <p className="mb-2">3DMuscio | Gartensiedlung 13, 8360 Eschlikon TG | info@3dmuscio.com | www.3dmuscio.com</p>
+        <p className="mb-2">3DMuscio | Eschlikon TG | info@3dmuscio.com | www.3dmuscio.com</p>
         <p className="underline text-zinc-400">Vom Newsletter abmelden</p>
       </div>
     </div>

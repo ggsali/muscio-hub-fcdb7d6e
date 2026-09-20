@@ -197,7 +197,7 @@ export const sendKiOfferteMail = createServerFn({ method: "POST" })
           <p style="margin:0;">Freundliche Grüsse<br /><strong>3DMuscio</strong></p>
         </td></tr>
         <tr><td style="background:#111827;padding:18px;text-align:center;color:#9ca3af;font-size:12px;">
-          3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG<br />
+          3DMuscio · Eschlikon TG<br />
           <a href="mailto:info@3dmuscio.com" style="color:#9ca3af;text-decoration:none;">info@3dmuscio.com</a>
         </td></tr>
       </table>

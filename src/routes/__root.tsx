@@ -58,9 +58,7 @@ const organizationJsonLd = JSON.stringify({
       logo: "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg",
       address: {
         "@type": "PostalAddress",
-        streetAddress: "Gartensiedlung 13",
         addressLocality: "Eschlikon",
-        postalCode: "8360",
         addressRegion: "Thurgau",
         addressCountry: "CH",
       },

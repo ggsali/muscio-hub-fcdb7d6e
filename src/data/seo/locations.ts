@@ -14,12 +14,12 @@ export interface LocationContent {
 
 const commonFaqs: AnswerFaq[] = [
   { q: "Wie lange dauert die Lieferung?", a: "Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung, danach Versand mit Post oder DHL (1–2 Tage innerhalb der Schweiz)." },
-  { q: "Kann ich meine Teile abholen?", a: "Ja, Abholung ist am Standort Gartensiedlung 13, 8360 Eschlikon TG nach Absprache möglich." },
+  { q: "Kann ich meine Teile abholen?", a: "Ja, Abholung ist in Eschlikon TG nach Absprache möglich." },
   { q: "Welche Dateiformate nehmt ihr an?", a: "STL, STEP, 3MF und OBJ – direkt im Online-Kalkulator hochladen." },
 ];
 
 const thurgauFaqs: AnswerFaq[] = [
-  { q: "Wo genau in Eschlikon kann ich abholen?", a: "Unsere Werkstatt ist an der Gartensiedlung 13 in 8360 Eschlikon TG. Abholung stimmen wir nach Produktion kurz per E-Mail oder Telefon ab." },
+  { q: "Wo kann ich in Eschlikon abholen?", a: "Den genauen Abholort stimmen wir nach der Produktion kurz per E-Mail oder Telefon ab." },
   { q: "Lohnt sich Abholung auch für kleine Teile?", a: "Ja – du sparst Versandkosten und Wartezeit. Gerade bei Eilaufträgen ist die Abholung in Eschlikon der schnellste Weg zum fertigen Teil." },
   { q: "Druckt ihr auch für Firmen im Thurgau?", a: "Ja, wir beliefern KMU, Landwirtschaft, Handwerk und Startups in der ganzen Region – von Einzelteilen bis zu Kleinserien mit Rechnung." },
   ...commonFaqs,
@@ -62,7 +62,7 @@ export const locations: LocationContent[] = [
     sections: [
       {
         title: "Vor Ort in Eschlikon",
-        text: "Unsere Produktion steht an der Gartensiedlung 13 in 8360 Eschlikon TG. Wer in der Region wohnt oder arbeitet, spart damit Versandzeit: Teile können nach Absprache direkt abgeholt werden. Für grössere Projekte lässt sich vorab telefonisch oder per E-Mail klären, ob und wie ein Bauteil sinnvoll druckbar ist.",
+        text: "Unsere Produktion steht in Eschlikon TG. Wer in der Region wohnt oder arbeitet, spart damit Versandzeit: Teile können nach Absprache direkt abgeholt werden. Für grössere Projekte lässt sich vorab telefonisch oder per E-Mail klären, ob und wie ein Bauteil sinnvoll druckbar ist.",
       },
       {
         title: "Typische Aufträge aus dem Thurgau",

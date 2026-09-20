@@ -117,7 +117,7 @@ export function buildGutscheinEmailHtml(input: {
             <tr>
               <td style="padding:24px 40px;background-color:#f9fafb;text-align:center;">
                 <p style="margin:0;font-size:12px;line-height:1.6;color:#9ca3af;">
-                  3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG<br />
+                  3DMuscio · Eschlikon TG<br />
                   <a href="mailto:info@3dmuscio.com" style="color:#9ca3af;text-decoration:none;">info@3dmuscio.com</a> ·
                   <a href="https://www.3dmuscio.com" style="color:#9ca3af;text-decoration:none;">www.3dmuscio.com</a>
                 </p>

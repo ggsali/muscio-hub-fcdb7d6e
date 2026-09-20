@@ -318,8 +318,8 @@ const ContactPage = () => {
                       <MapPin className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground text-sm">Adresse</p>
-                      <p className="text-muted-foreground text-sm">Gartensiedlung 13, 8360 Eschlikon TG</p>
+                      <p className="font-medium text-foreground text-sm">Standort</p>
+                      <p className="text-muted-foreground text-sm">Eschlikon TG</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -353,24 +353,23 @@ const ContactPage = () => {
 
               <div className="rounded-xl overflow-hidden border border-border bg-card">
                 <iframe
-                  src="https://maps.google.com/maps?q=Gartensiedlung+13,+8360+Eschlikon+TG&z=15&output=embed"
+                  src="https://maps.google.com/maps?q=Eschlikon+TG&z=13&output=embed"
                   width="100%"
                   height="260"
                   style={{ border: 0, display: "block" }}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Standort 3DMuscio – Gartensiedlung 13, 8360 Eschlikon TG"
+                  title="Standort 3DMuscio – Eschlikon TG"
                 />
                 <div className="p-4 flex items-center justify-between gap-3 border-t border-border">
                   <div className="flex items-center gap-3">
                     <MapPin className="w-4 h-4 text-primary" />
                     <div>
-                      <p className="font-medium text-foreground text-sm">Gartensiedlung 13</p>
-                      <p className="text-muted-foreground text-xs">8360 Eschlikon TG</p>
+                      <p className="font-medium text-foreground text-sm">Eschlikon TG</p>
                     </div>
                   </div>
                   <a
-                    href="https://www.google.com/maps/search/?api=1&query=Gartensiedlung+13+8360+Eschlikon+TG"
+                    href="https://www.google.com/maps/search/?api=1&query=Eschlikon+TG"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-primary font-medium whitespace-nowrap hover:underline"

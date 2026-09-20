@@ -15,7 +15,7 @@ const ImpressumPage = () => (
           <section>
             <h2 className="font-heading text-xl font-bold mb-3">Angaben gemäss Art. 3 UWG</h2>
             <p className="text-muted-foreground leading-relaxed">
-              3DMuscio<br />Gartensiedlung 13<br />8360 Eschlikon TG<br />Schweiz
+              3DMuscio<br />Eschlikon TG<br />Schweiz
             </p>
           </section>
         </ScrollReveal>

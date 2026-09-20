@@ -51,7 +51,7 @@ export default function StandortPage() {
           {
             title: "Standort und Kontakt",
             bullets: [
-              `${company.name}, ${company.address.street}, ${company.address.postalCode} ${company.address.city} ${company.address.regionCode}`,
+              `${company.name}, ${company.address.city} ${company.address.regionCode}`,
               `E-Mail: ${company.email}`,
               `Produktionszeit: ${company.productionTime}`,
               `Verfahren: ${company.processes.join(" und ")}`,

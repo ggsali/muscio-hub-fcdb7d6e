@@ -47,7 +47,7 @@ export const regionen: RegionContent[] = [
     description:
       "3D-Druck im Thurgau: 3DMuscio produziert in Eschlikon TG. FDM und SLA, ab 1 Stück, Abholung vor Ort oder Versand. Sofortpreis im Online-Kalkulator.",
     shortAnswer:
-      "3D-Druck im Thurgau kommt bei 3DMuscio direkt aus der eigenen Werkstatt an der Gartensiedlung 13 in 8360 Eschlikon TG. Der Thurgau ist damit kein Liefergebiet, sondern der Produktionsstandort: Teile können nach Absprache vor Ort abgeholt werden. Gedruckt wird in FDM und SLA/Resin, ab 1 Stück und ohne Mindestbestellmenge.",
+      "3D-Druck im Thurgau kommt bei 3DMuscio direkt aus der eigenen Werkstatt in Eschlikon TG. Der Thurgau ist damit kein Liefergebiet, sondern der Produktionsstandort: Teile können nach Absprache vor Ort abgeholt werden. Gedruckt wird in FDM und SLA/Resin, ab 1 Stück und ohne Mindestbestellmenge.",
     sections: [
       {
         title: "Warum diese Seite der Standort ist",
@@ -56,7 +56,7 @@ export const regionen: RegionContent[] = [
       {
         title: "Abholung in Eschlikon",
         bullets: [
-          "Adresse: Gartensiedlung 13, 8360 Eschlikon TG",
+          "Standort: Eschlikon TG",
           "Abholung nach Absprache per E-Mail oder Telefon",
           "Kein Versand, keine Versandkosten, kein Wartetag",
           "Rückfragen zur Druckbarkeit direkt vor Ort klärbar",
@@ -77,7 +77,7 @@ export const regionen: RegionContent[] = [
       },
     ],
     faqs: [
-      { q: "Wo genau produziert 3DMuscio im Thurgau?", a: "An der Gartensiedlung 13 in 8360 Eschlikon TG. Das ist der einzige Produktionsstandort von 3DMuscio." },
+      { q: "Wo produziert 3DMuscio im Thurgau?", a: "In Eschlikon TG. Das ist der einzige Produktionsstandort von 3DMuscio." },
       { q: "Kann ich meine Teile in Eschlikon abholen?", a: "Ja. Abholung ist nach Absprache möglich – wir melden uns, sobald die Teile fertig sind, und stimmen einen Zeitpunkt ab." },
       { q: "Lohnt sich die Abholung auch für ein einzelnes Kleinteil?", a: "Ja, du sparst Versandkosten und mindestens einen Tag Wartezeit. Bei Eilaufträgen aus der Region ist die Abholung der schnellste Weg zum Teil." },
       { q: "Druckt 3DMuscio auch für Thurgauer Firmen?", a: "Ja. Für Firmenkunden stellen wir eine Schweizer QR-Rechnung aus, von Einzelteilen bis zu Kleinserien." },

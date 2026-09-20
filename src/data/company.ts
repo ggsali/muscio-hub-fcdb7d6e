@@ -13,8 +13,8 @@ export const company = {
   email: "info@3dmuscio.com",
   url: SITE_URL,
   address: {
-    street: "Gartensiedlung 13",
-    postalCode: "8360",
+    street: "",
+    postalCode: "",
     city: "Eschlikon",
     region: "Thurgau",
     regionCode: "TG",
@@ -26,7 +26,7 @@ export const company = {
     "3DMuscio ist ein 3D-Druckservice aus Eschlikon im Kanton Thurgau (Schweiz). Wir fertigen Einzelteile, Prototypen, Funktionsteile, Ersatzteile und Kleinserien im FDM- und SLA/Resin-Verfahren für Privatkunden, KMU, Startups und Unternehmen in der ganzen Schweiz.",
   /** Längere Variante für Über-uns / llms.txt */
   longDescription:
-    "3DMuscio ist ein 3D-Druckservice mit Sitz an der Gartensiedlung 13, 8360 Eschlikon TG, Schweiz. Angeboten werden FDM-Druck (PLA, PETG, ABS, ASA, TPU) und SLA/Resin-Druck. Typische Aufträge sind Prototypen, Funktionsteile, Ersatzteile, Modelle und Kleinserien ab 1 Stück – ohne Mindestbestellmenge. Dateien können als STL, STEP, 3MF oder OBJ hochgeladen und im Online-Kalkulator direkt kalkuliert werden. Die Standard-Produktionszeit beträgt 48 Stunden ab Auftragsbestätigung, danach Versand innerhalb der Schweiz oder Abholung in Eschlikon TG.",
+    "3DMuscio ist ein 3D-Druckservice mit Sitz in Eschlikon TG, Schweiz. Angeboten werden FDM-Druck (PLA, PETG, ABS, ASA, TPU) und SLA/Resin-Druck. Typische Aufträge sind Prototypen, Funktionsteile, Ersatzteile, Modelle und Kleinserien ab 1 Stück – ohne Mindestbestellmenge. Dateien können als STL, STEP, 3MF oder OBJ hochgeladen und im Online-Kalkulator direkt kalkuliert werden. Die Standard-Produktionszeit beträgt 48 Stunden ab Auftragsbestätigung, danach Versand innerhalb der Schweiz oder Abholung in Eschlikon TG.",
   targetMarket: "Schweiz",
   audiences: ["Privatkunden", "KMU", "Startups", "Unternehmen"],
   processes: ["FDM (Fused Deposition Modeling)", "SLA / Resin"],
@@ -45,7 +45,7 @@ export const company = {
   shipping: "Versand mit Post oder DHL innerhalb der Schweiz, Abholung in Eschlikon TG möglich",
 } as const;
 
-export const fullAddress = `${company.address.street}, ${company.address.postalCode} ${company.address.city} ${company.address.regionCode}, ${company.address.country}`;
+export const fullAddress = `${company.address.city} ${company.address.regionCode}, ${company.address.country}`;
 
 /** LocalBusiness-Schema – sitewide identisch verwenden */
 export const localBusinessJsonLd = {
@@ -58,8 +58,6 @@ export const localBusinessJsonLd = {
   email: company.email,
   address: {
     "@type": "PostalAddress",
-    streetAddress: company.address.street,
-    postalCode: company.address.postalCode,
     addressLocality: company.address.city,
     addressRegion: company.address.region,
     addressCountry: company.address.countryCode,
