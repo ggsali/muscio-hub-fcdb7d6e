@@ -8,7 +8,7 @@ const DatenschutzPage = () => (
           <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Rechtliches</p>
           <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-foreground mb-4">Datenschutzerklärung</h1>
           <p className="text-muted-foreground">
-            3DMuscio · Gartensiedlung 13 · 8360 Eschlikon TG<br />
+            3DMuscio · Eschlikon TG<br />
             <a href="mailto:info@3dmuscio.com" className="text-primary hover:underline">info@3dmuscio.com</a>
           </p>
         </div>
@@ -17,7 +17,7 @@ const DatenschutzPage = () => (
       <div className="space-y-8 text-foreground">
         {[
           ["1. Allgemeine Hinweise", "Der Schutz Ihrer Daten ist uns wichtig. Wir behandeln Ihre Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften."],
-          ["2. Verantwortliche Stelle", "3DMuscio, Gartensiedlung 13, 8360 Eschlikon TG, Schweiz · info@3dmuscio.com"],
+          ["2. Verantwortliche Stelle", "3DMuscio, Eschlikon TG, Schweiz · info@3dmuscio.com"],
           ["3. Erhobene Daten", "Name, Adresse, E-Mail, Telefonnummer, Bestelldaten, Zahlungsinformationen — nur soweit erforderlich."],
           ["4. Nutzung", "Verwendung zur Bearbeitung Ihrer Bestellungen, Kontaktaufnahme und internen Zwecken. Weitergabe nur an Versanddienstleister oder bei gesetzlicher Pflicht."],
           ["5. Cookies", "Die Website verwendet Cookies für Funktion, Sicherheit und Komfort. Sie können dies in Ihrem Browser konfigurieren."],

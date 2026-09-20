@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
               <p style="margin:0;color:#6b7280;font-size:13px;">Dieser Link ist 30 Tage gültig.</p>
             </div>
             <div style="padding:16px 28px;background:#fafafa;color:#9ca3af;font-size:12px;text-align:center;">
-              3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG · <a href="mailto:info@3dmuscio.com" style="color:#9ca3af;">info@3dmuscio.com</a>
+              3DMuscio · Eschlikon TG · <a href="mailto:info@3dmuscio.com" style="color:#9ca3af;">info@3dmuscio.com</a>
             </div>
           </div>
         </div>

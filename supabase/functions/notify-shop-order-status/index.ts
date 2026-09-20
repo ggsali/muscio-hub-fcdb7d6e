@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
         ${trackingBlock}
         <p style="margin:20px 0 0;font-size:14px;"><strong>Bestellwert:</strong> CHF ${Number(order.total || 0).toFixed(2)}</p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
-        <p style="font-size:12px;color:#888;">3DMuscio · Gartensiedlung 13 · 8360 Eschlikon TG<br/>info@3dmuscio.com · 3dmuscio.com</p>
+        <p style="font-size:12px;color:#888;">3DMuscio · Eschlikon TG<br/>info@3dmuscio.com · 3dmuscio.com</p>
       </div>`,
     });
 

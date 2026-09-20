@@ -23,7 +23,7 @@ const FALLBACK: Record<string, string> = {
 
 const inhalt = (region: string) => `## 3D-Druck für ${region}
 
-3DMuscio ist ein 3D-Druckservice mit Standort in ${company.address.postalCode} ${company.address.city} ${company.address.regionCode}. Kunden aus ${region} laden ihre Datei online hoch, sehen den Preis sofort und erhalten die Teile per Post oder DHL – in der Regel innerhalb von 48 Stunden Produktionszeit plus 1–2 Tagen Versand.
+3DMuscio ist ein 3D-Druckservice mit Standort in ${company.address.city} ${company.address.regionCode}. Kunden aus ${region} laden ihre Datei online hoch, sehen den Preis sofort und erhalten die Teile per Post oder DHL – in der Regel innerhalb von 48 Stunden Produktionszeit plus 1–2 Tagen Versand.
 
 ## Verfahren und Materialien
 
@@ -46,11 +46,11 @@ const inhalt = (region: string) => `## 3D-Druck für ${region}
 
 ## Kontakt
 
-${company.name}, ${company.address.street}, ${company.address.postalCode} ${company.address.city} ${company.address.regionCode} · ${company.email}`;
+${company.name}, ${company.address.city} ${company.address.regionCode} · ${company.email}`;
 
 const faqFor = (region: string): DbFaq[] => [
   { frage: `Wie lange dauert die Lieferung nach ${region}?`, antwort: `Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung, danach 1–2 Tage Versand innerhalb der Schweiz.` },
-  { frage: "Kann ich die Teile abholen?", antwort: `Ja, Abholung ist am Standort ${company.address.street}, ${company.address.postalCode} ${company.address.city} nach Absprache möglich.` },
+  { frage: "Kann ich die Teile abholen?", antwort: `Ja, Abholung in ${company.address.city} ist nach Absprache möglich.` },
   { frage: "Welche Dateiformate werden akzeptiert?", antwort: "STL, STEP, 3MF und OBJ – direkt im Online-Kalkulator hochladen." },
   { frage: "Gibt es eine Mindestbestellmenge?", antwort: "Nein, wir drucken ab 1 Stück. Ab 5 bzw. 10 Stück gibt es Mengenrabatt." },
 ];
@@ -119,7 +119,7 @@ export default function LokalPage() {
       <DbContentPage
         eyebrow={`Region ${region}`}
         h1={`3D-Druck ${region} – Prototypen, Ersatzteile und Kleinserien`}
-        intro={`3D-Druckservice für ${region}: Datei online hochladen, Preis sofort sehen, Teile in 48 Stunden Produktionszeit erhalten. Gefertigt in ${company.address.postalCode} ${company.address.city} ${company.address.regionCode}.`}
+        intro={`3D-Druckservice für ${region}: Datei online hochladen, Preis sofort sehen, Teile in 48 Stunden Produktionszeit erhalten. Gefertigt in ${company.address.city} ${company.address.regionCode}.`}
         inhalt={inhalt(region)}
         faq={faqs}
         breadcrumb={[

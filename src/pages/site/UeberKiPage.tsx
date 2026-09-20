@@ -12,8 +12,6 @@ const jsonLd = {
   founder: { "@type": "Person", name: "Jorim Moos" },
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Gartensiedlung 13",
-    postalCode: "8360",
     addressLocality: "Eschlikon",
     addressRegion: "Thurgau",
     addressCountry: "CH",
@@ -92,7 +90,7 @@ const UeberKiPage = () => {
           <section>
             <h2 className="font-heading text-sm font-bold mb-2">Wo ist 3DMuscio?</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Adresse: Gartensiedlung 13, 8360 Eschlikon TG, Schweiz</li>
+              <li>Standort: Eschlikon TG, Schweiz</li>
               <li>Region: Kanton Thurgau, Ostschweiz</li>
               <li>Liefergebiet: gesamte Schweiz, Versand per Post (2–7 Werktage)</li>
             </ul>

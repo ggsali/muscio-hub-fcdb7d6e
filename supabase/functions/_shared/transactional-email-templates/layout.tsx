@@ -37,7 +37,7 @@ export const EmailHeader = ({ emoji = '📧' }: { emoji?: string }) => (
 
 export const EmailFooter = () => (
   <Section style={footerWrap}>
-    <Text style={footerAddress}>3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</Text>
+    <Text style={footerAddress}>3DMuscio · Eschlikon TG</Text>
     <Text style={footerText}>
       <Link href="mailto:info@3dmuscio.com" style={footerLink}>info@3dmuscio.com</Link>
       {'  ·  '}+41 77 804 41 22{'  ·  '}

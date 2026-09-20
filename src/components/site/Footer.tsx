@@ -125,7 +125,7 @@ export const Footer = () => (
               className="flex items-start gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors group"
             >
               <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/60 group-hover:text-primary transition-colors" />
-              <span>Gartensiedlung 13<br />8360 Eschlikon TG</span>
+              <span>Eschlikon TG</span>
             </a>
             <a href="tel:+41778044122" className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors group">
               <Phone className="w-3.5 h-3.5 shrink-0 text-primary/60 group-hover:text-primary transition-colors" />
