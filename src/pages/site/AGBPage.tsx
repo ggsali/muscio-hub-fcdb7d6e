@@ -10,7 +10,7 @@ const AGBPage = () => (
             Allgemeine Geschäftsbedingungen
           </h1>
           <p className="text-muted-foreground">
-            3DMuscio · Gartensiedlung 13 · 8360 Eschlikon TG · Schweiz<br />
+            3DMuscio · Eschlikon TG · Schweiz<br />
             E-Mail: <a href="mailto:info@3dmuscio.com" className="text-primary hover:underline">info@3dmuscio.com</a>
           </p>
         </div>
@@ -19,7 +19,7 @@ const AGBPage = () => (
       <div className="space-y-8 text-foreground">
         {[
           ["1. Geltungsbereich", "Diese AGB gelten für alle Verträge zwischen 3DMuscio und ihren Kunden über den Verkauf von 3D-gedruckten Produkten im Versandhandel."],
-          ["2. Vertragspartner", "Der Kaufvertrag kommt zustande mit: 3DMuscio, Gartensiedlung 13, 8360 Eschlikon TG, Schweiz · info@3dmuscio.com"],
+          ["2. Vertragspartner", "Der Kaufvertrag kommt zustande mit: 3DMuscio, Eschlikon TG, Schweiz · info@3dmuscio.com"],
           ["3. Angebot und Vertragsabschluss", "Die Darstellung der Produkte stellt kein bindendes Angebot dar. Mit der Bestellung geben Sie ein verbindliches Angebot ab. Der Vertrag kommt mit Auftragsbestätigung per E-Mail zustande."],
           ["4. Lieferung", "Lieferung erfolgt per Versand. Versandfertig in 1–7 Werktagen. Individuelle Druckaufträge können länger dauern. Bei Lieferungen ausserhalb der Schweiz trägt der Käufer Zoll- und Einfuhrkosten."],
           ["5. Preise und Versandkosten", "Alle Preise inkl. MwSt. (sofern anwendbar) zzgl. Versand. Ab CHF 65 versandkostenfrei innerhalb der Schweiz."],
@@ -29,7 +29,7 @@ const AGBPage = () => (
           ["9. Materialeigenschaften", "3D-gedruckte Waren weisen produktionsbedingt feine Schichtlinien auf. Geringfügige Farbabweichungen sind kein Reklamationsgrund."],
           ["10. Haftungsbegrenzung", "Schadensersatzansprüche sind ausgeschlossen, soweit kein Vorsatz oder grobe Fahrlässigkeit vorliegt."],
           ["11. Datenschutz", "Siehe separate Datenschutzerklärung."],
-          ["12. Gerichtsstand", "Es gilt das Recht der Schweiz. Gerichtsstand: 8360 Eschlikon TG."],
+          ["12. Gerichtsstand", "Es gilt das Recht der Schweiz. Gerichtsstand: Eschlikon TG."],
         ].map(([title, body]) => (
           <ScrollReveal key={title}>
             <section>

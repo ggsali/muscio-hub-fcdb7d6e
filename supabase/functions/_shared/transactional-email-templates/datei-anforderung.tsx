@@ -56,7 +56,7 @@ const Email = ({ name, uploadUrl }: Props) => (
         </Section>
 
         <Section style={{ padding: '20px 8px 0', textAlign: 'center' }}>
-          <Text style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 4px', textAlign: 'center' }}>3DMuscio · Gartensiedlung 13, 8360 Eschlikon TG</Text>
+          <Text style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 4px', textAlign: 'center' }}>3DMuscio · Eschlikon TG</Text>
           <Text style={{ fontSize: '12px', color: '#9ca3af', margin: 0, textAlign: 'center' }}>
             <Link href="mailto:info@3dmuscio.com" style={{ color: '#9ca3af', textDecoration: 'none' }}>info@3dmuscio.com</Link>
             {' · '} +41 77 804 41 22 {' · '}

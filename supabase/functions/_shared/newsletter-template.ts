@@ -101,7 +101,7 @@ export function renderNewsletter(opts: {
           ${blogBlock}
           <tr><td style="padding:20px 32px 28px;border-top:1px solid #e4e4e7;">
             <p style="margin:0 0 10px;font-size:12px;line-height:1.6;color:#71717a;">
-              3DMuscio | Gartensiedlung 13, 8360 Eschlikon TG |
+              3DMuscio | Eschlikon TG |
               <a href="mailto:info@3dmuscio.com" style="color:#71717a;">info@3dmuscio.com</a> |
               <a href="${SITE_URL}" style="color:#71717a;">www.3dmuscio.com</a>
             </p>
