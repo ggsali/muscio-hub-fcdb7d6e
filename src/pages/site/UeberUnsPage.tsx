@@ -5,7 +5,6 @@ import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote, Cpu, ArrowRight }
 import { motion, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Timeline } from "@/components/site/Timeline";
-import werkstatt from "@/assets/werkstatt.jpg";
 import Seo from "@/components/site/Seo";
 
 const values = [
@@ -30,7 +29,6 @@ export default function UeberUnsPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const [team, setTeam] = useState<TeamMember[]>([]);
-  const [storyImage, setStoryImage] = useState<string>(werkstatt);
   const location = useLocation();
 
   useEffect(() => {
@@ -40,16 +38,6 @@ export default function UeberUnsPage() {
       .eq("aktiv", true)
       .order("sort_order")
       .then(({ data }) => { if (data) setTeam(data as TeamMember[]); });
-
-    supabase
-      .from("website_settings")
-      .select("value")
-      .eq("key", "ueber_uns_bild")
-      .maybeSingle()
-      .then(({ data }) => {
-        const url = (data?.value as any)?.url;
-        if (url) setStoryImage(url);
-      });
   }, []);
 
   // Smooth scroll to hash anchors when navigating from header dropdown
@@ -93,40 +81,6 @@ export default function UeberUnsPage() {
         <div id="zeitleiste" className="scroll-mt-24">
           <Timeline team={team} />
         </div>
-
-        {/* Story */}
-        <ScrollReveal>
-          <div id="geschichte" className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 md:mb-28 max-w-5xl mx-auto scroll-mt-24">
-            <div className="md:col-span-5">
-              <img
-                src={storyImage}
-                alt="Unsere Werkstatt mit 3D-Druckern"
-                loading="lazy"
-                className="rounded-xl aspect-[3/4] object-cover w-full md:sticky md:top-24"
-              />
-            </div>
-            <div className="md:col-span-7 md:pl-4">
-              <span className="text-xs font-bold text-muted-foreground tracking-widest block mb-6">UNSERE GESCHICHTE</span>
-              <h2 className="font-heading text-2xl font-bold text-foreground mb-6 tracking-tight">
-                Von einem Drucker zu einer Flotte.
-              </h2>
-              <div className="space-y-5 text-muted-foreground text-sm leading-relaxed">
-                <p>
-                  2021 starteten wir mit einem einzigen FDM-Drucker und einer einfachen Idee: professionellen 3D-Druck
-                  für alle zugänglich machen — ohne Mindestbestellmengen, ohne komplizierte Prozesse.
-                </p>
-                <p>
-                  Heute betreiben wir eine wachsende Flotte aus FDM- und SLA-Druckern in der Schweiz. Jeder Auftrag
-                  wird von unserem Team persönlich betreut — von der Dateiprüfung bis zur Endkontrolle.
-                </p>
-                <p>
-                  Unser Fokus liegt auf Geschwindigkeit und Qualität. 48 Stunden Lieferzeit ist kein Marketing —
-                  es ist unser Standard.
-                </p>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
 
         {/* Team – ausführlich */}
         {team.length > 0 && (
