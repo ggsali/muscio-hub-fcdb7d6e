@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { useLocation, Link } from "@/lib/router-compat";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
-import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote, Cpu, ArrowRight } from "lucide-react";
+import { Shield, Zap, Leaf, MapPin, Phone, Mail, Clock, Quote } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Timeline } from "@/components/site/Timeline";
