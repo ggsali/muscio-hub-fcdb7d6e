@@ -28,7 +28,6 @@ export default function UeberUnsPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const [team, setTeam] = useState<TeamMember[]>([]);
-  const location = useLocation();
 
   useEffect(() => {
     supabase
