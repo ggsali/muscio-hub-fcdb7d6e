@@ -40,14 +40,13 @@ export default function UeberUnsPage() {
 
   // Smooth scroll to hash anchors when navigating from header dropdown
   useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.slice(1);
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 200);
-    }
-  }, [location.hash, team.length]);
+    if (!hash) return;
+    const id = hash.slice(1);
+    const t = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => window.clearTimeout(t);
+  }, [hash, team.length]);
 
   return (
     <div className="pb-16">
