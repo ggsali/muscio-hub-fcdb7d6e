@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Timeline } from "@/components/site/Timeline";
 import Seo from "@/components/site/Seo";
+import { useLocation } from "@/lib/router-compat";
 
 const values = [
   { icon: Shield, title: "Qualität", desc: "Jeder Druck durchläuft strenge Qualitätskontrolle. Wir liefern nur, was uns selbst überzeugt." },
