@@ -27,8 +27,6 @@ export default function WebsiteEinstellungenPage() {
   const [materials, setMaterials] = useState<MaterialRow[]>([]);
   const [karussel, setKarussel] = useState<{ text: string }[]>([]);
   const [savingKarussel, setSavingKarussel] = useState(false);
-  const [ueberUnsBild, setUeberUnsBild] = useState<string>("");
-  const [uploadingBild, setUploadingBild] = useState(false);
 
   const reloadMaterials = async () => {
     const { data } = await supabase.from("materials").select("*").order("sort_order");
@@ -45,7 +43,6 @@ export default function WebsiteEinstellungenPage() {
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
           if (row.key === "whatsapp") setWhatsapp({ nummer: (row.value as any)?.nummer || "" });
-          if (row.key === "ueber_uns_bild") setUeberUnsBild((row.value as any)?.url || "");
           if (row.key === "karussel") {
             const items = ((row.value as any)?.items) as { text: string }[] | undefined;
             if (items && items.length > 0) setKarussel(items);
@@ -121,33 +118,6 @@ export default function WebsiteEinstellungenPage() {
     else toast({ title: "Einstellungen gespeichert" });
   };
 
-  const uploadUeberUnsBild = async (file: File) => {
-    setUploadingBild(true);
-    try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `ueber-uns-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("company-assets")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (upErr) throw upErr;
-      const url = supabase.storage.from("company-assets").getPublicUrl(path).data.publicUrl;
-      const err = await saveOne("ueber_uns_bild", { url });
-      if (err) throw err;
-      setUeberUnsBild(url);
-      toast({ title: "Bild aktualisiert" });
-    } catch (e: any) {
-      toast({ title: "Fehler beim Hochladen", description: e.message, variant: "destructive" });
-    } finally {
-      setUploadingBild(false);
-    }
-  };
-
-  const removeUeberUnsBild = async () => {
-    const err = await saveOne("ueber_uns_bild", { url: "" });
-    if (err) { toast({ title: "Fehler", variant: "destructive" }); return; }
-    setUeberUnsBild("");
-    toast({ title: "Standardbild wird wieder verwendet" });
-  };
 
   if (loading) return <div className="p-4 md:p-8 text-center text-muted-foreground text-sm">Laden...</div>;
 
