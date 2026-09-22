@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Timeline } from "@/components/site/Timeline";
 import Seo from "@/components/site/Seo";
+import { useLocation } from "@/lib/router-compat";
 
 const values = [
   { icon: Shield, title: "Qualität", desc: "Jeder Druck durchläuft strenge Qualitätskontrolle. Wir liefern nur, was uns selbst überzeugt." },
@@ -28,6 +29,7 @@ export default function UeberUnsPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 80]);
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const { hash } = useLocation();
 
   useEffect(() => {
     supabase
@@ -40,14 +42,13 @@ export default function UeberUnsPage() {
 
   // Smooth scroll to hash anchors when navigating from header dropdown
   useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.slice(1);
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 200);
-    }
-  }, [location.hash, team.length]);
+    if (!hash) return;
+    const id = hash.slice(1);
+    const t = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+    return () => window.clearTimeout(t);
+  }, [hash, team.length]);
 
   return (
     <div className="pb-16">

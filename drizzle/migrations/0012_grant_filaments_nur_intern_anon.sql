@@ -1,0 +1,1 @@
+GRANT SELECT (nur_intern) ON public.filaments TO anon;
