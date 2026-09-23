@@ -2663,6 +2663,14 @@ export default function AuftragDetailPage() {
                                   )}
                                 </button>
                               )}
+                              <button
+                                type="button"
+                                title="Slicer-Screenshot scannen"
+                                onClick={() => setSlicerScanPartIdx(idx)}
+                                className="text-muted-foreground hover:text-primary transition-colors p-1"
+                              >
+                                <ScanLine className="w-3.5 h-3.5" />
+                              </button>
                               <button onClick={() => removePart(idx)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
