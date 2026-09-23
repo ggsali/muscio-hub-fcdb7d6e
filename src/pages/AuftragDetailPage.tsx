@@ -2397,6 +2397,14 @@ export default function AuftragDetailPage() {
                             )}
                           </button>
                         )}
+                        <button
+                          type="button"
+                          title="Slicer-Screenshot scannen"
+                          onClick={() => setSlicerScanPartIdx(idx)}
+                          className="p-2 rounded transition-colors text-muted-foreground hover:text-primary"
+                        >
+                          <ScanLine className="w-4 h-4" />
+                        </button>
                         <button onClick={() => removePart(idx)} className="p-2 rounded text-muted-foreground hover:text-destructive transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2472,12 +2480,6 @@ export default function AuftragDetailPage() {
                           />
                         </div>
                       ))}
-                      <div className="md:col-span-2">
-                        <button type="button" onClick={() => setSlicerScanPartIdx(idx)} className="flex items-center gap-2 w-full h-9 px-3 bg-primary/10 border border-dashed border-primary/40 rounded-md text-primary text-sm font-medium hover:bg-primary/15 transition-colors">
-                          <ScanLine className="w-4 h-4" />
-                          Slicer-Screenshot scannen
-                        </button>
-                      </div>
                       <div className="space-y-1">
                         <label className="text-xs text-muted-foreground">Status</label>
                         <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full">
