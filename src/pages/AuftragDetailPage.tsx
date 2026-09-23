@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X, ScanLine } from "lucide-react";
+import SlicerScanModal from "@/components/SlicerScanModal";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
@@ -162,6 +163,7 @@ export default function AuftragDetailPage() {
   // Eingemauerte Offerten-Positionen (Preise zum Zeitpunkt der Offerte)
   const [offerteSnapshot, setOfferteSnapshot] = useState<any | null>(null);
   const [setupDialog, setSetupDialog] = useState<{ idx: number; menge: number } | null>(null);
+  const [slicerScanPartIdx, setSlicerScanPartIdx] = useState<number | null>(null);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
   const [notesInternal, setNotesInternal] = useState<string>("");
@@ -2470,6 +2472,12 @@ export default function AuftragDetailPage() {
                           />
                         </div>
                       ))}
+                      <div className="md:col-span-2">
+                        <button type="button" onClick={() => setSlicerScanPartIdx(idx)} className="flex items-center gap-2 w-full h-9 px-3 bg-primary/10 border border-dashed border-primary/40 rounded-md text-primary text-sm font-medium hover:bg-primary/15 transition-colors">
+                          <ScanLine className="w-4 h-4" />
+                          Slicer-Screenshot scannen
+                        </button>
+                      </div>
                       <div className="space-y-1">
                         <label className="text-xs text-muted-foreground">Status</label>
                         <select value={part.status} onChange={e => updatePart(idx, "status", e.target.value)} className="h-9 px-3 rounded bg-input border border-border text-sm text-foreground w-full">
@@ -3069,6 +3077,15 @@ export default function AuftragDetailPage() {
       </AlertDialog>
 
       {/* Setup-Pauschale-Dialog (ab 5 Stück) – ausserhalb der Tabs, damit er überall erscheint */}
+      <SlicerScanModal
+        open={slicerScanPartIdx !== null}
+        onClose={() => setSlicerScanPartIdx(null)}
+        onApply={(druckzeit, gewicht) => {
+          if (slicerScanPartIdx === null) return;
+          updatePart(slicerScanPartIdx, "druckzeit_h", druckzeit);
+          updatePart(slicerScanPartIdx, "gewicht_g", gewicht);
+        }}
+      />
       {setupDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-xl">
