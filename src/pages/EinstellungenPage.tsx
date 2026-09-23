@@ -625,9 +625,18 @@ export default function EinstellungenPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  E-Mail-Text — Platzhalter: {"{{name}}"}, {"{{firma}}"} und [Google Rezension schreiben] (wird verlinkt)
-                </Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs text-muted-foreground">
+                    E-Mail-Text — Platzhalter: {"{{name}}"}, {"{{firma}}"} und {"{{review_url}}"} (wird verlinkt)
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setReviewBody(buildReviewBody("{{name}}", "{{review_url}}"))}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors shrink-0"
+                  >
+                    Auf Standard zurücksetzen
+                  </button>
+                </div>
                 <Textarea
                   value={reviewBody}
                   onChange={e => setReviewBody(e.target.value)}
