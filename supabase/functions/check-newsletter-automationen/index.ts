@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
         });
 
         if (error) {
-          console.error("Automation Resend Fehler:", c.email, error);
+          console.error("Automation Resend Fehler für Kunde", c.id, error);
           skipped++;
         } else {
           sent++;

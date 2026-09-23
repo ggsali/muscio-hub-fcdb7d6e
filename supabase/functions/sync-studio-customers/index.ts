@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     console.log(`Fetched ${allUsers.length} users from Studio Auth`);
     // Log first user for debug
     if (allUsers.length > 0) {
-      console.log(`First user sample: ${JSON.stringify(allUsers[0])}`);
+      console.log(`First user sample keys: ${Object.keys(allUsers[0] || {}).join(",")}`);
     }
 
     // 2. Fetch existing customer emails from dashboard
@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       });
 
       if (insertError) {
-        console.error(`Failed to insert ${email}: ${insertError.message}`);
+        console.error(`Failed to insert customer: ${insertError.message}`);
         skipped++;
       } else {
         synced++;

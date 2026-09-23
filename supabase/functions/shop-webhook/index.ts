@@ -50,8 +50,13 @@ serve(async (req) => {
         const nachricht = (session.metadata?.gutschein_nachricht || "").trim();
 
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        const rnd = new Uint8Array(12);
+        crypto.getRandomValues(rnd);
         let suffix = "";
-        for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+        for (let i = 0; i < 12; i++) suffix += chars[rnd[i] % chars.length];
+        const escH = (v: string) => v
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
         const code = `GESCHENK-${suffix}`;
         const gueltigBis = new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10);
 
@@ -82,8 +87,8 @@ serve(async (req) => {
                   html: `
                     <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#111;">
                       <h1 style="color:#FF5A00;">Dein 3DMuscio Gutschein</h1>
-                      <p>${empfaengerName ? `Hallo ${empfaengerName}` : "Hallo"}</p>
-                      ${nachricht ? `<p style="white-space:pre-wrap;">${nachricht}</p>` : ""}
+                      <p>${empfaengerName ? `Hallo ${escH(empfaengerName)}` : "Hallo"}</p>
+                      ${nachricht ? `<p style="white-space:pre-wrap;">${escH(nachricht)}</p>` : ""}
                       <div style="border:2px dashed #FF5A00;border-radius:12px;padding:20px;text-align:center;margin:24px 0;">
                         <div style="font-size:12px;letter-spacing:2px;color:#666;text-transform:uppercase;">Gutschein-Code</div>
                         <div style="font-size:28px;font-weight:bold;letter-spacing:3px;margin-top:8px;">${code}</div>
