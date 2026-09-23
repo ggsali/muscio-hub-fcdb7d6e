@@ -6,19 +6,63 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function esc(v: unknown) {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function str(v: unknown, max: number): string {
+  return typeof v === "string" ? v.trim().slice(0, max) : "";
+}
+
+const RATE_WINDOW_MS = 10 * 60_000;
+const RATE_MAX = 5;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const {
-      name, email, telefon, betreff, nachricht,
-      strasse, plz, ort, land,
-      attachments,
-      ki_beratung_zusammenfassung,
-      ki_empfohlenes_material,
-    } = await req.json();
+    // Best-effort Schutz vor Mail-Flooding pro IP
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+    const now = Date.now();
+    // @ts-ignore globalThis cache
+    const store: Map<string, number[]> = (globalThis.__inquiryRateStore ||= new Map());
+    const hits = (store.get(ip) || []).filter((t: number) => now - t < RATE_WINDOW_MS);
+    if (hits.length >= RATE_MAX) {
+      return new Response(JSON.stringify({ error: "Zu viele Anfragen. Bitte später erneut versuchen." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    hits.push(now);
+    store.set(ip, hits);
+
+    const raw = await req.json().catch(() => ({}));
+    const name = str(raw?.name, 120);
+    const email = str(raw?.email, 255).toLowerCase();
+    const telefon = str(raw?.telefon, 40);
+    const betreff = str(raw?.betreff, 200);
+    const nachricht = str(raw?.nachricht, 5000);
+    const strasse = str(raw?.strasse, 200);
+    const plz = str(raw?.plz, 20);
+    const ort = str(raw?.ort, 120);
+    const land = str(raw?.land, 80);
+    const attachments = Array.isArray(raw?.attachments) ? raw.attachments.slice(0, 20) : null;
+    const ki_beratung_zusammenfassung = str(raw?.ki_beratung_zusammenfassung, 5000);
+    const ki_empfohlenes_material = str(raw?.ki_empfohlenes_material, 200);
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: "Ungültige E-Mail-Adresse." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!name || !email || !nachricht) {
       return new Response(JSON.stringify({ error: "Name, E-Mail und Nachricht sind erforderlich." }), {
@@ -60,17 +104,8 @@ Deno.serve(async (req) => {
       }).select("id").single();
 
       if (newCustomer) customerId = newCustomer.id;
-    } else if (customerId && (strasse || plz || ort)) {
-      // Adresse im bestehenden Kundenprofil ergänzen falls noch leer
-      if (!existingCustomer?.strasse && strasse) {
-        await supabase.from("customers").update({
-          strasse: strasse || null,
-          plz: plz || null,
-          ort: ort || null,
-          land: land || "Schweiz",
-        }).eq("id", customerId);
-      }
     }
+    // Bestehende Kundendaten werden bewusst nicht durch öffentliche Anfragen verändert.
 
     // Anfrage speichern
     const { data: insertedInquiry, error } = await supabase
