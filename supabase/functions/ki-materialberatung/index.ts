@@ -11,8 +11,29 @@ function json(body: unknown, status = 200) {
   });
 }
 
+const ALLOWED_ORIGIN = /^https:\/\/((www\.)?3dmuscio\.com|[a-z0-9-]+\.lovable\.app|[a-z0-9-]+\.lovableproject\.com)$|^http:\/\/localhost(:\d+)?$/;
+const RL_WINDOW_MS = 10 * 60_000;
+const RL_MAX = 40;
+
+function abuseGuard(req: Request): Response | null {
+  const origin = req.headers.get("origin") || "";
+  if (!ALLOWED_ORIGIN.test(origin)) return json({ error: "Nicht erlaubt" }, 403);
+  const ip = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const now = Date.now();
+  // @ts-ignore globalThis cache
+  const store: Map<string, number[]> = (globalThis.__kiRateStore ||= new Map());
+  const hits = (store.get(ip) || []).filter((t: number) => now - t < RL_WINDOW_MS);
+  if (hits.length >= RL_MAX) return json({ error: "Zu viele Anfragen. Bitte später erneut versuchen." }, 429);
+  hits.push(now);
+  store.set(ip, hits);
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const blocked = abuseGuard(req);
+  if (blocked) return blocked;
+  if (Number(req.headers.get("content-length") || 0) > 200_000) return json({ error: "Anfrage zu gross" }, 413);
 
   try {
     const body = await req.json();

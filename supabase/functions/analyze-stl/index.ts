@@ -136,8 +136,28 @@ function overhangShare(tris: Float32Array, up: [number, number, number], thresho
 }
 
 
+const ALLOWED_ORIGIN = /^https:\/\/((www\.)?3dmuscio\.com|[a-z0-9-]+\.lovable\.app|[a-z0-9-]+\.lovableproject\.com)$|^http:\/\/localhost(:\d+)?$/;
+const RL_WINDOW_MS = 10 * 60_000;
+const RL_MAX = 20;
+
+function abuseGuard(req: Request): Response | null {
+  const origin = req.headers.get("origin") || "";
+  if (!ALLOWED_ORIGIN.test(origin)) return json({ error: "Nicht erlaubt" }, 403);
+  const ip = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  const now = Date.now();
+  // @ts-ignore globalThis cache
+  const store: Map<string, number[]> = (globalThis.__stlRateStore ||= new Map());
+  const hits = (store.get(ip) || []).filter((t: number) => now - t < RL_WINDOW_MS);
+  if (hits.length >= RL_MAX) return json({ error: "Zu viele Analysen. Bitte später erneut versuchen." }, 429);
+  hits.push(now);
+  store.set(ip, hits);
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const blocked = abuseGuard(req);
+  if (blocked) return blocked;
 
   try {
     // Zu grosse Requests gar nicht erst in den Speicher laden
