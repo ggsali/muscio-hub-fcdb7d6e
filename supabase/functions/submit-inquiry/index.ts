@@ -6,19 +6,63 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function esc(v: unknown) {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function str(v: unknown, max: number): string {
+  return typeof v === "string" ? v.trim().slice(0, max) : "";
+}
+
+const RATE_WINDOW_MS = 10 * 60_000;
+const RATE_MAX = 5;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const {
-      name, email, telefon, betreff, nachricht,
-      strasse, plz, ort, land,
-      attachments,
-      ki_beratung_zusammenfassung,
-      ki_empfohlenes_material,
-    } = await req.json();
+    // Best-effort Schutz vor Mail-Flooding pro IP
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+    const now = Date.now();
+    // @ts-ignore globalThis cache
+    const store: Map<string, number[]> = (globalThis.__inquiryRateStore ||= new Map());
+    const hits = (store.get(ip) || []).filter((t: number) => now - t < RATE_WINDOW_MS);
+    if (hits.length >= RATE_MAX) {
+      return new Response(JSON.stringify({ error: "Zu viele Anfragen. Bitte später erneut versuchen." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    hits.push(now);
+    store.set(ip, hits);
+
+    const raw = await req.json().catch(() => ({}));
+    const name = str(raw?.name, 120);
+    const email = str(raw?.email, 255).toLowerCase();
+    const telefon = str(raw?.telefon, 40);
+    const betreff = str(raw?.betreff, 200);
+    const nachricht = str(raw?.nachricht, 5000);
+    const strasse = str(raw?.strasse, 200);
+    const plz = str(raw?.plz, 20);
+    const ort = str(raw?.ort, 120);
+    const land = str(raw?.land, 80);
+    const attachments = Array.isArray(raw?.attachments) ? raw.attachments.slice(0, 20) : null;
+    const ki_beratung_zusammenfassung = str(raw?.ki_beratung_zusammenfassung, 5000);
+    const ki_empfohlenes_material = str(raw?.ki_empfohlenes_material, 200);
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: "Ungültige E-Mail-Adresse." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!name || !email || !nachricht) {
       return new Response(JSON.stringify({ error: "Name, E-Mail und Nachricht sind erforderlich." }), {
@@ -60,17 +104,8 @@ Deno.serve(async (req) => {
       }).select("id").single();
 
       if (newCustomer) customerId = newCustomer.id;
-    } else if (customerId && (strasse || plz || ort)) {
-      // Adresse im bestehenden Kundenprofil ergänzen falls noch leer
-      if (!existingCustomer?.strasse && strasse) {
-        await supabase.from("customers").update({
-          strasse: strasse || null,
-          plz: plz || null,
-          ort: ort || null,
-          land: land || "Schweiz",
-        }).eq("id", customerId);
-      }
     }
+    // Bestehende Kundendaten werden bewusst nicht durch öffentliche Anfragen verändert.
 
     // Anfrage speichern
     const { data: insertedInquiry, error } = await supabase
@@ -99,7 +134,7 @@ Deno.serve(async (req) => {
       await resend.emails.send({
         from: "3DMuscio <noreply@3dmuscio.com>",
         to: ["anfrage@3dmuscio.com"],
-        subject: `🔔 Neue Anfrage von ${name}${betreff ? ` – ${betreff}` : ""}`,
+        subject: `🔔 Neue Anfrage von ${name.replace(/[\r\n]/g, " ")}${betreff ? ` – ${betreff.replace(/[\r\n]/g, " ")}` : ""}`,
         html: `
           <div style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; color: #111827; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
             <div style="background: #FF5A00; padding: 24px; text-align: center;">
@@ -107,11 +142,11 @@ Deno.serve(async (req) => {
             </div>
             <div style="padding: 24px;">
               <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
-                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; width: 120px;">Name</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${name || "–"}</td></tr>
-                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">E-Mail</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${email || "–"}</td></tr>
-                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Telefon</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${telefon || "–"}</td></tr>
-                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Betreff</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${betreff || "–"}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Nachricht</td><td style="padding: 8px 0;">${nachricht || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600; width: 120px;">Name</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${esc(name) || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">E-Mail</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${esc(email) || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Telefon</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${esc(telefon) || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Betreff</td><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${esc(betreff) || "–"}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Nachricht</td><td style="padding: 8px 0; white-space: pre-wrap;">${esc(nachricht) || "–"}</td></tr>
               </table>
               <div style="text-align: center;">
                 <a href="https://muscio-hub.lovable.app/admin/anfragen" style="display: inline-block; background: #FF5A00; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 500;">Anfrage im Admin öffnen →</a>
@@ -139,7 +174,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: "Interner Fehler.", detail: String(err) }), {
+    return new Response(JSON.stringify({ error: "Interner Fehler." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

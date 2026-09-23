@@ -122,7 +122,8 @@ Deno.serve(async (req) => {
           customerId = existing.id
           const { error: updErr } = await admin.from('customers').update(fields).eq('id', customerId)
           if (updErr) {
-            return new Response(JSON.stringify({ error: updErr.message }), {
+            console.error('complete-customer-profile update error:', updErr.message)
+            return new Response(JSON.stringify({ error: 'Speichern fehlgeschlagen' }), {
               status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             })
           }
@@ -131,7 +132,8 @@ Deno.serve(async (req) => {
           const { data: created, error: insErr } = await admin
             .from('customers').insert(insertPayload).select('id').single()
           if (insErr || !created) {
-            return new Response(JSON.stringify({ error: insErr?.message || 'Anlegen fehlgeschlagen' }), {
+            if (insErr) console.error('complete-customer-profile insert error:', insErr.message)
+            return new Response(JSON.stringify({ error: 'Anlegen fehlgeschlagen' }), {
               status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             })
           }
@@ -146,7 +148,8 @@ Deno.serve(async (req) => {
         const { error: updErr } = await admin
           .from('customers').update(fields).eq('id', tok.customer_id)
         if (updErr) {
-          return new Response(JSON.stringify({ error: updErr.message }), {
+          console.error('complete-customer-profile update error:', updErr.message)
+          return new Response(JSON.stringify({ error: 'Speichern fehlgeschlagen' }), {
             status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           })
         }
@@ -165,7 +168,8 @@ Deno.serve(async (req) => {
       status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    console.error('complete-customer-profile error:', e)
+    return new Response(JSON.stringify({ error: 'Interner Fehler' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

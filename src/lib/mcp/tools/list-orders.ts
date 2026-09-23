@@ -25,7 +25,8 @@ export default defineTool({
       .order("created_at", { ascending: false })
       .limit(take);
     if (status) query = query.eq("status", status);
-    if (search) query = query.or(`name.ilike.%${search}%,beschreibung.ilike.%${search}%`);
+    const s = search ? String(search).replace(/[,()*%\\:"]/g, " ").trim().slice(0, 100) : "";
+    if (s) query = query.or(`name.ilike.%${s}%,beschreibung.ilike.%${s}%`);
     const { data, error } = await query;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {

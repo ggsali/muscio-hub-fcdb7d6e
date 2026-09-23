@@ -23,8 +23,10 @@ export default defineTool({
       .select("id, name, vorname, firma, email, telefon, strasse, hausnummer, plz, ort, land, aktiv, created_at")
       .order("created_at", { ascending: false })
       .limit(take);
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,firma.ilike.%${search}%,email.ilike.%${search}%`);
+    // PostgREST-Filtersyntax neutralisieren (keine Kommas, Klammern, Wildcards, Punkte-Operatoren)
+    const s = search ? String(search).replace(/[,()*%\\:"]/g, " ").trim().slice(0, 100) : "";
+    if (s) {
+      query = query.or(`name.ilike.%${s}%,firma.ilike.%${s}%,email.ilike.%${s}%`);
     }
     const { data, error } = await query;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };

@@ -77,7 +77,8 @@ var list_orders_default = defineTool({
     const supabase = supabaseForUser(ctx);
     let query = supabase.from("orders").select("id, name, beschreibung, status, datum, umsatz_total, lieferart, tracking_nr, customer_id, created_at").order("created_at", { ascending: false }).limit(take);
     if (status) query = query.eq("status", status);
-    if (search) query = query.or(`name.ilike.%${search}%,beschreibung.ilike.%${search}%`);
+    const s = search ? String(search).replace(/[,()*%\\:"]/g, " ").trim().slice(0, 100) : "";
+    if (s) query = query.or(`name.ilike.%${s}%,beschreibung.ilike.%${s}%`);
     const { data, error } = await query;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
@@ -139,8 +140,9 @@ var search_customers_default = defineTool3({
     const take = Math.min(Math.max(limit ?? 20, 1), 100);
     const supabase = supabaseForUser(ctx);
     let query = supabase.from("customers").select("id, name, vorname, firma, email, telefon, strasse, hausnummer, plz, ort, land, aktiv, created_at").order("created_at", { ascending: false }).limit(take);
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,firma.ilike.%${search}%,email.ilike.%${search}%`);
+    const s = search ? String(search).replace(/[,()*%\\:"]/g, " ").trim().slice(0, 100) : "";
+    if (s) {
+      query = query.or(`name.ilike.%${s}%,firma.ilike.%${s}%,email.ilike.%${s}%`);
     }
     const { data, error } = await query;
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };

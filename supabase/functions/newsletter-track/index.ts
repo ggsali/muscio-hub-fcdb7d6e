@@ -45,7 +45,14 @@ Deno.serve(async (req) => {
   const target = url.searchParams.get("url") ?? "";
 
   if (action === "click") {
-    const safeTarget = /^https?:\/\//i.test(target) ? target : FALLBACK_URL;
+    // Nur Weiterleitungen auf eigene Domains erlauben (kein Open Redirect)
+    let safeTarget = FALLBACK_URL;
+    try {
+      const parsed = new URL(target);
+      const host = parsed.hostname.toLowerCase();
+      const allowed = host === "3dmuscio.com" || host.endsWith(".3dmuscio.com");
+      if (parsed.protocol === "https:" && allowed) safeTarget = parsed.toString();
+    } catch { /* ungültige URL -> Fallback */ }
     try {
       if (UUID_RE.test(id)) {
         const db = admin();

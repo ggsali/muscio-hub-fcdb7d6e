@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       if (ok) sent++;
       else {
         failed.push(r.email);
-        console.error("Resend Fehler für", r.email, error);
+        console.error("Resend Fehler für einen Empfänger:", error);
       }
 
       if (rec?.id) {

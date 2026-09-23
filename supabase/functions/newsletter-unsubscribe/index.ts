@@ -37,10 +37,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Wildcards escapen, damit nur exakt diese (verifizierte) Adresse getroffen wird
+    const exactPattern = email.replace(/[\\%_]/g, (c) => `\\${c}`);
     const { error } = await admin
       .from("customers")
       .update({ newsletter_aktiv: false })
-      .ilike("email", email);
+      .ilike("email", exactPattern);
 
     if (error) {
       console.error("Abmeldung fehlgeschlagen:", error);

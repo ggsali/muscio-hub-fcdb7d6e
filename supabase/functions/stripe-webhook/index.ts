@@ -143,7 +143,7 @@ serve(async (req) => {
               },
             });
             if (mailErr) console.error("[stripe-webhook] confirmation email failed:", mailErr);
-            else console.log(`[stripe-webhook] confirmation email queued for ${customer.email}`);
+            else console.log(`[stripe-webhook] confirmation email queued for session ${session.id}`);
           }
         }
       } catch (emailErr) {
