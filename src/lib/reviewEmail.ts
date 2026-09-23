@@ -37,10 +37,14 @@ export async function loadReviewMailSettings(): Promise<ReviewMailSettings> {
     .in("key", ["google_review_url", "review_email_subject", "review_email_body", "review_auto_send"]);
   const map: Record<string, string> = {};
   for (const row of data || []) map[(row as any).key] = (row as any).value ?? "";
+  const storedBody = map.review_email_body || "";
+  // Guard against a wrong template in the DB (e.g. the shipping/tracking mail
+  // was accidentally saved under review_email_body): fall back to the default.
+  const looksLikeShippingMail = /sendung|tracking/i.test(storedBody);
   return {
     reviewUrl: map.google_review_url || "",
     subject: map.review_email_subject || REVIEW_DEFAULT_SUBJECT,
-    bodyTemplate: map.review_email_body || buildReviewBody("{{name}}", "{{review_url}}"),
+    bodyTemplate: storedBody && !looksLikeShippingMail ? storedBody : buildReviewBody("{{name}}", "{{review_url}}"),
     autoSend: map.review_auto_send !== "false",
   };
 }
@@ -81,6 +85,15 @@ export async function sendReviewRequestForOrder(
 
   const existing = await getReviewRequestLog(orderId);
   if (opts.auto && existing?.status === "review_request") return { sent: false, reason: "already_sent" };
+
+  if (!settings.reviewUrl) {
+    await supabase.from("order_status_log").insert({
+      order_id: orderId,
+      status: "review_request_failed",
+      notiz: "Kein Google-Rezensions-Link in den Einstellungen hinterlegt",
+    });
+    return { sent: false, reason: "no_review_url" };
+  }
 
   if (!customerId) return { sent: false, reason: "no_customer" };
   const { data: cust } = await supabase
