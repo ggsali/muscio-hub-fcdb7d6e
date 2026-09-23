@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
 
   // POST /project-upload/presign → get a presigned upload URL for direct client upload
   if (req.method === "POST" && path[1] === "presign") {
-    const { token, filename, contentType } = await req.json();
+    const { token, filename, fileSize } = await req.json();
 
     if (!token || !filename) {
       return new Response(JSON.stringify({ error: "Fehlende Parameter" }), {
@@ -55,6 +55,25 @@ Deno.serve(async (req) => {
     const safeName = String(filename).replace(/[^a-zA-Z0-9._\-]/g, "_").replace(/^\.+/, "_").slice(0, 200);
     if (!safeName || safeName === "_") {
       return new Response(JSON.stringify({ error: "Ungültiger Dateiname" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Dateityp- und Grössenprüfung
+    const ALLOWED_EXT = new Set([
+      "stl", "3mf", "obj", "step", "stp", "iges", "igs", "f3d", "fbx", "ply", "amf", "gcode",
+      "zip", "7z", "rar", "pdf", "png", "jpg", "jpeg", "webp", "heic", "gif", "svg", "dxf", "dwg", "txt",
+    ]);
+    const ext = safeName.includes(".") ? safeName.split(".").pop()!.toLowerCase() : "";
+    if (!ALLOWED_EXT.has(ext)) {
+      return new Response(JSON.stringify({ error: "Dateityp nicht erlaubt" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const MAX_BYTES = 5 * 1024 * 1024 * 1024; // 5 GB
+    const sizeNum = Number(fileSize);
+    if (!Number.isFinite(sizeNum) || sizeNum <= 0 || sizeNum > MAX_BYTES) {
+      return new Response(JSON.stringify({ error: "Datei ist zu gross oder Grösse unbekannt (max. 5 GB)" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

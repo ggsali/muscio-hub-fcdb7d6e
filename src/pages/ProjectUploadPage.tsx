@@ -75,7 +75,7 @@ export default function ProjectUploadPage() {
       const presignRes = await fetch(`${EDGE_URL}/presign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, filename: file.name, contentType: file.type }),
+        body: JSON.stringify({ token, filename: file.name, contentType: file.type, fileSize: file.size }),
       });
       const presignData = await presignRes.json();
 

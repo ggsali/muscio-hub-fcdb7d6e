@@ -57,19 +57,24 @@ export default function FilamentEtikettenPage() {
 
     const selected = sorted.filter(s => selectedSpools.has(s.id));
 
+    const esc = (v: unknown) => String(v ?? "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
     const etikettenHtml = selected.map(spool => {
       const t = typeMap[spool.filament_type_id];
-      const canvas = document.querySelector(`[data-spool="${spool.id}"] canvas`) as HTMLCanvasElement | null;
+      const canvas = document.querySelector(`[data-spool="${CSS.escape(String(spool.id))}"] canvas`) as HTMLCanvasElement | null;
       const qrDataUrl = canvas ? canvas.toDataURL() : "";
+      const safeQr = qrDataUrl.startsWith("data:image/png;base64,") ? qrDataUrl : "";
 
       return `
         <div class="etikett">
-          ${qrDataUrl ? `<img src="${qrDataUrl}" width="91" height="91" />` : ""}
+          ${safeQr ? `<img src="${safeQr}" width="91" height="91" />` : ""}
           <div class="text">
-            <div class="material">${t ? t.material : "?"}</div>
-            <div class="farbe">${t ? t.farbe : ""}</div>
-            <div class="code">${spool.spool_code}</div>
-            <div class="gewicht">${spool.gewicht_g}g</div>
+            <div class="material">${t ? esc(t.material) : "?"}</div>
+            <div class="farbe">${t ? esc(t.farbe) : ""}</div>
+            <div class="code">${esc(spool.spool_code)}</div>
+            <div class="gewicht">${esc(spool.gewicht_g)}g</div>
           </div>
         </div>
       `;

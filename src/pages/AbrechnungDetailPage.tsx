@@ -82,10 +82,12 @@ export default function AbrechnungDetailPage() {
   function exportCsv() {
     if (!abr) return;
     const head = ["Datum", "Typ", "Beschreibung", "Betrag CHF"];
+    // Formel-Injection verhindern: führende = + - @ Tab CR neutralisieren
+    const safeCell = (v: string) => (/^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
     const lines = positionen.map(p => [
       p.datum || "",
       p.typ,
-      `"${(p.beschreibung || "").replace(/"/g, '""')}"`,
+      `"${safeCell(p.beschreibung || "").replace(/"/g, '""')}"`,
       (p.typ === "ausgabe" ? "-" : "") + Number(p.betrag).toFixed(2),
     ].join(";"));
     const csv = [head.join(";"), ...lines, "", `Einnahmen;;;${Number(abr.einnahmen_total).toFixed(2)}`,
