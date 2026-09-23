@@ -1939,9 +1939,6 @@ export default function AuftragDetailPage() {
                       <StatusBadge status={status} />
                     </span>
                   </div>
-                  <button onClick={() => setActiveTab("Status & Versand")} className="text-xs text-primary hover:underline">
-                    Workflow öffnen →
-                  </button>
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-xs text-muted-foreground">Nächste Aktion</p>
@@ -1957,6 +1954,21 @@ export default function AuftragDetailPage() {
               </div>
             );
           })()}
+
+          {/* 2b. Workflow inline */}
+          {!isNew && (
+            <OrderStatusWorkflow
+              orderId={id!}
+              currentStatus={status}
+              parts={parts.map(p => ({ status: p.status }))}
+              trackingNr={trackingNr}
+              source={source}
+              lieferart={lieferart}
+              onStatusChange={setStatus}
+              onTrackingNrChange={setTrackingNr}
+            />
+          )}
+
 
           {/* 3. Kundendaten */}
           {!isNew && customerId && (() => {
@@ -3060,7 +3072,10 @@ export default function AuftragDetailPage() {
             </Button>
           </div>
 
-          <OrderActivityLog orderId={id!} />
+          <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+            <h3 className="font-semibold text-sm">Aktivitätsverlauf</h3>
+            <OrderActivityLog orderId={id!} />
+          </div>
         </div>
       )}
 
