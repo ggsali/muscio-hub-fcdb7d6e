@@ -2,14 +2,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const REVIEW_DEFAULT_SUBJECT = "Vielen Dank für Ihren Auftrag – kurze Bitte";
 
-export function buildReviewBody(name: string) {
+export function buildReviewBody(name: string, reviewUrl = "") {
+  const linkLine = reviewUrl
+    ? `👉 ${reviewUrl}`
+    : `👉 [Google Rezension schreiben]`;
+
   return `Guten Tag ${name || ""},
 
 vielen Dank für Ihren Auftrag bei 3DMuscio – es war uns eine Freude, für Sie zu drucken!
 
 Falls Sie einen Moment Zeit haben, würden wir uns sehr über eine kurze Google-Rezension freuen. Ihr Feedback hilft uns sehr und dauert nur 1–2 Minuten:
 
-👉 [Google Rezension schreiben]
+${linkLine}
 
 Herzlichen Dank und bis zum nächsten Mal!
 
@@ -36,16 +40,17 @@ export async function loadReviewMailSettings(): Promise<ReviewMailSettings> {
   return {
     reviewUrl: map.google_review_url || "",
     subject: map.review_email_subject || REVIEW_DEFAULT_SUBJECT,
-    bodyTemplate: map.review_email_body || buildReviewBody("{{name}}"),
+    bodyTemplate: map.review_email_body || buildReviewBody("{{name}}", "{{review_url}}"),
     autoSend: map.review_auto_send !== "false",
   };
 }
 
-/** Fills {{name}} / {{firma}} placeholders in the template. */
-export function fillReviewTemplate(tpl: string, vars: { name?: string; firma?: string }) {
+/** Fills {{name}} / {{firma}} / {{review_url}} placeholders in the template. */
+export function fillReviewTemplate(tpl: string, vars: { name?: string; firma?: string; reviewUrl?: string }) {
   return tpl
     .replace(/\{\{\s*name\s*\}\}/g, vars.name || "")
-    .replace(/\{\{\s*firma\s*\}\}/g, vars.firma || "");
+    .replace(/\{\{\s*firma\s*\}\}/g, vars.firma || "")
+    .replace(/\{\{\s*review_url\s*\}\}/g, vars.reviewUrl || "");
 }
 
 /** Returns the timestamp of the last successful review request for an order, or null. */
@@ -94,7 +99,7 @@ export async function sendReviewRequestForOrder(
     return { sent: false, reason: "no_email" };
   }
 
-  const body = fillReviewTemplate(settings.bodyTemplate, { name, firma: (cust as any)?.firma || "" });
+  const body = fillReviewTemplate(settings.bodyTemplate, { name, firma: (cust as any)?.firma || "", reviewUrl: settings.reviewUrl });
 
   const { data, error } = await supabase.functions.invoke("send-review-request", {
     body: {
