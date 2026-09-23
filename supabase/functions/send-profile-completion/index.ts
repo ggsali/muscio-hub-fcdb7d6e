@@ -101,7 +101,9 @@ Deno.serve(async (req) => {
     }
 
     // E-Mail direkt via Resend versenden
-    const kundenName = displayName || 'Kunde'
+    const kundenName = String(displayName || 'Kunde')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
     const { error: mailErr } = await resend.emails.send({
       from: '3DMuscio <noreply@3dmuscio.com>',
       to: [customer.email!],
