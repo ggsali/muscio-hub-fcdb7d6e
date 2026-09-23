@@ -1955,6 +1955,21 @@ export default function AuftragDetailPage() {
             );
           })()}
 
+          {/* 2b. Workflow inline */}
+          {!isNew && (
+            <OrderStatusWorkflow
+              orderId={id!}
+              currentStatus={status}
+              parts={parts.map(p => ({ status: p.status }))}
+              trackingNr={trackingNr}
+              source={source}
+              lieferart={lieferart}
+              onStatusChange={setStatus}
+              onTrackingNrChange={setTrackingNr}
+            />
+          )}
+
+
           {/* 3. Kundendaten */}
           {!isNew && customerId && (() => {
             const c = customers.find(cc => cc.id === customerId);
