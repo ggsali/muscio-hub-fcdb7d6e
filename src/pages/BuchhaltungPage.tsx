@@ -349,25 +349,105 @@ export default function BuchhaltungPage() {
     const [{ default: jsPDF }, autoTableMod] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
     const autoTable = (autoTableMod as unknown as { default: (doc: unknown, opts: unknown) => void }).default;
     const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("Einnahmen-/Ausgabenrechnung", 14, 18);
-    doc.setFontSize(10);
-    doc.text("3DMuscio – Jorim Moos, 8734 Eschlikon TG", 14, 25);
-    doc.text(`Geschäftsjahr ${jahr}`, 14, 31);
-    const body = rekapRows().slice(1).map(r => [
-      String(r[0]),
-      typeof r[1] === "number" ? fmtCHF(r[1]) : "",
-      typeof r[2] === "number" ? fmtCHF(r[2]) : "",
-    ]);
+    const header = () => {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text("3DMuscio, Jorim Moos, Eschlikon", 14, 18);
+    };
+
+    // Deckblatt
+    doc.setFontSize(18);
+    doc.text(`Einnahmen- / Ausgabenrechnung ${jahr}`, 14, 30);
+    doc.setFontSize(11);
+    doc.text("3DMuscio, Jorim Moos", 14, 44);
+    doc.text("Eschlikon TG", 14, 51);
+
+    // Rekapitulation: Beträge aus derselben Datenbasis wie im Excel-Export.
+    doc.addPage();
+    header();
+    doc.setFontSize(15);
+    doc.text("Rekapitulation", 14, 29);
+    const rekapData = rekapRows().slice(1);
+    const rekapPositionen = [
+      ["Einnahmen", "Total Einnahmen"],
+      ["Total Einnahmen", "Total Einnahmen"],
+      ["Div. Aufwände", "Div. Aufwände"],
+      ["Personalaufwand", "Personalaufwand"],
+      ["Raumaufwand", "Miete / Raumaufwand"],
+      ["Unterhalt", "Unterhalt & Fahrzeug"],
+      ["Versicherungen", "Versicherungen & Gebühren"],
+      ["Büro- und Verwaltungsaufwand", "Büro & Verwaltungsaufwand"],
+      ["Abschreibungen", "Abschreibungen"],
+      ["Bruttogewinn I", "Bruttogewinn I"],
+      ["Unternehmensergebnis", "UNTERNEHMENSERGEBNIS"],
+    ];
+    const rekapBody = rekapPositionen.map(([label, source]) => {
+      const row = rekapData.find(r => r[0] === source);
+      return [label, typeof row?.[1] === "number" ? fmtCHF(row[1]) : "", typeof row?.[2] === "number" ? fmtCHF(row[2]) : ""];
+    });
     autoTable(doc, {
-      startY: 38,
-      head: [["Position", String(jahr), String(jahr - 1)]],
-      body,
-      styles: { fontSize: 9, halign: "right" },
+      startY: 36,
+      head: [["Erfolgsrechnung vom 01. Januar bis 31. Dezember", String(jahr), String(jahr - 1)]],
+      body: rekapBody,
+      styles: { fontSize: 9, halign: "right", cellPadding: 3 },
       columnStyles: { 0: { halign: "left" } },
       headStyles: { fillColor: [30, 30, 30] },
+      didParseCell: (data: { section: string; row: { index: number }; cell: { styles: { fontStyle: string } } }) => {
+        if (data.section === "body" && [1, 9, 10].includes(data.row.index)) data.cell.styles.fontStyle = "bold";
+      },
     });
-    doc.save(`EAR_Rekapitulation_${jahr}.pdf`);
+
+    const kategorieLabels: Record<Kategorie, string> = {
+      einnahmen: "Einnahmen",
+      div_aufwaende: "Div. Aufwände",
+      personalaufwand: "Personalaufwand",
+      raumaufwand: "Raumaufwand",
+      unterhalt: "Unterhalt und Reparaturen",
+      versicherungen: "Versicherungen",
+      buero: "Büro- und Verwaltungsaufwand",
+      abschreibungen: "Abschreibungen",
+    };
+    for (const { key } of KATEGORIEN) {
+      doc.addPage();
+      header();
+      doc.setFontSize(15);
+      doc.text(kategorieLabels[key], 14, 29);
+      const rows = buchungen
+        .filter(b => b.kategorie === key && b.datum?.startsWith(String(jahr)))
+        .sort((a, b) => (a.datum ?? "").localeCompare(b.datum ?? ""));
+      let saldo = 0;
+      let totalEinnahmen = 0;
+      let totalAusgaben = 0;
+      const body = rows.map(b => {
+        const einnahme = key === "einnahmen" ? n(b.einnahmen) : 0;
+        const ausgabe = key === "einnahmen" ? 0 : n(b.ausgaben);
+        totalEinnahmen += einnahme;
+        totalAusgaben += ausgabe;
+        saldo += einnahme - ausgabe;
+        const date = b.datum?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return [date ? `${date[3]}.${date[2]}.${date[1].slice(2)}` : "", b.text ?? "", b.beleg ?? "",
+          key === "einnahmen" ? fmtCHF(einnahme) : "",
+          key === "einnahmen" ? "" : fmtCHF(ausgabe), fmtCHF(saldo)];
+      });
+      body.push(["TOTAL:", "", "", fmtCHF(totalEinnahmen), fmtCHF(totalAusgaben), fmtCHF(saldo)]);
+      autoTable(doc, {
+        startY: 36,
+        head: [["Datum", "Text", "Beleg", "Einnahmen", "Ausgaben", "Saldo"]],
+        body,
+        margin: { left: 14, right: 14 },
+        styles: { fontSize: 8, cellPadding: 2, overflow: "linebreak" },
+        columnStyles: {
+          0: { cellWidth: 21 }, 1: { cellWidth: 62 }, 2: { cellWidth: 20 },
+          3: { cellWidth: 26, halign: "right" }, 4: { cellWidth: 26, halign: "right" },
+          5: { cellWidth: 27, halign: "right" },
+        },
+        headStyles: { fillColor: [30, 30, 30] },
+        didParseCell: (data: { section: string; row: { index: number }; cell: { styles: { fontStyle: string } } }) => {
+          if (data.section === "body" && data.row.index === body.length - 1) data.cell.styles.fontStyle = "bold";
+        },
+      });
+    }
+    doc.save(`EAR_${jahr}_3DMuscio.pdf`);
     toast.success("PDF erstellt");
   };
 
