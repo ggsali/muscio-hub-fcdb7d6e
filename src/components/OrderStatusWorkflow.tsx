@@ -61,7 +61,7 @@ const STATUS_TO_TEMPLATE: Record<string, string> = {
   "Im Druck": "im_druck",
   "Qualitätsprüfung": "qualitaetspruefung",
   "Versandt": "versandt",
-  "Abgeschlossen": "geliefert",
+  // "Abgeschlossen" removed — the Bewertungsmail covers this transition
 };
 
 interface LogEntry {
