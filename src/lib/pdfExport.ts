@@ -73,6 +73,8 @@ interface OrderExportData {
   versandkosten?: number;
   paket_groesse?: string;
   lieferart?: string;
+  verpackungskosten?: number;
+  verpackungs_beschreibung?: string;
 }
 
 const BLACK = [30, 30, 30] as [number, number, number];
@@ -272,11 +274,13 @@ export async function exportOrderPDF(data: OrderExportData) {
   }, 0);
   const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
   const versandLabel = `PostPac Priority${data.paket_groesse ? ` (${PAKET_BEZ[data.paket_groesse] ?? data.paket_groesse})` : ""}`;
+  const verpBetrag = Math.max(0, Number(data.verpackungskosten) || 0);
+  const verpLabel = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
   const effectiveTotal = data.withDetails
-    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag
+    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag + verpBetrag
     : data.umsatz_total;
   const rabattProzent = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const rabattBetrag = (effectiveTotal - versandBetrag) * (rabattProzent / 100);
+  const rabattBetrag = (effectiveTotal - versandBetrag - verpBetrag) * (rabattProzent / 100);
   const netTotal = effectiveTotal - rabattBetrag;
 
   if (data.withDetails) {
@@ -432,6 +436,17 @@ export async function exportOrderPDF(data: OrderExportData) {
         { content: "CHF 0.00", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
     }
+    if (verpBetrag > 0) {
+      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 1 : 0) + (versandBetrag > 0 || data.lieferart === "abholung" ? 1 : 0) + 1).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: verpLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: "", styles: { fillColor: BLACK } },
+        { content: "", styles: { fillColor: BLACK } },
+        { content: formatCHF(verpBetrag), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
 
     autoTable(doc, {
       startY: tableY,
@@ -499,6 +514,16 @@ export async function exportOrderPDF(data: OrderExportData) {
         "CHF 0.00",
       ]);
     }
+    if (verpBetrag > 0) {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        verpLabel,
+        "—",
+        "1×",
+        formatCHF(verpBetrag),
+        formatCHF(verpBetrag),
+      ]);
+    }
     autoTable(doc, {
       startY: tableY,
       margin: { left: margin, right: margin },
@@ -552,7 +577,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   sumY += 6;
 
   // Zeilen
-  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0) - versandBetrag;
+  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0) - versandBetrag - verpBetrag;
   const sumRows: [string, string][] = [
     ["Zwischensumme", formatCHF(partsSubtotal)],
   ];
@@ -561,6 +586,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   }
   if (versandBetrag > 0) {
     sumRows.push([versandLabel, formatCHF(versandBetrag)]);
+  }
+  if (verpBetrag > 0) {
+    sumRows.push([verpLabel, formatCHF(verpBetrag)]);
   }
   if (rabattBetrag > 0) {
     sumRows.push([`Rabatt (${rabattProzent}%)`, `- ${formatCHF(rabattBetrag)}`]);
