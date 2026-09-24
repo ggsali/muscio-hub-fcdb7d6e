@@ -367,14 +367,16 @@ export async function exportAkontoPDF(data: AkontoExportData) {
   const descLines = rawDesc.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart, data.verpackungskosten, data.verpackungs_beschreibung);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
   const versandBetragA = Math.max(0, Number(data.versandkosten) || 0);
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragA;
+  const verpBetragA = Math.max(0, Number(data.verpackungskosten) || 0);
+  const verpLabelA = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragA - verpBetragA;
   const sumRows: [string, string][] = [
     ["Teile/Leistungen", formatCHF(partsSubtotal)],
   ];
@@ -383,6 +385,9 @@ export async function exportAkontoPDF(data: AkontoExportData) {
   }
   if (versandBetragA > 0) {
     sumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragA)]);
+  }
+  if (verpBetragA > 0) {
+    sumRows.push([verpLabelA, formatCHF(verpBetragA)]);
   }
   sumRows.push(["Gesamtbetrag (Referenz)", formatCHF(data.umsatz_total)]);
   sumRows.push([`Akontozahlung (${data.akontoPercent}%)`, formatCHF(data.akontoBetrag)]);
@@ -459,14 +464,16 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
   const descLines = rawDesc2.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart, data.verpackungskosten, data.verpackungs_beschreibung);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
   const versandBetragR = Math.max(0, Number(data.versandkosten) || 0);
-  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragR;
+  const verpBetragR = Math.max(0, Number(data.verpackungskosten) || 0);
+  const verpLabelR = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
+  const partsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragR - verpBetragR;
   const sumRows: [string, string][] = [
     ["Teile/Leistungen", formatCHF(partsSubtotal)],
   ];
@@ -475,6 +482,9 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
   }
   if (versandBetragR > 0) {
     sumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragR)]);
+  }
+  if (verpBetragR > 0) {
+    sumRows.push([verpLabelR, formatCHF(verpBetragR)]);
   }
   sumRows.push(["Gesamtbetrag", formatCHF(data.umsatz_total)]);
   sumRows.push([`Abzüglich Akonto (${data.akontoPercent}%)`, `- ${formatCHF(data.akontoBetrag)}`]);
