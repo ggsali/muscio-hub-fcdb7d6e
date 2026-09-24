@@ -52,6 +52,8 @@ interface OfferExportData {
   versandkosten?: number;
   paket_groesse?: string;
   lieferart?: string;
+  verpackungskosten?: number;
+  verpackungs_beschreibung?: string;
 }
 
 const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
@@ -255,6 +257,8 @@ export async function exportOfferPDF(data: OfferExportData) {
   // ── Positionstabelle ────────────────────────────────────────────
   const s = data.settings;
   const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
+  const verpBetrag = Math.max(0, Number(data.verpackungskosten) || 0);
+  const verpLabel = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
 
   // Berechne den effektiven Gesamtbetrag aus den angezeigten Komponenten,
   // damit Zwischensumme/Gesamtbetrag immer mit der Positionstabelle übereinstimmen.
@@ -271,7 +275,7 @@ export async function exportOfferPDF(data: OfferExportData) {
     return sum + ep * p.menge + setupA * s.setup_pauschale + supportTotalOf(p);
   }, 0);
   const effectiveTotal = data.withDetails
-    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag
+    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag + verpBetrag
     : data.umsatz_total;
 
   if (data.withDetails) {
@@ -408,6 +412,16 @@ export async function exportOfferPDF(data: OfferExportData) {
         { content: "CHF 0.00", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
     }
+    if (verpBetrag > 0) {
+      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 1 : 0) + (versandBetragD > 0 || data.lieferart === "abholung" ? 1 : 0) + 1).padStart(2, "0");
+      detailBody.push([
+        { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: verpLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "1×", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: formatCHF(verpBetrag), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(verpBetrag), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
 
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
@@ -451,6 +465,13 @@ export async function exportOfferPDF(data: OfferExportData) {
         "gratis", "CHF 0.00",
       ]);
     }
+    if (verpBetrag > 0) {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        verpLabel, "—", "1×",
+        formatCHF(verpBetrag), formatCHF(verpBetrag),
+      ]);
+    }
     autoTable(doc, {
       startY: 118, margin: { left: margin, right: margin },
       head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
@@ -474,7 +495,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   const sumW = 70;
   const sumX = pageW - margin - sumW;
 
-  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0) - versandBetrag;
+  const partsSubtotal = effectiveTotal - (data.expressKosten ?? 0) - versandBetrag - verpBetrag;
   const offerSumRows: [string, string][] = [["Zwischensumme", formatCHF(partsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     offerSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
@@ -482,8 +503,11 @@ export async function exportOfferPDF(data: OfferExportData) {
   if (versandBetrag > 0) {
     offerSumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetrag)]);
   }
+  if (verpBetrag > 0) {
+    offerSumRows.push([verpLabel, formatCHF(verpBetrag)]);
+  }
   const offerRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const offerRabatt = (effectiveTotal - versandBetrag) * (offerRabattPct / 100);
+  const offerRabatt = (effectiveTotal - versandBetrag - verpBetrag) * (offerRabattPct / 100);
   if (offerRabatt > 0) {
     offerSumRows.push([`Rabatt (${offerRabattPct}%)`, `- ${formatCHF(offerRabatt)}`]);
   }
@@ -590,6 +614,15 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
       "gratis", "CHF 0.00",
     ]);
   }
+  const verpBetragAb = Math.max(0, Number(data.verpackungskosten) || 0);
+  const verpLabelAb = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
+  if (verpBetragAb > 0) {
+    abTableBody.push([
+      String(abTableBody.length + 1).padStart(2, "0"),
+      verpLabelAb, "—", "1×",
+      formatCHF(verpBetragAb), formatCHF(verpBetragAb),
+    ]);
+  }
   autoTable(doc, {
     startY: 118, margin: { left: margin, right: margin },
     head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
@@ -613,7 +646,7 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   const sumX = pageW - margin - sumW;
 
   const versandBetragAb = Math.max(0, Number(data.versandkosten) || 0);
-  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragAb;
+  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragAb - verpBetragAb;
   const abSumRows: [string, string][] = [["Zwischensumme", formatCHF(abPartsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     abSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
@@ -621,8 +654,11 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   if (versandBetragAb > 0) {
     abSumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragAb)]);
   }
+  if (verpBetragAb > 0) {
+    abSumRows.push([verpLabelAb, formatCHF(verpBetragAb)]);
+  }
   const abRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const abRabatt = (data.umsatz_total - versandBetragAb) * (abRabattPct / 100);
+  const abRabatt = (data.umsatz_total - versandBetragAb - verpBetragAb) * (abRabattPct / 100);
   if (abRabatt > 0) {
     abSumRows.push([`Rabatt (${abRabattPct}%)`, `- ${formatCHF(abRabatt)}`]);
   }

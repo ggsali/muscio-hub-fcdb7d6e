@@ -160,6 +160,8 @@ export default function AuftragDetailPage() {
   const [paketGroesse, setPaketGroesse] = useState<string>("");
   const [paketGroesseDraft, setPaketGroesseDraft] = useState<string>("");
   const [versandkosten, setVersandkosten] = useState(0);
+  const [verpackungskosten, setVerpackungskosten] = useState(0);
+  const [verpackungsBeschreibung, setVerpackungsBeschreibung] = useState("");
   // Eingemauerte Offerten-Positionen (Preise zum Zeitpunkt der Offerte)
   const [offerteSnapshot, setOfferteSnapshot] = useState<any | null>(null);
   const [setupDialog, setSetupDialog] = useState<{ idx: number; menge: number } | null>(null);
@@ -391,6 +393,8 @@ export default function AuftragDetailPage() {
           setRabattProzent(Number((o as any).rabatt_prozent) || 0);
           setVersandkosten(Number((o as any).versandkosten) || 0);
           setPaketGroesse((o as any).paket_groesse || "");
+          setVerpackungskosten(Number((o as any).verpackungskosten) || 0);
+          setVerpackungsBeschreibung((o as any).verpackungs_beschreibung || "");
           setOfferteSnapshot((o as any).offerte_snapshot || null);
           setSource((o as any).source || "manual");
           setNotesInternal((o as any).notes_internal || "");
@@ -801,8 +805,8 @@ export default function AuftragDetailPage() {
         const brutto =
           nextParts.reduce((s, p) => s + (p.preis_total || 0), 0) +
           (nextParts.length > 0 ? Math.max(0, Number(expressKosten) || 0) : 0);
-        const neuTotal = brutto - brutto * (pct / 100) + versandkosten;
-        await supabase.from("orders").update({ umsatz_total: neuTotal, versandkosten, paket_groesse: paketGroesse || null }).eq("id", id);
+        const neuTotal = brutto - brutto * (pct / 100) + versandkosten + verpackungskosten;
+        await supabase.from("orders").update({ umsatz_total: neuTotal, versandkosten, paket_groesse: paketGroesse || null, verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung || null }).eq("id", id);
       }
     } catch (err: any) {
       console.error("Fehler beim Speichern der Teilauswahl:", err);
@@ -862,7 +866,7 @@ export default function AuftragDetailPage() {
 
   // Netto = nach Rabatt
   const selectedTotalUmsatz = selectedBruttoUmsatz - selectedRabattBetrag;
-  const totalMitVersand = selectedTotalUmsatz + versandkosten;
+  const totalMitVersand = selectedTotalUmsatz + versandkosten + verpackungskosten;
 
   // Kosten
   const selectedTotalKosten = selectedParts.reduce((s, p) => {
@@ -902,6 +906,8 @@ export default function AuftragDetailPage() {
     settings: activeSettings,
     versandkosten,
     paket_groesse: paketGroesse,
+    verpackungskosten,
+    verpackungs_beschreibung: verpackungsBeschreibung,
     lieferart,
     rabatt_prozent: rabattPct,
     express_kosten: selectedExpressAmount,
@@ -936,6 +942,8 @@ export default function AuftragDetailPage() {
         umsatz_total: Number(snap.umsatz_total) || totalMitVersand,
         versandkosten: Number(snap.versandkosten) || 0,
         paket_groesse: snap.paket_groesse || "",
+        verpackungskosten: Number(snap.verpackungskosten) || 0,
+        verpackungsBeschreibung: snap.verpackungs_beschreibung || "",
         lieferart: snap.lieferart || lieferart,
         rabattProzent: Number(snap.rabatt_prozent) || 0,
         expressKosten: Number(snap.express_kosten) || 0,
@@ -949,6 +957,8 @@ export default function AuftragDetailPage() {
       umsatz_total: totalMitVersand,
       versandkosten,
       paket_groesse: paketGroesse,
+      verpackungskosten,
+      verpackungsBeschreibung,
       lieferart,
       rabattProzent: rabattPct,
       expressKosten: selectedExpressAmount,
@@ -1010,6 +1020,7 @@ export default function AuftragDetailPage() {
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts: base.parts, umsatz_total: base.umsatz_total, kosten_total: selectedTotalKosten,
             versandkosten: base.versandkosten, paket_groesse: base.paket_groesse, lieferart: base.lieferart,
+            verpackungskosten: base.verpackungskosten, verpackungs_beschreibung: base.verpackungsBeschreibung,
             gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
             settings: base.settings || freshSettings, company, returnBase64: true, withDetails,
             expressKosten: base.expressKosten, expressLabel: base.expressLabel,
@@ -1022,6 +1033,7 @@ export default function AuftragDetailPage() {
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts: selectedParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true, withDetails,
             versandkosten, paket_groesse: paketGroesse, lieferart,
+            verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
             expressKosten: selectedExpressAmount, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
@@ -1034,6 +1046,7 @@ export default function AuftragDetailPage() {
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts: selectedParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true,
             versandkosten, paket_groesse: paketGroesse, lieferart,
+            verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
             expressKosten: selectedExpressAmount, expressLabel,
             rabattProzent: rabattPct,
           });
@@ -1128,6 +1141,7 @@ export default function AuftragDetailPage() {
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts: selectedParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag,
         versandkosten, paket_groesse: paketGroesse, lieferart,
+        verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
         settings: activeSettings, company, returnBase64: !download,
         expressKosten: selectedExpressAmount, expressLabel,
       });
@@ -1179,6 +1193,7 @@ export default function AuftragDetailPage() {
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts: selectedParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag, restbetrag,
         versandkosten, paket_groesse: paketGroesse, lieferart,
+        verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
         settings: activeSettings, company, returnBase64: !download,
         expressKosten: selectedExpressAmount, expressLabel,
       });
@@ -1261,6 +1276,8 @@ export default function AuftragDetailPage() {
       umsatz_total: base.umsatz_total,
       versandkosten: base.versandkosten,
       paket_groesse: base.paket_groesse,
+      verpackungskosten: base.verpackungskosten,
+      verpackungs_beschreibung: base.verpackungsBeschreibung,
       lieferart: base.lieferart,
       kosten_total: selectedTotalKosten,
       gewinn_total: selectedTotalGewinn,
@@ -1290,6 +1307,8 @@ export default function AuftragDetailPage() {
       umsatz_total: totalMitVersand,
       versandkosten,
       paket_groesse: paketGroesse,
+      verpackungskosten,
+      verpackungs_beschreibung: verpackungsBeschreibung,
       lieferart,
       settings: activeSettings,
       company,
@@ -1315,6 +1334,8 @@ export default function AuftragDetailPage() {
       umsatz_total: totalMitVersand,
       versandkosten,
       paket_groesse: paketGroesse,
+      verpackungskosten,
+      verpackungs_beschreibung: verpackungsBeschreibung,
       lieferart,
       settings: activeSettings,
       company,
@@ -1360,6 +1381,8 @@ export default function AuftragDetailPage() {
       lieferart,
       versandkosten,
       paket_groesse: paketGroesse || null,
+      verpackungskosten,
+      verpackungs_beschreibung: verpackungsBeschreibung || null,
     };
 
     let orderId = id === "neu" ? null : id;
@@ -2153,6 +2176,29 @@ export default function AuftragDetailPage() {
                     </button>
                   ))}
                 </div>
+                <div className="border-t border-border pt-4 mb-4 space-y-2">
+                  <p className="text-sm font-medium">Verpackung (optional)</p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Beschreibung z.B. Karton, Schaumstoff"
+                      value={verpackungsBeschreibung}
+                      onChange={e => setVerpackungsBeschreibung(e.target.value)}
+                      className="bg-input border-border flex-1 text-sm"
+                    />
+                    <div className="relative w-28">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">CHF</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        placeholder="0.00"
+                        value={verpackungskosten || ""}
+                        onChange={e => setVerpackungskosten(Number(e.target.value) || 0)}
+                        className="bg-input border-border pl-10 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
@@ -2172,12 +2218,14 @@ export default function AuftragDetailPage() {
                       setPaketGroesse(selected.id);
                       setVersandkosten(kosten);
                       setShowVersandModal(false);
-                      const neuesTotal = selectedTotalUmsatz + kosten;
+                      const neuesTotal = selectedTotalUmsatz + kosten + verpackungskosten;
                       if (id && !isNew) {
                         await supabase.from("orders").update({
                           lieferart: "versand",
                           versandkosten: kosten,
                           paket_groesse: selected.id,
+                          verpackungskosten,
+                          verpackungs_beschreibung: verpackungsBeschreibung || null,
                           umsatz_total: neuesTotal,
                         } as any).eq("id", id);
                       }
@@ -2770,6 +2818,9 @@ export default function AuftragDetailPage() {
                   {versandkosten > 0 && (
                     <div className="flex justify-between"><span className="text-muted-foreground">PostPac Priority ({POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})</span><span>{formatCHF(versandkosten)}</span></div>
                   )}
+                  {verpackungskosten > 0 && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">Verpackung{verpackungsBeschreibung ? ` (${verpackungsBeschreibung})` : ""}</span><span>{formatCHF(verpackungskosten)}</span></div>
+                  )}
                   {lieferart === "abholung" && (
                     <div className="flex justify-between"><span className="text-muted-foreground">Lieferart</span><span className="text-success font-medium">🏠 Abholung – kostenlos</span></div>
                   )}
@@ -2929,6 +2980,9 @@ export default function AuftragDetailPage() {
               )}
               {versandkosten > 0 && (
                 <div className="flex justify-between"><span className="text-muted-foreground">PostPac Priority ({POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})</span><span>{formatCHF(versandkosten)}</span></div>
+              )}
+              {verpackungskosten > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Verpackung{verpackungsBeschreibung ? ` (${verpackungsBeschreibung})` : ""}</span><span>{formatCHF(verpackungskosten)}</span></div>
               )}
               {lieferart === "abholung" && (
                 <div className="flex justify-between"><span className="text-muted-foreground">Lieferart</span><span className="text-success font-medium">🏠 Abholung – kostenlos</span></div>
