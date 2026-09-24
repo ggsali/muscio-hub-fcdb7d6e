@@ -47,14 +47,39 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const b64 = String(pdfBase64).includes(",") ? String(pdfBase64).split(",")[1] : String(pdfBase64);
-    const subject = `Rechnung ${rechnungsnummer}${betreff ? ` – ${betreff}` : ""}`;
+    // Nur an einen einzelnen, im System erfassten Kunden senden
+    const recipients = (Array.isArray(to) ? to : [to]).map((e: unknown) => String(e || "").trim().toLowerCase()).filter(Boolean);
+    if (recipients.length !== 1 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(recipients[0])) {
+      return new Response(JSON.stringify({ error: "Ungültiger Empfänger" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    {
+      const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: known } = await db.from("customers").select("id").ilike("email", recipients[0]).limit(1);
+      if (!known || known.length === 0) {
+        return new Response(JSON.stringify({ error: "Empfänger ist kein erfasster Kunde" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    const b64Raw = String(pdfBase64).includes(",") ? String(pdfBase64).split(",")[1] : String(pdfBase64);
+    if (b64Raw.length > 14_000_000 || !b64Raw.startsWith("JVBER")) {
+      return new Response(JSON.stringify({ error: "Anhang muss ein PDF sein (max. 10 MB)" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const b64 = b64Raw;
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const nr = String(rechnungsnummer).replace(/[^\w\-./]/g, "").slice(0, 40);
+    const bt = String(betreff || "").replace(/[\r\n]/g, " ").slice(0, 150);
+    const subject = `Rechnung ${nr}${bt ? ` – ${bt}` : ""}`;
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1f2937;">
-        <h2 style="margin:0 0 12px;">Rechnung ${rechnungsnummer}</h2>
-        <p>Guten Tag ${empfaenger_name || ""},</p>
+        <h2 style="margin:0 0 12px;">Rechnung ${esc(nr)}</h2>
+        <p>Guten Tag ${esc(String(empfaenger_name || "").slice(0, 120))},</p>
         <p>im Anhang finden Sie unsere Rechnung als PDF.</p>
-        ${betreff ? `<p style="color:#6b7280;font-size:13px;">Betreff: ${betreff}</p>` : ""}
+        ${bt ? `<p style="color:#6b7280;font-size:13px;">Betreff: ${esc(bt)}</p>` : ""}
         <p>Bei Fragen sind wir jederzeit gerne für Sie da.</p>
         <p>Freundliche Grüsse<br><strong>3DMuscio</strong></p>
       </div>`;
