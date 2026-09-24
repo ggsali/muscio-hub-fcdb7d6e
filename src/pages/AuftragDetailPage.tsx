@@ -1020,6 +1020,7 @@ export default function AuftragDetailPage() {
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts: base.parts, umsatz_total: base.umsatz_total, kosten_total: selectedTotalKosten,
             versandkosten: base.versandkosten, paket_groesse: base.paket_groesse, lieferart: base.lieferart,
+            verpackungskosten: base.verpackungskosten, verpackungs_beschreibung: base.verpackungsBeschreibung,
             gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
             settings: base.settings || freshSettings, company, returnBase64: true, withDetails,
             expressKosten: base.expressKosten, expressLabel: base.expressLabel,
@@ -1032,6 +1033,7 @@ export default function AuftragDetailPage() {
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts: selectedParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true, withDetails,
             versandkosten, paket_groesse: paketGroesse, lieferart,
+            verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
             expressKosten: selectedExpressAmount, expressLabel,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
@@ -1044,6 +1046,7 @@ export default function AuftragDetailPage() {
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
             parts: selectedParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true,
             versandkosten, paket_groesse: paketGroesse, lieferart,
+            verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
             expressKosten: selectedExpressAmount, expressLabel,
             rabattProzent: rabattPct,
           });
