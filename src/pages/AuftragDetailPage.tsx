@@ -2818,6 +2818,9 @@ export default function AuftragDetailPage() {
                   {versandkosten > 0 && (
                     <div className="flex justify-between"><span className="text-muted-foreground">PostPac Priority ({POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})</span><span>{formatCHF(versandkosten)}</span></div>
                   )}
+                  {verpackungskosten > 0 && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">Verpackung{verpackungsBeschreibung ? ` (${verpackungsBeschreibung})` : ""}</span><span>{formatCHF(verpackungskosten)}</span></div>
+                  )}
                   {lieferart === "abholung" && (
                     <div className="flex justify-between"><span className="text-muted-foreground">Lieferart</span><span className="text-success font-medium">🏠 Abholung – kostenlos</span></div>
                   )}
@@ -2977,6 +2980,9 @@ export default function AuftragDetailPage() {
               )}
               {versandkosten > 0 && (
                 <div className="flex justify-between"><span className="text-muted-foreground">PostPac Priority ({POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})</span><span>{formatCHF(versandkosten)}</span></div>
+              )}
+              {verpackungskosten > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Verpackung{verpackungsBeschreibung ? ` (${verpackungsBeschreibung})` : ""}</span><span>{formatCHF(verpackungskosten)}</span></div>
               )}
               {lieferart === "abholung" && (
                 <div className="flex justify-between"><span className="text-muted-foreground">Lieferart</span><span className="text-success font-medium">🏠 Abholung – kostenlos</span></div>
