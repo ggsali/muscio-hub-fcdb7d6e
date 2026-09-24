@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { sendReviewRequestForOrder } from "@/lib/reviewEmail";
 import {
   CheckCircle2, CheckCircle, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote,
   Settings2, ExternalLink, MessageCircle, FileText, Printer, Search, Package,
@@ -183,55 +184,31 @@ export default function OrderStatusWorkflow({
       } catch (e) { console.error("send-email status failed", e); }
     }
 
-    // Bewertungsmail nur beim Abschluss des GESAMTEN Auftrags: alle Teile fertig.
+    // Bewertungsmail beim Abschluss – gleicher Pfad wie manueller Versand
     if (newStatus === "Abgeschlossen" && allFertig) {
       try {
         const { data: order } = await supabase
           .from("orders")
-          .select("bewertungs_token, customer_id, customers:customer_id(email, vorname, name)")
+          .select("customer_id")
           .eq("id", orderId)
           .single();
-        let token = (order as any)?.bewertungs_token as string | null;
-        if (!token) {
-          token = crypto.randomUUID();
-          await supabase.from("orders").update({ bewertungs_token: token } as any).eq("id", orderId);
+        const customerId = (order as any)?.customer_id ?? null;
+        const result = await sendReviewRequestForOrder(orderId, customerId, { auto: true });
+        if (result.sent) {
+          await supabase
+            .from("orders")
+            .update({ bewertungsmail_gesendet_at: new Date().toISOString() } as any)
+            .eq("id", orderId);
         }
-        const customer = (order as any)?.customers;
-        const customerEmail = customer?.email;
-        const customerName = `${customer?.vorname || ""} ${customer?.name || ""}`.trim();
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "bewertung",
-            recipientEmail: customerEmail,
-            recipientName: customerName,
-            idempotencyKey: `bewertung-${orderId}`,
-            templateData: {
-              name: customerName,
-              orderId,
-              bewertungsLink: `https://3dmuscio.com/bewertung/${token}`,
-            },
-          },
-        });
-        await supabase
-          .from("orders")
-          .update({ bewertungsmail_gesendet_at: new Date().toISOString() } as any)
-          .eq("id", orderId);
-        await (supabase.from as any)("order_status_log").insert({
-          order_id: orderId,
-          status: "bewertungsmail_gesendet",
-          notiz: `📧 Bewertungsmail gesendet an ${customerEmail}`,
-          created_at: new Date().toISOString(),
-        });
-        loadLog?.();
+        await loadLog();
       } catch (e) {
         console.error("bewertung email failed", e);
         await (supabase.from as any)("order_status_log").insert({
           order_id: orderId,
-          status: "Abgeschlossen",
+          status: "review_request_failed",
           notiz: "⚠️ Bewertungsanfrage konnte nicht gesendet werden",
-          created_at: new Date().toISOString(),
         });
-        loadLog?.();
+        await loadLog();
       }
     }
   };
