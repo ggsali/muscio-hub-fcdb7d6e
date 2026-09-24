@@ -44,6 +44,8 @@ Deno.serve(async (req) => {
   const action = url.searchParams.get("a") ?? "open";
   const id = url.searchParams.get("id") ?? "";
   const target = url.searchParams.get("url") ?? "";
+  // Nur signierte Links dürfen Tracking-Daten verändern
+  const validId = UUID_RE.test(id) && verifyTrackSig(id, url.searchParams.get("s"));
 
   if (action === "click") {
     // Nur Weiterleitungen auf eigene Domains erlauben (kein Open Redirect)
@@ -55,7 +57,7 @@ Deno.serve(async (req) => {
       if (parsed.protocol === "https:" && allowed) safeTarget = parsed.toString();
     } catch { /* ungültige URL -> Fallback */ }
     try {
-      if (UUID_RE.test(id)) {
+      if (validId) {
         const db = admin();
         const { data: rec } = await db
           .from("newsletter_empfaenger")
@@ -80,7 +82,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    if (UUID_RE.test(id)) {
+    if (validId) {
       const db = admin();
       const { data: rec } = await db
         .from("newsletter_empfaenger")
