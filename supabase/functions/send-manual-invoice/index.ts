@@ -86,11 +86,11 @@ Deno.serve(async (req) => {
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
-      to: Array.isArray(to) ? to : [to],
+      to: recipients,
       reply_to: REPLY_TO,
       subject,
       html,
-      attachments: [{ filename: pdfFilename || `Rechnung_${rechnungsnummer}.pdf`, content: b64 }],
+      attachments: [{ filename: `${String(pdfFilename || `Rechnung_${nr}`).replace(/[^\w\-.]/g, "_").replace(/\.pdf$/i, "").slice(0, 100)}.pdf`, content: b64 }],
     } as any);
 
     if (error) {
