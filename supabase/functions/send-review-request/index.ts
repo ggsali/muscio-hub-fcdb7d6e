@@ -121,25 +121,50 @@ Deno.serve(async (req) => {
     const denied = await requireAdmin(req, corsHeaders);
     if (denied) return denied;
 
-    const { order_id, subject, body, customer_email, customer_name, review_url } = await req.json();
+    const { order_id, subject, body, customer_name, review_url } = await req.json();
 
-    if (!order_id || !customer_email || !body || !subject) {
+    if (!order_id || !body || !subject) {
       return new Response(
         JSON.stringify({ success: false, error: "Fehlende Felder" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
+    // Empfänger und Link werden serverseitig bestimmt: nur der Kunde des Auftrags,
+    // nur der hinterlegte Google-Link (oder eigene Domain).
+    const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: ord } = await db
+      .from("orders")
+      .select("id, customers:customer_id(email)")
+      .eq("id", String(order_id))
+      .maybeSingle();
+    const customer_email = String((ord as any)?.customers?.email || "").trim();
+    if (!ord || !customer_email) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Keine Kunden-E-Mail für diesen Auftrag" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const { data: urlRow } = await db.from("settings").select("value").eq("key", "google_review_url").maybeSingle();
+    const storedUrl = String((urlRow as any)?.value || "");
+    let safeReviewUrl = storedUrl;
+    try {
+      const u = new URL(String(review_url || storedUrl));
+      const h = u.hostname.toLowerCase();
+      const okHost = h === "3dmuscio.com" || h.endsWith(".3dmuscio.com") || h === "g.page" || h === "maps.app.goo.gl" || /^(www\.|search\.|maps\.)?google\.[a-z.]+$/.test(h);
+      if (u.protocol === "https:" && (okHost || u.toString() === storedUrl)) safeReviewUrl = u.toString();
+    } catch { /* fallback */ }
+
     const html = renderEmail({
-      bodyText: String(body),
-      reviewUrl: String(review_url || ""),
+      bodyText: String(body).slice(0, 5000),
+      reviewUrl: safeReviewUrl,
       heading: "Wie war dein 3D-Druck Erlebnis? ⭐",
     });
 
     const { error } = await resend.emails.send({
       from: "3DMuscio <noreply@3dmuscio.com>",
       to: [customer_email],
-      subject,
+      subject: String(subject).replace(/[\r\n]/g, " ").slice(0, 150),
       html,
     });
 
