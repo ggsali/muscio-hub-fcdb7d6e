@@ -1,5 +1,5 @@
 // Gemeinsames HTML-Template für Newsletter (Versand + Automationen) inkl. Tracking.
-import { unsubToken } from "./newsletter-unsub.ts";
+import { unsubToken, trackSig } from "./newsletter-unsub.ts";
 const SITE_URL = "https://3dmuscio.com";
 const LOGO_URL =
   "https://ukqtjdsjmtxgzhklvqky.supabase.co/storage/v1/object/public/company-assets/logo.jpeg";
@@ -23,7 +23,7 @@ export function isSafeUrl(url: string) {
 /** Baut einen Klick-Tracking-Link (fällt ohne trackId auf die Original-URL zurück). */
 export function trackedUrl(original: string, trackId?: string | null) {
   if (!trackId || !isSafeUrl(original)) return original;
-  return `${trackBase()}?a=click&id=${encodeURIComponent(trackId)}&url=${encodeURIComponent(original)}`;
+  return `${trackBase()}?a=click&id=${encodeURIComponent(trackId)}&s=${trackSig(trackId)}&url=${encodeURIComponent(original)}`;
 }
 
 export function renderNewsletter(opts: {
@@ -72,7 +72,7 @@ export function renderNewsletter(opts: {
   const ctaUrl = trackedUrl(`${SITE_URL}/kalkulator-online`, trackId);
   const unsubUrl = `${SITE_URL}/newsletter/abmelden?email=${encodeURIComponent(email)}&token=${encodeURIComponent(unsubToken(email))}`;
   const pixel = trackId
-    ? `<img src="${esc(`${trackBase()}?a=open&id=${encodeURIComponent(trackId)}`)}" width="1" height="1" alt="" style="display:none;width:1px;height:1px;border:0;" />`
+    ? `<img src="${esc(`${trackBase()}?a=open&id=${encodeURIComponent(trackId)}&s=${trackSig(trackId)}`)}" width="1" height="1" alt="" style="display:none;width:1px;height:1px;border:0;" />`
     : "";
 
   return `<!DOCTYPE html>

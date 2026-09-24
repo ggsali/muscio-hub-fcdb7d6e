@@ -2,6 +2,7 @@
 // GET ?a=open&id=<empfaenger_id>  -> 1x1 GIF + Öffnung speichern
 // GET ?a=click&id=<empfaenger_id>&url=<ziel> -> Klick speichern + 302 Redirect
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { verifyTrackSig } from "../_shared/newsletter-unsub.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
