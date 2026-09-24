@@ -1684,6 +1684,8 @@ export type Database = {
           tracking_zuletzt_geprueft: string | null
           umsatz_total: number | null
           updated_at: string | null
+          verpackungs_beschreibung: string | null
+          verpackungskosten: number | null
           versandkosten: number | null
         }
         Insert: {
@@ -1722,6 +1724,8 @@ export type Database = {
           tracking_zuletzt_geprueft?: string | null
           umsatz_total?: number | null
           updated_at?: string | null
+          verpackungs_beschreibung?: string | null
+          verpackungskosten?: number | null
           versandkosten?: number | null
         }
         Update: {
@@ -1760,6 +1764,8 @@ export type Database = {
           tracking_zuletzt_geprueft?: string | null
           umsatz_total?: number | null
           updated_at?: string | null
+          verpackungs_beschreibung?: string | null
+          verpackungskosten?: number | null
           versandkosten?: number | null
         }
         Relationships: [
