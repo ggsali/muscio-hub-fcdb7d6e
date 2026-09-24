@@ -2176,6 +2176,29 @@ export default function AuftragDetailPage() {
                     </button>
                   ))}
                 </div>
+                <div className="border-t border-border pt-4 mb-4 space-y-2">
+                  <p className="text-sm font-medium">Verpackung (optional)</p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Beschreibung z.B. Karton, Schaumstoff"
+                      value={verpackungsBeschreibung}
+                      onChange={e => setVerpackungsBeschreibung(e.target.value)}
+                      className="bg-input border-border flex-1 text-sm"
+                    />
+                    <div className="relative w-28">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">CHF</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.05"
+                        placeholder="0.00"
+                        value={verpackungskosten || ""}
+                        onChange={e => setVerpackungskosten(Number(e.target.value) || 0)}
+                        className="bg-input border-border pl-10 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
@@ -2195,12 +2218,14 @@ export default function AuftragDetailPage() {
                       setPaketGroesse(selected.id);
                       setVersandkosten(kosten);
                       setShowVersandModal(false);
-                      const neuesTotal = selectedTotalUmsatz + kosten;
+                      const neuesTotal = selectedTotalUmsatz + kosten + verpackungskosten;
                       if (id && !isNew) {
                         await supabase.from("orders").update({
                           lieferart: "versand",
                           versandkosten: kosten,
                           paket_groesse: selected.id,
+                          verpackungskosten,
+                          verpackungs_beschreibung: verpackungsBeschreibung || null,
                           umsatz_total: neuesTotal,
                         } as any).eq("id", id);
                       }
