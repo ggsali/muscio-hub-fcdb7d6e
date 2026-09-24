@@ -108,7 +108,7 @@ export function ChatWidget() {
     const resp = await fetch(CHAT_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-      body: JSON.stringify({ messages: allMessages.slice(-20).map(m => ({ role: m.role === "admin" ? "assistant" : m.role, content: m.content })) }),
+      body: JSON.stringify({ sessionId: sid, messages: allMessages.slice(-20).map(m => ({ role: m.role === "admin" ? "assistant" : m.role, content: m.content })) }),
     });
     if (!resp.ok || !resp.body) {
       const err = await resp.json().catch(() => ({ error: "Fehler" }));

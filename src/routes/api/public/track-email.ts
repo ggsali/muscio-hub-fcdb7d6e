@@ -32,8 +32,13 @@ function safeRedirect(raw: string | null): string {
   if (!raw) return 'https://3dmuscio.com'
   try {
     const url = new URL(raw)
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') return 'https://3dmuscio.com'
-    return url.toString()
+    if (url.protocol !== 'https:') return 'https://3dmuscio.com'
+    const host = url.hostname.toLowerCase()
+    const allowed =
+      host === '3dmuscio.com' || host.endsWith('.3dmuscio.com') ||
+      host === 'g.page' || host === 'maps.app.goo.gl' ||
+      /^(www\.|search\.|maps\.)?google\.[a-z.]+$/.test(host)
+    return allowed ? url.toString() : 'https://3dmuscio.com'
   } catch {
     return 'https://3dmuscio.com'
   }

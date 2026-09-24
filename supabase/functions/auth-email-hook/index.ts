@@ -216,10 +216,10 @@ async function handleAuthHook(req: Request): Promise<Response> {
       html,
     })
     if (error) {
-      console.error('Resend send error', { error, emailType, to: userEmail })
+      console.error('Resend send error', { error, emailType })
       return new Response(JSON.stringify({ error: 'Failed to send email', details: error }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
-    console.log('Auth email sent via Resend', { emailType, to: userEmail, id: data?.id })
+    console.log('Auth email sent via Resend', { emailType, id: data?.id })
     return new Response(JSON.stringify({ success: true, id: data?.id }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
     console.error('Resend exception', err)

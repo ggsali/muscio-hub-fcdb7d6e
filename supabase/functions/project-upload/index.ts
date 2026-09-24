@@ -199,7 +199,8 @@ Deno.serve(async (req) => {
           console.error("Storage download error:", downloadError.message);
         } else if (fileData) {
           const credentials = btoa(`${webdavUser}:${webdavPass}`);
-          const folderPath = `${webdavUrl.replace(/\/$/, "")}/${linkId}/`;
+          // Zielordner ausschliesslich aus dem serverseitig geprüften Link ableiten
+          const folderPath = `${webdavUrl.replace(/\/$/, "")}/${encodeURIComponent(String(link.id))}/`;
 
           // Create folder (ignore if exists), 10s timeout
           const mkcolAbort = new AbortController();

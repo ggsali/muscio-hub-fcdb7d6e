@@ -137,8 +137,9 @@ Deno.serve(async (req) => {
           gutschein_kauf: "1",
           gutschein_betrag: String(betrag),
           gutschein_empfaenger_email: email.slice(0, 255),
-          gutschein_empfaenger_name: (giftInput.empfaenger_name || "").slice(0, 120),
-          gutschein_nachricht: (giftInput.nachricht || "").slice(0, 500),
+          // Nur reiner Text: keine Links, kein HTML → keine Phishing-Inhalte in unserem Namen
+          gutschein_empfaenger_name: String(giftInput.empfaenger_name || "").replace(/[<>]/g, "").replace(/(https?:\/\/|www\.)\S*/gi, "").replace(/\S+\.(com|ch|net|org|io|de|app|ly|me)\b\S*/gi, "").trim().slice(0, 80),
+          gutschein_nachricht: String(giftInput.nachricht || "").replace(/[<>]/g, "").replace(/(https?:\/\/|www\.)\S*/gi, "").replace(/\S+\.(com|ch|net|org|io|de|app|ly|me)\b\S*/gi, "").trim().slice(0, 300),
         },
       } as any);
 

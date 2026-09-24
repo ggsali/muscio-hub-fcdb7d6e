@@ -54,8 +54,12 @@ export const generateKiOfferte = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("KI ist nicht konfiguriert");
 
     const p = data.preise;
+    // Filamentnamen nur als bereinigte, kurze Daten in den Prompt übernehmen
+    const clean = (v: unknown) =>
+      String(v ?? "").replace(/[^\p{L}\p{N} .,+\-/()#]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+    const num = (v: unknown) => (Number.isFinite(Number(v)) ? Math.max(0, Math.min(10000, Number(v))) : 0);
     const filamentListe =
-      p.filamente.map((f) => `  - ${f.name} (${f.material ?? "—"}): CHF ${f.preis_pro_g.toFixed(3)}/g`).join("\n") ||
+      p.filamente.slice(0, 60).map((f) => `  - ${clean(f.name)} (${clean(f.material) || "—"}): CHF ${num(f.preis_pro_g).toFixed(3)}/g`).join("\n") ||
       "  - PLA Standard: CHF 0.055/g";
 
     const systemPrompt = `Du bist ein Offerten-Assistent für 3DMuscio, Schweizer 3D-Druckservice in Eschlikon TG.

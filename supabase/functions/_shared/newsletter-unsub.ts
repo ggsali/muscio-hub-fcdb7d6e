@@ -33,3 +33,17 @@ export function verifyUnsubToken(email: string, token: unknown): boolean {
   }
   return diff === 0;
 }
+
+/** Signatur für Tracking-Links (bindet den Link an die Empfänger-ID). */
+export function trackSig(id: string): string {
+  return createHmac("sha256", secret()).update(`track:${id}`).digest("hex").slice(0, 24);
+}
+
+export function verifyTrackSig(id: string, sig: unknown): boolean {
+  if (typeof sig !== "string" || !sig) return false;
+  const expected = trackSig(id);
+  if (sig.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
+  return diff === 0;
+}

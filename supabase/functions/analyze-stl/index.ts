@@ -138,7 +138,7 @@ function overhangShare(tris: Float32Array, up: [number, number, number], thresho
 
 const ALLOWED_ORIGIN = /^https:\/\/((www\.)?3dmuscio\.com|[a-z0-9-]+\.lovable\.app|[a-z0-9-]+\.lovableproject\.com)$|^http:\/\/localhost(:\d+)?$/;
 const RL_WINDOW_MS = 10 * 60_000;
-const RL_MAX = 20;
+const RL_MAX = 10;
 
 function abuseGuard(req: Request): Response | null {
   const origin = req.headers.get("origin") || "";
