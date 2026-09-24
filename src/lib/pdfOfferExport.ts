@@ -275,7 +275,7 @@ export async function exportOfferPDF(data: OfferExportData) {
     return sum + ep * p.menge + setupA * s.setup_pauschale + supportTotalOf(p);
   }, 0);
   const effectiveTotal = data.withDetails
-    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag
+    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag + verpBetrag
     : data.umsatz_total;
 
   if (data.withDetails) {
@@ -614,6 +614,15 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
       "gratis", "CHF 0.00",
     ]);
   }
+  const verpBetragAb = Math.max(0, Number(data.verpackungskosten) || 0);
+  const verpLabelAb = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
+  if (verpBetragAb > 0) {
+    abTableBody.push([
+      String(abTableBody.length + 1).padStart(2, "0"),
+      verpLabelAb, "—", "1×",
+      formatCHF(verpBetragAb), formatCHF(verpBetragAb),
+    ]);
+  }
   autoTable(doc, {
     startY: 118, margin: { left: margin, right: margin },
     head: [["Nr.", "Beschreibung", "Material", "Menge", "Preis/St.", "Total"]],
@@ -637,7 +646,7 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   const sumX = pageW - margin - sumW;
 
   const versandBetragAb = Math.max(0, Number(data.versandkosten) || 0);
-  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragAb;
+  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragAb - verpBetragAb;
   const abSumRows: [string, string][] = [["Zwischensumme", formatCHF(abPartsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     abSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
@@ -645,8 +654,11 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   if (versandBetragAb > 0) {
     abSumRows.push([paketLabel(data.paket_groesse), formatCHF(versandBetragAb)]);
   }
+  if (verpBetragAb > 0) {
+    abSumRows.push([verpLabelAb, formatCHF(verpBetragAb)]);
+  }
   const abRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const abRabatt = (data.umsatz_total - versandBetragAb) * (abRabattPct / 100);
+  const abRabatt = (data.umsatz_total - versandBetragAb - verpBetragAb) * (abRabattPct / 100);
   if (abRabatt > 0) {
     abSumRows.push([`Rabatt (${abRabattPct}%)`, `- ${formatCHF(abRabatt)}`]);
   }

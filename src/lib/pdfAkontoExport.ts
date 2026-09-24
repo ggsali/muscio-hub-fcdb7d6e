@@ -35,6 +35,8 @@ export interface AkontoExportData {
   versandkosten?: number;
   paket_groesse?: string;
   lieferart?: string;
+  verpackungskosten?: number;
+  verpackungs_beschreibung?: string;
 }
 
 const PAKET_BEZ: Record<string, string> = { s: "bis 2 kg", m: "bis 10 kg", l: "bis 30 kg" };
@@ -202,7 +204,7 @@ function drawFooter(doc: jsPDF, company: CompanySettings, ACCENT: [number, numbe
 }
 
 /** Gemeinsame Positionen-Tabelle */
-function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string, versandkosten?: number, paketGroesse?: string, lieferart?: string) {
+function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string, versandkosten?: number, paketGroesse?: string, lieferart?: string, verpackungskosten?: number, verpackungsBeschreibung?: string) {
   const body: any[][] = parts.map((p, i) => [
     String(i + 1).padStart(2, "0"),
     p.teilname || "—",
@@ -239,6 +241,17 @@ function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKos
       "1×",
       "gratis",
       "CHF 0.00",
+    ]);
+  }
+  const verpBetrag = Math.max(0, Number(verpackungskosten) || 0);
+  if (verpBetrag > 0) {
+    body.push([
+      String(body.length + 1).padStart(2, "0"),
+      `Verpackung${verpackungsBeschreibung ? ` (${verpackungsBeschreibung})` : ""}`,
+      "—",
+      "1×",
+      formatCHF(verpBetrag),
+      formatCHF(verpBetrag),
     ]);
   }
   autoTable(doc, {
