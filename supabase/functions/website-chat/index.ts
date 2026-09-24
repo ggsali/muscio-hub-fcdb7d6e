@@ -41,10 +41,37 @@ function stripOutdatedMaterialPriceContext(messages: any[]): any[] {
   return messages.filter((m) => m.role !== "assistant" || !materialPricePattern.test(m.content));
 }
 
+const ALLOWED_ORIGIN = /^https:\/\/((www\.)?3dmuscio\.com|[a-z0-9-]+\.lovable\.app|[a-z0-9-]+\.lovableproject\.com)$|^http:\/\/localhost(:\d+)?$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SESSION_MAX_AI = 30;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const origin = req.headers.get("origin") || "";
+  if (!ALLOWED_ORIGIN.test(origin)) {
+    return new Response(JSON.stringify({ error: "Nicht erlaubt" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+  if (Number(req.headers.get("content-length") || 0) > 50_000) {
+    return new Response(JSON.stringify({ error: "Anfrage zu gross" }), { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
   try {
-    const { messages } = await req.json();
+    const { messages, sessionId } = await req.json();
+
+    // Nur echte, aktive Chat-Sitzungen dürfen die KI nutzen; Budget pro Sitzung begrenzt.
+    if (typeof sessionId !== "string" || !UUID_RE.test(sessionId)) {
+      return new Response(JSON.stringify({ error: "Chat-Sitzung fehlt" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: sess } = await sb.from("chat_sessions").select("id, created_at").eq("id", sessionId).maybeSingle();
+      if (!sess || Date.now() - new Date((sess as any).created_at).getTime() > 24 * 3600_000) {
+        return new Response(JSON.stringify({ error: "Chat-Sitzung ungültig" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { count } = await sb.from("chat_messages").select("id", { count: "exact", head: true }).eq("session_id", sessionId).eq("role", "user");
+      if ((count ?? 0) > SESSION_MAX_AI) {
+        return new Response(JSON.stringify({ error: "Limit für diese Sitzung erreicht. Ein Mitarbeiter meldet sich." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
 
     if (!Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages must be an array" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
