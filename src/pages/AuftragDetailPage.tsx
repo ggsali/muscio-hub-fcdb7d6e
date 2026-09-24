@@ -1141,6 +1141,7 @@ export default function AuftragDetailPage() {
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts: selectedParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag,
         versandkosten, paket_groesse: paketGroesse, lieferart,
+        verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
         settings: activeSettings, company, returnBase64: !download,
         expressKosten: selectedExpressAmount, expressLabel,
       });
@@ -1192,6 +1193,7 @@ export default function AuftragDetailPage() {
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
         parts: selectedParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag, restbetrag,
         versandkosten, paket_groesse: paketGroesse, lieferart,
+        verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
         settings: activeSettings, company, returnBase64: !download,
         expressKosten: selectedExpressAmount, expressLabel,
       });
@@ -1274,6 +1276,8 @@ export default function AuftragDetailPage() {
       umsatz_total: base.umsatz_total,
       versandkosten: base.versandkosten,
       paket_groesse: base.paket_groesse,
+      verpackungskosten: base.verpackungskosten,
+      verpackungs_beschreibung: base.verpackungsBeschreibung,
       lieferart: base.lieferart,
       kosten_total: selectedTotalKosten,
       gewinn_total: selectedTotalGewinn,
@@ -1303,6 +1307,8 @@ export default function AuftragDetailPage() {
       umsatz_total: totalMitVersand,
       versandkosten,
       paket_groesse: paketGroesse,
+      verpackungskosten,
+      verpackungs_beschreibung: verpackungsBeschreibung,
       lieferart,
       settings: activeSettings,
       company,
@@ -1328,6 +1334,8 @@ export default function AuftragDetailPage() {
       umsatz_total: totalMitVersand,
       versandkosten,
       paket_groesse: paketGroesse,
+      verpackungskosten,
+      verpackungs_beschreibung: verpackungsBeschreibung,
       lieferart,
       settings: activeSettings,
       company,
@@ -1373,6 +1381,8 @@ export default function AuftragDetailPage() {
       lieferart,
       versandkosten,
       paket_groesse: paketGroesse || null,
+      verpackungskosten,
+      verpackungs_beschreibung: verpackungsBeschreibung || null,
     };
 
     let orderId = id === "neu" ? null : id;
