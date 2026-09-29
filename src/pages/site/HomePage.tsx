@@ -11,6 +11,7 @@ import {
 
 import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { supabase } from "@/integrations/supabase/client";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
 import Seo from "@/components/site/Seo";
@@ -101,7 +102,9 @@ const HeroUploadButton = () => {
   );
 };
 
-const HeroBento = () => (
+const HeroBento = () => {
+  const resin = useResinEnabled();
+  return (
   <section className="relative overflow-hidden pt-8 pb-6 md:pt-12">
     <div
       className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -128,7 +131,7 @@ const HeroBento = () => (
           </span>
 
           <h1 className="font-heading text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.1] tracking-tight text-foreground mb-5">
-            3D-Druckservice Schweiz – <span className="text-primary">FDM &amp; SLA</span> ab 1 Stück.
+            3D-Druckservice Schweiz – <span className="text-primary">{resin ? "FDM & SLA" : "FDM"}</span> ab 1 Stück.
           </h1>
 
           <p className="text-base md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed">
@@ -143,10 +146,12 @@ const HeroBento = () => (
               FDM 3D-Druck
             </Link>{" "}
             für belastbare Teile ·{" "}
+            {resin && (<>
             <Link to="/leistungen/sla-3d-druck" className="text-primary hover:underline font-medium">
               SLA / Resin 3D-Druck
             </Link>{" "}
             für feine Details ·{" "}
+            </>)}
             <Link to="/3d-druck-schweiz" className="text-primary hover:underline font-medium">
               Überblick 3D-Druck Schweiz
             </Link>
@@ -174,7 +179,8 @@ const HeroBento = () => (
 
     </div>
   </section>
-);
+  );
+};
 
 /* ─── STATS + TRUST (kompakt) ─── */
 const StatsTrust = () => (
@@ -323,6 +329,7 @@ interface MaterialTeaser { name: string; price: string; tag: string; desc: strin
 
 const MaterialsTeaser = () => {
   const [materialTeaser, setMaterialTeaser] = useState<MaterialTeaser[]>([]);
+  const resin = useResinEnabled();
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -330,10 +337,10 @@ const MaterialsTeaser = () => {
         .select("name, price_per_gram, tag, description")
         .eq("aktiv", true)
         .order("sort_order")
-        .limit(4);
+        .limit(6);
       if (data) {
         setMaterialTeaser(
-          data.map((m: any) => ({
+          data.filter((m: any) => resin || (!isResinText(m.name) && !isResinText(m.tag))).slice(0, 4).map((m: any) => ({
             name: m.name,
             price: Number(m.price_per_gram).toFixed(3).replace(/0+$/, "").replace(/\.$/, ""),
             tag: m.tag,
@@ -342,7 +349,7 @@ const MaterialsTeaser = () => {
         );
       }
     })();
-  }, []);
+  }, [resin]);
   return (
   <section className="py-24 bg-foreground text-background overflow-hidden">
     <div className="container mx-auto px-4">
@@ -385,7 +392,7 @@ const MaterialsTeaser = () => {
 /* ─── VOLUME DISCOUNTS ─── */
 
 /* ─── FAQ ─── */
-const faqs = [
+const FAQS_ALL = [
   { q: "Was kostet ein 3D-Druck in der Schweiz?", a: "Der Preis ergibt sich aus Material, Druckzeit und Nachbearbeitung — Kleinteile gibt es bereits ab CHF 5.–. Im Online-Kalkulator sehen Sie den Preis sofort und transparent aufgeschlüsselt, ab CHF 0.055 pro Gramm Material. Ab 5 Stück erhalten Sie 10 % Mengenrabatt, ab 10 Stück 15 %." },
   { q: "Was ist der Unterschied zwischen FDM- und SLA-Druck?", a: "Beim FDM-Druck wird geschmolzener Kunststoff Schicht für Schicht aufgetragen — ideal für robuste Funktionsteile, Ersatzteile und grössere Bauteile. SLA härtet flüssiges Resin mit Licht aus und erreicht Auflösungen bis 0.025 mm für sehr feine Details und glatte Oberflächen. Wir beraten Sie kostenlos, welches Verfahren für Ihr Bauteil das richtige ist." },
   { q: "Welche Materialien stehen zur Auswahl?", a: "Im FDM-Verfahren drucken wir PLA, PETG, ABS, ASA, TPU und Nylon in über 12 Farben. Für höchste Detailtreue steht im SLA-Verfahren Resin zur Verfügung. Unsicher bei der Materialwahl? Unsere kostenlose KI-Materialberatung im Kalkulator hilft Ihnen weiter." },
@@ -397,7 +404,10 @@ const faqs = [
 ];
 
 
-const FAQ = () => (
+const FAQ = () => {
+  const resin = useResinEnabled();
+  const faqs = resin ? FAQS_ALL : FAQS_ALL.filter((f) => !isResinText(f.q));
+  return (
   <section className="py-28 relative" id="faq">
     <script
       type="application/ld+json"
@@ -424,7 +434,8 @@ const FAQ = () => (
       </div>
     </div>
   </section>
-);
+  );
+};
 
 /* ─── CTA ─── */
 const CTA = () => (
@@ -490,7 +501,9 @@ const EntityAnswer = () => (
 
 /* ─── SEO CONTENT ─── */
 
-const SEOContent = () => (
+const SEOContent = () => {
+  const resin = useResinEnabled();
+  return (
   <section className="py-20 bg-muted/30">
     <div className="container mx-auto px-4 max-w-4xl">
       <ScrollReveal>
@@ -511,12 +524,12 @@ const SEOContent = () => (
                 Unser FDM-Druckservice bietet hochwertige Bauteile aus PLA, PETG, ABS, ASA, TPU und Nylon. Ideal für Prototypen, Funktionsteile, Gehäuse und individuelle Bauteile. Dank modernster Bambu Lab Drucker erreichen wir Präzision bis 0.1mm und Druckgeschwindigkeiten von bis zu 600mm/s.
               </p>
             </div>
-            <div>
+            {resin && <div>
               <h3 className="font-heading text-lg font-bold text-foreground mb-2">SLA Resin-Druck</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
                 Für höchste Detailgenauigkeit bieten wir SLA Resin-Druck an. Perfekt für Schmuck, Miniaturen, Zahntechnik und filigrane Bauteile mit glatten Oberflächen. Auflösung bis zu 0.025mm für perfekte Ergebnisse bei anspruchsvollsten Projekten.
               </p>
-            </div>
+            </div>}
             <div>
               <h3 className="font-heading text-lg font-bold text-foreground mb-2">Schnelle Lieferung in der Schweiz</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
@@ -564,13 +577,13 @@ const SEOContent = () => (
           3DMuscio fertigt 3D-gedruckte Kunststoffteile für Unternehmen und Privatpersonen in der
           ganzen Schweiz, vom einfachen Ersatzteil über individuelle Gehäuse und Halterungen bis hin
           zu Prototypen und Kleinserien. Unser Service in Eschlikon, Thurgau, ist spezialisiert auf
-          schnelle, unkomplizierte Herstellung ohne Mindestbestellmenge. Ob FDM- oder SLA-Druck, ob
-          PLA, PETG, ABS oder Resin, wir finden die passende Lösung für Ihr Projekt.
+          schnelle, unkomplizierte Herstellung ohne Mindestbestellmenge. {resin ? "Ob FDM- oder SLA-Druck, ob PLA, PETG, ABS oder Resin" : "Ob PLA, PETG, ABS oder ASA"}, wir finden die passende Lösung für Ihr Projekt.
         </p>
       </ScrollReveal>
     </div>
   </section>
-);
+  );
+};
 
 const Index = () => (
   <div>
