@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { takePendingUploads } from "@/lib/pendingUpload";
 import { useSlicerWorker, type SlicerResult } from "@/hooks/useSlicerWorker";
 
@@ -291,7 +292,12 @@ const MATERIAL_HINTS: Record<string, string> = {
 const CalculatorOnlinePage = () => {
   const [step, setStep] = useState(1);
   const [parts, setParts] = useState<Part[]>([]);
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [allMaterials, setMaterials] = useState<Material[]>([]);
+  const resinEnabled = useResinEnabled();
+  const materials = useMemo(
+    () => resinEnabled ? allMaterials : allMaterials.filter((m) => !isResinText(m.name) && !isResinText(m.materialType)),
+    [allMaterials, resinEnabled],
+  );
   const [materialsLoading, setMaterialsLoading] = useState(true);
   const [materialsError, setMaterialsError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
