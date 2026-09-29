@@ -51,6 +51,8 @@ export default function ServiceDetailPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
+  const isResinPage = isResinText(service?.title) || isResinText(seite?.titel);
+  if (!resin && isResinPage) return <Navigate to="/leistungen" replace />;
   if (!service && !seite && loading) {
     return <div className="container mx-auto px-4 py-20 text-sm text-muted-foreground">Lädt…</div>;
   }
