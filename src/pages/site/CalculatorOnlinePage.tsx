@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { takePendingUploads } from "@/lib/pendingUpload";
 import { useSlicerWorker, type SlicerResult } from "@/hooks/useSlicerWorker";
 
@@ -293,7 +294,7 @@ const CalculatorOnlinePage = () => {
   const [parts, setParts] = useState<Part[]>([]);
   const [allMaterials, setMaterials] = useState<Material[]>([]);
   const resinEnabled = useResinEnabled();
-  const materials = React.useMemo(
+  const materials = useMemo(
     () => resinEnabled ? allMaterials : allMaterials.filter((m) => !isResinText(m.name) && !isResinText(m.materialType)),
     [allMaterials, resinEnabled],
   );

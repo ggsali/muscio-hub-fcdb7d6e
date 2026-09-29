@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { ArrowRight, Boxes, Cog, Layers, Package, Sparkles, Wrench } from "lucide-react";
 import Seo from "@/components/site/Seo";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
 const serviceJsonLd = {
   "@context": "https://schema.org",
@@ -73,6 +74,7 @@ const services = [
 ];
 
 export default function LeistungenPage() {
+  const resin = useResinEnabled();
   return (
     <div className="pt-12 pb-20">
       <Seo
@@ -89,7 +91,7 @@ export default function LeistungenPage() {
               3D Druck Leistungen für Unternehmen und Privatkunden
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              3DMuscio fertigt Einzelteile, Prototypen, Kleinserien und Ersatzteile im FDM und SLA
+              3DMuscio fertigt Einzelteile, Prototypen, Kleinserien und Ersatzteile im {resin ? "FDM und SLA" : "FDM"}
               Verfahren – ab einem Stück, mit transparenten Preisen und Lieferung in die ganze Schweiz.
             </p>
             <div className="flex flex-wrap gap-3 mt-7">
@@ -104,7 +106,7 @@ export default function LeistungenPage() {
         </ScrollReveal>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {services.map((s) => (
+          {services.filter((s) => resin || !isResinText(s.title)).map((s) => (
             <ScrollReveal key={s.title}>
               <article className="h-full bg-card border border-border rounded-xl p-6 flex flex-col">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
@@ -143,7 +145,7 @@ export default function LeistungenPage() {
                 { label: "FDM vs SLA", to: "/vergleich/fdm-vs-sla" },
                 { label: "3D-Druck vs Spritzguss", to: "/vergleich/3d-druck-vs-spritzguss" },
                 { label: "Alle Vergleiche", to: "/vergleich" },
-              ].map((l) => (
+              ].filter((l) => resin || !isResinText(l.label)).map((l) => (
                 <Link
                   key={l.to}
                   to={l.to}

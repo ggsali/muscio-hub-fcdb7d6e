@@ -20,6 +20,7 @@ export default function WebsiteEinstellungenPage() {
   const [saving, setSaving] = useState(false);
 
   const [wartung, setWartung] = useState({ aktiv: false, nachricht: "" });
+  const [resinEnabled, setResinEnabled] = useState({ aktiv: true });
   const [kontakt, setKontakt] = useState({ email: "", telefon: "", adresse: "" });
   const [whatsapp, setWhatsapp] = useState({ nummer: "" });
   const [faq, setFaq] = useState<FaqEntry[]>([]);
@@ -39,6 +40,7 @@ export default function WebsiteEinstellungenPage() {
       if (data) {
         for (const row of data) {
           if (row.key === "wartungsmodus") setWartung(row.value as any);
+          if (row.key === "resin_enabled") setResinEnabled({ aktiv: (row.value as any)?.aktiv !== false });
           if (row.key === "kontakt_info") setKontakt(row.value as any);
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
@@ -108,6 +110,7 @@ export default function WebsiteEinstellungenPage() {
     setSaving(true);
     const errs = await Promise.all([
       saveOne("wartungsmodus", wartung),
+      saveOne("resin_enabled", resinEnabled),
       saveOne("kontakt_info", kontakt),
       saveOne("faq", { eintraege: faq }),
       saveOne("material_preise", { eintraege: preise }),
@@ -191,6 +194,13 @@ export default function WebsiteEinstellungenPage() {
             placeholder="Nachricht für Besucher während Wartung"
             className="bg-input border-border w-full"
           />
+          <div className="flex items-center justify-between pt-3 border-t border-border">
+            <div>
+              <span className="text-sm font-medium">Resin-Druck anzeigen</span>
+              <p className="text-xs text-muted-foreground">Blendet Resin/SLA auf der öffentlichen Website aus, wenn deaktiviert.</p>
+            </div>
+            <Switch checked={resinEnabled.aktiv} onCheckedChange={v => setResinEnabled({ aktiv: v })} />
+          </div>
         </AccordionContent>
       </AccordionItem>
 

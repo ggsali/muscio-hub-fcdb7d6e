@@ -406,7 +406,7 @@ const FAQS_ALL = [
 
 const FAQ = () => {
   const resin = useResinEnabled();
-  const faqs = resin ? FAQS_ALL : FAQS_ALL.filter((f) => !isResinText(f.q));
+  const faqs = resin ? FAQS_ALL : FAQS_ALL.filter((f) => !isResinText(f.q)).map((f) => ({ ...f, a: f.a.replace(" Für höchste Detailtreue steht im SLA-Verfahren Resin zur Verfügung.", "") }));
   return (
   <section className="py-28 relative" id="faq">
     <script

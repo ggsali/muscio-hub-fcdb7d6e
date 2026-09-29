@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
 const DEFAULT_ITEMS = [
   "PLA", "PETG", "ABS", "TPU", "Resin", "Nylon", "ASA", "Carbon-Fiber",
@@ -7,7 +8,9 @@ const DEFAULT_ITEMS = [
 ];
 
 export const Marquee = () => {
-  const [items, setItems] = useState<string[]>(DEFAULT_ITEMS);
+  const [allItems, setItems] = useState<string[]>(DEFAULT_ITEMS);
+  const resin = useResinEnabled();
+  const items = resin ? allItems : allItems.filter((i) => !isResinText(i));
 
   useEffect(() => {
     const loadItems = async () => {

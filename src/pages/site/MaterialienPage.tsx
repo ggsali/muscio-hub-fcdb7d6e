@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Layers, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Seo from "@/components/site/Seo";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
 interface MaterialRow {
   id: string;
@@ -63,7 +64,9 @@ const fmtPrice = (v: number) =>
   Number(v).toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
 
 export default function MaterialienPage() {
-  const [materials, setMaterials] = useState<MaterialRow[]>([]);
+  const [allMaterials, setMaterials] = useState<MaterialRow[]>([]);
+  const resin = useResinEnabled();
+  const materials = resin ? allMaterials : allMaterials.filter((m) => !isResinText(m.name) && !isResinText(m.tag));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -225,7 +228,7 @@ export default function MaterialienPage() {
               { label: "Nylon", to: "/materialien/nylon", hint: "abriebfest" },
               { label: "Resin", to: "/materialien/resin", hint: "feinste Details" },
               { label: "Alle Vergleiche", to: "/vergleich", hint: "PLA vs PETG & mehr" },
-            ].map((l) => (
+            ].filter((l) => resin || !isResinText(l.label)).map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
