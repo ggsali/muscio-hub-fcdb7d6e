@@ -5,6 +5,7 @@ import AnswerLanding from "@/components/site/AnswerLanding";
 import DbContentPage, { type DbFaq } from "@/components/site/DbContentPage";
 import { getService } from "@/data/seo/services";
 import { supabase } from "@/integrations/supabase/client";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { breadcrumbJsonLd, faqJsonLd, serviceJsonLd } from "@/data/company";
 
 interface LeistungSeite {
@@ -29,6 +30,7 @@ const relatedMaterials = [
 export default function ServiceDetailPage() {
   const { slug } = useParams();
   const service = getService(slug);
+  const resin = useResinEnabled();
   const [seite, setSeite] = useState<LeistungSeite | null>(null);
   const [loading, setLoading] = useState(true);
 
