@@ -2120,7 +2120,9 @@ export default function AuftragDetailPage() {
                         lieferart: "abholung",
                         versandkosten: 0,
                         paket_groesse: null,
-                        umsatz_total: selectedTotalUmsatz,
+                        verpackungskosten,
+                        verpackungs_beschreibung: verpackungsBeschreibung || null,
+                        umsatz_total: selectedTotalUmsatz + verpackungskosten,
                       } as any).eq("id", id).then(() => {});
                     }
                     toast({ title: "Abholung in Eschlikon TG – kostenlos ✓" });

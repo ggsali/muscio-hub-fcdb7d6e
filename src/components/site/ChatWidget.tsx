@@ -163,7 +163,22 @@ export function ChatWidget() {
     const { data: botOn } = await supabase.rpc("get_chat_bot_enabled", { p_session_id: sid });
     if (botOn !== false) {
       try { await streamAI(sid, [...messages, userMsg]); }
-      catch (e: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e.message}` }]); }
+      catch (e: any) {
+        if (/sitzung ungültig/i.test(String(e?.message || ""))) {
+          // Abgelaufene Sitzung verwerfen und neue anlegen, dann erneut senden
+          localStorage.removeItem(SESSION_KEY);
+          const newSid = userInfo.name ? await createSession(userInfo.name, userInfo.email) : null;
+          if (newSid) {
+            await saveMessage(newSid, "user", text);
+            try { await streamAI(newSid, [userMsg]); }
+            catch (e2: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e2.message}` }]); }
+          } else {
+            setMessages(prev => [...prev, { role: "assistant", content: "Die Chat-Sitzung ist abgelaufen. Bitte starte den Chat neu." }]);
+          }
+        } else {
+          setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e.message}` }]);
+        }
+      }
     }
     if (shouldNotify(text) || botOn === false) {
       supabase.functions.invoke("send-sms-notification", {
