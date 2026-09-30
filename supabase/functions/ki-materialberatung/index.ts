@@ -95,12 +95,25 @@ Grund: [1 kurzer Satz]`;
 
     if (!Array.isArray(messages)) return json({ error: "messages fehlt" }, 400);
 
+    // Resin-Schalter aus den Website-Einstellungen
+    let resin = true;
+    try {
+      const u = Deno.env.get("SUPABASE_URL"), k = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (u && k) {
+        const r = await fetch(`${u}/rest/v1/website_settings?key=eq.resin_enabled&select=value`, { headers: { apikey: k, Authorization: `Bearer ${k}` } });
+        const rows = r.ok ? await r.json() : [];
+        const v = rows?.[0]?.value;
+        resin = v == null ? true : typeof v === "boolean" ? v : v.aktiv !== false;
+      }
+    } catch { /* default true */ }
+    const RESIN_RE = /resin|\bsla\b/i;
+
     // Nur bekannte Materialnamen zulassen; Kundenangaben niemals in den System-Prompt.
     const KNOWN = /^[A-Za-z0-9ÄÖÜäöü+ \-\/().]{1,40}$/;
     const matList: string[] = Array.isArray(availableMaterials)
-      ? availableMaterials.filter((m: unknown) => typeof m === "string" && KNOWN.test(m)).slice(0, 40)
+      ? availableMaterials.filter((m: unknown) => typeof m === "string" && KNOWN.test(m) && (resin || !RESIN_RE.test(m))).slice(0, 40)
       : [];
-    const list = matList.length > 0 ? matList.join(", ") : "PLA, PETG, ABS, ASA, TPU, Resin";
+    const list = matList.length > 0 ? matList.join(", ") : resin ? "PLA, PETG, ABS, ASA, TPU, Resin" : "PLA, PETG, ABS, ASA, TPU";
 
     const partList: string[] = Array.isArray(partNames)
       ? partNames.filter((n: unknown) => typeof n === "string" && n).slice(0, 20).map((n: string) => clip(n, 80))
@@ -117,7 +130,7 @@ WICHTIG - Der Kunde hat mehrere Teile hochgeladen (Namen siehe Kontext-Nachricht
 
     const SYSTEM_PROMPT = `Du bist ein erfahrener Berater für 3D-Druck-Materialien bei 3DMuscio in der Schweiz.
 
-Materialwissen: PLA (Standard, günstig, Innenbereich, bis 60°C), PETG (feuchtigkeitsbeständig, lebensmittelecht, bis 80°C), ABS (schlagfest, bis 100°C, Innen), ASA (UV-beständig, Aussenbereich, bis 100°C), TPU (flexibel, gummiartig), Resin/SLA (hochauflösend, glatte Sichtteile).
+Materialwissen: PLA (Standard, günstig, Innenbereich, bis 60°C), PETG (feuchtigkeitsbeständig, lebensmittelecht, bis 80°C), ABS (schlagfest, bis 100°C, Innen), ASA (UV-beständig, Aussenbereich, bis 100°C), TPU (flexibel, gummiartig)${resin ? ", Resin/SLA (hochauflösend, glatte Sichtteile)." : ".\nWICHTIG: Resin-/SLA-Druck wird derzeit NICHT angeboten. Erwähne oder empfehle Resin/SLA niemals."}
 
 Wählbare Materialien (Name exakt so verwenden): ${list}
 

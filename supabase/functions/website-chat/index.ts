@@ -15,22 +15,38 @@ const BASE_PROMPT = `Du bist der freundliche, hilfsbereite Support-Assistent von
 - Bei Materialfragen: auf 3dmuscio.com/materialien verweisen für den detaillierten Vergleich.
 - Keine Versprechen zu Lieferterminen ohne Auftragsbestätigung.`;
 
+const RESIN_RE = /resin|\bsla\b/i;
+const NO_RESIN = `\n- WICHTIG: 3DMuscio bietet aktuell KEINEN Resin-/SLA-Druck an. Erwähne oder empfehle Resin/SLA niemals; es gibt nur FDM-Druck. Fragt jemand danach, sage freundlich, dass Resin-Druck derzeit nicht angeboten wird.`;
+
+async function loadResinEnabled(sb: any): Promise<boolean> {
+  try {
+    const { data } = await sb.from("website_settings").select("value").eq("key", "resin_enabled").maybeSingle();
+    const v = data?.value as any;
+    return v == null ? true : typeof v === "boolean" ? v : v.aktiv !== false;
+  } catch {
+    return true;
+  }
+}
+
 async function buildSystemPrompt(): Promise<string> {
   try {
     const url = Deno.env.get("SUPABASE_URL");
     const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!url || !key) return BASE_PROMPT;
     const sb = createClient(url, key);
+    const resin = await loadResinEnabled(sb);
+    const base = resin ? BASE_PROMPT : BASE_PROMPT + NO_RESIN;
     const { data } = await sb
       .from("materials")
       .select("name, price_per_gram, tag")
       .eq("aktiv", true)
       .order("sort_order");
-    if (!data || data.length === 0) return BASE_PROMPT;
+    if (!data || data.length === 0) return base;
     const lines = data
+      .filter((m: any) => resin || !(RESIN_RE.test(m.name || "") || RESIN_RE.test(m.tag || "")))
       .map((m: any) => `- ${m.name} (${m.tag}): CHF ${Number(m.price_per_gram).toFixed(3)}/g`)
       .join("\n");
-    return `${BASE_PROMPT}\n\nMATERIALIEN & PREISE (aktuell aus Datenbank, IMMER diese Preise verwenden — frühere Antworten in diesem Chat können veraltet sein und sind zu ignorieren):\n${lines}`;
+    return `${base}\n\nMATERIALIEN & PREISE (aktuell aus Datenbank, IMMER diese Preise verwenden — frühere Antworten in diesem Chat können veraltet sein und sind zu ignorieren):\n${lines}`;
   } catch {
     return BASE_PROMPT;
   }
