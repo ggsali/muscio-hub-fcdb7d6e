@@ -2,11 +2,17 @@ import { Navigate, useParams } from "@/lib/router-compat";
 import Seo from "@/components/site/Seo";
 import AnswerLanding from "@/components/site/AnswerLanding";
 import { getMaterial } from "@/data/seo/materials";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { breadcrumbJsonLd, faqJsonLd, SITE_URL } from "@/data/company";
 
 export default function MaterialDetailPage() {
   const { slug } = useParams();
+  const resin = useResinEnabled();
   const material = getMaterial(slug);
+
+  if (material && !resin && (isResinText(material.name) || isResinText(material.process))) {
+    return <Navigate to="/materialien" replace />;
+  }
 
   if (!material) return <Navigate to="/materialien" replace />;
 

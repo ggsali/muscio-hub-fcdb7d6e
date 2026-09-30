@@ -2,6 +2,7 @@ import { Link } from "@/lib/router-compat";
 import { Mail, Phone, MapPin, ArrowUpRight, Printer } from "lucide-react";
 import { motion } from "framer-motion";
 import logo from "@/assets/logo.jpeg";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
 const footerLinks = [
   { label: "Kalkulator", path: "/kalkulator-online" },
@@ -40,7 +41,11 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } },
 };
 
-export const Footer = () => (
+export const Footer = () => {
+  const resin = useResinEnabled();
+  const visibleMaterials = resin ? materials : materials.filter((m) => !isResinText(m.label) && !isResinText(m.path));
+
+  return (
   <footer className="border-t border-border bg-background relative overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}>
     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-primary/[0.04] rounded-full blur-[80px] pointer-events-none" />
 
@@ -102,7 +107,7 @@ export const Footer = () => (
         <motion.div variants={itemVariants}>
           <h4 className="font-heading font-semibold text-xs mb-4 text-foreground uppercase tracking-widest">Materialien</h4>
           <div className="flex flex-col gap-2">
-            {materials.map((m) => (
+            {visibleMaterials.map((m) => (
               <Link
                 key={m.path}
                 to={m.path}
@@ -164,4 +169,5 @@ export const Footer = () => (
       </motion.div>
     </div>
   </footer>
-);
+  );
+};

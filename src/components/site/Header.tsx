@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import type { Session } from "@supabase/supabase-js";
 
 interface NavChild { label: string; path: string; divider?: boolean; }
@@ -74,6 +75,17 @@ export const Header = () => {
   const dropdownTimer = useRef<number | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
   const [navItems, setNavItems] = useState<NavItem[]>(NAV_ITEMS);
+  const resin = useResinEnabled();
+
+  // Resin ausgeschaltet: Resin-Einträge (auch aus der Admin-Navigation) verbergen.
+  const visibleNav: NavItem[] = resin
+    ? navItems
+    : navItems
+        .map((l) => ({
+          ...l,
+          children: l.children?.filter((c) => !isResinText(c.label) && !isResinText(c.path)),
+        }))
+        .filter((l) => !isResinText(l.label) && !isResinText(l.path));
 
   useEffect(() => { setOpen(false); setOpenDropdown(null); }, [location.pathname]);
 
@@ -166,7 +178,7 @@ export const Header = () => {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {navItems.map((l) => {
+            {visibleNav.map((l) => {
               const active = location.pathname === l.path;
               const hasChildren = l.children && l.children.length > 0;
               return (
@@ -335,7 +347,7 @@ export const Header = () => {
               transition={{ duration: 0.2 }}
             >
               <nav className="flex flex-col p-3 gap-0.5">
-                {flattenNav(navItems).map((l: NavChild, i: number) => {
+                {flattenNav(visibleNav).map((l: NavChild, i: number) => {
                   const active = location.pathname === l.path || location.pathname + location.hash === l.path;
                   return (
                     <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
