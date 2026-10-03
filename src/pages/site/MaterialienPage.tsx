@@ -33,17 +33,49 @@ interface MatProps {
   uv: number;
   chemical: number;
   tempC: string;
+  outdoor: "yes" | "partial" | "no";
+  flexible: "yes" | "no";
+  impact: "yes" | "partial" | "no";
+  food: "yes" | "no";
+  tags: string[];
 }
 
 const PROPS: Record<string, MatProps> = {
-  PLA: { strength: 3, temp: 1, uv: 1, chemical: 2, tempC: "bis 55 °C" },
-  PETG: { strength: 4, temp: 3, uv: 3, chemical: 4, tempC: "bis 75 °C" },
-  ABS: { strength: 4, temp: 4, uv: 2, chemical: 3, tempC: "bis 95 °C" },
-  ASA: { strength: 4, temp: 4, uv: 5, chemical: 4, tempC: "bis 100 °C" },
-  "ABS/ASA": { strength: 4, temp: 4, uv: 4, chemical: 4, tempC: "bis 100 °C" },
-  TPU: { strength: 3, temp: 2, uv: 3, chemical: 3, tempC: "bis 70 °C" },
-  Nylon: { strength: 5, temp: 4, uv: 2, chemical: 4, tempC: "bis 110 °C" },
-  Resin: { strength: 2, temp: 2, uv: 1, chemical: 2, tempC: "bis 60 °C" },
+  PLA:      { strength: 3, temp: 1, uv: 1, chemical: 2, tempC: "55 °C",  outdoor: "no",      flexible: "no",  impact: "partial", food: "no",  tags: [] },
+  PETG:     { strength: 4, temp: 3, uv: 3, chemical: 4, tempC: "75 °C",  outdoor: "partial", flexible: "no",  impact: "yes",     food: "yes", tags: ["lebensmittel"] },
+  ABS:      { strength: 4, temp: 4, uv: 2, chemical: 3, tempC: "95 °C",  outdoor: "no",      flexible: "no",  impact: "yes",     food: "no",  tags: ["hitze"] },
+  ASA:      { strength: 4, temp: 4, uv: 5, chemical: 4, tempC: "100 °C", outdoor: "yes",     flexible: "no",  impact: "yes",     food: "no",  tags: ["aussen", "hitze"] },
+  "ABS/ASA":{ strength: 4, temp: 4, uv: 4, chemical: 4, tempC: "100 °C", outdoor: "yes",     flexible: "no",  impact: "yes",     food: "no",  tags: ["aussen", "hitze"] },
+  TPU:      { strength: 3, temp: 2, uv: 3, chemical: 3, tempC: "70 °C",  outdoor: "partial", flexible: "yes", impact: "yes",     food: "no",  tags: ["flexibel"] },
+  Nylon:    { strength: 5, temp: 4, uv: 2, chemical: 4, tempC: "110 °C", outdoor: "no",      flexible: "no",  impact: "yes",     food: "no",  tags: ["hitze"] },
+  Resin:    { strength: 2, temp: 2, uv: 1, chemical: 2, tempC: "60 °C",  outdoor: "no",      flexible: "no",  impact: "no",      food: "no",  tags: [] },
+};
+
+const FILTERS = [
+  { id: "all",          label: "Alle" },
+  { id: "aussen",       label: "Aussenbereich" },
+  { id: "hitze",        label: "Hitzebeständig" },
+  { id: "flexibel",     label: "Flexibel" },
+  { id: "lebensmittel", label: "Lebensmittelkontakt" },
+];
+
+type DotState = "yes" | "partial" | "no";
+
+const Dot = ({ state, label }: { state: DotState; label: string }) => {
+  const colorClass =
+    state === "yes"     ? "bg-primary" :
+    state === "partial" ? "bg-amber-500" :
+                          "bg-border";
+  const text =
+    state === "yes"     ? "Ja" :
+    state === "partial" ? "Bedingt" :
+                          "Nein";
+  return (
+    <span className="flex items-center gap-1.5 whitespace-nowrap" aria-label={`${label}: ${text}`}>
+      <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${colorClass}`} />
+      <span className="text-muted-foreground text-xs">{text}</span>
+    </span>
+  );
 };
 
 const Bar = ({ value, label }: { value: number; label: string }) => (
@@ -69,6 +101,7 @@ export default function MaterialienPage() {
   const materials = resin ? allMaterials : allMaterials.filter((m) => !isResinText(m.name) && !isResinText(m.tag));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState("all");
 
   useEffect(() => {
     (async () => {
@@ -82,6 +115,12 @@ export default function MaterialienPage() {
       setLoading(false);
     })();
   }, []);
+
+  const filteredMaterials = materials.filter((m) => {
+    if (activeFilter === "all") return true;
+    const p = PROPS[m.name];
+    return p?.tags.includes(activeFilter) ?? false;
+  });
 
   return (
     <div>
@@ -164,48 +203,102 @@ export default function MaterialienPage() {
         )}
       </section>
 
-      {/* Vergleichstabelle */}
+      {/* Vergleichstabelle mit Filterung */}
       {!loading && !error && materials.length > 0 && (
         <section className="container mx-auto px-4 pb-16">
           <ScrollReveal>
-            <h2 className="font-heading text-2xl md:text-3xl font-bold tracking-tight mb-6">
+            <h2 className="font-heading text-2xl md:text-3xl font-bold tracking-tight mb-2">
               Materialien im Vergleich
             </h2>
+            <p className="text-muted-foreground text-sm mb-5">
+              Filtern Sie nach Einsatzbereich – für die richtige Wahl auf den ersten Blick.
+            </p>
+
+            {/* Filter Pills */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setActiveFilter(f.id)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                    activeFilter === f.id
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
             <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-              <table className="w-full text-sm min-w-[720px]">
+              <table className="w-full text-sm min-w-[680px]">
                 <caption className="sr-only">
-                  Vergleich der 3D-Druck-Materialien nach Festigkeit, Temperatur-, UV- und Chemikalienbeständigkeit
+                  Vergleich der 3D-Druck-Materialien nach Temperatur, Aussenbereich, Flexibilität, Schlagfestigkeit und Lebensmittelkontakt
                 </caption>
                 <thead>
                   <tr className="bg-muted/50 text-left">
-                    <th scope="col" className="p-4 font-heading font-semibold">Material</th>
-                    <th scope="col" className="p-4 font-heading font-semibold">Festigkeit</th>
-                    <th scope="col" className="p-4 font-heading font-semibold">Temperatur</th>
-                    <th scope="col" className="p-4 font-heading font-semibold">UV</th>
-                    <th scope="col" className="p-4 font-heading font-semibold">Chemikalien</th>
-                    <th scope="col" className="p-4 font-heading font-semibold">Typisch für</th>
-                    <th scope="col" className="p-4 font-heading font-semibold text-right">Preis</th>
+                    <th scope="col" className="p-4 font-heading font-semibold text-xs uppercase tracking-wide text-muted-foreground">Material</th>
+                    <th scope="col" className="p-4 font-heading font-semibold text-xs uppercase tracking-wide text-muted-foreground">Max. Temp.</th>
+                    <th scope="col" className="p-4 font-heading font-semibold text-xs uppercase tracking-wide text-muted-foreground">Aussen</th>
+                    <th scope="col" className="p-4 font-heading font-semibold text-xs uppercase tracking-wide text-muted-foreground">Flexibel</th>
+                    <th scope="col" className="p-4 font-heading font-semibold text-xs uppercase tracking-wide text-muted-foreground">Schlagfest</th>
+                    <th scope="col" className="p-4 font-heading font-semibold text-xs uppercase tracking-wide text-muted-foreground">Lebensmittel</th>
+                    <th scope="col" className="p-4 font-heading font-semibold text-xs uppercase tracking-wide text-muted-foreground">Ideal für</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {materials.map((m) => {
+                  {filteredMaterials.map((m) => {
                     const p = PROPS[m.name];
+                    const isHot = p && parseInt(p.tempC) >= 95;
                     return (
-                      <tr key={m.id} className="border-t border-border">
-                        <th scope="row" className="p-4 font-semibold text-left">{m.name}</th>
-                        <td className="p-4">{p ? `${p.strength}/5` : "–"}</td>
-                        <td className="p-4">{p ? p.tempC : "–"}</td>
-                        <td className="p-4">{p ? `${p.uv}/5` : "–"}</td>
-                        <td className="p-4">{p ? `${p.chemical}/5` : "–"}</td>
-                        <td className="p-4 text-muted-foreground">{(USES[m.name] || []).join(", ") || "–"}</td>
-                        <td className="p-4 text-right tabular-nums whitespace-nowrap">
-                          CHF {fmtPrice(m.price_per_gram)}/g
+                      <tr key={m.id} className="border-t border-border hover:bg-primary/[0.03] transition-colors">
+                        <th scope="row" className="p-4 font-heading font-bold text-left text-sm whitespace-nowrap">{m.name}</th>
+                        <td className="p-4">
+                          {p ? (
+                            <span className={`inline-block text-xs font-semibold tabular-nums px-2 py-0.5 rounded border ${
+                              isHot
+                                ? "border-amber-500/50 text-amber-500 bg-amber-500/5"
+                                : "border-border text-muted-foreground bg-muted/30"
+                            }`}>
+                              {p.tempC}
+                            </span>
+                          ) : "–"}
                         </td>
+                        <td className="p-4">{p ? <Dot state={p.outdoor} label="Aussen" /> : "–"}</td>
+                        <td className="p-4">{p ? <Dot state={p.flexible} label="Flexibel" /> : "–"}</td>
+                        <td className="p-4">{p ? <Dot state={p.impact} label="Schlagfest" /> : "–"}</td>
+                        <td className="p-4">{p ? <Dot state={p.food} label="Lebensmittel" /> : "–"}</td>
+                        <td className="p-4 text-muted-foreground text-xs">{(USES[m.name] || []).join(", ") || "–"}</td>
                       </tr>
                     );
                   })}
+                  {filteredMaterials.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">
+                        Keine Materialien für diesen Filter gefunden.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Empfehlungskarte */}
+            <div className="mt-4 flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 bg-card border border-border rounded-xl px-4 py-3.5 hover:border-primary/40 transition-colors">
+                <p className="text-xs font-bold text-primary uppercase tracking-wide mb-1">Tipp</p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-foreground font-medium">Unsicher?</span> Für die meisten B2B-Standardaufträge empfehlen wir{" "}
+                  <span className="text-foreground font-semibold">PETG</span> — gutes Preis-Leistungs-Verhältnis, feuchtigkeitsbeständig und lebensmittelecht.
+                </p>
+              </div>
+              <div className="flex-1 bg-card border border-border rounded-xl px-4 py-3.5 hover:border-primary/40 transition-colors">
+                <p className="text-xs font-bold text-primary uppercase tracking-wide mb-1">KI-Beratung</p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-foreground font-medium">Unser Konfigurator</span> analysiert Ihr 3D-Modell und schlägt automatisch das optimale Material vor.
+                </p>
+              </div>
             </div>
           </ScrollReveal>
         </section>
