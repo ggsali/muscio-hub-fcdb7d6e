@@ -263,7 +263,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   const s = data.settings;
   const computedPartsTotal = data.parts.reduce((sum, p) => {
     const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-    const setupA = (p as any).setup_pauschale_anzahl || 1;
+    const setupA = (p as any).setup_pauschale_anzahl ?? 1;
     return sum +
       (s.setup_pauschale > 0 ? setupA * s.setup_pauschale : 0) +
       (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
@@ -293,7 +293,7 @@ export async function exportOrderPDF(data: OrderExportData) {
       // Berechne Part-Total aus Komponenten, damit die Summe der Unterzeilen
       // immer mit dem angezeigten Hauptzeilen-Total übereinstimmt.
       const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-      const setupAnzahl = (p as any).setup_pauschale_anzahl || 1;
+      const setupAnzahl = (p as any).setup_pauschale_anzahl ?? 1;
       const setupTotal = s.setup_pauschale > 0 ? setupAnzahl * s.setup_pauschale : 0;
       // Einzelpreis ohne Setup (Setup wird 1× pro Teilart verrechnet)
       const einzelpreis =
