@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import JSZip from "jszip";
 import { useParams, useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X, ScanLine } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, FolderDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X, ScanLine } from "lucide-react";
 import SlicerScanModal from "@/components/SlicerScanModal";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
@@ -1254,6 +1255,40 @@ export default function AuftragDetailPage() {
       return freshSettings;
     } catch {
       return activeSettings;
+    }
+  };
+
+
+  const [zipLoading, setZipLoading] = useState(false);
+  const handleDownloadAllFiles = async () => {
+    if (partFiles.length === 0) {
+      toast({ title: "Keine Dateien vorhanden", variant: "destructive" });
+      return;
+    }
+    setZipLoading(true);
+    try {
+      const zip = new JSZip();
+      for (const f of partFiles) {
+        const { data } = await supabase.storage.from('part-files').createSignedUrl(f.storage_path, 300);
+        if (!data?.signedUrl) continue;
+        const resp = await fetch(data.signedUrl);
+        if (!resp.ok) continue;
+        const blob = await resp.blob();
+        const name = f.filename || f.storage_path.split('/').pop() || 'datei';
+        zip.file(name, blob);
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `auftrag-${id}-dateien.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: `${partFiles.length} Datei(en) als ZIP heruntergeladen ✓` });
+    } catch (e) {
+      toast({ title: "Fehler beim ZIP-Download", variant: "destructive" });
+    } finally {
+      setZipLoading(false);
     }
   };
 
@@ -3113,6 +3148,12 @@ export default function AuftragDetailPage() {
               <Button onClick={() => handleExportAuftragsbestaetigung()} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Auftragsbestätigung</Button>
               <Button onClick={() => handleExportLieferschein()} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Lieferschein</Button>
               <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung</Button>
+              {partFiles.length > 0 && (
+                <Button onClick={handleDownloadAllFiles} disabled={zipLoading} variant="outline" className="justify-start gap-2 border-border col-span-full">
+                  {zipLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FolderDown className="w-4 h-4" />}
+                  Alle Dateien als ZIP ({partFiles.length})
+                </Button>
+              )}
             </div>
           </div>
 
