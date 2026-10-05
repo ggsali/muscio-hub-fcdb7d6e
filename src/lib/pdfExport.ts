@@ -273,7 +273,7 @@ export async function exportOrderPDF(data: OrderExportData) {
       supportTotalOf(p);
   }, 0);
   const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
-  const versandLabel = `PostPac Priority${data.paket_groesse ? ` (${PAKET_BEZ[data.paket_groesse] ?? data.paket_groesse})` : ""}`;
+  const versandLabel = data.paket_groesse === "briefpost" ? "Briefpost A-Post" : `PostPac Priority${data.paket_groesse ? ` (${PAKET_BEZ[data.paket_groesse] ?? data.paket_groesse})` : ""}`;
   const verpBetrag = Math.max(0, Number(data.verpackungskosten) || 0);
   const verpLabel = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
   const effectiveTotal = data.withDetails

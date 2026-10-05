@@ -69,7 +69,7 @@ const supportRateOf = (p: any): number => Number(p?.support_preis_pro_g) || 0;
 const supportTotalOf = (p: any): number =>
   (Number(p?.support_gewicht_g) || 0) * supportRateOf(p) * (Number(p?.menge) || 0);
 const supportNameOf = (p: any): string => String(p?.support_name || "Support-Material");
-const paketLabel = (id?: string) => `PostPac Priority${id ? ` (${PAKET_BEZ[id] ?? id})` : ""}`;
+const paketLabel = (id?: string) => id === "briefpost" ? "Briefpost A-Post" : `PostPac Priority${id ? ` (${PAKET_BEZ[id] ?? id})` : ""}`;
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
 const BLACK  = [30, 30, 30]   as [number, number, number];
