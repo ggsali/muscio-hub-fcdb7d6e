@@ -2433,6 +2433,12 @@ export default function AuftragDetailPage() {
                     </select>
                   </div>
                 )}
+                {partFiles.length > 0 && (
+                  <Button onClick={handleDownloadAllFiles} disabled={zipLoading} variant="outline" size="sm" className="gap-1 border-border text-xs shrink-0 px-2 md:px-3">
+                    {zipLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderDown className="w-3.5 h-3.5" />}
+                    <span className="hidden md:inline">ZIP </span>({partFiles.length})
+                  </Button>
+                )}
                 <Button onClick={addPart} variant="outline" size="sm" className="gap-1 border-border text-xs shrink-0 px-2 md:px-3">
                   <Plus className="w-3.5 h-3.5" />
                   <span className="hidden md:inline">Teil </span>hinzufügen
