@@ -259,23 +259,25 @@ export async function exportOfferPDF(data: OfferExportData) {
   const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
   const verpBetrag = Math.max(0, Number(data.verpackungskosten) || 0);
   const verpLabel = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
+  const setupAnzahl = data.parts.reduce(
+    (sum, p) => sum + Math.max(0, Number((p as any).setup_pauschale_anzahl) || 0),
+    0,
+  );
+  const setupBetrag = setupAnzahl * s.setup_pauschale;
 
   // Berechne den effektiven Gesamtbetrag aus den angezeigten Komponenten,
   // damit Zwischensumme/Gesamtbetrag immer mit der Positionstabelle übereinstimmen.
   const computedPartsTotal = data.parts.reduce((sum, p) => {
     const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-    const setupA = (p as any).setup_pauschale_anzahl ?? 1;
-    // Einzelpreis OHNE Setup:
     const ep =
       ((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
       ((p.druckzeit_h ?? 0) > 0 ? (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h : 0) +
       ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
       ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0);
-    // Teilpreis = Einzelpreis × Menge + Setup einmalig:
-    return sum + ep * p.menge + setupA * s.setup_pauschale + supportTotalOf(p);
+    return sum + ep * p.menge + supportTotalOf(p);
   }, 0);
   const effectiveTotal = data.withDetails
-    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag + verpBetrag
+    ? computedPartsTotal + setupBetrag + (data.expressKosten ?? 0) + versandBetrag + verpBetrag
     : data.umsatz_total;
 
   if (data.withDetails) {
@@ -284,17 +286,13 @@ export async function exportOfferPDF(data: OfferExportData) {
       const nr = String(i + 1).padStart(2, "0");
       const rowBg = i % 2 === 0 ? WHITE : XLGRAY;
       const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-      const setupAnzahl = (p as any).setup_pauschale_anzahl ?? 1;
-      const setupTotal = setupAnzahl * s.setup_pauschale;
-      // Einzelpreis OHNE Setup (Setup wird 1× pro Teilart verrechnet):
       const einzelpreis =
         ((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
         ((p.druckzeit_h ?? 0) > 0 ? (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h : 0) +
         ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
         ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0);
-      // Teilpreis = Einzelpreis × Menge + Setup einmalig + Support-Material:
       const supportTotal = supportTotalOf(p);
-      const teilTotal = einzelpreis * p.menge + setupTotal + supportTotal;
+      const teilTotal = einzelpreis * p.menge + supportTotal;
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: p.teilname || "—", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -302,16 +300,6 @@ export async function exportOfferPDF(data: OfferExportData) {
         { content: formatCHF(einzelpreis), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
         { content: formatCHF(teilTotal), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
-      if (setupTotal > 0) {
-        detailBody.push([
-          { content: "", styles: { fillColor: rowBg } },
-          { content: "Setup-Pauschale", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
-          { content: `${setupAnzahl}×`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
-          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
-          { content: formatCHF(setupTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
-
-        ]);
-      }
       if ((p.gewicht_g ?? 0) > 0) {
         const matTotal = (p.gewicht_g ?? 0) * matRate * p.menge;
         detailBody.push([
@@ -378,6 +366,16 @@ export async function exportOfferPDF(data: OfferExportData) {
       }
     });
 
+    if (setupBetrag > 0) {
+      detailBody.push([
+        { content: String(data.parts.length + 1).padStart(2, "0"), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "Setuppauschale", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: `${setupAnzahl}×`, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: formatCHF(s.setup_pauschale), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: formatCHF(setupBetrag), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
+
     // Express-Lieferung (Details-Modus)
     if ((data.expressKosten ?? 0) > 0) {
       const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
@@ -443,6 +441,13 @@ export async function exportOfferPDF(data: OfferExportData) {
       String(i + 1).padStart(2, "0"), p.teilname || "—", p.material,
       `${p.menge}×`, formatCHF(p.preis_pro_stueck), formatCHF(p.preis_total),
     ]);
+    if (setupBetrag > 0) {
+      tableBody.push([
+        String(tableBody.length + 1).padStart(2, "0"),
+        "Setuppauschale", "—", `${setupAnzahl}×`,
+        formatCHF(s.setup_pauschale), formatCHF(setupBetrag),
+      ]);
+    }
     if ((data.expressKosten ?? 0) > 0) {
       const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
       tableBody.push([
