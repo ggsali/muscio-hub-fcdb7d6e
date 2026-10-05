@@ -113,6 +113,13 @@
       "when": 1790260152595,
       "tag": "0015_admin_role_requires_verified_email",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791191267840,
+      "tag": "0016_orders_add_setup_anzahl",
+      "breakpoints": true
     }
   ]
 }

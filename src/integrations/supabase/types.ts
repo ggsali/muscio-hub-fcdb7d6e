@@ -1675,6 +1675,7 @@ export type Database = {
           paket_groesse: string | null
           preset_id: string | null
           rabatt_prozent: number
+          setup_anzahl: number
           source: string
           status: string | null
           tracking_nr: string | null
@@ -1715,6 +1716,7 @@ export type Database = {
           paket_groesse?: string | null
           preset_id?: string | null
           rabatt_prozent?: number
+          setup_anzahl?: number
           source?: string
           status?: string | null
           tracking_nr?: string | null
@@ -1755,6 +1757,7 @@ export type Database = {
           paket_groesse?: string | null
           preset_id?: string | null
           rabatt_prozent?: number
+          setup_anzahl?: number
           source?: string
           status?: string | null
           tracking_nr?: string | null

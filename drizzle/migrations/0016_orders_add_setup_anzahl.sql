@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS setup_anzahl integer NOT NULL DEFAULT 1;
