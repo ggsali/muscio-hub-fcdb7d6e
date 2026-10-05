@@ -264,7 +264,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   // damit Zwischensumme/Gesamtbetrag immer mit der Positionstabelle übereinstimmen.
   const computedPartsTotal = data.parts.reduce((sum, p) => {
     const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-    const setupA = (p as any).setup_pauschale_anzahl || 1;
+    const setupA = (p as any).setup_pauschale_anzahl ?? 1;
     // Einzelpreis OHNE Setup:
     const ep =
       ((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
@@ -284,7 +284,7 @@ export async function exportOfferPDF(data: OfferExportData) {
       const nr = String(i + 1).padStart(2, "0");
       const rowBg = i % 2 === 0 ? WHITE : XLGRAY;
       const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-      const setupAnzahl = (p as any).setup_pauschale_anzahl || 1;
+      const setupAnzahl = (p as any).setup_pauschale_anzahl ?? 1;
       const setupTotal = setupAnzahl * s.setup_pauschale;
       // Einzelpreis OHNE Setup (Setup wird 1× pro Teilart verrechnet):
       const einzelpreis =

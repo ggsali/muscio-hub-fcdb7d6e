@@ -165,7 +165,7 @@ export default function AuftragDetailPage() {
   const [verpackungsBeschreibung, setVerpackungsBeschreibung] = useState("");
   // Eingemauerte Offerten-Positionen (Preise zum Zeitpunkt der Offerte)
   const [offerteSnapshot, setOfferteSnapshot] = useState<any | null>(null);
-  const [setupDialog, setSetupDialog] = useState<{ idx: number; menge: number } | null>(null);
+  const [setupAnzahl, setSetupAnzahl] = useState<number>(1);
   const [slicerScanPartIdx, setSlicerScanPartIdx] = useState<number | null>(null);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   const [source, setSource] = useState<string>("manual");
@@ -395,6 +395,7 @@ export default function AuftragDetailPage() {
           setVersandkosten(Number((o as any).versandkosten) || 0);
           setPaketGroesse((o as any).paket_groesse || "");
           setVerpackungskosten(Number((o as any).verpackungskosten) || 0);
+          setSetupAnzahl(Math.max(0, Number((o as any).setup_anzahl ?? 1)));
           setVerpackungsBeschreibung((o as any).verpackungs_beschreibung || "");
           setOfferteSnapshot((o as any).offerte_snapshot || null);
           setSource((o as any).source || "manual");
@@ -501,8 +502,6 @@ export default function AuftragDetailPage() {
     };
     // Einzelpreis = Material + Maschine + Nachbearbeitung + Konstruktion (ohne Setup)
     const preis_pro_stueck = calcUmsatz(settingsForPart, part.gewicht_g, part.druckzeit_h, part.nachbearbeitung_h, part.konstruktion_h);
-    const setupAnzahl = part.setup_pauschale_anzahl || 1;
-    const setupKosten = setupAnzahl * (activeSettings.setup_pauschale || 0);
     const supportKosten = supportKostenFor(part);
     const supportFil = part.support_filament_id
       ? internFilamente.find(x => x.id === part.support_filament_id)
@@ -510,7 +509,7 @@ export default function AuftragDetailPage() {
     return {
       ...part,
       preis_pro_stueck,
-      preis_total: preis_pro_stueck * part.menge + setupKosten + supportKosten,
+      preis_total: preis_pro_stueck * part.menge + supportKosten,
       // nur für PDF/Anzeige, nicht in der DB gespeichert
       support_preis_pro_g: supportPreisProG(part),
       support_name: supportFil?.name || supportFil?.material || undefined,
@@ -529,9 +528,6 @@ export default function AuftragDetailPage() {
   // Menge ändern – ab 5 Stück fragen, wie viele Setup-Pauschalen verrechnet werden
   const handleMengeChange = (idx: number, neueMenge: number) => {
     updatePart(idx, "menge", neueMenge);
-    if (neueMenge >= 5) {
-      setSetupDialog({ idx, menge: neueMenge });
-    }
   };
 
   // Interne Filamente (Support-Material) laden
@@ -805,9 +801,10 @@ export default function AuftragDetailPage() {
         const pct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
         const brutto =
           nextParts.reduce((s, p) => s + (p.preis_total || 0), 0) +
+          (nextParts.length > 0 ? setupAnzahl * (activeSettings.setup_pauschale || 0) : 0) +
           (nextParts.length > 0 ? Math.max(0, Number(expressKosten) || 0) : 0);
         const neuTotal = brutto - brutto * (pct / 100) + versandkosten + verpackungskosten;
-        await supabase.from("orders").update({ umsatz_total: neuTotal, versandkosten, paket_groesse: paketGroesse || null, verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung || null }).eq("id", id);
+        await supabase.from("orders").update({ umsatz_total: neuTotal, versandkosten, paket_groesse: paketGroesse || null, verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung || null, setup_anzahl: setupAnzahl } as any).eq("id", id);
       }
     } catch (err: any) {
       console.error("Fehler beim Speichern der Teilauswahl:", err);
@@ -848,10 +845,11 @@ export default function AuftragDetailPage() {
 
   // Setup-Pauschale: 1× pro Teilart (bzw. so viele Rüstvorgänge wie erfasst) –
   // bereits in preis_total enthalten, hier nur zur Anzeige ausgewiesen.
-  const selectedSetup = selectedParts.reduce(
-    (s, p) => s + (p.setup_pauschale_anzahl || 1) * activeSettings.setup_pauschale,
-    0
-  );
+  // Setuppauschale: auf Auftragsebene, Anzahl frei wählbar (setup_anzahl)
+  const setupPreisProSetup = activeSettings.setup_pauschale || 0;
+  const selectedSetup = selectedParts.length > 0 ? setupAnzahl * setupPreisProSetup : 0;
+  // Für PDFs: Setup als einmalige Position am ersten Teil (andere Teile 0)
+  const pdfParts = selectedParts.map((p, i) => ({ ...p, setup_pauschale_anzahl: i === 0 ? setupAnzahl : 0 }));
 
   // Teilpreise (inkl. Setup)
   const selectedPartsUmsatz = selectedParts.reduce((s, p) => s + (p.preis_total || 0), 0);
@@ -860,7 +858,7 @@ export default function AuftragDetailPage() {
   const selectedExpressAmount = selectedParts.length > 0 ? expressBetrag : 0;
 
   // Brutto = Teile (inkl. Setup) + Express
-  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedExpressAmount;
+  const selectedBruttoUmsatz = selectedPartsUmsatz + selectedSetup + selectedExpressAmount;
 
   // Rabatt auf Brutto
   const selectedRabattBetrag = selectedBruttoUmsatz * (rabattPct / 100);
@@ -914,7 +912,7 @@ export default function AuftragDetailPage() {
     express_kosten: selectedExpressAmount,
     express_label: expressLabel,
     umsatz_total: totalMitVersand,
-    parts: selectedParts.map(p => ({
+    parts: pdfParts.map(p => ({
       ...recalcPart(p),
       preis_eingefroren: true,
       material_rate_frozen: frozenMaterialRate(p),
@@ -954,7 +952,7 @@ export default function AuftragDetailPage() {
       };
     }
     return {
-      parts: selectedParts,
+      parts: pdfParts,
       umsatz_total: totalMitVersand,
       versandkosten,
       paket_groesse: paketGroesse,
@@ -1032,7 +1030,7 @@ export default function AuftragDetailPage() {
           const result = await exportOfferPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true, withDetails,
+            parts: pdfParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true, withDetails,
             versandkosten, paket_groesse: paketGroesse, lieferart,
             verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
             expressKosten: selectedExpressAmount, expressLabel,
@@ -1045,7 +1043,7 @@ export default function AuftragDetailPage() {
           const result = await exportAuftragsbestaetiguungPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true,
+            parts: pdfParts, umsatz_total: totalMitVersand, settings: activeSettings, company, returnBase64: true,
             versandkosten, paket_groesse: paketGroesse, lieferart,
             verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
             expressKosten: selectedExpressAmount, expressLabel,
@@ -1057,7 +1055,7 @@ export default function AuftragDetailPage() {
           const result = await exportLieferscheinPDF({
             orderId: id || "neu", datum, beschreibung: fullBeschreibung,
             customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-            parts: selectedParts, company, returnBase64: true, trackingNr,
+            parts: pdfParts, company, returnBase64: true, trackingNr,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
@@ -1140,7 +1138,7 @@ export default function AuftragDetailPage() {
       const result = await exportAkontoPDF({
         orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-        parts: selectedParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag,
+        parts: pdfParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag,
         versandkosten, paket_groesse: paketGroesse, lieferart,
         verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
         settings: activeSettings, company, returnBase64: !download,
@@ -1192,7 +1190,7 @@ export default function AuftragDetailPage() {
       const result = await exportRestbetragPDF({
         orderId: id || "neu", datum, beschreibung: fullBeschreibung, status,
         customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-        parts: selectedParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag, restbetrag,
+        parts: pdfParts, umsatz_total: totalMitVersand, akontoPercent, akontoBetrag, restbetrag,
         versandkosten, paket_groesse: paketGroesse, lieferart,
         verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
         settings: activeSettings, company, returnBase64: !download,
@@ -1304,7 +1302,7 @@ export default function AuftragDetailPage() {
       customerEmail,
       customerTelefon,
       customerAdresse,
-      parts: selectedParts,
+      parts: pdfParts,
       umsatz_total: totalMitVersand,
       versandkosten,
       paket_groesse: paketGroesse,
@@ -1331,7 +1329,7 @@ export default function AuftragDetailPage() {
       customerEmail,
       customerTelefon,
       customerAdresse,
-      parts: selectedParts,
+      parts: pdfParts,
       umsatz_total: totalMitVersand,
       versandkosten,
       paket_groesse: paketGroesse,
@@ -1353,7 +1351,7 @@ export default function AuftragDetailPage() {
       datum,
       beschreibung: fullBeschreibung,
       customerName, customerFirma, customerEmail, customerTelefon, customerAdresse,
-      parts: selectedParts,
+      parts: pdfParts,
       company,
       trackingNr,
     });
@@ -1384,6 +1382,7 @@ export default function AuftragDetailPage() {
       paket_groesse: paketGroesse || null,
       verpackungskosten,
       verpackungs_beschreibung: verpackungsBeschreibung || null,
+      setup_anzahl: setupAnzahl,
     };
 
     let orderId = id === "neu" ? null : id;
@@ -2680,16 +2679,6 @@ export default function AuftragDetailPage() {
                           <td className="px-2 py-2">
                             <div className="flex flex-col gap-0.5">
                               <Input type="number" value={part.menge} onChange={e => handleMengeChange(idx, parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-16" />
-                              <button
-                                type="button"
-                                onClick={() => setSetupDialog({ idx, menge: part.menge })}
-                                className="text-xs text-muted-foreground underline hover:text-foreground text-left"
-                              >
-                                Setup: {part.setup_pauschale_anzahl || 1}×
-                              </button>
-                              {(part.setup_pauschale_anzahl || 1) > 1 && (
-                                <span className="text-xs text-amber-600">{part.setup_pauschale_anzahl}× Setup</span>
-                              )}
                             </div>
                           </td>
                           <td className="px-2 py-2"><Input type="number" value={part.gewicht_g} onChange={e => updatePart(idx, "gewicht_g", parseFloat(e.target.value) || 0)} className="bg-input border-border h-7 text-xs w-20" step="0.1" /></td>
@@ -2772,6 +2761,34 @@ export default function AuftragDetailPage() {
             )}
           </div>
 
+          {/* Setuppauschale */}
+          {!isNew && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h3 className="font-semibold text-sm mb-3">Setuppauschale</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div className="space-y-1.5">
+                  <Label>Anzahl Setups</Label>
+                  <Input
+                    type="number" min="0" step="1"
+                    value={setupAnzahl}
+                    onChange={e => setSetupAnzahl(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                    className="bg-input border-border"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Preis pro Setup</Label>
+                  <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted/40 text-sm">{formatCHF(setupPreisProSetup)}</div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Total Setuppauschale</Label>
+                  <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted/40 text-sm font-semibold">
+                    {setupAnzahl} × {formatCHF(setupPreisProSetup)} = {formatCHF(selectedSetup)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Express */}
           {!isNew && lieferart === "versand" && (
             <div className="bg-card border border-border rounded-lg p-4 md:p-5">
@@ -2838,7 +2855,7 @@ export default function AuftragDetailPage() {
             <div className="bg-card border border-border rounded-lg p-4 md:p-5">
               <h3 className="font-semibold text-sm mb-3">Kostenaufschlüsselung</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Setup</span><span>{formatCHF(setupKosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Setuppauschale (×{setupAnzahl})</span><span>{formatCHF(setupKosten)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Material</span><span>{formatCHF(matKosten)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
@@ -2970,7 +2987,7 @@ export default function AuftragDetailPage() {
           <div className="bg-card border border-border rounded-lg p-4 md:p-5">
             <h3 className="font-semibold text-sm mb-3">Kostenübersicht</h3>
             <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Setup-Pauschale</span><span>{formatCHF(setupKosten)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Setuppauschale (×{setupAnzahl})</span><span>{formatCHF(setupKosten)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Material</span><span>{formatCHF(matKosten)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit</span><span>{formatCHF(maschKosten)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Nachbearbeitung</span><span>{formatCHF(nbKosten)}</span></div>
@@ -3158,57 +3175,7 @@ export default function AuftragDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Setup-Pauschale-Dialog (ab 5 Stück) – ausserhalb der Tabs, damit er überall erscheint */}
-      <SlicerScanModal
-        open={slicerScanPartIdx !== null}
-        onClose={() => setSlicerScanPartIdx(null)}
-        onApply={(druckzeit, gewicht) => {
-          if (slicerScanPartIdx === null) return;
-          updatePart(slicerScanPartIdx, "druckzeit_h", druckzeit);
-          updatePart(slicerScanPartIdx, "gewicht_g", gewicht);
-        }}
-      />
-      {setupDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="font-bold text-lg mb-1">Setup-Pauschale</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Du hast {setupDialog.menge} Stück eingetragen. Wie viele Setup-Pauschalen möchtest du verrechnen?
-            </p>
-            <div className="space-y-2 mb-4">
-              {[1, 2, 3].map(anzahl => {
-                const active = (parts[setupDialog.idx]?.setup_pauschale_anzahl || 1) === anzahl;
-                return (
-                  <button
-                    key={anzahl}
-                    type="button"
-                    onClick={() => {
-                      updatePart(setupDialog.idx, "setup_pauschale_anzahl", anzahl);
-                      setSetupDialog(null);
-                    }}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${active ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold text-sm">{anzahl}×</div>
-                        <div className="text-xs text-muted-foreground">
-                          {anzahl === 1 ? "Standard – 1 Rüstung" : `${anzahl} Rüstvorgänge`}
-                        </div>
-                      </div>
-                      <div className="font-bold text-sm">
-                        CHF {(anzahl * (activeSettings.setup_pauschale || 20)).toFixed(2)}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            <Button variant="outline" className="w-full" onClick={() => setSetupDialog(null)}>
-              Schliessen
-            </Button>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }
