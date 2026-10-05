@@ -143,6 +143,7 @@ export default function AuftragDetailPage() {
   const [expandedPartIdx, setExpandedPartIdx] = useState<number | null>(null);
   const [partsWithFiles, setPartsWithFiles] = useState<string[]>([]);
   const [partFiles, setPartFiles] = useState<{ part_id: string; storage_path: string; filename?: string; file_type?: string }[]>([]);
+  const [refImageUrls, setRefImageUrls] = useState<{ url: string; filename: string }[]>([]);
   const [activeSettings, setActiveSettings] = useState<Settings>(settings);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [customerId, setCustomerId] = useState(preselectedCustomerId);
@@ -713,6 +714,17 @@ export default function AuftragDetailPage() {
           if (data && data.length > 0) {
             const files = (data as unknown) as { part_id: string; storage_path: string; filename?: string; file_type?: string }[];
             setPartFiles(files);
+            // Load signed URLs for reference images
+            const refImgs = files.filter(f => f.file_type === "reference-image");
+            if (refImgs.length > 0) {
+              Promise.all(refImgs.map(async (f) => {
+                const { data } = await supabase.storage.from("part-files").createSignedUrl(f.storage_path, 3600);
+                if (!data?.signedUrl) return null;
+                return { url: data.signedUrl, filename: f.filename || f.storage_path.split("/").pop() || "Bild" };
+              })).then(results => {
+                setRefImageUrls(results.filter(Boolean) as { url: string; filename: string }[]);
+              });
+            }
             const partIds = [...new Set(files.map((f) => f.part_id))] as string[];
             setPartsWithFiles(partIds);
             const partIdx = parts.findIndex(p => p.id && partIds.includes(p.id));
@@ -2348,6 +2360,26 @@ export default function AuftragDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Referenzbilder vom Kunden */}
+          {!isNew && refImageUrls.length > 0 && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <span>Referenzbilder</span>
+                <span className="text-xs font-normal text-muted-foreground">({refImageUrls.length} Bild{refImageUrls.length !== 1 ? "er" : ""})</span>
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {refImageUrls.map((img, idx) => (
+                  <a key={idx} href={img.url} target="_blank" rel="noopener noreferrer" className="block group rounded-lg overflow-hidden border border-border hover:border-primary transition-colors">
+                    <div className="aspect-square bg-muted overflow-hidden">
+                      <img src={img.url} alt={img.filename} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground px-1.5 py-1 truncate">{img.filename}</p>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Fortschrittsbalken */}
           {!isNew && (
