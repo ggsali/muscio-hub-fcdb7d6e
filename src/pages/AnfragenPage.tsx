@@ -330,10 +330,47 @@ export default function AnfragenPage() {
         jpeg: "image/jpeg", webp: "image/webp",
       };
 
+      const IMAGE_EXTS = ["webp", "jpg", "jpeg", "png", "gif", "bmp", "avif", "heic", "svg"];
+      const isImage = (filename?: string | null) => {
+        const ext = filename?.split(".").pop()?.toLowerCase() || "";
+        return IMAGE_EXTS.includes(ext);
+      };
+
       if (attachments.length > 0) {
         // Create each part individually so we can attach its file directly via the returned id
         for (let i = 0; i < attachments.length; i++) {
           const att = attachments[i];
+
+          // Bilder → als Referenzbild speichern, KEIN Teil erstellen
+          if (isImage(att.filename)) {
+            if (!att.storage_path) continue;
+            try {
+              const { data: fileData, error: dlErr } = await supabase.storage
+                .from(att.bucket || "project-uploads")
+                .download(att.storage_path);
+              if (dlErr || !fileData) continue;
+              const ext = att.filename?.split(".").pop()?.toLowerCase() || "";
+              const safeName = (att.filename || "bild").replace(/[^\w.\-]+/g, "_");
+              const newPath = `${order.id}/referenz/${Date.now()}_${safeName}`;
+              const { error: upErr } = await supabase.storage
+                .from("part-files")
+                .upload(newPath, fileData, { upsert: true, contentType: mimeMap[ext] || "image/jpeg" });
+              if (upErr) continue;
+              await supabase.from("part_files").insert({
+                part_id: null,
+                order_id: order.id,
+                customer_id: customerId,
+                filename: att.filename,
+                storage_path: newPath,
+                file_type: "reference-image",
+                file_size_bytes: att.size_bytes ?? (fileData as Blob).size ?? null,
+              });
+            } catch (e) {
+              console.error("Referenzbild kopieren fehlgeschlagen:", att.filename, e);
+            }
+            continue;
+          }
+
           const teilname = att.filename?.replace(/\.[^.]+$/, "") || `Teil ${i + 1}`;
 
           const sl = att as unknown as {
