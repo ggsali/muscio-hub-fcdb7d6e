@@ -3239,7 +3239,7 @@ export default function AuftragDetailPage() {
 
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
             <h3 className="font-semibold text-sm">Aktivitätsverlauf</h3>
-            <OrderActivityLog orderId={id!} />
+            <OrderActivityLog key={activeTab} orderId={id!} />
           </div>
         </div>
       )}
@@ -3293,42 +3293,63 @@ function OrderActivityLog({ orderId }: { orderId: string }) {
   const [entries, setEntries] = useState<{ id: string; status: string; notiz: string | null; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchEntries = async () => {
     if (!orderId) return;
-    (supabase.from as any)("order_status_log")
+    const { data } = await (supabase.from as any)("order_status_log")
       .select("*")
       .eq("order_id", orderId)
-      .order("created_at", { ascending: false })
-      .then(({ data }: any) => {
-        setEntries((data ?? []) as any[]);
-        setLoading(false);
-      });
+      .order("created_at", { ascending: false });
+    setEntries((data ?? []) as any[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (!orderId) return;
+    fetchEntries();
+    // Realtime: neue Einträge sofort anzeigen
+    const channel = supabase
+      .channel(`activity-log-${orderId}`)
+      .on("postgres_changes" as any, { event: "INSERT", schema: "public", table: "order_status_log", filter: `order_id=eq.${orderId}` }, () => {
+        fetchEntries();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [orderId]);
 
   if (loading) return <p className="text-xs text-muted-foreground py-2">Wird geladen...</p>;
-  if (entries.length === 0) return <p className="text-xs text-muted-foreground py-2">Noch keine Aktivitäten erfasst.</p>;
+  if (entries.length === 0) return (
+    <div className="flex items-center justify-between">
+      <p className="text-xs text-muted-foreground py-2">Noch keine Aktivitäten erfasst.</p>
+      <button onClick={fetchEntries} className="text-xs text-primary hover:underline">Aktualisieren</button>
+    </div>
+  );
 
   return (
-    <div className="relative pl-4 space-y-0">
-      {/* vertical timeline line */}
-      <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
-      {entries.map((e, idx) => {
-        const style = activityStyle(e.status);
-        return (
-          <div key={e.id} className="relative flex gap-3 pb-3">
-            <span className={`absolute -left-[1px] mt-1.5 w-3 h-3 rounded-full border-2 border-background ${style.dot}`} />
-            <div className={`ml-4 flex-1 rounded-lg px-3 py-2 text-xs ${style.bg}`}>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <span className={`font-semibold ${style.label}`}>{e.status}</span>
-                <span className="text-muted-foreground tabular-nums">
-                  {new Date(e.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                </span>
+    <div>
+      <div className="flex justify-end mb-2">
+        <button onClick={fetchEntries} className="text-xs text-muted-foreground hover:text-primary">↻ Aktualisieren</button>
+      </div>
+      <div className="relative pl-4 space-y-0">
+        {/* vertical timeline line */}
+        <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+        {entries.map((e) => {
+          const style = activityStyle(e.status);
+          return (
+            <div key={e.id} className="relative flex gap-3 pb-3">
+              <span className={`absolute -left-[1px] mt-1.5 w-3 h-3 rounded-full border-2 border-background ${style.dot}`} />
+              <div className={`ml-4 flex-1 rounded-lg px-3 py-2 text-xs ${style.bg}`}>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span className={`font-semibold ${style.label}`}>{e.status}</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {new Date(e.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+                {e.notiz && <p className="mt-0.5 text-muted-foreground">{e.notiz}</p>}
               </div>
-              {e.notiz && <p className="mt-0.5 text-muted-foreground">{e.notiz}</p>}
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
