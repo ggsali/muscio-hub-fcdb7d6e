@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, CheckCircle, Upload, Plus, Trash2, Star } from "lucide-react";
+import { Save, CheckCircle, Upload, Plus, Trash2, Star, ShieldCheck, ShieldOff, Loader2, QrCode } from "lucide-react";
 import AdminAllowlistManager from "@/components/AdminAllowlistManager";
 import { toast } from "sonner";
 import { loadReviewMailSettings, REVIEW_DEFAULT_SUBJECT, buildReviewBody } from "@/lib/reviewEmail";
@@ -769,7 +769,12 @@ export default function EinstellungenPage() {
         </div>
       )}
 
-      {tab === "zugriff" && <AdminAllowlistManager />}
+      {tab === "zugriff" && (
+        <div className="space-y-6">
+          <AdminAllowlistManager />
+          <MfaSetupCard />
+        </div>
+      )}
     </div>
   );
 }
@@ -783,5 +788,135 @@ function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void })
       {saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
       {saved ? "Gespeichert!" : "Speichern"}
     </Button>
+  );
+}
+
+
+function MfaSetupCard() {
+  const [factors, setFactors] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [enrolling, setEnrolling] = React.useState(false);
+  const [enrollData, setEnrollData] = React.useState<{ qr: string; secret: string; factorId: string } | null>(null);
+  const [verifyCode, setVerifyCode] = React.useState("");
+  const [verifyError, setVerifyError] = React.useState("");
+  const [verifyLoading, setVerifyLoading] = React.useState(false);
+  const [unenrollLoading, setUnenrollLoading] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+
+  const loadFactors = async () => {
+    setLoading(true);
+    const { data } = await supabase.auth.mfa.listFactors();
+    setFactors(data?.totp ?? []);
+    setLoading(false);
+  };
+
+  React.useEffect(() => { loadFactors(); }, []);
+
+  const handleEnroll = async () => {
+    setEnrolling(true);
+    setEnrollData(null);
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", issuer: "3DMuscio", friendlyName: "Admin" });
+    if (error || !data) { setEnrolling(false); return; }
+    setEnrollData({ qr: data.totp.qr_code, secret: data.totp.secret, factorId: data.id });
+    setEnrolling(false);
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!enrollData || verifyCode.length < 6) return;
+    setVerifyLoading(true);
+    setVerifyError("");
+    const { data: challenge } = await supabase.auth.mfa.challenge({ factorId: enrollData.factorId });
+    if (!challenge) { setVerifyError("Challenge fehlgeschlagen."); setVerifyLoading(false); return; }
+    const { error } = await supabase.auth.mfa.verify({ factorId: enrollData.factorId, challengeId: challenge.id, code: verifyCode.trim() });
+    if (error) { setVerifyError("Ungültiger Code."); setVerifyLoading(false); return; }
+    setEnrollData(null);
+    setVerifyCode("");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+    await loadFactors();
+    setVerifyLoading(false);
+  };
+
+  const handleUnenroll = async (factorId: string) => {
+    if (!confirm("2FA wirklich deaktivieren?")) return;
+    setUnenrollLoading(true);
+    await supabase.auth.mfa.unenroll({ factorId });
+    await loadFactors();
+    setUnenrollLoading(false);
+  };
+
+  const activeFactor = factors.find(f => f.status === "verified");
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <ShieldCheck className="w-4 h-4 text-primary" />
+        <h3 className="font-semibold text-sm">Zwei-Faktor-Authentifizierung (2FA)</h3>
+        {activeFactor && <span className="ml-auto text-xs bg-green-500/15 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full font-medium">Aktiv</span>}
+      </div>
+      <p className="text-xs text-muted-foreground">Schütze den Admin-Bereich mit einem zusätzlichen Einmal-Code aus einer Authenticator-App (Google Authenticator, Authy, etc.).</p>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Wird geladen...</div>
+      ) : activeFactor ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-500/10 rounded-lg px-3 py-2">
+            <ShieldCheck className="w-4 h-4" />
+            2FA ist eingerichtet und aktiv. Beim nächsten Login wird ein Code abgefragt.
+          </div>
+          <button
+            onClick={() => handleUnenroll(activeFactor.id)}
+            disabled={unenrollLoading}
+            className="flex items-center gap-1.5 text-xs text-destructive hover:underline"
+          >
+            {unenrollLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ShieldOff className="w-3 h-3" />}
+            2FA deaktivieren
+          </button>
+        </div>
+      ) : enrollData ? (
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground">Scanne den QR-Code mit deiner Authenticator-App:</p>
+          <div className="flex justify-center">
+            <img src={enrollData.qr} alt="QR Code" className="w-44 h-44 rounded-lg border border-border" />
+          </div>
+          <div className="bg-muted rounded-lg px-3 py-2 text-xs font-mono text-center break-all select-all">{enrollData.secret}</div>
+          <form onSubmit={handleVerify} className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Code bestätigen</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="000000"
+                maxLength={6}
+                value={verifyCode}
+                onChange={e => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="w-full text-center text-xl tracking-[0.4em] font-mono border border-border rounded-md px-3 py-2 bg-input focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            {verifyError && <p className="text-xs text-destructive">{verifyError}</p>}
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setEnrollData(null)} className="flex-1 text-xs border border-border rounded-md py-1.5 hover:bg-muted">Abbrechen</button>
+              <button type="submit" disabled={verifyLoading || verifyCode.length < 6} className="flex-1 text-xs bg-primary text-primary-foreground rounded-md py-1.5 disabled:opacity-50 flex items-center justify-center gap-1">
+                {verifyLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Aktivieren"}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {saved && <p className="text-xs text-green-600 dark:text-green-400">✓ 2FA wurde erfolgreich eingerichtet.</p>}
+          <button
+            onClick={handleEnroll}
+            disabled={enrolling}
+            className="flex items-center gap-2 text-sm bg-primary text-primary-foreground rounded-lg px-4 py-2 hover:bg-primary/90 disabled:opacity-50"
+          >
+            {enrolling ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+            2FA einrichten
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
