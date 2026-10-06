@@ -990,6 +990,7 @@ export default function AuftragDetailPage() {
         toast({ title: "Fehler", description: data?.error || error?.message, variant: "destructive" });
       } else {
         toast({ title: "Test-E-Mail gesendet ✓", description: "Eine Test-Nachricht wurde an die Kundenadresse gesendet." });
+        await (supabase.from as any)("order_status_log").insert({ order_id: id, status: "✉️ Test-Mail gesendet", notiz: null });
       }
     } catch (e: any) {
       toast({ title: "Fehler", description: e.message, variant: "destructive" });
@@ -1116,10 +1117,21 @@ export default function AuftragDetailPage() {
             file_path: storedPath,
             filename: storedFilename,
           });
+          // Log in activity timeline
+          await (supabase.from as any)("order_status_log").insert({
+            order_id: id,
+            status: `✉️ ${labelsMap[type]} per Mail gesendet`,
+            notiz: sentDate,
+          });
         }
       }
     } catch (e: any) {
       toast({ title: "Fehler", description: e.message, variant: "destructive" });
+      await (supabase.from as any)("order_status_log").insert({
+        order_id: id,
+        status: `⚠️ Mail-Versand fehlgeschlagen`,
+        notiz: e.message ?? String(e),
+      });
     }
     setSendingEmail(null);
   };
@@ -3260,6 +3272,23 @@ export default function AuftragDetailPage() {
 }
 
 /** Chronologischer Aktivitäts-Verlauf des Auftrags */
+function activityStyle(status: string) {
+  const s = status.toLowerCase();
+  if (s.includes("✉️") || s.includes("mail") || s.includes("gesendet")) {
+    return { dot: "bg-blue-500", bg: "bg-blue-500/10", label: "text-blue-600 dark:text-blue-400" };
+  }
+  if (s.includes("⚠️") || s.includes("fehler") || s.includes("failed")) {
+    return { dot: "bg-destructive", bg: "bg-destructive/10", label: "text-destructive" };
+  }
+  if (s.includes("bezahlt") || s.includes("zahlung")) {
+    return { dot: "bg-green-500", bg: "bg-green-500/10", label: "text-green-600 dark:text-green-400" };
+  }
+  if (s.includes("abgeschlossen") || s.includes("geliefert")) {
+    return { dot: "bg-emerald-500", bg: "bg-emerald-500/10", label: "text-emerald-600 dark:text-emerald-400" };
+  }
+  return { dot: "bg-muted-foreground", bg: "bg-muted/40", label: "text-foreground" };
+}
+
 function OrderActivityLog({ orderId }: { orderId: string }) {
   const [entries, setEntries] = useState<{ id: string; status: string; notiz: string | null; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -3276,24 +3305,30 @@ function OrderActivityLog({ orderId }: { orderId: string }) {
       });
   }, [orderId]);
 
+  if (loading) return <p className="text-xs text-muted-foreground py-2">Wird geladen...</p>;
+  if (entries.length === 0) return <p className="text-xs text-muted-foreground py-2">Noch keine Aktivitäten erfasst.</p>;
+
   return (
-    <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
-      <h3 className="font-semibold text-sm mb-2">Aktivitäts-Log</h3>
-      {loading ? (
-        <p className="text-xs text-muted-foreground">Wird geladen...</p>
-      ) : entries.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Noch keine Aktivitäten erfasst.</p>
-      ) : (
-        entries.map(e => (
-          <div key={e.id} className="flex items-start gap-2 text-xs bg-muted/30 rounded-lg px-2 py-1.5">
-            <span className="text-muted-foreground tabular-nums shrink-0">
-              {new Date(e.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
-            </span>
-            <span className="text-foreground font-medium">{e.status}</span>
-            {e.notiz && <span className="text-muted-foreground">· {e.notiz}</span>}
+    <div className="relative pl-4 space-y-0">
+      {/* vertical timeline line */}
+      <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+      {entries.map((e, idx) => {
+        const style = activityStyle(e.status);
+        return (
+          <div key={e.id} className="relative flex gap-3 pb-3">
+            <span className={`absolute -left-[1px] mt-1.5 w-3 h-3 rounded-full border-2 border-background ${style.dot}`} />
+            <div className={`ml-4 flex-1 rounded-lg px-3 py-2 text-xs ${style.bg}`}>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span className={`font-semibold ${style.label}`}>{e.status}</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {new Date(e.created_at).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+              {e.notiz && <p className="mt-0.5 text-muted-foreground">{e.notiz}</p>}
+            </div>
           </div>
-        ))
-      )}
+        );
+      })}
     </div>
   );
 }

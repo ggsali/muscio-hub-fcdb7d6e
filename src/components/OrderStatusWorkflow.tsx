@@ -181,7 +181,22 @@ export default function OrderStatusWorkflow({
         await supabase.functions.invoke("send-email", {
           body: { kind: "status", orderId, statusKey: tplKey, trackingNr: trackingInput || trackingNr || null, lieferart },
         });
-      } catch (e) { console.error("send-email status failed", e); }
+        // Log mail sent
+        const mailLabels: Record<string, string> = {
+          bestätigung: "✉️ Bestätigungs-Mail gesendet",
+          versand: "✉️ Versand-Mail mit Tracking gesendet",
+          offerte: "✉️ Offerte per Mail gesendet",
+          abschluss: "✉️ Abschluss-Mail gesendet",
+          storno: "✉️ Storno-Mail gesendet",
+        };
+        const mailLabel = mailLabels[tplKey] ?? `✉️ Status-Mail gesendet (${tplKey})`;
+        await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: mailLabel, notiz: null });
+        await loadLog();
+      } catch (e) {
+        console.error("send-email status failed", e);
+        await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: "⚠️ Mail-Versand fehlgeschlagen", notiz: String(e) });
+        await loadLog();
+      }
     }
 
     // Bewertungsmail beim Abschluss – gleicher Pfad wie manueller Versand
