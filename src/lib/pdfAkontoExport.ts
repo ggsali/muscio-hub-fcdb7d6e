@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { formatCHF, Settings } from "./calc";
 import { CompanySettings } from "./companySettings";
 import { appendQrBill } from "./pdfQrBill";
-import { checkPdfPlausibility } from "./pdfPlausibility";
+import { checkPdfPlausibility, setupTotalFromParts } from "./pdfPlausibility";
 
 interface PartRow {
   teilname: string;
@@ -204,7 +204,7 @@ function drawFooter(doc: jsPDF, company: CompanySettings, ACCENT: [number, numbe
 }
 
 /** Gemeinsame Positionen-Tabelle */
-function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string, versandkosten?: number, paketGroesse?: string, lieferart?: string, verpackungskosten?: number, verpackungsBeschreibung?: string) {
+function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKosten?: number, expressLabel?: string, versandkosten?: number, paketGroesse?: string, lieferart?: string, verpackungskosten?: number, verpackungsBeschreibung?: string, setupPreis?: number) {
   const body: any[][] = parts.map((p, i) => [
     String(i + 1).padStart(2, "0"),
     p.teilname || "—",
@@ -213,6 +213,11 @@ function drawPartsTable(doc: jsPDF, parts: PartRow[], margin: number, expressKos
     formatCHF(p.preis_pro_stueck),
     formatCHF(p.preis_total),
   ]);
+  const setupAnz = parts.reduce((s, p: any) => s + Math.max(0, Number(p.setup_pauschale_anzahl) || 0), 0);
+  const setupP = Number(setupPreis) || 0;
+  if (setupAnz > 0 && setupP > 0) {
+    body.push([String(body.length + 1).padStart(2, "0"), "Setuppauschale", "—", `${setupAnz}×`, formatCHF(setupP), formatCHF(setupAnz * setupP)]);
+  }
   if ((expressKosten ?? 0) > 0) {
     body.push([
       String(body.length + 1).padStart(2, "0"),
@@ -330,6 +335,7 @@ export async function exportAkontoPDF(data: AkontoExportData) {
   checkPdfPlausibility({
     parts: data.parts,
     expressKosten: data.expressKosten,
+    setupKosten: setupTotalFromParts(data.parts, data.settings?.setup_pauschale ?? 0),
     umsatz_total: data.umsatz_total,
     context: "Akontorechnung",
   });
@@ -367,7 +373,7 @@ export async function exportAkontoPDF(data: AkontoExportData) {
   const descLines = rawDesc.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart, data.verpackungskosten, data.verpackungs_beschreibung);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart, data.verpackungskosten, data.verpackungs_beschreibung, data.settings?.setup_pauschale);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;
@@ -429,6 +435,7 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
   checkPdfPlausibility({
     parts: data.parts,
     expressKosten: data.expressKosten,
+    setupKosten: setupTotalFromParts(data.parts, data.settings?.setup_pauschale ?? 0),
     umsatz_total: data.umsatz_total,
     context: "Schlussrechnung",
   });
@@ -464,7 +471,7 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
   const descLines = rawDesc2.split("\n").flatMap(line => doc.splitTextToSize(line || " ", pageW - colR - margin));
   doc.text(descLines.slice(0, 5), colR, 83);
 
-  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart, data.verpackungskosten, data.verpackungs_beschreibung);
+  drawPartsTable(doc, data.parts, margin, data.expressKosten, data.expressLabel, data.versandkosten, data.paket_groesse, data.lieferart, data.verpackungskosten, data.verpackungs_beschreibung, data.settings?.setup_pauschale);
 
   const afterTable = (doc as any).lastAutoTable.finalY + 6;
   const sumW = 70;

@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCHF, Settings } from "./calc";
 import { CompanySettings } from "./companySettings";
-import { checkPdfPlausibility } from "./pdfPlausibility";
+import { checkPdfPlausibility, setupTotalFromParts } from "./pdfPlausibility";
 
 interface PartRow {
   teilname: string;
@@ -213,6 +213,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   checkPdfPlausibility({
     parts: data.parts,
     expressKosten: data.expressKosten,
+    setupKosten: setupTotalFromParts(data.parts, data.settings?.setup_pauschale ?? 0),
     umsatz_total: data.umsatz_total,
     context: "Offerte",
   });
@@ -379,7 +380,7 @@ export async function exportOfferPDF(data: OfferExportData) {
     // Express-Lieferung (Details-Modus)
     if ((data.expressKosten ?? 0) > 0) {
       const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
-      const nr = String(data.parts.length + 1).padStart(2, "0");
+      const nr = String(data.parts.length + (setupBetrag > 0 ? 2 : 1)).padStart(2, "0");
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: exLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -392,7 +393,7 @@ export async function exportOfferPDF(data: OfferExportData) {
     // Versand / Abholung (Details-Modus)
     const versandBetragD = Math.max(0, Number(data.versandkosten) || 0);
     if (versandBetragD > 0) {
-      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
+      const nr = String(data.parts.length + (setupBetrag > 0 ? 1 : 0) + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: paketLabel(data.paket_groesse), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -401,7 +402,7 @@ export async function exportOfferPDF(data: OfferExportData) {
         { content: formatCHF(versandBetragD), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
     } else if (data.lieferart === "abholung") {
-      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
+      const nr = String(data.parts.length + (setupBetrag > 0 ? 1 : 0) + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: "Abholung in Eschlikon TG", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -598,6 +599,13 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
     String(i + 1).padStart(2, "0"), p.teilname || "—", p.material,
     `${p.menge}×`, formatCHF(p.preis_pro_stueck), formatCHF(p.preis_total),
   ]);
+  {
+    const setupAnzAb = data.parts.reduce((sum, p: any) => sum + Math.max(0, Number(p.setup_pauschale_anzahl) || 0), 0);
+    const setupPAb = Number(data.settings?.setup_pauschale) || 0;
+    if (setupAnzAb > 0 && setupPAb > 0) {
+      abTableBody.push([String(abTableBody.length + 1).padStart(2, "0"), "Setuppauschale", "—", `${setupAnzAb}×`, formatCHF(setupPAb), formatCHF(setupAnzAb * setupPAb)]);
+    }
+  }
   if ((data.expressKosten ?? 0) > 0) {
     abTableBody.push([
       String(abTableBody.length + 1).padStart(2, "0"),

@@ -8,6 +8,8 @@ interface PlausibilityPart {
 interface PlausibilityCheckInput {
   parts: PlausibilityPart[];
   expressKosten?: number;
+  /** Setuppauschale auf Auftragsebene (nicht in preis_total enthalten) */
+  setupKosten?: number;
   umsatz_total: number;
   /** Kontext für die Warnung, z.B. "Rechnung", "Offerte", "Akontorechnung" */
   context?: string;
@@ -26,11 +28,17 @@ export interface PlausibilityResult {
  * Validiert, dass die Summe der Teile/Positionen + Express dem Auftrag-Totalumsatz entspricht.
  * Zeigt bei Abweichung eine Toast-Warnung an und gibt das Ergebnis zurück.
  */
+/** Setuppauschale aus den PDF-Teilen (Anzahl ist beim ersten Teil hinterlegt). */
+export function setupTotalFromParts(parts: any[], preisProSetup: number): number {
+  const anz = parts.reduce((s, p) => s + Math.max(0, Number(p?.setup_pauschale_anzahl) || 0), 0);
+  return anz * (Number(preisProSetup) || 0);
+}
+
 export function checkPdfPlausibility(input: PlausibilityCheckInput): PlausibilityResult {
   const tolerance = input.tolerance ?? 0.05;
   const partsSum = input.parts.reduce((s, p) => s + (Number(p.preis_total) || 0), 0);
   const express = Number(input.expressKosten) || 0;
-  const expected = partsSum + express;
+  const expected = partsSum + express + (Number(input.setupKosten) || 0);
   const actual = Number(input.umsatz_total) || 0;
   const diff = Math.abs(expected - actual);
   const ok = diff <= tolerance;
