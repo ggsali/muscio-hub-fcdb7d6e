@@ -3063,6 +3063,17 @@ export default function AuftragDetailPage() {
           {/* 4. Tracking-Nummer (bei Versand) + Termine */}
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
             <h3 className="font-semibold text-sm">{lieferart === "abholung" ? "Termine" : "Tracking & Termine"}</h3>
+            {lieferart === "versand" && (
+              <Button
+                onClick={handleGenerateShippingLabel}
+                disabled={labelLoading}
+                variant="outline"
+                className="border-border gap-2 w-full sm:w-auto"
+              >
+                {labelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>📦</span>}
+                Versandetikette erstellen (Post CH)
+              </Button>
+            )}
             {lieferart === "versand" && (["Versandt", "Geliefert", "Abgeschlossen"].includes(status) || !!trackingNr) && (
               <div className="space-y-1.5">
                 <Label>Tracking-Nummer (Post CH)</Label>
@@ -3077,15 +3088,6 @@ export default function AuftragDetailPage() {
                     <Save className="w-4 h-4" /> Speichern
                   </Button>
                 </div>
-                <Button
-                  onClick={handleGenerateShippingLabel}
-                  disabled={labelLoading || lieferart !== "versand"}
-                  variant="outline"
-                  className="border-border gap-2 w-full sm:w-auto"
-                >
-                  {labelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>📦</span>}
-                  Versandetikette erstellen (Post CH)
-                </Button>
                 {trackingNr && (
                   <a
                     href={`https://service.post.ch/ekp-web/ui/list?barcode=${encodeURIComponent(trackingNr)}`}
