@@ -262,6 +262,7 @@ export default function EinstellungenPage() {
     { key: "firma", label: "Firmenangaben" },
     { key: "rechnung", label: "Rechnungs-Design" },
     { key: "zugriff", label: "Admin-Zugriff" },
+    { key: "versand", label: "Versand & Post" },
   ];
 
   return (
@@ -775,6 +776,12 @@ export default function EinstellungenPage() {
           <MfaSetupCard />
         </div>
       )}
+
+      {tab === "versand" && (
+        <div className="space-y-6">
+          <SwissPostSettingsCard />
+        </div>
+      )}
     </div>
   );
 }
@@ -917,6 +924,143 @@ function MfaSetupCard() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+function SwissPostSettingsCard() {
+  const { toast } = useToast();
+  const [loading, setLoading] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+  const [fields, setFields] = React.useState({
+    customer_no: "",
+    franking_license: "",
+    api_user: "",
+    api_password: "",
+    produkt: "PRI",
+  });
+
+  React.useEffect(() => {
+    supabase.from("app_settings").select("key,value").in("key", [
+      "swiss_post_customer_no",
+      "swiss_post_franking_license",
+      "swiss_post_api_user",
+      "swiss_post_api_password",
+      "swiss_post_produkt",
+    ]).then(({ data }) => {
+      if (!data) return;
+      const map: Record<string, string> = {};
+      data.forEach(r => { map[r.key] = r.value; });
+      setFields({
+        customer_no: map["swiss_post_customer_no"] || "",
+        franking_license: map["swiss_post_franking_license"] || "",
+        api_user: map["swiss_post_api_user"] || "",
+        api_password: map["swiss_post_api_password"] || "",
+        produkt: map["swiss_post_produkt"] || "PRI",
+      });
+    });
+  }, []);
+
+  const handleSave = async () => {
+    setLoading(true);
+    const rows = [
+      { key: "swiss_post_customer_no", value: fields.customer_no },
+      { key: "swiss_post_franking_license", value: fields.franking_license },
+      { key: "swiss_post_api_user", value: fields.api_user },
+      { key: "swiss_post_api_password", value: fields.api_password },
+      { key: "swiss_post_produkt", value: fields.produkt },
+    ];
+    const { error } = await supabase.from("app_settings").upsert(rows, { onConflict: "key" });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Fehler beim Speichern", description: error.message, variant: "destructive" });
+    } else {
+      setSaved(true);
+      toast({ title: "Swiss Post Einstellungen gespeichert ✓" });
+      setTimeout(() => setSaved(false), 2500);
+    }
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+      <div>
+        <h3 className="font-semibold flex items-center gap-2">📦 Swiss Post — Barcode API</h3>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Zugangsdaten für die automatische Erstellung von Versandetiketten.{" "}
+          <a href="https://developer.post.ch" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+            developer.post.ch
+          </a>
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Kundennummer (Customer No)</label>
+          <input
+            type="text"
+            value={fields.customer_no}
+            onChange={e => setFields(f => ({ ...f, customer_no: e.target.value }))}
+            placeholder="z.B. 0123456789"
+            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm font-mono"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Frankierlizenz (Franking License)</label>
+          <input
+            type="text"
+            value={fields.franking_license}
+            onChange={e => setFields(f => ({ ...f, franking_license: e.target.value }))}
+            placeholder="z.B. 9876543210"
+            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm font-mono"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">API Benutzername</label>
+          <input
+            type="text"
+            value={fields.api_user}
+            onChange={e => setFields(f => ({ ...f, api_user: e.target.value }))}
+            placeholder="API User"
+            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">API Passwort</label>
+          <input
+            type="password"
+            value={fields.api_password}
+            onChange={e => setFields(f => ({ ...f, api_password: e.target.value }))}
+            placeholder="••••••••"
+            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <label className="text-sm font-medium">Versandprodukt</label>
+          <select
+            value={fields.produkt}
+            onChange={e => setFields(f => ({ ...f, produkt: e.target.value }))}
+            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm"
+          >
+            <option value="PRI">Priority (A-Post)</option>
+            <option value="ECO">Economy (B-Post)</option>
+            <option value="R">Einschreiben (Registered)</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="pt-1">
+        <Button onClick={handleSave} disabled={loading} className={`gap-2 ${saved ? "bg-success hover:bg-success/90" : "bg-primary hover:bg-primary/90"}`}>
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? "✓ Gespeichert!" : <><Save className="w-4 h-4" /> Speichern</>}
+        </Button>
+      </div>
+
+      <div className="border-t border-border pt-3 text-xs text-muted-foreground space-y-1">
+        <p className="font-medium text-foreground">So erhältst du die Zugangsdaten:</p>
+        <ol className="list-decimal list-inside space-y-0.5">
+          <li>Melde dich bei <strong>post.ch Business</strong> an und aktiviere die Barcode-API</li>
+          <li>Unter <em>developer.post.ch → My Applications</em> eine neue App erstellen</li>
+          <li>Kundennummer und Frankierlizenz findest du in deinem Post-Vertrag</li>
+        </ol>
+      </div>
     </div>
   );
 }

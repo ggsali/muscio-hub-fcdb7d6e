@@ -1283,6 +1283,49 @@ export default function AuftragDetailPage() {
   };
 
 
+  const [labelLoading, setLabelLoading] = useState(false);
+  const handleGenerateShippingLabel = async () => {
+    if (!id) return;
+    setLabelLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-shipping-label", {
+        body: { order_id: id },
+      });
+      if (error || !data?.success) {
+        const msg = data?.error || error?.message || "Unbekannter Fehler";
+        if (msg.includes("not configured")) {
+          toast({
+            title: "Swiss Post API nicht konfiguriert",
+            description: "Bitte trage deine Post-API-Zugangsdaten in den Einstellungen ein.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: "Fehler beim Erstellen der Etikette", description: msg, variant: "destructive" });
+        }
+        return;
+      }
+      // Download the PDF
+      const byteCharacters = atob(data.label_base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = data.filename || "versandetikette.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "📦 Versandetikette erstellt & heruntergeladen ✓" });
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e.message, variant: "destructive" });
+    } finally {
+      setLabelLoading(false);
+    }
+  };
+
   const [zipLoading, setZipLoading] = useState(false);
   const handleDownloadAllFiles = async () => {
     if (partFiles.length === 0) {
@@ -3034,6 +3077,15 @@ export default function AuftragDetailPage() {
                     <Save className="w-4 h-4" /> Speichern
                   </Button>
                 </div>
+                <Button
+                  onClick={handleGenerateShippingLabel}
+                  disabled={labelLoading || lieferart !== "versand"}
+                  variant="outline"
+                  className="border-border gap-2 w-full sm:w-auto"
+                >
+                  {labelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>📦</span>}
+                  Versandetikette erstellen (Post CH)
+                </Button>
                 {trackingNr && (
                   <a
                     href={`https://service.post.ch/ekp-web/ui/list?barcode=${encodeURIComponent(trackingNr)}`}
