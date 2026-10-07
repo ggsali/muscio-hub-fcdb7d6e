@@ -20,7 +20,7 @@ serve(async (req) => {
 
     // Load Swiss Post credentials from app_settings table
     const { data: settingsRows } = await supabase
-      .from("app_settings")
+      .from("settings")
       .select("key,value")
       .in("key", [
         "swiss_post_customer_no",
