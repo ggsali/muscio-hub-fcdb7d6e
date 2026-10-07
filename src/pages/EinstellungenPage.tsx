@@ -57,7 +57,7 @@ const PRESET_RATE_FIELDS: { key: keyof Omit<Preset, "id" | "name" | "beschreibun
   { key: "rabatt_prozent", label: "Rabatt", unit: "%", step: "1" },
 ];
 
-type Tab = "raten" | "presets" | "firma" | "rechnung" | "website" | "kalkulator" | "zugriff";
+type Tab = "raten" | "presets" | "firma" | "rechnung" | "website" | "kalkulator" | "zugriff" | "versand";
 
 export default function EinstellungenPage() {
   const { settings, reload: reloadSettings } = useSettings();
@@ -928,7 +928,6 @@ function MfaSetupCard() {
   );
 }
 function SwissPostSettingsCard() {
-  const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   const [fields, setFields] = React.useState({
@@ -940,7 +939,7 @@ function SwissPostSettingsCard() {
   });
 
   React.useEffect(() => {
-    supabase.from("app_settings").select("key,value").in("key", [
+    supabase.from("settings").select("key,value").in("key", [
       "swiss_post_customer_no",
       "swiss_post_franking_license",
       "swiss_post_api_user",
@@ -969,13 +968,13 @@ function SwissPostSettingsCard() {
       { key: "swiss_post_api_password", value: fields.api_password },
       { key: "swiss_post_produkt", value: fields.produkt },
     ];
-    const { error } = await supabase.from("app_settings").upsert(rows, { onConflict: "key" });
+    const { error } = await supabase.from("settings").upsert(rows, { onConflict: "key" });
     setLoading(false);
     if (error) {
-      toast({ title: "Fehler beim Speichern", description: error.message, variant: "destructive" });
+      toast.error("Fehler beim Speichern", { description: error.message });
     } else {
       setSaved(true);
-      toast({ title: "Swiss Post Einstellungen gespeichert ✓" });
+      toast.success("Swiss Post Einstellungen gespeichert ✓");
       setTimeout(() => setSaved(false), 2500);
     }
   };

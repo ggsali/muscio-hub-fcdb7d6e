@@ -20,7 +20,7 @@ serve(async (req) => {
 
     // Load Swiss Post credentials from app_settings table
     const { data: settingsRows } = await supabase
-      .from("app_settings")
+      .from("settings")
       .select("key,value")
       .in("key", [
         "swiss_post_customer_no",
@@ -59,8 +59,9 @@ serve(async (req) => {
     if (custErr || !customer) throw new Error("Customer not found");
 
     // Fetch company settings for sender address
-    const { data: companyRows } = await supabase.from("company_settings").select("*");
-    const company: any = companyRows?.[0] || {};
+    const { data: companyRows } = await supabase.from("company_settings").select("key,value");
+    const company: any = {};
+    (companyRows || []).forEach((r: any) => { company[r.key] = r.value; });
 
     // Parse sender address — stored as "Strasse Nr, PLZ Ort" or multi-line
     const rawAdresse = (company.adresse || "").replace(/\n/g, ", ");
