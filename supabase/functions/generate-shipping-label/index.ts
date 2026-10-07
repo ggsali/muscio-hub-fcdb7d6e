@@ -59,8 +59,9 @@ serve(async (req) => {
     if (custErr || !customer) throw new Error("Customer not found");
 
     // Fetch company settings for sender address
-    const { data: companyRows } = await supabase.from("company_settings").select("*");
-    const company: any = companyRows?.[0] || {};
+    const { data: companyRows } = await supabase.from("company_settings").select("key,value");
+    const company: any = {};
+    (companyRows || []).forEach((r: any) => { company[r.key] = r.value; });
 
     // Parse sender address — stored as "Strasse Nr, PLZ Ort" or multi-line
     const rawAdresse = (company.adresse || "").replace(/\n/g, ", ");
