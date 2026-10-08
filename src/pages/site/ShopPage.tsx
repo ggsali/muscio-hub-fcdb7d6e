@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useSearchParams, useNavigate } from "@/lib/router-compat";
@@ -32,6 +33,7 @@ const getImageUrl = (path: string) =>
   supabase.storage.from("shop-products").getPublicUrl(path).data.publicUrl;
 
 export default function ShopPage() {
+  const resin = useResinEnabled();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -159,7 +161,7 @@ export default function ShopPage() {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-8">
-          {categories.map(cat => (
+          {categories.filter((item) => resin || !isResinText(JSON.stringify(item))).map(cat => (
             <button key={cat.slug} onClick={() => handleCategoryChange(cat.slug)}
               className={cn("px-4 py-2 rounded-full text-xs font-semibold transition-all border",
                 activeCategory === cat.slug

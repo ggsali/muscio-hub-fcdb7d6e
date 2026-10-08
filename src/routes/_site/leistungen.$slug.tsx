@@ -12,6 +12,6 @@ export const Route = createFileRoute("/_site/leistungen/$slug")({
       title: service.title,
       description: service.description,
       path: `/leistungen/${service.slug}`,
-    }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false);
+    }, matches.at(-1)?.context.resinEnabled ?? false);
   },
 });

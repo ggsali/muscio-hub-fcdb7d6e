@@ -10,5 +10,5 @@ export const Route = createFileRoute("/_site/kalkulator-online")({
       description:
         "Berechne deinen 3D-Druckauftrag sofort und kostenlos: Datei hochladen, Material wählen, Preis in Sekunden sehen. FDM & SLA aus der Schweiz, ab 1 Stück.",
       path: "/kalkulator-online",
-    }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false),
+    }, matches.at(-1)?.context.resinEnabled ?? false),
 });

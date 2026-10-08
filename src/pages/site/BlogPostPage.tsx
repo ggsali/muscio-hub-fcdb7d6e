@@ -1,3 +1,5 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
+import { Navigate } from "@/lib/router-compat";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useParams } from "@/lib/router-compat";
@@ -20,6 +22,7 @@ interface Post {
 }
 
 export default function BlogPostPage() {
+  const resin = useResinEnabled();
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);

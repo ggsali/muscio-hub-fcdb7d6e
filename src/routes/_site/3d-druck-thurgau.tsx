@@ -7,5 +7,5 @@ const data = regionBySlug("3d-druck-thurgau");
 
 export const Route = createFileRoute("/_site/3d-druck-thurgau")({
   component: () => <RegionPage slug="3d-druck-thurgau" />,
-  head: ({ matches }) => buildHead({ title: data?.title ?? "3D-Druck Schweiz | 3DMuscio", description: data?.description ?? "3D-Druck von 3DMuscio aus der Schweiz.", path: "/3d-druck-thurgau" }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false),
+  head: ({ matches }) => buildHead({ title: data?.title ?? "3D-Druck Schweiz | 3DMuscio", description: data?.description ?? "3D-Druck von 3DMuscio aus der Schweiz.", path: "/3d-druck-thurgau" }, matches.at(-1)?.context.resinEnabled ?? false),
 });

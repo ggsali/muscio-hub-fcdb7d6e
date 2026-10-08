@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +28,7 @@ const resolveImage = (p: any): string => {
 };
 
 export const HeroProjectsCarousel = () => {
+  const resin = useResinEnabled();
   const [projects, setProjects] = useState<HeroProject[]>([]);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -52,7 +54,7 @@ export const HeroProjectsCarousel = () => {
         if (mapped.length > 0) setProjects(mapped);
       }
     })();
-  }, []);
+  }, [resin]);
 
   const next = useCallback(() => {
     setDirection(1);
@@ -120,7 +122,7 @@ export const HeroProjectsCarousel = () => {
 
         <div className="flex items-center justify-between mt-4 px-1">
           <div className="flex items-center gap-1.5">
-            {projects.map((p, i) => (
+            {projects.filter((item) => resin || !isResinText(JSON.stringify(item))).map((p, i) => (
               <button
                 key={p.id}
                 onClick={() => { setDirection(i > index ? 1 : -1); setIndex(i); }}

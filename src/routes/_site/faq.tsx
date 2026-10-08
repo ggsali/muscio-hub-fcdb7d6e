@@ -10,5 +10,5 @@ export const Route = createFileRoute("/_site/faq")({
       description:
         "Antworten auf häufige Fragen zu Lieferzeit, Dateiformaten, Genauigkeit, Materialien und Preisen im 3D-Druck bei 3DMuscio in Eschlikon TG.",
       path: "/faq",
-    }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false),
+    }, matches.at(-1)?.context.resinEnabled ?? false),
 });

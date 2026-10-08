@@ -10,5 +10,5 @@ export const Route = createFileRoute("/_site/3d-druck-schweiz")({
       description:
         "3D-Druckservice aus der Schweiz: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Produktion in Eschlikon TG, Versand schweizweit.",
       path: "/3d-druck-schweiz",
-    }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false),
+    }, matches.at(-1)?.context.resinEnabled ?? false),
 });

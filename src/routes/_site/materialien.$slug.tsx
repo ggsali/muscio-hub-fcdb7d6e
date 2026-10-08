@@ -12,6 +12,6 @@ export const Route = createFileRoute("/_site/materialien/$slug")({
       title: material.title,
       description: material.description,
       path: `/materialien/${material.slug}`,
-    }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false);
+    }, matches.at(-1)?.context.resinEnabled ?? false);
   },
 });

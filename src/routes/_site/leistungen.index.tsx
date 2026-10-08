@@ -10,5 +10,5 @@ export const Route = createFileRoute("/_site/leistungen/")({
       description:
         "Alle Leistungen von 3DMuscio: FDM und SLA/Resin 3D-Druck, Rapid Prototyping, Kleinserien, Ersatzteile und B2B – gefertigt in Eschlikon TG für die ganze Schweiz.",
       path: "/leistungen",
-    }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false),
+    }, matches.at(-1)?.context.resinEnabled ?? false),
 });

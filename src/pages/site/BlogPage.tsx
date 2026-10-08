@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router-compat";
 import { motion } from "framer-motion";
@@ -17,6 +18,7 @@ interface Post {
 }
 
 export default function BlogPage() {
+  const resin = useResinEnabled();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +58,7 @@ export default function BlogPage() {
           <p className="text-muted-foreground">Noch keine Beiträge veröffentlicht.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((p, i) => (
+            {posts.filter((item) => resin || !isResinText(JSON.stringify(item))).map((p, i) => (
               <motion.div
                 key={p.id}
                 initial={{ opacity: 0, y: 16 }}

@@ -10,5 +10,5 @@ export const Route = createFileRoute("/_site/materialien/")({
       description:
         "Übersicht aller Materialien für deinen 3D-Druck: PLA, PETG, ABS, ASA, TPU und SLA-Resin mit Festigkeit, Temperatur- und UV-Beständigkeit sowie Einsatzgebieten.",
       path: "/materialien",
-    }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false),
+    }, matches.at(-1)?.context.resinEnabled ?? false),
 });

@@ -10,5 +10,5 @@ export const Route = createFileRoute("/_site/ueber-uns")({
       description:
         "3DMuscio aus Eschlikon TG: Geschichte, Team und Standort. Partner für FDM- und SLA-3D-Druck, Prototypen, Kleinserien und Ersatzteile in der ganzen Schweiz.",
       path: "/ueber-uns",
-    }, matches.find((match) => match.routeId === "/_site")?.context.resinEnabled ?? false),
+    }, matches.at(-1)?.context.resinEnabled ?? false),
 });
