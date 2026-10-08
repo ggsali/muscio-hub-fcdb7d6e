@@ -5,6 +5,7 @@ export function isResinText(s?: string | null): boolean {
 
 export function stripResin(s: string): string {
   return s
+    .replace(/FDM-?\s*und\s*(?:im\s+)?SLA\s*\/\s*Resin(?:-Verfahren|-Druck)?/gi, "FDM-Verfahren")
     .replace(/FDM-?\s*(?:und|&|sowie)\s*(?:im\s+)?SLA(?:\s*\/\s*Resin)?(?:-3D-Druck|-Verfahren|-Druck)?/gi, "FDM")
     .replace(/(?:,\s*)?FDM\s+vs\.?\s+SLA(?:\s*\/\s*Resin)?/gi, "")
     .replace(/\s*(?:&|und|sowie|,)\s*(?:SLA[-\s/]*)?Resin\b/gi, "")

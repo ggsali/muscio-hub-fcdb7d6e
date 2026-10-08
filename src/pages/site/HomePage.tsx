@@ -11,7 +11,7 @@ import {
 
 import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
-import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
+import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 import { supabase } from "@/integrations/supabase/client";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
 import Seo from "@/components/site/Seo";
@@ -454,18 +454,20 @@ const CTA = () => (
 );
 
 /* ─── ENTITY / KURZANTWORT ─── */
-const EntityAnswer = () => (
+const EntityAnswer = () => {
+  const resin = useResinEnabled();
+  return (
   <section className="py-16">
     <div className="container mx-auto px-4 max-w-4xl">
       <ScrollReveal>
         <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
           <h2 className="font-heading text-xl md:text-2xl font-bold mb-3">Was ist 3DMuscio?</h2>
-          <p className="text-muted-foreground leading-relaxed">{company.shortDescription}</p>
+          <p className="text-muted-foreground leading-relaxed">{resin ? company.shortDescription : stripResin(company.shortDescription)}</p>
           <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 mt-6 text-sm">
             {[
               ["Standort", fullAddress],
-              ["Verfahren", company.processes.join(", ")],
-              ["Materialien", company.materials.join(", ")],
+              ["Verfahren", company.processes.filter((p) => resin || !isResinText(p)).join(", ")],
+              ["Materialien", company.materials.filter((m) => resin || !isResinText(m)).join(", ")],
               ["Dateiformate", company.fileFormats.join(", ")],
               ["Produktionszeit", company.productionTime],
               ["Mindestmenge", company.minOrder],
@@ -498,6 +500,7 @@ const EntityAnswer = () => (
     </div>
   </section>
 );
+};
 
 /* ─── SEO CONTENT ─── */
 
