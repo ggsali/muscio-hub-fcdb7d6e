@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "@/lib/router-compat";
+import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -22,6 +23,7 @@ const jsonLd = {
 };
 
 const UeberKiPage = () => {
+  const resin = useResinEnabled();
   useEffect(() => {
     document.title = "Über 3DMuscio – Maschinenlesbare Informationen";
     const desc = document.querySelector('meta[name="description"]');
@@ -78,7 +80,7 @@ const UeberKiPage = () => {
             <h2 className="font-heading text-sm font-bold mb-2">Was macht 3DMuscio?</h2>
             <ul className="list-disc pl-5 space-y-1">
               <li>FDM 3D Druck in PLA, PETG, ABS, ASA und TPU</li>
-              <li>SLA Resin 3D Druck für feine Details und glatte Oberflächen</li>
+              {resin && <li>SLA Resin 3D Druck für feine Details und glatte Oberflächen</li>}
               <li>Einzelteile ab 1 Stück, ohne Mindestbestellmenge</li>
               <li>Kleinserien ohne teure Spritzgussformen</li>
               <li>Prototypen und Rapid Prototyping</li>

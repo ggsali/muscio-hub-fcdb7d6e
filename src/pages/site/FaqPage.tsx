@@ -5,6 +5,7 @@ import { Link } from "@/lib/router-compat";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 
 interface FaqEntry { frage: string; antwort: string; }
 
@@ -18,6 +19,7 @@ const fallback: FaqEntry[] = [
 export default function FaqPage() {
   const [items, setItems] = useState<FaqEntry[]>(fallback);
   const [open, setOpen] = useState<number | null>(0);
+  const resin = useResinEnabled();
 
   useEffect(() => {
     (async () => {
@@ -75,7 +77,7 @@ export default function FaqPage() {
             { label: "Ersatzteile drucken lassen", to: "/leistungen/3d-druck-ersatzteile" },
             { label: "Kleinserien ab 1 Stück", to: "/leistungen/3d-druck-kleinserien" },
             { label: "Materialien im Überblick", to: "/materialien" },
-          ].map(l => (
+          ].filter((l) => resin || !isResinText(l.label)).map(l => (
             <Link
               key={l.to}
               to={l.to}

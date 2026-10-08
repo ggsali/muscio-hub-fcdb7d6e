@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "@/lib/router-compat";
 import Seo from "@/components/site/Seo";
@@ -60,6 +61,7 @@ export default function LokalPage() {
   const slug = pathname.replace(/^\//, "").replace(/\/$/, "");
   const [seite, setSeite] = useState<LokaleSeite | null>(null);
   const [loading, setLoading] = useState(true);
+  const resin = useResinEnabled();
 
   useEffect(() => {
     let cancelled = false;
@@ -120,8 +122,8 @@ export default function LokalPage() {
         eyebrow={`Region ${region}`}
         h1={`3D-Druck ${region} – Prototypen, Ersatzteile und Kleinserien`}
         intro={`3D-Druckservice für ${region}: Datei online hochladen, Preis sofort sehen, Teile in 48 Stunden Produktionszeit erhalten. Gefertigt in ${company.address.city} ${company.address.regionCode}.`}
-        inhalt={inhalt(region)}
-        faq={faqs}
+        inhalt={resin ? inhalt(region) : inhalt(region).split("\n").filter((l) => !l.includes("sla-3d-druck")).map((l) => l.replace(" und Resin", "")).join("\n")}
+        faq={resin ? faqs : faqs.filter((f: any) => !isResinText(f.frage ?? f.q)).map((f: any) => ({ ...f, ...(f.antwort ? { antwort: stripResin(f.antwort) } : {}), ...(f.a ? { a: stripResin(f.a) } : {}) }))}
         breadcrumb={[
           { name: "Start", to: "/" },
           { name: `3D-Druck ${region}`, to: path },
@@ -130,8 +132,8 @@ export default function LokalPage() {
           { label: "Preis online berechnen", to: "/kalkulator-online", text: "Datei hochladen und Preis sehen." },
           { label: "FDM 3D-Druck", to: "/leistungen/fdm-3d-druck", text: "Belastbare Funktionsteile." },
           { label: "SLA Resin 3D-Druck", to: "/leistungen/sla-3d-druck", text: "Feine Details, glatte Oberflächen." },
-          { label: "Materialien", to: "/materialien", text: "PLA, PETG, ABS, ASA, TPU, Resin." },
-        ]}
+          { label: "Materialien", to: "/materialien", text: resin ? "PLA, PETG, ABS, ASA, TPU, Resin." : "PLA, PETG, ABS, ASA, TPU." },
+        ].filter((l) => resin || !isResinText(l.label))}
         ctaTitle={`3D-Druck in ${region} anfragen`}
       />
     </>
