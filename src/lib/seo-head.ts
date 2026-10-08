@@ -4,6 +4,7 @@
  * AI-Crawler pro Seite eindeutige Titel/Descriptions sehen.
  */
 
+import { stripResin } from "@/lib/resin-content";
 const SITE_URL = "https://3dmuscio.com";
 const DEFAULT_IMAGE =
   "https://storage.googleapis.com/gpt-engineer-file-uploads/HMfId6YGEQSzYkPI7XRIdUZpU013/social-images/social-1777546828436-file_1770761597489.webp";
@@ -15,7 +16,8 @@ export function buildHead(opts: {
   path: string;
   type?: "website" | "article" | "product";
   image?: string;
-}) {
+}, resinEnabled = true) {
+  if (!resinEnabled) opts = { ...opts, title: stripResin(opts.title), description: stripResin(opts.description) };
   const url = `${SITE_URL}${opts.path === "/" ? "/" : opts.path.replace(/\/$/, "")}`;
   const image = opts.image ?? DEFAULT_IMAGE;
   return {

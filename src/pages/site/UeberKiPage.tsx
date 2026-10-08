@@ -35,14 +35,14 @@ const UeberKiPage = () => {
 
     const script = document.createElement("script");
     script.type = "application/ld+json";
-    script.text = JSON.stringify(jsonLd);
+    script.text = JSON.stringify({ ...jsonLd, description: resin ? jsonLd.description : stripResin(jsonLd.description) });
     document.head.appendChild(script);
 
     return () => {
       document.head.removeChild(script);
       if (prev) desc?.setAttribute("content", prev);
     };
-  }, []);
+  }, [resin]);
 
   return (
     <div className="pt-12 pb-16">
