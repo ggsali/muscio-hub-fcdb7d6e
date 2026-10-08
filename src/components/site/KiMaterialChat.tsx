@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Sparkles, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
 type ChatMsg = { id: string; role: "assistant" | "user"; text: string };
 
@@ -65,6 +66,7 @@ export default function KiMaterialChat({
   recommendedMaterialName?: string;
 }) {
   const STORAGE_KEY = "ki_chat_messages";
+  const resin = useResinEnabled();
 
   const [messages, setMessages] = useState<ChatMsg[]>(() => {
     try {
@@ -194,7 +196,7 @@ export default function KiMaterialChat({
         }
       >
         <AnimatePresence initial={false}>
-          {messages.map((m) => (
+          {messages.filter((m) => resin || m.role === "user" || !isResinText(m.text)).map((m) => (
             <motion.div
               key={m.id}
               initial={{ opacity: 0, y: 8 }}

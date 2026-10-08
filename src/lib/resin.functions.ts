@@ -4,8 +4,8 @@ import { parseResinEnabled } from "@/lib/resin-content";
 
 /** Public setting only; never use an admin client for this read. */
 export const getPublicResinEnabled = createServerFn({ method: "GET" }).handler(async () => {
-  const url = process.env['SUPABASE_URL'];
-  const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
+  const url = process.env['SUPABASE_URL'] || import.meta.env.VITE_SUPABASE_URL;
+  const key = process.env['SUPABASE_PUBLISHABLE_KEY'] || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return false;
   const client = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },

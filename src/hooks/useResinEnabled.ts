@@ -13,12 +13,12 @@ function load(): Promise<boolean> {
   if (!pending) {
     pending = Promise.resolve(
       supabase.from("website_settings").select("value").eq("key", "resin_enabled").maybeSingle(),
-    ).then(({ data }) => {
-      const enabled = parseResinEnabled(data?.value);
+    ).then(({ data, error }) => {
+      const enabled = error ? false : parseResinEnabled(data?.value);
       cached = enabled;
       listeners.forEach((l) => l(enabled));
       return enabled;
-    }).catch(() => { cached = true; return true; });
+    }).catch(() => { cached = false; listeners.forEach((l) => l(false)); return false; });
   }
   return pending;
 }
