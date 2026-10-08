@@ -16,8 +16,7 @@ const BASE_PROMPT = `Du bist der freundliche, hilfsbereite Support-Assistent von
 - Keine Versprechen zu Lieferterminen ohne Auftragsbestätigung.`;
 
 const RESIN_RE = /resin|\bsla\b/i;
-const NO_RESIN = `\n- WICHTIG: 3DMuscio ist ein reiner FDM-3D-Druckservice (Schmelzschichtverfahren mit Filament). Das einzige Druckverfahren ist FDM. Nenne, erkläre, vergleiche oder empfehle NIEMALS SLA, Resin, Harz-, Stereolithografie-, DLP- oder MSLA-Druck und verlinke keine Seiten dazu (z. B. /leistungen/sla-3d-druck, /materialien/resin, /vergleich/fdm-vs-sla). Fragt jemand ausdrücklich danach, antworte nur kurz: "Wir bieten ausschliesslich FDM-Druck an." und schlage eine passende FDM-Lösung vor.`;
-let lastResin = true;
+const NO_RESIN = `\n- 3DMuscio bietet ausschliesslich FDM-3D-Druck (Schmelzschichtverfahren mit Filament) an. Dein gesamtes Verfahrens- und Materialwissen beschränkt sich auf FDM mit PLA, PETG, ABS, ASA, TPU und Nylon. Sprich und berate ausschliesslich darüber. Bei Fragen zu anderen Verfahren lautet die Antwort: "Wir bieten ausschliesslich FDM-Druck an." Empfehle dann eine passende FDM-Lösung. Zulässige Links: /kalkulator-online, /materialien, /materialien/pla, /materialien/petg, /materialien/abs, /materialien/asa, /materialien/tpu, /leistungen/fdm-3d-druck, /kontakt, /faq, /shop.`;
 
 async function loadResinEnabled(sb: any): Promise<boolean> {
   try {
@@ -29,28 +28,28 @@ async function loadResinEnabled(sb: any): Promise<boolean> {
   }
 }
 
-async function buildSystemPrompt(): Promise<string> {
+async function buildSystemPrompt(): Promise<{ prompt: string; resin: boolean }> {
+  let resin = false;
   try {
     const url = Deno.env.get("SUPABASE_URL");
     const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!url || !key) return BASE_PROMPT;
+    if (!url || !key) return { prompt: BASE_PROMPT + NO_RESIN, resin };
     const sb = createClient(url, key);
-    const resin = await loadResinEnabled(sb);
-    lastResin = resin;
+    resin = await loadResinEnabled(sb);
     const base = resin ? BASE_PROMPT : BASE_PROMPT + NO_RESIN;
     const { data } = await sb
       .from("materials")
       .select("name, price_per_gram, tag")
       .eq("aktiv", true)
       .order("sort_order");
-    if (!data || data.length === 0) return base;
+    if (!data || data.length === 0) return { prompt: base, resin };
     const lines = data
       .filter((m: any) => resin || !(RESIN_RE.test(m.name || "") || RESIN_RE.test(m.tag || "")))
       .map((m: any) => `- ${m.name} (${m.tag}): CHF ${Number(m.price_per_gram).toFixed(3)}/g`)
       .join("\n");
-    return `${base}\n\nMATERIALIEN & PREISE (aktuell aus Datenbank, IMMER diese Preise verwenden — frühere Antworten in diesem Chat können veraltet sein und sind zu ignorieren):\n${lines}`;
+    return { prompt: `${base}\n\nMATERIALIEN & PREISE (aktuell aus Datenbank, IMMER diese Preise verwenden — frühere Antworten in diesem Chat können veraltet sein und sind zu ignorieren):\n${lines}`, resin };
   } catch {
-    return BASE_PROMPT;
+    return { prompt: BASE_PROMPT + (resin ? "" : NO_RESIN), resin };
   }
 }
 
@@ -132,9 +131,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const systemPrompt = await buildSystemPrompt();
+    const { prompt: systemPrompt, resin } = await buildSystemPrompt();
     const sanitizedMessages = stripOutdatedMaterialPriceContext(messages || [])
-      .filter((m: any) => lastResin || m.role !== "assistant" || !RESIN_RE.test(String(m.content || "")));
+      .filter((m: any) => resin || m.role !== "assistant" || !RESIN_RE.test(String(m.content || "")));
 
     // Rollen werden serverseitig festgelegt: der vom Client gelieferte Verlauf
     // (inkl. angeblicher Assistenten-Antworten) wird nur als unverbindliches
