@@ -30,6 +30,7 @@ const POST_PRIORITY_PREISE = [
 import TimeTracker from "@/components/TimeTracker";
 import OfferMode from "@/components/OfferMode";
 import BillsSection from "@/components/BillsSection";
+import OrderDocumentUpload from "@/components/OrderDocumentUpload";
 import OrderUploadRequests from "@/components/OrderUploadRequests";
 import ReviewRequestButton from "@/components/ReviewRequestButton";
 import { sendReviewRequestForOrder } from "@/lib/reviewEmail";
@@ -3201,6 +3202,7 @@ export default function AuftragDetailPage() {
       {/* ====================== TAB: DOKUMENTE ====================== */}
       {activeTab === "Dokumente" && !isNew && (
         <div className="space-y-4">
+          <OrderDocumentUpload orderId={id!} />
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-2">
             <h3 className="font-semibold text-sm mb-2">PDF herunterladen</h3>
             {offerteSnapshot?.parts?.length > 0 && (
