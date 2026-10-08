@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router-compat";
 import { ArrowRight, Cpu, Loader2 } from "lucide-react";
@@ -18,6 +19,7 @@ interface Equipment {
 }
 
 export default function EquipmentPage() {
+  const resin = useResinEnabled();
   const [items, setItems] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +73,7 @@ export default function EquipmentPage() {
         {/* Items */}
         {!loading && items.length > 0 && (
           <div className="mb-20 md:mb-28">
-            {items.map((it, i) => {
+            {items.filter((item) => resin || !isResinText(JSON.stringify(item))).map((it, i) => {
               const reversed = i % 2 === 1;
               return (
                 <ScrollReveal key={it.id}>

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
 interface Message {
   id?: string;
@@ -26,6 +27,7 @@ const shouldNotify = (userMessage: string): boolean => {
 };
 
 export function ChatWidget() {
+  const resin = useResinEnabled();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -247,7 +249,7 @@ export function ChatWidget() {
               </form>
             )}
 
-            {messages.map((msg, i) => (
+            {messages.filter((msg) => resin || msg.role === "user" || !isResinText(msg.content)).map((msg, i) => (
               <div key={msg.id || i} className={cn("flex gap-2", msg.role === "user" ? "justify-end" : "justify-start")}>
                 {msg.role !== "user" && (
                   <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">

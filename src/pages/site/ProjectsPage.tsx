@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router-compat";
 import { motion } from "framer-motion";
@@ -16,6 +17,7 @@ interface Project {
 }
 
 export default function ProjectsPage() {
+  const resin = useResinEnabled();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +58,7 @@ export default function ProjectsPage() {
           <p className="text-muted-foreground">Noch keine Projekte veröffentlicht.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {projects.map((p, i) => (
+            {projects.filter((item) => resin || !isResinText(JSON.stringify(item))).map((p, i) => (
               <ScrollReveal key={p.id} delay={i * 0.05}>
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}

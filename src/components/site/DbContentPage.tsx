@@ -7,6 +7,7 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
+import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 
 export interface DbFaq { frage: string; antwort: string }
 
@@ -32,6 +33,18 @@ interface DbContentPageProps {
 export default function DbContentPage({
   eyebrow, h1, intro, inhalt, faq = [], breadcrumb, ctaTitle, ctaText, related = [],
 }: DbContentPageProps) {
+  const resin = useResinEnabled();
+  if (!resin) {
+    eyebrow = eyebrow ? stripResin(eyebrow) : eyebrow;
+    h1 = stripResin(h1);
+    intro = intro ? stripResin(intro) : intro;
+    inhalt = inhalt ? stripResin(inhalt) : inhalt;
+    faq = faq.filter((f) => !isResinText(f.frage)).map((f) => ({ frage: f.frage, antwort: stripResin(f.antwort) }));
+    related = related.filter((r) => !isResinText(r.label) && !isResinText(r.to)).map((r) => ({ ...r, text: r.text ? stripResin(r.text) : r.text }));
+    breadcrumb = breadcrumb.map((b) => ({ ...b, name: stripResin(b.name) }));
+    ctaTitle = ctaTitle ? stripResin(ctaTitle) : ctaTitle;
+    ctaText = ctaText ? stripResin(ctaText) : ctaText;
+  }
   return (
     <div className="pb-20">
       <section className="border-b border-border/50 bg-muted/20">

@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ interface Project {
  * Kompakte Projekt-Vorschau (max. 3) für die Startseite.
  */
 export const HomeProjectsPreview = () => {
+  const resin = useResinEnabled();
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export const HomeProjectsPreview = () => {
       .then(({ data }) => {
         if (data) setProjects(data as Project[]);
       });
-  }, []);
+  }, [resin]);
 
   if (projects.length === 0) return null;
 
@@ -46,7 +48,7 @@ export const HomeProjectsPreview = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        {projects.map((p, i) => (
+        {projects.filter((item) => resin || !isResinText(JSON.stringify(item))).map((p, i) => (
           <ScrollReveal key={p.id} delay={i * 0.06}>
             <Link
               to={`/projekte/${p.slug}`}

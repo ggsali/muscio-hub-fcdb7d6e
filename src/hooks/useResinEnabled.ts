@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { parseResinEnabled } from "@/lib/resin-content";
+export { isResinText, stripResin } from "@/lib/resin-content";
+export const ResinEnabledContext = createContext<boolean | null>(null);
 
 // Einmal pro App-Start geladen, danach aus dem Cache geteilt.
 let cached: boolean | null = null;
@@ -10,36 +13,25 @@ function load(): Promise<boolean> {
   if (!pending) {
     pending = Promise.resolve(
       supabase.from("website_settings").select("value").eq("key", "resin_enabled").maybeSingle(),
-    ).then(({ data }) => {
-      const v = data?.value as any;
-      const enabled = v == null ? true : typeof v === "boolean" ? v : v.aktiv !== false;
+    ).then(({ data, error }) => {
+      const enabled = error ? false : parseResinEnabled(data?.value);
       cached = enabled;
       listeners.forEach((l) => l(enabled));
       return enabled;
-    }).catch(() => { cached = true; return true; });
+    }).catch(() => { cached = false; listeners.forEach((l) => l(false)); return false; });
   }
   return pending;
 }
 
-export function isResinText(s?: string | null) {
-  return !!s && /resin|\bsla\b/i.test(s);
-}
-
-/** Entfernt Formulierungen wie „FDM & SLA", „FDM und SLA/Resin" aus einem Text. */
-export function stripResin(s: string): string {
-  return s
-    .replace(/\s*(?:&|und|sowie|,)\s*(?:im\s+)?SLA(?:\s*\/\s*Resin|[-\s]Resin)?(?:-Verfahren|-Druck)?/gi, "")
-    .replace(/\s*(?:,|und|&)\s*(?:SLA-)?Resin\b/gi, "")
-    .replace(/\s{2,}/g, " ");
-}
-
 export function useResinEnabled(): boolean {
-  const [enabled, setEnabled] = useState<boolean>(cached ?? true);
+  const provided = useContext(ResinEnabledContext);
+  const [enabled, setEnabled] = useState<boolean>(false);
   useEffect(() => {
+    if (provided !== null) return;
     listeners.add(setEnabled);
     if (cached !== null) setEnabled(cached);
     else load();
     return () => { listeners.delete(setEnabled); };
-  }, []);
-  return enabled;
+  }, [provided]);
+  return provided ?? enabled;
 }

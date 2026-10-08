@@ -1,3 +1,5 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
+import { Navigate } from "@/lib/router-compat";
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams, useNavigate } from "@/lib/router-compat";
@@ -35,6 +37,7 @@ const getImageUrl = (path: string) =>
   supabase.storage.from("shop-products").getPublicUrl(path).data.publicUrl;
 
 export default function ShopDetailPage() {
+  const resin = useResinEnabled();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addItem } = useCart();
@@ -135,6 +138,7 @@ export default function ShopDetailPage() {
   const discount = product?.vergleichspreis ? Math.round((1 - product.preis / product.vergleichspreis) * 100) : null;
 
 
+  if (!resin && product && isResinText(JSON.stringify(product))) return <Navigate to="/shop" replace />;
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
   if (!product) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4">
@@ -357,7 +361,7 @@ export default function ShopDetailPage() {
             <div>
               <h2 className="font-heading text-xl font-bold mb-6">Ähnliche Produkte</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {related.map(r => {
+                {related.filter((item) => resin || !isResinText(JSON.stringify(item))).map(r => {
                   const primaryImg = [...(r.shop_product_images || [])].sort((a: any) => a.is_primary ? -1 : 1)[0];
                   return (
                     <Link key={r.id} to={`/shop/${r.slug}`}>

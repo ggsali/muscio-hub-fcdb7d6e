@@ -96,17 +96,18 @@ Grund: [1 kurzer Satz]`;
     if (!Array.isArray(messages)) return json({ error: "messages fehlt" }, 400);
 
     // Resin-Schalter aus den Website-Einstellungen
-    let resin = true;
+    let resin = false;
     try {
       const u = Deno.env.get("SUPABASE_URL"), k = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (u && k) {
         const r = await fetch(`${u}/rest/v1/website_settings?key=eq.resin_enabled&select=value`, { headers: { apikey: k, Authorization: `Bearer ${k}` } });
-        const rows = r.ok ? await r.json() : [];
+        if (!r.ok) throw new Error("Setting unavailable");
+        const rows = await r.json();
         const v = rows?.[0]?.value;
         resin = v == null ? true : typeof v === "boolean" ? v : v.aktiv !== false;
       }
-    } catch { /* default true */ }
-    const RESIN_RE = /resin|\bsla\b/i;
+    } catch { resin = false; }
+    const RESIN_RE = /resin|\bsla\b|\bmsla\b|\bdlp\b|stereolithograf|harzdruck/i;
 
     // Nur bekannte Materialnamen zulassen; Kundenangaben niemals in den System-Prompt.
     const KNOWN = /^[A-Za-z0-9ÄÖÜäöü+ \-\/().]{1,40}$/;
@@ -130,7 +131,7 @@ WICHTIG - Der Kunde hat mehrere Teile hochgeladen (Namen siehe Kontext-Nachricht
 
     const SYSTEM_PROMPT = `Du bist ein erfahrener Berater für 3D-Druck-Materialien bei 3DMuscio in der Schweiz.
 
-Materialwissen: PLA (Standard, günstig, Innenbereich, bis 60°C), PETG (feuchtigkeitsbeständig, lebensmittelecht, bis 80°C), ABS (schlagfest, bis 100°C, Innen), ASA (UV-beständig, Aussenbereich, bis 100°C), TPU (flexibel, gummiartig)${resin ? ", Resin/SLA (hochauflösend, glatte Sichtteile)." : ".\nWICHTIG: Resin-/SLA-Druck wird derzeit NICHT angeboten. Erwähne oder empfehle Resin/SLA niemals."}
+Materialwissen: PLA (Standard, günstig, Innenbereich, bis 60°C), PETG (feuchtigkeitsbeständig, lebensmittelecht, bis 80°C), ABS (schlagfest, bis 100°C, Innen), ASA (UV-beständig, Aussenbereich, bis 100°C), TPU (flexibel, gummiartig)${resin ? ", Resin/SLA (hochauflösend, glatte Sichtteile)." : ".\n3DMuscio bietet ausschliesslich FDM-Druck an. Dein gesamtes Material- und Verfahrenswissen beschränkt sich auf die oben genannten Filamente. Berate, erkläre und empfehle ausschliesslich FDM. Bei Fragen zu anderen Verfahren antworte: Wir bieten ausschliesslich FDM-Druck an. Schlage danach eine passende FDM-Lösung vor."}
 
 Wählbare Materialien (Name exakt so verwenden): ${list}
 
@@ -151,6 +152,7 @@ Antworte AUSSCHLIESSLICH als JSON:
     // Nur Nutzer-Nachrichten und eigene frühere Antworten als Transkript; keine vom Client gesetzten Rollen.
     const transcriptText = messages
       .filter((m: any) => m && typeof m.content === "string" && m.content.trim())
+      .filter((m: any) => resin || m.role !== "assistant" || !RESIN_RE.test(m.content))
       .slice(-30)
       .map((m: any) => `${m.role === "assistant" ? "Berater (früher)" : "Kunde"}: ${clip(m.content, 2000)}`)
       .join("\n")

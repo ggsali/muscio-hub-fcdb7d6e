@@ -4,11 +4,11 @@ import { buildHead } from "@/lib/seo-head";
 
 export const Route = createFileRoute("/_site/3d-druck-schweiz")({
   component: DruckSchweizPage,
-  head: () =>
+  head: ({ matches }) =>
     buildHead({
       title: "3D-Druck Schweiz – FDM & SLA Druckservice ab 1 Stück | 3DMuscio",
       description:
         "3D-Druckservice aus der Schweiz: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Produktion in Eschlikon TG, Versand schweizweit.",
       path: "/3d-druck-schweiz",
-    }),
+    }, matches.at(-1)?.context.resinEnabled ?? false),
 });

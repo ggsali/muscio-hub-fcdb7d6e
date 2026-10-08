@@ -51,6 +51,10 @@ export const AnswerLanding = (props: AnswerLandingProps) => {
   return (
     <AnswerLandingView
       {...props}
+      eyebrow={st(props.eyebrow)}
+      breadcrumb={props.breadcrumb.map((b) => ({ ...b, name: st(b.name) }))}
+      ctaTitle={props.ctaTitle ? st(props.ctaTitle) : undefined}
+      ctaText={props.ctaText ? st(props.ctaText) : undefined}
       h1={st(props.h1)}
       shortAnswer={st(props.shortAnswer)}
       sections={(props.sections ?? [])
@@ -60,12 +64,12 @@ export const AnswerLanding = (props: AnswerLandingProps) => {
           text: s.text ? st(s.text) : s.text,
           bullets: s.bullets?.filter((b) => !isResinText(b)).map(st),
         }))}
-      table={props.table && props.table.headers.some((h) => isResinText(h)) ? undefined : props.table && {
+      table={props.table && (isResinText(props.table.title) || props.table.headers.some((h) => isResinText(h))) ? undefined : props.table && {
         ...props.table,
         rows: props.table.rows.filter((r) => !r.some((c) => isResinText(c))),
       }}
       faqs={(props.faqs ?? []).filter((f) => !isResinText(f.q)).map((f) => ({ q: f.q, a: st(f.a) }))}
-      related={(props.related ?? []).filter((r) => !isResinText(r.label) && !isResinText(r.to))}
+      related={(props.related ?? []).filter((r) => !isResinText(r.label) && !isResinText(r.to)).map((r) => ({ ...r, text: r.text ? st(r.text) : r.text }))}
     />
   );
 };

@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "@/lib/router-compat";
 import { motion } from "framer-motion";
@@ -24,6 +25,7 @@ type Project = {
 };
 
 export default function ProjektDetailPage() {
+  const resin = useResinEnabled();
   const { slug } = useParams<{ slug: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [others, setOthers] = useState<Project[]>([]);
@@ -69,6 +71,7 @@ export default function ProjektDetailPage() {
   }, [slug]);
 
   if (notFound) return <Navigate to="/" replace />;
+  if (!resin && project && isResinText(JSON.stringify(project))) return <Navigate to="/projekte" replace />;
   if (loading || !project) {
     return <div className="min-h-screen container mx-auto px-4 py-20"><p className="text-muted-foreground">Lädt…</p></div>;
   }
@@ -212,7 +215,7 @@ export default function ProjektDetailPage() {
           <div className="mt-24">
             <p className="text-xs font-medium text-primary uppercase tracking-widest mb-6">Weitere Projekte</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {others.map(p => (
+              {others.filter((item) => resin || !isResinText(JSON.stringify(item))).map(p => (
                 <Link key={p.id} to={`/projekte/${p.slug}`} className="group relative overflow-hidden rounded-2xl bg-card border border-border hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
                   <div className="relative aspect-[4/3] overflow-hidden">
                     {p.bild_url ? (

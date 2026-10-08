@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ interface Project {
 }
 
 export function ProjectsGrid() {
+  const resin = useResinEnabled();
   const [projects, setProjects] = useState<Project[]>([]);
   useEffect(() => {
     supabase.from("projekte")
@@ -18,7 +20,7 @@ export function ProjectsGrid() {
       .order("sort_order", { ascending: true })
       .limit(6)
       .then(({ data }) => { if (data) setProjects(data as Project[]); });
-  }, []);
+  }, [resin]);
 
   if (projects.length === 0) return null;
 
@@ -37,7 +39,7 @@ export function ProjectsGrid() {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {projects.map((p, i) => (
+          {projects.filter((item) => resin || !isResinText(JSON.stringify(item))).map((p, i) => (
             <ScrollReveal key={p.id} delay={i * 0.05}>
               <Link to={`/projekte/${p.slug}`} className="group relative block rounded-2xl overflow-hidden border border-border bg-card aspect-[4/3]">
                 <div className="absolute inset-0 bg-muted flex items-center justify-center">

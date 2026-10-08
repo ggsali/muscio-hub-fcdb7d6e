@@ -1,3 +1,4 @@
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -173,6 +174,7 @@ function HeuteItem({ team, isLeft }: { team: TeamMini[]; isLeft: boolean }) {
 }
 
 export function Timeline({ team = [] }: TimelineProps) {
+  const resin = useResinEnabled();
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -215,7 +217,7 @@ export function Timeline({ team = [] }: TimelineProps) {
         />
 
         <div className="space-y-12 md:space-y-16">
-          {events.map((e, i) => (
+          {events.filter((item) => resin || !isResinText(JSON.stringify(item))).map((e, i) => (
             <TimelineItem key={e.id} event={e} index={i} isLeft={i % 2 === 0} total={events.length} />
           ))}
           {team.length > 0 && (
