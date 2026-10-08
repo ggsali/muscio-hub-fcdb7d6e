@@ -96,17 +96,18 @@ Grund: [1 kurzer Satz]`;
     if (!Array.isArray(messages)) return json({ error: "messages fehlt" }, 400);
 
     // Resin-Schalter aus den Website-Einstellungen
-    let resin = true;
+    let resin = false;
     try {
       const u = Deno.env.get("SUPABASE_URL"), k = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (u && k) {
         const r = await fetch(`${u}/rest/v1/website_settings?key=eq.resin_enabled&select=value`, { headers: { apikey: k, Authorization: `Bearer ${k}` } });
-        const rows = r.ok ? await r.json() : [];
+        if (!r.ok) throw new Error("Setting unavailable");
+        const rows = await r.json();
         const v = rows?.[0]?.value;
         resin = v == null ? true : typeof v === "boolean" ? v : v.aktiv !== false;
       }
-    } catch { /* default true */ }
-    const RESIN_RE = /resin|\bsla\b/i;
+    } catch { resin = false; }
+    const RESIN_RE = /resin|\bsla\b|\bmsla\b|\bdlp\b|stereolithograf|harzdruck/i;
 
     // Nur bekannte Materialnamen zulassen; Kundenangaben niemals in den System-Prompt.
     const KNOWN = /^[A-Za-z0-9ÄÖÜäöü+ \-\/().]{1,40}$/;

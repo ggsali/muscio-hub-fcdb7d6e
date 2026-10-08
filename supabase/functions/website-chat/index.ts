@@ -15,16 +15,17 @@ const BASE_PROMPT = `Du bist der freundliche, hilfsbereite Support-Assistent von
 - Bei Materialfragen: auf 3dmuscio.com/materialien verweisen für den detaillierten Vergleich.
 - Keine Versprechen zu Lieferterminen ohne Auftragsbestätigung.`;
 
-const RESIN_RE = /resin|\bsla\b/i;
+const RESIN_RE = /resin|\bsla\b|\bmsla\b|\bdlp\b|stereolithograf|harzdruck/i;
 const NO_RESIN = `\n- 3DMuscio bietet ausschliesslich FDM-3D-Druck (Schmelzschichtverfahren mit Filament) an. Dein gesamtes Verfahrens- und Materialwissen beschränkt sich auf FDM mit PLA, PETG, ABS, ASA, TPU und Nylon. Sprich und berate ausschliesslich darüber. Bei Fragen zu anderen Verfahren lautet die Antwort: "Wir bieten ausschliesslich FDM-Druck an." Empfehle dann eine passende FDM-Lösung. Zulässige Links: /kalkulator-online, /materialien, /materialien/pla, /materialien/petg, /materialien/abs, /materialien/asa, /materialien/tpu, /leistungen/fdm-3d-druck, /kontakt, /faq, /shop.`;
 
 async function loadResinEnabled(sb: any): Promise<boolean> {
   try {
-    const { data } = await sb.from("website_settings").select("value").eq("key", "resin_enabled").maybeSingle();
+    const { data, error } = await sb.from("website_settings").select("value").eq("key", "resin_enabled").maybeSingle();
+    if (error) return false;
     const v = data?.value as any;
     return v == null ? true : typeof v === "boolean" ? v : v.aktiv !== false;
   } catch {
-    return true;
+    return false;
   }
 }
 

@@ -19,7 +19,6 @@ import { CustomerAuthProvider } from "@/contexts/CustomerAuthContext";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 import NotFound from "@/pages/NotFound";
 import appCss from "../styles.css?url";
-import { filterResinData } from "@/lib/resin-content";
 
 // Ported from index.html: Domain-Vereinheitlichung www -> non-www (Client-Fallback)
 const domainRedirectScript = `(function () {
@@ -42,7 +41,7 @@ const legacyPwaCleanupScript = `(function () {
 })();`;
 
 // Ported from index.html: LocalBusiness / ManufacturingBusiness + Service + WebSite Schema
-const organizationJsonLd = JSON.stringify({
+export const organizationJsonLd = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -195,7 +194,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     scripts: [
       { children: domainRedirectScript },
       { children: legacyPwaCleanupScript },
-      { type: "application/ld+json", children: JSON.stringify(filterResinData(JSON.parse(organizationJsonLd))) },
     ],
   }),
   shellComponent: RootShell,
