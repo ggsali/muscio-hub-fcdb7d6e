@@ -5,8 +5,11 @@ import { comparisons, getComparison } from "@/data/seo/comparisons";
 import { breadcrumbJsonLd, faqJsonLd, SITE_URL } from "@/data/company";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { ArrowRight } from "lucide-react";
+import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
-const VergleichIndex = () => (
+const VergleichIndex = () => {
+  const resin = useResinEnabled();
+  return (
   <>
     <Seo
       title="3D-Druck Vergleiche: Materialien & Verfahren | 3DMuscio"
@@ -32,7 +35,7 @@ const VergleichIndex = () => (
           </header>
         </ScrollReveal>
         <div className="grid sm:grid-cols-2 gap-3">
-          {comparisons.map((c) => (
+          {comparisons.filter((c) => resin || !isResinText(c.slug)).map((c) => (
             <Link
               key={c.slug}
               to={`/vergleich/${c.slug}`}
@@ -51,10 +54,13 @@ const VergleichIndex = () => (
       </div>
     </div>
   </>
-);
+  );
+};
 
 export default function VergleichPage() {
   const { slug } = useParams();
+  const resin = useResinEnabled();
+  if (slug && !resin && isResinText(slug)) return <Navigate to="/vergleich" replace />;
   if (!slug) return <VergleichIndex />;
 
   const cmp = getComparison(slug);

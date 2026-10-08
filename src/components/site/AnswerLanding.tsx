@@ -5,6 +5,7 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ArrowRight, Check, ChevronRight, Printer } from "lucide-react";
+import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 
 export interface AnswerSection {
   title: string;
@@ -43,7 +44,33 @@ interface AnswerLandingProps {
   ctaText?: string;
 }
 
-export const AnswerLanding = ({
+export const AnswerLanding = (props: AnswerLandingProps) => {
+  const resin = useResinEnabled();
+  if (resin) return <AnswerLandingView {...props} />;
+  const st = stripResin;
+  return (
+    <AnswerLandingView
+      {...props}
+      h1={st(props.h1)}
+      shortAnswer={st(props.shortAnswer)}
+      sections={(props.sections ?? [])
+        .filter((s) => !/^\s*SLA|Resin/i.test(s.title))
+        .map((s) => ({
+          title: st(s.title),
+          text: s.text ? st(s.text) : s.text,
+          bullets: s.bullets?.filter((b) => !isResinText(b)).map(st),
+        }))}
+      table={props.table && props.table.headers.some((h) => isResinText(h)) ? undefined : props.table && {
+        ...props.table,
+        rows: props.table.rows.filter((r) => !r.some((c) => isResinText(c))),
+      }}
+      faqs={(props.faqs ?? []).filter((f) => !isResinText(f.q)).map((f) => ({ q: f.q, a: st(f.a) }))}
+      related={(props.related ?? []).filter((r) => !isResinText(r.label) && !isResinText(r.to))}
+    />
+  );
+};
+
+const AnswerLandingView = ({
   eyebrow,
   h1,
   shortAnswer,
