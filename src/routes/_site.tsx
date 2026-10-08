@@ -7,7 +7,9 @@ import { organizationJsonLd } from "@/lib/organization-schema";
 import { filterResinData } from "@/lib/resin-content";
 
 export const Route = createFileRoute("/_site")({
-  beforeLoad: async () => ({ resinEnabled: await getPublicResinEnabled() }),
+  beforeLoad: async ({ context }) => ({ resinEnabled: await context.queryClient.ensureQueryData({
+    queryKey: ["public-resin-enabled"], queryFn: () => getPublicResinEnabled(), staleTime: Infinity,
+  }) }),
   head: ({ matches }) => ({ scripts: [{
     type: "application/ld+json",
     children: matches.at(-1)?.context.resinEnabled ? organizationJsonLd : JSON.stringify(filterResinData(JSON.parse(organizationJsonLd))),

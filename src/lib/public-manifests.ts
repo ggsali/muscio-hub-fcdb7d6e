@@ -1,11 +1,11 @@
 import llms from '@/data/llms.txt?raw';
 import full from '@/data/llms-full.txt?raw';
 import sitemap from '@/data/sitemap.xml?raw';
-import { getPublicResinEnabled } from '@/lib/resin.functions';
+import { readPublicResinEnabled } from '@/lib/resin.functions';
 import { isResinText, stripResin } from '@/lib/resin-content';
 
 export async function publicManifest(kind: 'llms' | 'full' | 'sitemap'): Promise<Response> {
-  const enabled = await getPublicResinEnabled();
+  const enabled = await readPublicResinEnabled();
   let body = kind === 'sitemap' ? sitemap : kind === 'full' ? full : llms;
   if (!enabled) {
     body = kind === 'sitemap'
