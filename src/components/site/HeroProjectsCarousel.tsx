@@ -51,7 +51,7 @@ export const HeroProjectsCarousel = () => {
           beschreibung: p.kurzbeschreibung || p.beschreibung || "",
           bild_url: resolveImage(p),
         })).filter(p => p.bild_url);
-        if (mapped.length > 0) setProjects(mapped);
+        setProjects(mapped.filter((item) => resin || !isResinText(JSON.stringify(item))));
       }
     })();
   }, [resin]);

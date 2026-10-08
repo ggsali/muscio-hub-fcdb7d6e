@@ -19,6 +19,7 @@ import { CustomerAuthProvider } from "@/contexts/CustomerAuthContext";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
 import NotFound from "@/pages/NotFound";
 import appCss from "../styles.css?url";
+import { filterResinData } from "@/lib/resin-content";
 
 // Ported from index.html: Domain-Vereinheitlichung www -> non-www (Client-Fallback)
 const domainRedirectScript = `(function () {
@@ -145,11 +146,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1.0, viewport-fit=cover" },
       { name: "google-site-verification", content: "viXJbv64kKqwwY_MpoGdHZU0kcvv0GVwwQKTXeIieHU" },
-      { title: "3DMuscio – 3D Druckservice Schweiz | FDM & SLA Druck Ostschweiz" },
+      { title: "3DMuscio – 3D Druckservice Schweiz" },
       {
         name: "description",
         content:
-          "Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator. Schnell, präzise, made in Switzerland.",
+          "Professioneller 3D Druckservice in Eschlikon TG für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator. Schnell, präzise, made in Switzerland.",
       },
       { name: "author", content: "3DMuscio" },
       { name: "robots", content: "index, follow, max-image-preview:large" },
@@ -159,32 +160,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:url", content: "https://3dmuscio.com/" },
       {
         property: "og:title",
-        content: "3DMuscio – 3D Druckservice Schweiz | FDM & SLA Druck Ostschweiz",
+        content: "3DMuscio – 3D Druckservice Schweiz",
       },
       {
         property: "og:description",
         content:
-          "Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/HMfId6YGEQSzYkPI7XRIdUZpU013/social-images/social-1777546828436-file_1770761597489.webp",
+          "Professioneller 3D Druckservice in Eschlikon TG für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator.",
       },
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:title",
-        content: "3DMuscio – 3D Druckservice Schweiz | FDM & SLA Druck Ostschweiz",
+        content: "3DMuscio – 3D Druckservice Schweiz",
       },
       {
         name: "twitter:description",
         content:
-          "Professioneller 3D Druckservice in Eschlikon TG. FDM und SLA Druck für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator.",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/HMfId6YGEQSzYkPI7XRIdUZpU013/social-images/social-1777546828436-file_1770761597489.webp",
+          "Professioneller 3D Druckservice in Eschlikon TG für B2B-Kunden, Einzelteile und Kleinserien. Online-Kalkulator.",
       },
       { name: "theme-color", content: "#22c55e" },
     ],
@@ -204,7 +195,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     scripts: [
       { children: domainRedirectScript },
       { children: legacyPwaCleanupScript },
-      { type: "application/ld+json", children: organizationJsonLd },
+      { type: "application/ld+json", children: JSON.stringify(filterResinData(JSON.parse(organizationJsonLd))) },
     ],
   }),
   shellComponent: RootShell,

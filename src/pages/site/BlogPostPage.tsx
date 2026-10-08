@@ -1,5 +1,4 @@
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
-import { Navigate } from "@/lib/router-compat";
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, Navigate, useParams } from "@/lib/router-compat";
@@ -44,6 +43,7 @@ export default function BlogPostPage() {
   }, [slug]);
 
   if (notFound) return <Navigate to="/blog" replace />;
+  if (!resin && post && isResinText(JSON.stringify(post))) return <Navigate to="/blog" replace />;
   if (loading || !post) return <div className="container mx-auto px-4 py-20"><p className="text-muted-foreground">Lädt…</p></div>;
 
   const title = post.meta_title || `${post.titel} | 3DMuscio Blog`;

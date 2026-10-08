@@ -82,6 +82,7 @@ export default function ShopPage() {
   }, [activeCategory, categories]);
 
   const filtered = products
+    .filter((item) => resin || !isResinText(JSON.stringify(item)))
     .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) ||
       (p.kurzbeschreibung || "").toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {

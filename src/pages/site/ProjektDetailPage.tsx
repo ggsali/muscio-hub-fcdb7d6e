@@ -1,5 +1,4 @@
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
-import { Navigate } from "@/lib/router-compat";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams, Link, Navigate } from "@/lib/router-compat";
 import { motion } from "framer-motion";
@@ -72,6 +71,7 @@ export default function ProjektDetailPage() {
   }, [slug]);
 
   if (notFound) return <Navigate to="/" replace />;
+  if (!resin && project && isResinText(JSON.stringify(project))) return <Navigate to="/projekte" replace />;
   if (loading || !project) {
     return <div className="min-h-screen container mx-auto px-4 py-20"><p className="text-muted-foreground">Lädt…</p></div>;
   }
