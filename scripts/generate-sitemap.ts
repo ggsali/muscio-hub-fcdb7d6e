@@ -1,4 +1,4 @@
-// Läuft vor `vite dev` und `vite build` (predev/prebuild) und schreibt public/sitemap.xml.
+// Generates the bundled sitemap source; the public endpoint filters hidden services at request time.
 // Statische Routen kommen aus der Liste unten, dynamische Inhalte (Blog, Projekte, Shop)
 // werden über die Lovable-Cloud-REST-API geladen – mit denselben Filtern wie die Seiten.
 
@@ -147,5 +147,5 @@ const all = [...staticEntries, ...dynamic].filter((e) => {
   return true;
 });
 
-writeFileSync(resolve("public/sitemap.xml"), generateSitemap(all));
+writeFileSync(resolve("src/data/sitemap.xml"), generateSitemap(all));
 console.log(`sitemap.xml written (${all.length} entries, ${dynamic.length} dynamisch)`);
