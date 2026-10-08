@@ -25,6 +25,14 @@ export function isResinText(s?: string | null) {
   return !!s && /resin|\bsla\b/i.test(s);
 }
 
+/** Entfernt Formulierungen wie „FDM & SLA", „FDM und SLA/Resin" aus einem Text. */
+export function stripResin(s: string): string {
+  return s
+    .replace(/\s*(?:&|und|sowie|,)\s*(?:im\s+)?SLA(?:\s*\/\s*Resin|[-\s]Resin)?(?:-Verfahren|-Druck)?/gi, "")
+    .replace(/\s*(?:,|und|&)\s*(?:SLA-)?Resin\b/gi, "")
+    .replace(/\s{2,}/g, " ");
+}
+
 export function useResinEnabled(): boolean {
   const [enabled, setEnabled] = useState<boolean>(cached ?? true);
   useEffect(() => {

@@ -16,7 +16,8 @@ const BASE_PROMPT = `Du bist der freundliche, hilfsbereite Support-Assistent von
 - Keine Versprechen zu Lieferterminen ohne Auftragsbestätigung.`;
 
 const RESIN_RE = /resin|\bsla\b/i;
-const NO_RESIN = `\n- WICHTIG: 3DMuscio bietet aktuell KEINEN Resin-/SLA-Druck an. Erwähne oder empfehle Resin/SLA niemals; es gibt nur FDM-Druck. Fragt jemand danach, sage freundlich, dass Resin-Druck derzeit nicht angeboten wird.`;
+const NO_RESIN = `\n- WICHTIG: 3DMuscio ist ein reiner FDM-3D-Druckservice (Schmelzschichtverfahren mit Filament). Das einzige Druckverfahren ist FDM. Nenne, erkläre, vergleiche oder empfehle NIEMALS SLA, Resin, Harz-, Stereolithografie-, DLP- oder MSLA-Druck und verlinke keine Seiten dazu (z. B. /leistungen/sla-3d-druck, /materialien/resin, /vergleich/fdm-vs-sla). Fragt jemand ausdrücklich danach, antworte nur kurz: "Wir bieten ausschliesslich FDM-Druck an." und schlage eine passende FDM-Lösung vor.`;
+let lastResin = true;
 
 async function loadResinEnabled(sb: any): Promise<boolean> {
   try {
@@ -35,6 +36,7 @@ async function buildSystemPrompt(): Promise<string> {
     if (!url || !key) return BASE_PROMPT;
     const sb = createClient(url, key);
     const resin = await loadResinEnabled(sb);
+    lastResin = resin;
     const base = resin ? BASE_PROMPT : BASE_PROMPT + NO_RESIN;
     const { data } = await sb
       .from("materials")
@@ -131,7 +133,8 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = await buildSystemPrompt();
-    const sanitizedMessages = stripOutdatedMaterialPriceContext(messages || []);
+    const sanitizedMessages = stripOutdatedMaterialPriceContext(messages || [])
+      .filter((m: any) => lastResin || m.role !== "assistant" || !RESIN_RE.test(String(m.content || "")));
 
     // Rollen werden serverseitig festgelegt: der vom Client gelieferte Verlauf
     // (inkl. angeblicher Assistenten-Antworten) wird nur als unverbindliches
