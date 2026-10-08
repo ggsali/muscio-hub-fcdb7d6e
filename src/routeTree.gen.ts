@@ -20,6 +20,8 @@ import { Route as FilamenteRouteImport } from './routes/filamente'
 import { Route as KalenderRouteImport } from './routes/kalender'
 import { Route as KalkulatorRouteImport } from './routes/kalkulator'
 import { Route as KleinserienRouteImport } from './routes/kleinserien'
+import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeinKontoRouteImport } from './routes/mein-konto'
 import { Route as PaymentSuccessRouteImport } from './routes/payment-success'
@@ -28,6 +30,7 @@ import { Route as ProfilErgaenzenRouteImport } from './routes/profil-ergaenzen'
 import { Route as ProfilVervollstaendigenRouteImport } from './routes/profil-vervollstaendigen'
 import { Route as PrototypenRouteImport } from './routes/prototypen'
 import { Route as RegistrierenRouteImport } from './routes/registrieren'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeileRouteImport } from './routes/teile'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as UploadsRouteImport } from './routes/uploads'
@@ -187,6 +190,16 @@ const KleinserienRoute = KleinserienRouteImport.update({
   path: '/kleinserien',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
+  id: '/llms-full.txt',
+  path: '/llms-full.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -225,6 +238,11 @@ const PrototypenRoute = PrototypenRouteImport.update({
 const RegistrierenRoute = RegistrierenRouteImport.update({
   id: '/registrieren',
   path: '/registrieren',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeileRoute = TeileRouteImport.update({
@@ -770,6 +788,8 @@ export interface FileRoutesByFullPath {
   '/kalender': typeof KalenderRoute
   '/kalkulator': typeof KalkulatorRoute
   '/kleinserien': typeof KleinserienRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/mein-konto': typeof MeinKontoRoute
   '/payment-success': typeof PaymentSuccessRoute
@@ -778,6 +798,7 @@ export interface FileRoutesByFullPath {
   '/profil-vervollstaendigen': typeof ProfilVervollstaendigenRoute
   '/prototypen': typeof PrototypenRoute
   '/registrieren': typeof RegistrierenRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teile': typeof TeileRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/uploads': typeof UploadsRoute
@@ -892,6 +913,8 @@ export interface FileRoutesByTo {
   '/kalender': typeof KalenderRoute
   '/kalkulator': typeof KalkulatorRoute
   '/kleinserien': typeof KleinserienRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/mein-konto': typeof MeinKontoRoute
   '/payment-success': typeof PaymentSuccessRoute
@@ -899,6 +922,7 @@ export interface FileRoutesByTo {
   '/profil-vervollstaendigen': typeof ProfilVervollstaendigenRoute
   '/prototypen': typeof PrototypenRoute
   '/registrieren': typeof RegistrierenRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teile': typeof TeileRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/uploads': typeof UploadsRoute
@@ -1016,6 +1040,8 @@ export interface FileRoutesById {
   '/kalender': typeof KalenderRoute
   '/kalkulator': typeof KalkulatorRoute
   '/kleinserien': typeof KleinserienRoute
+  '/llms-full.txt': typeof LlmsFullDottxtRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/mein-konto': typeof MeinKontoRoute
   '/payment-success': typeof PaymentSuccessRoute
@@ -1024,6 +1050,7 @@ export interface FileRoutesById {
   '/profil-vervollstaendigen': typeof ProfilVervollstaendigenRoute
   '/prototypen': typeof PrototypenRoute
   '/registrieren': typeof RegistrierenRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teile': typeof TeileRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/uploads': typeof UploadsRoute
@@ -1143,6 +1170,8 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/kalkulator'
     | '/kleinserien'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/login'
     | '/mein-konto'
     | '/payment-success'
@@ -1151,6 +1180,7 @@ export interface FileRouteTypes {
     | '/profil-vervollstaendigen'
     | '/prototypen'
     | '/registrieren'
+    | '/sitemap.xml'
     | '/teile'
     | '/unsubscribe'
     | '/uploads'
@@ -1265,6 +1295,8 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/kalkulator'
     | '/kleinserien'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/login'
     | '/mein-konto'
     | '/payment-success'
@@ -1272,6 +1304,7 @@ export interface FileRouteTypes {
     | '/profil-vervollstaendigen'
     | '/prototypen'
     | '/registrieren'
+    | '/sitemap.xml'
     | '/teile'
     | '/unsubscribe'
     | '/uploads'
@@ -1388,6 +1421,8 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/kalkulator'
     | '/kleinserien'
+    | '/llms-full.txt'
+    | '/llms.txt'
     | '/login'
     | '/mein-konto'
     | '/payment-success'
@@ -1396,6 +1431,7 @@ export interface FileRouteTypes {
     | '/profil-vervollstaendigen'
     | '/prototypen'
     | '/registrieren'
+    | '/sitemap.xml'
     | '/teile'
     | '/unsubscribe'
     | '/uploads'
@@ -1514,6 +1550,8 @@ export interface RootRouteChildren {
   KalenderRoute: typeof KalenderRoute
   KalkulatorRoute: typeof KalkulatorRoute
   KleinserienRoute: typeof KleinserienRoute
+  LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
   LoginRoute: typeof LoginRoute
   MeinKontoRoute: typeof MeinKontoRoute
   PaymentSuccessRoute: typeof PaymentSuccessRoute
@@ -1522,6 +1560,7 @@ export interface RootRouteChildren {
   ProfilVervollstaendigenRoute: typeof ProfilVervollstaendigenRoute
   PrototypenRoute: typeof PrototypenRoute
   RegistrierenRoute: typeof RegistrierenRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeileRoute: typeof TeileRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   UploadsRoute: typeof UploadsRoute
@@ -1618,6 +1657,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KleinserienRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/llms-full.txt': {
+      id: '/llms-full.txt'
+      path: '/llms-full.txt'
+      fullPath: '/llms-full.txt'
+      preLoaderRoute: typeof LlmsFullDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -1672,6 +1725,13 @@ declare module '@tanstack/react-router' {
       path: '/registrieren'
       fullPath: '/registrieren'
       preLoaderRoute: typeof RegistrierenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/teile': {
@@ -2640,6 +2700,8 @@ const rootRouteChildren: RootRouteChildren = {
   KalenderRoute: KalenderRoute,
   KalkulatorRoute: KalkulatorRoute,
   KleinserienRoute: KleinserienRoute,
+  LlmsFullDottxtRoute: LlmsFullDottxtRoute,
+  LlmsDottxtRoute: LlmsDottxtRoute,
   LoginRoute: LoginRoute,
   MeinKontoRoute: MeinKontoRoute,
   PaymentSuccessRoute: PaymentSuccessRoute,
@@ -2648,6 +2710,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfilVervollstaendigenRoute: ProfilVervollstaendigenRoute,
   PrototypenRoute: PrototypenRoute,
   RegistrierenRoute: RegistrierenRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeileRoute: TeileRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   UploadsRoute: UploadsRoute,
