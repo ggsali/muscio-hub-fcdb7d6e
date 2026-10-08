@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { formatCHF, Settings } from "./calc";
 import { CompanySettings } from "./companySettings";
 import { appendQrBill } from "./pdfQrBill";
-import { checkPdfPlausibility } from "./pdfPlausibility";
+import { checkPdfPlausibility, setupCountFromParts, setupTotalFromParts } from "./pdfPlausibility";
 
 interface PartRow {
   teilname: string;
@@ -122,6 +122,7 @@ export async function exportOrderPDF(data: OrderExportData) {
   checkPdfPlausibility({
     parts: data.parts,
     expressKosten: data.expressKosten,
+    setupKosten: setupTotalFromParts(data.parts, data.settings?.setup_pauschale ?? 0),
     umsatz_total: data.umsatz_total,
     context: "Rechnung",
   });
@@ -484,6 +485,13 @@ export async function exportOrderPDF(data: OrderExportData) {
       formatCHF(p.preis_pro_stueck),
       formatCHF(p.preis_total),
     ]);
+    {
+    const __sa = setupCountFromParts(data.parts);
+    const __sp = Number(data.settings?.setup_pauschale) || 0;
+    if (__sa > 0 && __sp > 0) {
+      tableBody.push([String(tableBody.length + 1).padStart(2, "0"), "Setuppauschale", "—", `${__sa}×`, formatCHF(__sp), formatCHF(__sa * __sp)]);
+    }
+  }
     if ((data.expressKosten ?? 0) > 0) {
       const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
       tableBody.push([
