@@ -51,7 +51,7 @@ export default function FaqPage() {
       <p className="text-muted-foreground mb-10">Wir haben zusammengefasst, was am häufigsten gefragt wird.</p>
 
       <div className="space-y-3">
-        {items.map((it, i) => (
+        {items.filter((it: any) => resin || !isResinText(it.frage)).map((it, i) => (
           <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
             <button
               onClick={() => setOpen(open === i ? null : i)}
