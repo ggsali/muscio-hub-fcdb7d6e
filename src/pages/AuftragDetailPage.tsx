@@ -844,7 +844,8 @@ export default function AuftragDetailPage() {
   const rabattPct = Math.max(0, Math.min(100, Number(rabattProzent) || 0));
 
   // ── GESAMT (alle Teile – für Anzeige Kostenübersicht) ──
-  const bruttoUmsatz = parts.reduce((s, p) => s + (p.preis_total || 0), 0) + expressBetrag;
+  const totalSetupBetrag = parts.length > 0 ? setupAnzahl * (activeSettings.setup_pauschale || 0) : 0;
+  const bruttoUmsatz = parts.reduce((s, p) => s + (p.preis_total || 0), 0) + totalSetupBetrag + expressBetrag;
   const rabattBetrag = bruttoUmsatz * (rabattPct / 100);
   const totalUmsatz = bruttoUmsatz - rabattBetrag;
   const totalKosten = parts.reduce((s, p) => {
