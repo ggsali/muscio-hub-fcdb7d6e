@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useToast } from "@/hooks/use-toast";
 import { COLOR_MAP, colorHex } from "@/lib/colorMap";
 import { invalidateResinCache } from "@/hooks/useResinEnabled";
+import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 
 interface FaqEntry { frage: string; antwort: string; }
@@ -17,6 +18,7 @@ interface MaterialRow { id: string; name: string; tag: string; price_per_gram: n
 
 export default function WebsiteEinstellungenPage() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -119,6 +121,7 @@ export default function WebsiteEinstellungenPage() {
     ]);
     setSaving(false);
     invalidateResinCache();
+    queryClient.invalidateQueries({ queryKey: ["public-resin-enabled"] });
     if (errs.some(Boolean)) toast({ title: "Fehler beim Speichern", variant: "destructive" });
     else toast({ title: "Einstellungen gespeichert" });
   };
