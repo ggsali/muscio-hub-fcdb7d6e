@@ -93,13 +93,17 @@ export function ChatWidget() {
   };
 
   const createSession = async (name: string, email: string) => {
-    const { data } = await supabase.from("chat_sessions").insert({ user_name: name, user_email: email, status: "active" }).select().single();
-    if (data) {
-      setSessionId(data.id);
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ sessionId: data.id, userInfo: { name, email } }));
-      return data.id;
+    // Besucher dürfen Sitzungen anlegen, aber nicht zurücklesen → ID clientseitig erzeugen, ohne .select()
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("chat_sessions").insert({ id, user_name: name, user_email: email || null, status: "active" });
+    if (error) {
+      console.error("Chat-Sitzung konnte nicht erstellt werden", error);
+      return null;
     }
-    return null;
+    setSessionId(id);
+    setMessages([]);
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ sessionId: id, userInfo: { name, email } }));
+    return id;
   };
 
   const saveMessage = async (sid: string, role: string, content: string) => {
@@ -171,6 +175,7 @@ export function ChatWidget() {
           localStorage.removeItem(SESSION_KEY);
           const newSid = userInfo.name ? await createSession(userInfo.name, userInfo.email) : null;
           if (newSid) {
+            setMessages([userMsg]);
             await saveMessage(newSid, "user", text);
             try { await streamAI(newSid, [userMsg]); }
             catch (e2: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e2.message}` }]); }
