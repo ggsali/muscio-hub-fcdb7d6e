@@ -23,6 +23,13 @@ function load(): Promise<boolean> {
   return pending;
 }
 
+/** Verwirft den Cache und lädt den Wert sofort neu aus der Datenbank. */
+export function invalidateResinCache(): void {
+  cached = null;
+  pending = null;
+  void load();
+}
+
 export function useResinEnabled(): boolean {
   const provided = useContext(ResinEnabledContext);
   const [enabled, setEnabled] = useState<boolean>(false);
