@@ -121,7 +121,7 @@ export default function WebsiteEinstellungenPage() {
     ]);
     setSaving(false);
     invalidateResinCache();
-    queryClient.invalidateQueries({ queryKey: ["public-resin-enabled"] });
+    queryClient.setQueryData(["public-resin-enabled"], resinEnabled.aktiv);
     if (errs.some(Boolean)) toast({ title: "Fehler beim Speichern", variant: "destructive" });
     else toast({ title: "Einstellungen gespeichert" });
   };

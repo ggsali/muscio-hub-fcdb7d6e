@@ -8,7 +8,7 @@ import { filterResinData } from "@/lib/resin-content";
 
 export const Route = createFileRoute("/_site")({
   beforeLoad: async ({ context }) => ({ resinEnabled: await context.queryClient.ensureQueryData({
-    queryKey: ["public-resin-enabled"], queryFn: () => getPublicResinEnabled(), staleTime: Infinity,
+    queryKey: ["public-resin-enabled"], queryFn: () => getPublicResinEnabled(), staleTime: 0,
   }) }),
   head: ({ matches }) => ({ scripts: [{
     type: "application/ld+json",
