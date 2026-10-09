@@ -120,6 +120,13 @@
       "when": 1791191267840,
       "tag": "0016_orders_add_setup_anzahl",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791529393251,
+      "tag": "0017_public_read_resin_enabled_setting",
+      "breakpoints": true
     }
   ]
 }
