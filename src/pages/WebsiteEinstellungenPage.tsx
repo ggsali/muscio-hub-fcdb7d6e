@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { COLOR_MAP, colorHex } from "@/lib/colorMap";
+import { invalidateResinCache } from "@/hooks/useResinEnabled";
 import { X } from "lucide-react";
 
 interface FaqEntry { frage: string; antwort: string; }
@@ -117,6 +118,7 @@ export default function WebsiteEinstellungenPage() {
       saveOne("whatsapp", whatsapp),
     ]);
     setSaving(false);
+    invalidateResinCache();
     if (errs.some(Boolean)) toast({ title: "Fehler beim Speichern", variant: "destructive" });
     else toast({ title: "Einstellungen gespeichert" });
   };
