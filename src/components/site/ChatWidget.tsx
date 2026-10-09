@@ -175,6 +175,7 @@ export function ChatWidget() {
           localStorage.removeItem(SESSION_KEY);
           const newSid = userInfo.name ? await createSession(userInfo.name, userInfo.email) : null;
           if (newSid) {
+            setMessages([userMsg]);
             await saveMessage(newSid, "user", text);
             try { await streamAI(newSid, [userMsg]); }
             catch (e2: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e2.message}` }]); }
