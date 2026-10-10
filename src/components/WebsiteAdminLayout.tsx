@@ -11,6 +11,7 @@ import {
   Handshake, UserCircle2, Navigation, Clock, Package, FileText, Cpu, Menu, X, TrendingUp, BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const NAV = [
   { to: "/website-admin", label: "Übersicht", icon: Globe, end: true },
@@ -65,6 +66,7 @@ function MobileLayout({ onBack, onLogout }: { onBack: () => void; onLogout: () =
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
+              <GlobalSearch area="website" className="px-2 pt-3" onNavigate={() => setMenuOpen(false)} />
               <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
                 {NAV.map(item => (
                   <NavLink
@@ -136,6 +138,7 @@ function DesktopLayout({ onBack, onLogout }: { onBack: () => void; onLogout: () 
           <p className="text-[10px] uppercase tracking-widest text-primary font-bold">Website-Admin</p>
           <h1 className="font-heading text-lg font-bold text-foreground mt-1">3DMuscio Web</h1>
         </div>
+        <GlobalSearch area="website" className="px-3 pt-3" />
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {NAV.map(item => (
             <NavLink
