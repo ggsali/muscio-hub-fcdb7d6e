@@ -40,6 +40,9 @@ interface TopKunde {
   umsatz: number;
 }
 
+// Aufträge, die Umsatz/Gewinn zählen: alles ab "Bezahlt" (ohne Anfrage, Offerte, Storniert).
+const UMSATZ_STATUS = ["Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert", "Abgeschlossen"];
+
 const ACCENT = "hsl(var(--primary))";
 const SUCCESS = "hsl(var(--success))";
 
@@ -70,11 +73,11 @@ export default function DashboardPage() {
           : "Kein Kunde";
 
       if (orders) {
-        const abgeschlossen = orders.filter(o => o.status === "Abgeschlossen");
-        const umsatz = abgeschlossen.reduce((s, o) => s + (o.umsatz_total || 0), 0);
-        const gewinn = abgeschlossen.reduce((s, o) => s + (o.gewinn_total || 0), 0);
+        const umsatzAuftraege = orders.filter(o => UMSATZ_STATUS.includes(o.status ?? ""));
+        const umsatz = umsatzAuftraege.reduce((s, o) => s + (o.umsatz_total || 0), 0);
+        const gewinn = umsatzAuftraege.reduce((s, o) => s + (o.gewinn_total || 0), 0);
         const offeneAuftraege = orders.filter(o => ["Offen", "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert"].includes(o.status ?? "")).length;
-        const marges = abgeschlossen.filter(o => (o.marge ?? 0) > 0).map(o => o.marge ?? 0);
+        const marges = umsatzAuftraege.filter(o => (o.marge ?? 0) > 0).map(o => o.marge ?? 0);
         const avgMarge = marges.length ? marges.reduce((a, b) => (a ?? 0) + (b ?? 0), 0) / marges.length : 0;
         const investFonds = gewinn * (settings.investitions_fonds_prozent / 100);
 
@@ -91,7 +94,7 @@ export default function DashboardPage() {
         setRecentOrders(recent);
 
         const monthMap: Record<string, { umsatz: number; gewinn: number }> = {};
-        abgeschlossen.forEach(o => {
+        umsatzAuftraege.forEach(o => {
           if (!o.datum) return;
           const key = o.datum.substring(0, 7);
           if (!monthMap[key]) monthMap[key] = { umsatz: 0, gewinn: 0 };
@@ -144,7 +147,7 @@ export default function DashboardPage() {
         offen: (orders || []).filter(o => ["Offen", "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert"].includes(o.status ?? "")).length,
         anfragenHeute: anfragenHeute ?? 0,
         umsatzMonat: (orders || [])
-          .filter(o => (o.datum ?? "").startsWith(monatPrefix) && ["Bezahlt", "Abgeschlossen"].includes(o.status ?? ""))
+          .filter(o => (o.datum ?? "").startsWith(monatPrefix) && UMSATZ_STATUS.includes(o.status ?? ""))
           .reduce((s, o) => s + (o.umsatz_total || 0), 0),
         shopOffen: shopOffen ?? 0,
       });
