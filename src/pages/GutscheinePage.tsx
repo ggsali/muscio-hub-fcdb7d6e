@@ -12,6 +12,11 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import { ChevronsUpDown } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -21,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
-  Ticket, Plus, Copy, Mail, Trash2, MoreVertical, RefreshCw, Loader2, Search,
+  Ticket, Plus, Copy, Mail, Trash2, MoreVertical, RefreshCw, Loader2, Search, Check,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { sendGutscheinMail } from "@/lib/gutschein.functions";
@@ -275,17 +280,53 @@ export default function GutscheinePage() {
                 </div>
                 <div>
                   <Label className="text-xs">Kunde (optional)</Label>
-                  <Select value={form.kunde_id || "none"} onValueChange={(v) => setForm((f) => ({ ...f, kunde_id: v === "none" ? "" : v }))}>
-                    <SelectTrigger className="mt-1"><SelectValue placeholder="Kein Kunde" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Kein Kunde</SelectItem>
-                      {kunden.map((k) => (
-                        <SelectItem key={k.id} value={k.id}>
-                          {[k.vorname, k.name].filter(Boolean).join(" ")}{k.email ? ` · ${k.email}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button type="button" variant="outline" className="w-full justify-between font-normal mt-1">
+                        <span className="truncate">
+                          {form.kunde_id
+                            ? (() => {
+                                const k = kunden.find((x) => x.id === form.kunde_id);
+                                if (!k) return "Kunde";
+                                const n = [k.vorname, k.name].filter(Boolean).join(" ");
+                                return k.email ? `${n} · ${k.email}` : n;
+                              })()
+                            : "Kein Kunde"}
+                        </span>
+                        <ChevronsUpDown className="w-4 h-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Kunde suchen (Name oder E-Mail)…" />
+                        <CommandList>
+                          <CommandEmpty>Kein Kunde gefunden.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="__kein_kunde__"
+                              onSelect={() => setForm((f) => ({ ...f, kunde_id: "" }))}
+                            >
+                              <Check className={`w-4 h-4 mr-2 ${!form.kunde_id ? "opacity-100" : "opacity-0"}`} />
+                              Kein Kunde
+                            </CommandItem>
+                            {kunden.map((k) => {
+                              const label = [k.vorname, k.name].filter(Boolean).join(" ");
+                              return (
+                                <CommandItem
+                                  key={k.id}
+                                  value={`${label} ${k.email || ""}`}
+                                  onSelect={() => setForm((f) => ({ ...f, kunde_id: k.id }))}
+                                >
+                                  <Check className={`w-4 h-4 mr-2 ${form.kunde_id === k.id ? "opacity-100" : "opacity-0"}`} />
+                                  <span className="truncate">{k.email ? `${label} · ${k.email}` : label}</span>
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <Label className="text-xs">Grund / Anlass</Label>
