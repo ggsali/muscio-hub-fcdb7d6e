@@ -13,6 +13,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NavLink } from "@/lib/router-compat";
 import { cn } from "@/lib/utils";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const ic = "w-[18px] h-[18px]";
 
@@ -136,6 +137,7 @@ function MobileLayout({ canInstall, onInstall, unreadChatCount }: { canInstall: 
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
+              <GlobalSearch area="admin" className="px-2 pt-3" onNavigate={() => setMenuOpen(false)} />
               <nav className="flex-1 px-2 py-3 overflow-y-auto">
                 {navGroups.map(group => (
                   <div key={group.label}>
@@ -264,6 +266,7 @@ function DesktopLayout({ canInstall, onInstall, unreadChatCount }: { canInstall:
             </div>
           )}
         </div>
+        {!collapsed && <GlobalSearch area="admin" className="px-2 pt-3" />}
         <nav className="flex-1 px-2 py-2 overflow-y-auto">
           {navGroups.map(group => (
             <div key={group.label}>
