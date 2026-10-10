@@ -129,8 +129,11 @@ export default function DashboardPage() {
       setNeueKunden(kun || []);
 
       // Quick-Stats
-      const heute = new Date().toISOString().slice(0, 10);
-      const monatPrefix = heute.slice(0, 7);
+      // Lokales Datum (nicht UTC), sonst stimmt der Monat rund um Mitternacht nicht.
+      const jetzt = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const monatPrefix = `${jetzt.getFullYear()}-${pad(jetzt.getMonth() + 1)}`;
+      const heute = `${monatPrefix}-${pad(jetzt.getDate())}`;
       const [{ count: anfragenHeute }, { count: shopOffen }] = await Promise.all([
         supabase.from("inquiries").select("id", { count: "exact", head: true }).gte("created_at", `${heute}T00:00:00`),
         supabase.from("orders").select("id", { count: "exact", head: true })
@@ -141,7 +144,7 @@ export default function DashboardPage() {
         offen: (orders || []).filter(o => ["Offen", "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert"].includes(o.status ?? "")).length,
         anfragenHeute: anfragenHeute ?? 0,
         umsatzMonat: (orders || [])
-          .filter(o => (o.datum ?? "").startsWith(monatPrefix))
+          .filter(o => (o.datum ?? "").startsWith(monatPrefix) && ["Bezahlt", "Abgeschlossen"].includes(o.status ?? ""))
           .reduce((s, o) => s + (o.umsatz_total || 0), 0),
         shopOffen: shopOffen ?? 0,
       });
