@@ -930,57 +930,69 @@ function MfaSetupCard() {
 function SwissPostSettingsCard() {
   const [loading, setLoading] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
+  const [hasSecret, setHasSecret] = React.useState(false);
   const [fields, setFields] = React.useState({
-    customer_no: "",
+    client_id: "",
+    client_secret: "", // wird nie aus der Datenbank geladen, nur geschrieben
     franking_license: "",
-    api_user: "",
-    api_password: "",
     produkt: "PRI",
+    label_layout: "A6",
+    test_mode: true,
   });
 
   React.useEffect(() => {
     supabase.from("settings").select("key,value").in("key", [
-      "swiss_post_customer_no",
+      "swiss_post_client_id",
       "swiss_post_franking_license",
-      "swiss_post_api_user",
-      "swiss_post_api_password",
       "swiss_post_produkt",
+      "swiss_post_label_layout",
+      "swiss_post_test_mode",
     ]).then(({ data }) => {
       if (!data) return;
       const map: Record<string, string> = {};
       data.forEach(r => { map[r.key] = r.value; });
-      setFields({
-        customer_no: map["swiss_post_customer_no"] || "",
+      setFields(f => ({
+        ...f,
+        client_id: map["swiss_post_client_id"] || "",
         franking_license: map["swiss_post_franking_license"] || "",
-        api_user: map["swiss_post_api_user"] || "",
-        api_password: map["swiss_post_api_password"] || "",
         produkt: map["swiss_post_produkt"] || "PRI",
-      });
+        label_layout: map["swiss_post_label_layout"] || "A6",
+        test_mode: (map["swiss_post_test_mode"] ?? "1") !== "0",
+      }));
+    });
+    // Nur prüfen, ob ein Secret hinterlegt ist – der Wert selbst wird nicht geladen
+    supabase.from("settings").select("key").eq("key", "swiss_post_client_secret").then(({ data }) => {
+      setHasSecret(!!data && data.length > 0);
     });
   }, []);
 
   const handleSave = async () => {
     setLoading(true);
     const rows = [
-      { key: "swiss_post_customer_no", value: fields.customer_no },
-      { key: "swiss_post_franking_license", value: fields.franking_license },
-      { key: "swiss_post_api_user", value: fields.api_user },
-      { key: "swiss_post_api_password", value: fields.api_password },
+      { key: "swiss_post_client_id", value: fields.client_id.trim() },
+      { key: "swiss_post_franking_license", value: fields.franking_license.trim() },
       { key: "swiss_post_produkt", value: fields.produkt },
+      { key: "swiss_post_label_layout", value: fields.label_layout },
+      { key: "swiss_post_test_mode", value: fields.test_mode ? "1" : "0" },
     ];
+    if (fields.client_secret.trim()) rows.push({ key: "swiss_post_client_secret", value: fields.client_secret.trim() });
     const { error } = await supabase.from("settings").upsert(rows, { onConflict: "key" });
     setLoading(false);
     if (error) {
       toast.error("Fehler beim Speichern", { description: error.message });
     } else {
+      if (fields.client_secret.trim()) setHasSecret(true);
+      setFields(f => ({ ...f, client_secret: "" }));
       setSaved(true);
       toast.success("Swiss Post Einstellungen gespeichert ✓");
       setTimeout(() => setSaved(false), 2500);
     }
   };
 
+  const inputCls = "w-full rounded-md border border-border bg-input px-3 py-3 md:py-2 text-base md:text-sm";
+
   return (
-    <div className="bg-card border border-border rounded-lg p-5 space-y-4">
+    <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
       <div>
         <h3 className="font-semibold flex items-center gap-2">📦 Swiss Post — Barcode API</h3>
         <p className="text-sm text-muted-foreground mt-0.5">
@@ -992,52 +1004,59 @@ function SwissPostSettingsCard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">Kundennummer (Customer No)</label>
+        <div className="space-y-1.5 sm:col-span-2">
+          <label className="text-sm font-medium">Client-ID</label>
           <input
             type="text"
-            value={fields.customer_no}
-            onChange={e => setFields(f => ({ ...f, customer_no: e.target.value }))}
-            placeholder="z.B. 0123456789"
-            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm font-mono"
+            value={fields.client_id}
+            onChange={e => setFields(f => ({ ...f, client_id: e.target.value }))}
+            placeholder="aus dem Post-Portal (My Applications)"
+            autoComplete="off"
+            className={`${inputCls} font-mono`}
           />
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">Frankierlizenz (Franking License)</label>
-          <input
-            type="text"
-            value={fields.franking_license}
-            onChange={e => setFields(f => ({ ...f, franking_license: e.target.value }))}
-            placeholder="z.B. 9876543210"
-            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm font-mono"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">API Benutzername</label>
-          <input
-            type="text"
-            value={fields.api_user}
-            onChange={e => setFields(f => ({ ...f, api_user: e.target.value }))}
-            placeholder="API User"
-            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">API Passwort</label>
+        <div className="space-y-1.5 sm:col-span-2">
+          <label className="text-sm font-medium">
+            Client-Secret {hasSecret && <span className="text-success font-normal">✓ hinterlegt</span>}
+          </label>
           <input
             type="password"
-            value={fields.api_password}
-            onChange={e => setFields(f => ({ ...f, api_password: e.target.value }))}
-            placeholder="••••••••"
-            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm"
+            value={fields.client_secret}
+            onChange={e => setFields(f => ({ ...f, client_secret: e.target.value }))}
+            placeholder={hasSecret ? "Leer lassen, um das gespeicherte Secret zu behalten" : "Client-Secret einfügen"}
+            autoComplete="new-password"
+            className={inputCls}
           />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Frankierlizenz</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={fields.franking_license}
+            onChange={e => setFields(f => ({ ...f, franking_license: e.target.value }))}
+            placeholder="aus dem Post-Vertrag"
+            className={`${inputCls} font-mono`}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Etikettenformat</label>
+          <select
+            value={fields.label_layout}
+            onChange={e => setFields(f => ({ ...f, label_layout: e.target.value }))}
+            className={inputCls}
+          >
+            <option value="A6">A6 (Standard-Paketetikette)</option>
+            <option value="A5">A5</option>
+            <option value="A7">A7</option>
+          </select>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <label className="text-sm font-medium">Versandprodukt</label>
           <select
             value={fields.produkt}
             onChange={e => setFields(f => ({ ...f, produkt: e.target.value }))}
-            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm"
+            className={inputCls}
           >
             <option value="PRI">Priority (A-Post)</option>
             <option value="ECO">Economy (B-Post)</option>
@@ -1046,8 +1065,24 @@ function SwissPostSettingsCard() {
         </div>
       </div>
 
+      <label className="flex items-start gap-3 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={fields.test_mode}
+          onChange={e => setFields(f => ({ ...f, test_mode: e.target.checked }))}
+          className="mt-1 h-5 w-5 shrink-0"
+        />
+        <span className="text-sm">
+          <span className="font-medium">Testmodus (empfohlen zum Ausprobieren)</span>
+          <span className="block text-muted-foreground text-xs mt-0.5">
+            Erstellt Etiketten mit dem Aufdruck «SPECIMEN». Sie sind nicht für den Versand gültig und es wird keine Sendungsnummer im Auftrag gespeichert.
+            Zum echten Versenden ausschalten.
+          </span>
+        </span>
+      </label>
+
       <div className="pt-1">
-        <Button onClick={handleSave} disabled={loading} className={`gap-2 ${saved ? "bg-success hover:bg-success/90" : "bg-primary hover:bg-primary/90"}`}>
+        <Button onClick={handleSave} disabled={loading} className={`gap-2 w-full sm:w-auto h-12 md:h-10 ${saved ? "bg-success hover:bg-success/90" : "bg-primary hover:bg-primary/90"}`}>
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? "✓ Gespeichert!" : <><Save className="w-4 h-4" /> Speichern</>}
         </Button>
       </div>
@@ -1055,10 +1090,13 @@ function SwissPostSettingsCard() {
       <div className="border-t border-border pt-3 text-xs text-muted-foreground space-y-1">
         <p className="font-medium text-foreground">So erhältst du die Zugangsdaten:</p>
         <ol className="list-decimal list-inside space-y-0.5">
-          <li>Melde dich bei <strong>post.ch Business</strong> an und aktiviere die Barcode-API</li>
-          <li>Unter <em>developer.post.ch → My Applications</em> eine neue App erstellen</li>
-          <li>Kundennummer und Frankierlizenz findest du in deinem Post-Vertrag</li>
+          <li>Im Post-Portal <em>developer.post.ch → My Applications</em> die App für die <strong>Barcode-API</strong> öffnen: dort stehen Client-ID und Client-Secret</li>
+          <li>Die Frankierlizenz findest du in deinem Post-Vertrag</li>
+          <li>Die Absenderadresse kommt aus den Firmeneinstellungen (Format «Strasse Nr, PLZ Ort»)</li>
         </ol>
+        <p className="pt-1">
+          Sicherer: Hinterlege das Secret nicht hier, sondern als Edge-Function-Secret <code>SWISS_POST_CLIENT_SECRET</code>. Es hat Vorrang vor dem Wert hier.
+        </p>
       </div>
     </div>
   );

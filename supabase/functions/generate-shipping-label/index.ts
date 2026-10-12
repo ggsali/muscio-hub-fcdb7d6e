@@ -1,29 +1,36 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { normalizeStreet } from "../_shared/address.ts";
+import {
+  POST_TOKEN_URL, POST_LABEL_URL, POST_SCOPE,
+  countryToIso, validateAddress, buildGenerateLabelRequest, extractLabelResult,
+} from "../_shared/swiss-post.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Sendungsnummer aus der Post-Antwort lesen. Feldnamen sind je nach API-Version unterschiedlich,
-// deshalb wird die Antwort durchsucht und der Wert auf das Format einer Post-Sendungsnummer geprüft.
-const TRACKING_KEYS = /^(identcode|ident_code|sendungsnummer|sendungsnr|trackingnumber|tracking_nr|barcode|itemid|parcelnumber)$/i;
-function looksLikeParcelNumber(v: string): boolean {
-  const x = v.replace(/\s+/g, "");
-  return /^\d[\d.]{16,24}$/.test(x) || /^[A-Z]{2}\d{9}[A-Z]{2}$/.test(x);
-}
-function findTrackingNumber(node: unknown, depth = 0): string | null {
-  if (!node || typeof node !== "object" || depth > 5) return null;
-  for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
-    if (typeof v === "string" && TRACKING_KEYS.test(k) && looksLikeParcelNumber(v)) return v.replace(/\s+/g, "");
+/** OAuth2 Client-Credentials gegen die Post holen (Token gilt nur ~5 Minuten, daher pro Aufruf neu). */
+async function getPostToken(clientId: string, clientSecret: string): Promise<string> {
+  const res = await fetch(POST_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: POST_SCOPE,
+    }),
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    console.error("Swiss Post OAuth error:", res.status, t.slice(0, 300));
+    throw new Error(`Swiss Post Anmeldung fehlgeschlagen (${res.status}). Client-ID/Secret prüfen. ${t.slice(0, 200)}`);
   }
-  for (const v of Object.values(node as Record<string, unknown>)) {
-    const found = findTrackingNumber(v, depth + 1);
-    if (found) return found;
-  }
-  return null;
+  const json = await res.json();
+  if (!json?.access_token) throw new Error("Swiss Post Anmeldung: kein Access-Token erhalten");
+  return json.access_token as string;
 }
 
 serve(async (req) => {
@@ -38,32 +45,35 @@ serve(async (req) => {
     const { order_id } = await req.json();
     if (!order_id) throw new Error("order_id required");
 
-    // Load Swiss Post credentials from app_settings table
+    // Zugangsdaten: Secret bevorzugt aus den Edge-Function-Secrets, sonst aus der settings-Tabelle
     const { data: settingsRows } = await supabase
       .from("settings")
       .select("key,value")
       .in("key", [
-        "swiss_post_customer_no",
+        "swiss_post_client_id",
+        "swiss_post_client_secret",
         "swiss_post_franking_license",
-        "swiss_post_api_user",
-        "swiss_post_api_password",
         "swiss_post_produkt",
+        "swiss_post_label_layout",
+        "swiss_post_test_mode",
       ]);
 
-    const settingsMap: Record<string, string> = {};
-    (settingsRows || []).forEach((r: any) => { settingsMap[r.key] = r.value; });
+    const s: Record<string, string> = {};
+    (settingsRows || []).forEach((r: any) => { s[r.key] = r.value; });
 
-    const postCustomerNo = settingsMap["swiss_post_customer_no"] || Deno.env.get("SWISS_POST_CUSTOMER_NO");
-    const postFrankingLicense = settingsMap["swiss_post_franking_license"] || Deno.env.get("SWISS_POST_FRANKING_LICENSE");
-    const postApiUser = settingsMap["swiss_post_api_user"] || Deno.env.get("SWISS_POST_API_USER");
-    const postApiPassword = settingsMap["swiss_post_api_password"] || Deno.env.get("SWISS_POST_API_PASSWORD");
-    const produkt = settingsMap["swiss_post_produkt"] || "PRI";
+    const clientId = Deno.env.get("SWISS_POST_CLIENT_ID") || s["swiss_post_client_id"];
+    const clientSecret = Deno.env.get("SWISS_POST_CLIENT_SECRET") || s["swiss_post_client_secret"];
+    const frankingLicense = Deno.env.get("SWISS_POST_FRANKING_LICENSE") || s["swiss_post_franking_license"];
+    const produkt = s["swiss_post_produkt"] || "PRI";
+    const labelLayout = s["swiss_post_label_layout"] || "A6";
+    // Solange nichts anderes eingestellt ist: Testmodus (SPECIMEN-Etikette, kostenlos, nicht versandgültig)
+    const testMode = (s["swiss_post_test_mode"] ?? "1") !== "0";
 
-    if (!postCustomerNo || !postFrankingLicense || !postApiUser || !postApiPassword) {
-      throw new Error("Swiss Post API credentials not configured. Please add them in settings.");
+    if (!clientId || !clientSecret || !frankingLicense) {
+      throw new Error("Swiss Post API credentials not configured. Bitte Client-ID, Client-Secret und Frankierlizenz in den Einstellungen eintragen.");
     }
 
-    // Fetch order + customer
+    // Auftrag + Kunde
     const { data: order, error: orderErr } = await supabase
       .from("orders")
       .select("id, order_number, customer_id, beschreibung, tracking_nr")
@@ -78,134 +88,102 @@ serve(async (req) => {
       .single();
     if (custErr || !customer) throw new Error("Customer not found");
 
-    // Fetch company settings for sender address
+    // Absender aus den Firmeneinstellungen ("Strasse Nr, PLZ Ort")
     const { data: companyRows } = await supabase.from("company_settings").select("key,value");
-    const company: any = {};
+    const company: Record<string, string> = {};
     (companyRows || []).forEach((r: any) => { company[r.key] = r.value; });
 
-    // Parse sender address — stored as "Strasse Nr, PLZ Ort" or multi-line
-    const rawAdresse = (company.adresse || "").replace(/\n/g, ", ");
-    const adresseParts = rawAdresse.split(",").map((s: string) => s.trim());
-    const senderStrasse = adresseParts[0] || "Musterstrasse 1";
-    const plzOrtParts = (adresseParts[1] || "8200 Schaffhausen").trim().split(" ");
-    const senderPlz = plzOrtParts[0] || "8200";
-    const senderOrt = plzOrtParts.slice(1).join(" ") || "Schaffhausen";
+    const parts = String(company.adresse || "").replace(/\n/g, ",").split(",").map((p) => p.trim()).filter(Boolean);
+    const plzIdx = parts.findIndex((p) => /^\d{4,5}\s+\S/.test(p));
+    if (plzIdx < 1) {
+      throw new Error('Absenderadresse unvollständig. Bitte unter Einstellungen → Firma die Adresse als "Strasse Nr, PLZ Ort" eintragen.');
+    }
+    const sender = {
+      name1: company.firmenname || "3dMuscio",
+      street: parts.slice(0, plzIdx).join(", "),
+      zip: parts[plzIdx].split(/\s+/)[0],
+      city: parts[plzIdx].split(/\s+/).slice(1).join(" "),
+      country: "CH",
+    };
 
-    // Recipient
-    const recipientName = customer.firma
-      ? customer.firma
-      : `${customer.vorname || ""} ${customer.name || ""}`.trim();
-    const recipientZusatz = customer.firma
-      ? `${customer.vorname || ""} ${customer.name || ""}`.trim()
-      : "";
-    // Hausnummer ggf. aus dem Strassenfeld lösen und Doppelungen ("Gartensiedlung 13 13") vermeiden
+    // Empfänger: Hausnummer sauber vom Strassennamen trennen
     const addr = normalizeStreet(customer.strasse, customer.hausnummer);
-    const recipientStrasse = [addr.strasse, addr.hausnummer].filter(Boolean).join(" ").trim();
-    const recipientPlz = customer.plz || "";
-    const recipientOrt = customer.ort || "";
-    const recipientLand = (customer.land || "CH").toUpperCase().slice(0, 2);
+    const country = countryToIso(customer.land);
+    if (!country) throw new Error(`Land "${customer.land}" wird nicht erkannt. Bitte beim Kunden einen gültigen Ländernamen oder Ländercode eintragen.`);
+
+    const personName = `${customer.vorname || ""} ${customer.name || ""}`.trim();
+    const recipient = {
+      name1: customer.firma ? customer.firma : personName,
+      name2: customer.firma ? personName : undefined,
+      street: addr.strasse,
+      houseNo: addr.hausnummer || undefined,
+      zip: String(customer.plz || "").trim(),
+      city: String(customer.ort || "").trim(),
+      country,
+    };
+
+    const problem = validateAddress(sender, "Absender") || validateAddress(recipient, "Empfänger");
+    if (problem) throw new Error(problem);
 
     const orderLabel = order.order_number
       ? String(order.order_number).padStart(8, "0")
-      : order_id.slice(0, 8).toUpperCase();
+      : String(order_id).slice(0, 8).toUpperCase();
 
-    // Swiss Post Barcode Web Service v2
-    const requestBody = {
-      Language: "de",
-      FrankingLicense: postFrankingLicense,
-      PpFranking: false,
-      ImageFileType: "PDF",
-      ImageResolution: 300,
-      Sendungen: [
-        {
-          DataIdentifier: "109",
-          Produkt: produkt,
-          Services: [],
-          Sender: {
-            Name1: company.firmenname || "3dMuscio",
-            Street: senderStrasse,
-            ZIP: senderPlz,
-            City: senderOrt,
-            Country: "CH",
-          },
-          Recipient: {
-            Name1: recipientName,
-            ...(recipientZusatz ? { Name2: recipientZusatz } : {}),
-            Street: recipientStrasse,
-            ZIP: recipientPlz,
-            City: recipientOrt,
-            Country: recipientLand,
-          },
-          AdditionalINFOS: [
-            {
-              Type: "SENDUNGSNUMMER",
-              Value: orderLabel,
-            },
-          ],
-        },
-      ],
-    };
+    const body = buildGenerateLabelRequest({
+      frankingLicense, produkt, testMode, labelLayout, itemId: orderLabel, sender, recipient,
+    });
 
-    const credentials = btoa(`${postApiUser}:${postApiPassword}`);
-
-    const postResponse = await fetch(
-      "https://wedec.post.ch/WEDECBarcode/barcode/v2/generateAddressLabel",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${credentials}`,
-          "Customer-Number": postCustomerNo,
-        },
-        body: JSON.stringify(requestBody),
-      }
-    );
+    const token = await getPostToken(clientId, clientSecret);
+    const postResponse = await fetch(POST_LABEL_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
 
     if (!postResponse.ok) {
       const errText = await postResponse.text();
-      console.error("Swiss Post API error:", postResponse.status, errText);
+      console.error("Swiss Post API error:", postResponse.status, errText.slice(0, 500));
       throw new Error(`Swiss Post API ${postResponse.status}: ${errText.slice(0, 300)}`);
     }
 
-    const result = await postResponse.json();
-    const labelBase64 = result?.Sendungen?.[0]?.Label;
-    if (!labelBase64) {
-      console.error("Swiss Post response:", JSON.stringify(result));
-      throw new Error("Kein Label in der Antwort der Post API");
+    const result = extractLabelResult(await postResponse.json());
+    if (result.errors) {
+      console.error("Swiss Post item errors:", JSON.stringify(result.errors).slice(0, 500));
+      throw new Error(`Swiss Post meldet Fehler: ${JSON.stringify(result.errors).slice(0, 300)}`);
     }
+    if (!result.label) throw new Error("Kein Label in der Antwort der Post API");
 
-    // Sendungsnummer automatisch im Auftrag speichern (vorhandene, von Hand erfasste Nummer wird nicht überschrieben)
-    const trackingNr = findTrackingNumber(result);
+    // Sendungsnummer im Auftrag speichern – nicht im Testmodus (SPECIMEN-Nummern sind ungültig)
+    // und nie eine von Hand erfasste Nummer überschreiben.
     let trackingSaved = false;
-    if (trackingNr && !order.tracking_nr) {
-      const { error: trErr } = await supabase.from("orders").update({ tracking_nr: trackingNr }).eq("id", order_id);
+    if (!testMode && result.identCode && !order.tracking_nr) {
+      const { error: trErr } = await supabase.from("orders").update({ tracking_nr: result.identCode }).eq("id", order_id);
       if (trErr) console.error("tracking_nr speichern fehlgeschlagen:", trErr.message);
       else trackingSaved = true;
-    } else if (!trackingNr) {
-      console.warn("Keine Sendungsnummer in der Post-Antwort gefunden. Felder:", Object.keys(result?.Sendungen?.[0] ?? result ?? {}));
     }
 
-    // Log to activity log
     await supabase.from("order_status_log").insert({
       order_id,
-      status: "📦 Versandetikette erstellt",
-      notiz: trackingNr ? `Sendungsnummer ${trackingNr}` : null,
+      status: testMode ? "📦 Test-Versandetikette erstellt" : "📦 Versandetikette erstellt",
+      notiz: testMode ? "Testmodus (SPECIMEN), nicht für den Versand gültig" : (result.identCode ? `Sendungsnummer ${result.identCode}` : null),
     });
 
     return new Response(
       JSON.stringify({
         success: true,
-        label_base64: labelBase64,
-        filename: `versandetikette_${orderLabel}.pdf`,
-        tracking_nr: trackingNr,
+        label_base64: result.label,
+        filename: `${testMode ? "TEST_" : ""}versandetikette_${orderLabel}.pdf`,
+        tracking_nr: result.identCode,
         tracking_saved: trackingSaved,
+        test_mode: testMode,
+        warnings: result.warnings,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
-    console.error("generate-shipping-label error:", err);
+    console.error("generate-shipping-label error:", err?.message || err);
     return new Response(
-      JSON.stringify({ success: false, error: err.message }),
+      JSON.stringify({ success: false, error: err?.message || String(err) }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

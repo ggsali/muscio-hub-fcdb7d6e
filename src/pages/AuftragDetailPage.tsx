@@ -1320,7 +1320,12 @@ export default function AuftragDetailPage() {
       a.download = data.filename || "versandetikette.pdf";
       a.click();
       URL.revokeObjectURL(url);
-      if (data.tracking_saved && data.tracking_nr) {
+      if (data.test_mode) {
+        toast({
+          title: "📦 Test-Etikette erstellt (SPECIMEN)",
+          description: "Nicht für den Versand gültig. Den Testmodus schaltest du in den Einstellungen unter Swiss Post aus.",
+        });
+      } else if (data.tracking_saved && data.tracking_nr) {
         // Sendungsnummer wurde serverseitig im Auftrag gespeichert – Anzeige angleichen
         setTrackingNr(data.tracking_nr);
         toast({ title: "📦 Versandetikette erstellt ✓", description: `Sendungsnummer ${data.tracking_nr} wurde automatisch gespeichert.` });
