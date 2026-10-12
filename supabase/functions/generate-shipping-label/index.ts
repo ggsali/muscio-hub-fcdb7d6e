@@ -1,10 +1,30 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { normalizeStreet } from "../_shared/address.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Sendungsnummer aus der Post-Antwort lesen. Feldnamen sind je nach API-Version unterschiedlich,
+// deshalb wird die Antwort durchsucht und der Wert auf das Format einer Post-Sendungsnummer geprüft.
+const TRACKING_KEYS = /^(identcode|ident_code|sendungsnummer|sendungsnr|trackingnumber|tracking_nr|barcode|itemid|parcelnumber)$/i;
+function looksLikeParcelNumber(v: string): boolean {
+  const x = v.replace(/\s+/g, "");
+  return /^\d[\d.]{16,24}$/.test(x) || /^[A-Z]{2}\d{9}[A-Z]{2}$/.test(x);
+}
+function findTrackingNumber(node: unknown, depth = 0): string | null {
+  if (!node || typeof node !== "object" || depth > 5) return null;
+  for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+    if (typeof v === "string" && TRACKING_KEYS.test(k) && looksLikeParcelNumber(v)) return v.replace(/\s+/g, "");
+  }
+  for (const v of Object.values(node as Record<string, unknown>)) {
+    const found = findTrackingNumber(v, depth + 1);
+    if (found) return found;
+  }
+  return null;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -46,7 +66,7 @@ serve(async (req) => {
     // Fetch order + customer
     const { data: order, error: orderErr } = await supabase
       .from("orders")
-      .select("id, order_number, customer_id, beschreibung")
+      .select("id, order_number, customer_id, beschreibung, tracking_nr")
       .eq("id", order_id)
       .single();
     if (orderErr || !order) throw new Error("Order not found");
@@ -78,7 +98,9 @@ serve(async (req) => {
     const recipientZusatz = customer.firma
       ? `${customer.vorname || ""} ${customer.name || ""}`.trim()
       : "";
-    const recipientStrasse = [customer.strasse, customer.hausnummer].filter(Boolean).join(" ").trim();
+    // Hausnummer ggf. aus dem Strassenfeld lösen und Doppelungen ("Gartensiedlung 13 13") vermeiden
+    const addr = normalizeStreet(customer.strasse, customer.hausnummer);
+    const recipientStrasse = [addr.strasse, addr.hausnummer].filter(Boolean).join(" ").trim();
     const recipientPlz = customer.plz || "";
     const recipientOrt = customer.ort || "";
     const recipientLand = (customer.land || "CH").toUpperCase().slice(0, 2);
@@ -152,11 +174,22 @@ serve(async (req) => {
       throw new Error("Kein Label in der Antwort der Post API");
     }
 
+    // Sendungsnummer automatisch im Auftrag speichern (vorhandene, von Hand erfasste Nummer wird nicht überschrieben)
+    const trackingNr = findTrackingNumber(result);
+    let trackingSaved = false;
+    if (trackingNr && !order.tracking_nr) {
+      const { error: trErr } = await supabase.from("orders").update({ tracking_nr: trackingNr }).eq("id", order_id);
+      if (trErr) console.error("tracking_nr speichern fehlgeschlagen:", trErr.message);
+      else trackingSaved = true;
+    } else if (!trackingNr) {
+      console.warn("Keine Sendungsnummer in der Post-Antwort gefunden. Felder:", Object.keys(result?.Sendungen?.[0] ?? result ?? {}));
+    }
+
     // Log to activity log
     await supabase.from("order_status_log").insert({
       order_id,
       status: "📦 Versandetikette erstellt",
-      notiz: null,
+      notiz: trackingNr ? `Sendungsnummer ${trackingNr}` : null,
     });
 
     return new Response(
@@ -164,6 +197,8 @@ serve(async (req) => {
         success: true,
         label_base64: labelBase64,
         filename: `versandetikette_${orderLabel}.pdf`,
+        tracking_nr: trackingNr,
+        tracking_saved: trackingSaved,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

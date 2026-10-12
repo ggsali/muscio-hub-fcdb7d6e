@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { normalizeStreet } from "@/lib/address";
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/complete-customer-profile`;
 const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
@@ -39,6 +40,7 @@ export default function ProfilErgaenzenPage() {
         }
         const c = data.customer || {};
         const isNew = !!data.new_customer;
+        const addr = normalizeStreet(c.strasse, c.hausnummer);
         setState({ kind: "ready", customer: c, isNew });
         setForm({
           vorname: c.vorname || "",
@@ -46,8 +48,8 @@ export default function ProfilErgaenzenPage() {
           firma: c.firma || "",
           email: c.email || "",
           telefon: c.telefon || "",
-          strasse: c.strasse || "",
-          hausnummer: c.hausnummer || "",
+          strasse: addr.strasse,
+          hausnummer: addr.hausnummer,
           plz: c.plz || "",
           ort: c.ort || "",
           land: c.land || "Schweiz",
@@ -74,7 +76,7 @@ export default function ProfilErgaenzenPage() {
       const res = await fetch(FN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", apikey: ANON, Authorization: `Bearer ${ANON}` },
-        body: JSON.stringify({ token, ...form }),
+        body: JSON.stringify({ token, ...form, ...normalizeStreet(form.strasse, form.hausnummer) }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -157,24 +159,31 @@ export default function ProfilErgaenzenPage() {
               <Label>Telefon</Label>
               <Input className="mt-1" value={form.telefon} onChange={e => setForm({ ...form, telefon: e.target.value })} placeholder="+41 79..." />
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
+            <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] sm:grid-cols-[minmax(0,1fr)_7rem] gap-3">
+              <div className="min-w-0">
                 <Label>Strasse *</Label>
-                <Input className="mt-1" value={form.strasse} onChange={e => setForm({ ...form, strasse: e.target.value })} required />
+                <Input
+                  className="mt-1 h-12 md:h-10"
+                  value={form.strasse}
+                  onChange={e => setForm({ ...form, strasse: e.target.value })}
+                  onBlur={() => setForm(f => ({ ...f, ...normalizeStreet(f.strasse, f.hausnummer) }))}
+                  autoComplete="address-line1"
+                  required
+                />
               </div>
-              <div>
+              <div className="min-w-0">
                 <Label>Nr.</Label>
-                <Input className="mt-1" value={form.hausnummer} onChange={e => setForm({ ...form, hausnummer: e.target.value })} />
+                <Input className="mt-1 h-12 md:h-10" value={form.hausnummer} onChange={e => setForm({ ...form, hausnummer: e.target.value })} placeholder="12a" />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
+            <div className="grid grid-cols-[6rem_minmax(0,1fr)] sm:grid-cols-[8rem_minmax(0,1fr)] gap-3">
+              <div className="min-w-0">
                 <Label>PLZ *</Label>
-                <Input className="mt-1" value={form.plz} onChange={e => setForm({ ...form, plz: e.target.value })} required />
+                <Input className="mt-1 h-12 md:h-10" value={form.plz} onChange={e => setForm({ ...form, plz: e.target.value })} inputMode="numeric" autoComplete="postal-code" required />
               </div>
-              <div className="col-span-2">
+              <div className="min-w-0">
                 <Label>Ort *</Label>
-                <Input className="mt-1" value={form.ort} onChange={e => setForm({ ...form, ort: e.target.value })} required />
+                <Input className="mt-1 h-12 md:h-10" value={form.ort} onChange={e => setForm({ ...form, ort: e.target.value })} autoComplete="address-level2" required />
               </div>
             </div>
             <div>

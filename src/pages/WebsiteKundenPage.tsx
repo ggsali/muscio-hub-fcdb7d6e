@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Users, UserPlus, Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 import { useNavigate } from "@/lib/router-compat";
 import { toast } from "sonner";
+import { splitStreet } from "@/lib/address";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
@@ -61,6 +62,7 @@ export default function WebsiteKundenPage() {
     const vorname = nameParts.slice(0, -1).join(" ") || nameParts[0] || "";
     const name = nameParts.slice(-1)[0] || k.full_name || "Unbekannt";
 
+    const addr = splitStreet(k.address);
     const { data, error } = await supabase
       .from("customers")
       .insert({
@@ -70,7 +72,8 @@ export default function WebsiteKundenPage() {
         ort: k.city || null,
         plz: k.postal_code || null,
         land: k.country || "Schweiz",
-        strasse: k.address || null,
+        strasse: addr.strasse || null,
+        hausnummer: addr.hausnummer || null,
         aktiv: true,
       })
       .select()

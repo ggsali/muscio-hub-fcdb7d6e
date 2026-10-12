@@ -1320,7 +1320,13 @@ export default function AuftragDetailPage() {
       a.download = data.filename || "versandetikette.pdf";
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: "📦 Versandetikette erstellt & heruntergeladen ✓" });
+      if (data.tracking_saved && data.tracking_nr) {
+        // Sendungsnummer wurde serverseitig im Auftrag gespeichert – Anzeige angleichen
+        setTrackingNr(data.tracking_nr);
+        toast({ title: "📦 Versandetikette erstellt ✓", description: `Sendungsnummer ${data.tracking_nr} wurde automatisch gespeichert.` });
+      } else {
+        toast({ title: "📦 Versandetikette erstellt & heruntergeladen ✓" });
+      }
     } catch (e: any) {
       toast({ title: "Fehler", description: e.message, variant: "destructive" });
     } finally {

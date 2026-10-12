@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNoIndex } from "@/hooks/useNoIndex";
+import { normalizeStreet, joinStreet } from "@/lib/address";
 
 const LAENDER = ["Schweiz", "Deutschland", "Österreich", "Liechtenstein", "Frankreich", "Italien"];
 
@@ -41,11 +42,13 @@ const CompleteProfile = () => {
       const meta: any = user.user_metadata || {};
       const fullName: string = data?.full_name || meta.full_name || meta.name || "";
       const parts = fullName.trim().split(/\s+/);
+      const addr = normalizeStreet(data?.strasse as string, "");
       setForm(f => ({
         ...f,
         vorname: data?.vorname || meta.given_name || parts[0] || "",
         nachname: data?.nachname || meta.family_name || (parts.length > 1 ? parts.slice(1).join(" ") : ""),
-        strasse: (data?.strasse as string) || "",
+        strasse: addr.strasse,
+        hausnummer: addr.hausnummer,
         plz: (data?.plz as string) || "",
         ort: (data?.ort as string) || "",
         land: (data?.land as string) || "Schweiz",
@@ -57,6 +60,10 @@ const CompleteProfile = () => {
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [field]: e.target.value }));
+
+  // Wer "Musterstrasse 12" ins Strassenfeld tippt, bekommt die Nummer automatisch ins Nr.-Feld.
+  const splitStreetField = () =>
+    setForm(f => { const n = normalizeStreet(f.strasse, f.hausnummer); return { ...f, strasse: n.strasse, hausnummer: n.hausnummer }; });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +81,7 @@ const CompleteProfile = () => {
 
     setLoading(true);
     const fullName = `${form.vorname.trim()} ${form.nachname.trim()}`;
-    const strasseFull = `${form.strasse} ${form.hausnummer}`.trim();
+    const strasseFull = joinStreet(form.strasse, form.hausnummer);
 
     const { error: upsertError } = await supabase.from("profiles").upsert({
       user_id: user.id,
@@ -138,24 +145,24 @@ const CompleteProfile = () => {
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Adresse</p>
             <div className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] md:grid-cols-[minmax(0,1fr)_7rem] gap-3">
                 <div>
                   <Label className="text-xs">Strasse <Req /></Label>
-                  <Input className="mt-1" placeholder="Musterstrasse" required value={form.strasse} onChange={set("strasse")} />
+                  <Input className="mt-1 h-12 md:h-10" placeholder="Musterstrasse" required autoComplete="address-line1" value={form.strasse} onChange={set("strasse")} onBlur={splitStreetField} />
                 </div>
-                <div className="md:w-28">
+                <div>
                   <Label className="text-xs">Hausnr. <Req /></Label>
-                  <Input className="mt-1" placeholder="1" required value={form.hausnummer} onChange={set("hausnummer")} />
+                  <Input className="mt-1 h-12 md:h-10" placeholder="12a" required value={form.hausnummer} onChange={set("hausnummer")} />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-[6rem_minmax(0,1fr)] md:grid-cols-[8rem_minmax(0,1fr)] gap-3">
                 <div>
                   <Label className="text-xs">PLZ <Req /></Label>
-                  <Input className="mt-1" placeholder="8000" required value={form.plz} onChange={set("plz")} />
+                  <Input className="mt-1 h-12 md:h-10" placeholder="8000" required inputMode="numeric" autoComplete="postal-code" value={form.plz} onChange={set("plz")} />
                 </div>
                 <div>
                   <Label className="text-xs">Ort <Req /></Label>
-                  <Input className="mt-1" placeholder="Zürich" required value={form.ort} onChange={set("ort")} />
+                  <Input className="mt-1 h-12 md:h-10" placeholder="Zürich" required autoComplete="address-level2" value={form.ort} onChange={set("ort")} />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

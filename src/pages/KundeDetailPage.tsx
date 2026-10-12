@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
+import { normalizeStreet } from "@/lib/address";
 import { toast } from "sonner";
 import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare, Send, Link2, Copy, Check , Ticket} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -86,6 +87,12 @@ const emptyCustomer = (): Customer => ({
   strasse: "", hausnummer: "", plz: "", ort: "", land: "Schweiz",
   adresse: "", notizen: "", aktiv: true,
 });
+
+// Hausnummer gehört ins Nr.-Feld, nicht ins Strassenfeld (ältere Einträge enthalten sie oft in "strasse").
+const withNormalizedStreet = (c: Customer): Customer => {
+  const n = normalizeStreet(c.strasse, c.hausnummer);
+  return { ...c, strasse: n.strasse, hausnummer: n.hausnummer };
+};
 
 type Attachment = { filename: string; storage_path: string; bucket?: string; size_bytes?: number | null };
 type InquiryRow = {
@@ -193,7 +200,7 @@ export default function KundeDetailPage() {
     async function load() {
       const { data: c } = await supabase.from("customers").select("*").eq("id", id!).single();
       if (c) {
-        setCustomer({ ...emptyCustomer(), ...(c as any) });
+        setCustomer(withNormalizedStreet({ ...emptyCustomer(), ...(c as any) }));
         setCreatedAt(((c as any).created_at as string) ?? null);
       }
 
@@ -235,14 +242,15 @@ export default function KundeDetailPage() {
       toast.error("Name ist erforderlich");
       return;
     }
+    const addr = normalizeStreet(customer.strasse, customer.hausnummer);
     const payload = {
       vorname: customer.vorname || null,
       name: customer.name,
       firma: customer.firma || null,
       email: customer.email || null,
       telefon: customer.telefon || null,
-      strasse: customer.strasse || null,
-      hausnummer: customer.hausnummer || null,
+      strasse: addr.strasse || null,
+      hausnummer: addr.hausnummer || null,
       plz: customer.plz || null,
       ort: customer.ort || null,
       land: customer.land || "Schweiz",
@@ -259,7 +267,7 @@ export default function KundeDetailPage() {
     } else {
       const { data, error } = await supabase.from("customers").update(payload).eq("id", id!).select().single();
       if (error) { toast.error("Fehler beim Speichern: " + error.message); return; }
-      if (data) setCustomer({ ...emptyCustomer(), ...(data as any) });
+      if (data) setCustomer(withNormalizedStreet({ ...emptyCustomer(), ...(data as any) }));
       toast.success("Änderungen gespeichert");
       setEditing(false);
     }
@@ -313,7 +321,7 @@ export default function KundeDetailPage() {
         onChange={e => setCustomer({ ...customer, [key]: e.target.value })}
         disabled={!editing}
         placeholder={placeholder}
-        className="bg-input border-border"
+        className="bg-input border-border h-12 md:h-10"
       />
     </div>
   );
@@ -324,11 +332,11 @@ export default function KundeDetailPage() {
         <button onClick={() => navigate("/admin/kunden")} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold truncate">
             {isNew ? "Neuer Kunde" : [customer.vorname, customer.name].filter(Boolean).join(" ") || customer.name}
           </h1>
-          {!isNew && customer.firma && <p className="text-muted-foreground text-sm">{customer.firma}</p>}
+          {!isNew && customer.firma && <p className="text-muted-foreground text-sm truncate">{customer.firma}</p>}
         </div>
         {!isNew && !editing && (
           <div className="flex items-center gap-2">
@@ -518,12 +526,12 @@ export default function KundeDetailPage() {
 
       {/* Tabs */}
       {!isNew && (
-        <div className="flex gap-1 border-b border-border">
+        <div className="flex gap-1 border-b border-border overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-4 px-4 md:mx-0 md:px-0">
           {(["kontakt", "anfragen", "auftraege", "teile", "dateien"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => { setActiveTab(tab); setSearchParams(tab === "kontakt" ? {} : { tab }); }}
-              className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+              className={`px-3 md:px-4 py-3 md:py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px shrink-0 ${
                 activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -535,7 +543,7 @@ export default function KundeDetailPage() {
 
       {/* Kontakt Tab */}
       {(isNew || activeTab === "kontakt") && (
-        <div className="bg-card border border-border rounded-lg p-5 space-y-5 max-w-2xl">
+        <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-5 max-w-2xl">
           {/* Person */}
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Person</h3>
@@ -558,26 +566,67 @@ export default function KundeDetailPage() {
           {/* Adresse */}
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Adresse</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="col-span-3 space-y-1.5">
-                <Label>Strasse</Label>
-                <Input value={customer.strasse || ""} onChange={e => setCustomer({ ...customer, strasse: e.target.value })} disabled={!editing} placeholder="Musterstrasse" className="bg-input border-border" />
+            <div className="space-y-4">
+              {/* Strasse + Nr. immer nebeneinander (auch am Handy) */}
+              <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] sm:grid-cols-[minmax(0,1fr)_7rem] gap-3">
+                <div className="space-y-1.5 min-w-0">
+                  <Label>Strasse</Label>
+                  <Input
+                    value={customer.strasse || ""}
+                    onChange={e => setCustomer({ ...customer, strasse: e.target.value })}
+                    onBlur={() => editing && setCustomer(c => withNormalizedStreet(c))}
+                    disabled={!editing}
+                    placeholder="Musterstrasse"
+                    autoComplete="address-line1"
+                    className="bg-input border-border h-12 md:h-10"
+                  />
+                </div>
+                <div className="space-y-1.5 min-w-0">
+                  <Label>Nr.</Label>
+                  <Input
+                    value={customer.hausnummer || ""}
+                    onChange={e => setCustomer({ ...customer, hausnummer: e.target.value })}
+                    disabled={!editing}
+                    placeholder="12a"
+                    className="bg-input border-border h-12 md:h-10"
+                  />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label>Nr.</Label>
-                <Input value={customer.hausnummer || ""} onChange={e => setCustomer({ ...customer, hausnummer: e.target.value })} disabled={!editing} placeholder="12a" className="bg-input border-border" />
-              </div>
-              <div className="col-span-1 space-y-1.5">
-                <Label>PLZ</Label>
-                <Input value={customer.plz || ""} onChange={e => setCustomer({ ...customer, plz: e.target.value })} disabled={!editing} placeholder="8000" className="bg-input border-border" />
-              </div>
-              <div className="col-span-2 space-y-1.5">
-                <Label>Ort</Label>
-                <Input value={customer.ort || ""} onChange={e => setCustomer({ ...customer, ort: e.target.value })} disabled={!editing} placeholder="Zürich" className="bg-input border-border" />
+              {/* PLZ + Ort nebeneinander */}
+              <div className="grid grid-cols-[6rem_minmax(0,1fr)] sm:grid-cols-[8rem_minmax(0,1fr)] gap-3">
+                <div className="space-y-1.5 min-w-0">
+                  <Label>PLZ</Label>
+                  <Input
+                    value={customer.plz || ""}
+                    onChange={e => setCustomer({ ...customer, plz: e.target.value })}
+                    disabled={!editing}
+                    placeholder="8000"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    className="bg-input border-border h-12 md:h-10"
+                  />
+                </div>
+                <div className="space-y-1.5 min-w-0">
+                  <Label>Ort</Label>
+                  <Input
+                    value={customer.ort || ""}
+                    onChange={e => setCustomer({ ...customer, ort: e.target.value })}
+                    disabled={!editing}
+                    placeholder="Zürich"
+                    autoComplete="address-level2"
+                    className="bg-input border-border h-12 md:h-10"
+                  />
+                </div>
               </div>
               <div className="space-y-1.5">
                 <Label>Land</Label>
-                <Input value={customer.land || "Schweiz"} onChange={e => setCustomer({ ...customer, land: e.target.value })} disabled={!editing} className="bg-input border-border" />
+                <Input
+                  value={customer.land || "Schweiz"}
+                  onChange={e => setCustomer({ ...customer, land: e.target.value })}
+                  disabled={!editing}
+                  autoComplete="country-name"
+                  className="bg-input border-border h-12 md:h-10"
+                />
               </div>
             </div>
           </div>
@@ -590,11 +639,11 @@ export default function KundeDetailPage() {
 
           {editing && (
             <div className="flex gap-2">
-              <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 gap-2">
+              <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 gap-2 flex-1 md:flex-none h-12 md:h-10">
                 <Save className="w-4 h-4" />Speichern
               </Button>
               {!isNew && (
-                <Button variant="outline" onClick={() => setEditing(false)} className="gap-2 border-border">
+                <Button variant="outline" onClick={() => setEditing(false)} className="gap-2 border-border flex-1 md:flex-none h-12 md:h-10">
                   <X className="w-4 h-4" />Abbrechen
                 </Button>
               )}
