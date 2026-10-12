@@ -975,7 +975,6 @@ function SwissPostSettingsCard() {
       { key: "swiss_post_label_layout", value: fields.label_layout },
       { key: "swiss_post_test_mode", value: fields.test_mode ? "1" : "0" },
     ];
-    if (fields.client_secret.trim()) rows.push({ key: "swiss_post_client_secret", value: fields.client_secret.trim() });
     const { error } = await supabase.from("settings").upsert(rows, { onConflict: "key" });
     setLoading(false);
     if (error) {
@@ -1016,17 +1015,10 @@ function SwissPostSettingsCard() {
           />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
-          <label className="text-sm font-medium">
-            Client-Secret {hasSecret && <span className="text-success font-normal">✓ hinterlegt</span>}
-          </label>
-          <input
-            type="password"
-            value={fields.client_secret}
-            onChange={e => setFields(f => ({ ...f, client_secret: e.target.value }))}
-            placeholder={hasSecret ? "Leer lassen, um das gespeicherte Secret zu behalten" : "Client-Secret einfügen"}
-            autoComplete="new-password"
-            className={inputCls}
-          />
+          <label className="text-sm font-medium">Client-Secret</label>
+          <p className="text-sm text-muted-foreground">
+            Sicher im Backend hinterlegt (nicht in der Datenbank). Zum Ändern bitte im Chat anfragen.
+          </p>
         </div>
         <div className="space-y-1.5">
           <label className="text-sm font-medium">Frankierlizenz</label>
