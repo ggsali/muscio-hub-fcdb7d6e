@@ -76,7 +76,7 @@ serve(async (req) => {
     // Auftrag + Kunde
     const { data: order, error: orderErr } = await supabase
       .from("orders")
-      .select("id, order_number, customer_id, beschreibung, tracking_nr")
+      .select("id, customer_id, beschreibung, tracking_nr")
       .eq("id", order_id)
       .single();
     if (orderErr || !order) throw new Error("Order not found");
@@ -125,9 +125,7 @@ serve(async (req) => {
     const problem = validateAddress(sender, "Absender") || validateAddress(recipient, "Empfänger");
     if (problem) throw new Error(problem);
 
-    const orderLabel = order.order_number
-      ? String(order.order_number).padStart(8, "0")
-      : String(order_id).slice(0, 8).toUpperCase();
+    const orderLabel = String(order_id).replace(/-/g, "").slice(0, 8).toUpperCase();
 
     const body = buildGenerateLabelRequest({
       frankingLicense, produkt, testMode, labelLayout, itemId: orderLabel, sender, recipient,
