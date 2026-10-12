@@ -2036,10 +2036,20 @@ export default function AuftragDetailPage() {
 
       {/* Sub-header: Auftrags-ID + Kunde + Datum */}
       {!isNew && (
-        <div className="text-xs text-muted-foreground -mt-2">
+        <div className="text-sm md:text-xs text-muted-foreground -mt-2">
           ID: <span className="font-mono">{(id || "").slice(0, 8)}</span>
           {customerId && customers.find(c => c.id === customerId) && (
-            <> · {customers.find(c => c.id === customerId)!.name}</>
+            <>
+              {" · "}
+              <button
+                type="button"
+                onClick={() => navigate(`/admin/kunden/${customerId}`)}
+                className="text-primary font-medium hover:underline underline-offset-2 py-1"
+                title="Kundenprofil öffnen"
+              >
+                {customers.find(c => c.id === customerId)!.name} →
+              </button>
+            </>
           )}
           {" · "}{datum}
         </div>
@@ -2119,8 +2129,12 @@ export default function AuftragDetailPage() {
               <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="font-semibold text-sm">Kundendaten</h3>
-                  <button onClick={() => navigate(`/admin/kunden/${c.id}`)} className="text-xs text-primary hover:underline">
-                    Kundenprofil →
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/admin/kunden/${c.id}`)}
+                    className="text-sm md:text-xs font-medium text-primary border border-primary/40 rounded-md px-3 py-2 md:px-2.5 md:py-1 hover:bg-primary/10 transition-colors"
+                  >
+                    👤 Kundenprofil öffnen →
                   </button>
                 </div>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -3077,15 +3091,27 @@ export default function AuftragDetailPage() {
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
             <h3 className="font-semibold text-sm">{lieferart === "abholung" ? "Termine" : "Tracking & Termine"}</h3>
             {lieferart === "versand" && (
-              <Button
-                onClick={handleGenerateShippingLabel}
-                disabled={labelLoading}
-                variant="outline"
-                className="border-border gap-2 w-full sm:w-auto"
-              >
-                {labelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>📦</span>}
-                Versandetikette erstellen (Post CH)
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  onClick={handleGenerateShippingLabel}
+                  disabled={labelLoading}
+                  variant="outline"
+                  className="border-border gap-2 w-full sm:w-auto h-12 md:h-10"
+                >
+                  {labelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>📦</span>}
+                  Versandetikette erstellen (Post CH)
+                </Button>
+                {customerId && (
+                  <Button
+                    onClick={() => navigate(`/admin/kunden/${customerId}`)}
+                    variant="outline"
+                    className="border-border gap-2 w-full sm:w-auto h-12 md:h-10"
+                  >
+                    <span>👤</span>
+                    Kundenprofil öffnen
+                  </Button>
+                )}
+              </div>
             )}
             {lieferart === "versand" && (["Versandt", "Geliefert", "Abgeschlossen"].includes(status) || !!trackingNr) && (
               <div className="space-y-1.5">
