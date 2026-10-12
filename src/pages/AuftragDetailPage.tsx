@@ -1285,60 +1285,6 @@ export default function AuftragDetailPage() {
   };
 
 
-  const [labelLoading, setLabelLoading] = useState(false);
-  const handleGenerateShippingLabel = async () => {
-    if (!id) return;
-    setLabelLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-shipping-label", {
-        body: { order_id: id },
-      });
-      if (error || !data?.success) {
-        const msg = data?.error || error?.message || "Unbekannter Fehler";
-        if (msg.includes("not configured")) {
-          toast({
-            title: "Swiss Post API nicht konfiguriert",
-            description: "Bitte trage deine Post-API-Zugangsdaten in den Einstellungen ein.",
-            variant: "destructive",
-          });
-        } else {
-          toast({ title: "Fehler beim Erstellen der Etikette", description: msg, variant: "destructive" });
-        }
-        return;
-      }
-      // Download the PDF
-      const byteCharacters = atob(data.label_base64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = data.filename || "versandetikette.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
-      if (data.test_mode) {
-        toast({
-          title: "📦 Test-Etikette erstellt (SPECIMEN)",
-          description: "Nicht für den Versand gültig. Den Testmodus schaltest du in den Einstellungen unter Swiss Post aus.",
-        });
-      } else if (data.tracking_saved && data.tracking_nr) {
-        // Sendungsnummer wurde serverseitig im Auftrag gespeichert – Anzeige angleichen
-        setTrackingNr(data.tracking_nr);
-        toast({ title: "📦 Versandetikette erstellt ✓", description: `Sendungsnummer ${data.tracking_nr} wurde automatisch gespeichert.` });
-      } else {
-        toast({ title: "📦 Versandetikette erstellt & heruntergeladen ✓" });
-      }
-    } catch (e: any) {
-      toast({ title: "Fehler", description: e.message, variant: "destructive" });
-    } finally {
-      setLabelLoading(false);
-    }
-  };
-
   const [zipLoading, setZipLoading] = useState(false);
   const handleDownloadAllFiles = async () => {
     if (partFiles.length === 0) {
@@ -2112,6 +2058,7 @@ export default function AuftragDetailPage() {
               trackingNr={trackingNr}
               source={source}
               lieferart={lieferart}
+              customerId={customerId || undefined}
               onStatusChange={setStatus}
               onTrackingNrChange={setTrackingNr}
             />
@@ -3053,6 +3000,7 @@ export default function AuftragDetailPage() {
             trackingNr={trackingNr}
             source={source}
             lieferart={lieferart}
+            customerId={customerId || undefined}
             onStatusChange={setStatus}
             onTrackingNrChange={setTrackingNr}
           />
@@ -3090,29 +3038,6 @@ export default function AuftragDetailPage() {
           {/* 4. Tracking-Nummer (bei Versand) + Termine */}
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
             <h3 className="font-semibold text-sm">{lieferart === "abholung" ? "Termine" : "Tracking & Termine"}</h3>
-            {lieferart === "versand" && (
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button
-                  onClick={handleGenerateShippingLabel}
-                  disabled={labelLoading}
-                  variant="outline"
-                  className="border-border gap-2 w-full sm:w-auto h-12 md:h-10"
-                >
-                  {labelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>📦</span>}
-                  Versandetikette erstellen (Post CH)
-                </Button>
-                {customerId && (
-                  <Button
-                    onClick={() => navigate(`/admin/kunden/${customerId}`)}
-                    variant="outline"
-                    className="border-border gap-2 w-full sm:w-auto h-12 md:h-10"
-                  >
-                    <span>👤</span>
-                    Kundenprofil öffnen
-                  </Button>
-                )}
-              </div>
-            )}
             {lieferart === "versand" && (["Versandt", "Geliefert", "Abgeschlossen"].includes(status) || !!trackingNr) && (
               <div className="space-y-1.5">
                 <Label>Tracking-Nummer (Post CH)</Label>

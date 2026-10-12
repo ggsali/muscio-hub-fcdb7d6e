@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendReviewRequestForOrder } from "@/lib/reviewEmail";
 import {
   CheckCircle2, CheckCircle, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote,
-  Settings2, ExternalLink, MessageCircle, FileText, Printer, Search, Package,
+  Settings2, ExternalLink, MessageCircle, FileText, Printer, Search, Package, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { createShippingLabel } from "@/lib/shippingLabel";
+import { useNavigate } from "@/lib/router-compat";
 
 /** Post-CH Sendungsverfolgungs-Link */
 export function postTrackingUrl(nr: string) {
@@ -83,13 +85,15 @@ interface Props {
   trackingNr?: string;
   source?: string;
   lieferart?: "versand" | "abholung";
+  customerId?: string;
   onStatusChange: (newStatus: string) => void;
   onTrackingNrChange?: (nr: string) => void;
 }
 
 export default function OrderStatusWorkflow({
-  orderId, currentStatus, parts, trackingNr = "", lieferart = "versand", onStatusChange, onTrackingNrChange
+  orderId, currentStatus, parts, trackingNr = "", lieferart = "versand", customerId, onStatusChange, onTrackingNrChange
 }: Props) {
+  const navigate = useNavigate();
   const [log, setLog] = useState<LogEntry[]>([]);
   const [loadingLog, setLoadingLog] = useState(true);
   const [showTrackingInput, setShowTrackingInput] = useState(false);
@@ -99,6 +103,8 @@ export default function OrderStatusWorkflow({
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
   const [openLogId, setOpenLogId] = useState<string | null>(null);
+  const [labelLoading, setLabelLoading] = useState(false);
+  const [labelError, setLabelError] = useState<{ message: string; notConfigured?: boolean } | null>(null);
 
   const loadLog = async () => {
     const { data } = await (supabase.from as any)("order_status_log")
@@ -228,6 +234,44 @@ export default function OrderStatusWorkflow({
     }
   };
 
+
+  /** Versandetikette (Post CH) erstellen, PDF laden und Sendungsnummer automatisch übernehmen */
+  const handleCreateLabel = async () => {
+    if (labelLoading) return;
+    if (trackingNr && ["Versandt", "Geliefert", "Abgeschlossen"].includes(currentStatus)) {
+      const ok = window.confirm(
+        `Für diesen Auftrag gibt es schon die Sendungsnummer ${trackingNr}.\nWirklich eine neue Etikette mit neuer Nummer erstellen?`,
+      );
+      if (!ok) return;
+    }
+    setLabelLoading(true);
+    setLabelError(null);
+    const res = await createShippingLabel(orderId);
+    setLabelLoading(false);
+
+    if (!res.ok) {
+      setLabelError({ message: res.error || "Unbekannter Fehler", notConfigured: res.notConfigured });
+      toast.error("Etikette konnte nicht erstellt werden", { description: res.error });
+      return;
+    }
+    if (res.testMode) {
+      toast.info("Test-Etikette (SPECIMEN) erstellt", {
+        description: "Nicht für den Versand gültig. Den Testmodus schaltest du in den Einstellungen unter Swiss Post aus.",
+      });
+    } else if (res.trackingNr && res.trackingSaved) {
+      setTrackingInput(res.trackingNr);
+      onTrackingNrChange?.(res.trackingNr);
+      toast.success("Versandetikette erstellt", { description: `Sendungsnummer ${res.trackingNr} wurde automatisch eingetragen.` });
+    } else if (res.trackingNr) {
+      toast.success("Versandetikette erstellt", {
+        description: `Neue Nummer ${res.trackingNr}. Im Auftrag bleibt die bestehende Nummer gespeichert.`,
+      });
+    } else {
+      toast.success("Versandetikette erstellt", { description: "Die Post hat keine Sendungsnummer geliefert. Bitte von Hand eintragen." });
+    }
+    await loadLog();
+  };
+
   const handleConfirmDelivery = async () => {
     if (savingTracking) return; // Doppelklick verhindern
     setSavingTracking(true);
@@ -260,11 +304,43 @@ export default function OrderStatusWorkflow({
       case "Bezahlt": return "Zahlung erhalten – jetzt bestätigen?";
       case "Im Druck": return "Druck gestartet?";
       case "Qualitätsprüfung": return allFertig ? "Alle Teile fertig – Qualitätsprüfung starten?" : "Druck fertig – Qualitätsprüfung starten?";
-      case "Versandt": return lieferart === "abholung" ? "Bereit zur Abholung?" : "Paket versandbereit – Tracking erfassen?";
+      case "Versandt": return lieferart === "abholung" ? "Bereit zur Abholung?" : "Paket versandbereit – Etikette erstellen und Tracking erfassen?";
       case "Abgeschlossen": return "Auftrag abschliessen (Bewertungsmail wird gesendet)?";
       default: return "";
     }
   })();
+
+  const labelBlock = lieferart === "versand" ? (
+    <div className="space-y-2">
+      <Button
+        type="button"
+        onClick={handleCreateLabel}
+        disabled={labelLoading}
+        variant="outline"
+        className="w-full h-12 md:h-10 gap-2 border-border"
+      >
+        {labelLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+        {labelLoading ? "Etikette wird erstellt..." : "Versandetikette erstellen (Post CH)"}
+      </Button>
+      {labelError && (
+        <div className="text-xs bg-destructive/10 border border-destructive/30 text-destructive rounded-lg px-3 py-2 space-y-1.5">
+          <p>⚠️ {labelError.notConfigured ? "Die Post-Zugangsdaten sind unvollständig." : labelError.message}</p>
+          <div className="flex gap-4 flex-wrap">
+            {customerId && /Empfänger|Land "/.test(labelError.message) && (
+              <button type="button" onClick={() => navigate(`/admin/kunden/${customerId}`)} className="font-semibold underline py-1">
+                Kundenprofil öffnen →
+              </button>
+            )}
+            {(labelError.notConfigured || /Absender|Anmeldung|frankingLicense|Frankierlizenz/i.test(labelError.message)) && (
+              <button type="button" onClick={() => navigate("/admin/einstellungen")} className="font-semibold underline py-1">
+                Einstellungen öffnen →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   return (
     <div className="bg-card border border-border rounded-lg p-5 space-y-5">
@@ -401,6 +477,9 @@ export default function OrderStatusWorkflow({
         </div>
       )}
 
+      {/* Etikette (sobald der Schritt "Versandt" erreicht ist) */}
+      {!showTrackingInput && ["Versandt", "Geliefert", "Abgeschlossen"].includes(currentStatus) && labelBlock}
+
       {/* Tracking-Nr. Eingabe (bei Versand) */}
       {showTrackingInput && (
         <div className="bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-3">
@@ -408,6 +487,12 @@ export default function OrderStatusWorkflow({
             <Package className="w-4 h-4 text-primary" />
             <p className="text-sm font-semibold">Versand bestätigen</p>
           </div>
+          {labelBlock}
+          {labelBlock && (
+            <p className="text-[11px] text-muted-foreground -mt-1">
+              Erstellt die Etikette als PDF. Die Sendungsnummer wird danach automatisch unten eingetragen.
+            </p>
+          )}
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">Tracking-Nummer (Post CH)</label>
             <Input
