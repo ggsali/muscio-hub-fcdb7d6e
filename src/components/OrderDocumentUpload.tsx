@@ -20,7 +20,7 @@ export default function OrderDocumentUpload({ orderId }: { orderId: string }) {
     const { data } = await (supabase.from as any)("bills")
       .select("id, titel, file_path, filename, created_at")
       .eq("order_id", orderId)
-      .not("file_path", "is", null)
+      .like("file_path", `${orderId}/uploads/%`)
       .order("created_at", { ascending: false });
     setDocs((data as Doc[]) || []);
   };

@@ -27,7 +27,7 @@ export default defineTool({
     }
     const [{ data: parts }, { data: bills }] = await Promise.all([
       supabase.from("parts").select("*").eq("order_id", order_id),
-      supabase.from("bills").select("*").eq("order_id", order_id),
+      supabase.from("bills").select("*").eq("order_id", order_id).or("file_path.is.null,file_path.not.like.*/uploads/*"),
     ]);
     const result = { order, parts: parts ?? [], bills: bills ?? [] };
     return {

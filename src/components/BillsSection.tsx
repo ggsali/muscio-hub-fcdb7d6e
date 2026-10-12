@@ -42,6 +42,7 @@ export default function BillsSection({ orderId }: Props) {
     const { data } = await (supabase.from as any)("bills")
       .select("*")
       .eq("order_id", orderId)
+      .or("file_path.is.null,file_path.not.like.*/uploads/*")
       .order("faellig_am", { ascending: true, nullsFirst: false });
     if (data) setBills(data as Bill[]);
     setLoading(false);
