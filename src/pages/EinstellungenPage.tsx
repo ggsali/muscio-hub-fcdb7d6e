@@ -1046,7 +1046,7 @@ function SwissPostSettingsCard() {
             onChange={e => setFields(f => ({ ...f, label_layout: e.target.value }))}
             className={inputCls}
           >
-            <option value="A6">A6 (Standard-Paketetikette)</option>
+            <option value="A6">A6 (105×148 mm, passt auf 4×6″-Etikettendrucker)</option>
             <option value="A5">A5</option>
             <option value="A7">A7</option>
           </select>

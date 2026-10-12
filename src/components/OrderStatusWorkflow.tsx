@@ -261,7 +261,7 @@ export default function OrderStatusWorkflow({
     } else if (res.trackingNr && res.trackingSaved) {
       setTrackingInput(res.trackingNr);
       onTrackingNrChange?.(res.trackingNr);
-      toast.success("Versandetikette erstellt", { description: `Sendungsnummer ${res.trackingNr} wurde automatisch eingetragen.` });
+      toast.success("Versandetikette erstellt – Druckdialog geöffnet", { description: `Sendungsnummer ${res.trackingNr} wurde automatisch eingetragen.` });
     } else if (res.trackingNr) {
       toast.success("Versandetikette erstellt", {
         description: `Neue Nummer ${res.trackingNr}. Im Auftrag bleibt die bestehende Nummer gespeichert.`,
