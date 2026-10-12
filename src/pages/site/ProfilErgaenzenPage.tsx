@@ -16,11 +16,35 @@ type State =
   | { kind: "ready"; customer: any; isNew: boolean }
   | { kind: "done"; isNew: boolean };
 
+type FormValues = {
+  vorname: string;
+  name: string;
+  firma: string;
+  email: string;
+  telefon: string;
+  strasse: string;
+  hausnummer: string;
+  plz: string;
+  ort: string;
+  land: string;
+};
+
 export default function ProfilErgaenzenPage() {
   const [params] = useSearchParams();
   const token = params.get("token") || "";
   const [state, setState] = useState<State>({ kind: "loading" });
-  const [form, setForm] = useState<any>({});
+  const [form, setForm] = useState<FormValues>({
+    vorname: "",
+    name: "",
+    firma: "",
+    email: "",
+    telefon: "",
+    strasse: "",
+    hausnummer: "",
+    plz: "",
+    ort: "",
+    land: "Schweiz",
+  });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
