@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useToast } from "@/hooks/use-toast";
 import { COLOR_MAP, colorHex } from "@/lib/colorMap";
 import { invalidateResinCache } from "@/hooks/useResinEnabled";
+import { invalidateStadtmodellCache } from "@/hooks/useStadtmodellEnabled";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 
@@ -24,6 +25,7 @@ export default function WebsiteEinstellungenPage() {
 
   const [wartung, setWartung] = useState({ aktiv: false, nachricht: "" });
   const [resinEnabled, setResinEnabled] = useState({ aktiv: true });
+  const [stadtmodell, setStadtmodell] = useState({ aktiv: true });
   const [kontakt, setKontakt] = useState({ email: "", telefon: "", adresse: "" });
   const [whatsapp, setWhatsapp] = useState({ nummer: "" });
   const [faq, setFaq] = useState<FaqEntry[]>([]);
@@ -44,6 +46,7 @@ export default function WebsiteEinstellungenPage() {
         for (const row of data) {
           if (row.key === "wartungsmodus") setWartung(row.value as any);
           if (row.key === "resin_enabled") setResinEnabled({ aktiv: (row.value as any)?.aktiv !== false });
+          if (row.key === "stadtmodell_enabled") setStadtmodell({ aktiv: (row.value as any)?.aktiv !== false });
           if (row.key === "kontakt_info") setKontakt(row.value as any);
           if (row.key === "faq") setFaq(((row.value as any).eintraege) || []);
           if (row.key === "material_preise") setPreise(((row.value as any).eintraege) || []);
@@ -114,6 +117,7 @@ export default function WebsiteEinstellungenPage() {
     const errs = await Promise.all([
       saveOne("wartungsmodus", wartung),
       saveOne("resin_enabled", resinEnabled),
+      saveOne("stadtmodell_enabled", stadtmodell),
       saveOne("kontakt_info", kontakt),
       saveOne("faq", { eintraege: faq }),
       saveOne("material_preise", { eintraege: preise }),
@@ -121,6 +125,7 @@ export default function WebsiteEinstellungenPage() {
     ]);
     setSaving(false);
     invalidateResinCache();
+    invalidateStadtmodellCache();
     queryClient.setQueryData(["public-resin-enabled"], resinEnabled.aktiv);
     if (errs.some(Boolean)) toast({ title: "Fehler beim Speichern", variant: "destructive" });
     else toast({ title: "Einstellungen gespeichert" });
@@ -205,6 +210,13 @@ export default function WebsiteEinstellungenPage() {
               <p className="text-xs text-muted-foreground">Blendet Resin/SLA auf der öffentlichen Website aus, wenn deaktiviert.</p>
             </div>
             <Switch checked={resinEnabled.aktiv} onCheckedChange={v => setResinEnabled({ aktiv: v })} />
+          </div>
+          <div className="flex items-center justify-between pt-3 border-t border-border">
+            <div>
+              <span className="text-sm font-medium">Stadtmodell-Konfigurator aktiv</span>
+              <p className="text-xs text-muted-foreground">Deaktiviert: Besucher sehen einen Hinweis statt des Konfigurators, der Link im Footer verschwindet. Admins sehen ihn weiterhin.</p>
+            </div>
+            <Switch checked={stadtmodell.aktiv} onCheckedChange={v => setStadtmodell({ aktiv: v })} />
           </div>
         </AccordionContent>
       </AccordionItem>

@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, ArrowUpRight, Printer } from "lucide-react";
 import { motion } from "framer-motion";
 import logo from "@/assets/logo.jpeg";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
+import { useStadtmodellEnabled } from "@/hooks/useStadtmodellEnabled";
 
 const footerLinks = [
   { label: "Kalkulator", path: "/kalkulator-online" },
@@ -43,6 +44,7 @@ const itemVariants = {
 
 export const Footer = () => {
   const resin = useResinEnabled();
+  const stadtmodellAktiv = useStadtmodellEnabled();
   const visibleMaterials = resin ? materials : materials.filter((m) => !isResinText(m.label) && !isResinText(m.path));
 
   return (
@@ -91,7 +93,7 @@ export const Footer = () => {
         <motion.div variants={itemVariants}>
           <h4 className="font-heading font-semibold text-xs mb-4 text-foreground uppercase tracking-widest">Navigation</h4>
           <div className="flex flex-col gap-2">
-            {footerLinks.map((l) => (
+            {footerLinks.filter((l) => stadtmodellAktiv !== false || l.path !== "/stadtmodell").map((l) => (
               <Link
                 key={l.path}
                 to={l.path}

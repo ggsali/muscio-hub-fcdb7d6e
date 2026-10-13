@@ -148,6 +148,13 @@
       "when": 1791893638026,
       "tag": "0020_filaments_stadtmodell_aktiv",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791895698861,
+      "tag": "0021_stadtmodell_enabled_public_read",
+      "breakpoints": true
     }
   ]
 }
