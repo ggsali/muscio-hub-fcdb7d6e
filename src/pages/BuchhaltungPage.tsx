@@ -36,6 +36,11 @@ interface Zeile extends Buchung {
 
 const fmtDatum = (d: string) => d.split("-").reverse().join(".");
 
+const speicherFehler = (msg: string) =>
+  /gilt_(von|bis)/.test(msg)
+    ? "Speichern fehlgeschlagen: Die Datenbank kennt «Gilt von/bis» noch nicht. Die Migration muss zuerst in Lovable ausgeführt werden."
+    : `Speichern fehlgeschlagen: ${msg}`;
+
 interface Anlage {
   id: string;
   jahr: number;
@@ -291,11 +296,11 @@ export default function BuchhaltungPage() {
     else if (original?.gilt_von || original?.gilt_bis) { payload.gilt_von = null; payload.gilt_bis = null; }
     if (editId === "new") {
       const { error } = await supabase.from("ear_buchungen").insert(payload);
-      if (error) { toast.error("Speichern fehlgeschlagen"); return; }
+      if (error) { toast.error(speicherFehler(error.message)); return; }
       toast.success("Eintrag hinzugefügt");
     } else if (editId) {
       const { error } = await supabase.from("ear_buchungen").update(payload).eq("id", editId);
-      if (error) { toast.error("Speichern fehlgeschlagen"); return; }
+      if (error) { toast.error(speicherFehler(error.message)); return; }
       toast.success("Eintrag gespeichert");
     }
     cancelEdit();
