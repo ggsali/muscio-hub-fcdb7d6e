@@ -16,7 +16,6 @@ const footerLinks = [
   { label: "3D-Druck St. Gallen", path: "/3d-druck-st-gallen" },
   { label: "3D-Druck Winterthur", path: "/3d-druck-winterthur" },
   { label: "3D-Druck Zürich", path: "/3d-druck-zuerich" },
-  { label: "Unsere Maschinen", path: "/maschinen" },
   { label: "Über uns", path: "/ueber-uns" },
   { label: "Gutschein kaufen", path: "/gutschein" },
   { label: "Blog", path: "/blog" },

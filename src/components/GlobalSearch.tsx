@@ -48,7 +48,6 @@ const PAGES: { label: string; to: string; area?: Area; keys: string }[] = [
   { label: "Team", to: "/website-admin/team", keys: "mitarbeiter" },
   { label: "Zeitleiste", to: "/website-admin/timeline", keys: "geschichte timeline" },
   { label: "Partner", to: "/website-admin/partner", keys: "logos" },
-  { label: "Maschinen & Equipment", to: "/website-admin/equipment", keys: "drucker maschinen" },
   { label: "Navigation", to: "/website-admin/navigation", keys: "menü links" },
   { label: "Website-Kunden", to: "/website-admin/kunden", keys: "konten accounts registrierung" },
   { label: "Website-Einstellungen", to: "/website-admin/einstellungen", keys: "wartung faq kontakt whatsapp" },

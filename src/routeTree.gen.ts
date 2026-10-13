@@ -87,7 +87,6 @@ import { Route as WebsiteAdminAnalyseRouteImport } from './routes/website-admin/
 import { Route as WebsiteAdminBlogRouteImport } from './routes/website-admin/blog'
 import { Route as WebsiteAdminChatRouteImport } from './routes/website-admin/chat'
 import { Route as WebsiteAdminEinstellungenRouteImport } from './routes/website-admin/einstellungen'
-import { Route as WebsiteAdminEquipmentRouteImport } from './routes/website-admin/equipment'
 import { Route as WebsiteAdminKundenRouteImport } from './routes/website-admin/kunden'
 import { Route as WebsiteAdminNavigationRouteImport } from './routes/website-admin/navigation'
 import { Route as WebsiteAdminPartnerRouteImport } from './routes/website-admin/partner'
@@ -525,11 +524,6 @@ const WebsiteAdminEinstellungenRoute =
     path: '/einstellungen',
     getParentRoute: () => WebsiteAdminRoute,
   } as any)
-const WebsiteAdminEquipmentRoute = WebsiteAdminEquipmentRouteImport.update({
-  id: '/equipment',
-  path: '/equipment',
-  getParentRoute: () => WebsiteAdminRoute,
-} as any)
 const WebsiteAdminKundenRoute = WebsiteAdminKundenRouteImport.update({
   id: '/kunden',
   path: '/kunden',
@@ -842,7 +836,6 @@ export interface FileRoutesByFullPath {
   '/website-admin/blog': typeof WebsiteAdminBlogRoute
   '/website-admin/chat': typeof WebsiteAdminChatRoute
   '/website-admin/einstellungen': typeof WebsiteAdminEinstellungenRoute
-  '/website-admin/equipment': typeof WebsiteAdminEquipmentRoute
   '/website-admin/kunden': typeof WebsiteAdminKundenRoute
   '/website-admin/navigation': typeof WebsiteAdminNavigationRoute
   '/website-admin/partner': typeof WebsiteAdminPartnerRoute
@@ -964,7 +957,6 @@ export interface FileRoutesByTo {
   '/website-admin/blog': typeof WebsiteAdminBlogRoute
   '/website-admin/chat': typeof WebsiteAdminChatRoute
   '/website-admin/einstellungen': typeof WebsiteAdminEinstellungenRoute
-  '/website-admin/equipment': typeof WebsiteAdminEquipmentRoute
   '/website-admin/kunden': typeof WebsiteAdminKundenRoute
   '/website-admin/navigation': typeof WebsiteAdminNavigationRoute
   '/website-admin/partner': typeof WebsiteAdminPartnerRoute
@@ -1092,7 +1084,6 @@ export interface FileRoutesById {
   '/website-admin/blog': typeof WebsiteAdminBlogRoute
   '/website-admin/chat': typeof WebsiteAdminChatRoute
   '/website-admin/einstellungen': typeof WebsiteAdminEinstellungenRoute
-  '/website-admin/equipment': typeof WebsiteAdminEquipmentRoute
   '/website-admin/kunden': typeof WebsiteAdminKundenRoute
   '/website-admin/navigation': typeof WebsiteAdminNavigationRoute
   '/website-admin/partner': typeof WebsiteAdminPartnerRoute
@@ -1221,7 +1212,6 @@ export interface FileRouteTypes {
     | '/website-admin/blog'
     | '/website-admin/chat'
     | '/website-admin/einstellungen'
-    | '/website-admin/equipment'
     | '/website-admin/kunden'
     | '/website-admin/navigation'
     | '/website-admin/partner'
@@ -1343,7 +1333,6 @@ export interface FileRouteTypes {
     | '/website-admin/blog'
     | '/website-admin/chat'
     | '/website-admin/einstellungen'
-    | '/website-admin/equipment'
     | '/website-admin/kunden'
     | '/website-admin/navigation'
     | '/website-admin/partner'
@@ -1470,7 +1459,6 @@ export interface FileRouteTypes {
     | '/website-admin/blog'
     | '/website-admin/chat'
     | '/website-admin/einstellungen'
-    | '/website-admin/equipment'
     | '/website-admin/kunden'
     | '/website-admin/navigation'
     | '/website-admin/partner'
@@ -2114,13 +2102,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WebsiteAdminEinstellungenRouteImport
       parentRoute: typeof WebsiteAdminRoute
     }
-    '/website-admin/equipment': {
-      id: '/website-admin/equipment'
-      path: '/equipment'
-      fullPath: '/website-admin/equipment'
-      preLoaderRoute: typeof WebsiteAdminEquipmentRouteImport
-      parentRoute: typeof WebsiteAdminRoute
-    }
     '/website-admin/kunden': {
       id: '/website-admin/kunden'
       path: '/kunden'
@@ -2628,7 +2609,6 @@ interface WebsiteAdminRouteChildren {
   WebsiteAdminBlogRoute: typeof WebsiteAdminBlogRoute
   WebsiteAdminChatRoute: typeof WebsiteAdminChatRoute
   WebsiteAdminEinstellungenRoute: typeof WebsiteAdminEinstellungenRoute
-  WebsiteAdminEquipmentRoute: typeof WebsiteAdminEquipmentRoute
   WebsiteAdminKundenRoute: typeof WebsiteAdminKundenRoute
   WebsiteAdminNavigationRoute: typeof WebsiteAdminNavigationRoute
   WebsiteAdminPartnerRoute: typeof WebsiteAdminPartnerRoute
@@ -2648,7 +2628,6 @@ const WebsiteAdminRouteChildren: WebsiteAdminRouteChildren = {
   WebsiteAdminBlogRoute: WebsiteAdminBlogRoute,
   WebsiteAdminChatRoute: WebsiteAdminChatRoute,
   WebsiteAdminEinstellungenRoute: WebsiteAdminEinstellungenRoute,
-  WebsiteAdminEquipmentRoute: WebsiteAdminEquipmentRoute,
   WebsiteAdminKundenRoute: WebsiteAdminKundenRoute,
   WebsiteAdminNavigationRoute: WebsiteAdminNavigationRoute,
   WebsiteAdminPartnerRoute: WebsiteAdminPartnerRoute,

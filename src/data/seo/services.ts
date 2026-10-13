@@ -83,7 +83,6 @@ export const services: ServiceContent[] = [
       { label: "SLA / Resin 3D-Druck", to: "/leistungen/sla-3d-druck", text: "Wenn feine Details wichtiger sind als Festigkeit." },
       { label: "FDM vs SLA im Vergleich", to: "/vergleich/fdm-vs-sla", text: "Welches Verfahren passt zu deinem Bauteil?" },
       { label: "Materialien im Überblick", to: "/materialien", text: "PLA, PETG, ABS, ASA, TPU und Resin." },
-      { label: "Maschinenpark", to: "/maschinen", text: "Bauräume und eingesetzte Drucker." },
     ],
   },
   {

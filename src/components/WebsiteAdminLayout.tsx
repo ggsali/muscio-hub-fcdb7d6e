@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { Session } from "@supabase/supabase-js";
 import {
   ShoppingBag, Star, FolderKanban, Users2, MessageCircle, Settings, Globe, ArrowLeft, LogOut,
-  Handshake, UserCircle2, Navigation, Clock, Package, FileText, Cpu, Menu, X, TrendingUp, BarChart3,
+  Handshake, UserCircle2, Navigation, Clock, Package, FileText, Menu, X, TrendingUp, BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
@@ -25,7 +25,6 @@ const NAV = [
   { to: "/website-admin/team", label: "Team", icon: UserCircle2 },
   { to: "/website-admin/timeline", label: "Zeitleiste", icon: Clock },
   { to: "/website-admin/partner", label: "Partner", icon: Handshake },
-  { to: "/website-admin/equipment", label: "Maschinen & Equipment", icon: Cpu },
   { to: "/website-admin/navigation", label: "Navigation", icon: Navigation },
   { to: "/website-admin/kunden", label: "Website-Kunden", icon: Users2 },
   { to: "/website-admin/chat", label: "Chat-Postfach", icon: MessageCircle },
