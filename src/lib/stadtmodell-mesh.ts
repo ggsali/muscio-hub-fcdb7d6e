@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-export const GRID = 64;
+export const GRID = 96;
 
 export function wgs84ToLv95(lat: number, lon: number) {
   const p = (lat * 3600 - 169028.66) / 10000;
@@ -85,17 +85,27 @@ function interpretiere(t: Record<string, string>, ring: [number, number][]): Geb
   return { ring, hoeheM: total, dachM: roofM, dach };
 }
 
-/** Building footprints in local metres (x east, y north) relative to centre. */
-export async function ladeGebaeude(lat: number, lon: number, kanteM: number): Promise<Gebaeude[]> {
-  const dLat = kanteM / 2 / 110540;
-  const dLon = kanteM / 2 / (111320 * Math.cos((lat * Math.PI) / 180));
+export interface Weg { pts: [number, number][]; breiteM: number; fuss: boolean }
+export interface Stadtdaten { gebaeude: Gebaeude[]; wege: Weg[]; plaetze: [number, number][][]; baeume: [number, number][] }
+
+const WEG_BREITE: Record<string, number> = {
+  motorway: 14, trunk: 12, primary: 10, secondary: 8.5, tertiary: 7.5, unclassified: 6, residential: 6,
+  living_street: 5.5, service: 4, pedestrian: 5, track: 3, footway: 2.2, path: 2, cycleway: 2.2, steps: 2.2, bridleway: 2,
+};
+const FUSS = new Set(["footway", "path", "cycleway", "steps", "bridleway", "pedestrian", "track"]);
+
+/** Buildings, roads, squares and trees in local metres (x east, y north) relative to centre. */
+export async function ladeStadt(lat: number, lon: number, kanteM: number): Promise<Stadtdaten> {
+  const pad = kanteM * 0.55;
+  const dLat = pad / 110540;
+  const dLon = pad / (111320 * Math.cos((lat * Math.PI) / 180));
   const bb = `${lat - dLat},${lon - dLon},${lat + dLat},${lon + dLon}`;
-  const q = `[out:json][timeout:25];(way["building"](${bb});way["building:part"](${bb});relation["building"]["type"="multipolygon"](${bb}););out tags geom;`;
+  const q = `[out:json][timeout:30];(way["building"](${bb});way["building:part"](${bb});relation["building"]["type"="multipolygon"](${bb});way["highway"](${bb});way["place"="square"](${bb});way["area:highway"](${bb});node["natural"="tree"](${bb}););out tags geom;`;
   let data: any = null;
   for (const server of OVERPASS_SERVER) {
     try {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 20000);
+      const t = setTimeout(() => ctrl.abort(), 25000);
       const res = await fetch(server, { method: "POST", body: "data=" + encodeURIComponent(q), signal: ctrl.signal });
       clearTimeout(t);
       if (res.ok) { data = await res.json(); break; }
@@ -103,18 +113,38 @@ export async function ladeGebaeude(lat: number, lon: number, kanteM: number): Pr
   }
   if (!data) throw new Error("Gebäudedaten konnten nicht geladen werden");
   const kx = 111320 * Math.cos((lat * Math.PI) / 180);
+  const P = (g: any) => [(g.lon - lon) * kx, (g.lat - lat) * 110540] as [number, number];
   const toRing = (geom: any[]): [number, number][] => {
-    const r = geom.map((g: any) => [(g.lon - lon) * kx, (g.lat - lat) * 110540] as [number, number]);
+    const r = geom.map(P);
     if (r.length > 1 && r[0][0] === r[r.length - 1][0] && r[0][1] === r[r.length - 1][1]) r.pop();
     return r;
   };
-  const out: Gebaeude[] = [];
+  const out: Stadtdaten = { gebaeude: [], wege: [], plaetze: [], baeume: [] };
   for (const el of data.elements || []) {
     const t = el.tags || {};
-    if (el.type === "way" && el.geometry?.length > 3) out.push(interpretiere({ ...t, building: t.building || t["building:part"] }, toRing(el.geometry)));
-    if (el.type === "relation") for (const m of el.members || []) if (m.role === "outer" && m.geometry?.length > 3) out.push(interpretiere(t, toRing(m.geometry)));
+    if (el.type === "node") { if (t.natural === "tree") out.baeume.push(P(el)); continue; }
+    if (el.type === "way" && (t.building || t["building:part"])) {
+      if (el.geometry?.length > 3) out.gebaeude.push(interpretiere({ ...t, building: t.building || t["building:part"] }, toRing(el.geometry)));
+      continue;
+    }
+    if (el.type === "relation") {
+      for (const m of el.members || []) if (m.role === "outer" && m.geometry?.length > 3) out.gebaeude.push(interpretiere(t, toRing(m.geometry)));
+      continue;
+    }
+    if (el.type !== "way" || !el.geometry?.length) continue;
+    const closed = el.geometry.length > 3 && el.geometry[0].lat === el.geometry[el.geometry.length - 1].lat && el.geometry[0].lon === el.geometry[el.geometry.length - 1].lon;
+    if ((t.place === "square" || t["area:highway"] || (t.highway && t.area === "yes")) && closed) { out.plaetze.push(toRing(el.geometry)); continue; }
+    const hw = t.highway;
+    if (!hw || t.tunnel === "yes" || t.indoor === "yes" || !(hw in WEG_BREITE)) continue;
+    let b = parseM(t.width); if (!isFinite(b)) b = WEG_BREITE[hw];
+    out.wege.push({ pts: el.geometry.map(P), breiteM: Math.min(Math.max(b, 1.5), 25), fuss: FUSS.has(hw) || t.footway === "sidewalk" });
   }
   return out;
+}
+
+/** Backwards compatible: only buildings. */
+export async function ladeGebaeude(lat: number, lon: number, kanteM: number): Promise<Gebaeude[]> {
+  return (await ladeStadt(lat, lon, kanteM)).gebaeude;
 }
 
 /** Minimum-area oriented rectangle: returns centre, unit axis u (long), half extents. */
@@ -158,7 +188,7 @@ function clip(ring: [number, number][], h: number): [number, number][] {
 }
 
 /** Builds a z-up mesh in millimetres. */
-export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: number, massstab: number, sockelMm: number) {
+export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: number, massstab: number, sockelMm: number, extra?: Omit<Stadtdaten, "gebaeude">) {
   const s = 1000 / massstab;
   const size = kanteM * s;
   let hmin = Infinity;
@@ -222,9 +252,89 @@ export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: num
     geo.deleteAttribute("uv");
     parts.push(geo.toNonIndexed());
   }
+  if (extra) {
+    const RELIEF = 0.4; // mm Strassen-/Platzrelief
+    // Plätze: flache Platten
+    for (const pl of extra.plaetze) {
+      const ring = clip(pl, half);
+      if (ring.length < 3 || Math.abs(ringArea(ring)) * s * s < 2) continue;
+      const zs = ring.map(([x, y]) => sample(x, y));
+      const base = Math.min(...zs) - 0.6, top = Math.max(...zs) + RELIEF * 0.6;
+      const geo = new THREE.ExtrudeGeometry(new THREE.Shape(ring.map(([x, y]) => new THREE.Vector2(x * s, y * s))), { depth: top - base, bevelEnabled: false });
+      geo.translate(0, 0, base); geo.deleteAttribute("uv"); parts.push(geo.toNonIndexed());
+    }
+    // Strassen und Wege: erhabene Bänder, Fusswege höher als Fahrbahnen
+    for (const w of extra.wege) {
+      const breite = Math.max(w.breiteM * s, w.fuss ? 0.5 : 0.8);
+      const hoch = w.fuss ? RELIEF : RELIEF * 0.5;
+      for (const seg of clipLinie(w.pts, half)) {
+        for (let k = 0; k < seg.length - 1; k++) parts.push(band(seg[k], seg[k + 1], s, breite, hoch, sample));
+        for (const p of seg) parts.push(knoten(p, s, breite / 2, hoch, sample));
+      }
+    }
+    // Bäume: kleine Kegel
+    let n = 0;
+    for (const [x, y] of extra.baeume) {
+      if (Math.abs(x) > half - 2 || Math.abs(y) > half - 2 || n++ > 600) continue;
+      const r = Math.max(2.5 * s, 0.7), hgt = Math.max(7 * s, 1.6);
+      const z = sample(x, y) - 0.3;
+      const c = new THREE.ConeGeometry(r, hgt, 8).rotateX(Math.PI / 2).translate(x * s, y * s, z + hgt / 2);
+      c.deleteAttribute("uv"); parts.push(c.toNonIndexed());
+    }
+  }
   const merged = mergeGeometries(parts.map((p) => (p.index ? p.toNonIndexed() : p)), false)!;
   merged.computeBoundingBox();
   return merged;
+}
+
+type Sampler = (x: number, y: number) => number;
+
+/** Clips a polyline to the square, returning the inside pieces. */
+function clipLinie(pts: [number, number][], h: number): [number, number][][] {
+  const inside = (p: [number, number]) => Math.abs(p[0]) <= h && Math.abs(p[1]) <= h;
+  const cut = (a: [number, number], b: [number, number]): [number, number] => {
+    let lo = 0, hi = 1; // a inside, b outside → bisection
+    for (let i = 0; i < 20; i++) { const m = (lo + hi) / 2; if (inside([a[0] + (b[0] - a[0]) * m, a[1] + (b[1] - a[1]) * m])) lo = m; else hi = m; }
+    return [a[0] + (b[0] - a[0]) * lo, a[1] + (b[1] - a[1]) * lo];
+  };
+  const out: [number, number][][] = [];
+  let cur: [number, number][] = [];
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], prev = pts[i - 1];
+    if (inside(p)) { if (prev && !inside(prev)) cur.push(cut(p, prev)); cur.push(p); }
+    else if (prev && inside(prev)) { cur.push(cut(prev, p)); out.push(cur); cur = []; }
+  }
+  if (cur.length > 1) out.push(cur);
+  return out.filter((c) => c.length > 1);
+}
+
+/** Closed box along a segment (metres in, mm out). */
+function band(a: [number, number], b: [number, number], s: number, breite: number, hoch: number, sample: Sampler) {
+  const ax = a[0] * s, ay = a[1] * s, bx = b[0] * s, by = b[1] * s;
+  const len = Math.hypot(bx - ax, by - ay) || 1e-6;
+  const nx = (-(by - ay) / len) * breite / 2, ny = ((bx - ax) / len) * breite / 2;
+  const za = sample(a[0], a[1]), zb = sample(b[0], b[1]);
+  const lo = Math.min(za, zb) - 0.6;
+  const v = [[ax + nx, ay + ny], [bx + nx, by + ny], [bx - nx, by - ny], [ax - nx, ay - ny]];
+  const zt = [za, zb, zb, za].map((z) => z + hoch);
+  const pos: number[] = [];
+  const t = (p: number[], q: number[], r: number[]) => pos.push(...p, ...q, ...r);
+  const T = (i: number) => [v[i][0], v[i][1], zt[i]], B = (i: number) => [v[i][0], v[i][1], lo];
+  t(T(0), T(3), T(2)); t(T(0), T(2), T(1));
+  t(B(0), B(1), B(2)); t(B(0), B(2), B(3));
+  for (let i = 0; i < 4; i++) { const j = (i + 1) % 4; t(B(i), B(j), T(j)); t(B(i), T(j), T(i)); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+/** Octagonal plug at polyline vertices so bends stay closed. */
+function knoten(p: [number, number], s: number, r: number, hoch: number, sample: Sampler) {
+  const z = sample(p[0], p[1]);
+  const c = new THREE.CylinderGeometry(r, r, hoch + 0.6, 8).rotateX(Math.PI / 2).translate(p[0] * s, p[1] * s, z - 0.6 + (hoch + 0.6) / 2);
+  c.deleteAttribute("uv");
+  return c.toNonIndexed();
 }
 
 /** Closed solid: rectangular walls up to eave, then gabled / hipped / skillion roof. */

@@ -17,7 +17,7 @@ import {
   KANTE_MAX, KANTE_MIN, MASSSTAEBE, MODELL_MAX_MM, MODELL_MIN_MM, QUELLE, SOCKEL_MAX, SOCKEL_MIN, VERSAND,
   berechnePreis, druckzeitH, modellMm, type StadtmodellFilament, type VersandKey,
 } from "@/lib/stadtmodell";
-import { baueModell, exportStl, ladeGebaeude, ladeHoehen } from "@/lib/stadtmodell-mesh";
+import { baueModell, exportStl, ladeStadt, ladeHoehen } from "@/lib/stadtmodell-mesh";
 import { cn } from "@/lib/utils";
 
 const START: [number, number] = [47.3769, 8.5417];
@@ -139,10 +139,10 @@ export default function StadtmodellKonfigurator() {
       setLaden("Lade Höhendaten …");
       const [h, g] = await Promise.all([
         ladeHoehen(center[0], center[1], kante, (p) => setLaden(`Lade Höhendaten … ${Math.round(p * 100)}%`)),
-        ladeGebaeude(center[0], center[1], kante).catch(() => { toast.warning("Gebäude konnten nicht geladen werden – nur Gelände"); return []; }),
+        ladeStadt(center[0], center[1], kante).catch(() => { toast.warning("Gebäude und Strassen konnten nicht geladen werden – nur Gelände"); return { gebaeude: [], wege: [], plaetze: [], baeume: [] }; }),
       ]);
       setLaden("Erzeuge 3D-Modell …");
-      setGeo(baueModell(h, g, kante, massstab, sockel));
+      setGeo(baueModell(h, g.gebaeude, kante, massstab, sockel, g));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Fehler beim Erzeugen");
     } finally { setLaden(null); }

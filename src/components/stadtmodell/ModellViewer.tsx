@@ -15,11 +15,15 @@ export default function ModellViewer({ geo, size, color }: { geo: THREE.BufferGe
     cam.up.set(0, 0, 1);
     cam.position.set(0, -size * 1.1, size * 0.9);
     scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
-    const sun = new THREE.DirectionalLight(0xffffff, 1.4);
-    sun.position.set(size, -size, size * 2);
+    const sun = new THREE.DirectionalLight(0xffffff, 1.8);
+    sun.position.set(-size * 1.2, -size * 0.6, size * 1.4);
     scene.add(sun);
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.85 });
+    mat.polygonOffset = true; mat.polygonOffsetFactor = 1; mat.polygonOffsetUnits = 1;
     scene.add(new THREE.Mesh(geo, mat));
+    const edges = new THREE.EdgesGeometry(geo, 28);
+    const lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(color).multiplyScalar(0.35), transparent: true, opacity: 0.85 });
+    scene.add(new THREE.LineSegments(edges, lineMat));
     const controls = new OrbitControls(cam, renderer.domElement);
     controls.enableDamping = true;
     let raf = 0;
@@ -30,7 +34,7 @@ export default function ModellViewer({ geo, size, color }: { geo: THREE.BufferGe
       renderer.setSize(host.clientWidth, host.clientHeight);
     });
     ro.observe(host);
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); controls.dispose(); mat.dispose(); renderer.dispose(); host.removeChild(renderer.domElement); };
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); controls.dispose(); mat.dispose(); edges.dispose(); lineMat.dispose(); renderer.dispose(); host.removeChild(renderer.domElement); };
   }, [geo, size, color]);
   return <div ref={el} className="h-full w-full" />;
 }
