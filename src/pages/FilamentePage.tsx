@@ -335,9 +335,17 @@ export default function FilamentePage() {
                           {f.nur_intern && (
                             <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 align-middle">🔒 Intern</span>
                           )}
-                          {f.stadtmodell_aktiv && (
-                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary align-middle">Stadtmodell</span>
-                          )}
+                          <button
+                            type="button"
+                            title="Für Stadtmodelle verfügbar ein/aus"
+                            onClick={async () => {
+                              await supabase.from("filaments").update({ stadtmodell_aktiv: !f.stadtmodell_aktiv } as any).eq("id", f.id);
+                              load();
+                            }}
+                            className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full align-middle border transition-colors ${f.stadtmodell_aktiv ? "bg-primary/15 text-primary border-primary/30" : "border-dashed border-border text-muted-foreground hover:text-primary"}`}
+                          >
+                            {f.stadtmodell_aktiv ? "✓ Stadtmodell" : "+ Stadtmodell"}
+                          </button>
                         </td>
                         <td className="px-4 py-2.5">
                           {f.farben.length === 0 ? (

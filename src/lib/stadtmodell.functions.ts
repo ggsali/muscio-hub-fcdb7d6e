@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { COLOR_MAP } from "./colorMap";
 import {
   MASSSTAEBE, MODELL_MAX_MM, MODELL_MIN_MM, QUELLE, VERSAND, berechnePreis, modellMm,
   type StadtmodellFilament, type VersandKey,
@@ -8,8 +9,10 @@ import {
 function toFilament(r: any): StadtmodellFilament {
   const farben = Array.isArray(r.farben) ? r.farben : [];
   const c = farben[0];
-  const hex = typeof c === "object" && c?.hex ? String(c.hex) : typeof c === "string" && c.startsWith("#") ? c : "#e8e8e8";
-  const farbname = typeof c === "object" && c?.name ? String(c.name) : r.farbe || "";
+  const farbname = typeof c === "object" && c?.name ? String(c.name) : typeof c === "string" ? c : String(r.farbe || "").replace(/^#(?![0-9a-f]{3,6}$)/i, "");
+  let hex = typeof c === "object" && c?.hex ? String(c.hex) : typeof c === "string" && /^#[0-9a-f]{3,6}$/i.test(c) ? c : "";
+  if (!hex && /^#[0-9a-f]{3,6}$/i.test(r.farbe || "")) hex = r.farbe;
+  if (!hex) hex = COLOR_MAP[farbname] || "#e8e8e8";
   return { id: r.id, name: r.name, material: r.material, hersteller: r.hersteller, hex, farbname };
 }
 
