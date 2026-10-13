@@ -42,8 +42,8 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { order_id } = await req.json();
-    if (!order_id) throw new Error("order_id required");
+    const { order_id, customer_id } = await req.json();
+    if (!order_id && !customer_id) throw new Error("order_id oder customer_id required");
 
     // Zugangsdaten: Secret bevorzugt aus den Edge-Function-Secrets, sonst aus der settings-Tabelle
     const { data: settingsRows } = await supabase
@@ -74,17 +74,21 @@ serve(async (req) => {
     }
 
     // Auftrag + Kunde
-    const { data: order, error: orderErr } = await supabase
-      .from("orders")
-      .select("id, customer_id, beschreibung, tracking_nr")
-      .eq("id", order_id)
-      .single();
-    if (orderErr || !order) throw new Error("Order not found");
+    let order: any = null;
+    if (order_id) {
+      const { data, error: orderErr } = await supabase
+        .from("orders")
+        .select("id, customer_id, beschreibung, tracking_nr")
+        .eq("id", order_id)
+        .single();
+      if (orderErr || !data) throw new Error("Order not found");
+      order = data;
+    }
 
     const { data: customer, error: custErr } = await supabase
       .from("customers")
       .select("name, vorname, firma, strasse, hausnummer, plz, ort, land")
-      .eq("id", order.customer_id)
+      .eq("id", order ? order.customer_id : customer_id)
       .single();
     if (custErr || !customer) throw new Error("Customer not found");
 
@@ -125,7 +129,7 @@ serve(async (req) => {
     const problem = validateAddress(sender, "Absender") || validateAddress(recipient, "Empfänger");
     if (problem) throw new Error(problem);
 
-    const orderLabel = String(order_id).replace(/-/g, "").slice(0, 8).toUpperCase();
+    const orderLabel = String(order_id || customer_id).replace(/-/g, "").slice(0, 8).toUpperCase();
 
     const body = buildGenerateLabelRequest({
       frankingLicense, produkt, testMode, labelLayout, itemId: orderLabel, sender, recipient,
@@ -154,7 +158,7 @@ serve(async (req) => {
     // Sendungsnummer im Auftrag speichern – nicht im Testmodus (SPECIMEN-Nummern sind ungültig)
     // und nie eine von Hand erfasste Nummer überschreiben.
     let trackingSaved = false;
-    if (!testMode && result.identCode && !order.tracking_nr) {
+    if (order && !testMode && result.identCode && !order.tracking_nr) {
       const { error: trErr } = await supabase.from("orders").update({ tracking_nr: result.identCode }).eq("id", order_id);
       if (trErr) console.error("tracking_nr speichern fehlgeschlagen:", trErr.message);
       else trackingSaved = true;
@@ -162,7 +166,7 @@ serve(async (req) => {
 
     // Etikette als PDF im Auftrag unter "Dokumente" ablegen (gleicher Ort wie hochgeladene Dokumente)
     let documentSaved = false;
-    try {
+    if (order) try {
       const filename = `${testMode ? "TEST_" : ""}versandetikette_${orderLabel}.pdf`;
       const bin = atob(result.label);
       const bytes = new Uint8Array(bin.length);
@@ -184,7 +188,7 @@ serve(async (req) => {
       console.error("Etikette als Dokument speichern fehlgeschlagen:", e?.message || e);
     }
 
-    await supabase.from("order_status_log").insert({
+    if (order) await supabase.from("order_status_log").insert({
       order_id,
       status: testMode ? "📦 Test-Versandetikette erstellt" : "📦 Versandetikette erstellt",
       notiz: testMode ? "Testmodus (SPECIMEN), nicht für den Versand gültig" : (result.identCode ? `Sendungsnummer ${result.identCode}` : null),
