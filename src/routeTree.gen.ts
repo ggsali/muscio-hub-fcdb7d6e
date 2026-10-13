@@ -60,9 +60,9 @@ import { Route as AdminBuchhaltungRouteImport } from './routes/admin/buchhaltung
 import { Route as AdminChatRouteImport } from './routes/admin/chat'
 import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellungen'
 import { Route as AdminFilamenteRouteImport } from './routes/admin/filamente'
+import { Route as AdminFilamentverbrauchRouteImport } from './routes/admin/filamentverbrauch'
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
-import { Route as AdminFilamentverbrauchRouteImport } from './routes/admin/filamentverbrauch'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
 import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
@@ -389,14 +389,14 @@ const AdminFilamenteRoute = AdminFilamenteRouteImport.update({
   path: '/filamente',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminGutscheineRoute = AdminGutscheineRouteImport.update({
-  id: '/gutscheine',
-  path: '/gutscheine',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminFilamentverbrauchRoute = AdminFilamentverbrauchRouteImport.update({
   id: '/filamentverbrauch',
   path: '/filamentverbrauch',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGutscheineRoute = AdminGutscheineRouteImport.update({
+  id: '/gutscheine',
+  path: '/gutscheine',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminKalenderRoute = AdminKalenderRouteImport.update({
@@ -820,9 +820,9 @@ export interface FileRoutesByFullPath {
   '/admin/chat': typeof AdminChatRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
+  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
-  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
@@ -942,9 +942,9 @@ export interface FileRoutesByTo {
   '/admin/chat': typeof AdminChatRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
+  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
-  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
@@ -1070,9 +1070,9 @@ export interface FileRoutesById {
   '/admin/chat': typeof AdminChatRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
+  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
-  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
@@ -1199,9 +1199,9 @@ export interface FileRouteTypes {
     | '/admin/chat'
     | '/admin/einstellungen'
     | '/admin/filamente'
+    | '/admin/filamentverbrauch'
     | '/admin/gutscheine'
     | '/admin/kalender'
-    | '/admin/filamentverbrauch'
     | '/admin/kalkulator'
     | '/admin/ki-offerte'
     | '/admin/lager'
@@ -1321,9 +1321,9 @@ export interface FileRouteTypes {
     | '/admin/chat'
     | '/admin/einstellungen'
     | '/admin/filamente'
+    | '/admin/filamentverbrauch'
     | '/admin/gutscheine'
     | '/admin/kalender'
-    | '/admin/filamentverbrauch'
     | '/admin/kalkulator'
     | '/admin/ki-offerte'
     | '/admin/lager'
@@ -1448,9 +1448,9 @@ export interface FileRouteTypes {
     | '/admin/chat'
     | '/admin/einstellungen'
     | '/admin/filamente'
+    | '/admin/filamentverbrauch'
     | '/admin/gutscheine'
     | '/admin/kalender'
-    | '/admin/filamentverbrauch'
     | '/admin/kalkulator'
     | '/admin/ki-offerte'
     | '/admin/lager'
@@ -1925,18 +1925,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFilamenteRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/gutscheine': {
-      id: '/admin/gutscheine'
-      path: '/gutscheine'
-      fullPath: '/admin/gutscheine'
-      preLoaderRoute: typeof AdminGutscheineRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/filamentverbrauch': {
       id: '/admin/filamentverbrauch'
       path: '/filamentverbrauch'
       fullPath: '/admin/filamentverbrauch'
       preLoaderRoute: typeof AdminFilamentverbrauchRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gutscheine': {
+      id: '/admin/gutscheine'
+      path: '/gutscheine'
+      fullPath: '/admin/gutscheine'
+      preLoaderRoute: typeof AdminGutscheineRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/kalender': {
@@ -2547,9 +2547,9 @@ interface AdminRouteChildren {
   AdminChatRoute: typeof AdminChatRoute
   AdminEinstellungenRoute: typeof AdminEinstellungenRoute
   AdminFilamenteRoute: typeof AdminFilamenteRouteWithChildren
+  AdminFilamentverbrauchRoute: typeof AdminFilamentverbrauchRoute
   AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
-  AdminFilamentverbrauchRoute: typeof AdminFilamentverbrauchRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
   AdminKiOfferteRoute: typeof AdminKiOfferteRoute
   AdminLagerRoute: typeof AdminLagerRoute
@@ -2578,9 +2578,9 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminChatRoute: AdminChatRoute,
   AdminEinstellungenRoute: AdminEinstellungenRoute,
   AdminFilamenteRoute: AdminFilamenteRouteWithChildren,
+  AdminFilamentverbrauchRoute: AdminFilamentverbrauchRoute,
   AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
-  AdminFilamentverbrauchRoute: AdminFilamentverbrauchRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
   AdminKiOfferteRoute: AdminKiOfferteRoute,
   AdminLagerRoute: AdminLagerRoute,

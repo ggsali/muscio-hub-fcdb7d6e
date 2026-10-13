@@ -37,22 +37,24 @@ export const scanBeleg = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("KI ist nicht konfiguriert");
 
-    const dataUrl = `data:${data.mimeType};base64,${data.fileBase64}`;
     const isPdf = data.mimeType === "application/pdf";
     const filePart = isPdf
-      ? { type: "input_file", filename: "beleg.pdf", file_data: dataUrl }
-      : { type: "input_image", image_url: dataUrl };
+      ? { type: "file", file: { filename: "beleg.pdf", file_data: `data:application/pdf;base64,${data.fileBase64}` } }
+      : { type: "image_url", image_url: { url: `data:${data.mimeType};base64,${data.fileBase64}` } };
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "X-Lovable-AIG-SDK": "fetch",
+      },
       body: JSON.stringify({
-        model: "openai/gpt-6-astra",
-        reasoning: { effort: "low" },
-        input: [
+        model: "google/gemini-2.5-flash",
+        messages: [
           {
             role: "user",
-            content: [{ type: "input_text", text: ANWEISUNG }, filePart],
+            content: [{ type: "text", text: ANWEISUNG }, filePart],
           },
         ],
       }),
@@ -66,13 +68,9 @@ export const scanBeleg = createServerFn({ method: "POST" })
     }
 
     const json = (await resp.json()) as {
-      output_text?: string;
-      output?: { content?: { type?: string; text?: string }[] }[];
+      choices?: { message?: { content?: string | null } }[];
     };
-    const text =
-      json.output_text ??
-      json.output?.flatMap((o) => o.content ?? []).find((c) => c.type === "output_text")?.text ??
-      "";
+    const text = json.choices?.[0]?.message?.content ?? "";
     const match = text.match(/\{[\s\S]*\}/);
     let parsed: Record<string, unknown> = {};
     try {
