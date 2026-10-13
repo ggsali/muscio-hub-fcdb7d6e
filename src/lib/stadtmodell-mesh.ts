@@ -410,3 +410,12 @@ export async function exportStl(geo: THREE.BufferGeometry): Promise<Blob> {
   const data = new STLExporter().parse(new THREE.Mesh(geo), { binary: true }) as unknown as DataView;
   return new Blob([data.buffer as ArrayBuffer], { type: "model/stl" });
 }
+
+function inPoly(r: [number, number][], x: number, y: number) {
+  let c = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const [xi, yi] = r[i], [xj, yj] = r[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
