@@ -208,7 +208,6 @@ export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: num
     // ground: sample footprint + centre, sink below lowest point so slopes stay closed
     const zs = ring.map(([x, y]) => sample(x, y));
     const zMin = Math.min(...zs), zMax = Math.max(...zs);
-    const sink = 0.6 + (zMax - zMin);
     const base = zMin - 0.6;
     const top = zMax + Math.max(g.hoeheM * s, 0.8);
     const roof = g.dachM * s;
@@ -222,7 +221,6 @@ export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: num
     geo.translate(0, 0, base);
     geo.deleteAttribute("uv");
     parts.push(geo.toNonIndexed());
-    void sink;
   }
   const merged = mergeGeometries(parts.map((p) => (p.index ? p.toNonIndexed() : p)), false)!;
   merged.computeBoundingBox();
