@@ -513,8 +513,8 @@ export default function OrderStatusWorkflow({
         </div>
       )}
 
-      {/* Etikette (sobald der Schritt "Versandt" erreicht ist) */}
-      {!showTrackingInput && ["Versandt", "Geliefert", "Abgeschlossen"].includes(currentStatus) && labelBlock}
+      {/* Etikette – für JEDEN Versand-Auftrag sichtbar, unabhängig vom Status */}
+      {!showTrackingInput && labelBlock}
 
       {/* Tracking-Nr. Eingabe (bei Versand) */}
       {showTrackingInput && (
