@@ -48,12 +48,6 @@ export async function printAddressLabel(orderId: string | null, customerId?: str
       return { ok: false, error: "Empfänger: Strasse, PLZ oder Ort fehlt im Kundenprofil." };
     }
 
-    // Absender (klein oben), aus den Firmeneinstellungen
-    const { data: rows } = await supabase.from("company_settings").select("key,value");
-    const comp: Record<string, string> = {};
-    (rows || []).forEach((r: any) => { comp[r.key] = r.value; });
-    const absender = [comp.firmenname || "3dMuscio", String(comp.adresse || "").replace(/\s*\n\s*/g, ", ")]
-      .filter(Boolean).join(" · ");
 
     const lines = [
       c.firma || person,
@@ -69,12 +63,10 @@ export async function printAddressLabel(orderId: string | null, customerId?: str
   html, body { margin: 0; padding: 0; }
   .l { width: ${LABEL_W_MM}mm; height: ${LABEL_H_MM}mm; box-sizing: border-box; padding: 1.5mm 2mm;
        font-family: Arial, Helvetica, sans-serif; color: #000; overflow: hidden; }
-  .abs { font-size: 7.5pt; color: #222; border-bottom: 0.2mm solid #000; padding-bottom: 0.4mm; margin-bottom: 1mm;
-         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .adr { font-size: 12pt; line-height: 1.15; font-weight: 600; }
   .adr div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style></head><body>
-<div class="l"><div class="abs">${esc(absender)}</div>
+<div class="l">
 <div class="adr">${lines.map((t) => `<div>${esc(t)}</div>`).join("")}</div></div>
 </body></html>`;
 
