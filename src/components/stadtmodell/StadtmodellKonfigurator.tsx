@@ -276,7 +276,7 @@ export default function StadtmodellKonfigurator() {
             <Button size="lg" className="h-12 w-full text-base" disabled={!kannBestellen} onClick={bestellen}>
               {laden && geo ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{laden}</> : "Jetzt bestellen"}
             </Button>
-            <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Sichere Zahlung über Stripe · TWINT, Karte</p>
+            <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Sichere Zahlung über Stripe</p>
           </div>
         </div>
       </aside>
