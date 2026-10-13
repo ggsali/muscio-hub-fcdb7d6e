@@ -69,9 +69,9 @@ export async function printAddressLabel(orderId: string | null, customerId?: str
   html, body { margin: 0; padding: 0; }
   .l { width: ${LABEL_W_MM}mm; height: ${LABEL_H_MM}mm; box-sizing: border-box; padding: 1.5mm 2mm;
        font-family: Arial, Helvetica, sans-serif; color: #000; overflow: hidden; }
-  .abs { font-size: 5pt; color: #333; border-bottom: 0.2mm solid #000; padding-bottom: 0.6mm; margin-bottom: 1.4mm;
+  .abs { font-size: 6pt; color: #333; border-bottom: 0.2mm solid #000; padding-bottom: 0.4mm; margin-bottom: 1mm;
          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .adr { font-size: 9pt; line-height: 1.22; font-weight: 600; }
+  .adr { font-size: 12pt; line-height: 1.15; font-weight: 600; }
   .adr div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style></head><body>
 <div class="l"><div class="abs">${esc(absender)}</div>
