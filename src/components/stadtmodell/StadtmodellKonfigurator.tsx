@@ -107,8 +107,9 @@ export default function StadtmodellKonfigurator() {
     let start: { ll: L.LatLng; c: [number, number] } | null = null;
     rect.on("mousedown", (e: L.LeafletMouseEvent) => { start = { ll: e.latlng, c: stateRef.current.center }; map.dragging.disable(); });
     map.on("mousemove", (e: L.LeafletMouseEvent) => { if (start) setCenter([start.c[0] + e.latlng.lat - start.ll.lat, start.c[1] + e.latlng.lng - start.ll.lng]); });
-    map.on("mouseup", () => { if (start) { start = null; map.dragging.enable(); } });
-    map.on("click", (e) => { if (!start) setCenter([e.latlng.lat, e.latlng.lng]); });
+    let lastDrag = 0;
+    map.on("mouseup", () => { if (start) { start = null; lastDrag = Date.now(); map.dragging.enable(); } });
+    map.on("click", (e) => { if (Date.now() - lastDrag > 300) setCenter([e.latlng.lat, e.latlng.lng]); });
     centerMk.current = cm; cornerMk.current = km;
     mapRef.current = map;
     return () => { map.remove(); mapRef.current = null; };
