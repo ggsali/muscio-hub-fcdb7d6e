@@ -63,10 +63,10 @@ function printPdf(url: string): Promise<boolean> {
 }
 
 /** Erstellt die Post-Versandetikette für einen Auftrag und öffnet direkt den Druckdialog. */
-export async function createShippingLabel(orderId: string): Promise<ShippingLabelResult> {
+export async function createShippingLabel(orderId: string | null, customerId?: string): Promise<ShippingLabelResult> {
   try {
     const { data, error } = await supabase.functions.invoke("generate-shipping-label", {
-      body: { order_id: orderId },
+      body: orderId ? { order_id: orderId } : { customer_id: customerId },
     });
 
     if (error || !data?.success) {

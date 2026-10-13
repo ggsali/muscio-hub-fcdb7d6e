@@ -10,6 +10,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { formatCHF, formatPct } from "@/lib/calc";
 import { normalizeStreet } from "@/lib/address";
 import { toast } from "sonner";
+import { createShippingLabel } from "@/lib/shippingLabel";
+import { printAddressLabel } from "@/lib/addressLabel";
 import { ArrowLeft, Edit2, Save, X, Download, FileText, Image, Box, Plus, MoreVertical, Trash2, MessageSquare, Send, Link2, Copy, Check , Ticket} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
@@ -368,6 +370,22 @@ export default function KundeDetailPage() {
                 >
                   <Link2 className="w-4 h-4" />
                   {generatingLink ? "Erstellen..." : "Profil-Link erstellen & kopieren"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2" onClick={async () => {
+                  const t = toast.loading("Paketetikette wird erstellt...");
+                  const r = await createShippingLabel(null, id);
+                  toast.dismiss(t);
+                  if (r.ok) toast.success(r.testMode ? "Test-Etikette erstellt (nicht versandgültig)" : `Paketetikette erstellt${r.trackingNr ? `: ${r.trackingNr}` : ""}`);
+                  else toast.error(r.error || "Fehler");
+                }}>
+                  <Box className="w-4 h-4" /> Paketetikette drucken (Post)
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2" onClick={async () => {
+                  const r = await printAddressLabel(null, id);
+                  if (!r.ok) toast.error(r.error || "Fehler");
+                }}>
+                  <FileText className="w-4 h-4" /> Adressetikette drucken (Brief)
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive focus:text-destructive">
