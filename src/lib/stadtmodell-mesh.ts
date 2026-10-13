@@ -195,38 +195,77 @@ export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: num
   hoehen.forEach((r) => r.forEach((v) => (hmin = Math.min(hmin, v))));
   const zAt = (i: number, j: number) => sockelMm + (hoehen[j][i] - hmin) * s;
   const xAt = (i: number) => -size / 2 + (i / (GRID - 1)) * size;
-  const pos: number[] = [];
-  const tri = (a: number[], b: number[], c: number[]) => pos.push(...a, ...b, ...c);
-  for (let j = 0; j < GRID - 1; j++)
-    for (let i = 0; i < GRID - 1; i++) {
-      const a = [xAt(i), xAt(j), zAt(i, j)], b = [xAt(i + 1), xAt(j), zAt(i + 1, j)];
-      const c = [xAt(i + 1), xAt(j + 1), zAt(i + 1, j + 1)], d = [xAt(i), xAt(j + 1), zAt(i, j + 1)];
-      tri(a, b, c); tri(a, c, d);
-      // bottom
-      tri([a[0], a[1], 0], [c[0], c[1], 0], [b[0], b[1], 0]);
-      tri([a[0], a[1], 0], [d[0], d[1], 0], [c[0], c[1], 0]);
-    }
   const L = GRID - 1;
-  for (let k = 0; k < L; k++) {
-    const x0 = xAt(k), x1 = xAt(k + 1), lo = -size / 2, hi = size / 2;
-    // south (y=lo), outward -y
-    tri([x0, lo, 0], [x1, lo, 0], [x1, lo, zAt(k + 1, 0)]); tri([x0, lo, 0], [x1, lo, zAt(k + 1, 0)], [x0, lo, zAt(k, 0)]);
-    // north (y=hi), outward +y
-    tri([x1, hi, 0], [x0, hi, 0], [x0, hi, zAt(k, L)]); tri([x1, hi, 0], [x0, hi, zAt(k, L)], [x1, hi, zAt(k + 1, L)]);
-    // west (x=lo), outward -x
-    tri([lo, x1, 0], [lo, x0, 0], [lo, x0, zAt(0, k)]); tri([lo, x1, 0], [lo, x0, zAt(0, k)], [lo, x1, zAt(0, k + 1)]);
-    // east (x=hi), outward +x
-    tri([hi, x0, 0], [hi, x1, 0], [hi, x1, zAt(L, k + 1)]); tri([hi, x0, 0], [hi, x1, zAt(L, k + 1)], [hi, x0, zAt(L, k)]);
-  }
-  const terrain = new THREE.BufferGeometry();
-  terrain.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  terrain.computeVertexNormals();
-
   const sample = (xm: number, ym: number) => {
     const fi = Math.max(0, Math.min(L, ((xm + kanteM / 2) / kanteM) * L)), fj = Math.max(0, Math.min(L, ((ym + kanteM / 2) / kanteM) * L));
     const i0 = Math.min(L - 1, Math.floor(fi)), j0 = Math.min(L - 1, Math.floor(fj)), ti = fi - i0, tj = fj - j0;
     return (zAt(i0, j0) * (1 - ti) + zAt(i0 + 1, j0) * ti) * (1 - tj) + (zAt(i0, j0 + 1) * (1 - ti) + zAt(i0 + 1, j0 + 1) * ti) * tj;
   };
+
+  // Feines Geländegitter (~0.5 mm), in das Strassen/Wege/Plätze eingeprägt werden
+  const N = Math.min(360, Math.max(140, Math.round(size / 0.5)));
+  const cell = size / (N - 1);
+  const fx = (i: number) => -size / 2 + i * cell;
+  const tiefe = new Float32Array(N * N);
+  const praege = (cx0: number, cy0: number, cx1: number, cy1: number, d: number, test: (x: number, y: number) => boolean) => {
+    const i0 = Math.max(0, Math.floor((cx0 + size / 2) / cell)), i1 = Math.min(N - 1, Math.ceil((cx1 + size / 2) / cell));
+    const j0 = Math.max(0, Math.floor((cy0 + size / 2) / cell)), j1 = Math.min(N - 1, Math.ceil((cy1 + size / 2) / cell));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const k = j * N + i;
+      if (tiefe[k] < d && test(fx(i), fx(j))) tiefe[k] = d;
+    }
+  };
+  if (extra) {
+    const STRASSE = 0.8, FUSS = 0.45, PLATZ = 0.45;
+    for (const pl of extra.plaetze) {
+      const r = pl.map(([x, y]) => [x * s, y * s] as [number, number]);
+      const xs = r.map((p) => p[0]), ys = r.map((p) => p[1]);
+      praege(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), PLATZ, (x, y) => inPoly(r, x, y));
+    }
+    for (const w of extra.wege) {
+      const hw = Math.max(w.breiteM * s, w.fuss ? 0.6 : 0.9) / 2;
+      const d = w.fuss ? FUSS : STRASSE;
+      for (let k = 0; k < w.pts.length - 1; k++) {
+        const ax = w.pts[k][0] * s, ay = w.pts[k][1] * s, bx = w.pts[k + 1][0] * s, by = w.pts[k + 1][1] * s;
+        const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1e-9;
+        praege(Math.min(ax, bx) - hw, Math.min(ay, by) - hw, Math.max(ax, bx) + hw, Math.max(ay, by) + hw, d, (x, y) => {
+          const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2));
+          return Math.hypot(x - ax - t * dx, y - ay - t * dy) <= hw;
+        });
+      }
+    }
+  }
+  const zF = (i: number, j: number) => {
+    const base = sample((fx(i) / s), (fx(j) / s));
+    return Math.max(base - tiefe[j * N + i], Math.min(base, sockelMm * 0.5));
+  };
+  const Z = new Float32Array(N * N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) Z[j * N + i] = zF(i, j);
+  const z = (i: number, j: number) => Z[j * N + i];
+
+  const pos: number[] = [];
+  const tri = (a: number[], b: number[], c: number[]) => pos.push(...a, ...b, ...c);
+  for (let j = 0; j < N - 1; j++)
+    for (let i = 0; i < N - 1; i++) {
+      const a = [fx(i), fx(j), z(i, j)], b = [fx(i + 1), fx(j), z(i + 1, j)];
+      const c = [fx(i + 1), fx(j + 1), z(i + 1, j + 1)], d = [fx(i), fx(j + 1), z(i, j + 1)];
+      tri(a, b, c); tri(a, c, d);
+    }
+  const M = N - 1, lo = -size / 2, hi = size / 2, O = [0, 0, 0];
+  for (let k = 0; k < M; k++) {
+    const x0 = fx(k), x1 = fx(k + 1);
+    tri([x0, lo, 0], [x1, lo, 0], [x1, lo, z(k + 1, 0)]); tri([x0, lo, 0], [x1, lo, z(k + 1, 0)], [x0, lo, z(k, 0)]);
+    tri([x1, hi, 0], [x0, hi, 0], [x0, hi, z(k, M)]); tri([x1, hi, 0], [x0, hi, z(k, M)], [x1, hi, z(k + 1, M)]);
+    tri([lo, x1, 0], [lo, x0, 0], [lo, x0, z(0, k)]); tri([lo, x1, 0], [lo, x0, z(0, k)], [lo, x1, z(0, k + 1)]);
+    tri([hi, x0, 0], [hi, x1, 0], [hi, x1, z(M, k + 1)]); tri([hi, x0, 0], [hi, x1, z(M, k + 1)], [hi, x0, z(M, k)]);
+    // Boden als Fächer aus der Mitte (wasserdicht zu den Seitenwänden)
+    tri(O, [x1, lo, 0], [x0, lo, 0]); tri(O, [x0, hi, 0], [x1, hi, 0]);
+    tri(O, [lo, x0, 0], [lo, x1, 0]); tri(O, [hi, x1, 0], [hi, x0, 0]);
+  }
+  const terrain = new THREE.BufferGeometry();
+  terrain.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  terrain.computeVertexNormals();
+
   const parts: THREE.BufferGeometry[] = [terrain];
   const half = kanteM / 2;
   for (const g of gebaeude) {
@@ -238,7 +277,7 @@ export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: num
     // ground: sample footprint + centre, sink below lowest point so slopes stay closed
     const zs = ring.map(([x, y]) => sample(x, y));
     const zMin = Math.min(...zs), zMax = Math.max(...zs);
-    const base = zMin - 0.6;
+    const base = zMin - 1.2;
     const top = zMax + Math.max(g.hoeheM * s, 0.8);
     const roof = g.dachM * s;
     const box = inside && g.dach !== "flach" ? obb(ring) : null;
@@ -246,32 +285,26 @@ export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: num
       parts.push(dachKoerper(box, s, base, top - roof, top, g.dach));
       continue;
     }
-    const shape = new THREE.Shape(ring.map(([x, y]) => new THREE.Vector2(x * s, y * s)));
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: top - base, bevelEnabled: false });
+    const pts = ring.map(([x, y]) => new THREE.Vector2(x * s, y * s));
+    const geo = new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth: top - base, bevelEnabled: false });
     geo.translate(0, 0, base);
     geo.deleteAttribute("uv");
     parts.push(geo.toNonIndexed());
-  }
-  if (extra) {
-    const RELIEF = 0.4; // mm Strassen-/Platzrelief
-    // Plätze: flache Platten
-    for (const pl of extra.plaetze) {
-      const ring = clip(pl, half);
-      if (ring.length < 3 || Math.abs(ringArea(ring)) * s * s < 2) continue;
-      const zs = ring.map(([x, y]) => sample(x, y));
-      const base = Math.min(...zs) - 0.6, top = Math.max(...zs) + RELIEF * 0.6;
-      const geo = new THREE.ExtrudeGeometry(new THREE.Shape(ring.map(([x, y]) => new THREE.Vector2(x * s, y * s))), { depth: top - base, bevelEnabled: false });
-      geo.translate(0, 0, base); geo.deleteAttribute("uv"); parts.push(geo.toNonIndexed());
-    }
-    // Strassen und Wege: erhabene Bänder, Fusswege höher als Fahrbahnen
-    for (const w of extra.wege) {
-      const breite = Math.max(w.breiteM * s, w.fuss ? 0.5 : 0.8);
-      const hoch = w.fuss ? RELIEF : RELIEF * 0.5;
-      for (const seg of clipLinie(w.pts, half)) {
-        for (let k = 0; k < seg.length - 1; k++) parts.push(band(seg[k], seg[k + 1], s, breite, hoch, sample));
-        for (const p of seg) parts.push(knoten(p, s, breite / 2, hoch, sample));
+    // Attika: umlaufende Dachbrüstung bei Flachdächern
+    const ob = obb(ring);
+    if (ob && Math.min(ob.hl, ob.hw) * s > 2.2) {
+      const cx = pts.reduce((a, p) => a + p.x, 0) / pts.length, cy = pts.reduce((a, p) => a + p.y, 0) / pts.length;
+      const f = 1 - 0.55 / (Math.min(ob.hl, ob.hw) * s);
+      const inner = pts.map((p) => new THREE.Vector2(cx + (p.x - cx) * f, cy + (p.y - cy) * f));
+      if (inner.every((p) => inPoly(pts.map((q) => [q.x, q.y] as [number, number]), p.x, p.y))) {
+        const sh = new THREE.Shape(pts);
+        sh.holes.push(new THREE.Path(inner.slice().reverse()));
+        const at = new THREE.ExtrudeGeometry(sh, { depth: 0.8, bevelEnabled: false });
+        at.translate(0, 0, top - 0.1); at.deleteAttribute("uv"); parts.push(at.toNonIndexed());
       }
     }
+  }
+  if (extra) {
     // Bäume: kleine Kegel
     let n = 0;
     for (const [x, y] of extra.baeume) {
@@ -376,4 +409,13 @@ export async function exportStl(geo: THREE.BufferGeometry): Promise<Blob> {
   const { STLExporter } = await import("three/examples/jsm/exporters/STLExporter.js");
   const data = new STLExporter().parse(new THREE.Mesh(geo), { binary: true }) as unknown as DataView;
   return new Blob([data.buffer as ArrayBuffer], { type: "model/stl" });
+}
+
+function inPoly(r: [number, number][], x: number, y: number) {
+  let c = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const [xi, yi] = r[i], [xj, yj] = r[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
 }
