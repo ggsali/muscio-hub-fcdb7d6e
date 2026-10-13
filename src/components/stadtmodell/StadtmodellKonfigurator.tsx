@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import ModellViewer from "./ModellViewer";
 import * as THREE from "three";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { toast } from "sonner";
@@ -119,12 +118,7 @@ export default function StadtmodellKonfigurator() {
         <p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" /> In die Karte klicken, um das Quadrat zu platzieren.</p>
         <div className="h-[340px] overflow-hidden rounded-xl border border-border bg-muted/30">
           {geo ? (
-            <Canvas camera={{ position: [0, -mm * 1.1, mm * 0.9], fov: 45, up: [0, 0, 1] }}>
-              <ambientLight intensity={0.6} />
-              <directionalLight position={[mm, -mm, mm * 2]} intensity={1.2} />
-              <mesh geometry={geo}><meshStandardMaterial color={material === "pla_grau" ? "#9a9a9a" : material === "pla_stein" ? "#c9c2b5" : "#f2f2f2"} /></mesh>
-              <OrbitControls />
-            </Canvas>
+            <ModellViewer geo={geo} size={mm} color={material === "pla_grau" ? "#9a9a9a" : material === "pla_stein" ? "#c9c2b5" : "#f2f2f2"} />
           ) : (
             <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
               {laden ?? "Klicke auf «3D-Vorschau erzeugen», um dein Modell zu sehen."}
