@@ -257,20 +257,21 @@ export default function OrderStatusWorkflow({
       toast.error("Etikette konnte nicht erstellt werden", { description: res.error });
       return;
     }
+    const docHint = res.documentSaved ? " Als PDF unter «Dokumente» gespeichert." : "";
     if (res.testMode) {
       toast.info("Test-Etikette (SPECIMEN) erstellt", {
-        description: "Nicht für den Versand gültig. Den Testmodus schaltest du in den Einstellungen unter Swiss Post aus.",
+        description: "Nicht für den Versand gültig. Den Testmodus schaltest du in den Einstellungen unter Swiss Post aus." + docHint,
       });
     } else if (res.trackingNr && res.trackingSaved) {
       setTrackingInput(res.trackingNr);
       onTrackingNrChange?.(res.trackingNr);
-      toast.success("Versandetikette erstellt – Druckdialog geöffnet", { description: `Sendungsnummer ${res.trackingNr} wurde automatisch eingetragen.` });
+      toast.success("Versandetikette erstellt – Druckdialog geöffnet", { description: `Sendungsnummer ${res.trackingNr} wurde automatisch eingetragen.${docHint}` });
     } else if (res.trackingNr) {
       toast.success("Versandetikette erstellt", {
-        description: `Neue Nummer ${res.trackingNr}. Im Auftrag bleibt die bestehende Nummer gespeichert.`,
+        description: `Neue Nummer ${res.trackingNr}. Im Auftrag bleibt die bestehende Nummer gespeichert.${docHint}`,
       });
     } else {
-      toast.success("Versandetikette erstellt", { description: "Die Post hat keine Sendungsnummer geliefert. Bitte von Hand eintragen." });
+      toast.success("Versandetikette erstellt", { description: "Die Post hat keine Sendungsnummer geliefert. Bitte von Hand eintragen." + docHint });
     }
     await loadLog();
   };

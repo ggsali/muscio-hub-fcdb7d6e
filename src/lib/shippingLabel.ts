@@ -12,6 +12,8 @@ export interface ShippingLabelResult {
   trackingSaved?: boolean;
   /** Testmodus: SPECIMEN-Etikette, nicht versandgültig */
   testMode?: boolean;
+  /** Etikette wurde zusätzlich unter «Dokumente» im Auftrag gespeichert */
+  documentSaved?: boolean;
 }
 
 function base64ToPdfUrl(base64: string): string {
@@ -89,6 +91,7 @@ export async function createShippingLabel(orderId: string): Promise<ShippingLabe
       trackingNr: data.tracking_nr ?? null,
       trackingSaved: !!data.tracking_saved,
       testMode: !!data.test_mode,
+      documentSaved: !!data.document_saved,
     };
   } catch (e: any) {
     return { ok: false, error: e?.message || String(e) };

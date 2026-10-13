@@ -160,6 +160,30 @@ serve(async (req) => {
       else trackingSaved = true;
     }
 
+    // Etikette als PDF im Auftrag unter "Dokumente" ablegen (gleicher Ort wie hochgeladene Dokumente)
+    let documentSaved = false;
+    try {
+      const filename = `${testMode ? "TEST_" : ""}versandetikette_${orderLabel}.pdf`;
+      const bin = atob(result.label);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const path = `${order_id}/uploads/${Date.now()}_${filename}`;
+      const { error: upErr } = await supabase.storage.from("bills").upload(path, bytes, { contentType: "application/pdf", upsert: false });
+      if (upErr) throw upErr;
+      const { error: dbErr } = await supabase.from("bills").insert({
+        order_id,
+        titel: testMode ? "Paketetikette (Test)" : (result.identCode ? `Paketetikette: ${result.identCode}` : "Paketetikette"),
+        betrag: 0,
+        bezahlt: true,
+        file_path: path,
+        filename,
+      });
+      if (dbErr) throw dbErr;
+      documentSaved = true;
+    } catch (e: any) {
+      console.error("Etikette als Dokument speichern fehlgeschlagen:", e?.message || e);
+    }
+
     await supabase.from("order_status_log").insert({
       order_id,
       status: testMode ? "📦 Test-Versandetikette erstellt" : "📦 Versandetikette erstellt",
@@ -173,6 +197,7 @@ serve(async (req) => {
         filename: `${testMode ? "TEST_" : ""}versandetikette_${orderLabel}.pdf`,
         tracking_nr: result.identCode,
         tracking_saved: trackingSaved,
+        document_saved: documentSaved,
         test_mode: testMode,
         warnings: result.warnings,
       }),
