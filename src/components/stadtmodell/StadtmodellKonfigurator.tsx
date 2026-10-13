@@ -76,21 +76,50 @@ export default function StadtmodellKonfigurator() {
       .catch(() => { setFilamente([]); toast.error("Materialien konnten nicht geladen werden"); });
   }, []);
 
+  const stateRef = useRef({ center: START, kante: 250, cornerDrag: false });
+  stateRef.current.center = center; stateRef.current.kante = kante;
+  const centerMk = useRef<L.Marker | null>(null);
+  const cornerMk = useRef<L.Marker | null>(null);
+
   useEffect(() => {
     if (!mapEl.current || mapRef.current) return;
-    const map = L.map(mapEl.current, { center: START, zoom: 15 });
+    const map = L.map(mapEl.current, { center: START, zoom: 16 });
     L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg", {
       maxZoom: 19, attribution: "© swisstopo",
     }).addTo(map);
     const c = primaryColor();
-    rectRef.current = L.rectangle(squareBounds(START[0], START[1], 250), { color: c, fillColor: c, weight: 3, fillOpacity: 0.18 }).addTo(map);
-    map.on("click", (e) => setCenter([e.latlng.lat, e.latlng.lng]));
+    const rect = L.rectangle(squareBounds(START[0], START[1], 250), { color: c, fillColor: c, weight: 3, fillOpacity: 0.18, className: "cursor-move" }).addTo(map);
+    rectRef.current = rect;
+    const handle = (cls: string, html: string) => L.divIcon({ className: "", iconSize: [30, 30], iconAnchor: [15, 15],
+      html: `<div class="${cls}" style="width:30px;height:30px;border-radius:9999px;background:${c};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700">${html}</div>` });
+    const cm = L.marker(START, { draggable: true, icon: handle("cursor-move", "✥"), title: "Quadrat verschieben" }).addTo(map);
+    cm.on("drag", (e) => { const ll = (e.target as L.Marker).getLatLng(); setCenter([ll.lat, ll.lng]); });
+    const ne = (lat: number, lon: number, k: number) => (L.latLngBounds(squareBounds(lat, lon, k) as any)).getNorthEast();
+    const km = L.marker(ne(START[0], START[1], 250), { draggable: true, icon: handle("cursor-nesw-resize", "⤢"), title: "Grösse ändern" }).addTo(map);
+    km.on("dragstart", () => { stateRef.current.cornerDrag = true; });
+    km.on("drag", (e) => {
+      const ll = (e.target as L.Marker).getLatLng(); const [la, lo] = stateRef.current.center;
+      const dy = Math.abs(ll.lat - la) * 110540, dx = Math.abs(ll.lng - lo) * 111320 * Math.cos((la * Math.PI) / 180);
+      setKante(Math.min(KANTE_MAX, Math.max(KANTE_MIN, Math.round((2 * Math.max(dx, dy)) / 10) * 10)));
+    });
+    km.on("dragend", () => { stateRef.current.cornerDrag = false; const { center: [la, lo], kante: k } = stateRef.current; km.setLatLng(ne(la, lo, k)); });
+    // drag the whole square
+    let start: { ll: L.LatLng; c: [number, number] } | null = null;
+    rect.on("mousedown", (e: L.LeafletMouseEvent) => { start = { ll: e.latlng, c: stateRef.current.center }; map.dragging.disable(); });
+    map.on("mousemove", (e: L.LeafletMouseEvent) => { if (start) setCenter([start.c[0] + e.latlng.lat - start.ll.lat, start.c[1] + e.latlng.lng - start.ll.lng]); });
+    let lastDrag = 0;
+    map.on("mouseup", () => { if (start) { start = null; lastDrag = Date.now(); map.dragging.enable(); } });
+    map.on("click", (e) => { if (Date.now() - lastDrag > 300) setCenter([e.latlng.lat, e.latlng.lng]); });
+    centerMk.current = cm; cornerMk.current = km;
     mapRef.current = map;
     return () => { map.remove(); mapRef.current = null; };
   }, []);
 
   useEffect(() => {
-    rectRef.current?.setBounds(squareBounds(center[0], center[1], kante) as L.LatLngBounds);
+    const b = squareBounds(center[0], center[1], kante) as L.LatLngBoundsExpression;
+    rectRef.current?.setBounds(L.latLngBounds(b as any));
+    centerMk.current?.setLatLng(center);
+    if (!stateRef.current.cornerDrag) cornerMk.current?.setLatLng(L.latLngBounds(b as any).getNorthEast());
     setGeo(null);
   }, [center, kante]);
   useEffect(() => { setGeo(null); }, [massstab, sockel]);
@@ -141,9 +170,9 @@ export default function StadtmodellKonfigurator() {
   const kannBestellen = !!geo && grenzeOk && !!filament && !laden;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="grid gap-6 [--secondary:var(--muted)] lg:grid-cols-[1fr_380px]">
       <div className="space-y-6">
-        <Schritt nr={1} titel="Ort & Ausschnitt wählen" untertitel="Suche einen Ort oder klicke in die Karte.">
+        <Schritt nr={1} titel="Ort & Ausschnitt wählen" untertitel="Suche einen Ort, verschiebe das Quadrat mit ✥ und ändere die Grösse mit ⤢ an der Ecke.">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
