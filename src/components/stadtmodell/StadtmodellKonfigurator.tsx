@@ -169,6 +169,30 @@ export default function StadtmodellKonfigurator() {
   const checkoutOptions = useMemo(() => clientSecret ? { fetchClientSecret: () => Promise.resolve(clientSecret) } : null, [clientSecret]);
   const kannBestellen = !!geo && grenzeOk && !!filament && !laden;
 
+  const [istAdmin, setIstAdmin] = useState(false);
+  useEffect(() => {
+    let aktiv = true;
+    const pruefe = async (uid?: string) => {
+      if (!uid) { if (aktiv) setIstAdmin(false); return; }
+      const { data } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" });
+      if (aktiv) setIstAdmin(data === true);
+    };
+    supabase.auth.getSession().then(({ data }) => pruefe(data.session?.user.id));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { pruefe(s?.user.id); });
+    return () => { aktiv = false; sub.subscription.unsubscribe(); };
+  }, []);
+
+  async function stlHerunterladen() {
+    if (!geo) return;
+    const blob = await exportStl(geo);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `stadtmodell_${center[0].toFixed(4)}_${center[1].toFixed(4)}_${kante}m_1-${massstab}.stl`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   return (
     <div className="grid gap-6 [--secondary:var(--muted)] lg:grid-cols-[1fr_380px]">
       <div className="space-y-6">
@@ -259,6 +283,12 @@ export default function StadtmodellKonfigurator() {
               </div>
             )}
           </div>
+          {istAdmin && geo && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/50 bg-accent p-3">
+              <span className="text-xs font-medium text-primary">Admin-Testmodus</span>
+              <Button size="sm" variant="outline" onClick={stlHerunterladen}>STL herunterladen</Button>
+            </div>
+          )}
           <p className="mt-3 text-xs text-muted-foreground">{QUELLE}</p>
         </Schritt>
 
