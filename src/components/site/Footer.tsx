@@ -6,6 +6,7 @@ import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
 const footerLinks = [
   { label: "Kalkulator", path: "/kalkulator-online" },
+  { label: "Stadtmodell", path: "/stadtmodell" },
   { label: "3D-Druck Schweiz", path: "/3d-druck-schweiz" },
   { label: "Leistungen", path: "/leistungen" },
   { label: "Materialien", path: "/materialien" },

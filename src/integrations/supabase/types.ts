@@ -2785,6 +2785,66 @@ export type Database = {
           },
         ]
       }
+      stadtmodell_bestellungen: {
+        Row: {
+          created_at: string
+          fehler: string | null
+          id: string
+          kantenlaenge_m: number
+          kunde_email: string | null
+          kunde_name: string | null
+          lat: number
+          lon: number
+          massstab: number
+          material: string
+          modell_mm: number
+          preis: number
+          sockel_mm: number
+          status: string
+          stl_path: string | null
+          stripe_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fehler?: string | null
+          id?: string
+          kantenlaenge_m: number
+          kunde_email?: string | null
+          kunde_name?: string | null
+          lat: number
+          lon: number
+          massstab: number
+          material: string
+          modell_mm: number
+          preis: number
+          sockel_mm: number
+          status?: string
+          stl_path?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fehler?: string | null
+          id?: string
+          kantenlaenge_m?: number
+          kunde_email?: string | null
+          kunde_name?: string | null
+          lat?: number
+          lon?: number
+          massstab?: number
+          material?: string
+          modell_mm?: number
+          preis?: number
+          sockel_mm?: number
+          status?: string
+          stl_path?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string

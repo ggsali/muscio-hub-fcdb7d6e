@@ -51,6 +51,7 @@ import { Route as SiteImpressumRouteImport } from './routes/_site/impressum'
 import { Route as SiteKalkulatorOnlineRouteImport } from './routes/_site/kalkulator-online'
 import { Route as SiteKontaktRouteImport } from './routes/_site/kontakt'
 import { Route as SiteMaschinenRouteImport } from './routes/_site/maschinen'
+import { Route as SiteStadtmodellRouteImport } from './routes/_site/stadtmodell'
 import { Route as SiteUeberKiRouteImport } from './routes/_site/ueber-ki'
 import { Route as SiteUeberUnsRouteImport } from './routes/_site/ueber-uns'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
@@ -68,6 +69,7 @@ import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
+import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
@@ -343,6 +345,11 @@ const SiteMaschinenRoute = SiteMaschinenRouteImport.update({
   path: '/maschinen',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteStadtmodellRoute = SiteStadtmodellRouteImport.update({
+  id: '/stadtmodell',
+  path: '/stadtmodell',
+  getParentRoute: () => SiteRoute,
+} as any)
 const SiteUeberKiRoute = SiteUeberKiRouteImport.update({
   id: '/ueber-ki',
   path: '/ueber-ki',
@@ -426,6 +433,11 @@ const AdminNewsletterRoute = AdminNewsletterRouteImport.update({
 const AdminScanRoute = AdminScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStadtmodelleRoute = AdminStadtmodelleRouteImport.update({
+  id: '/stadtmodelle',
+  path: '/stadtmodelle',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTeileRoute = AdminTeileRouteImport.update({
@@ -806,6 +818,7 @@ export interface FileRoutesByFullPath {
   '/kalkulator-online': typeof SiteKalkulatorOnlineRoute
   '/kontakt': typeof SiteKontaktRoute
   '/maschinen': typeof SiteMaschinenRoute
+  '/stadtmodell': typeof SiteStadtmodellRoute
   '/ueber-ki': typeof SiteUeberKiRoute
   '/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
@@ -822,6 +835,7 @@ export interface FileRoutesByFullPath {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
+  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -927,6 +941,7 @@ export interface FileRoutesByTo {
   '/kalkulator-online': typeof SiteKalkulatorOnlineRoute
   '/kontakt': typeof SiteKontaktRoute
   '/maschinen': typeof SiteMaschinenRoute
+  '/stadtmodell': typeof SiteStadtmodellRoute
   '/ueber-ki': typeof SiteUeberKiRoute
   '/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
@@ -943,6 +958,7 @@ export interface FileRoutesByTo {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
+  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1054,6 +1070,7 @@ export interface FileRoutesById {
   '/_site/kalkulator-online': typeof SiteKalkulatorOnlineRoute
   '/_site/kontakt': typeof SiteKontaktRoute
   '/_site/maschinen': typeof SiteMaschinenRoute
+  '/_site/stadtmodell': typeof SiteStadtmodellRoute
   '/_site/ueber-ki': typeof SiteUeberKiRoute
   '/_site/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
@@ -1070,6 +1087,7 @@ export interface FileRoutesById {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
+  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1182,6 +1200,7 @@ export interface FileRouteTypes {
     | '/kalkulator-online'
     | '/kontakt'
     | '/maschinen'
+    | '/stadtmodell'
     | '/ueber-ki'
     | '/ueber-uns'
     | '/admin/anfragen'
@@ -1198,6 +1217,7 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
+    | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1303,6 +1323,7 @@ export interface FileRouteTypes {
     | '/kalkulator-online'
     | '/kontakt'
     | '/maschinen'
+    | '/stadtmodell'
     | '/ueber-ki'
     | '/ueber-uns'
     | '/admin/anfragen'
@@ -1319,6 +1340,7 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
+    | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1429,6 +1451,7 @@ export interface FileRouteTypes {
     | '/_site/kalkulator-online'
     | '/_site/kontakt'
     | '/_site/maschinen'
+    | '/_site/stadtmodell'
     | '/_site/ueber-ki'
     | '/_site/ueber-uns'
     | '/admin/anfragen'
@@ -1445,6 +1468,7 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
+    | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin_/login'
     | '/auftraege/$id'
@@ -1850,6 +1874,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteMaschinenRouteImport
       parentRoute: typeof SiteRoute
     }
+    '/_site/stadtmodell': {
+      id: '/_site/stadtmodell'
+      path: '/stadtmodell'
+      fullPath: '/stadtmodell'
+      preLoaderRoute: typeof SiteStadtmodellRouteImport
+      parentRoute: typeof SiteRoute
+    }
     '/_site/ueber-ki': {
       id: '/_site/ueber-ki'
       path: '/ueber-ki'
@@ -1967,6 +1998,13 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/admin/scan'
       preLoaderRoute: typeof AdminScanRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/stadtmodelle': {
+      id: '/admin/stadtmodelle'
+      path: '/stadtmodelle'
+      fullPath: '/admin/stadtmodelle'
+      preLoaderRoute: typeof AdminStadtmodelleRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/teile': {
@@ -2443,6 +2481,7 @@ interface SiteRouteChildren {
   SiteKalkulatorOnlineRoute: typeof SiteKalkulatorOnlineRoute
   SiteKontaktRoute: typeof SiteKontaktRoute
   SiteMaschinenRoute: typeof SiteMaschinenRoute
+  SiteStadtmodellRoute: typeof SiteStadtmodellRoute
   SiteUeberKiRoute: typeof SiteUeberKiRoute
   SiteUeberUnsRoute: typeof SiteUeberUnsRoute
   SiteIndexRoute: typeof SiteIndexRoute
@@ -2479,6 +2518,7 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteKalkulatorOnlineRoute: SiteKalkulatorOnlineRoute,
   SiteKontaktRoute: SiteKontaktRoute,
   SiteMaschinenRoute: SiteMaschinenRoute,
+  SiteStadtmodellRoute: SiteStadtmodellRoute,
   SiteUeberKiRoute: SiteUeberKiRoute,
   SiteUeberUnsRoute: SiteUeberUnsRoute,
   SiteIndexRoute: SiteIndexRoute,
@@ -2536,6 +2576,7 @@ interface AdminRouteChildren {
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminScanRoute: typeof AdminScanRoute
+  AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
@@ -2567,6 +2608,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminScanRoute: AdminScanRoute,
+  AdminStadtmodelleRoute: AdminStadtmodelleRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,

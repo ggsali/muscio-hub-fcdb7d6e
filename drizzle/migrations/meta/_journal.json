@@ -134,6 +134,13 @@
       "when": 1791881735108,
       "tag": "0018_add_ear_buchungen_gilt_zeitraum",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791892464175,
+      "tag": "0019_stadtmodell_bestellungen",
+      "breakpoints": true
     }
   ]
 }

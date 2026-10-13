@@ -17,7 +17,24 @@ function getSupabase() {
   return _supabase;
 }
 
+async function handleStadtmodellPaid(session: any, id: string) {
+  const sb = getSupabase() as any;
+  const { data: files } = await sb.storage.from("stadtmodelle").list("", { search: `${id}.stl` });
+  const ok = (files || []).some((f: any) => f.name === `${id}.stl`);
+  await sb.from("stadtmodell_bestellungen").update({
+    status: ok ? "bezahlt" : "fehler",
+    fehler: ok ? null : "STL-Datei fehlt nach Zahlung",
+    kunde_name: session.customer_details?.name ?? null,
+    kunde_email: session.customer_details?.email ?? null,
+    updated_at: new Date().toISOString(),
+  }).eq("id", id);
+}
+
 async function handleCheckoutSessionCompleted(session: any, env: StripeEnv) {
+  if (session.metadata?.stadtmodell_id) {
+    await handleStadtmodellPaid(session, session.metadata.stadtmodell_id);
+    return;
+  }
   const shopOrderId = session.metadata?.shop_order_id;
   if (!shopOrderId) {
     console.warn("[payments-webhook] No shop_order_id in session metadata; ignoring");
