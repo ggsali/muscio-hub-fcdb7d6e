@@ -34,3 +34,10 @@ export function verteile(betrag: number, von: string, bis: string): Map<number, 
   });
   return out;
 }
+
+/** Gesamtbetrag der Rechnung: entweder der eingegebene Betrag oder Monatsbetrag × Anzahl Monate */
+export function gesamtBetrag(eingabe: number, modus: "gesamt" | "monat", von: string, bis: string): number {
+  if (modus !== "monat") return eingabe;
+  const m = monateZwischen(von, bis);
+  return m > 0 ? Math.round(eingabe * m * 100) / 100 : eingabe;
+}

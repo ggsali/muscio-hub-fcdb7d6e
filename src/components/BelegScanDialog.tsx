@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Camera, FolderOpen, Loader2, X, Sparkles, CameraOff } from "lucide-react";
 import { scanBeleg } from "@/lib/belegScan.functions";
 import { cn } from "@/lib/utils";
-import { VERTEILBAR, verteile, monateZwischen } from "@/lib/earVerteilung";
+import { VERTEILBAR, verteile, monateZwischen, gesamtBetrag } from "@/lib/earVerteilung";
 
 export type BelegKategorie =
   | "einnahmen" | "div_aufwaende" | "personalaufwand" | "raumaufwand"
@@ -42,7 +42,7 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [bildSpeichern, setBildSpeichern] = useState(true);
-  const [form, setForm] = useState({ datum: heute(), text: "", beleg: "", betrag: "", kategorie, gilt_von: "", gilt_bis: "" });
+  const [form, setForm] = useState({ datum: heute(), text: "", beleg: "", betrag: "", kategorie, gilt_von: "", gilt_bis: "", modus: "gesamt" as "gesamt" | "monat" });
   const [dragOver, setDragOver] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -184,15 +184,16 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
 
   const buchen = async () => {
     if (!form.text.trim()) { toast.error("Text ist ein Pflichtfeld"); return; }
-    const betrag = Number(form.betrag || 0);
+    const eingabe = Number(form.betrag || 0);
     const hatZeitraum = VERTEILBAR.includes(form.kategorie) && !!(form.gilt_von || form.gilt_bis);
     if (hatZeitraum) {
       if (!form.gilt_von || !form.gilt_bis) { toast.error("Bitte «Gilt von» und «Gilt bis» ausfüllen"); return; }
       const mt = monateZwischen(form.gilt_von, form.gilt_bis);
       if (mt < 1) { toast.error("«Gilt bis» muss nach «Gilt von» liegen"); return; }
       if (mt > 120) { toast.error("Zeitraum maximal 10 Jahre"); return; }
-      if (!(betrag > 0)) { toast.error("Für die Verteilung einen Betrag eintragen"); return; }
+      if (!(eingabe > 0)) { toast.error("Für die Verteilung einen Betrag eintragen"); return; }
     }
+    const betrag = hatZeitraum ? gesamtBetrag(eingabe, form.modus, form.gilt_von, form.gilt_bis) : eingabe;
     setSaving(true);
     let storagePath: string | null = null;
     let belegUrl: string | null = null;
@@ -335,8 +336,9 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
                     </select>
                   </div>
                   {VERTEILBAR.includes(form.kategorie) && (() => {
-                    const teile = form.gilt_von && form.gilt_bis && Number(form.betrag) > 0
-                      ? verteile(Number(form.betrag), form.gilt_von, form.gilt_bis) : null;
+                    const monate = form.gilt_von && form.gilt_bis ? monateZwischen(form.gilt_von, form.gilt_bis) : 0;
+                    const total = monate > 0 ? gesamtBetrag(Number(form.betrag) || 0, form.modus, form.gilt_von, form.gilt_bis) : 0;
+                    const teile = monate > 0 && total > 0 ? verteile(total, form.gilt_von, form.gilt_bis) : null;
                     const chf = (v: number) => v.toLocaleString("de-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     return (
                       <div className="rounded-xl border border-border p-3 space-y-2">
@@ -351,9 +353,20 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
                             <Input type="date" value={form.gilt_bis} onChange={e => setForm({ ...form, gilt_bis: e.target.value })} />
                           </div>
                         </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground">Der Betrag oben gilt</label>
+                          <select
+                            value={form.modus}
+                            onChange={e => setForm({ ...form, modus: e.target.value as "gesamt" | "monat" })}
+                            className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm"
+                          >
+                            <option value="gesamt">für den ganzen Zeitraum (Gesamtbetrag)</option>
+                            <option value="monat">pro Monat (wird mal Anzahl Monate gerechnet)</option>
+                          </select>
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {teile
-                            ? `Wird pro Monat verteilt: ${[...teile.entries()].map(([j, v]) => `${j}: CHF ${chf(v)}`).join(" · ")}`
+                            ? `${form.modus === "monat" ? `CHF ${chf(Number(form.betrag))} × ${monate} Mt. = CHF ${chf(total)} gesamt. ` : ""}Verteilt: ${[...teile.entries()].map(([j, v]) => `${j}: CHF ${chf(v)}`).join(" · ")}`
                             : "Wenn die Rechnung mehrere Monate oder Jahre abdeckt, wird der Betrag automatisch auf die Jahre verteilt."}
                         </p>
                       </div>

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, ArrowDown, Camera, ReceiptText, RefreshCw } from "lucide-react";
 import BelegScanDialog from "@/components/BelegScanDialog";
 import { cn } from "@/lib/utils";
-import { VERTEILBAR, verteile, monateZwischen } from "@/lib/earVerteilung";
+import { VERTEILBAR, verteile, monateZwischen, gesamtBetrag } from "@/lib/earVerteilung";
 import type { Database } from "@/integrations/supabase/types";
 
 type BuchungInsert = Database["public"]["Tables"]["ear_buchungen"]["Insert"];
@@ -100,7 +100,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "export", label: "Export" },
 ];
 
-interface DraftBuchung { datum: string; text: string; beleg: string; einnahmen: string; ausgaben: string; gilt_von: string; gilt_bis: string }
+interface DraftBuchung { datum: string; text: string; beleg: string; einnahmen: string; ausgaben: string; gilt_von: string; gilt_bis: string; modus: "gesamt" | "monat" }
 
 const heute = () => new Date().toISOString().slice(0, 10);
 
@@ -252,7 +252,7 @@ export default function BuchhaltungPage() {
 
   const startNew = (kategorie: Kategorie) => {
     setEditId("new");
-    setDraft({ datum: heute(), text: "", beleg: "", einnahmen: "", ausgaben: "", gilt_von: "", gilt_bis: "" });
+    setDraft({ datum: heute(), text: "", beleg: "", einnahmen: "", ausgaben: "", gilt_von: "", gilt_bis: "", modus: "gesamt" });
     void kategorie;
   };
 
@@ -268,6 +268,7 @@ export default function BuchhaltungPage() {
       ausgaben: b.ausgaben ? String(b.ausgaben) : "",
       gilt_von: b.gilt_von ?? "",
       gilt_bis: b.gilt_bis ?? "",
+      modus: "gesamt",
     });
   };
 
@@ -292,7 +293,7 @@ export default function BuchhaltungPage() {
       text: draft.text.trim(),
       beleg: draft.beleg.trim() || null,
       einnahmen: kategorie === "einnahmen" ? Number(draft.einnahmen || 0) : 0,
-      ausgaben: Number(draft.ausgaben || 0),
+      ausgaben: hatZeitraum ? gesamtBetrag(Number(draft.ausgaben || 0), draft.modus, draft.gilt_von, draft.gilt_bis) : Number(draft.ausgaben || 0),
     };
     // Zeitraum nur schreiben, wenn gesetzt (oder zum Löschen eines bestehenden) – so läuft Speichern auch ohne die neue Spalte
     if (hatZeitraum) { payload.gilt_von = draft.gilt_von; payload.gilt_bis = draft.gilt_bis; }
@@ -529,8 +530,9 @@ export default function BuchhaltungPage() {
       </td>
     </tr>
     {VERTEILBAR.includes(kategorie) && (() => {
-      const teile = draft.gilt_von && draft.gilt_bis && Number(draft.ausgaben) > 0
-        ? verteile(Number(draft.ausgaben), draft.gilt_von, draft.gilt_bis) : null;
+      const monate = draft.gilt_von && draft.gilt_bis ? monateZwischen(draft.gilt_von, draft.gilt_bis) : 0;
+      const total = monate > 0 ? gesamtBetrag(Number(draft.ausgaben) || 0, draft.modus, draft.gilt_von, draft.gilt_bis) : 0;
+      const teile = monate > 0 && total > 0 ? verteile(total, draft.gilt_von, draft.gilt_bis) : null;
       return (
         <tr className="bg-muted/40">
           <td className="px-2 pb-3" colSpan={7}>
@@ -543,9 +545,16 @@ export default function BuchhaltungPage() {
                 <label className="block text-[11px] text-muted-foreground mb-0.5">Gilt bis</label>
                 <Input type="date" value={draft.gilt_bis} onChange={e => setDraft({ ...draft, gilt_bis: e.target.value })} className="h-9 w-[160px]" />
               </div>
+              <div>
+                <label className="block text-[11px] text-muted-foreground mb-0.5">Betrag gilt</label>
+                <select value={draft.modus} onChange={e => setDraft({ ...draft, modus: e.target.value as "gesamt" | "monat" })} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+                  <option value="gesamt">für den ganzen Zeitraum</option>
+                  <option value="monat">pro Monat (× Monate)</option>
+                </select>
+              </div>
               <p className="text-xs text-muted-foreground flex-1 min-w-[200px]">
                 {teile
-                  ? <>Wird pro Monat verteilt: {[...teile.entries()].map(([j, v]) => `${j}: CHF ${fmtCHF(v)}`).join(" · ")}</>
+                  ? <>{draft.modus === "monat" ? `CHF ${fmtCHF(Number(draft.ausgaben))} × ${monate} Mt. = CHF ${fmtCHF(total)} gesamt. ` : ""}Verteilt: {[...teile.entries()].map(([j, v]) => `${j}: CHF ${fmtCHF(v)}`).join(" · ")}</>
                   : "Zeitraum der Rechnung angeben, wenn sie mehrere Monate oder Jahre abdeckt. Der Betrag wird dann automatisch auf die Jahre verteilt."}
               </p>
             </div>
