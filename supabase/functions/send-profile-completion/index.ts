@@ -93,6 +93,13 @@ Deno.serve(async (req) => {
       })
     }
 
+    if (!customer) {
+      return new Response(JSON.stringify({ error: 'Customer not found' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+
 
     if (linkOnly) {
       return new Response(JSON.stringify({ ok: true, url: completionUrl, token }), {
