@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, ArrowDown, Camera, ReceiptText, RefreshCw } from "lucide-react";
 import BelegScanDialog from "@/components/BelegScanDialog";
 import { cn } from "@/lib/utils";
+import { VERTEILBAR, verteile, monateZwischen } from "@/lib/earVerteilung";
 
 type Kategorie =
   | "einnahmen" | "div_aufwaende" | "personalaufwand" | "raumaufwand"
@@ -23,7 +24,17 @@ interface Buchung {
   einnahmen: number | null;
   ausgaben: number | null;
   kategorie: Kategorie;
+  gilt_von?: string | null;
+  gilt_bis?: string | null;
 }
+
+/** Zeile eines Blatts: Betrag gilt für das angezeigte Jahr (bei verteilten Rechnungen der Jahresanteil) */
+interface Zeile extends Buchung {
+  hinweis?: string;
+  virtuell?: boolean;
+}
+
+const fmtDatum = (d: string) => d.split("-").reverse().join(".");
 
 interface Anlage {
   id: string;
@@ -81,7 +92,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "export", label: "Export" },
 ];
 
-interface DraftBuchung { datum: string; text: string; beleg: string; einnahmen: string; ausgaben: string }
+interface DraftBuchung { datum: string; text: string; beleg: string; einnahmen: string; ausgaben: string; gilt_von: string; gilt_bis: string }
 
 const heute = () => new Date().toISOString().slice(0, 10);
 
@@ -152,7 +163,7 @@ export default function BuchhaltungPage() {
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data: b }, { data: a }] = await Promise.all([
-      supabase.from("ear_buchungen").select("*").in("jahr", [jahr, jahr - 1]),
+      supabase.from("ear_buchungen").select("*").gte("jahr", jahr - 3).lte("jahr", jahr + 3),
       supabase.from("ear_anlagevermoegen").select("*").eq("jahr", jahr).order("created_at"),
     ]);
     setBuchungen((b as Buchung[]) ?? []);
@@ -173,9 +184,32 @@ export default function BuchhaltungPage() {
     })();
   }, [loading, anlagen.length, jahr]);
 
+  /** Alle Zeilen einer Kategorie für ein Jahr. Verteilte Rechnungen zählen nur mit ihrem Jahresanteil. */
+  const zeilenFor = useCallback((kategorie: Kategorie, j: number): Zeile[] => {
+    const out: Zeile[] = [];
+    for (const b of buchungen) {
+      if (b.kategorie !== kategorie) continue;
+      const total = n(b.ausgaben);
+      const verteilt = VERTEILBAR.includes(kategorie) && b.gilt_von && b.gilt_bis && total > 0
+        ? verteile(total, b.gilt_von, b.gilt_bis) : null;
+      if (!verteilt) {
+        if (b.jahr === j) out.push({ ...b });
+        continue;
+      }
+      const teil = verteilt.get(j) ?? 0;
+      const hinweis = `Anteil ${j} von CHF ${fmtCHF(total)} · ${fmtDatum(b.gilt_von!)} – ${fmtDatum(b.gilt_bis!)} (${monateZwischen(b.gilt_von!, b.gilt_bis!)} Mt.)`;
+      if (b.jahr === j) {
+        out.push({ ...b, ausgaben: teil, hinweis });
+      } else if (teil > 0) {
+        const start = b.gilt_von!.startsWith(String(j)) ? b.gilt_von! : `${j}-01-01`;
+        out.push({ ...b, id: `${b.id}@${j}`, jahr: j, datum: start, ausgaben: teil, einnahmen: 0, hinweis: `${hinweis} – gebucht ${b.datum ? fmtDatum(b.datum) : b.jahr}`, virtuell: true });
+      }
+    }
+    return out;
+  }, [buchungen]);
+
   const sumFor = useCallback((j: number, kategorie: Kategorie, feld: "einnahmen" | "ausgaben") =>
-    buchungen.filter(b => b.jahr === j && b.kategorie === kategorie)
-      .reduce((s, b) => s + n(b[feld]), 0), [buchungen]);
+    zeilenFor(kategorie, j).reduce((s, b) => s + n(b[feld]), 0), [zeilenFor]);
 
   const rekap = useCallback((j: number) => {
     const einnahmen = sumFor(j, "einnahmen", "einnahmen");
@@ -199,22 +233,24 @@ export default function BuchhaltungPage() {
   const veraenderung = cur.ergebnis - prev.ergebnis;
 
   const rowsFor = useCallback((kategorie: Kategorie) => {
-    const rows = buchungen.filter(b => b.jahr === jahr && b.kategorie === kategorie)
+    const rows = zeilenFor(kategorie, jahr)
       .sort((x, y) => (x.datum ?? "").localeCompare(y.datum ?? ""));
     let saldo = 0;
     return rows.map(r => {
       saldo += n(r.einnahmen) - n(r.ausgaben);
       return { ...r, saldo };
     });
-  }, [buchungen, jahr]);
+  }, [zeilenFor, jahr]);
 
   const startNew = (kategorie: Kategorie) => {
     setEditId("new");
-    setDraft({ datum: heute(), text: "", beleg: "", einnahmen: "", ausgaben: "" });
+    setDraft({ datum: heute(), text: "", beleg: "", einnahmen: "", ausgaben: "", gilt_von: "", gilt_bis: "" });
     void kategorie;
   };
 
-  const startEdit = (b: Buchung) => {
+  const startEdit = (row: Buchung) => {
+    // Bei verteilten Rechnungen den Originalbetrag bearbeiten, nicht den Jahresanteil
+    const b = buchungen.find(x => x.id === row.id) ?? row;
     setEditId(b.id);
     setDraft({
       datum: b.datum ?? heute(),
@@ -222,6 +258,8 @@ export default function BuchhaltungPage() {
       beleg: b.beleg ?? "",
       einnahmen: b.einnahmen ? String(b.einnahmen) : "",
       ausgaben: b.ausgaben ? String(b.ausgaben) : "",
+      gilt_von: b.gilt_von ?? "",
+      gilt_bis: b.gilt_bis ?? "",
     });
   };
 
@@ -230,7 +268,16 @@ export default function BuchhaltungPage() {
   const saveDraft = async (kategorie: Kategorie) => {
     if (!draft) return;
     if (!draft.text.trim()) { toast.error("Text ist ein Pflichtfeld"); return; }
-    const payload = {
+    const verteilbar = VERTEILBAR.includes(kategorie);
+    const hatZeitraum = verteilbar && (draft.gilt_von || draft.gilt_bis);
+    if (hatZeitraum) {
+      if (!draft.gilt_von || !draft.gilt_bis) { toast.error("Bitte «Gilt von» und «Gilt bis» ausfüllen"); return; }
+      if (monateZwischen(draft.gilt_von, draft.gilt_bis) < 1) { toast.error("«Gilt bis» muss nach «Gilt von» liegen"); return; }
+      if (monateZwischen(draft.gilt_von, draft.gilt_bis) > 120) { toast.error("Zeitraum maximal 10 Jahre"); return; }
+      if (!(Number(draft.ausgaben) > 0)) { toast.error("Für die Verteilung einen Betrag bei Ausgaben eintragen"); return; }
+    }
+    const original = editId && editId !== "new" ? buchungen.find(x => x.id === editId) : undefined;
+    const payload: Record<string, any> = {
       jahr,
       kategorie,
       datum: draft.datum || null,
@@ -239,6 +286,9 @@ export default function BuchhaltungPage() {
       einnahmen: kategorie === "einnahmen" ? Number(draft.einnahmen || 0) : 0,
       ausgaben: Number(draft.ausgaben || 0),
     };
+    // Zeitraum nur schreiben, wenn gesetzt (oder zum Löschen eines bestehenden) – so läuft Speichern auch ohne die neue Spalte
+    if (hatZeitraum) { payload.gilt_von = draft.gilt_von; payload.gilt_bis = draft.gilt_bis; }
+    else if (original?.gilt_von || original?.gilt_bis) { payload.gilt_von = null; payload.gilt_bis = null; }
     if (editId === "new") {
       const { error } = await supabase.from("ear_buchungen").insert(payload);
       if (error) { toast.error("Speichern fehlgeschlagen"); return; }
@@ -330,7 +380,7 @@ export default function BuchhaltungPage() {
     for (const k of KATEGORIEN) {
       const rows = rowsFor(k.key);
       const aoa: (string | number)[][] = [["Datum", "Text", "Beleg", "Einnahmen CHF", "Ausgaben CHF", "Saldo CHF"]];
-      rows.forEach(r => aoa.push([r.datum ?? "", r.text ?? "", r.beleg ?? "", n(r.einnahmen), n(r.ausgaben), r.saldo]));
+      rows.forEach(r => aoa.push([r.datum ?? "", `${r.text ?? ""}${r.hinweis ? ` (${r.hinweis})` : ""}`, r.beleg ?? "", n(r.einnahmen), n(r.ausgaben), r.saldo]));
       aoa.push(["TOTAL", "", "",
         rows.reduce((s, r) => s + n(r.einnahmen), 0),
         rows.reduce((s, r) => s + n(r.ausgaben), 0),
@@ -412,8 +462,7 @@ export default function BuchhaltungPage() {
       header();
       doc.setFontSize(15);
       doc.text(kategorieLabels[key], 14, 29);
-      const rows = buchungen
-        .filter(b => b.kategorie === key && b.datum?.startsWith(String(jahr)))
+      const rows = zeilenFor(key, jahr)
         .sort((a, b) => (a.datum ?? "").localeCompare(b.datum ?? ""));
       let saldo = 0;
       let totalEinnahmen = 0;
@@ -425,7 +474,7 @@ export default function BuchhaltungPage() {
         totalAusgaben += ausgabe;
         saldo += einnahme - ausgabe;
         const date = b.datum?.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        return [date ? `${date[3]}.${date[2]}.${date[1].slice(2)}` : "", b.text ?? "", b.beleg ?? "",
+        return [date ? `${date[3]}.${date[2]}.${date[1].slice(2)}` : "", `${b.text ?? ""}${b.hinweis ? `\n(${b.hinweis})` : ""}`, b.beleg ?? "",
           key === "einnahmen" ? fmtCHF(einnahme) : "",
           key === "einnahmen" ? "" : fmtCHF(ausgabe), fmtCHF(saldo)];
       });
@@ -453,6 +502,7 @@ export default function BuchhaltungPage() {
 
   // ---------- Render-Helfer ----------
   const renderDraftRow = (kategorie: Kategorie) => draft && (
+    <>
     <tr className="bg-muted/40">
       <td className="p-2"><Input type="date" value={draft.datum} onChange={e => setDraft({ ...draft, datum: e.target.value })} className="h-8" /></td>
       <td className="p-2"><Input value={draft.text} onChange={e => setDraft({ ...draft, text: e.target.value })} placeholder="Text *" className="h-8" /></td>
@@ -470,6 +520,32 @@ export default function BuchhaltungPage() {
         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={cancelEdit}><X className="w-4 h-4" /></Button>
       </td>
     </tr>
+    {VERTEILBAR.includes(kategorie) && (() => {
+      const teile = draft.gilt_von && draft.gilt_bis && Number(draft.ausgaben) > 0
+        ? verteile(Number(draft.ausgaben), draft.gilt_von, draft.gilt_bis) : null;
+      return (
+        <tr className="bg-muted/40">
+          <td className="px-2 pb-3" colSpan={7}>
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-[11px] text-muted-foreground mb-0.5">Gilt von (optional)</label>
+                <Input type="date" value={draft.gilt_von} onChange={e => setDraft({ ...draft, gilt_von: e.target.value })} className="h-9 w-[160px]" />
+              </div>
+              <div>
+                <label className="block text-[11px] text-muted-foreground mb-0.5">Gilt bis</label>
+                <Input type="date" value={draft.gilt_bis} onChange={e => setDraft({ ...draft, gilt_bis: e.target.value })} className="h-9 w-[160px]" />
+              </div>
+              <p className="text-xs text-muted-foreground flex-1 min-w-[200px]">
+                {teile
+                  ? <>Wird pro Monat verteilt: {[...teile.entries()].map(([j, v]) => `${j}: CHF ${fmtCHF(v)}`).join(" · ")}</>
+                  : "Zeitraum der Rechnung angeben, wenn sie mehrere Monate oder Jahre abdeckt. Der Betrag wird dann automatisch auf die Jahre verteilt."}
+              </p>
+            </div>
+          </td>
+        </tr>
+      );
+    })()}
+    </>
   );
 
   const renderBlatt = (kategorie: Kategorie) => {
@@ -523,7 +599,10 @@ export default function BuchhaltungPage() {
               ) : (
                 <tr key={r.id} className={cn("border-t border-border", r.saldo < 0 && "bg-destructive/10")}>
                   <td className="p-2 tabular-nums">{r.datum ?? "–"}</td>
-                  <td className="p-2">{r.text}</td>
+                  <td className="p-2">
+                    {r.text}
+                    {r.hinweis && <div className="text-[11px] text-muted-foreground">{r.virtuell ? "↳ " : ""}{r.hinweis}</div>}
+                  </td>
                   <td className="p-2 text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       {r.beleg ?? "–"}
@@ -538,8 +617,14 @@ export default function BuchhaltungPage() {
                   <td className="p-2 text-right"><Num value={n(r.ausgaben)} /></td>
                   <td className="p-2 text-right"><Num value={r.saldo} bold /></td>
                   <td className="p-2 text-right whitespace-nowrap">
-                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(r)}><Pencil className="w-3.5 h-3.5" /></Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => void deleteBuchung(r.id)}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
+                    {r.virtuell ? (
+                      <span className="text-[11px] text-muted-foreground pr-2">Abgrenzung</span>
+                    ) : (
+                      <>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => startEdit(r)}><Pencil className="w-3.5 h-3.5" /></Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => void deleteBuchung(r.id)}><Trash2 className="w-3.5 h-3.5 text-destructive" /></Button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
