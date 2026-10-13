@@ -277,7 +277,7 @@ export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: num
     // ground: sample footprint + centre, sink below lowest point so slopes stay closed
     const zs = ring.map(([x, y]) => sample(x, y));
     const zMin = Math.min(...zs), zMax = Math.max(...zs);
-    const base = zMin - 0.6;
+    const base = zMin - 1.2;
     const top = zMax + Math.max(g.hoeheM * s, 0.8);
     const roof = g.dachM * s;
     const box = inside && g.dach !== "flach" ? obb(ring) : null;
@@ -285,32 +285,26 @@ export function baueModell(hoehen: number[][], gebaeude: Gebaeude[], kanteM: num
       parts.push(dachKoerper(box, s, base, top - roof, top, g.dach));
       continue;
     }
-    const shape = new THREE.Shape(ring.map(([x, y]) => new THREE.Vector2(x * s, y * s)));
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: top - base, bevelEnabled: false });
+    const pts = ring.map(([x, y]) => new THREE.Vector2(x * s, y * s));
+    const geo = new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth: top - base, bevelEnabled: false });
     geo.translate(0, 0, base);
     geo.deleteAttribute("uv");
     parts.push(geo.toNonIndexed());
-  }
-  if (extra) {
-    const RELIEF = 0.4; // mm Strassen-/Platzrelief
-    // Plätze: flache Platten
-    for (const pl of extra.plaetze) {
-      const ring = clip(pl, half);
-      if (ring.length < 3 || Math.abs(ringArea(ring)) * s * s < 2) continue;
-      const zs = ring.map(([x, y]) => sample(x, y));
-      const base = Math.min(...zs) - 0.6, top = Math.max(...zs) + RELIEF * 0.6;
-      const geo = new THREE.ExtrudeGeometry(new THREE.Shape(ring.map(([x, y]) => new THREE.Vector2(x * s, y * s))), { depth: top - base, bevelEnabled: false });
-      geo.translate(0, 0, base); geo.deleteAttribute("uv"); parts.push(geo.toNonIndexed());
-    }
-    // Strassen und Wege: erhabene Bänder, Fusswege höher als Fahrbahnen
-    for (const w of extra.wege) {
-      const breite = Math.max(w.breiteM * s, w.fuss ? 0.5 : 0.8);
-      const hoch = w.fuss ? RELIEF : RELIEF * 0.5;
-      for (const seg of clipLinie(w.pts, half)) {
-        for (let k = 0; k < seg.length - 1; k++) parts.push(band(seg[k], seg[k + 1], s, breite, hoch, sample));
-        for (const p of seg) parts.push(knoten(p, s, breite / 2, hoch, sample));
+    // Attika: umlaufende Dachbrüstung bei Flachdächern
+    const ob = obb(ring);
+    if (ob && Math.min(ob.hl, ob.hw) * s > 2.2) {
+      const cx = pts.reduce((a, p) => a + p.x, 0) / pts.length, cy = pts.reduce((a, p) => a + p.y, 0) / pts.length;
+      const f = 1 - 0.55 / (Math.min(ob.hl, ob.hw) * s);
+      const inner = pts.map((p) => new THREE.Vector2(cx + (p.x - cx) * f, cy + (p.y - cy) * f));
+      if (inner.every((p) => inPoly(pts.map((q) => [q.x, q.y] as [number, number]), p.x, p.y))) {
+        const sh = new THREE.Shape(pts);
+        sh.holes.push(new THREE.Path(inner.slice().reverse()));
+        const at = new THREE.ExtrudeGeometry(sh, { depth: 0.8, bevelEnabled: false });
+        at.translate(0, 0, top - 0.1); at.deleteAttribute("uv"); parts.push(at.toNonIndexed());
       }
     }
+  }
+  if (extra) {
     // Bäume: kleine Kegel
     let n = 0;
     for (const [x, y] of extra.baeume) {
