@@ -3,7 +3,7 @@ import { Outlet, useLocation } from "@/lib/router-compat";
 import {
   LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Menu, X, CalendarDays, MessageCircle,
-  Mail, Layers, Receipt, Smartphone, ShoppingBag, FileText, PenLine, Star,
+  Mail, Receipt, Smartphone, ShoppingBag, FileText, PenLine, Star,
   ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles, Sun, Moon, BookOpen } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,7 +42,6 @@ const navGroups: NavGroup[] = [
   {
     label: "Produktion",
     items: [
-      { to: "/admin/druckplatten", icon: <Layers className={ic} />, label: "Druckplatten" },
       { to: "/admin/filamente", icon: <FlaskConical className={ic} />, label: "Filamente", exact: true },
       { to: "/admin/filamentverbrauch", icon: <BarChart3 className={ic} />, label: "Filamentverbrauch" },
       { to: "/admin/lager", icon: <Package className={ic} />, label: "Lager" },

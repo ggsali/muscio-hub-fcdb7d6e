@@ -2458,9 +2458,6 @@ export default function AuftragDetailPage() {
                 <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} variant="outline" className="justify-start gap-2 border-border">
                   {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />} Zahlungslink senden
                 </Button>
-                <Button onClick={() => navigate(`/admin/auftraege/${id}/platten`)} variant="outline" className="justify-start gap-2 border-border">
-                  <Layers className="w-4 h-4" /> Druckplatten planen
-                </Button>
                 <Button onClick={handleDuplicate} disabled={duplicating} variant="outline" className="justify-start gap-2 border-border">
                   <Copy className="w-4 h-4" /> Auftrag duplizieren
                 </Button>
@@ -2974,18 +2971,6 @@ export default function AuftragDetailPage() {
           )}
 
 
-          {!isNew && id && (
-            <div className="bg-card border border-border rounded-lg p-4 flex items-center gap-3">
-              <Layers className="w-4 h-4 text-primary shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">Druckplatten-Planer</p>
-                <p className="text-xs text-muted-foreground">Teile auf 3D-Bauplatten anordnen, drehen und als ZIP exportieren.</p>
-              </div>
-              <Button size="sm" onClick={() => navigate(`/admin/auftraege/${id}/platten`)}>
-                Platten planen
-              </Button>
-            </div>
-          )}
         </div>
       )}
 

@@ -23,7 +23,6 @@ const PAGES: { label: string; to: string; area?: Area; keys: string }[] = [
   { label: "Anfragen", to: "/admin/anfragen", keys: "inquiries kontaktformular mails" },
   { label: "Bestellungen", to: "/admin/website/bestellungen", keys: "shop orders käufe" },
   { label: "Live-Chat", to: "/admin/chat", keys: "nachrichten support" },
-  { label: "Druckplatten", to: "/admin/druckplatten", keys: "plates bauplatte drucker" },
   { label: "Filamente", to: "/admin/filamente", keys: "material pla petg spulen" },
   { label: "Filament-Rollen", to: "/admin/filamente/rollen", keys: "spulen rolle" },
   { label: "Filament-Bestand", to: "/admin/filamente/bestand", keys: "lager inventar" },

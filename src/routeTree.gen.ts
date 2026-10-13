@@ -58,7 +58,6 @@ import { Route as AdminAnfragenRouteImport } from './routes/admin/anfragen'
 import { Route as AdminBewertungenRouteImport } from './routes/admin/bewertungen'
 import { Route as AdminBuchhaltungRouteImport } from './routes/admin/buchhaltung'
 import { Route as AdminChatRouteImport } from './routes/admin/chat'
-import { Route as AdminDruckplattenRouteImport } from './routes/admin/druckplatten'
 import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellungen'
 import { Route as AdminFilamenteRouteImport } from './routes/admin/filamente'
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
@@ -132,7 +131,6 @@ import { Route as ApiPublicTrackEmailRouteImport } from './routes/api/public/tra
 import { Route as WebsiteAdminBestellungenIndexRouteImport } from './routes/website-admin/bestellungen.index'
 import { Route as WebsiteAdminBestellungenIdRouteImport } from './routes/website-admin/bestellungen.$id'
 import { Route as AdminAuftraegeIdIndexRouteImport } from './routes/admin/auftraege.$id.index'
-import { Route as AdminAuftraegeIdPlattenRouteImport } from './routes/admin/auftraege.$id.platten'
 import { Route as AdminFinanzenAbrechnungenIndexRouteImport } from './routes/admin/finanzen.abrechnungen.index'
 import { Route as AdminFinanzenAbrechnungenIdRouteImport } from './routes/admin/finanzen.abrechnungen.$id'
 import { Route as AdminShopBestellungenIdRouteImport } from './routes/admin/shop.bestellungen.$id'
@@ -379,11 +377,6 @@ const AdminBuchhaltungRoute = AdminBuchhaltungRouteImport.update({
 const AdminChatRoute = AdminChatRouteImport.update({
   id: '/chat',
   path: '/chat',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDruckplattenRoute = AdminDruckplattenRouteImport.update({
-  id: '/druckplatten',
-  path: '/druckplatten',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminEinstellungenRoute = AdminEinstellungenRouteImport.update({
@@ -759,11 +752,6 @@ const AdminAuftraegeIdIndexRoute = AdminAuftraegeIdIndexRouteImport.update({
   path: '/auftraege/$id/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAuftraegeIdPlattenRoute = AdminAuftraegeIdPlattenRouteImport.update({
-  id: '/auftraege/$id/platten',
-  path: '/auftraege/$id/platten',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminFinanzenAbrechnungenIndexRoute =
   AdminFinanzenAbrechnungenIndexRouteImport.update({
     id: '/finanzen/abrechnungen/',
@@ -830,7 +818,6 @@ export interface FileRoutesByFullPath {
   '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
-  '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
@@ -904,7 +891,6 @@ export interface FileRoutesByFullPath {
   '/admin/finanzen/': typeof AdminFinanzenIndexRoute
   '/admin/kunden/': typeof AdminKundenIndexRoute
   '/website-admin/bestellungen/': typeof WebsiteAdminBestellungenIndexRoute
-  '/admin/auftraege/$id/platten': typeof AdminAuftraegeIdPlattenRoute
   '/admin/finanzen/abrechnungen/$id': typeof AdminFinanzenAbrechnungenIdRoute
   '/admin/shop/bestellungen/$id': typeof AdminShopBestellungenIdRoute
   '/admin/auftraege/$id/': typeof AdminAuftraegeIdIndexRoute
@@ -954,7 +940,6 @@ export interface FileRoutesByTo {
   '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
-  '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
@@ -1029,7 +1014,6 @@ export interface FileRoutesByTo {
   '/admin/finanzen': typeof AdminFinanzenIndexRoute
   '/admin/kunden': typeof AdminKundenIndexRoute
   '/website-admin/bestellungen': typeof WebsiteAdminBestellungenIndexRoute
-  '/admin/auftraege/$id/platten': typeof AdminAuftraegeIdPlattenRoute
   '/admin/finanzen/abrechnungen/$id': typeof AdminFinanzenAbrechnungenIdRoute
   '/admin/shop/bestellungen/$id': typeof AdminShopBestellungenIdRoute
   '/admin/auftraege/$id': typeof AdminAuftraegeIdIndexRoute
@@ -1084,7 +1068,6 @@ export interface FileRoutesById {
   '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
-  '/admin/druckplatten': typeof AdminDruckplattenRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
@@ -1159,7 +1142,6 @@ export interface FileRoutesById {
   '/admin/finanzen/': typeof AdminFinanzenIndexRoute
   '/admin/kunden/': typeof AdminKundenIndexRoute
   '/website-admin/bestellungen/': typeof WebsiteAdminBestellungenIndexRoute
-  '/admin/auftraege/$id/platten': typeof AdminAuftraegeIdPlattenRoute
   '/admin/finanzen/abrechnungen/$id': typeof AdminFinanzenAbrechnungenIdRoute
   '/admin/shop/bestellungen/$id': typeof AdminShopBestellungenIdRoute
   '/admin/auftraege/$id/': typeof AdminAuftraegeIdIndexRoute
@@ -1215,7 +1197,6 @@ export interface FileRouteTypes {
     | '/admin/bewertungen'
     | '/admin/buchhaltung'
     | '/admin/chat'
-    | '/admin/druckplatten'
     | '/admin/einstellungen'
     | '/admin/filamente'
     | '/admin/gutscheine'
@@ -1289,7 +1270,6 @@ export interface FileRouteTypes {
     | '/admin/finanzen/'
     | '/admin/kunden/'
     | '/website-admin/bestellungen/'
-    | '/admin/auftraege/$id/platten'
     | '/admin/finanzen/abrechnungen/$id'
     | '/admin/shop/bestellungen/$id'
     | '/admin/auftraege/$id/'
@@ -1339,7 +1319,6 @@ export interface FileRouteTypes {
     | '/admin/bewertungen'
     | '/admin/buchhaltung'
     | '/admin/chat'
-    | '/admin/druckplatten'
     | '/admin/einstellungen'
     | '/admin/filamente'
     | '/admin/gutscheine'
@@ -1414,7 +1393,6 @@ export interface FileRouteTypes {
     | '/admin/finanzen'
     | '/admin/kunden'
     | '/website-admin/bestellungen'
-    | '/admin/auftraege/$id/platten'
     | '/admin/finanzen/abrechnungen/$id'
     | '/admin/shop/bestellungen/$id'
     | '/admin/auftraege/$id'
@@ -1468,7 +1446,6 @@ export interface FileRouteTypes {
     | '/admin/bewertungen'
     | '/admin/buchhaltung'
     | '/admin/chat'
-    | '/admin/druckplatten'
     | '/admin/einstellungen'
     | '/admin/filamente'
     | '/admin/gutscheine'
@@ -1543,7 +1520,6 @@ export interface FileRouteTypes {
     | '/admin/finanzen/'
     | '/admin/kunden/'
     | '/website-admin/bestellungen/'
-    | '/admin/auftraege/$id/platten'
     | '/admin/finanzen/abrechnungen/$id'
     | '/admin/shop/bestellungen/$id'
     | '/admin/auftraege/$id/'
@@ -1933,13 +1909,6 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/admin/chat'
       preLoaderRoute: typeof AdminChatRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/druckplatten': {
-      id: '/admin/druckplatten'
-      path: '/druckplatten'
-      fullPath: '/admin/druckplatten'
-      preLoaderRoute: typeof AdminDruckplattenRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/einstellungen': {
@@ -2453,13 +2422,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAuftraegeIdIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/auftraege/$id/platten': {
-      id: '/admin/auftraege/$id/platten'
-      path: '/auftraege/$id/platten'
-      fullPath: '/admin/auftraege/$id/platten'
-      preLoaderRoute: typeof AdminAuftraegeIdPlattenRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/finanzen/abrechnungen/': {
       id: '/admin/finanzen/abrechnungen/'
       path: '/finanzen/abrechnungen'
@@ -2583,7 +2545,6 @@ interface AdminRouteChildren {
   AdminBewertungenRoute: typeof AdminBewertungenRoute
   AdminBuchhaltungRoute: typeof AdminBuchhaltungRoute
   AdminChatRoute: typeof AdminChatRoute
-  AdminDruckplattenRoute: typeof AdminDruckplattenRoute
   AdminEinstellungenRoute: typeof AdminEinstellungenRoute
   AdminFilamenteRoute: typeof AdminFilamenteRouteWithChildren
   AdminGutscheineRoute: typeof AdminGutscheineRoute
@@ -2604,7 +2565,6 @@ interface AdminRouteChildren {
   AdminAuftraegeIndexRoute: typeof AdminAuftraegeIndexRoute
   AdminFinanzenIndexRoute: typeof AdminFinanzenIndexRoute
   AdminKundenIndexRoute: typeof AdminKundenIndexRoute
-  AdminAuftraegeIdPlattenRoute: typeof AdminAuftraegeIdPlattenRoute
   AdminFinanzenAbrechnungenIdRoute: typeof AdminFinanzenAbrechnungenIdRoute
   AdminShopBestellungenIdRoute: typeof AdminShopBestellungenIdRoute
   AdminAuftraegeIdIndexRoute: typeof AdminAuftraegeIdIndexRoute
@@ -2616,7 +2576,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBewertungenRoute: AdminBewertungenRoute,
   AdminBuchhaltungRoute: AdminBuchhaltungRoute,
   AdminChatRoute: AdminChatRoute,
-  AdminDruckplattenRoute: AdminDruckplattenRoute,
   AdminEinstellungenRoute: AdminEinstellungenRoute,
   AdminFilamenteRoute: AdminFilamenteRouteWithChildren,
   AdminGutscheineRoute: AdminGutscheineRoute,
@@ -2637,7 +2596,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuftraegeIndexRoute: AdminAuftraegeIndexRoute,
   AdminFinanzenIndexRoute: AdminFinanzenIndexRoute,
   AdminKundenIndexRoute: AdminKundenIndexRoute,
-  AdminAuftraegeIdPlattenRoute: AdminAuftraegeIdPlattenRoute,
   AdminFinanzenAbrechnungenIdRoute: AdminFinanzenAbrechnungenIdRoute,
   AdminShopBestellungenIdRoute: AdminShopBestellungenIdRoute,
   AdminAuftraegeIdIndexRoute: AdminAuftraegeIdIndexRoute,
