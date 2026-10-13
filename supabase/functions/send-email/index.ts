@@ -342,13 +342,23 @@ Deno.serve(async (req) => {
     const datum = order.datum ? new Date(order.datum).toLocaleDateString("de-CH") : "";
     const effectiveLieferart = bodyLieferart || (order as any).lieferart || "versand";
     const isPickup = effectiveLieferart === "abholung";
+    // Briefpost (A-Post): kein Paket, keine Sendungsnummer
+    const isBrief = !isPickup && (((order as any).paket_groesse || "") === "briefpost" || body.versandart === "briefpost");
 
     let subject = "";
     let html = "";
 
     if (kind === "status") {
       const key = STATUS_KEY_MAP[statusKey] || statusKey;
-      const s = (isPickup && STATUS_TEXTS_PICKUP[key]) ? STATUS_TEXTS_PICKUP[key] : STATUS_TEXTS[key];
+      let s = (isPickup && STATUS_TEXTS_PICKUP[key]) ? STATUS_TEXTS_PICKUP[key] : STATUS_TEXTS[key];
+      if (isBrief && key === "versandt") {
+        s = {
+          subject: "Ihr Auftrag wurde per Briefpost versendet",
+          title: "Per Briefpost versendet",
+          intro: "Ihr Auftrag wurde soeben per Briefpost (A-Post) versendet. Die Zustellung erfolgt in der Regel innerhalb von 1–2 Werktagen in Ihren Briefkasten. Eine Sendungsnummer gibt es bei Briefpost nicht.",
+          emoji: "✉️",
+        };
+      }
       if (!s) {
         return new Response(JSON.stringify({ skipped: true, reason: "unknown-status" }), {
           status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -360,7 +370,7 @@ Deno.serve(async (req) => {
         if (isPickup) {
           infoBlock = PICKUP_ADDRESS_HTML;
         } else {
-          const effectiveTracking = trackingNr || (order as any).tracking_nr || null;
+          const effectiveTracking = isBrief ? null : (trackingNr || (order as any).tracking_nr || null);
           if (effectiveTracking) {
             infoBlock = trackingBlockHtml(effectiveTracking);
           }

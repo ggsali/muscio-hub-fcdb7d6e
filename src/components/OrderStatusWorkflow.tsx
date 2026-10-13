@@ -188,12 +188,12 @@ export default function OrderStatusWorkflow({
     if (tplKey) {
       try {
         await supabase.functions.invoke("send-email", {
-          body: { kind: "status", orderId, statusKey: tplKey, trackingNr: trackingInput || trackingNr || null, lieferart },
+          body: { kind: "status", orderId, statusKey: tplKey, trackingNr: trackingInput || trackingNr || null, lieferart, versandart: paketGroesse || null },
         });
         // Log mail sent
         const mailLabels: Record<string, string> = {
           bestätigung: "✉️ Bestätigungs-Mail gesendet",
-          versand: "✉️ Versand-Mail mit Tracking gesendet",
+          versandt: paketGroesse === "briefpost" ? "✉️ Versand-Mail (Briefpost) gesendet" : "✉️ Versand-Mail mit Tracking gesendet",
           offerte: "✉️ Offerte per Mail gesendet",
           abschluss: "✉️ Abschluss-Mail gesendet",
           storno: "✉️ Storno-Mail gesendet",
