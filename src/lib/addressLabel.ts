@@ -62,7 +62,8 @@ export async function printAddressLabel(orderId: string | null, customerId?: str
   @page { size: ${LABEL_W_MM}mm ${LABEL_H_MM}mm; margin: 0; }
   html, body { margin: 0; padding: 0; }
   .l { width: ${LABEL_W_MM}mm; height: ${LABEL_H_MM}mm; box-sizing: border-box; padding: 1.5mm 2mm;
-       font-family: Arial, Helvetica, sans-serif; color: #000; overflow: hidden; }
+       font-family: Arial, Helvetica, sans-serif; color: #000; overflow: hidden;
+       display: flex; flex-direction: column; justify-content: center; }
   .adr { font-size: 12pt; line-height: 1.15; font-weight: 600; }
   .adr div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style></head><body>
