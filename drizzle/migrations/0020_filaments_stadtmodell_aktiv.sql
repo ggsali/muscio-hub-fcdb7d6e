@@ -1,0 +1,2 @@
+ALTER TABLE public.filaments ADD COLUMN IF NOT EXISTS stadtmodell_aktiv boolean NOT NULL DEFAULT false;
+ALTER TABLE public.stadtmodell_bestellungen ADD COLUMN IF NOT EXISTS versandart text, ADD COLUMN IF NOT EXISTS versandkosten numeric, ADD COLUMN IF NOT EXISTS lieferadresse text;
