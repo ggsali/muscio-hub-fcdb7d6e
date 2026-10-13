@@ -1,5 +1,5 @@
 /** Kategorien, bei denen eine Rechnung auf einen Zeitraum verteilt werden kann (Abgrenzung) */
-export const VERTEILBAR = ["raumaufwand", "versicherungen"];
+export const VERTEILBAR = ["raumaufwand", "versicherungen", "buero"];
 
 const ymd = (s: string) => {
   const m = /^(\d{4})-(\d{2})/.exec(s);
