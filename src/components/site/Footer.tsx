@@ -43,6 +43,7 @@ const itemVariants = {
 
 export const Footer = () => {
   const resin = useResinEnabled();
+  const stadtmodellAktiv = useStadtmodellEnabled();
   const visibleMaterials = resin ? materials : materials.filter((m) => !isResinText(m.label) && !isResinText(m.path));
 
   return (
