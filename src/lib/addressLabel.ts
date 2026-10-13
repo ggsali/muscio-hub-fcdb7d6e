@@ -23,16 +23,21 @@ const isSwiss = (land?: string | null) => {
  * Druckt eine Adressetikette (Briefpost) für den Auftrag auf dem Etikettendrucker (50 × 30 mm).
  * Ohne Post-API – bei Briefen gibt es keine Sendungsnummer.
  */
-export async function printAddressLabel(orderId: string): Promise<AddressLabelResult> {
+export async function printAddressLabel(orderId: string | null, customerId?: string): Promise<AddressLabelResult> {
   try {
-    const { data: order, error: oErr } = await supabase
-      .from("orders").select("customer_id").eq("id", orderId).single();
-    if (oErr || !order?.customer_id) return { ok: false, error: "Auftrag oder Kunde nicht gefunden" };
+    let custId = customerId;
+    if (orderId) {
+      const { data: order, error: oErr } = await supabase
+        .from("orders").select("customer_id").eq("id", orderId).single();
+      if (oErr || !order?.customer_id) return { ok: false, error: "Auftrag oder Kunde nicht gefunden" };
+      custId = order.customer_id;
+    }
+    if (!custId) return { ok: false, error: "Kunde nicht gefunden" };
 
     const { data: c, error: cErr } = await supabase
       .from("customers")
       .select("name, vorname, firma, strasse, hausnummer, plz, ort, land")
-      .eq("id", order.customer_id).single();
+      .eq("id", custId).single();
     if (cErr || !c) return { ok: false, error: "Kunde nicht gefunden" };
 
     const addr = normalizeStreet(c.strasse, c.hausnummer);
