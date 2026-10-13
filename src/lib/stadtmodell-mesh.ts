@@ -40,6 +40,12 @@ export async function ladeHoehen(lat: number, lon: number, kanteM: number, onPro
   return rows;
 }
 
+const OVERPASS_SERVER = [
+  "https://overpass.osm.ch/api/interpreter",
+  "https://lz4.overpass-api.de/api/interpreter",
+  "https://z.overpass-api.de/api/interpreter",
+];
+
 export interface Gebaeude { ring: [number, number][]; hoeheM: number }
 
 /** Building footprints in local metres (x east, y north) relative to centre. */
@@ -47,9 +53,17 @@ export async function ladeGebaeude(lat: number, lon: number, kanteM: number): Pr
   const dLat = kanteM / 2 / 110540;
   const dLon = kanteM / 2 / (111320 * Math.cos((lat * Math.PI) / 180));
   const q = `[out:json][timeout:25];way["building"](${lat - dLat},${lon - dLon},${lat + dLat},${lon + dLon});out tags geom;`;
-  const res = await fetch("https://overpass-api.de/api/interpreter", { method: "POST", body: "data=" + encodeURIComponent(q) });
-  if (!res.ok) throw new Error("Gebäudedaten konnten nicht geladen werden");
-  const data = await res.json();
+  let data: any = null;
+  for (const server of OVERPASS_SERVER) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 20000);
+      const res = await fetch(server, { method: "POST", body: "data=" + encodeURIComponent(q), signal: ctrl.signal });
+      clearTimeout(t);
+      if (res.ok) { data = await res.json(); break; }
+    } catch { /* nächster Server */ }
+  }
+  if (!data) throw new Error("Gebäudedaten konnten nicht geladen werden");
   const kx = 111320 * Math.cos((lat * Math.PI) / 180);
   return (data.elements || [])
     .filter((el: any) => el.geometry?.length > 3)
