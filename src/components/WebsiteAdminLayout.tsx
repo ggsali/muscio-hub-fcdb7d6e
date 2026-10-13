@@ -25,7 +25,6 @@ const NAV = [
   { to: "/website-admin/team", label: "Team", icon: UserCircle2 },
   { to: "/website-admin/timeline", label: "Zeitleiste", icon: Clock },
   { to: "/website-admin/partner", label: "Partner", icon: Handshake },
-  { to: "/website-admin/equipment", label: "Maschinen & Equipment", icon: Cpu },
   { to: "/website-admin/navigation", label: "Navigation", icon: Navigation },
   { to: "/website-admin/kunden", label: "Website-Kunden", icon: Users2 },
   { to: "/website-admin/chat", label: "Chat-Postfach", icon: MessageCircle },

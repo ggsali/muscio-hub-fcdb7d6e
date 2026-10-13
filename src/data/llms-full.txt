@@ -104,7 +104,6 @@ Deutsch (Hauptsprache), Englisch auf Anfrage
 - 3D-Druck Ostschweiz: https://3dmuscio.com/standorte/ostschweiz
 - 3D-Druck Zürich: https://3dmuscio.com/standorte/zuerich
 - 3D-Druck St. Gallen: https://3dmuscio.com/standorte/st-gallen
-- Maschinen: https://3dmuscio.com/maschinen
 - Projekte: https://3dmuscio.com/projekte
 - Shop: https://3dmuscio.com/shop
 - Blog: https://3dmuscio.com/blog
