@@ -683,6 +683,8 @@ export type Database = {
           created_at: string
           datum: string | null
           einnahmen: number | null
+          gilt_bis: string | null
+          gilt_von: string | null
           id: string
           jahr: number
           kategorie: string
@@ -696,6 +698,8 @@ export type Database = {
           created_at?: string
           datum?: string | null
           einnahmen?: number | null
+          gilt_bis?: string | null
+          gilt_von?: string | null
           id?: string
           jahr?: number
           kategorie: string
@@ -709,6 +713,8 @@ export type Database = {
           created_at?: string
           datum?: string | null
           einnahmen?: number | null
+          gilt_bis?: string | null
+          gilt_von?: string | null
           id?: string
           jahr?: number
           kategorie?: string
