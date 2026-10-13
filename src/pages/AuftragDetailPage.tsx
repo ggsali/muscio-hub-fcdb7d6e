@@ -2059,6 +2059,7 @@ export default function AuftragDetailPage() {
               source={source}
               lieferart={lieferart}
               customerId={customerId || undefined}
+              paketGroesse={paketGroesse}
               onStatusChange={setStatus}
               onTrackingNrChange={setTrackingNr}
             />
@@ -3001,6 +3002,7 @@ export default function AuftragDetailPage() {
             source={source}
             lieferart={lieferart}
             customerId={customerId || undefined}
+            paketGroesse={paketGroesse}
             onStatusChange={setStatus}
             onTrackingNrChange={setTrackingNr}
           />

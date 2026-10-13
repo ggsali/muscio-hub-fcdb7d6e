@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { createShippingLabel } from "@/lib/shippingLabel";
+import { printAddressLabel } from "@/lib/addressLabel";
 import { useNavigate } from "@/lib/router-compat";
 
 /** Post-CH Sendungsverfolgungs-Link */
@@ -86,12 +87,14 @@ interface Props {
   source?: string;
   lieferart?: "versand" | "abholung";
   customerId?: string;
+  /** "briefpost" = A-Post-Brief (Adressetikette statt Post-Paketetikette) */
+  paketGroesse?: string;
   onStatusChange: (newStatus: string) => void;
   onTrackingNrChange?: (nr: string) => void;
 }
 
 export default function OrderStatusWorkflow({
-  orderId, currentStatus, parts, trackingNr = "", lieferart = "versand", customerId, onStatusChange, onTrackingNrChange
+  orderId, currentStatus, parts, trackingNr = "", lieferart = "versand", customerId, paketGroesse, onStatusChange, onTrackingNrChange
 }: Props) {
   const navigate = useNavigate();
   const [log, setLog] = useState<LogEntry[]>([]);
@@ -297,6 +300,8 @@ export default function OrderStatusWorkflow({
     }
   };
 
+  const isBrief = paketGroesse === "briefpost";
+
   const bannerText = (() => {
     switch (suggestedStatus) {
       case "Anfrage": return "Auftrag auf den neuen Workflow umstellen?";
@@ -304,13 +309,44 @@ export default function OrderStatusWorkflow({
       case "Bezahlt": return "Zahlung erhalten – jetzt bestätigen?";
       case "Im Druck": return "Druck gestartet?";
       case "Qualitätsprüfung": return allFertig ? "Alle Teile fertig – Qualitätsprüfung starten?" : "Druck fertig – Qualitätsprüfung starten?";
-      case "Versandt": return lieferart === "abholung" ? "Bereit zur Abholung?" : "Paket versandbereit – Etikette erstellen und Tracking erfassen?";
+      case "Versandt": return lieferart === "abholung" ? "Bereit zur Abholung?" : isBrief ? "Brief versandbereit – Adressetikette drucken?" : "Paket versandbereit – Etikette erstellen und Tracking erfassen?";
       case "Abgeschlossen": return "Auftrag abschliessen (Bewertungsmail wird gesendet)?";
       default: return "";
     }
   })();
 
-  const labelBlock = lieferart === "versand" ? (
+  /** Briefpost: Adressetikette auf dem Etikettendrucker (50 × 30 mm) drucken */
+  const handlePrintAddress = async () => {
+    setLabelError(null);
+    const res = await printAddressLabel(orderId);
+    if (!res.ok) {
+      setLabelError({ message: res.error || "Unbekannter Fehler" });
+      toast.error("Adressetikette konnte nicht erstellt werden", { description: res.error });
+      return;
+    }
+    toast.success("Adressetikette – Druckdialog geöffnet", { description: "Etikettendrucker (50 × 30 mm) wählen." });
+    await supabase.from("order_status_log").insert({ order_id: orderId, status: "🏷️ Adressetikette (Briefpost) gedruckt", notiz: null } as any);
+    await loadLog();
+  };
+
+  const labelBlock = lieferart === "versand" && isBrief ? (
+    <div className="space-y-2">
+      <Button type="button" onClick={handlePrintAddress} variant="outline" className="w-full h-12 md:h-10 gap-2 border-border">
+        <Printer className="w-4 h-4" />
+        Adressetikette drucken (Briefpost)
+      </Button>
+      {labelError && (
+        <div className="text-xs bg-destructive/10 border border-destructive/30 text-destructive rounded-lg px-3 py-2 space-y-1.5">
+          <p>⚠️ {labelError.message}</p>
+          {customerId && (
+            <button type="button" onClick={() => navigate(`/admin/kunden/${customerId}`)} className="font-semibold underline py-1">
+              Kundenprofil öffnen →
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  ) : lieferart === "versand" ? (
     <div className="space-y-2">
       <Button
         type="button"
@@ -488,7 +524,7 @@ export default function OrderStatusWorkflow({
             <p className="text-sm font-semibold">Versand bestätigen</p>
           </div>
           {labelBlock}
-          {labelBlock && (
+          {labelBlock && !isBrief && (
             <p className="text-[11px] text-muted-foreground -mt-1">
               Erstellt die Etikette als PDF. Die Sendungsnummer wird danach automatisch unten eingetragen.
             </p>
