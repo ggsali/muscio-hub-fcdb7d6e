@@ -8,6 +8,9 @@ import { Pencil, Trash2, Check, X, Plus, FileSpreadsheet, FileDown, ArrowUp, Arr
 import BelegScanDialog from "@/components/BelegScanDialog";
 import { cn } from "@/lib/utils";
 import { VERTEILBAR, verteile, monateZwischen } from "@/lib/earVerteilung";
+import type { Database } from "@/integrations/supabase/types";
+
+type BuchungInsert = Database["public"]["Tables"]["ear_buchungen"]["Insert"];
 
 type Kategorie =
   | "einnahmen" | "div_aufwaende" | "personalaufwand" | "raumaufwand"
@@ -282,7 +285,7 @@ export default function BuchhaltungPage() {
       if (!(Number(draft.ausgaben) > 0)) { toast.error("Für die Verteilung einen Betrag bei Ausgaben eintragen"); return; }
     }
     const original = editId && editId !== "new" ? buchungen.find(x => x.id === editId) : undefined;
-    const payload: Record<string, any> = {
+    const payload: BuchungInsert = {
       jahr,
       kategorie,
       datum: draft.datum || null,
