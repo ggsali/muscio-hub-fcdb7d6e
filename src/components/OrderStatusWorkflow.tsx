@@ -193,7 +193,7 @@ export default function OrderStatusWorkflow({
         // Log mail sent
         const mailLabels: Record<string, string> = {
           bestätigung: "✉️ Bestätigungs-Mail gesendet",
-          versandt: paketGroesse === "briefpost" ? "✉️ Versand-Mail (Briefpost) gesendet" : "✉️ Versand-Mail mit Tracking gesendet",
+          versandt: paketGroesse === "briefpost" ? "✉️ Versand-Mail (A-Briefpost) gesendet" : "✉️ Versand-Mail mit Tracking gesendet",
           offerte: "✉️ Offerte per Mail gesendet",
           abschluss: "✉️ Abschluss-Mail gesendet",
           storno: "✉️ Storno-Mail gesendet",
@@ -472,7 +472,7 @@ export default function OrderStatusWorkflow({
       )}
 
       {/* Tracking-Nr. nachträglich bearbeiten */}
-      {!showTrackingInput && ["Versandt", "Geliefert", "Abgeschlossen"].includes(currentStatus) && (
+      {!isBrief && !showTrackingInput && ["Versandt", "Geliefert", "Abgeschlossen"].includes(currentStatus) && (
         <div className="flex items-center gap-2 text-xs bg-muted/20 border border-border rounded-lg px-3 py-2 flex-wrap">
           <Truck className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           <span className="text-muted-foreground">Tracking-Nr.:</span>
@@ -529,6 +529,9 @@ export default function OrderStatusWorkflow({
               Erstellt die Etikette als PDF. Die Sendungsnummer wird danach automatisch unten eingetragen.
             </p>
           )}
+          {isBrief ? (
+            <p className="text-[11px] text-muted-foreground">Briefpost A-Post hat keine Sendungsnummer. Der Kunde erhält eine Mail, dass der Auftrag per A-Briefpost versendet wurde.</p>
+          ) : (
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">Tracking-Nummer (Post CH)</label>
             <Input
@@ -551,6 +554,7 @@ export default function OrderStatusWorkflow({
             )}
             <p className="text-[11px] text-muted-foreground">Die Nummer wird gespeichert und dem Kunden per Mail mit Tracking-Link mitgeteilt.</p>
           </div>
+          )}
           <div className="flex gap-2">
             <Button onClick={handleConfirmDelivery} disabled={savingTracking} className="bg-primary hover:bg-primary/90 gap-2 text-sm" size="sm">
               <Package className="w-3.5 h-3.5" />

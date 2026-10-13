@@ -353,9 +353,9 @@ Deno.serve(async (req) => {
       let s = (isPickup && STATUS_TEXTS_PICKUP[key]) ? STATUS_TEXTS_PICKUP[key] : STATUS_TEXTS[key];
       if (isBrief && key === "versandt") {
         s = {
-          subject: "Ihr Auftrag wurde per Briefpost versendet",
-          title: "Per Briefpost versendet",
-          intro: "Ihr Auftrag wurde soeben per Briefpost (A-Post) versendet. Die Zustellung erfolgt in der Regel innerhalb von 1–2 Werktagen in Ihren Briefkasten. Eine Sendungsnummer gibt es bei Briefpost nicht.",
+          subject: "Ihr Auftrag wurde per A-Briefpost versendet",
+          title: "Per A-Briefpost versendet",
+          intro: "Ihr Auftrag wurde soeben per A-Briefpost versendet. Die Zustellung erfolgt in der Regel innerhalb von 1–2 Werktagen in Ihren Briefkasten. Bei A-Briefpost gibt es keine Sendungsnummer.",
           emoji: "✉️",
         };
       }

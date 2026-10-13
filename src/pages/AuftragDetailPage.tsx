@@ -3039,8 +3039,8 @@ export default function AuftragDetailPage() {
 
           {/* 4. Tracking-Nummer (bei Versand) + Termine */}
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
-            <h3 className="font-semibold text-sm">{lieferart === "abholung" ? "Termine" : "Tracking & Termine"}</h3>
-            {lieferart === "versand" && (["Versandt", "Geliefert", "Abgeschlossen"].includes(status) || !!trackingNr) && (
+            <h3 className="font-semibold text-sm">{lieferart === "abholung" || paketGroesse === "briefpost" ? "Termine" : "Tracking & Termine"}</h3>
+            {lieferart === "versand" && paketGroesse !== "briefpost" && (["Versandt", "Geliefert", "Abgeschlossen"].includes(status) || !!trackingNr) && (
               <div className="space-y-1.5">
                 <Label>Tracking-Nummer (Post CH)</Label>
                 <div className="flex gap-2">
