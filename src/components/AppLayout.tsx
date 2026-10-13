@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Menu, X, CalendarDays, MessageCircle,
   Mail, Receipt, Smartphone, ShoppingBag, FileText, PenLine, Star,
-  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles, Sun, Moon, BookOpen } from "lucide-react";
+  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles, Sun, Moon, BookOpen, Building2 } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -45,6 +45,7 @@ const navGroups: NavGroup[] = [
       { to: "/admin/filamente", icon: <FlaskConical className={ic} />, label: "Filamente", exact: true },
       { to: "/admin/filamentverbrauch", icon: <BarChart3 className={ic} />, label: "Filamentverbrauch" },
       { to: "/admin/lager", icon: <Package className={ic} />, label: "Lager" },
+      { to: "/admin/stadtmodelle", icon: <Building2 className={ic} />, label: "Stadtmodelle" },
 
       { to: "/admin/teile", icon: <Library className={ic} />, label: "Teile-Bibliothek" },
     ],
