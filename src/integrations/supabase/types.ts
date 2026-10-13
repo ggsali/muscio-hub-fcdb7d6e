@@ -949,6 +949,7 @@ export type Database = {
           nur_intern: boolean | null
           preis_pro_kg: number
           public_preis_pro_g: number | null
+          stadtmodell_aktiv: boolean
           verkaufspreis_pro_g: number | null
         }
         Insert: {
@@ -965,6 +966,7 @@ export type Database = {
           nur_intern?: boolean | null
           preis_pro_kg?: number
           public_preis_pro_g?: number | null
+          stadtmodell_aktiv?: boolean
           verkaufspreis_pro_g?: number | null
         }
         Update: {
@@ -981,6 +983,7 @@ export type Database = {
           nur_intern?: boolean | null
           preis_pro_kg?: number
           public_preis_pro_g?: number | null
+          stadtmodell_aktiv?: boolean
           verkaufspreis_pro_g?: number | null
         }
         Relationships: []
@@ -2794,6 +2797,7 @@ export type Database = {
           kunde_email: string | null
           kunde_name: string | null
           lat: number
+          lieferadresse: string | null
           lon: number
           massstab: number
           material: string
@@ -2804,6 +2808,8 @@ export type Database = {
           stl_path: string | null
           stripe_session_id: string | null
           updated_at: string
+          versandart: string | null
+          versandkosten: number | null
         }
         Insert: {
           created_at?: string
@@ -2813,6 +2819,7 @@ export type Database = {
           kunde_email?: string | null
           kunde_name?: string | null
           lat: number
+          lieferadresse?: string | null
           lon: number
           massstab: number
           material: string
@@ -2823,6 +2830,8 @@ export type Database = {
           stl_path?: string | null
           stripe_session_id?: string | null
           updated_at?: string
+          versandart?: string | null
+          versandkosten?: number | null
         }
         Update: {
           created_at?: string
@@ -2832,6 +2841,7 @@ export type Database = {
           kunde_email?: string | null
           kunde_name?: string | null
           lat?: number
+          lieferadresse?: string | null
           lon?: number
           massstab?: number
           material?: string
@@ -2842,6 +2852,8 @@ export type Database = {
           stl_path?: string | null
           stripe_session_id?: string | null
           updated_at?: string
+          versandart?: string | null
+          versandkosten?: number | null
         }
         Relationships: []
       }

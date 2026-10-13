@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MATERIALIEN, type MaterialKey } from "@/lib/stadtmodell";
 
 export const Route = createFileRoute("/admin/stadtmodelle")({
   head: () => ({ meta: [{ title: "Stadtmodelle | 3DMuscio Admin" }] }),
@@ -50,7 +49,7 @@ function StadtmodellePage() {
                   <span className="text-sm text-muted-foreground">{b.kunde_email}</span>
                   <Badge variant={b.status === "fehler" ? "destructive" : "secondary"}>{STATUS[b.status] ?? b.status}</Badge>
                 </div>
-                <p className="text-sm">{b.kantenlaenge_m} m · 1:{b.massstab} · {b.modell_mm}×{b.modell_mm} mm · Sockel {b.sockel_mm} mm · {MATERIALIEN[b.material as MaterialKey]?.label ?? b.material} · <b>CHF {Number(b.preis).toFixed(2)}</b></p>
+                <p className="text-sm">{b.kantenlaenge_m} m · 1:{b.massstab} · {b.modell_mm}×{b.modell_mm} mm · Sockel {b.sockel_mm} mm · {b.material} · <b>CHF {Number(b.preis).toFixed(2)}</b>{b.versandart ? <> · {b.versandart} (CHF {Number(b.versandkosten ?? 0).toFixed(2)})</> : null}</p>
                 <p className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleString("de-CH")}{b.fehler ? ` · ${b.fehler}` : ""}</p>
               </div>
               <div className="flex flex-wrap gap-2">

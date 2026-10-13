@@ -24,6 +24,7 @@ export interface Filament {
   notizen: string;
   aktiv: boolean;
   nur_intern: boolean;
+  stadtmodell_aktiv: boolean;
 }
 
 const DEFAULT_MATERIAL_OPTIONS = ["PLA", "PLA+", "PETG", "TPU", "ABS", "ASA", "Nylon", "PC", "HIPS", "PVA", "Resin", "Sonstige"];
@@ -41,6 +42,7 @@ const emptyFilament = (): Omit<Filament, "id"> => ({
   notizen: "",
   aktiv: true,
   nur_intern: false,
+  stadtmodell_aktiv: false,
 });
 
 
@@ -276,6 +278,18 @@ export default function FilamentePage() {
                 onCheckedChange={v => setEditing(prev => (prev ? { ...prev, nur_intern: v } : prev))}
               />
             </div>
+            <div className="col-span-2 md:col-span-3 flex items-center justify-between rounded-md border border-border p-3">
+              <div>
+                <Label>Für Stadtmodelle verfügbar</Label>
+                <p className="text-xs text-muted-foreground">
+                  Kunden können dieses Filament im Stadtmodell-Konfigurator wählen
+                </p>
+              </div>
+              <Switch
+                checked={editing.stadtmodell_aktiv || false}
+                onCheckedChange={v => setEditing(prev => (prev ? { ...prev, stadtmodell_aktiv: v } : prev))}
+              />
+            </div>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={saving || !editing.name} className="bg-primary hover:bg-primary/90 gap-2">
@@ -320,6 +334,9 @@ export default function FilamentePage() {
                           {f.name}
                           {f.nur_intern && (
                             <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 align-middle">🔒 Intern</span>
+                          )}
+                          {f.stadtmodell_aktiv && (
+                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary align-middle">Stadtmodell</span>
                           )}
                         </td>
                         <td className="px-4 py-2.5">
