@@ -63,6 +63,7 @@ import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellu
 import { Route as AdminFilamenteRouteImport } from './routes/admin/filamente'
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
+import { Route as AdminFilamentverbrauchRouteImport } from './routes/admin/filamentverbrauch'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
 import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
@@ -398,6 +399,11 @@ const AdminFilamenteRoute = AdminFilamenteRouteImport.update({
 const AdminGutscheineRoute = AdminGutscheineRouteImport.update({
   id: '/gutscheine',
   path: '/gutscheine',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFilamentverbrauchRoute = AdminFilamentverbrauchRouteImport.update({
+  id: '/filamentverbrauch',
+  path: '/filamentverbrauch',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminKalenderRoute = AdminKalenderRouteImport.update({
@@ -829,6 +835,7 @@ export interface FileRoutesByFullPath {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
+  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
@@ -952,6 +959,7 @@ export interface FileRoutesByTo {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
+  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
@@ -1081,6 +1089,7 @@ export interface FileRoutesById {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
+  '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
@@ -1211,6 +1220,7 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/gutscheine'
     | '/admin/kalender'
+    | '/admin/filamentverbrauch'
     | '/admin/kalkulator'
     | '/admin/ki-offerte'
     | '/admin/lager'
@@ -1334,6 +1344,7 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/gutscheine'
     | '/admin/kalender'
+    | '/admin/filamentverbrauch'
     | '/admin/kalkulator'
     | '/admin/ki-offerte'
     | '/admin/lager'
@@ -1462,6 +1473,7 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/gutscheine'
     | '/admin/kalender'
+    | '/admin/filamentverbrauch'
     | '/admin/kalkulator'
     | '/admin/ki-offerte'
     | '/admin/lager'
@@ -1949,6 +1961,13 @@ declare module '@tanstack/react-router' {
       path: '/gutscheine'
       fullPath: '/admin/gutscheine'
       preLoaderRoute: typeof AdminGutscheineRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/filamentverbrauch': {
+      id: '/admin/filamentverbrauch'
+      path: '/filamentverbrauch'
+      fullPath: '/admin/filamentverbrauch'
+      preLoaderRoute: typeof AdminFilamentverbrauchRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/kalender': {
@@ -2569,6 +2588,7 @@ interface AdminRouteChildren {
   AdminFilamenteRoute: typeof AdminFilamenteRouteWithChildren
   AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
+  AdminFilamentverbrauchRoute: typeof AdminFilamentverbrauchRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
   AdminKiOfferteRoute: typeof AdminKiOfferteRoute
   AdminLagerRoute: typeof AdminLagerRoute
@@ -2601,6 +2621,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminFilamenteRoute: AdminFilamenteRouteWithChildren,
   AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
+  AdminFilamentverbrauchRoute: AdminFilamentverbrauchRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
   AdminKiOfferteRoute: AdminKiOfferteRoute,
   AdminLagerRoute: AdminLagerRoute,

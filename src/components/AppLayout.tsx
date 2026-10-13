@@ -44,6 +44,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/admin/druckplatten", icon: <Layers className={ic} />, label: "Druckplatten" },
       { to: "/admin/filamente", icon: <FlaskConical className={ic} />, label: "Filamente", exact: true },
+      { to: "/admin/filamentverbrauch", icon: <BarChart3 className={ic} />, label: "Filamentverbrauch" },
       { to: "/admin/lager", icon: <Package className={ic} />, label: "Lager" },
 
       { to: "/admin/teile", icon: <Library className={ic} />, label: "Teile-Bibliothek" },
