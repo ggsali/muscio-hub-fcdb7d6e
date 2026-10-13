@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Camera, FolderOpen, Loader2, X, Sparkles, CameraOff } from "lucide-react";
 import { scanBeleg } from "@/lib/belegScan.functions";
 import { cn } from "@/lib/utils";
+import { VERTEILBAR, verteile, monateZwischen } from "@/lib/earVerteilung";
 
 export type BelegKategorie =
   | "einnahmen" | "div_aufwaende" | "personalaufwand" | "raumaufwand"
@@ -41,7 +42,7 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [bildSpeichern, setBildSpeichern] = useState(true);
-  const [form, setForm] = useState({ datum: heute(), text: "", beleg: "", betrag: "", kategorie });
+  const [form, setForm] = useState({ datum: heute(), text: "", beleg: "", betrag: "", kategorie, gilt_von: "", gilt_bis: "" });
   const [dragOver, setDragOver] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -184,6 +185,14 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
   const buchen = async () => {
     if (!form.text.trim()) { toast.error("Text ist ein Pflichtfeld"); return; }
     const betrag = Number(form.betrag || 0);
+    const hatZeitraum = VERTEILBAR.includes(form.kategorie) && !!(form.gilt_von || form.gilt_bis);
+    if (hatZeitraum) {
+      if (!form.gilt_von || !form.gilt_bis) { toast.error("Bitte «Gilt von» und «Gilt bis» ausfüllen"); return; }
+      const mt = monateZwischen(form.gilt_von, form.gilt_bis);
+      if (mt < 1) { toast.error("«Gilt bis» muss nach «Gilt von» liegen"); return; }
+      if (mt > 120) { toast.error("Zeitraum maximal 10 Jahre"); return; }
+      if (!(betrag > 0)) { toast.error("Für die Verteilung einen Betrag eintragen"); return; }
+    }
     setSaving(true);
     let storagePath: string | null = null;
     let belegUrl: string | null = null;
@@ -203,6 +212,7 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
     }
 
     const { error } = await supabase.from("ear_buchungen").insert({
+      ...(hatZeitraum ? { gilt_von: form.gilt_von, gilt_bis: form.gilt_bis } : {}),
       jahr,
       kategorie: form.kategorie,
       datum: form.datum || null,
@@ -214,7 +224,12 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
       beleg_url: belegUrl,
     });
     setSaving(false);
-    if (error) { toast.error("Buchung fehlgeschlagen"); return; }
+    if (error) {
+      toast.error(/gilt_(von|bis)/.test(error.message)
+        ? "Buchung fehlgeschlagen: Die Datenbank kennt «Gilt von/bis» noch nicht (Migration in Lovable ausführen)."
+        : `Buchung fehlgeschlagen: ${error.message}`);
+      return;
+    }
     toast.success("✓ Beleg erfolgreich gebucht");
     await onSaved();
     onClose();
@@ -319,6 +334,31 @@ export default function BelegScanDialog({ jahr, kategorie, onClose, onSaved }: P
                       {BELEG_KATEGORIEN.map(k => <option key={k.key} value={k.key}>{k.label}</option>)}
                     </select>
                   </div>
+                  {VERTEILBAR.includes(form.kategorie) && (() => {
+                    const teile = form.gilt_von && form.gilt_bis && Number(form.betrag) > 0
+                      ? verteile(Number(form.betrag), form.gilt_von, form.gilt_bis) : null;
+                    const chf = (v: number) => v.toLocaleString("de-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return (
+                      <div className="rounded-xl border border-border p-3 space-y-2">
+                        <p className="text-sm font-medium">Zeitraum der Rechnung <span className="text-xs text-muted-foreground font-normal">(optional)</span></p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground">Gilt von</label>
+                            <Input type="date" value={form.gilt_von} onChange={e => setForm({ ...form, gilt_von: e.target.value })} />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">Gilt bis</label>
+                            <Input type="date" value={form.gilt_bis} onChange={e => setForm({ ...form, gilt_bis: e.target.value })} />
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {teile
+                            ? `Wird pro Monat verteilt: ${[...teile.entries()].map(([j, v]) => `${j}: CHF ${chf(v)}`).join(" · ")}`
+                            : "Wenn die Rechnung mehrere Monate oder Jahre abdeckt, wird der Betrag automatisch auf die Jahre verteilt."}
+                        </p>
+                      </div>
+                    );
+                  })()}
                   <div className="flex items-center justify-between rounded-xl border border-border p-3">
                     <div>
                       <p className="text-sm font-medium">Beleg-Bild speichern</p>
