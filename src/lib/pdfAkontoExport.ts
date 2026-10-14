@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { formatCHF, Settings } from "./calc";
 import { CompanySettings } from "./companySettings";
-import { appendQrBill } from "./pdfQrBill";
+import { appendQrBill, addQrBillImage } from "./pdfQrBill";
 import { checkPdfPlausibility, setupCountFromParts, setupTotalFromParts } from "./pdfPlausibility";
 
 interface PartRow {
@@ -423,7 +423,7 @@ export async function exportAkontoPDF(data: AkontoExportData) {
 
   if (data.company.qr_bill_image_url) {
     const qrImg = await loadImageAsBase64(data.company.qr_bill_image_url);
-    if (qrImg) { doc.addPage(); const pw = doc.internal.pageSize.getWidth(); const ph = doc.internal.pageSize.getHeight(); doc.addImage(qrImg, "PNG", 0, 0, pw, ph); }
+    if (qrImg) addQrBillImage(doc, qrImg);
   } else {
     await appendQrBill(doc, { company: data.company, customerName: data.customerName, customerAdresse: data.customerAdresse, amount: data.akontoBetrag, invoiceNr: akontoNr });
   }
@@ -521,7 +521,7 @@ export async function exportRestbetragPDF(data: RestbetragExportData) {
 
   if (data.company.qr_bill_image_url) {
     const qrImg = await loadImageAsBase64(data.company.qr_bill_image_url);
-    if (qrImg) { doc.addPage(); const pw = doc.internal.pageSize.getWidth(); const ph = doc.internal.pageSize.getHeight(); doc.addImage(qrImg, "PNG", 0, 0, pw, ph); }
+    if (qrImg) addQrBillImage(doc, qrImg);
   } else {
     await appendQrBill(doc, { company: data.company, customerName: data.customerName, customerAdresse: data.customerAdresse, amount: data.restbetrag, invoiceNr: restNr });
   }

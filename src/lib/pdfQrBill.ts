@@ -272,3 +272,15 @@ export async function appendQrBill(
   doc.setTextColor(...GRAY);
   doc.text("Weitere Informationen", RCX + 1, pageH - 13);
 }
+
+// Hochgeladenen Einzahlungsschein massstabsgetreu einfügen (Zahlteil unten auf A4)
+export function addQrBillImage(doc: jsPDF, img: string) {
+  doc.addPage();
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  const props = doc.getImageProperties(img);
+  let w = pw;
+  let h = (props.height / props.width) * pw;
+  if (h > ph) { h = ph; w = (props.width / props.height) * ph; }
+  doc.addImage(img, "PNG", (pw - w) / 2, ph - h, w, h);
+}
