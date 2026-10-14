@@ -99,6 +99,7 @@ const fmtPrice = (v: number) =>
 export default function MaterialienPage() {
   const [allMaterials, setMaterials] = useState<MaterialRow[]>([]);
   const resin = useResinEnabled();
+  const { farbenFor } = useMaterialFarben();
   const materials = resin ? allMaterials : allMaterials.filter((m) => !isResinText(m.name) && !isResinText(m.tag));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
