@@ -8,6 +8,8 @@ export interface SlicerResult {
   density?: number;
   layers: number;
   hasSupport: boolean;
+  /** Gewählte Ausrichtung (Überhangfläche in mm² vorher/nachher) */
+  orientation?: { name: string; before: number; after: number };
 }
 
 export interface SlicerParams {
@@ -100,10 +102,10 @@ export function useSlicerWorker() {
 
         const mat = params.material.toUpperCase();
         const slicerParams = {
-          // Bambu H2C Profil
-          bed_width: 330,
-          bed_depth: 320,
-          bed_height: 325,
+          // Creality K2 Plus Profil (350 × 350 × 350 mm)
+          bed_width: 350,
+          bed_depth: 350,
+          bed_height: 350,
           nozzle_diameter: 0.4,
           filament_diameter: 1.75,
 
@@ -123,18 +125,18 @@ export function useSlicerWorker() {
               : 220,
           bed_temperature: mat.includes("PLA") ? 65 : 85,
 
-          // Bambu H2C Geschwindigkeiten
-          outer_wall_speed: 150,
-          inner_wall_speed: 200,
-          sparse_infill_speed: 300,
-          internal_solid_infill_speed: 250,
+          // K2 Plus Geschwindigkeiten (konservativ)
+          outer_wall_speed: 120,
+          inner_wall_speed: 180,
+          sparse_infill_speed: 250,
+          internal_solid_infill_speed: 200,
           top_surface_speed: 100,
-          travel_speed: 500,
+          travel_speed: 400,
           initial_layer_speed: 50,
 
           // Beschleunigung CoreXY
-          default_acceleration: 10000,
-          travel_acceleration: 10000,
+          default_acceleration: 8000,
+          travel_acceleration: 8000,
 
           // Support
           enable_support: true,
@@ -143,7 +145,7 @@ export function useSlicerWorker() {
 
         queueRef.current.push({
           id,
-          message: { id, stlBytes: stlArrayBuffer, params: slicerParams, density: params.density ?? 1.24 },
+          message: { id, stlBytes: stlArrayBuffer, params: slicerParams, density: params.density ?? 1.24, autoOrient: true },
           transfer: [stlArrayBuffer], // Transfer ownership für Performance
           priority,
         });
