@@ -729,7 +729,7 @@ const CalculatorOnlinePage = () => {
         infill: quality.infill,
         speedFactor: quality.speedFactor,
         density: mat?.density,
-      });
+      }, quickSlice ? 1 : 0);
       console.log("[Slicer]", result);
       sliceCache.current.set(cacheKey, result);
       setParts((prev) => prev.map((p) => p.id === partId
@@ -800,6 +800,26 @@ const CalculatorOnlinePage = () => {
       },
     ]);
 
+    // Volumen berechnen
+    try {
+      let vol = 0;
+      if (ext === "stl") vol = await calcStlVolumeCm3(file);
+      else if (ext === "obj") vol = await calcObjVolumeCm3(file);
+      else if (ext === "3mf") vol = await calc3mfVolumeCm3(file);
+
+      if (vol > 0) {
+        const mat = materials[0];
+        const weightG = mat ? calcWeight(vol, mat, 20) : 0;
+        setParts((p) =>
+          p.map((x) =>
+            x.id === id ? { ...x, volumeCm3: vol, hasVolume: true, estimatedWeight: weightG } : x,
+          ),
+        );
+      }
+    } catch (err) {
+      console.warn("Volumen-Berechnung fehlgeschlagen", err);
+    }
+
     // STL als ArrayBuffer (Slicer) und Base64 (Edge-Function-Fallback) speichern
     if (ext === "stl") {
       startProgress();
@@ -827,26 +847,6 @@ const CalculatorOnlinePage = () => {
     }
 
 
-
-    // Volumen berechnen
-    try {
-      let vol = 0;
-      if (ext === "stl") vol = await calcStlVolumeCm3(file);
-      else if (ext === "obj") vol = await calcObjVolumeCm3(file);
-      else if (ext === "3mf") vol = await calc3mfVolumeCm3(file);
-
-      if (vol > 0) {
-        const mat = materials[0];
-        const weightG = mat ? calcWeight(vol, mat, 20) : 0;
-        setParts((p) =>
-          p.map((x) =>
-            x.id === id ? { ...x, volumeCm3: vol, hasVolume: true, estimatedWeight: weightG } : x,
-          ),
-        );
-      }
-    } catch (err) {
-      console.warn("Volumen-Berechnung fehlgeschlagen", err);
-    }
 
     // Upload im Hintergrund
     try {
