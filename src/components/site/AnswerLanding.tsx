@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/accordion";
 import { ArrowRight, Check, ChevronRight, Printer } from "lucide-react";
 import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
+import type { MaterialFarbe } from "@/lib/material-farben";
 
 export interface AnswerSection {
   title: string;
