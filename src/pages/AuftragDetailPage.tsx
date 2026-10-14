@@ -23,6 +23,7 @@ import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
 
 const POST_PRIORITY_PREISE = [
   { id: "briefpost", label: "Briefpost A-Post", beschreibung: "bis 100 g", beispiel: "Kleinstteile, Schlüsselanhänger, Ringe", preis: 2.00 },
+  { id: "grossbrief", label: "A-Post Grossbrief", beschreibung: "bis 500 g", beispiel: "Flache Teile, mehrere Kleinteile, bis 2 cm dick", preis: 4.00 },
   { id: "s", label: "Klein", beschreibung: "bis 2 kg", beispiel: "Kleine Teile, Clips, Halterungen", preis: 10.50 },
   { id: "m", label: "Mittel", beschreibung: "bis 10 kg", beispiel: "Normale Aufträge, Prototypen", preis: 13.50 },
   { id: "l", label: "Gross", beschreibung: "bis 30 kg", beispiel: "Grosse Teile, Mehrere Artikel", preis: 22.50 },
@@ -2232,7 +2233,7 @@ export default function AuftragDetailPage() {
               <div className="bg-background rounded-2xl p-6 max-w-md w-full shadow-xl">
                 <h3 className="font-bold text-lg mb-1">Versandart wählen</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Briefpost A-Post oder PostPac Priority
+                  Briefpost A-Post, A-Post Grossbrief oder PostPac Priority
                 </p>
                 <div className="space-y-2 mb-6">
                   {POST_PRIORITY_PREISE.map(p => (
@@ -2308,7 +2309,7 @@ export default function AuftragDetailPage() {
                           umsatz_total: neuesTotal,
                         } as any).eq("id", id);
                       }
-                      toast({ title: `${selected.id === "briefpost" ? "Briefpost A-Post" : `PostPac Priority ${selected.label}`} · CHF ${kosten.toFixed(2)} hinzugefügt ✓` });
+                      toast({ title: `${selected.id === "grossbrief" ? "A-Post Grossbrief" : selected.id === "briefpost" ? "Briefpost A-Post" : `PostPac Priority ${selected.label}`} · CHF ${kosten.toFixed(2)} hinzugefügt ✓` });
                     }}
                     disabled={!paketGroesseDraft}
                     className="flex-1 bg-primary text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-50"
@@ -2936,7 +2937,7 @@ export default function AuftragDetailPage() {
                   <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{formatCHF(selectedBruttoUmsatz)}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Rabatt {rabattPct > 0 ? `(${rabattPct}%)` : ""}</span><span className="text-destructive">− {formatCHF(selectedRabattBetrag)}</span></div>
                   {versandkosten > 0 && (
-                    <div className="flex justify-between"><span className="text-muted-foreground">{paketGroesse === "briefpost" ? "Briefpost A-Post" : `PostPac Priority (${POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})`}</span><span>{formatCHF(versandkosten)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{paketGroesse === "grossbrief" ? "A-Post Grossbrief" : paketGroesse === "briefpost" ? "Briefpost A-Post" : `PostPac Priority (${POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})`}</span><span>{formatCHF(versandkosten)}</span></div>
                   )}
                   {verpackungskosten > 0 && (
                     <div className="flex justify-between"><span className="text-muted-foreground">Verpackung{verpackungsBeschreibung ? ` (${verpackungsBeschreibung})` : ""}</span><span>{formatCHF(verpackungskosten)}</span></div>
@@ -3024,8 +3025,8 @@ export default function AuftragDetailPage() {
 
           {/* 4. Tracking-Nummer (bei Versand) + Termine */}
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
-            <h3 className="font-semibold text-sm">{lieferart === "abholung" || paketGroesse === "briefpost" ? "Termine" : "Tracking & Termine"}</h3>
-            {lieferart === "versand" && paketGroesse !== "briefpost" && (["Versandt", "Geliefert", "Abgeschlossen"].includes(status) || !!trackingNr) && (
+            <h3 className="font-semibold text-sm">{lieferart === "abholung" || paketGroesse === "briefpost" || paketGroesse === "grossbrief" ? "Termine" : "Tracking & Termine"}</h3>
+            {lieferart === "versand" && paketGroesse !== "briefpost" && paketGroesse !== "grossbrief" && (["Versandt", "Geliefert", "Abgeschlossen"].includes(status) || !!trackingNr) && (
               <div className="space-y-1.5">
                 <Label>Tracking-Nummer (Post CH)</Label>
                 <div className="flex gap-2">
@@ -3089,7 +3090,7 @@ export default function AuftragDetailPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Rabatt ({rabattPct}%)</span><span className="text-destructive">− {formatCHF(selectedRabattBetrag)}</span></div>
               )}
               {versandkosten > 0 && (
-                <div className="flex justify-between"><span className="text-muted-foreground">{paketGroesse === "briefpost" ? "Briefpost A-Post" : `PostPac Priority (${POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})`}</span><span>{formatCHF(versandkosten)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{paketGroesse === "grossbrief" ? "A-Post Grossbrief" : paketGroesse === "briefpost" ? "Briefpost A-Post" : `PostPac Priority (${POST_PRIORITY_PREISE.find(p => p.id === paketGroesse)?.beschreibung || ""})`}</span><span>{formatCHF(versandkosten)}</span></div>
               )}
               {verpackungskosten > 0 && (
                 <div className="flex justify-between"><span className="text-muted-foreground">Verpackung{verpackungsBeschreibung ? ` (${verpackungsBeschreibung})` : ""}</span><span>{formatCHF(verpackungskosten)}</span></div>

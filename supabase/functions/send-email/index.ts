@@ -343,7 +343,7 @@ Deno.serve(async (req) => {
     const effectiveLieferart = bodyLieferart || (order as any).lieferart || "versand";
     const isPickup = effectiveLieferart === "abholung";
     // Briefpost (A-Post): kein Paket, keine Sendungsnummer
-    const isBrief = !isPickup && (((order as any).paket_groesse || "") === "briefpost" || body.versandart === "briefpost");
+    const isBrief = !isPickup && (["briefpost", "grossbrief"].includes((order as any).paket_groesse || "") || ["briefpost", "grossbrief"].includes(body.versandart));
 
     let subject = "";
     let html = "";

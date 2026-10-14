@@ -193,7 +193,7 @@ export default function OrderStatusWorkflow({
         // Log mail sent
         const mailLabels: Record<string, string> = {
           bestätigung: "✉️ Bestätigungs-Mail gesendet",
-          versandt: paketGroesse === "briefpost" ? "✉️ Versand-Mail (A-Briefpost) gesendet" : "✉️ Versand-Mail mit Tracking gesendet",
+          versandt: (paketGroesse === "briefpost" || paketGroesse === "grossbrief") ? "✉️ Versand-Mail (A-Briefpost) gesendet" : "✉️ Versand-Mail mit Tracking gesendet",
           offerte: "✉️ Offerte per Mail gesendet",
           abschluss: "✉️ Abschluss-Mail gesendet",
           storno: "✉️ Storno-Mail gesendet",
@@ -301,7 +301,7 @@ export default function OrderStatusWorkflow({
     }
   };
 
-  const isBrief = paketGroesse === "briefpost";
+  const isBrief = paketGroesse === "briefpost" || paketGroesse === "grossbrief";
 
   const bannerText = (() => {
     switch (suggestedStatus) {
