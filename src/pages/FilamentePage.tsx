@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Save, X, Pencil } from "lucide-react";
+import { toast } from "sonner";
 
 export interface FilamentColor {
   name: string;
@@ -121,13 +122,20 @@ export default function FilamentePage() {
     if (!editing) return;
     setSaving(true);
     const farben = (editing.farben ?? []).filter((c) => c.name.trim());
+    let error: any = null;
     if (editing.id) {
-      const { isNew, created_at, ...rest } = editing as any;
-      await supabase.from("filaments").update({ ...rest, farben, farbe: farben[0]?.name ?? rest.farbe ?? "" } as any).eq("id", editing.id);
+      const { isNew, created_at, public_preis_pro_g, ...rest } = editing as any;
+      ({ error } = await supabase.from("filaments").update({ ...rest, farben, farbe: farben[0]?.name ?? rest.farbe ?? "" } as any).eq("id", editing.id));
     } else {
-      const { isNew, id, created_at, ...rest } = editing as any;
-      await supabase.from("filaments").insert([{ ...rest, farben, farbe: farben[0]?.name ?? rest.farbe ?? "" }] as any);
+      const { isNew, id, created_at, public_preis_pro_g, ...rest } = editing as any;
+      ({ error } = await supabase.from("filaments").insert([{ ...rest, farben, farbe: farben[0]?.name ?? rest.farbe ?? "" }] as any));
     }
+    if (error) {
+      toast.error("Speichern fehlgeschlagen: " + error.message);
+      setSaving(false);
+      return;
+    }
+    toast.success("Filament gespeichert");
     await load();
     setEditing(null);
     setSaving(false);
