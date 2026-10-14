@@ -273,9 +273,13 @@ export async function exportOrderPDF(data: OrderExportData) {
   const versandLabel = data.paket_groesse === "grossbrief" ? "A-Post Grossbrief" : data.paket_groesse === "briefpost" ? "Briefpost A-Post" : `PostPac Priority${data.paket_groesse ? ` (${PAKET_BEZ[data.paket_groesse] ?? data.paket_groesse})` : ""}`;
   const verpBetrag = Math.max(0, Number(data.verpackungskosten) || 0);
   const verpLabel = `Verpackung${data.verpackungs_beschreibung ? ` (${data.verpackungs_beschreibung})` : ""}`;
-  const effectiveTotal = data.withDetails
-    ? computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag + verpBetrag
-    : data.umsatz_total;
+  // Gesamtbetrag 1:1 aus dem Auftrag/Offerten-Snapshot (umsatz_total ist netto nach Rabatt inkl. Versand):
+  // Brutto wird daraus zurückgerechnet, damit Offerte, Rechnung und Admin exakt denselben Betrag zeigen.
+  const _rabPct = Math.max(0, Math.min(99.99, Number(data.rabattProzent) || 0));
+  const _netto = Number(data.umsatz_total) || 0;
+  const effectiveTotal = _netto > 0
+    ? Math.round((((_netto - versandBetrag - verpBetrag) / (1 - _rabPct / 100)) + versandBetrag + verpBetrag) * 100) / 100
+    : computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag + verpBetrag;
   const rabattProzent = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
   const rabattBetrag = (effectiveTotal - versandBetrag - verpBetrag) * (rabattProzent / 100);
   const netTotal = effectiveTotal - rabattBetrag;

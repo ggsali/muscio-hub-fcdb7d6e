@@ -270,9 +270,13 @@ export async function exportOfferPDF(data: OfferExportData) {
   // damit Zwischensumme/Gesamtbetrag immer mit der Positionstabelle übereinstimmen.
   // 1:1 wie im Admin/Kalkulator: gespeicherte Teilpreise (preis_total) summieren, Setup separat
   const computedPartsTotal = data.parts.reduce((sum, p) => sum + (Number(p.preis_total) || 0), 0);
-  const effectiveTotal = data.withDetails
-    ? computedPartsTotal + setupBetrag + (data.expressKosten ?? 0) + versandBetrag + verpBetrag
-    : data.umsatz_total;
+  // Gesamtbetrag 1:1 aus dem Auftrag/Offerten-Snapshot (umsatz_total ist netto nach Rabatt inkl. Versand):
+  // Brutto wird daraus zurückgerechnet, damit Offerte, Rechnung und Admin exakt denselben Betrag zeigen.
+  const _rabPct = Math.max(0, Math.min(99.99, Number(data.rabattProzent) || 0));
+  const _netto = Number(data.umsatz_total) || 0;
+  const effectiveTotal = _netto > 0
+    ? Math.round((((_netto - versandBetrag - verpBetrag) / (1 - _rabPct / 100)) + versandBetrag + verpBetrag) * 100) / 100
+    : computedPartsTotal + setupBetrag + (data.expressKosten ?? 0) + versandBetrag + verpBetrag;
 
   if (data.withDetails) {
     const detailBody: any[][] = [];
