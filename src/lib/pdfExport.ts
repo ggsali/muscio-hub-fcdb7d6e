@@ -262,17 +262,13 @@ export async function exportOrderPDF(data: OrderExportData) {
   // Berechne den effektiven Gesamtbetrag aus den angezeigten Komponenten,
   // damit Zwischensumme/Gesamtbetrag immer mit der Positionstabelle übereinstimmen.
   const s = data.settings;
-  const computedPartsTotal = data.parts.reduce((sum, p) => {
-    const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-    const setupA = (p as any).setup_pauschale_anzahl ?? 1;
-    return sum +
-      (s.setup_pauschale > 0 ? setupA * s.setup_pauschale : 0) +
-      (p.gewicht_g > 0 ? p.gewicht_g * matRate * p.menge : 0) +
-      (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h * p.menge : 0) +
-      (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h * p.menge : 0) +
-      (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h * p.menge : 0) +
-      supportTotalOf(p);
-  }, 0);
+  // 1:1 wie im Admin/Kalkulator: gespeicherte Teilpreise (preis_total) summieren, Setup separat
+  const computedPartsTotal = data.parts.reduce(
+    (sum, p) =>
+      sum + (Number(p.preis_total) || 0) +
+      (s.setup_pauschale > 0 ? ((p as any).setup_pauschale_anzahl ?? 1) * s.setup_pauschale : 0),
+    0,
+  );
   const versandBetrag = Math.max(0, Number(data.versandkosten) || 0);
   const versandLabel = data.paket_groesse === "grossbrief" ? "A-Post Grossbrief" : data.paket_groesse === "briefpost" ? "Briefpost A-Post" : `PostPac Priority${data.paket_groesse ? ` (${PAKET_BEZ[data.paket_groesse] ?? data.paket_groesse})` : ""}`;
   const verpBetrag = Math.max(0, Number(data.verpackungskosten) || 0);

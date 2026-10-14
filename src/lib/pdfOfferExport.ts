@@ -268,15 +268,8 @@ export async function exportOfferPDF(data: OfferExportData) {
 
   // Berechne den effektiven Gesamtbetrag aus den angezeigten Komponenten,
   // damit Zwischensumme/Gesamtbetrag immer mit der Positionstabelle übereinstimmen.
-  const computedPartsTotal = data.parts.reduce((sum, p) => {
-    const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
-    const ep =
-      Math.round((((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
-      ((p.druckzeit_h ?? 0) > 0 ? (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h : 0) +
-      ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
-      ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0))*100)/100;
-    return sum + ep * p.menge + supportTotalOf(p);
-  }, 0);
+  // 1:1 wie im Admin/Kalkulator: gespeicherte Teilpreise (preis_total) summieren, Setup separat
+  const computedPartsTotal = data.parts.reduce((sum, p) => sum + (Number(p.preis_total) || 0), 0);
   const effectiveTotal = data.withDetails
     ? computedPartsTotal + setupBetrag + (data.expressKosten ?? 0) + versandBetrag + verpBetrag
     : data.umsatz_total;
