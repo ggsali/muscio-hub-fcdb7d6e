@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, Trash2, Plus, Minus, Loader2, Send, ArrowRight, ArrowLeft, FileText,
   Check, Zap, Gauge, Shield, Gem, Sparkles, MessageCircle,
-  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X, Ticket,
+  Lock as LockIcon, RotateCcw, Star, Package, Lightbulb, X, Ticket, Box,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, erfasseGutscheinVerwendung, type Gutschein } from "@/lib/gutschein";
@@ -311,6 +311,10 @@ const CalculatorOnlinePage = () => {
   // Globale Auswahl (gilt für alle hochgeladenen Teile)
   const [materialId, setMaterialId] = useState("");
   const [color, setColor] = useState("");
+  /** Mehrere Teile: false = alle Teile einheitlich, true = Material/Farbe pro Bauteil */
+  const [individualMode, setIndividualMode] = useState(false);
+  const [activePartId, setActivePartId] = useState("");
+  const [partMatChosen, setPartMatChosen] = useState<Record<string, boolean>>({});
   const [qualityKey, setQualityKey] = useState("standard");
   const qualityTracked = useRef(false);
   const [kiResult, setKiResult] = useState<KiResult | null>(null);
@@ -1109,8 +1113,15 @@ const CalculatorOnlinePage = () => {
 
 
   const hasStep = parts.some((p) => isStepFile(p.fileName));
-  const selectedMaterial = materials.find((m) => m.id === materialId) || null;
+  const individual = individualMode && parts.length > 1;
+  const activePart = individual ? (parts.find((p) => p.id === activePartId) ?? parts[0]) : undefined;
+  /** Im Einzelmodus gilt als gewählt, was für das aktive Bauteil bestätigt wurde */
+  const viewMaterialId = individual ? (activePart && partMatChosen[activePart.id] ? activePart.materialId : "") : materialId;
+  const viewColor = individual ? (activePart?.color ?? "") : color;
+  const selectedMaterial = materials.find((m) => m.id === (individual ? activePart?.materialId : materialId)) || null;
   const availableColors = selectedMaterial?.farben || [];
+  const partsMissingMaterial = individual ? parts.filter((p) => !partMatChosen[p.id]).length : 0;
+  const allPartColorsOk = parts.every((p) => !!p.color || (materials.find((m) => m.id === p.materialId)?.farben || []).length === 0);
   const groupedMaterials = useMemo(
     () =>
       materials.reduce((acc, m) => {
@@ -1126,7 +1137,7 @@ const CalculatorOnlinePage = () => {
   // sonst geometrische Schätzung (Summe über alle Teile).
   const materialCostPreview = (mat: Material): number | null => {
     if (!mat.pricePerGram) return null;
-    const relevant = parts.filter((p) => p.slicerResult || p.volumeCm3 > 0);
+    const relevant = (individual && activePart ? [activePart] : parts).filter((p) => p.slicerResult || p.volumeCm3 > 0);
     if (relevant.length === 0) return null;
     return relevant.reduce(
       (sum, p) => sum + (p.slicerResult?.filamentGrams || p.estimatedWeight) * mat.pricePerGram,
@@ -1167,6 +1178,15 @@ const CalculatorOnlinePage = () => {
   const chooseMaterial = (id: string, fromKi = false) => {
     const matName = materials.find((m) => m.id === id)?.name || id;
     trackCalc(fromKi ? "schritt_2_ki_empfehlung_uebernommen" : "schritt_2_material_manuell_gewaehlt", { material: matName });
+    if (individual && activePart) {
+      // Einzelmodus: nur das aktive Bauteil bekommt das Material
+      update(activePart.id, { materialId: id });
+      setPartMatChosen((c) => ({ ...c, [activePart.id]: true }));
+      startProgress();
+      runKiAnalysis(activePart.id);
+      runSlicer(activePart.id);
+      return;
+    }
     setMaterialId(id);
     const mat = materials.find((m) => m.id === id);
     const firstColor = mat?.farben?.[0] || "";
@@ -1177,6 +1197,87 @@ const CalculatorOnlinePage = () => {
     runSlicerAll();
   };
 
+
+  /** Wechsel zwischen «alle einheitlich» und «individuell pro Bauteil» */
+  const switchMode = (ind: boolean) => {
+    trackCalc("schritt_3_modus", { modus: ind ? "individuell" : "einheitlich" });
+    setIndividualMode(ind);
+    if (ind) {
+      setActivePartId(parts[0]?.id || "");
+      // Wurde schon einheitlich gewählt, gilt das für alle Teile als bestätigt
+      setPartMatChosen(materialId ? Object.fromEntries(parts.map((p) => [p.id, true])) : {});
+    } else {
+      setMaterialId("");
+      setColor("");
+    }
+  };
+
+  /** Material des aktiven Bauteils auf alle Teile übernehmen */
+  const applyMaterialToAll = () => {
+    if (!activePart) return;
+    const id = activePart.materialId;
+    applyAll({ materialId: id });
+    setPartMatChosen(Object.fromEntries(parts.map((p) => [p.id, true])));
+    startProgress();
+    runKiAnalysisAll();
+    runSlicerAll();
+  };
+
+  /** Farbe des aktiven Bauteils auf alle Teile übernehmen, wo sie verfügbar ist */
+  const applyColorToAll = () => {
+    if (!activePart?.color) return;
+    const c = activePart.color;
+    parts.forEach((p) => {
+      const farben = materials.find((m) => m.id === p.materialId)?.farben || [];
+      if (farben.length === 0 || farben.includes(c)) update(p.id, { color: c });
+    });
+  };
+
+  const renderPartTabs = () => individual && (
+    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" role="tablist" aria-label="Bauteile">
+      {parts.map((p) => {
+        const active = p.id === activePart?.id;
+        const done = step === 3 ? !!partMatChosen[p.id] : !!p.color || (materials.find((m) => m.id === p.materialId)?.farben || []).length === 0;
+        return (
+          <button
+            key={p.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => setActivePartId(p.id)}
+            className={`shrink-0 flex items-center gap-2 rounded-xl border-2 px-3 py-2 min-h-[44px] text-sm transition-all ${
+              active ? "border-primary bg-primary/5 font-semibold" : "border-border bg-card hover:border-primary/40"
+            }`}
+          >
+            <Box className="w-4 h-4 text-muted-foreground" />
+            <span className="max-w-[140px] truncate">{p.fileName}</span>
+            {done && <Check className="w-4 h-4 text-primary" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const renderModeChoice = () => parts.length > 1 && (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {([
+        { ind: false, title: "Alle Teile einheitlich", sub: "Schnell: 1× Material und Farbe für alle" },
+        { ind: true, title: "Individuell pro Bauteil", sub: "Jedes Teil bekommt eigenes Material und Farbe" },
+      ] as const).map((o) => (
+        <button
+          key={o.title}
+          type="button"
+          onClick={() => switchMode(o.ind)}
+          className={`text-left rounded-xl border-2 p-3 min-h-[56px] transition-all ${
+            individual === o.ind ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+          }`}
+        >
+          <p className="text-sm font-bold">{o.title}</p>
+          <p className="text-xs text-muted-foreground">{o.sub}</p>
+        </button>
+      ))}
+    </div>
+  );
 
   const handleKiResult = (r: KiResult) => {
     setKiResult(r);
@@ -1210,8 +1311,8 @@ const CalculatorOnlinePage = () => {
   const canNext =
     (step === 1 && parts.length > 0) ||
     step === 2 ||
-    (step === 3 && !!materialId) ||
-    (step === 4 && (!!color || availableColors.length === 0)) ||
+    (step === 3 && (individual ? partsMissingMaterial === 0 : !!materialId)) ||
+    (step === 4 && (individual ? allPartColorsOk : (!!color || availableColors.length === 0))) ||
     step === 5;
 
   const goNext = useCallback(() => {
@@ -1334,6 +1435,8 @@ const CalculatorOnlinePage = () => {
       setKiResult(null);
       setMaterialId("");
       setColor("");
+      setIndividualMode(false);
+      setPartMatChosen({});
       setQualityKey("standard");
 
       sessionStorage.removeItem("ki_chat_messages");
@@ -1373,8 +1476,8 @@ const CalculatorOnlinePage = () => {
   const canGoNext = step === 1
     ? parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName))
     : step === 2 ? true
-    : step === 3 ? !!materialId
-    : step === 4 ? !!color
+    : step === 3 ? (individual ? partsMissingMaterial === 0 : !!materialId)
+    : step === 4 ? (individual ? allPartColorsOk : !!color)
     : step === 5 ? !kiLoading
     : true;
 
@@ -1837,6 +1940,15 @@ const CalculatorOnlinePage = () => {
                     </p>
                   </div>
 
+                  {renderModeChoice()}
+                  {renderPartTabs()}
+                  {individual && activePart && (
+                    <p className="text-sm text-muted-foreground -mt-3">
+                      Material für <span className="font-semibold text-foreground">{activePart.fileName}</span>
+                      {partsMissingMaterial > 0 && <> · noch {partsMissingMaterial} {partsMissingMaterial === 1 ? "Teil" : "Teile"} ohne Material</>}
+                    </p>
+                  )}
+
                   {materialMode === null && (
                     <div className="grid gap-4 sm:grid-cols-2">
                       <button
@@ -1925,10 +2037,10 @@ const CalculatorOnlinePage = () => {
                         <Button
                           className="mt-4 gap-2"
                           onClick={() => chooseMaterial(recommendedMaterial.id, true)}
-                          disabled={materialId === recommendedMaterial.id}
+                          disabled={viewMaterialId === recommendedMaterial.id}
                         >
                           <Check className="w-4 h-4" />
-                          {materialId === recommendedMaterial.id ? `${recommendedMaterial.name} übernommen` : `${recommendedMaterial.name} übernehmen`}
+                          {viewMaterialId === recommendedMaterial.id ? `${recommendedMaterial.name} übernommen` : `${recommendedMaterial.name} übernehmen`}
                         </Button>
                       )}
                     </div>
@@ -1942,7 +2054,7 @@ const CalculatorOnlinePage = () => {
                           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                             {items.map((m) => {
-                              const sel = materialId === m.id;
+                              const sel = viewMaterialId === m.id;
                               const hint = MATERIAL_HINTS[m.materialType || m.name.split(" ")[0]];
                               const costPreview = materialCostPreview(m);
                               return (
@@ -1998,7 +2110,7 @@ const CalculatorOnlinePage = () => {
                           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{typ}</p>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                             {items.map((m) => {
-                              const sel = materialId === m.id;
+                              const sel = viewMaterialId === m.id;
                               const rec = recommendedMaterial?.id === m.id;
                               const hint = MATERIAL_HINTS[m.materialType || m.name.split(" ")[0]];
                               const costPreview = materialCostPreview(m);
@@ -2047,9 +2159,21 @@ const CalculatorOnlinePage = () => {
                   )}
 
 
-                  {materialId && (materialMode === "manual" || (materialMode === "ki" && (!isMobile || !kiChatOpen))) && (
+                  {viewMaterialId && (materialMode === "manual" || (materialMode === "ki" && (!isMobile || !kiChatOpen))) && (
                     <div className="fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto z-40 lg:z-auto bg-background/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-t border-border lg:border-none p-4 lg:p-0"
                       style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+                      {individual && (
+                        <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                          <Button type="button" variant="outline" onClick={applyMaterialToAll} className="w-full sm:w-auto">
+                            Für alle Teile übernehmen
+                          </Button>
+                          {partsMissingMaterial > 0 && (
+                            <p className="text-xs text-muted-foreground self-center">
+                              Noch {partsMissingMaterial} {partsMissingMaterial === 1 ? "Teil" : "Teile"} ohne Material – oben das nächste Teil wählen.
+                            </p>
+                          )}
+                        </div>
+                      )}
                       <Button
                         onClick={goNext}
                         disabled={!canGoNext}
@@ -2069,20 +2193,25 @@ const CalculatorOnlinePage = () => {
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground mb-1">Farbe wählen</h1>
-                    <p className="text-muted-foreground text-sm">Verfügbare Farben für {selectedMaterial?.name}.</p>
+                    <p className="text-muted-foreground text-sm">
+                      Verfügbare Farben für {selectedMaterial?.name}
+                      {individual && activePart ? <> · Bauteil <span className="font-semibold text-foreground">{activePart.fileName}</span></> : null}.
+                    </p>
                   </div>
+
+                  {renderPartTabs()}
 
                   {availableColors.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">Für dieses Material stimmen wir die Farbe individuell mit dir ab.</p>
                   ) : (
                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                       {availableColors.map((name) => {
-                        const sel = color === name;
+                        const sel = viewColor === name;
                         return (
                           <button
                             key={name}
                             type="button"
-                            onClick={() => { setColor(name); applyAll({ color: name }); }}
+                            onClick={() => { if (individual && activePart) { update(activePart.id, { color: name }); } else { setColor(name); applyAll({ color: name }); } }}
                             className={`rounded-xl border-2 p-3 flex flex-col items-center gap-2 transition-all ${
                               sel ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
                             }`}
@@ -2099,10 +2228,16 @@ const CalculatorOnlinePage = () => {
                     </div>
                   )}
 
+                  {individual && availableColors.length > 0 && (
+                    <Button type="button" variant="outline" onClick={applyColorToAll} disabled={!activePart?.color} className="w-full sm:w-auto">
+                      Farbe für alle Teile übernehmen
+                    </Button>
+                  )}
+
                   <Button
                     className="w-full gap-2"
-                    onClick={() => { trackCalc("schritt_3_farbe_gewaehlt", { farbe: color || null }); goNext(); }}
-                    disabled={availableColors.length > 0 && !color}
+                    onClick={() => { trackCalc("schritt_3_farbe_gewaehlt", { farbe: viewColor || null, individuell: individual }); goNext(); }}
+                    disabled={individual ? !allPartColorsOk : (availableColors.length > 0 && !color)}
                   >
                     Weiter zur Qualität <ArrowRight className="w-4 h-4" />
                   </Button>
