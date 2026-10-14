@@ -41,6 +41,8 @@ interface AnswerLandingProps {
   table?: AnswerTable;
   faqs?: AnswerFaq[];
   related?: RelatedLink[];
+  /** Verfügbare Farben – synchronisiert mit der Filamentbibliothek */
+  farben?: MaterialFarbe[];
   ctaTitle?: string;
   ctaText?: string;
 }
@@ -84,6 +86,7 @@ const AnswerLandingView = ({
   table,
   faqs = [],
   related = [],
+  farben = [],
   ctaTitle = "Preis in 60 Sekunden berechnen",
   ctaText = "Datei hochladen, Material wählen, Preis sehen – ohne Anmeldung.",
 }: AnswerLandingProps) => (
