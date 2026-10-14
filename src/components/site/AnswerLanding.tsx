@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/accordion";
 import { ArrowRight, Check, ChevronRight, Printer } from "lucide-react";
 import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
+import type { MaterialFarbe } from "@/lib/material-farben";
 
 export interface AnswerSection {
   title: string;
@@ -40,6 +41,8 @@ interface AnswerLandingProps {
   table?: AnswerTable;
   faqs?: AnswerFaq[];
   related?: RelatedLink[];
+  /** Verfügbare Farben – synchronisiert mit der Filamentbibliothek */
+  farben?: MaterialFarbe[];
   ctaTitle?: string;
   ctaText?: string;
 }
@@ -83,6 +86,7 @@ const AnswerLandingView = ({
   table,
   faqs = [],
   related = [],
+  farben = [],
   ctaTitle = "Preis in 60 Sekunden berechnen",
   ctaText = "Datei hochladen, Material wählen, Preis sehen – ohne Anmeldung.",
 }: AnswerLandingProps) => (
@@ -176,6 +180,31 @@ const AnswerLandingView = ({
                   ))}
                 </tbody>
               </table>
+            </div>
+          </section>
+        </ScrollReveal>
+      )}
+
+      {farben.length > 0 && (
+        <ScrollReveal>
+          <section className="mt-12">
+            <h2 className="font-heading text-xl md:text-2xl font-bold mb-2">Verfügbare Farben</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Aktuell in unserer Filamentbibliothek lagernd – Farbe im Bestellvorgang angeben.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {farben.map((c) => (
+                <span
+                  key={c.name}
+                  className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full border border-border bg-card"
+                >
+                  <span
+                    className="w-3.5 h-3.5 rounded-full border border-border shrink-0"
+                    style={{ backgroundColor: c.hex }}
+                  />
+                  {c.name}
+                </span>
+              ))}
             </div>
           </section>
         </ScrollReveal>

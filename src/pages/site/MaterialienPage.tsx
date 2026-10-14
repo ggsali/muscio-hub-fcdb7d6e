@@ -6,7 +6,7 @@ import { ArrowRight, Layers, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Seo from "@/components/site/Seo";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
-import { colorHex } from "@/lib/colorMap";
+import { useMaterialFarben } from "@/lib/material-farben";
 
 interface MaterialRow {
   id: string;
@@ -99,54 +99,25 @@ const fmtPrice = (v: number) =>
 export default function MaterialienPage() {
   const [allMaterials, setMaterials] = useState<MaterialRow[]>([]);
   const resin = useResinEnabled();
+  const { farbenFor } = useMaterialFarben();
   const materials = resin ? allMaterials : allMaterials.filter((m) => !isResinText(m.name) && !isResinText(m.tag));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
 
-  const [farbenByMat, setFarbenByMat] = useState<Record<string, { name: string; hex: string }[]>>({});
-
   useEffect(() => {
     (async () => {
-      const [{ data, error }, { data: fils }] = await Promise.all([
-        supabase
-          .from("materials")
-          .select("id, name, tag, price_per_gram, description")
-          .eq("aktiv", true)
-          .order("sort_order"),
-        supabase.from("filaments").select("material, farbe, farben").eq("aktiv", true),
-      ]);
+      const { data, error } = await supabase
+        .from("materials")
+        .select("id, name, tag, price_per_gram, description")
+        .eq("aktiv", true)
+        .order("sort_order");
       if (error) setError("Materialien konnten nicht geladen werden.");
       else if (data) setMaterials(data as MaterialRow[]);
-      const map: Record<string, { name: string; hex: string }[]> = {};
-      (fils ?? []).forEach((f: any) => {
-        const key = String(f.material || "").toUpperCase();
-        const list = Array.isArray(f.farben) && f.farben.length ? f.farben : f.farbe ? [{ name: f.farbe, hex: "" }] : [];
-        list.forEach((c: any) => {
-          let name = String(typeof c === "string" ? c : c?.name ?? "").trim();
-          let hex = String(typeof c === "string" ? "" : c?.hex ?? "");
-          if (!name) return;
-          if (/^#[0-9a-f]{3,8}$/i.test(name)) { hex = hex || name; name = ""; }
-          else name = name.replace(/^#/, "");
-          if (!hex) hex = colorHex(name);
-          if (!name) name = hex.toLowerCase() === "#000000" ? "Schwarz" : hex.toLowerCase() === "#ffffff" ? "Weiss" : hex;
-          map[key] = map[key] || [];
-          if (!map[key].some((x) => x.name.toLowerCase() === name.toLowerCase())) map[key].push({ name, hex });
-        });
-      });
-      setFarbenByMat(map);
       setLoading(false);
     })();
   }, []);
 
-  const farbenFor = (name: string) => {
-    const keys = name.toUpperCase().split("/").map((s) => s.trim());
-    const out: { name: string; hex: string }[] = [];
-    keys.forEach((k) => (farbenByMat[k] ?? []).forEach((c) => {
-      if (!out.some((x) => x.name.toLowerCase() === c.name.toLowerCase())) out.push(c);
-    }));
-    return out;
-  };
 
   const filteredMaterials = materials.filter((m) => {
     if (activeFilter === "all") return true;
