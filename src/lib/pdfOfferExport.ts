@@ -275,7 +275,7 @@ export async function exportOfferPDF(data: OfferExportData) {
   const _rabPct = Math.max(0, Math.min(99.99, Number(data.rabattProzent) || 0));
   const _netto = Number(data.umsatz_total) || 0;
   const effectiveTotal = _netto > 0
-    ? Math.round((((_netto - versandBetrag - verpBetrag) / (1 - _rabPct / 100)) + versandBetrag + verpBetrag) * 100) / 100
+    ? (_rabPct === 0 ? _netto : ((_netto - versandBetrag - verpBetrag) / (1 - _rabPct / 100)) + versandBetrag + verpBetrag)
     : computedPartsTotal + setupBetrag + (data.expressKosten ?? 0) + versandBetrag + verpBetrag;
 
   if (data.withDetails) {
