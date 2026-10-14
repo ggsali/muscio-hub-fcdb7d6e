@@ -112,7 +112,17 @@ interface Part {
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
 const SHIPPING_FREE_FROM = 65;
-const SHIPPING_COST = 8;
+/** PostPac Priority – gleiche Preise wie im Admin (Auftrag → Versand) */
+const POSTPAC_PREISE = [
+  { bisKg: 2, preis: 10.5 },
+  { bisKg: 10, preis: 13.5 },
+  { bisKg: 30, preis: 22.5 },
+];
+const shippingCostForGrams = (grams: number) => {
+  const kg = grams / 1000;
+  return (POSTPAC_PREISE.find((t) => kg <= t.bisKg) ?? POSTPAC_PREISE[POSTPAC_PREISE.length - 1]).preis;
+};
+const SHIPPING_COST = POSTPAC_PREISE[0].preis;
 
 const calcWeight = (volumeCm3: number, material: Material, infill: number): number => {
   // Shell ist immer solid — realistisch 35-40% des Volumens
@@ -1103,7 +1113,8 @@ const CalculatorOnlinePage = () => {
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const setupFee = parts.length > 0 ? (FIX_COST || 20) : 0;
   const subtotal = materialTotal + setupFee;
-  const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
+  const shippingGrams = calcs.reduce((sum, { part, calc }) => sum + calc.weight * part.quantity, 0);
+  const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : shippingCostForGrams(shippingGrams);
   const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
   const totalMin = Math.round(total * 0.9 * 100) / 100;
   const totalMax = Math.round(total * 1.15 * 100) / 100;
@@ -1500,15 +1511,17 @@ const CalculatorOnlinePage = () => {
     if (parts.length === 0 || hasStep) return 0;
     const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
     let sum = 0;
+    let grams = 0;
     parts.forEach((p) => {
       const mat = materials.find((m) => m.id === (p.materialId || materials[0]?.id));
       if (!mat || !p.hasVolume || p.volumeCm3 <= 0) return;
       const unit = calcQuickPrice(p.volumeCm3, mat, quality, settings.maschinenzeit_pro_h || 3, calcParams.min_price);
       sum += unit * p.quantity;
+      grams += p.estimatedWeight * p.quantity;
     });
     const setup = parts.length > 0 ? (calcParams.fix_cost || 20) : 0;
     const sub = sum + setup;
-    const ship = sub === 0 ? 0 : sub >= SHIPPING_FREE_FROM ? 0 : SHIPPING_COST;
+    const ship = sub === 0 ? 0 : sub >= SHIPPING_FREE_FROM ? 0 : shippingCostForGrams(grams);
     return Math.max(sub + ship, calcParams.min_price || 5);
   }, [parts, materials, qualityKey, qualityPresets, settings.maschinenzeit_pro_h, calcParams, hasStep]);
 
