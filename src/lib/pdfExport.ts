@@ -298,10 +298,10 @@ export async function exportOrderPDF(data: OrderExportData) {
       const setupTotal = s.setup_pauschale > 0 ? setupAnzahl * s.setup_pauschale : 0;
       // Einzelpreis ohne Setup (Setup wird 1× pro Teilart verrechnet)
       const einzelpreis =
-        (p.gewicht_g > 0 ? p.gewicht_g * matRate : 0) +
+      Math.round(((p.gewicht_g > 0 ? p.gewicht_g * matRate : 0) +
         (p.druckzeit_h > 0 ? p.druckzeit_h * s.maschinenzeit_pro_h : 0) +
         (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h : 0) +
-        (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h : 0);
+        (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h : 0))*100)/100;
       const supportTotal = supportTotalOf(p);
       const componentTotal = einzelpreis * p.menge + setupTotal + supportTotal;
       // Header row for the part

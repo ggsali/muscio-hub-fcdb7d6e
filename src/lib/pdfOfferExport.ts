@@ -271,10 +271,10 @@ export async function exportOfferPDF(data: OfferExportData) {
   const computedPartsTotal = data.parts.reduce((sum, p) => {
     const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
     const ep =
-      ((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
+      Math.round((((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
       ((p.druckzeit_h ?? 0) > 0 ? (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h : 0) +
       ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
-      ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0);
+      ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0))*100)/100;
     return sum + ep * p.menge + supportTotalOf(p);
   }, 0);
   const effectiveTotal = data.withDetails
@@ -288,10 +288,10 @@ export async function exportOfferPDF(data: OfferExportData) {
       const rowBg = i % 2 === 0 ? WHITE : XLGRAY;
       const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
       const einzelpreis =
-        ((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
+      Math.round((((p.gewicht_g ?? 0) > 0 ? (p.gewicht_g ?? 0) * matRate : 0) +
         ((p.druckzeit_h ?? 0) > 0 ? (p.druckzeit_h ?? 0) * s.maschinenzeit_pro_h : 0) +
         ((p.konstruktion_h ?? 0) > 0 ? (p.konstruktion_h ?? 0) * s.konstruktion_pro_h : 0) +
-        ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0);
+        ((p.nachbearbeitung_h ?? 0) > 0 ? (p.nachbearbeitung_h ?? 0) * s.nachbearbeitung_pro_h : 0))*100)/100;
       const supportTotal = supportTotalOf(p);
       const teilTotal = einzelpreis * p.menge + supportTotal;
       detailBody.push([
