@@ -3,11 +3,13 @@ import Seo from "@/components/site/Seo";
 import AnswerLanding from "@/components/site/AnswerLanding";
 import { getMaterial } from "@/data/seo/materials";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
+import { useMaterialFarben } from "@/lib/material-farben";
 import { breadcrumbJsonLd, faqJsonLd, SITE_URL } from "@/data/company";
 
 export default function MaterialDetailPage() {
   const { slug } = useParams();
   const resin = useResinEnabled();
+  const { farbenFor } = useMaterialFarben();
   const material = getMaterial(slug);
 
   if (material && !resin && (isResinText(material.name) || isResinText(material.process))) {
@@ -55,6 +57,7 @@ export default function MaterialDetailPage() {
         table={material.table}
         faqs={material.faqs}
         related={material.related}
+        farben={farbenFor(material.name)}
         ctaTitle={`${material.name} jetzt kalkulieren`}
         ctaText="Datei hochladen, Material wählen, Preis sofort sehen – ohne Anmeldung."
       />

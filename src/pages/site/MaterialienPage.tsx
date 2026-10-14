@@ -6,7 +6,7 @@ import { ArrowRight, Layers, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Seo from "@/components/site/Seo";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
-import { colorHex } from "@/lib/colorMap";
+import { useMaterialFarben } from "@/lib/material-farben";
 
 interface MaterialRow {
   id: string;
