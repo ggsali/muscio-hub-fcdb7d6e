@@ -160,7 +160,11 @@ export default function MaterialienPage() {
               const p = PROPS[m.name];
               return (
                 <ScrollReveal key={m.id} delay={i * 0.05}>
-                  <div className="bg-card border border-border rounded-3xl p-6 hover:border-primary/40 hover:shadow-[0_12px_30px_-12px_hsl(var(--foreground)/0.12)] transition-all h-full flex flex-col">
+                  <Link
+                    to={`/materialien/${m.name === "ABS/ASA" ? "asa" : m.name.toLowerCase()}`}
+                    aria-label={`${m.name} – Details ansehen`}
+                    className="bg-card border border-border rounded-3xl p-6 hover:border-primary/40 hover:shadow-[0_12px_30px_-12px_hsl(var(--foreground)/0.12)] transition-all h-full flex flex-col cursor-pointer"
+                  >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -212,7 +216,7 @@ export default function MaterialienPage() {
                         CHF {fmtPrice(m.price_per_gram)}/g
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 </ScrollReveal>
               );
             })}
