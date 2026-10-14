@@ -257,6 +257,12 @@ function isStepFile(name: string): boolean {
   return ext === "step" || ext === "stp";
 }
 
+/** Gramm bei anderer Materialdichte umrechnen – gleicher Slice, anderes Material */
+const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => {
+  if (!density || !r.density || r.density === density) return r;
+  return { ...r, filamentGrams: Math.round(((r.filamentGrams * density) / r.density) * 10) / 10, density };
+};
+
 const STEPS = ["Datei", "Bilder", "Material", "Farbe", "Qualität", "Übersicht"];
 
 /** Anonymes Funnel-Tracking für den Kalkulator */
@@ -418,6 +424,10 @@ const CalculatorOnlinePage = () => {
 
   const isMobile = useIsMobile();
   const { slice } = useSlicerWorker();
+  /** Slice-Ergebnisse pro Teil, Schichthöhe und Infill – Material/Farbe/Menge lösen keinen neuen Slice aus */
+  const sliceCache = useRef<Map<string, SlicerResult>>(new Map());
+  const sliceKey = (partId: string, quick: boolean, q: { layerHeight: number; infill: number }) =>
+    `${partId}|${quick ? "q" : q.layerHeight}|${q.infill}`;
 
 
   const { settings } = useSettings();
@@ -678,8 +688,12 @@ const CalculatorOnlinePage = () => {
     kiTimers.current[partId] = window.setTimeout(() => { void kiFnRef.current(partId); }, 300);
   }, []);
 
+  /**
+   * Die Server-Analyse hängt nur von der Datei ab und läuft einmal beim Hochladen.
+   * Neu gerechnet wird nur dort, wo kein Slicer-Ergebnis vorliegt (Fallback für den Preis).
+   */
   const runKiAnalysisAll = useCallback(() => {
-    parts.forEach((p) => { if (p.stlBase64) runKiAnalysis(p.id); });
+    parts.forEach((p) => { if (p.stlBase64 && !p.slicerResult) runKiAnalysis(p.id); });
   }, [parts, runKiAnalysis]);
 
   /** Browser-Slicing via three-slicer Web Worker (OrcaSlicer-Kernel) */
@@ -694,6 +708,16 @@ const CalculatorOnlinePage = () => {
       ? { layerHeight: 0.3, infill: 15, speedFactor: 0.7, key: "quick" }
       : (qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1]);
 
+    const cacheKey = sliceKey(partId, quickSlice, quality);
+    const cached = sliceCache.current.get(cacheKey);
+    if (cached) {
+      const r = rescaleForMaterial(cached, mat?.density);
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, slicerResult: r, slicerLoading: false, slicerError: null, isQuickSlice: quickSlice, quickSliceResult: quickSlice ? r : p.quickSliceResult }
+        : p));
+      return;
+    }
+
     setParts((prev) => prev.map((p) => p.id === partId
       ? { ...p, slicerLoading: true, slicerError: null, isQuickSlice: quickSlice }
       : p));
@@ -707,6 +731,7 @@ const CalculatorOnlinePage = () => {
         density: mat?.density,
       });
       console.log("[Slicer]", result);
+      sliceCache.current.set(cacheKey, result);
       setParts((prev) => prev.map((p) => p.id === partId
         ? {
             ...p,
@@ -988,17 +1013,13 @@ const CalculatorOnlinePage = () => {
     }
     setQualityKey(key);
     applyAll({ infill });
-    startProgress();
-    runKiAnalysisAll();
 
     const quality = qualityPresets.find((q) => q.key === key);
-    // Nur neu slicen wenn sich Qualität vom QuickSlice unterscheidet
+    // Nur neu slicen wenn sich Qualität vom QuickSlice unterscheidet; Cache-Treffer sind sofort da
     if (quality && quality.layerHeight !== 0.3) {
-      parts.forEach((p) => {
-        if (p.stlArrayBuffer && !isStepFile(p.fileName)) {
-          runSlicer(p.id, false); // genauer Slice mit echter Qualität
-        }
-      });
+      const todo = parts.filter((p) => p.stlArrayBuffer && !isStepFile(p.fileName));
+      if (todo.some((p) => !sliceCache.current.has(sliceKey(p.id, false, quality)))) startProgress();
+      todo.forEach((p) => runSlicer(p.id, false));
     }
   };
 
@@ -1030,6 +1051,7 @@ const CalculatorOnlinePage = () => {
         discount,
         exact: true,
         druckzeitMin,
+        breakdown: { material: materialCost, machine: machineCost, support: supportCost },
       };
     }
 
@@ -1044,6 +1066,11 @@ const CalculatorOnlinePage = () => {
         exact: true,
         kiMin: p.kiAnalysis.gesamtpreis_min,
         kiMax: p.kiAnalysis.gesamtpreis_max,
+        breakdown: {
+          material: p.kiAnalysis.materialkosten,
+          machine: p.kiAnalysis.maschinenkosten,
+          support: p.kiAnalysis.support_nachbearbeitung,
+        },
       };
     }
 
@@ -1175,6 +1202,26 @@ const CalculatorOnlinePage = () => {
       .join(" | ");
   }, [parts]);
 
+  /** Materialwechsel: vorhandene Slicer-Ergebnisse nur umrechnen (Dichte), nur ohne Ergebnis neu rechnen */
+  const refreshForMaterial = (ids: string[], matId: string) => {
+    const density = materials.find((m) => m.id === matId)?.density;
+    const missing = parts.filter((p) => ids.includes(p.id) && p.stlArrayBuffer && !p.slicerResult && !isStepFile(p.fileName));
+    setParts((prev) => prev.map((p) => ids.includes(p.id)
+      ? {
+          ...p,
+          slicerResult: p.slicerResult ? rescaleForMaterial(p.slicerResult, density) : p.slicerResult,
+          quickSliceResult: p.quickSliceResult ? rescaleForMaterial(p.quickSliceResult, density) : p.quickSliceResult,
+        }
+      : p));
+    if (missing.length > 0) {
+      startProgress();
+      missing.forEach((p) => {
+        runSlicer(p.id, false);
+        if (p.stlBase64 && !p.kiAnalysis) runKiAnalysis(p.id);
+      });
+    }
+  };
+
   const chooseMaterial = (id: string, fromKi = false) => {
     const matName = materials.find((m) => m.id === id)?.name || id;
     trackCalc(fromKi ? "schritt_2_ki_empfehlung_uebernommen" : "schritt_2_material_manuell_gewaehlt", { material: matName });
@@ -1182,9 +1229,7 @@ const CalculatorOnlinePage = () => {
       // Einzelmodus: nur das aktive Bauteil bekommt das Material
       update(activePart.id, { materialId: id });
       setPartMatChosen((c) => ({ ...c, [activePart.id]: true }));
-      startProgress();
-      runKiAnalysis(activePart.id);
-      runSlicer(activePart.id);
+      refreshForMaterial([activePart.id], id);
       return;
     }
     setMaterialId(id);
@@ -1192,9 +1237,7 @@ const CalculatorOnlinePage = () => {
     const firstColor = mat?.farben?.[0] || "";
     setColor((c) => (mat?.farben?.includes(c) ? c : firstColor));
     applyAll({ materialId: id });
-    startProgress();
-    runKiAnalysisAll();
-    runSlicerAll();
+    refreshForMaterial(parts.map((p) => p.id), id);
   };
 
 
@@ -1218,9 +1261,7 @@ const CalculatorOnlinePage = () => {
     const id = activePart.materialId;
     applyAll({ materialId: id });
     setPartMatChosen(Object.fromEntries(parts.map((p) => [p.id, true])));
-    startProgress();
-    runKiAnalysisAll();
-    runSlicerAll();
+    refreshForMaterial(parts.map((p) => p.id), id);
   };
 
   /** Farbe des aktiven Bauteils auf alle Teile übernehmen, wo sie verfügbar ist */
@@ -2509,12 +2550,12 @@ const CalculatorOnlinePage = () => {
                             {isStepFile(p.fileName) ? "Auf Anfrage" : `${CHF(calc.unit)} × ${p.quantity}`}
                           </span>
                         </div>
-                        {p.kiAnalysis && !p.kiAnalysisLoading && (
+                        {"breakdown" in calc && calc.breakdown && !p.kiAnalysisLoading && !p.slicerLoading && (
                           <div className="ml-3 pl-3 border-l border-border space-y-0.5 text-xs text-muted-foreground">
-                            <div className="flex justify-between"><span>Materialkosten</span><span className="tabular-nums">{CHF(p.kiAnalysis.materialkosten)}</span></div>
-                            <div className="flex justify-between"><span>Maschinenzeit</span><span className="tabular-nums">{CHF(p.kiAnalysis.maschinenkosten)}</span></div>
-                            {p.kiAnalysis.support_nachbearbeitung > 0 && (
-                              <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(p.kiAnalysis.support_nachbearbeitung)}</span></div>
+                            <div className="flex justify-between"><span>Materialkosten</span><span className="tabular-nums">{CHF(calc.breakdown.material)}</span></div>
+                            <div className="flex justify-between"><span>Maschinenzeit</span><span className="tabular-nums">{CHF(calc.breakdown.machine)}</span></div>
+                            {calc.breakdown.support > 0 && (
+                              <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(calc.breakdown.support)}</span></div>
                             )}
                             <div className="flex justify-between"><span>× {p.quantity} Stück{calc.discount > 0 ? ` (−${Math.round(calc.discount * 100)}%)` : ""}</span><span className="tabular-nums text-foreground">{CHF(calc.subtotal)}</span></div>
                           </div>

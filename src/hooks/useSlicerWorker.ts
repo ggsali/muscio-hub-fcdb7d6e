@@ -4,6 +4,8 @@ export interface SlicerResult {
   printTimeMinutes: number;
   filamentGrams: number;
   filamentMm: number;
+  /** Dichte (g/cm³), mit der filamentGrams gerechnet wurde – für die Umrechnung bei Materialwechsel */
+  density?: number;
   layers: number;
   hasSupport: boolean;
 }

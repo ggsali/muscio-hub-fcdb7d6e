@@ -45,18 +45,15 @@ self.onmessage = async (e: MessageEvent) => {
     const printTimeMinutes = effectiveSec > 0 ? Math.max(1, Math.round(effectiveSec / 60)) : 0;
 
     const filamentMm = Number(stats.filament_mm) || 0;
+    const usedDensity = Number(density) || 1.24;
+    // Gramm bevorzugt aus der Filamentlänge rechnen: so stimmt die Dichte des gewählten Materials,
+    // und das Ergebnis lässt sich bei Materialwechsel ohne neuen Slice umrechnen.
     const filamentGrams =
-      Number(stats.filament_weight) ||
-      Number(stats.filament_g) ||
-      (filamentMm > 0
+      filamentMm > 0
         ? Math.round(
-            gramsFromFilamentMm(
-              filamentMm,
-              Number(params?.filament_diameter) || 1.75,
-              Number(density) || 1.24,
-            ) * 10,
+            gramsFromFilamentMm(filamentMm, Number(params?.filament_diameter) || 1.75, usedDensity) * 10,
           ) / 10
-        : 0);
+        : Number(stats.filament_weight) || Number(stats.filament_g) || 0;
 
     const layers = Number(stats.layers) || 0;
     // Support nur melden, wenn tatsächlich Support-Extrusionen im G-Code sind
@@ -74,6 +71,7 @@ self.onmessage = async (e: MessageEvent) => {
       printTimeMinutes,
       filamentGrams,
       filamentMm,
+      density: filamentMm > 0 ? usedDensity : undefined,
       layers,
       hasSupport,
       rawStats: stats,
