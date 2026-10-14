@@ -121,7 +121,7 @@ export default function BuchhaltungPage() {
   const syncableOrders = useCallback(async () => {
     const { data: orders } = await supabase
       .from("orders")
-      .select("id, name, beschreibung, datum, created_at, umsatz_total, status")
+      .select("id, name, beschreibung, datum, created_at, umsatz_total, versandkosten, status")
       .in("status", ["Bezahlt", "Abgeschlossen"]);
     const list = (orders ?? []).filter(o => {
       const d = (o.datum || o.created_at || "").slice(0, 10);
@@ -153,7 +153,8 @@ export default function BuchhaltungPage() {
         datum: (o.datum || o.created_at || "").slice(0, 10) || null,
         text: o.name || o.beschreibung || `Auftrag ${o.id.slice(0, 8)}`,
         beleg: o.id.slice(0, 8),
-        einnahmen: n(o.umsatz_total),
+        // Versandkosten sind durchlaufende Posten und gehören nicht zum Umsatz
+        einnahmen: Math.max(0, Math.round((n(o.umsatz_total) - n((o as any).versandkosten)) * 100) / 100),
         ausgaben: 0,
         kategorie: "einnahmen" as const,
       }));
