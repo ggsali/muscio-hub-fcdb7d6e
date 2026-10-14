@@ -3272,7 +3272,20 @@ export default function AuftragDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      
+      <SlicerScanModal
+        open={slicerScanPartIdx !== null}
+        onClose={() => setSlicerScanPartIdx(null)}
+        onApply={(druckzeit, gewicht) => {
+          if (slicerScanPartIdx === null) return;
+          const idx = slicerScanPartIdx;
+          setParts(prev => {
+            if (!prev[idx]) return prev;
+            const updated = [...prev];
+            updated[idx] = recalcPart({ ...updated[idx], druckzeit_h: druckzeit, gewicht_g: gewicht });
+            return updated;
+          });
+        }}
+      />
     </div>
   );
 }
