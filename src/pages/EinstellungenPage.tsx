@@ -198,19 +198,47 @@ export default function EinstellungenPage() {
   };
 
   const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const original = e.target.files?.[0];
+    e.target.value = "";
+    if (!original) return;
     setUploadingQr(true);
     try {
-      const ext = file.name.split(".").pop();
+      let file: Blob = original;
+      let ext = (original.name.split(".").pop() || "png").toLowerCase();
+      let contentType = original.type;
+      // PDF → erste Seite als hochaufgelöstes PNG (für die Rechnungs-PDFs)
+      if (original.type === "application/pdf" || ext === "pdf") {
+        const pdfjs = await import("pdfjs-dist");
+        const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+        pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+        const pdf = await pdfjs.getDocument({ data: await original.arrayBuffer() }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 3 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport, canvas } as any).promise;
+        file = await new Promise<Blob>((res, rej) => canvas.toBlob(b => (b ? res(b) : rej(new Error("PDF konnte nicht umgewandelt werden"))), "image/png"));
+        ext = "png";
+        contentType = "image/png";
+      }
       const path = `qr_bill.${ext}`;
       const { error } = await supabase.storage
         .from("company-assets")
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, file, { upsert: true, contentType });
       if (error) throw error;
       const { data } = supabase.storage.from("company-assets").getPublicUrl(path);
       const url = data.publicUrl + `?t=${Date.now()}`;
-      setLocalCompany(prev => ({ ...prev, qr_bill_image_url: url }));
+      const next = { ...localCompany, qr_bill_image_url: url };
+      setLocalCompany(next);
+      await saveCompanySettings(next);
+      await reloadCompany();
+      toast.success("Einzahlungsschein gespeichert");
+    } catch (err: any) {
+      toast.error("Hochladen fehlgeschlagen: " + (err?.message || String(err)));
     } finally {
       setUploadingQr(false);
     }
@@ -721,7 +749,7 @@ export default function EinstellungenPage() {
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <div>
               <h3 className="font-semibold text-sm">Einzahlungsschein (QR-Rechnung)</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Lade dein eigenes QR-Einzahlungsschein-Bild hoch (PNG/JPG). Es wird automatisch als zweite Seite an jede Rechnung angehängt.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Lade deinen QR-Einzahlungsschein als PDF oder Bild (PNG/JPG) hoch. Er wird sofort gespeichert und automatisch als zweite Seite an jede Rechnung angehängt.</p>
             </div>
             {localCompany.qr_bill_image_url && (
               <div className="space-y-2">
@@ -749,7 +777,7 @@ export default function EinstellungenPage() {
                 <Upload className="w-3.5 h-3.5" />
                 {uploadingQr ? "Hochladen..." : localCompany.qr_bill_image_url ? "Bild ersetzen" : "Bild hochladen"}
               </Button>
-              <input ref={qrInputRef} type="file" accept="image/*" className="hidden" onChange={handleQrUpload} />
+              <input ref={qrInputRef} type="file" accept="image/*,application/pdf,.pdf" className="hidden" onChange={handleQrUpload} />
             </div>
           </div>
 
