@@ -283,6 +283,8 @@ export async function exportOrderPDF(data: OrderExportData) {
   if (data.withDetails) {
     // Build detail rows: main part row + per-component cost breakdown
     const detailBody: any[][] = [];
+    let hauptNr = data.parts.length;
+    const nextNr = () => String(++hauptNr).padStart(2, "0");
 
     data.parts.forEach((p, i) => {
       const nr = String(i + 1).padStart(2, "0");
@@ -299,7 +301,7 @@ export async function exportOrderPDF(data: OrderExportData) {
         (p.konstruktion_h > 0 ? p.konstruktion_h * s.konstruktion_pro_h : 0) +
         (p.nachbearbeitung_h > 0 ? p.nachbearbeitung_h * s.nachbearbeitung_pro_h : 0))*100)/100;
       const supportTotal = supportTotalOf(p);
-      const componentTotal = einzelpreis * p.menge + setupTotal + supportTotal;
+      const componentTotal = einzelpreis * p.menge + supportTotal;
       // Header row for the part
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -310,17 +312,6 @@ export async function exportOrderPDF(data: OrderExportData) {
         { content: formatCHF(componentTotal), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
       // Cost breakdown sub-rows
-      if (setupTotal > 0) {
-        detailBody.push([
-          { content: "", styles: { fillColor: rowBg } },
-          { content: "Setup-Pauschale", styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
-          { content: `${setupAnzahl}×`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
-          { content: formatCHF(s.setup_pauschale), styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
-          { content: `×1`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
-          { content: formatCHF(setupTotal), styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", halign: "right", fillColor: rowBg } },
-
-        ]);
-      }
       if (p.gewicht_g > 0) {
         const matRate = effectiveMaterialPricePerG(p, s.material_verkauf_pro_g);
         const matTotal = p.gewicht_g * matRate * p.menge;
@@ -397,10 +388,27 @@ export async function exportOrderPDF(data: OrderExportData) {
       }
     });
 
+    // Setuppauschale als eigene Hauptposition (wie in der Offerte)
+    const setupGesamt = data.parts.reduce(
+      (sum, p) => sum + (s.setup_pauschale > 0 ? ((p as any).setup_pauschale_anzahl ?? 1) * s.setup_pauschale : 0),
+      0,
+    );
+    if (setupGesamt > 0) {
+      const setupN = setupGesamt / s.setup_pauschale;
+      detailBody.push([
+        { content: nextNr(), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: "Setuppauschale", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
+        { content: `${setupN}×`, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "center", fontSize: 8.5 } },
+        { content: formatCHF(s.setup_pauschale), styles: { fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+        { content: "", styles: { fillColor: BLACK } },
+        { content: formatCHF(setupGesamt), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
+      ]);
+    }
+
     // Express-Lieferung als zusätzliche Hauptzeile am Ende
     if ((data.expressKosten ?? 0) > 0) {
       const exLabel = data.expressLabel?.trim() || "Express-Lieferung";
-      const nr = String(data.parts.length + 1).padStart(2, "0");
+      const nr = nextNr();
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: exLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -413,7 +421,7 @@ export async function exportOrderPDF(data: OrderExportData) {
 
     // Versand / Abholung als zusätzliche Hauptzeile am Ende
     if (versandBetrag > 0) {
-      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
+      const nr = nextNr();
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: versandLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -423,7 +431,7 @@ export async function exportOrderPDF(data: OrderExportData) {
         { content: formatCHF(versandBetrag), styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, halign: "right", fontSize: 8.5 } },
       ]);
     } else if (data.lieferart === "abholung") {
-      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 2 : 1)).padStart(2, "0");
+      const nr = nextNr();
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: "Abholung in Eschlikon TG", styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
@@ -434,7 +442,7 @@ export async function exportOrderPDF(data: OrderExportData) {
       ]);
     }
     if (verpBetrag > 0) {
-      const nr = String(data.parts.length + ((data.expressKosten ?? 0) > 0 ? 1 : 0) + (versandBetrag > 0 || data.lieferart === "abholung" ? 1 : 0) + 1).padStart(2, "0");
+      const nr = nextNr();
       detailBody.push([
         { content: nr, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
         { content: verpLabel, styles: { fontStyle: "bold", fillColor: BLACK, textColor: WHITE, fontSize: 8.5 } },
