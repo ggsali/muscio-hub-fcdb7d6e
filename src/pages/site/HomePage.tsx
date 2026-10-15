@@ -19,7 +19,7 @@ import Seo from "@/components/site/Seo";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
 import { toast } from "sonner";
-import { company, fullAddress, localBusinessJsonLd, faqJsonLd } from "@/data/company";
+import { company, fullAddress, faqJsonLd } from "@/data/company";
 
 
 
@@ -599,48 +599,12 @@ const SEOContent = () => {
 };
 
 const Index = () => {
-  const reviewData = useReviewData();
-  // Bewertungs-Schema nur aus echten, sichtbaren Daten (identisch mit der Anzeige auf der Seite)
-  const ratingJsonLd = reviewData && reviewData.count > 0
-    ? {
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: reviewData.average,
-          reviewCount: reviewData.count,
-          bestRating: 5,
-          worstRating: 1,
-        },
-        review: reviewData.reviews
-          .filter((r) => (r.kommentar ?? "").trim().length > 0)
-          .slice(0, 5)
-          .map((r) => ({
-            "@type": "Review",
-            author: { "@type": "Person", name: r.customer_name.split(" · ")[0] },
-            datePublished: r.created_at.slice(0, 10),
-            reviewBody: r.kommentar,
-            reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 },
-          })),
-      }
-    : {};
   return (
   <div>
     <Seo
       title="3D-Druckservice Schweiz – FDM & SLA ab 1 Stück | 3DMuscio"
       description="Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Fertigung bei geeigneten Aufträgen in 48 h möglich."
       path="/"
-      jsonLd={[
-        { ...localBusinessJsonLd, ...ratingJsonLd },
-        {
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "@id": "https://3dmuscio.com/#website",
-          url: "https://3dmuscio.com",
-          name: company.name,
-          inLanguage: "de-CH",
-          publisher: { "@id": "https://3dmuscio.com/#organization" },
-        },
-        
-      ]}
     />
     <HeroBento />
     <Marquee />

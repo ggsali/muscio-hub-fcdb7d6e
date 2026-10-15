@@ -1,15 +1,20 @@
-// Ported from index.html: LocalBusiness / ManufacturingBusiness + Service + WebSite Schema
-export const organizationJsonLd = JSON.stringify({
+// Einzige sitewide JSON-LD-Quelle: LocalBusiness (@id #organization) + Service + WebSite.
+// Seiten dürfen diese Entität NICHT erneut ausgeben (sonst doppelte/widersprüchliche Knoten);
+// Bewertungen werden über buildOrganizationJsonLd(rating) in genau diesen Knoten eingefügt.
+export type OrgRatingData = { aggregateRating?: Record<string, unknown>; review?: Record<string, unknown>[] };
+
+export const buildOrganizationJsonLd = (rating: OrgRatingData = {}) => ({
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": ["LocalBusiness", "ProfessionalService", "ManufacturingBusiness"],
+      "@type": ["LocalBusiness", "ProfessionalService"],
       "@id": "https://3dmuscio.com/#organization",
       name: "3DMuscio",
       description:
         "Schweizer 3D-Druckservice für Prototypen, Ersatzteile und Kleinserien. FDM und SLA 3D-Druck aus Eschlikon TG.",
       url: "https://3dmuscio.com",
       email: "info@3dmuscio.com",
+      telephone: "+41778044122",
       founder: { "@type": "Person", name: "Jorim Moos" },
       foundingDate: "2024",
       image:
@@ -22,7 +27,9 @@ export const organizationJsonLd = JSON.stringify({
         addressCountry: "CH",
       },
       geo: { "@type": "GeoCoordinates", latitude: 47.6537, longitude: 8.9736 },
-      areaServed: { "@type": "Country", name: "Schweiz" },
+      areaServed: [{ "@type": "Country", name: "Schweiz" }, { "@type": "Country", name: "Liechtenstein" }],
+      knowsAbout: ["3D-Druck", "FDM 3D-Druck", "SLA Resin 3D-Druck", "Rapid Prototyping", "Ersatzteilfertigung", "Kleinserienfertigung"],
+      ...rating,
       serviceType: ["FDM 3D-Druck", "SLA 3D-Druck", "Rapid Prototyping", "Kleinserienfertigung"],
       priceRange: "CHF 5 – CHF 500",
       currenciesAccepted: "CHF",
@@ -58,19 +65,13 @@ export const organizationJsonLd = JSON.stringify({
             "@type": "OfferCatalog",
             name: "Materialien",
             itemListElement: [
-              { "@type": "Offer", itemOffered: { "@type": "Product", name: "PLA", material: "PLA" } },
-              { "@type": "Offer", itemOffered: { "@type": "Product", name: "PETG", material: "PETG" } },
-              { "@type": "Offer", itemOffered: { "@type": "Product", name: "ABS", material: "ABS" } },
-              { "@type": "Offer", itemOffered: { "@type": "Product", name: "ASA", material: "ASA" } },
-              { "@type": "Offer", itemOffered: { "@type": "Product", name: "TPU", material: "TPU" } },
-              {
-                "@type": "Offer",
-                itemOffered: { "@type": "Product", name: "Nylon (PA)", material: "Nylon" },
-              },
-              {
-                "@type": "Offer",
-                itemOffered: { "@type": "Product", name: "Resin", material: "Resin" },
-              },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "3D-Druck in PLA", serviceType: "3D-Druck" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "3D-Druck in PETG", serviceType: "3D-Druck" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "3D-Druck in ABS", serviceType: "3D-Druck" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "3D-Druck in ASA", serviceType: "3D-Druck" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "3D-Druck in TPU", serviceType: "3D-Druck" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "3D-Druck in Nylon (PA)", serviceType: "3D-Druck" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "3D-Druck in Resin", serviceType: "3D-Druck" } },
             ],
           },
         ],
@@ -97,3 +98,4 @@ export const organizationJsonLd = JSON.stringify({
   ],
 });
 
+export const organizationJsonLd = JSON.stringify(buildOrganizationJsonLd());

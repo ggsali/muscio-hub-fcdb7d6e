@@ -1,6 +1,6 @@
 import Seo from "@/components/site/Seo";
 import AnswerLanding from "@/components/site/AnswerLanding";
-import { breadcrumbJsonLd, faqJsonLd, localBusinessJsonLd, serviceJsonLd } from "@/data/company";
+import { breadcrumbJsonLd, faqJsonLd, serviceJsonLd } from "@/data/company";
 
 const PATH = "/3d-druck-schweiz";
 
@@ -55,7 +55,6 @@ export default function DruckSchweizPage() {
         description={DESCRIPTION}
         path={PATH}
         jsonLd={[
-          localBusinessJsonLd,
           serviceJsonLd("3D-Druckservice Schweiz", DESCRIPTION, PATH),
           breadcrumbJsonLd([
             { name: "Start", path: "/" },

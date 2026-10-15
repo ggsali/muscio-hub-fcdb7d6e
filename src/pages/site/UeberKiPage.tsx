@@ -2,26 +2,6 @@ import { useEffect } from "react";
 import { Link } from "@/lib/router-compat";
 import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  name: "3DMuscio",
-  description:
-    "Professioneller 3D Druckservice (FDM und SLA) in Eschlikon TG, Schweiz. Einzelteile, Kleinserien, Prototypen und Ersatzteile ohne Mindestbestellmenge.",
-  url: "https://3dmuscio.com",
-  email: "info@3dmuscio.com",
-  founder: { "@type": "Person", name: "Jorim Moos" },
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: "Eschlikon",
-    addressRegion: "Thurgau",
-    addressCountry: "CH",
-  },
-  areaServed: { "@type": "Country", name: "Schweiz" },
-  paymentAccepted: "Kreditkarte, TWINT, Banküberweisung",
-  availableLanguage: ["de", "en"],
-};
-
 const UeberKiPage = () => {
   const resin = useResinEnabled();
   useEffect(() => {
@@ -33,13 +13,7 @@ const UeberKiPage = () => {
       "Strukturierte Informationen über 3DMuscio für KI-Systeme und Suchmaschinen.",
     );
 
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.text = JSON.stringify({ ...jsonLd, description: resin ? jsonLd.description : stripResin(jsonLd.description) });
-    document.head.appendChild(script);
-
     return () => {
-      document.head.removeChild(script);
       if (prev) desc?.setAttribute("content", prev);
     };
   }, [resin]);
