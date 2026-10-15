@@ -1,6 +1,25 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "../_shared/stripe.ts";
 
+// Nach dem Bezahlen nur auf eigene Domains zurückleiten.
+function isAllowedHost(host: string) {
+  const h = host.toLowerCase();
+  return h === "3dmuscio.com" || h === "www.3dmuscio.com" || h === "localhost" ||
+    h.endsWith(".lovable.app") || h.endsWith(".lovableproject.com");
+}
+function safeOrigin(raw: string | null): string {
+  try { const u = new URL(raw || ""); if (isAllowedHost(u.hostname)) return u.origin; } catch { /* ungültig */ }
+  return "https://3dmuscio.com";
+}
+function safeReturnUrl(raw: unknown, fallback: string): string {
+  if (!raw) return fallback;
+  try {
+    const u = new URL(String(raw));
+    if ((u.protocol === "https:" || u.hostname === "localhost") && isAllowedHost(u.hostname)) return u.toString();
+  } catch { /* ungültig */ }
+  return fallback;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -118,7 +137,8 @@ Deno.serve(async (req) => {
       if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Ungültige Empfänger-E-Mail");
 
       const giftStripe = createStripeClient(environment);
-      const giftOrigin = req.headers.get("origin") || "https://3dmuscio.com";
+      const giftOrigin = safeOrigin(req.headers.get("origin"));
+      const giftStripe = createStripeClient(environment);
       const giftSession = await giftStripe.checkout.sessions.create({
         mode: "payment",
         ui_mode: "embedded_page",
@@ -130,9 +150,7 @@ Deno.serve(async (req) => {
             product_data: { name: `3DMuscio Gutschein CHF ${betrag.toFixed(2)}`, tax_code: "txcd_99999999" },
           },
         }],
-        return_url: body?.returnUrl
-          ? String(body.returnUrl)
-          : `${giftOrigin}/gutschein?erfolg=1`,
+        return_url: safeReturnUrl(body?.returnUrl, `${giftOrigin}/gutschein?erfolg=1`),
         metadata: {
           gutschein_kauf: "1",
           gutschein_betrag: String(betrag),
@@ -281,7 +299,7 @@ Deno.serve(async (req) => {
 
 
     const stripe = createStripeClient(environment);
-    const origin = req.headers.get("origin") || "https://3dmuscio.com";
+    const origin = safeOrigin(req.headers.get("origin"));
 
     const effectiveEmail = inCustomer?.email || userEmail;
     const customerId = await resolveOrCreateCustomer(stripe, {

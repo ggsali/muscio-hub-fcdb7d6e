@@ -168,7 +168,8 @@ function buildOrderEmail(opts: {
   restbetrag?: number | null;
   lieferart?: string | null;
 }): { subject: string; html: string } {
-  const { type, customerName, orderNr, orderName, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag, lieferart } = opts;
+  const { type, customerName, orderNr, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag, lieferart } = opts;
+  const orderName = escHtml(opts.orderName);
   const isPickup = lieferart === "abholung";
 
   const greet = `<p>Guten Tag ${formattedName(customerName)},</p>`;
