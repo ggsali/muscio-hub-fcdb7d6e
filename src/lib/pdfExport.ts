@@ -70,6 +70,9 @@ interface OrderExportData {
   expressKosten?: number;
   expressLabel?: string;
   rabattProzent?: number;
+  /** Gutschein-Abzug in CHF (bereits in umsatz_total abgezogen) */
+  gutscheinBetrag?: number;
+  gutscheinCode?: string;
   versandkosten?: number;
   paket_groesse?: string;
   lieferart?: string;
@@ -276,13 +279,16 @@ export async function exportOrderPDF(data: OrderExportData) {
   // Gesamtbetrag 1:1 aus dem Auftrag/Offerten-Snapshot (umsatz_total ist netto nach Rabatt inkl. Versand):
   // Brutto wird daraus zurückgerechnet, damit Offerte, Rechnung und Admin exakt denselben Betrag zeigen.
   const _rabPct = Math.max(0, Math.min(99.99, Number(data.rabattProzent) || 0));
-  const _netto = Number(data.umsatz_total) || 0;
+  const gutscheinBetrag = Math.max(0, Number(data.gutscheinBetrag) || 0);
+  const gutscheinLabel = `Gutschein${data.gutscheinCode ? ` (${data.gutscheinCode})` : ""}`;
+  // umsatz_total enthält den Gutschein-Abzug bereits; für die Rückrechnung davor wieder aufaddieren
+  const _netto = (Number(data.umsatz_total) || 0) + (Number(data.umsatz_total) > 0 ? gutscheinBetrag : 0);
   const effectiveTotal = _netto > 0
     ? (_rabPct === 0 ? _netto : ((_netto - versandBetrag - verpBetrag) / (1 - _rabPct / 100)) + versandBetrag + verpBetrag)
     : computedPartsTotal + (data.expressKosten ?? 0) + versandBetrag + verpBetrag;
   const rabattProzent = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
   const rabattBetrag = (effectiveTotal - versandBetrag - verpBetrag) * (rabattProzent / 100);
-  const netTotal = effectiveTotal - rabattBetrag;
+  const netTotal = effectiveTotal - rabattBetrag - gutscheinBetrag;
 
   if (data.withDetails) {
     // Build detail rows: main part row + per-component cost breakdown
@@ -608,6 +614,9 @@ export async function exportOrderPDF(data: OrderExportData) {
   }
   if (rabattBetrag > 0) {
     sumRows.push([`Rabatt (${rabattProzent}%)`, `- ${formatCHF(rabattBetrag)}`]);
+  }
+  if (gutscheinBetrag > 0) {
+    sumRows.push([gutscheinLabel, `- ${formatCHF(gutscheinBetrag)}`]);
   }
   sumRows.push(["MwSt. (0%)", "CHF 0.00"]);
 

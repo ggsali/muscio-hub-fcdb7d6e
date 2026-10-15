@@ -172,6 +172,11 @@ export default function AuftragDetailPage() {
   const [setupAnzahl, setSetupAnzahl] = useState<number>(1);
   const [slicerScanPartIdx, setSlicerScanPartIdx] = useState<number | null>(null);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
+  // Gutschein (separater Abschnitt, wird auf Offerte/Rechnung als eigene Zeile ausgewiesen)
+  const [gutscheinCode, setGutscheinCode] = useState<string>("");
+  const [gutscheinTyp, setGutscheinTyp] = useState<"" | "prozent" | "betrag" | "gratis_versand">("");
+  const [gutscheinWert, setGutscheinWert] = useState<number>(0);
+  const [gutscheinHatteDb, setGutscheinHatteDb] = useState(false);
   const [source, setSource] = useState<string>("manual");
   const [notesInternal, setNotesInternal] = useState<string>("");
   const [pendingStatusEmail, setPendingStatusEmail] = useState<string | null>(null);
@@ -396,6 +401,10 @@ export default function AuftragDetailPage() {
           setExpressKosten(Number((o as any).express_kosten) || 0);
           setExpressLabel((o as any).express_label || "");
           setRabattProzent(Number((o as any).rabatt_prozent) || 0);
+          setGutscheinCode((o as any).gutschein_code || "");
+          setGutscheinTyp(((o as any).gutschein_typ as any) || "");
+          setGutscheinWert(Number((o as any).gutschein_wert) || 0);
+          setGutscheinHatteDb(!!((o as any).gutschein_typ || (o as any).gutschein_code));
           setVersandkosten(Number((o as any).versandkosten) || 0);
           setPaketGroesse((o as any).paket_groesse || "");
           setVerpackungskosten(Number((o as any).verpackungskosten) || 0);
@@ -803,6 +812,15 @@ export default function AuftragDetailPage() {
     }
   };
 
+  const calcGutschein = (netto: number, versand: number): number => {
+    const w = Number(gutscheinWert) || 0;
+    let b = 0;
+    if (gutscheinTyp === "prozent") b = netto * (Math.max(0, Math.min(100, w)) / 100);
+    else if (gutscheinTyp === "betrag") b = Math.min(w, netto);
+    else if (gutscheinTyp === "gratis_versand") b = versand;
+    return Math.round(Math.max(0, b) * 100) / 100;
+  };
+
   const togglePart = async (partId: string) => {
     const willBeSelected = !selectedPartIds.has(partId);
     const nextSet = new Set(selectedPartIds);
@@ -818,7 +836,8 @@ export default function AuftragDetailPage() {
           nextParts.reduce((s, p) => s + (p.preis_total || 0), 0) +
           (nextParts.length > 0 ? setupAnzahl * (activeSettings.setup_pauschale || 0) : 0) +
           (nextParts.length > 0 ? Math.max(0, Number(expressKosten) || 0) : 0);
-        const neuTotal = brutto - brutto * (pct / 100) + versandkosten + verpackungskosten;
+        const neuNetto = brutto - brutto * (pct / 100);
+        const neuTotal = Math.max(0, neuNetto + versandkosten + verpackungskosten - calcGutschein(neuNetto, versandkosten));
         await supabase.from("orders").update({ umsatz_total: neuTotal, versandkosten, paket_groesse: paketGroesse || null, verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung || null, setup_anzahl: setupAnzahl } as any).eq("id", id);
       }
     } catch (err: any) {
@@ -881,7 +900,9 @@ export default function AuftragDetailPage() {
 
   // Netto = nach Rabatt
   const selectedTotalUmsatz = selectedBruttoUmsatz - selectedRabattBetrag;
-  const totalMitVersand = selectedTotalUmsatz + versandkosten + verpackungskosten;
+  // Gutschein: Prozent auf Netto (nach Rabatt), fester Betrag (max. Netto) oder Versand gratis
+  const gutscheinBetrag = calcGutschein(selectedTotalUmsatz, versandkosten);
+  const totalMitVersand = Math.max(0, selectedTotalUmsatz + versandkosten + verpackungskosten - gutscheinBetrag);
 
   // Kosten
   const selectedTotalKosten = selectedParts.reduce((s, p) => {
@@ -925,6 +946,8 @@ export default function AuftragDetailPage() {
     verpackungs_beschreibung: verpackungsBeschreibung,
     lieferart,
     rabatt_prozent: rabattPct,
+    gutschein_code: gutscheinCode,
+    gutschein_betrag: gutscheinBetrag,
     express_kosten: selectedExpressAmount,
     express_label: expressLabel,
     umsatz_total: totalMitVersand,
@@ -961,6 +984,8 @@ export default function AuftragDetailPage() {
         verpackungsBeschreibung: snap.verpackungs_beschreibung || "",
         lieferart: snap.lieferart || lieferart,
         rabattProzent: Number(snap.rabatt_prozent) || 0,
+        gutscheinBetrag: Number(snap.gutschein_betrag) || 0,
+        gutscheinCode: snap.gutschein_code || "",
         expressKosten: Number(snap.express_kosten) || 0,
         expressLabel: snap.express_label || "",
         settings: snap.settings,
@@ -976,6 +1001,8 @@ export default function AuftragDetailPage() {
       verpackungsBeschreibung,
       lieferart,
       rabattProzent: rabattPct,
+      gutscheinBetrag,
+      gutscheinCode,
       expressKosten: selectedExpressAmount,
       expressLabel,
       settings: null,
@@ -1040,6 +1067,7 @@ export default function AuftragDetailPage() {
             gewinn_total: selectedTotalGewinn, marge: selectedTotalMarge,
             settings: base.settings || freshSettings, company, returnBase64: true, withDetails,
             expressKosten: base.expressKosten, expressLabel: base.expressLabel,
+            rabattProzent: base.rabattProzent, gutscheinBetrag: base.gutscheinBetrag, gutscheinCode: base.gutscheinCode,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         } else {
@@ -1051,6 +1079,7 @@ export default function AuftragDetailPage() {
             versandkosten, paket_groesse: paketGroesse, lieferart,
             verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
             expressKosten: selectedExpressAmount, expressLabel,
+            rabattProzent: rabattPct, gutscheinBetrag, gutscheinCode,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
@@ -1064,7 +1093,7 @@ export default function AuftragDetailPage() {
             versandkosten, paket_groesse: paketGroesse, lieferart,
             verpackungskosten, verpackungs_beschreibung: verpackungsBeschreibung,
             expressKosten: selectedExpressAmount, expressLabel,
-            rabattProzent: rabattPct,
+            rabattProzent: rabattPct, gutscheinBetrag, gutscheinCode,
           });
           if (result) { pdfBase64 = result.base64; pdfFilename = result.filename; }
         }
@@ -1349,6 +1378,8 @@ export default function AuftragDetailPage() {
       expressKosten: base.expressKosten,
       expressLabel: base.expressLabel,
       rabattProzent: base.rabattProzent,
+      gutscheinBetrag: base.gutscheinBetrag,
+      gutscheinCode: base.gutscheinCode,
     });
   };
 
@@ -1377,6 +1408,8 @@ export default function AuftragDetailPage() {
       expressKosten: selectedExpressAmount,
       expressLabel,
       rabattProzent: rabattPct,
+      gutscheinBetrag,
+      gutscheinCode,
     });
   };
 
@@ -1403,6 +1436,8 @@ export default function AuftragDetailPage() {
       expressKosten: selectedExpressAmount,
       expressLabel,
       rabattProzent: rabattPct,
+      gutscheinBetrag,
+      gutscheinCode,
     });
   };
 
@@ -1438,6 +1473,10 @@ export default function AuftragDetailPage() {
       express_kosten: expressBetrag,
       express_label: expressLabel || null,
       rabatt_prozent: rabattPct,
+      // nur schreiben, wenn ein Gutschein gesetzt ist oder war (so bleibt Speichern auch ohne Migration möglich)
+      ...((gutscheinTyp || gutscheinCode || gutscheinHatteDb)
+        ? { gutschein_code: gutscheinCode.trim() || null, gutschein_typ: gutscheinTyp || null, gutschein_wert: Number(gutscheinWert) || 0, gutschein_betrag: gutscheinBetrag }
+        : {}),
       notes_internal: notesInternal || null,
       lieferart,
       versandkosten,
@@ -2200,7 +2239,8 @@ export default function AuftragDetailPage() {
                         paket_groesse: null,
                         verpackungskosten,
                         verpackungs_beschreibung: verpackungsBeschreibung || null,
-                        umsatz_total: selectedTotalUmsatz + verpackungskosten,
+                        umsatz_total: Math.max(0, selectedTotalUmsatz + verpackungskosten - calcGutschein(selectedTotalUmsatz, 0)),
+                        ...(gutscheinTyp ? { gutschein_betrag: calcGutschein(selectedTotalUmsatz, 0) } : {}),
                       } as any).eq("id", id).then(() => {});
                     }
                     toast({ title: "Abholung in Eschlikon TG – kostenlos ✓" });
@@ -2298,7 +2338,7 @@ export default function AuftragDetailPage() {
                       setPaketGroesse(selected.id);
                       setVersandkosten(kosten);
                       setShowVersandModal(false);
-                      const neuesTotal = selectedTotalUmsatz + kosten + verpackungskosten;
+                      const neuesTotal = Math.max(0, selectedTotalUmsatz + kosten + verpackungskosten - calcGutschein(selectedTotalUmsatz, kosten));
                       if (id && !isNew) {
                         await supabase.from("orders").update({
                           lieferart: "versand",
@@ -2307,6 +2347,7 @@ export default function AuftragDetailPage() {
                           verpackungskosten,
                           verpackungs_beschreibung: verpackungsBeschreibung || null,
                           umsatz_total: neuesTotal,
+                          ...(gutscheinTyp ? { gutschein_betrag: calcGutschein(selectedTotalUmsatz, kosten) } : {}),
                         } as any).eq("id", id);
                       }
                       toast({ title: `${selected.id === "grossbrief" ? "A-Post Grossbrief" : selected.id === "briefpost" ? "Briefpost A-Post" : `PostPac Priority ${selected.label}`} · CHF ${kosten.toFixed(2)} hinzugefügt ✓` });
@@ -2945,9 +2986,59 @@ export default function AuftragDetailPage() {
                   {lieferart === "abholung" && (
                     <div className="flex justify-between"><span className="text-muted-foreground">Lieferart</span><span className="text-success font-medium">🏠 Abholung – kostenlos</span></div>
                   )}
+                  {gutscheinBetrag > 0 && (
+                    <div className="flex justify-between"><span className="text-muted-foreground">Gutschein{gutscheinCode ? ` (${gutscheinCode})` : ""}</span><span className="text-destructive">− {formatCHF(gutscheinBetrag)}</span></div>
+                  )}
                   <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatCHF(totalMitVersand)}</span></div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Gutschein */}
+          {!isNew && (
+            <div className="bg-card border border-border rounded-lg p-4 md:p-5">
+              <h3 className="font-semibold text-sm mb-3">Gutschein</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                <div className="space-y-1.5">
+                  <Label>Code</Label>
+                  <Input
+                    value={gutscheinCode}
+                    onChange={e => setGutscheinCode(e.target.value.toUpperCase())}
+                    placeholder="z.B. MUSCIO-ABC123"
+                    className="bg-input border-border"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Art</Label>
+                  <select
+                    value={gutscheinTyp}
+                    onChange={e => setGutscheinTyp(e.target.value as any)}
+                    className="h-10 w-full rounded-md border border-border bg-input px-3 text-sm"
+                  >
+                    <option value="">Kein Gutschein</option>
+                    <option value="prozent">Prozent-Rabatt</option>
+                    <option value="betrag">Betrag (CHF)</option>
+                    <option value="gratis_versand">Gratis Versand</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{gutscheinTyp === "prozent" ? "Wert (%)" : "Wert (CHF)"}</Label>
+                  <Input
+                    type="number" step="0.5" min="0"
+                    disabled={gutscheinTyp === "gratis_versand" || !gutscheinTyp}
+                    value={gutscheinWert || ""}
+                    onChange={e => setGutscheinWert(Math.max(0, parseFloat(e.target.value) || 0))}
+                    placeholder="0"
+                    className="bg-input border-border"
+                  />
+                </div>
+                <div className="text-sm">
+                  <div className="text-muted-foreground">Abzug</div>
+                  <div className="font-semibold text-destructive">− {formatCHF(gutscheinBetrag)}</div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Wird auf Offerte und Rechnung als eigene Zeile «Gutschein» ausgewiesen. Zum Speichern oben «Speichern» klicken.</p>
             </div>
           )}
 

@@ -37,6 +37,7 @@ type Inquiry = {
   attachments?: Attachment[] | null;
   ki_beratung_zusammenfassung?: string | null;
   ki_empfohlenes_material?: string | null;
+  gutschein?: { code: string; typ: "prozent" | "betrag" | "gratis_versand"; wert: number; rabatt?: number } | null;
 };
 
 
@@ -314,6 +315,10 @@ export default function AnfragenPage() {
         status: "Offen",
         source: "website",
         name: aiTitle || fallbackTitle,
+        // Gutschein aus dem Kalkulator: Abzug wird im Auftrag als eigene Zeile berechnet
+        ...(inq.gutschein?.code
+          ? { gutschein_code: inq.gutschein.code, gutschein_typ: inq.gutschein.typ, gutschein_wert: Number(inq.gutschein.wert) || 0 }
+          : {}),
       } as any).select().single();
 
       if (orderErr || !order) {
@@ -378,6 +383,9 @@ export default function AnfragenPage() {
             slicer_filament_gramm?: number | null;
             slicer_hat_supports?: boolean | null;
             slicer_layer_anzahl?: number | null;
+            menge?: number | null;
+            material?: string | null;
+            farbe?: string | null;
           };
           const slSeconds = sl.slicer_druckzeit_sekunden ?? null;
           const slGrams = sl.slicer_filament_gramm ?? null;
@@ -387,7 +395,7 @@ export default function AnfragenPage() {
             customer_id: customerId,
             teilname,
             material: "PLA",
-            menge: 1,
+            menge: Math.max(1, Math.floor(Number(sl.menge) || 1)),
             gewicht_g: slGrams ?? 0,
             druckzeit_h: slSeconds ? Math.round((slSeconds / 3600) * 100) / 100 : 0,
             nachbearbeitung_h: 0,
@@ -395,7 +403,7 @@ export default function AnfragenPage() {
             preis_pro_stueck: 0,
             preis_total: 0,
             status: "Ausstehend",
-            notizen: `Datei: ${att.filename}`,
+            notizen: `Datei: ${att.filename}${sl.menge ? ` · Kunde: ${sl.menge}×` : ""}${sl.material ? ` ${sl.material}` : ""}${sl.farbe ? `, ${sl.farbe}` : ""}`,
             slicer_druckzeit_sekunden: slSeconds,
             slicer_filament_gramm: slGrams,
             slicer_hat_supports: sl.slicer_hat_supports ?? null,

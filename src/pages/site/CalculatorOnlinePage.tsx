@@ -1427,6 +1427,9 @@ const CalculatorOnlinePage = () => {
             storage_path: p.storagePath,
             size_bytes: p.file?.size ?? null,
             bucket: "project-uploads",
+            menge: Math.max(1, Math.floor(Number(p.quantity) || 1)),
+            material: materials.find(m => m.id === p.materialId)?.name || p.materialId || null,
+            farbe: p.color || null,
           })),
         ...partImageAttachments,
         ...refImages
@@ -1457,6 +1460,9 @@ const CalculatorOnlinePage = () => {
           ort: form.ort || null,
           land: form.land || "Schweiz",
           attachments,
+          gutschein: gutschein
+            ? { code: gutschein.code, typ: gutschein.typ, wert: gutschein.wert, rabatt: gutscheinRabatt }
+            : null,
           ki_beratung_zusammenfassung: kiSummaryText,
           ki_empfohlenes_material: kiResult?.material ?? null,
         },

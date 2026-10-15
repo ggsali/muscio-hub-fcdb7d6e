@@ -119,10 +119,12 @@ export default function BuchhaltungPage() {
   const [pendingSync, setPendingSync] = useState<number | null>(null);
 
   const syncableOrders = useCallback(async () => {
-    const { data: orders } = await supabase
+    // select("*"): funktioniert auch bevor die Gutschein-Migration eingespielt ist
+    const { data: ordersRaw } = await supabase
       .from("orders")
-      .select("id, name, beschreibung, datum, created_at, umsatz_total, versandkosten, status")
+      .select("*")
       .in("status", ["Bezahlt", "Abgeschlossen"]);
+    const orders = (ordersRaw ?? []) as any[];
     const list = (orders ?? []).filter(o => {
       const d = (o.datum || o.created_at || "").slice(0, 10);
       return d.startsWith(String(jahr));
@@ -154,7 +156,7 @@ export default function BuchhaltungPage() {
         text: o.name || o.beschreibung || `Auftrag ${o.id.slice(0, 8)}`,
         beleg: o.id.slice(0, 8),
         // Versandkosten sind durchlaufende Posten und gehören nicht zum Umsatz
-        einnahmen: Math.max(0, Math.round((n(o.umsatz_total) - n((o as any).versandkosten)) * 100) / 100),
+        einnahmen: Math.max(0, Math.round((n(o.umsatz_total) - ((o as any).gutschein_typ === "gratis_versand" ? 0 : n((o as any).versandkosten))) * 100) / 100),
         ausgaben: 0,
         kategorie: "einnahmen" as const,
       }));

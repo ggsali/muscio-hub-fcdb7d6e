@@ -56,6 +56,16 @@ Deno.serve(async (req) => {
     const land = str(raw?.land, 80);
     const attachments = Array.isArray(raw?.attachments) ? raw.attachments.slice(0, 20) : null;
     const ki_beratung_zusammenfassung = str(raw?.ki_beratung_zusammenfassung, 5000);
+    // Gutschein aus dem Kalkulator (nur Code/Typ/Wert/Rabatt – Einlösung wird separat serverseitig geprüft)
+    const g = raw?.gutschein;
+    const gutschein = g && typeof g === "object" && ["prozent", "betrag", "gratis_versand"].includes(g.typ) && str(g.code, 60)
+      ? {
+          code: str(g.code, 60).toUpperCase(),
+          typ: g.typ,
+          wert: Math.max(0, Number(g.wert) || 0),
+          rabatt: Math.max(0, Number(g.rabatt) || 0),
+        }
+      : null;
     const ki_empfohlenes_material = str(raw?.ki_empfohlenes_material, 200);
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -109,9 +119,7 @@ Deno.serve(async (req) => {
     // Bestehende Kundendaten werden bewusst nicht durch öffentliche Anfragen verändert.
 
     // Anfrage speichern
-    const { data: insertedInquiry, error } = await supabase
-      .from("inquiries")
-      .insert({
+    const inquiryRow: Record<string, unknown> = {
         name,
         email,
         telefon: telefon || null,
@@ -123,9 +131,14 @@ Deno.serve(async (req) => {
         attachments: attachments || null,
         ki_beratung_zusammenfassung: ki_beratung_zusammenfassung || null,
         ki_empfohlenes_material: ki_empfohlenes_material || null,
-      })
-      .select("id")
-      .single();
+    };
+    if (gutschein) inquiryRow.gutschein = gutschein;
+    let { data: insertedInquiry, error } = await supabase.from("inquiries").insert(inquiryRow).select("id").single();
+    if (error && gutschein && /gutschein/i.test(error.message ?? "")) {
+      // Spalte noch nicht migriert: Anfrage trotzdem speichern (Gutschein steht zusätzlich im Nachrichtentext)
+      delete inquiryRow.gutschein;
+      ({ data: insertedInquiry, error } = await supabase.from("inquiries").insert(inquiryRow).select("id").single());
+    }
 
     if (error) throw error;
 

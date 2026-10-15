@@ -49,6 +49,9 @@ interface OfferExportData {
   expressKosten?: number;
   expressLabel?: string;
   rabattProzent?: number;
+  /** Gutschein-Abzug in CHF (bereits in umsatz_total abgezogen) */
+  gutscheinBetrag?: number;
+  gutscheinCode?: string;
   versandkosten?: number;
   paket_groesse?: string;
   lieferart?: string;
@@ -273,7 +276,10 @@ export async function exportOfferPDF(data: OfferExportData) {
   // Gesamtbetrag 1:1 aus dem Auftrag/Offerten-Snapshot (umsatz_total ist netto nach Rabatt inkl. Versand):
   // Brutto wird daraus zurückgerechnet, damit Offerte, Rechnung und Admin exakt denselben Betrag zeigen.
   const _rabPct = Math.max(0, Math.min(99.99, Number(data.rabattProzent) || 0));
-  const _netto = Number(data.umsatz_total) || 0;
+  const gutscheinBetrag = Math.max(0, Number(data.gutscheinBetrag) || 0);
+  const gutscheinLabel = `Gutschein${data.gutscheinCode ? ` (${data.gutscheinCode})` : ""}`;
+  // umsatz_total enthält den Gutschein-Abzug bereits; für die Rückrechnung davor wieder aufaddieren
+  const _netto = (Number(data.umsatz_total) || 0) + (Number(data.umsatz_total) > 0 ? gutscheinBetrag : 0);
   const effectiveTotal = _netto > 0
     ? (_rabPct === 0 ? _netto : ((_netto - versandBetrag - verpBetrag) / (1 - _rabPct / 100)) + versandBetrag + verpBetrag)
     : computedPartsTotal + setupBetrag + (data.expressKosten ?? 0) + versandBetrag + verpBetrag;
@@ -516,12 +522,15 @@ export async function exportOfferPDF(data: OfferExportData) {
   if (offerRabatt > 0) {
     offerSumRows.push([`Rabatt (${offerRabattPct}%)`, `- ${formatCHF(offerRabatt)}`]);
   }
+  if (gutscheinBetrag > 0) {
+    offerSumRows.push([gutscheinLabel, `- ${formatCHF(gutscheinBetrag)}`]);
+  }
   offerSumRows.push(["MwSt. (0%)", "CHF 0.00"]);
 
   const totalBoxBottom = drawSummary(
     doc,
     offerSumRows,
-    "ANGEBOTSSUMME", formatCHF(effectiveTotal - offerRabatt),
+    "ANGEBOTSSUMME", formatCHF(effectiveTotal - offerRabatt - gutscheinBetrag),
     ACCENT, sumX, afterTable, pageW, margin,
   );
 
@@ -658,7 +667,13 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
   const sumX = pageW - margin - sumW;
 
   const versandBetragAb = Math.max(0, Number(data.versandkosten) || 0);
-  const abPartsSubtotal = data.umsatz_total - (data.expressKosten ?? 0) - versandBetragAb - verpBetragAb;
+  // umsatz_total ist netto nach Rabatt und Gutschein (inkl. Versand): Brutto zurückrechnen, damit AB, Offerte, Rechnung und Admin identisch sind
+  const abGutschein = Math.max(0, Number(data.gutscheinBetrag) || 0);
+  const abGutscheinLabel = `Gutschein${data.gutscheinCode ? ` (${data.gutscheinCode})` : ""}`;
+  const abRabPctRaw = Math.max(0, Math.min(99.99, Number(data.rabattProzent) || 0));
+  const abPre = (Number(data.umsatz_total) || 0) + abGutschein;
+  const abGross = abRabPctRaw === 0 ? abPre : ((abPre - versandBetragAb - verpBetragAb) / (1 - abRabPctRaw / 100)) + versandBetragAb + verpBetragAb;
+  const abPartsSubtotal = abGross - (data.expressKosten ?? 0) - versandBetragAb - verpBetragAb;
   const abSumRows: [string, string][] = [["Zwischensumme", formatCHF(abPartsSubtotal)]];
   if ((data.expressKosten ?? 0) > 0) {
     abSumRows.push([data.expressLabel?.trim() || "Express-Lieferung", formatCHF(data.expressKosten!)]);
@@ -670,16 +685,19 @@ export async function exportAuftragsbestaetiguungPDF(data: OfferExportData) {
     abSumRows.push([verpLabelAb, formatCHF(verpBetragAb)]);
   }
   const abRabattPct = Math.max(0, Math.min(100, Number(data.rabattProzent) || 0));
-  const abRabatt = (data.umsatz_total - versandBetragAb - verpBetragAb) * (abRabattPct / 100);
+  const abRabatt = (abGross - versandBetragAb - verpBetragAb) * (abRabattPct / 100);
   if (abRabatt > 0) {
     abSumRows.push([`Rabatt (${abRabattPct}%)`, `- ${formatCHF(abRabatt)}`]);
+  }
+  if (abGutschein > 0) {
+    abSumRows.push([abGutscheinLabel, `- ${formatCHF(abGutschein)}`]);
   }
   abSumRows.push(["MwSt. (0%)", "CHF 0.00"]);
 
   const totalBoxBottom = drawSummary(
     doc,
     abSumRows,
-    "AUFTRAGSSUMME", formatCHF(data.umsatz_total - abRabatt),
+    "AUFTRAGSSUMME", formatCHF(abGross - abRabatt - abGutschein),
     GREEN, sumX, afterTable, pageW, margin,
   );
 
