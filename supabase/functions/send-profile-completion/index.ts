@@ -101,12 +101,17 @@ Deno.serve(async (req) => {
     }
 
     // E-Mail direkt via Resend versenden
+    if (!customer || !customer.email) {
+      return new Response(JSON.stringify({ error: 'Kunde hat keine E-Mail-Adresse' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
     const kundenName = String(displayName || 'Kunde')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
     const { error: mailErr } = await resend.emails.send({
       from: '3DMuscio <noreply@3dmuscio.com>',
-      to: [customer.email!],
+      to: [customer.email],
       subject: 'Bitte ergänzen Sie Ihre Adressdaten – 3DMuscio',
       html: `
         <div style="font-family:Arial,Helvetica,sans-serif;background:#f5f5f5;padding:24px;">
