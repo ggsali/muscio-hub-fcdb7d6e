@@ -155,6 +155,13 @@
       "when": 1791895698861,
       "tag": "0021_stadtmodell_enabled_public_read",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792044462509,
+      "tag": "0022_reviews_admin_list",
+      "breakpoints": true
     }
   ]
 }
