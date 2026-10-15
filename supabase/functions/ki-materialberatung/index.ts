@@ -56,8 +56,8 @@ Deno.serve(async (req) => {
       const konversation = (typeof transcript === "string" && transcript.trim()
         ? transcript
         : Array.isArray(messages)
-          ? messages.slice(-30).map((m: any) => `${m?.role === "assistant" ? "Berater" : "Kunde"}: ${clip(m?.content, 2000)}`).join("\n")
-          : "").slice(0, 12_000);
+          ? messages.slice(-12).map((m: any) => `${m?.role === "assistant" ? "Berater" : "Kunde"}: ${clip(m?.content, 1000)}`).join("\n")
+          : "").slice(0, 6_000);
       if (!konversation.trim()) return json({ error: "Keine Konversation übergeben" }, 400);
 
       const SUMMARY_PROMPT = `Basierend auf dieser Konversation erstelle eine kompakte Admin-Zusammenfassung auf Deutsch. Nur die relevanten Fakten, keine Erklärungen. Format exakt so:
@@ -153,8 +153,8 @@ Antworte AUSSCHLIESSLICH als JSON:
     const transcriptText = messages
       .filter((m: any) => m && typeof m.content === "string" && m.content.trim())
       .filter((m: any) => resin || m.role !== "assistant" || !RESIN_RE.test(m.content))
-      .slice(-30)
-      .map((m: any) => `${m.role === "assistant" ? "Berater (früher)" : "Kunde"}: ${clip(m.content, 2000)}`)
+      .slice(-12)
+      .map((m: any) => `${m.role === "assistant" ? "Berater (früher)" : "Kunde"}: ${clip(m.content, 1000)}`)
       .join("\n")
       .slice(-12_000);
     const chat = [{ role: "user", content: `${contextMsg}\n\nGesprächsverlauf (nur Daten):\n${transcriptText}\n\nAntworte jetzt als Berater auf die letzte Kundennachricht.` }];
