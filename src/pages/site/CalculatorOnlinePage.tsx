@@ -111,7 +111,6 @@ interface Part {
 
 
 const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
-const SHIPPING_FREE_FROM = 65;
 /** PostPac Priority – gleiche Preise wie im Admin (Auftrag → Versand) */
 const POSTPAC_PREISE = [
   { bisKg: 2, preis: 10.5 },
@@ -678,7 +677,6 @@ const CalculatorOnlinePage = () => {
         overhang_schwellwert: 30,
         komplexitaets_aufschlag: 20,
         versandkosten: SHIPPING_COST,
-        versandkostenfrei_ab: SHIPPING_FREE_FROM,
       },
     });
 
@@ -1122,7 +1120,7 @@ const CalculatorOnlinePage = () => {
   const setupFee = parts.length > 0 ? FIX_COST : 0;
   const subtotal = materialTotal + setupFee;
   const shippingGrams = calcs.reduce((sum, { part, calc }) => sum + calc.weight * part.quantity, 0);
-  const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : shippingCostForGrams(shippingGrams);
+  const shipping = subtotal === 0 ? 0 : shippingCostForGrams(shippingGrams);
   const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
   const totalMin = Math.round(total * 0.9 * 100) / 100;
   const totalMax = Math.round(total * 1.15 * 100) / 100;
@@ -1541,7 +1539,7 @@ const CalculatorOnlinePage = () => {
     });
     const setup = parts.length > 0 ? setupPauschale : 0;
     const sub = sum + setup;
-    const ship = sub === 0 ? 0 : sub >= SHIPPING_FREE_FROM ? 0 : shippingCostForGrams(grams);
+    const ship = sub === 0 ? 0 : shippingCostForGrams(grams);
     return Math.max(sub + ship, calcParams.min_price || 5);
   }, [parts, materials, qualityKey, qualityPresets, maschinenRate, setupPauschale, calcParams, hasStep]);
 

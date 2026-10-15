@@ -22,7 +22,7 @@ const AGBPage = () => (
           ["2. Vertragspartner", "Der Kaufvertrag kommt zustande mit: 3DMuscio, Eschlikon TG, Schweiz · info@3dmuscio.com"],
           ["3. Angebot und Vertragsabschluss", "Die Darstellung der Produkte stellt kein bindendes Angebot dar. Mit der Bestellung geben Sie ein verbindliches Angebot ab. Der Vertrag kommt mit Auftragsbestätigung per E-Mail zustande."],
           ["4. Lieferung", "Lieferung erfolgt per Versand. Versandfertig in 1–7 Werktagen. Individuelle Druckaufträge können länger dauern. Bei Lieferungen ausserhalb der Schweiz trägt der Käufer Zoll- und Einfuhrkosten."],
-          ["5. Preise und Versandkosten", "Alle Preise inkl. MwSt. (sofern anwendbar) zzgl. Versand. Ab CHF 65 versandkostenfrei innerhalb der Schweiz."],
+          ["5. Preise und Versandkosten", "Alle Preise inkl. MwSt. (sofern anwendbar) zzgl. Versand."],
           ["6. Zahlung", "Zahlungsarten: Rechnung, PayPal, Kreditkarte, Twint. Zahlung sofort fällig, sofern nicht anders vereinbart."],
           ["7. Widerrufsrecht", "14 Tage Widerrufsrecht ab Erhalt der Ware. Ausgeschlossen bei individuell angefertigten 3D-Druck-Produkten."],
           ["8. Gewährleistung", "Es gelten die gesetzlichen Gewährleistungsrechte. Bei Mängeln bitte info@3dmuscio.com kontaktieren."],

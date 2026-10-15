@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: "Fallen Versandkosten an?",
-    a: "Versand erfolgt mit Post oder DHL innerhalb der Schweiz; ab CHF 65 Bestellwert ist der Versand kostenlos. Abholung in Eschlikon TG ist ebenfalls möglich.",
+    a: "Versand erfolgt mit Post oder DHL innerhalb der Schweiz; die Versandkosten werden im Kalkulator nach Gewicht berechnet. Abholung in Eschlikon TG ist ebenfalls möglich.",
   },
 ];
 

@@ -177,7 +177,6 @@ Deno.serve(async (req) => {
       overhang_schwellwert = 30,
       komplexitaets_aufschlag = 20,
       versandkosten = 8,
-      versandkostenfrei_ab = 65,
     } = body ?? {};
 
     const stlBase64 = body?.stlBase64;
@@ -246,7 +245,7 @@ Deno.serve(async (req) => {
 
     const teilpreis = preisProStueck * qty * (1 - discount);
     const zwischensumme = teilpreis + setupFee;
-    const versand = zwischensumme < versandkostenfrei_ab ? versandkosten : 0;
+    const versand = versandkosten; // kein Gratis-Versand
     const gesamtpreis = Math.round(Math.max(zwischensumme + versand, minPrice) * 100) / 100;
 
     // ── Erklärtext (KI, mit Fallback) ──
@@ -294,7 +293,7 @@ Materialpreis: CHF ${pricePerGram}/g
 Maschinenzeit: CHF ${maschinenzeit}/h
 Setup-Pauschale: CHF ${setupFee} (einmalig)
 Mindestpreis: CHF ${minPrice}
-Versand: CHF ${versandkosten} (gratis ab CHF ${versandkostenfrei_ab})
+Versand: CHF ${versandkosten} (immer berechnet, keinen Gratis-Versand nennen)
 Menge: ${qty} Stück
 
 BERECHNE SCHRITT FÜR SCHRITT:
@@ -341,7 +340,7 @@ SCHRITT 8 – GESAMTPREIS:
 mengenrabatt = ${qty >= 10 ? "15%" : qty >= 5 ? "10%" : "0%"}
 subtotal = preisProStueck × ${qty} × (1 - mengenrabatt) = ?
 gesamtPreis = subtotal + CHF ${setupFee} Setup = ?
-versand = gesamtPreis < ${versandkostenfrei_ab} ? CHF ${versandkosten} : 0 = ?
+versand = CHF ${versandkosten} (immer)
 total = gesamtPreis + versand = ?
 preisspanne_min = total × 0.9 = ?
 preisspanne_max = total × 1.1 = ?

@@ -546,7 +546,7 @@ const SEOContent = () => {
             <div>
               <h3 className="font-heading text-lg font-bold text-foreground mb-2">Schneller Versand in der Schweiz</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Als Schweizer Unternehmen aus Eschlikon TG fertigen wir schnell – bei geeigneten Aufträgen innerhalb von 48 Stunden. Kein Zoll, keine langen Wartezeiten aus dem Ausland. Versand mit Post oder DHL, kostenlos ab CHF 65 Bestellwert.
+                Als Schweizer Unternehmen aus Eschlikon TG fertigen wir schnell – bei geeigneten Aufträgen innerhalb von 48 Stunden. Kein Zoll, keine langen Wartezeiten aus dem Ausland. Versand mit Post oder DHL.
               </p>
             </div>
           </div>
