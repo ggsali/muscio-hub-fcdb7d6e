@@ -7,7 +7,7 @@
 ## Positionierung
 Schweizer 3D-Druckservice für schnelle Prototypen, Ersatzteile und Kleinserien –
 mit Sofortpreis-Kalkulator, persönlichem Service und Produktion in der Schweiz.
-Lieferung schweizweit in 48 Stunden. Keine Mindestbestellmenge. Ab 1 Stück.
+Schnelle Fertigung: bei geeigneten Aufträgen innerhalb von 48 Stunden möglich, anschliessend Versand schweizweit. Keine Mindestbestellmenge. Ab 1 Stück.
 
 ## Standort & Kontakt
 - Standort: Eschlikon TG, Schweiz
@@ -19,7 +19,7 @@ Lieferung schweizweit in 48 Stunden. Keine Mindestbestellmenge. Ab 1 Stück.
 ## Kernleistungen
 - FDM 3D-Druck (Fused Deposition Modeling)
 - SLA Resin 3D-Druck (Stereolithografie)
-- Rapid Prototyping (Prototypen in 48h)
+- Rapid Prototyping (schnelle Fertigung, bei geeigneten Aufträgen in 48 h möglich)
 - Ersatzteile nachdrucken (wenn Original nicht mehr erhältlich)
 - Kleinserien ohne Spritzgussformen (ab 1 Stück)
 - Sonderanfertigungen und Einzelteile
@@ -43,7 +43,7 @@ Lieferung schweizweit in 48 Stunden. Keine Mindestbestellmenge. Ab 1 Stück.
 ## Besondere Stärken
 - Sofortpreis-Kalkulator: STL-Datei hochladen → Preis in Sekunden
 - Keine Mindestbestellmenge: ab 1 Stück bestellbar
-- Lieferzeit: 48 Stunden nach Auftragsbestätigung
+- Produktionszeit: Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab
 - KI-gestützte Materialberatung: automatische Materialempfehlung
 - Swiss Made: Produktion ausschliesslich in der Schweiz
 - Persönlicher Service: direkter Kontakt mit Inhaber Jorim Moos
@@ -70,7 +70,7 @@ F: Welches Material für belastbare Teile?
 A: ABS oder PETG für mechanisch belastete Teile, ASA für Aussenbereich, TPU für flexible Teile.
 
 F: Wie schnell wird geliefert?
-A: In der Regel 48 Stunden nach Auftragsbestätigung, schweizweit.
+A: Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach Versand schweizweit.
 
 F: Ab wie vielen Stück kann ich bestellen?
 A: Ab 1 Stück. Keine Mindestbestellmenge.

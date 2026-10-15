@@ -13,7 +13,7 @@ export interface LocationContent {
 }
 
 const commonFaqs: AnswerFaq[] = [
-  { q: "Wie lange dauert die Lieferung?", a: "Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung, danach Versand mit Post oder DHL (1–2 Tage innerhalb der Schweiz)." },
+  { q: "Wie lange dauert die Lieferung?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand mit Post oder DHL (in der Regel 1–2 Werktage innerhalb der Schweiz)." },
   { q: "Kann ich meine Teile abholen?", a: "Ja, Abholung ist in Eschlikon TG nach Absprache möglich." },
   { q: "Welche Dateiformate nehmt ihr an?", a: "STL, STEP, 3MF und OBJ – direkt im Online-Kalkulator hochladen." },
 ];
@@ -26,13 +26,13 @@ const thurgauFaqs: AnswerFaq[] = [
 ];
 
 const ostschweizFaqs: AnswerFaq[] = [
-  { q: "Liefert ihr in alle Ostschweizer Kantone?", a: "Ja – Thurgau, St. Gallen, Appenzell Innerrhoden und Ausserrhoden, Glarus und das Zürcher Oberland beliefern wir per Post oder DHL in 1–2 Tagen nach Produktion." },
+  { q: "Liefert ihr in alle Ostschweizer Kantone?", a: "Ja – Thurgau, St. Gallen, Appenzell Innerrhoden und Ausserrhoden, Glarus und das Zürcher Oberland beliefern wir per Post oder DHL; der Versand dauert nach der Produktion in der Regel 1–2 Werktage." },
   { q: "Gibt es einen Express-Versand?", a: "Bei dringenden Aufträgen klären wir individuell, ob eine schnellere Produktion oder ein Express-Versand möglich ist – schreibe uns dazu einfach bei der Anfrage." },
   ...commonFaqs,
 ];
 
 const zuerichFaqs: AnswerFaq[] = [
-  { q: "Wie schnell ist mein Teil in Zürich?", a: "Nach Auftragsbestätigung produzieren wir im Standard innert 48 Stunden; der Versand nach Zürich dauert in der Regel 1–2 Tage. Insgesamt also meist 3–4 Tage von Upload bis Zustellung." },
+  { q: "Wie schnell ist mein Teil in Zürich?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Der Versand nach Zürich dauert danach in der Regel 1–2 Werktage." },
   { q: "Muss ich für ein Angebot vorbeikommen?", a: "Nein – der ganze Prozess läuft online: Datei hochladen, Preis sehen, bestellen. Bei Rückfragen melden wir uns telefonisch oder per E-Mail." },
   ...commonFaqs,
 ];
@@ -75,7 +75,7 @@ export const locations: LocationContent[] = [
       },
       {
         title: "So läuft eine Anfrage ab",
-        text: "Datei im Online-Kalkulator hochladen, Material und Qualität wählen und den Preis direkt sehen. Ohne Datei geht es über das Kontaktformular mit Fotos und Maßen. Nach Auftragsbestätigung produzieren wir im Standard innerhalb von 48 Stunden.",
+        text: "Datei im Online-Kalkulator hochladen, Material und Qualität wählen und den Preis direkt sehen. Ohne Datei geht es über das Kontaktformular mit Fotos und Maßen. Bei geeigneten Aufträgen ist nach Auftragsbestätigung eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab.",
       },
       {
         title: "Wirtschaftsfaktor Region",
@@ -85,7 +85,7 @@ export const locations: LocationContent[] = [
         title: "Entfernungen im Kanton",
         bullets: [
           "Frauenfeld, Weinfelden, Kreuzlingen: Versand meist 1 Tag nach Produktion",
-          "Amriswil, Romanshorn, Arbon: Versand 1–2 Tage, Abholung in ca. 20 Min. erreichbar",
+          "Amriswil, Romanshorn, Arbon: Versand in der Regel 1–2 Werktage, Abholung in ca. 20 Min. erreichbar",
           "Wil, Münchwilen, Sirnach: direkte Nachbarschaft – Abholung in wenigen Minuten",
         ],
       },
@@ -99,13 +99,13 @@ export const locations: LocationContent[] = [
     h1: "3D-Druck Ostschweiz – Prototypen, Ersatzteile, Kleinserien",
     title: "3D-Druck Ostschweiz | FDM & SLA Druckservice | 3DMuscio",
     description:
-      "3D-Druckservice für die Ostschweiz: FDM und SLA aus Eschlikon TG. Prototypen, Ersatzteile und Kleinserien ab 1 Stück, 48 h Produktionszeit.",
+      "3D-Druckservice für die Ostschweiz: FDM und SLA aus Eschlikon TG. Prototypen, Ersatzteile und Kleinserien ab 1 Stück, Fertigung bei geeigneten Aufträgen in 48 h möglich.",
     shortAnswer:
       "Für die Ostschweiz produzieren wir aus Eschlikon TG heraus: Prototypen, Funktionsteile, Ersatzteile und Kleinserien in FDM und SLA. Dank kurzer Wege innerhalb der Region sind Teile nach der Produktion schnell da – oder du holst sie direkt ab.",
     sections: [
       {
         title: "Kurze Wege in der Region",
-        text: "Aus Eschlikon liegen Thurgau, St. Gallen, Appenzell und das Zürcher Oberland in unmittelbarer Nachbarschaft. Versand innerhalb der Schweiz dauert nach der Produktion in der Regel 1–2 Tage; Abholung in Eschlikon ist nach Absprache jederzeit möglich.",
+        text: "Aus Eschlikon liegen Thurgau, St. Gallen, Appenzell und das Zürcher Oberland in unmittelbarer Nachbarschaft. Der Versand innerhalb der Schweiz dauert nach der Produktion in der Regel 1–2 Werktage; Abholung in Eschlikon ist nach Absprache jederzeit möglich.",
       },
       {
         title: "Für Unternehmen und Privatpersonen",
@@ -134,9 +134,9 @@ export const locations: LocationContent[] = [
     h1: "3D-Druck Zürich – Schweizer Druckservice mit Versand",
     title: "3D-Druck Zürich | Druckservice mit Versand | 3DMuscio",
     description:
-      "3D-Druckservice für Zürich: Prototypen, Ersatzteile und Kleinserien aus Eschlikon TG. Online kalkulieren, 48 h Produktion, Versand in 1–2 Tagen.",
+      "3D-Druckservice für Zürich: Prototypen, Ersatzteile und Kleinserien aus Eschlikon TG. Online kalkulieren, Fertigung bei geeigneten Aufträgen in 48 h möglich, danach Versand mit Post oder DHL.",
     shortAnswer:
-      "Für Kundschaft in Zürich produzieren wir in Eschlikon TG und versenden mit Post oder DHL – nach der Standard-Produktionszeit von 48 Stunden ist das Paket in der Regel innerhalb von 1–2 Tagen da. Der komplette Ablauf von Upload bis Bestellung läuft online, ohne Termin.",
+      "Für Kundschaft in Zürich produzieren wir in Eschlikon TG und versenden mit Post oder DHL – bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich, danach dauert der Versand in der Regel 1–2 Werktage. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Der komplette Ablauf von Upload bis Bestellung läuft online, ohne Termin.",
     sections: [
       {
         title: "Komplett online abwickeln",
@@ -169,7 +169,7 @@ export const locations: LocationContent[] = [
     h1: "3D-Druck St. Gallen – Fertigung in der Nachbarschaft",
     title: "3D-Druck St. Gallen | FDM & SLA Druckservice | 3DMuscio",
     description:
-      "3D-Druckservice für St. Gallen: FDM und SLA aus Eschlikon TG. Prototypen, Ersatzteile, Kleinserien ab 1 Stück. Online kalkulieren, 48 h Produktion.",
+      "3D-Druckservice für St. Gallen: FDM und SLA aus Eschlikon TG. Prototypen, Ersatzteile, Kleinserien ab 1 Stück. Online kalkulieren, Fertigung bei geeigneten Aufträgen in 48 h möglich.",
     shortAnswer:
       "St. Gallen liegt nur wenige Kilometer von unserer Werkstatt in Eschlikon TG entfernt. Wir drucken Prototypen, Funktions- und Ersatzteile sowie Kleinserien in FDM und SLA – mit Versand oder Abholung nach Absprache.",
     sections: [

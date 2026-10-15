@@ -25,7 +25,7 @@ const FALLBACK: Record<string, string> = {
 
 const inhalt = (region: string) => `## 3D-Druck für ${region}
 
-3DMuscio ist ein 3D-Druckservice mit Standort in ${company.address.city} ${company.address.regionCode}. Kunden aus ${region} laden ihre Datei online hoch, sehen den Preis sofort und erhalten die Teile per Post oder DHL – in der Regel innerhalb von 48 Stunden Produktionszeit plus 1–2 Tagen Versand.
+3DMuscio ist ein 3D-Druckservice mit Standort in ${company.address.city} ${company.address.regionCode}. Kunden aus ${region} laden ihre Datei online hoch, sehen den Preis sofort und erhalten die Teile per Post oder DHL – bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich, danach dauert der Versand in der Regel 1–2 Werktage.
 
 ## Verfahren und Materialien
 
@@ -51,7 +51,7 @@ const inhalt = (region: string) => `## 3D-Druck für ${region}
 ${company.name}, ${company.address.city} ${company.address.regionCode} · ${company.email}`;
 
 const faqFor = (region: string): DbFaq[] => [
-  { frage: `Wie lange dauert die Lieferung nach ${region}?`, antwort: `Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung, danach 1–2 Tage Versand innerhalb der Schweiz.` },
+  { frage: `Wie lange dauert die Lieferung nach ${region}?`, antwort: `Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach dauert der Versand innerhalb der Schweiz in der Regel 1–2 Werktage.` },
   { frage: "Kann ich die Teile abholen?", antwort: `Ja, Abholung in ${company.address.city} ist nach Absprache möglich.` },
   { frage: "Welche Dateiformate werden akzeptiert?", antwort: "STL, STEP, 3MF und OBJ – direkt im Online-Kalkulator hochladen." },
   { frage: "Gibt es eine Mindestbestellmenge?", antwort: "Nein, wir drucken ab 1 Stück. Ab 5 bzw. 10 Stück gibt es Mengenrabatt." },
@@ -89,10 +89,10 @@ export default function LokalPage() {
 
   const region = seite?.region_name ?? fallbackRegion;
   const path = `/${slug}`;
-  const title = seite?.meta_title ?? `3D-Druck ${region} – Lieferung in 48h | 3DMuscio`;
+  const title = seite?.meta_title ?? `3D-Druck ${region} – Fertigung in 48 h möglich | 3DMuscio`;
   const description =
     seite?.meta_description ??
-    `3D-Druckservice für ${region}. FDM und SLA aus ${company.address.city} ${company.address.regionCode}, schweizweit geliefert in 48h.`;
+    `3D-Druckservice für ${region}. FDM und SLA aus ${company.address.city} ${company.address.regionCode}, Versand schweizweit. Fertigung bei geeigneten Aufträgen in 48 h möglich.`;
   const faqs = faqFor(region);
 
   return (
@@ -122,7 +122,7 @@ export default function LokalPage() {
       <DbContentPage
         eyebrow={`Region ${region}`}
         h1={`3D-Druck ${region} – Prototypen, Ersatzteile und Kleinserien`}
-        intro={`3D-Druckservice für ${region}: Datei online hochladen, Preis sofort sehen, Teile in 48 Stunden Produktionszeit erhalten. Gefertigt in ${company.address.city} ${company.address.regionCode}.`}
+        intro={`3D-Druckservice für ${region}: Datei online hochladen, Preis sofort sehen, schnelle Fertigung (bei geeigneten Aufträgen in 48 Stunden möglich). Gefertigt in ${company.address.city} ${company.address.regionCode}.`}
         inhalt={resin ? inhalt(region) : inhalt(region).split("\n").filter((l) => !l.includes("sla-3d-druck")).map((l) => l.replace(" und Resin", "")).join("\n")}
         faq={resin ? faqs : faqs.filter((f: any) => !isResinText(f.frage ?? f.q)).map((f: any) => ({ ...f, ...(f.antwort ? { antwort: stripResin(f.antwort) } : {}), ...(f.a ? { a: stripResin(f.a) } : {}) }))}
         breadcrumb={[

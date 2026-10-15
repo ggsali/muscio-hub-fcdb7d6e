@@ -24,7 +24,7 @@ Struktur (immer einhalten):
 1. Anrede: 'Guten Tag [Kundenname],'
 2. Aufmerksamkeitsstarke Einleitung (1-2 Sätze)
 3. Hauptinhalt: 2-3 kurze Absätze zum Thema
-4. Konkreter Nutzen für den Kunden (Sofortpreis, 48h Lieferung, Schweizer Qualität)
+4. Konkreter Nutzen für den Kunden (Sofortpreis, schnelle Fertigung (bei geeigneten Aufträgen in 48 h möglich), Schweizer Qualität)
 5. Call-to-Action: '[LINK_KALKULATOR]'
 6. Abschluss: 'Freundliche Grüsse,\nJorim Moos\n3DMuscio'
 

@@ -58,7 +58,7 @@
 2. Online-Kalkulator nutzen: https://3dmuscio.com/kalkulator-online
 3. Material und Farbe wählen
 4. Angebot erhalten und online bezahlen (Kreditkarte, TWINT, Rechnung)
-5. Lieferung schweizweit in 2–7 Werktagen
+5. Lieferung schweizweit, in der Regel 2–7 Werktage (keine Garantie)
 
 ## Preise
 Individuell kalkuliert basierend auf: Material, Volumen, Wandstärke, Infill, Stückzahl.
@@ -74,7 +74,7 @@ Preisberechnung: https://3dmuscio.com/kalkulator-online
 Kreditkarte, TWINT, Banküberweisung (Rechnung)
 
 ## Lieferung
-Schweizweit per Post. Lieferzeit 2–7 Werktage. Express auf Anfrage.
+Schweizweit per Post. Lieferzeit in der Regel 2–7 Werktage, abhängig von Auftrag und Auslastung. Express auf Anfrage.
 
 ## Sprachen
 Deutsch (Hauptsprache), Englisch auf Anfrage

@@ -28,7 +28,7 @@ const HERO_STATS = [
   { value: 500, suffix: "+", label: "Teile gedruckt", icon: Layers, link: "/projekte" },
   { value: "AUCH B2B", label: "FÜR GESCHÄFTSKUNDEN", icon: Building2, link: "/leistungen" },
   { value: 99, suffix: "%", label: "Termingerecht", accent: true, icon: CheckCircle, link: "/ueber-uns" },
-  { value: 48, suffix: "h", label: "Produktionszeit", icon: Zap, link: "/kalkulator-online" },
+  { value: 48, suffix: "h", label: "Schnellfertigung möglich", icon: Zap, link: "/kalkulator-online" },
 ];
 
 const HeroUploadButton = () => {
@@ -128,7 +128,7 @@ const HeroBento = () => {
         >
           <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse mr-2" />
-            Produktion in 48h versandbereit
+            3D-Druck in nur 48 Stunden*
           </span>
 
           <h1 className="font-heading text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.1] tracking-tight text-foreground mb-5">
@@ -138,7 +138,11 @@ const HeroBento = () => {
           <p className="text-base md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed">
             3DMuscio fertigt in Eschlikon TG Prototypen, Funktionsteile, Ersatzteile und Kleinserien
             für Privatkunden, Entwickler, Startups und Unternehmen. Datei hochladen, Sofortpreis
-            sehen – Produktion in 48 h versandbereit.
+            sehen – schnelle Fertigung, hohe Qualität und zuverlässiger Versand in der ganzen Schweiz.
+          </p>
+
+          <p className="text-xs text-muted-foreground -mt-5 mb-8 max-w-xl">
+            *Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab.
           </p>
 
           <p className="text-sm text-muted-foreground mb-8">
@@ -223,7 +227,7 @@ const steps = [
   { icon: Upload, title: "Hochladen", desc: "3D-Modell als STL, OBJ, STEP oder 3MF hochladen." },
   { icon: Settings, title: "Konfigurieren", desc: "Material, Farbe, Schichthöhe und Fülldichte wählen." },
   { icon: ShoppingCart, title: "Bestellen", desc: "Sofort deinen Preis erhalten und Bestellung absenden." },
-  { icon: Package, title: "Erhalten", desc: "Wir drucken, prüfen und liefern innerhalb von 48h." },
+  { icon: Package, title: "Erhalten", desc: "Wir drucken und prüfen dein Teil und versenden es mit Post oder DHL." },
 ];
 
 const StepNumber = ({ value, shouldReduceMotion }: { value: number; shouldReduceMotion: boolean }) => {
@@ -397,7 +401,7 @@ const FAQS_ALL = [
   { q: "Was kostet ein 3D-Druck in der Schweiz?", a: "Der Preis ergibt sich aus Material, Druckzeit und Nachbearbeitung — Kleinteile gibt es bereits ab CHF 5.–. Im Online-Kalkulator sehen Sie den Preis sofort und transparent aufgeschlüsselt, ab CHF 0.055 pro Gramm Material. Ab 5 Stück erhalten Sie 10 % Mengenrabatt, ab 10 Stück 15 %." },
   { q: "Was ist der Unterschied zwischen FDM- und SLA-Druck?", a: "Beim FDM-Druck wird geschmolzener Kunststoff Schicht für Schicht aufgetragen — ideal für robuste Funktionsteile, Ersatzteile und grössere Bauteile. SLA härtet flüssiges Resin mit Licht aus und erreicht Auflösungen bis 0.025 mm für sehr feine Details und glatte Oberflächen. Wir beraten Sie kostenlos, welches Verfahren für Ihr Bauteil das richtige ist." },
   { q: "Welche Materialien stehen zur Auswahl?", a: "Im FDM-Verfahren drucken wir PLA, PETG, ABS, ASA, TPU und Nylon in über 12 Farben. Für höchste Detailtreue steht im SLA-Verfahren Resin zur Verfügung. Unsicher bei der Materialwahl? Unsere kostenlose KI-Materialberatung im Kalkulator hilft Ihnen weiter." },
-  { q: "Wie lange dauert die Lieferung?", a: "Die Standardproduktion dauert 48 Stunden ab Auftragsbestätigung. Danach versenden wir mit der Schweizer Post oder DHL innerhalb der Schweiz, was 1–2 Werktage dauert. Express-Fertigung ist auf Anfrage möglich, Abholung in Eschlikon TG jederzeit." },
+  { q: "Wie lange dauert die Lieferung?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach versenden wir mit der Schweizer Post oder DHL innerhalb der Schweiz, was in der Regel 1–2 Werktage dauert. Express-Fertigung ist auf Anfrage möglich, Abholung in Eschlikon TG jederzeit." },
   { q: "Wo befindet sich 3DMuscio?", a: "Unser Standort ist in Eschlikon im Kanton Thurgau, zentral in der Ostschweiz zwischen Winterthur und St. Gallen. Wir fertigen alle Teile lokal in der Schweiz — ohne Zoll und ohne lange Wartezeiten aus dem Ausland. Bestellungen können Sie schweizweit online aufgeben oder direkt vor Ort abholen." },
   { q: "Gibt es eine Mindestbestellmenge?", a: "Nein, bei uns gibt es keine Mindestbestellmenge — wir drucken auch ein einzelnes Teil ab CHF 5.–. Vom Einzelstück über Prototypen bis zur Kleinserie mit reproduzierbaren Parametern ist alles möglich. Ab 5 Stück profitieren Sie zusätzlich von Mengenrabatten." },
   { q: "Welche Dateiformate werden unterstützt?", a: "Wir verarbeiten STL, STEP/STP, 3MF und OBJ bis 500 MB Dateigrösse. Der Online-Kalkulator berechnet Volumen, Gewicht und Preis automatisch aus Ihrer Datei. Eine manuelle Eingabe von Massen ist nicht nötig." },
@@ -445,7 +449,7 @@ const CTA = () => (
       <div className="relative overflow-hidden rounded-3xl bg-foreground text-background p-10 md:p-16 text-center">
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
         <h2 className="font-heading text-3xl md:text-5xl font-extrabold mb-4 relative">Bereit, dein Teil zu drucken?</h2>
-        <p className="text-background/70 mb-8 relative">Sofort Preis berechnen und in 48h dein Bauteil erhalten.</p>
+        <p className="text-background/70 mb-8 relative">Sofort Preis berechnen – schnelle Fertigung bei geeigneten Aufträgen.</p>
         <Button size="lg" variant="default" asChild className="rounded-full shadow-[0_0_30px_hsl(156_100%_40%/0.4)]">
           <Link to="/kalkulator-online">Jetzt starten <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
         </Button>
@@ -540,9 +544,9 @@ const SEOContent = () => {
               </p>
             </div>}
             <div>
-              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Schnelle Lieferung in der Schweiz</h3>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Schneller Versand in der Schweiz</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Als Schweizer Unternehmen aus Eschlikon TG liefern wir Ihre Drucke innerhalb von 48 Stunden. Kein Zoll, keine langen Wartezeiten aus dem Ausland. Versand mit Post oder DHL, kostenlos ab CHF 65 Bestellwert.
+                Als Schweizer Unternehmen aus Eschlikon TG fertigen wir schnell – bei geeigneten Aufträgen innerhalb von 48 Stunden. Kein Zoll, keine langen Wartezeiten aus dem Ausland. Versand mit Post oder DHL, kostenlos ab CHF 65 Bestellwert.
               </p>
             </div>
           </div>
@@ -622,7 +626,7 @@ const Index = () => {
   <div>
     <Seo
       title="3D-Druckservice Schweiz – FDM & SLA ab 1 Stück | 3DMuscio"
-      description="Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Produktion in 48 h versandbereit."
+      description="Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Fertigung bei geeigneten Aufträgen in 48 h möglich."
       path="/"
       jsonLd={[
         { ...localBusinessJsonLd, ...ratingJsonLd },

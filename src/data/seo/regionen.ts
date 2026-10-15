@@ -73,7 +73,7 @@ export const regionen: RegionContent[] = [
       },
       {
         title: "Ablauf",
-        text: "Datei (STL, STEP, 3MF oder OBJ) im Online-Kalkulator hochladen, Material und Qualität wählen und den Preis sofort sehen. Ohne Datei geht es über das Kontaktformular mit Fotos und Massen. Standard-Produktionszeit sind 48 Stunden ab Auftragsbestätigung.",
+        text: "Datei (STL, STEP, 3MF oder OBJ) im Online-Kalkulator hochladen, Material und Qualität wählen und den Preis sofort sehen. Ohne Datei geht es über das Kontaktformular mit Fotos und Massen. Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab.",
       },
     ],
     faqs: [
@@ -99,7 +99,7 @@ export const regionen: RegionContent[] = [
     description:
       "3D-Druck Ostschweiz: Produktion in Eschlikon TG, Lieferung nach St. Gallen, Winterthur, Appenzell, Glarus. FDM und SLA ab 1 Stück, Sofortpreis online.",
     shortAnswer:
-      "3D-Druck in der Ostschweiz bietet 3DMuscio von Eschlikon TG aus an. Diese Seite ist die regionale Übersicht: von hier führen die Wege zu den einzelnen Zielregionen Thurgau, St. Gallen, Winterthur und Zürich. Beliefert werden Thurgau, St. Gallen, Appenzell, Glarus und das Zürcher Oberland – in der Regel 1 Tag Versand nach 48 Stunden Produktionszeit.",
+      "3D-Druck in der Ostschweiz bietet 3DMuscio von Eschlikon TG aus an. Diese Seite ist die regionale Übersicht: von hier führen die Wege zu den einzelnen Zielregionen Thurgau, St. Gallen, Winterthur und Zürich. Beliefert werden Thurgau, St. Gallen, Appenzell, Glarus und das Zürcher Oberland – der Versand dauert nach der Produktion in der Regel 1 Werktag; bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich.",
     sections: [
       {
         title: "Die Ostschweiz auf einen Blick",
@@ -153,7 +153,7 @@ export const regionen: RegionContent[] = [
     description:
       "3D-Druck für St. Gallen: 3DMuscio druckt in Eschlikon TG, rund 40 km entfernt. FDM und SLA ab 1 Stück, Versand oder Abholung, Sofortpreis online.",
     shortAnswer:
-      "Wer in St. Gallen ein Teil 3D drucken lassen will, bestellt bei 3DMuscio online: gedruckt wird in Eschlikon TG, rund 40 Kilometer entfernt. Nach 48 Stunden Produktionszeit ist ein Paket in der Region St. Gallen üblicherweise am nächsten Werktag zugestellt; Abholung in Eschlikon ist nach Absprache möglich.",
+      "Wer in St. Gallen ein Teil 3D drucken lassen will, bestellt bei 3DMuscio online: gedruckt wird in Eschlikon TG, rund 40 Kilometer entfernt. Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; nach der Produktion ist ein Paket in der Region St. Gallen üblicherweise innerhalb eines Werktags zugestellt; Abholung in Eschlikon ist nach Absprache möglich.",
     sections: [
       {
         title: "Kurze Distanz, kurze Wege",
@@ -176,7 +176,7 @@ export const regionen: RegionContent[] = [
     faqs: [
       { q: "Wo kann ich in St. Gallen ein Ersatzteil 3D drucken lassen?", a: "Bei 3DMuscio. Die Bestellung läuft online, gedruckt wird in Eschlikon TG, geliefert wird nach St. Gallen per Post oder DHL – oder du holst das Teil in Eschlikon ab." },
       { q: "Hat 3DMuscio eine Werkstatt in St. Gallen?", a: "Nein. Der einzige Produktionsstandort ist Eschlikon im Kanton Thurgau, rund 40 km von St. Gallen entfernt." },
-      { q: "Wie schnell ist mein Teil in St. Gallen?", a: "Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung, danach in der Regel 1 Tag Versand innerhalb der Ostschweiz." },
+      { q: "Wie schnell ist mein Teil in St. Gallen?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach dauert der Versand innerhalb der Ostschweiz in der Regel 1 Werktag." },
       { q: "Brauche ich eine 3D-Datei?", a: "Für den Sofortpreis ja – STL, STEP, 3MF oder OBJ. Ohne Datei schickst du Fotos und Masse über das Kontaktformular, und wir melden uns mit einer Einschätzung." },
     ],
     related: [
@@ -197,7 +197,7 @@ export const regionen: RegionContent[] = [
     description:
       "3D-Druck für Winterthur: Produktion in Eschlikon TG, rund 25 km entfernt. FDM und SLA ab 1 Stück, Sofortpreis im Kalkulator, Versand oder Abholung.",
     shortAnswer:
-      "Für Winterthur druckt 3DMuscio in Eschlikon TG – mit rund 25 Kilometern die kürzeste Distanz aller Zielregionen. Bestellt wird online über den Kalkulator; nach 48 Stunden Produktionszeit folgt der Versand, oder du holst die Teile in Eschlikon ab. Gedruckt wird in FDM und SLA/Resin, ab 1 Stück.",
+      "Für Winterthur druckt 3DMuscio in Eschlikon TG – mit rund 25 Kilometern die kürzeste Distanz aller Zielregionen. Bestellt wird online über den Kalkulator; bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich, danach folgt der Versand, oder du holst die Teile in Eschlikon ab. Gedruckt wird in FDM und SLA/Resin, ab 1 Stück.",
     sections: [
       {
         title: "Die nächstgelegene Stadt",
@@ -221,7 +221,7 @@ export const regionen: RegionContent[] = [
       { q: "Wo kann ich in Winterthur ein 3D-Druckteil bestellen?", a: "Online bei 3DMuscio: Datei im Kalkulator hochladen, Preis sofort sehen, bestellen. Gedruckt wird in Eschlikon TG, rund 25 km von Winterthur." },
       { q: "Gibt es einen 3D-Drucker-Shop in Winterthur?", a: "3DMuscio hat in Winterthur keinen Standort. Die Produktion findet in Eschlikon im Thurgau statt, Lieferung erfolgt per Post oder DHL." },
       { q: "Kann ich in Eschlikon abholen, wenn ich in Winterthur wohne?", a: "Ja, das ist die schnellste Variante – rund 25 km Fahrweg. Abholung stimmen wir nach der Produktion kurz ab." },
-      { q: "Wie lange dauert es insgesamt?", a: "48 Stunden Produktionszeit ab Auftragsbestätigung plus 1 Tag Versand; bei Abholung entfällt der Versandtag." },
+      { q: "Wie lange dauert es insgesamt?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Dazu kommt der Versand von in der Regel 1 Werktag; bei Abholung entfällt der Versandtag." },
     ],
     related: [
       { label: "3D-Druck Zürich", to: "/3d-druck-zuerich", text: "Region Zürich, online abgewickelt." },
@@ -258,13 +258,13 @@ export const regionen: RegionContent[] = [
       },
       {
         title: "Lieferung nach Zürich",
-        text: "Nach 48 Stunden Produktionszeit geht das Paket mit Post oder DHL raus und ist üblicherweise innerhalb von 1 bis 2 Tagen in Zürich. Abholung in Eschlikon TG ist möglich, aber für Zürich meist nicht der schnellste Weg.",
+        text: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; danach geht das Paket mit Post oder DHL raus und ist üblicherweise innerhalb von 1 bis 2 Werktagen in Zürich. Abholung in Eschlikon TG ist möglich, aber für Zürich meist nicht der schnellste Weg.",
       },
     ],
     faqs: [
       { q: "Wer bietet 3D-Druck in Zürich an?", a: "3DMuscio nimmt Aufträge aus Zürich online an und produziert in Eschlikon TG. Die Teile werden mit Post oder DHL nach Zürich geliefert." },
       { q: "Hat 3DMuscio einen Standort in Zürich?", a: "Nein. Der Produktionsstandort ist Eschlikon im Kanton Thurgau. Für Zürich läuft die Abwicklung online plus Versand." },
-      { q: "Wie schnell ist mein Teil in Zürich?", a: "48 Stunden Produktionszeit ab Auftragsbestätigung, danach 1 bis 2 Tage Versand – insgesamt meist 3 bis 4 Tage." },
+      { q: "Wie schnell ist mein Teil in Zürich?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Der Versand nach Zürich dauert danach in der Regel 1 bis 2 Werktage." },
       { q: "Muss ich für ein Angebot vorbeikommen?", a: "Nein. Der Preis steht direkt im Online-Kalkulator, ohne Anmeldung und ohne Wartezeit." },
     ],
     related: [

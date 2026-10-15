@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     q: "Wie schnell liefert 3DMuscio?",
-    a: "Die Standard-Produktionszeit beträgt 48 Stunden ab Auftragsbestätigung, danach 1–2 Tage Versand innerhalb der Schweiz.",
+    a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach dauert der Versand innerhalb der Schweiz in der Regel 1–2 Werktage.",
   },
   {
     q: "Kann ich eine STL-Datei hochladen?",
@@ -67,7 +67,7 @@ export default function DruckSchweizPage() {
       <AnswerLanding
         eyebrow="Überblick"
         h1="3D-Druck Schweiz – FDM & SLA aus einer Hand"
-        shortAnswer="3DMuscio ist ein Schweizer 3D-Druckservice mit Sitz in Eschlikon im Kanton Thurgau. Wir drucken Einzelteile, Prototypen, Funktionsteile, Ersatzteile und Kleinserien im FDM- und im SLA/Resin-Verfahren – ab 1 Stück, mit Sofortpreis im Online-Kalkulator und einer Standard-Produktionszeit von 48 Stunden ab Auftragsbestätigung."
+        shortAnswer="3DMuscio ist ein Schweizer 3D-Druckservice mit Sitz in Eschlikon im Kanton Thurgau. Wir drucken Einzelteile, Prototypen, Funktionsteile, Ersatzteile und Kleinserien im FDM- und im SLA/Resin-Verfahren – ab 1 Stück, mit Sofortpreis im Online-Kalkulator und schneller Fertigung (bei geeigneten Aufträgen innerhalb von 48 Stunden möglich)."
         breadcrumb={[
           { name: "Start", to: "/" },
           { name: "3D-Druck Schweiz", to: PATH },

@@ -21,7 +21,7 @@ export const services: ServiceContent[] = [
     h1: "FDM 3D-Druck – robuste Teile aus Kunststoff",
     title: "FDM 3D-Druck Schweiz | Funktionsteile & Gehäuse | 3DMuscio",
     description:
-      "FDM 3D-Druck aus Eschlikon TG für Funktionsteile, Gehäuse und Halterungen: Schweizer 3D-Druckservice mit Sofortpreis, persönlichem Service und 48 h Produktion.",
+      "FDM 3D-Druck aus Eschlikon TG für Funktionsteile, Gehäuse und Halterungen: Schweizer 3D-Druckservice mit Sofortpreis, persönlichem Service und schneller Fertigung (bei geeigneten Aufträgen in 48 h möglich).",
     shortAnswer:
       "FDM (Fused Deposition Modeling) ist das richtige Verfahren, wenn ein Bauteil mechanisch belastbar, günstig und schnell sein soll. Ein Kunststofffaden wird geschmolzen und Schicht für Schicht aufgetragen. Bei 3DMuscio drucken wir FDM in PLA, PETG, ABS, ASA und TPU mit einer typischen Genauigkeit von ±0.2 mm.",
     sections: [
@@ -44,7 +44,7 @@ export const services: ServiceContent[] = [
           "Günstig auch bei grösseren Bauteilen",
           "Mechanisch belastbare Teile",
           "Temperatur- und UV-fähige Materialien verfügbar",
-          "Kurze Durchlaufzeit – Standard 48 h ab Auftragsbestätigung",
+          "Kurze Durchlaufzeit – bei geeigneten Aufträgen Fertigung in 48 h möglich",
         ],
       },
       {
@@ -77,7 +77,7 @@ export const services: ServiceContent[] = [
       { q: "Welches FDM-Material ist am belastbarsten?", a: "Für hohe Festigkeit und Temperaturbeständigkeit sind ABS, ASA und Nylon geeignet. PETG ist der gute Allrounder für Funktionsteile, PLA eher für Modelle und Prototypen." },
       { q: "Sind FDM-Teile wasserdicht?", a: "Mit angepasster Wandstärke und Materialwahl (z. B. PETG) lassen sich weitgehend dichte Teile drucken. Absolute Dichtheit garantieren wir nicht – für kritische Anwendungen bitte vorher anfragen." },
       { q: "Wie gross darf ein Bauteil sein?", a: "Die verfügbaren Bauräume unserer Drucker findest du auf der Maschinen-Seite. Grössere Teile teilen wir auf Wunsch in verklebbare Segmente." },
-      { q: "Wie schnell erhalte ich mein FDM-Teil?", a: "Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung, danach Versand innerhalb der Schweiz oder Abholung in Eschlikon TG." },
+      { q: "Wie schnell erhalte ich mein FDM-Teil?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand innerhalb der Schweiz oder die Abholung in Eschlikon TG." },
     ],
     related: [
       { label: "SLA / Resin 3D-Druck", to: "/leistungen/sla-3d-druck", text: "Wenn feine Details wichtiger sind als Festigkeit." },
@@ -124,7 +124,7 @@ export const services: ServiceContent[] = [
       },
       {
         title: "Lieferzeit und Ablauf",
-        text: "Lade STL, STEP, 3MF oder OBJ im Online-Kalkulator hoch und wähle Material und Qualität. Standard-Produktionszeit sind 48 Stunden ab Auftragsbestätigung, danach Versand innerhalb der Schweiz oder Abholung in Eschlikon TG.",
+        text: "Lade STL, STEP, 3MF oder OBJ im Online-Kalkulator hoch und wähle Material und Qualität. Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand innerhalb der Schweiz oder die Abholung in Eschlikon TG.",
       },
       {
         title: "Preis und Kalkulation",
@@ -204,14 +204,14 @@ export const services: ServiceContent[] = [
       },
       {
         title: "Ablauf",
-        text: "Datei hochladen, Material und Qualität wählen, Preis sehen und bestellen. Standard-Produktionszeit sind 48 Stunden ab Auftragsbestätigung. Bei unklaren Geometrien melden wir uns vor dem Druck mit einem Hinweis, statt ein Teil zu drucken, das nicht funktioniert.",
+        text: "Datei hochladen, Material und Qualität wählen, Preis sehen und bestellen. Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab. Bei unklaren Geometrien melden wir uns vor dem Druck mit einem Hinweis, statt ein Teil zu drucken, das nicht funktioniert.",
       },
     ],
     faqs: [
       { q: "Kann ich einen einzelnen Prototyp bestellen?", a: "Ja, wir fertigen ab 1 Stück ohne Mindestbestellmenge." },
       { q: "Wie genau sind Prototypen?", a: "Die typische Toleranz liegt bei ±0.2 mm. Bei engeren Anforderungen sprich uns vorher an, damit wir Orientierung und Qualitätsstufe abstimmen." },
       { q: "Ich habe nur eine Skizze, kein CAD – geht das?", a: "Schreib uns über das Kontaktformular mit Skizze, Maßen oder Foto. Wir sagen dir, was wir daraus umsetzen können." },
-      { q: "Wie lange dauert ein Prototyp?", a: "Standard 48 Stunden Produktionszeit ab Auftragsbestätigung, danach Versand (1–2 Tage innerhalb der Schweiz) oder Abholung in Eschlikon TG." },
+      { q: "Wie lange dauert ein Prototyp?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand (in der Regel 1–2 Werktage innerhalb der Schweiz) oder die Abholung in Eschlikon TG." },
     ],
     related: [
       { label: "Prototypen-Service", to: "/leistungen/3d-druck-prototypen", text: "Überblick, Ablauf und Beispiele." },
@@ -322,7 +322,7 @@ export const services: ServiceContent[] = [
     description:
       "3D-Druck für Schweizer Firmen: Prototypen, Ersatzteile und Kleinserien mit Sofortpreis, persönlichem Service, Rechnung mit QR-Zahlteil und Produktion in der Schweiz.",
     shortAnswer:
-      "3DMuscio fertigt für Schweizer Unternehmen Prototypen, Betriebsmittel, Ersatzteile und Kleinserien im FDM- und SLA-Verfahren. Firmenkunden bestellen auf Rechnung (Schweizer QR-Rechnung), erhalten Mengenrabatt bereits ab kleinen Stückzahlen und wählen aus technischen Materialien wie PETG, ABS, ASA, TPU und Resin. Produziert wird in Eschlikon TG, Standardproduktionszeit 48 Stunden.",
+      "3DMuscio fertigt für Schweizer Unternehmen Prototypen, Betriebsmittel, Ersatzteile und Kleinserien im FDM- und SLA-Verfahren. Firmenkunden bestellen auf Rechnung (Schweizer QR-Rechnung), erhalten Mengenrabatt bereits ab kleinen Stückzahlen und wählen aus technischen Materialien wie PETG, ABS, ASA, TPU und Resin. Produziert wird in Eschlikon TG; bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich.",
     sections: [
       {
         title: "Was Firmenkunden bei uns bestellen",
@@ -362,7 +362,7 @@ export const services: ServiceContent[] = [
       { q: "Gibt es eine Mindestbestellmenge?", a: "Nein. Wir fertigen ab 1 Stück – Mengenrabatt wird im Kalkulator automatisch berücksichtigt." },
       { q: "Erhalten wir vorab ein Angebot?", a: "Ja. Sende Datei, Stückzahl und Zieltermin über das Kontaktformular, dann erstellen wir ein schriftliches Angebot." },
       { q: "Welche Materialien eignen sich für technische Bauteile?", a: "PETG für allgemeine Funktionsteile, ABS und ASA für höhere Temperatur- und UV-Belastung, TPU für flexible Teile, Resin für feine Details." },
-      { q: "Wie lange dauert die Produktion?", a: "Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung, danach 1–2 Tage Versand innerhalb der Schweiz." },
+      { q: "Wie lange dauert die Produktion?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand, in der Regel 1–2 Werktage innerhalb der Schweiz." },
     ],
     related: [
       { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien", text: "Serienfertigung ohne Werkzeugkosten." },

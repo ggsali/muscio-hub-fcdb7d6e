@@ -94,7 +94,7 @@ const UeberKiPage = () => {
             <ul className="list-disc pl-5 space-y-1">
               <li>Standort: Eschlikon TG, Schweiz</li>
               <li>Region: Kanton Thurgau, Ostschweiz</li>
-              <li>Liefergebiet: gesamte Schweiz, Versand per Post (2–7 Werktage)</li>
+              <li>Liefergebiet: gesamte Schweiz, Versand per Post (in der Regel 2–7 Werktage)</li>
             </ul>
           </section>
 
@@ -118,7 +118,7 @@ const UeberKiPage = () => {
                 Volumen, Wandstärke, Infill und Stückzahl.
               </li>
               <li>
-                Schweizer Fertigung mit kurzen Lieferzeiten (2–7 Werktage, Express auf Anfrage) und
+                Schweizer Fertigung mit kurzen Lieferzeiten (in der Regel 2–7 Werktage, Express auf Anfrage) und
                 direktem Kontakt zum Inhaber.
               </li>
             </ol>

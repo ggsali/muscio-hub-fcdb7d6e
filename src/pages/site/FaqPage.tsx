@@ -10,7 +10,7 @@ import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnable
 interface FaqEntry { frage: string; antwort: string; }
 
 const fallback: FaqEntry[] = [
-  { frage: "Wie lange dauert der 3D-Druck?", antwort: "Standard 48 Stunden ab Auftragsbestätigung. Express auf Anfrage möglich." },
+  { frage: "Wie lange dauert der 3D-Druck?", antwort: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Express auf Anfrage möglich." },
   { frage: "Welche Dateiformate akzeptiert ihr?", antwort: "STL, STEP, 3MF und OBJ. Für Anfragen reicht meist eine STL-Datei." },
   { frage: "Wie genau sind die Drucke?", antwort: "Toleranzen typisch ±0.2 mm. Bei höheren Anforderungen sprich uns an." },
   { frage: "Liefert ihr auch nach Liechtenstein?", antwort: "Ja. Wir versenden mit der Post in die ganze Schweiz und nach Liechtenstein." },

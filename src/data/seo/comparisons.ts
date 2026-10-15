@@ -210,7 +210,7 @@ export const comparisons: ComparisonContent[] = [
       { q: "Was ist günstiger?", a: "Bei grösseren Volumen ist FDM klar günstiger. Bei kleinen, detailreichen Teilen liegen beide nahe beieinander." },
       { q: "Welches Verfahren wähle ich im Kalkulator?", a: "Du wählst das Material – daraus ergibt sich das Verfahren. Resin steht für SLA, alle Filamente für FDM." },
       { q: "Wie gross darf ein Teil sein?", a: "FDM erlaubt deutlich grössere Bauteile; übergrosse Teile teilen wir bei Bedarf und fügen sie nach dem Druck zusammen. Resin ist auf kleinere Bauteile optimiert." },
-      { q: "Welches Verfahren ist schneller?", a: "Kleine Resin-Teile sind oft in wenigen Stunden fertig, grössere FDM-Teile brauchen entsprechend länger. In beiden Verfahren gilt unser Standard von 48 Stunden Produktionszeit." },
+      { q: "Welches Verfahren ist schneller?", a: "Kleine Resin-Teile sind oft in wenigen Stunden fertig, grössere FDM-Teile brauchen entsprechend länger. Bei geeigneten Aufträgen ist in beiden Verfahren eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab." },
     ],
     related: [
       { label: "FDM 3D-Druck", to: "/leistungen/fdm-3d-druck" },
@@ -272,7 +272,7 @@ export const comparisons: ComparisonContent[] = [
         ["Materialien", "Kunststoffe, Resin", "Kunststoffe und Metalle"],
         ["Rüstaufwand", "gering", "höher (Programmierung, Spannen)"],
         ["Stückkosten klein", "günstig", "höher"],
-        ["Lieferzeit", "kurz (Standard 48 h Produktion)", "länger"],
+        ["Lieferzeit", "kurz (Fertigung bei geeigneten Aufträgen in 48 h möglich)", "länger"],
       ],
     },
     sections: [

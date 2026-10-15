@@ -26,7 +26,7 @@ export const company = {
     "3DMuscio ist ein 3D-Druckservice aus Eschlikon im Kanton Thurgau (Schweiz). Wir fertigen Einzelteile, Prototypen, Funktionsteile, Ersatzteile und Kleinserien im FDM- und SLA/Resin-Verfahren für Privatkunden, KMU, Startups und Unternehmen in der ganzen Schweiz und in Liechtenstein.",
   /** Längere Variante für Über-uns / llms.txt */
   longDescription:
-    "3DMuscio ist ein 3D-Druckservice mit Sitz in Eschlikon TG, Schweiz. Angeboten werden FDM-Druck (PLA, PETG, ABS, ASA, TPU) und SLA/Resin-Druck. Typische Aufträge sind Prototypen, Funktionsteile, Ersatzteile, Modelle und Kleinserien ab 1 Stück – ohne Mindestbestellmenge. Dateien können als STL, STEP, 3MF oder OBJ hochgeladen und im Online-Kalkulator direkt kalkuliert werden. Die Standard-Produktionszeit beträgt 48 Stunden ab Auftragsbestätigung, danach Versand in die ganze Schweiz und nach Liechtenstein.",
+    "3DMuscio ist ein 3D-Druckservice mit Sitz in Eschlikon TG, Schweiz. Angeboten werden FDM-Druck (PLA, PETG, ABS, ASA, TPU) und SLA/Resin-Druck. Typische Aufträge sind Prototypen, Funktionsteile, Ersatzteile, Modelle und Kleinserien ab 1 Stück – ohne Mindestbestellmenge. Dateien können als STL, STEP, 3MF oder OBJ hochgeladen und im Online-Kalkulator direkt kalkuliert werden. Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich (tatsächliche Produktionszeit abhängig von Material, Auftragsumfang und Auslastung), danach Versand in die ganze Schweiz und nach Liechtenstein.",
   targetMarket: "Schweiz und Liechtenstein",
   audiences: ["Privatkunden", "KMU", "Startups", "Unternehmen"],
   processes: ["FDM (Fused Deposition Modeling)", "SLA / Resin"],
@@ -39,7 +39,7 @@ export const company = {
   ],
   materials: ["PLA", "PETG", "ABS", "ASA", "TPU", "Nylon", "Resin"],
   fileFormats: ["STL", "STEP", "3MF", "OBJ"],
-  productionTime: "48 Stunden ab Auftragsbestätigung (Standard)",
+  productionTime: "Fertigung bei geeigneten Aufträgen innerhalb von 48 Stunden möglich",
   tolerance: "typisch ±0.2 mm",
   minOrder: "ab 1 Stück, keine Mindestbestellmenge",
   shipping: "Versand mit der Post in die ganze Schweiz und nach Liechtenstein",

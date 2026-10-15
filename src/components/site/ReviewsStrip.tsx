@@ -20,7 +20,7 @@ export default function ReviewsStrip({ region }: { region?: string }) {
         </h2>
         <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-muted-foreground">
           <li><strong className="text-foreground">Preis:</strong> ab CHF 5.–, keine Mindestmenge</li>
-          <li><strong className="text-foreground">Produktionszeit:</strong> 48 Stunden (Standard)</li>
+          <li><strong className="text-foreground">Produktionszeit:</strong> Fertigung bei geeigneten Aufträgen in 48 Stunden möglich</li>
           <li><strong className="text-foreground">Standort:</strong> {company.address.city} {company.address.regionCode}, Versand schweizweit</li>
           <li><strong className="text-foreground">Dateien:</strong> {company.fileFormats.join(", ")}</li>
         </ul>

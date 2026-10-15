@@ -105,8 +105,8 @@ export default function KostenPage() {
             text: "Unser Kalkulator analysiert deine Datei, ermittelt Volumen, Gewicht und Druckzeit und weist Material-, Zeit- und Nachbearbeitungsanteil separat aus. Du siehst also nicht nur den Endpreis, sondern auch, woraus er entsteht – und kannst gezielt an den Parametern drehen.",
           },
           {
-            title: "Preis und Lieferzeit hängen zusammen",
-            text: "Standard sind 48 Stunden Produktionszeit ab Auftragsbestätigung. Express ist auf Anfrage möglich und wird individuell kalkuliert, weil wir dafür laufende Aufträge umplanen müssen.",
+            title: "Preis und Fertigungszeit hängen zusammen",
+            text: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab. Express ist auf Anfrage möglich und wird individuell kalkuliert, weil wir dafür laufende Aufträge umplanen müssen.",
           },
         ]}
         table={table}

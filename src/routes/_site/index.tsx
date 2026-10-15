@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_site/")({
     buildHead({
       title: "3D-Druckservice Schweiz – FDM & SLA ab 1 Stück | 3DMuscio",
       description:
-        "Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Produktion in 48 h versandbereit.",
+        "Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Fertigung bei geeigneten Aufträgen in 48 h möglich.",
       path: "/",
     }, matches.at(-1)?.context.resinEnabled ?? false),
 });

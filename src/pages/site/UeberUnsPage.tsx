@@ -9,7 +9,7 @@ import { useLocation } from "@/lib/router-compat";
 
 const values = [
   { icon: Shield, title: "Qualität", desc: "Jeder Druck durchläuft strenge Qualitätskontrolle. Wir liefern nur, was uns selbst überzeugt." },
-  { icon: Zap, title: "Schnelligkeit", desc: "48h von Bestellung bis Lieferung. Express-Optionen für eilige Projekte verfügbar." },
+  { icon: Zap, title: "Schnelligkeit", desc: "Schnelle Fertigung – bei geeigneten Aufträgen innerhalb von 48 h möglich. Express auf Anfrage für eilige Projekte." },
   { icon: Leaf, title: "Nachhaltigkeit", desc: "Recycelbare Materialien, energieeffiziente Drucker. Weniger Abfall, mehr Zukunft." },
 ];
 

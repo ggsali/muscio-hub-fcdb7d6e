@@ -1570,7 +1570,7 @@ const CalculatorOnlinePage = () => {
 
   const getDeliveryText = () => {
     if (lieferdatum) {
-      return `⚡ Jetzt bestellen → Lieferung ${lieferdatum.toLocaleDateString("de-CH", {
+      return `⚡ Jetzt bestellen → voraussichtliche Lieferung ${lieferdatum.toLocaleDateString("de-CH", {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -1583,11 +1583,11 @@ const CalculatorOnlinePage = () => {
     if (isWeekday && hour >= 8 && hour < 17) {
       const delivery = new Date(now);
       delivery.setDate(delivery.getDate() + 2);
-      return `Jetzt bestellen → Lieferung ${delivery.toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+      return `Jetzt bestellen → voraussichtliche Lieferung ${delivery.toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long' })}`;
     } else if (isWeekday) {
-      return "Heute noch bestellen → Lieferung in 48h";
+      return "Heute noch bestellen → schnelle Fertigung möglich";
     } else {
-      return "Montag bestellen → Lieferung Mittwoch";
+      return "Montag bestellen → voraussichtlich ab Mittwoch geliefert";
     }
   };
 
@@ -1674,7 +1674,7 @@ const CalculatorOnlinePage = () => {
                 <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground flex-wrap justify-end">
                   <span>🇨🇭 Swiss Made</span>
                   <span>·</span>
-                  <span>⚡ 48h Lieferung</span>
+                  <span>⚡ Fertigung ab 48h möglich</span>
                   <span className="hidden sm:inline">·</span>
                   <span className="hidden sm:inline">✓ Ab 1 Stück</span>
                   <span className="hidden md:inline">·</span>
