@@ -70,8 +70,6 @@ Deno.serve(async (req) => {
       JSON.stringify({
         lieferdatum: lieferdatum.toISOString(),
         werktage,
-        offene_stunden: Math.round(totalOffeneSekunden / 3600),
-        offene_auftraege: offeneAuftraege?.length ?? 0,
         drucker_anzahl: druckerAnzahl,
         druckstunden_pro_tag: druckstundenProTag,
         ferien: ferienCfg ? { von: ferienCfg.von, bis: ferienCfg.bis } : null,

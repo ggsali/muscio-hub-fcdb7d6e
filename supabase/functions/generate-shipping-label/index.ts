@@ -42,6 +42,21 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Nur angemeldete Admins dürfen Etiketten erstellen.
+    const authHeader = req.headers.get("Authorization") || "";
+    const jwt = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const { data: userData } = jwt ? await supabase.auth.getUser(jwt) : { data: { user: null } };
+    const uid = userData?.user?.id;
+    const { data: isAdmin } = uid
+      ? await supabase.rpc("has_role", { _user_id: uid, _role: "admin" })
+      : { data: false };
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ success: false, error: "Nicht berechtigt" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { order_id, customer_id } = await req.json();
     if (!order_id && !customer_id) throw new Error("order_id oder customer_id required");
 
