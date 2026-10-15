@@ -483,7 +483,7 @@ const EntityAnswer = () => {
               { label: "Leistungen", to: "/leistungen" },
               { label: "Materialien", to: "/materialien" },
               { label: "Preise & Kosten", to: "/wissen/3d-druck-kosten-schweiz" },
-              { label: "3D-Druck Thurgau", to: "/standorte/thurgau" },
+              { label: "3D-Druck Thurgau", to: "/3d-druck-thurgau" },
             ].map((l) => (
               <Link
                 key={l.to}
