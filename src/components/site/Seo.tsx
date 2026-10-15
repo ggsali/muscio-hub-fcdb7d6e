@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { useMatches } from "@tanstack/react-router";
 import { useResinEnabled, stripResin } from "@/hooks/useResinEnabled";
 import { filterResinData } from "@/lib/resin-content";
 
@@ -25,12 +26,27 @@ interface SeoProps {
  */
 export const Seo = ({ title, description, path, image = DEFAULT_IMAGE, type = "website", jsonLd, noindex }: SeoProps) => {
   const resin = useResinEnabled();
+  // Liefert die Route bereits Titel/Meta per head(), nur JSON-LD ausgeben (sonst doppelte Tags).
+  const matches = useMatches();
+  const routeHasHead = !!(matches.at(-1) as any)?.meta?.some((m: any) => m && "title" in m);
   if (!resin) {
     title = stripResin(title);
     description = stripResin(description);
   }
   const url = `${SITE_URL}${path === "/" ? "/" : path.replace(/\/$/, "")}`;
   const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+
+  if (routeHasHead) {
+    return (
+      <Helmet>
+        {blocks.map((b, i) => (
+          <script key={i} type="application/ld+json">
+            {JSON.stringify(resin ? b : filterResinData(b))}
+          </script>
+        ))}
+      </Helmet>
+    );
+  }
 
   return (
     <Helmet>
