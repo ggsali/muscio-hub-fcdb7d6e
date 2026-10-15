@@ -1113,6 +1113,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           email: string
+          gutschein: Json | null
           herkunft: string | null
           id: string
           ki_beratung_zusammenfassung: string | null
@@ -1132,6 +1133,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           email: string
+          gutschein?: Json | null
           herkunft?: string | null
           id?: string
           ki_beratung_zusammenfassung?: string | null
@@ -1151,6 +1153,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           email?: string
+          gutschein?: Json | null
           herkunft?: string | null
           id?: string
           ki_beratung_zusammenfassung?: string | null
@@ -1671,6 +1674,10 @@ export type Database = {
           geplant_bis: string | null
           geplant_von: string | null
           gewinn_total: number | null
+          gutschein_betrag: number
+          gutschein_code: string | null
+          gutschein_typ: string | null
+          gutschein_wert: number
           id: string
           ki_beratung_zusammenfassung: string | null
           ki_empfohlenes_material: string | null
@@ -1712,6 +1719,10 @@ export type Database = {
           geplant_bis?: string | null
           geplant_von?: string | null
           gewinn_total?: number | null
+          gutschein_betrag?: number
+          gutschein_code?: string | null
+          gutschein_typ?: string | null
+          gutschein_wert?: number
           id?: string
           ki_beratung_zusammenfassung?: string | null
           ki_empfohlenes_material?: string | null
@@ -1753,6 +1764,10 @@ export type Database = {
           geplant_bis?: string | null
           geplant_von?: string | null
           gewinn_total?: number | null
+          gutschein_betrag?: number
+          gutschein_code?: string | null
+          gutschein_typ?: string | null
+          gutschein_wert?: number
           id?: string
           ki_beratung_zusammenfassung?: string | null
           ki_empfohlenes_material?: string | null
