@@ -176,6 +176,13 @@
       "when": 1792056580851,
       "tag": "0024_gutschein_auftrag",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792058175251,
+      "tag": "0025_gutschein_menge_kalkulator",
+      "breakpoints": true
     }
   ]
 }
