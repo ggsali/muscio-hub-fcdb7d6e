@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { encode } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+
+const escHtml = (v: unknown) =>
+  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 import { Resend } from "npm:resend@2";
 
 const corsHeaders = {
@@ -202,9 +205,9 @@ serve(async (req) => {
                       <td style="padding:8px;text-align:right;">CHF ${Number(shopOrder.total || 0).toFixed(2)}</td>
                     </tr>
                   </table>
-                  <p><strong>Kunde:</strong> ${shopOrder.customer_name || "–"}</p>
-                  <p><strong>E-Mail:</strong> ${shopOrder.customer_email || "–"}</p>
-                  <p><strong>Lieferadresse:</strong> ${shopOrder.shipping_address || "–"}, ${shopOrder.shipping_postal_code || ""} ${shopOrder.shipping_city || ""}</p>
+                  <p><strong>Kunde:</strong> ${escHtml(shopOrder.customer_name || "–")}</p>
+                  <p><strong>E-Mail:</strong> ${escHtml(shopOrder.customer_email || "–")}</p>
+                  <p><strong>Lieferadresse:</strong> ${escHtml(shopOrder.shipping_address || "–")}, ${escHtml(shopOrder.shipping_postal_code || "")} ${escHtml(shopOrder.shipping_city || "")}</p>
                   <p style="margin-top:24px;">
                     <a href="https://muscio-hub.lovable.app/admin/website-bestellungen" style="background:#FF5A00;color:#fff;padding:12px 20px;text-decoration:none;border-radius:6px;">Bestellung im Admin anzeigen →</a>
                   </p>
