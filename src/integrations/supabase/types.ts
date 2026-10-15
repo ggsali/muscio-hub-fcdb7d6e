@@ -3184,6 +3184,29 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_reviews: {
+        Args: never
+        Returns: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          freigegeben: boolean
+          id: string
+          kommentar: string | null
+          order_id: string | null
+          rating: number
+          sichtbar_auf_website: boolean
+          source: string | null
+          token: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "reviews"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       current_user_email: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
