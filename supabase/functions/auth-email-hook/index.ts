@@ -183,7 +183,7 @@ async function handleAuthHook(req: Request): Promise<Response> {
   }
 
   if (!userEmail || !emailType) {
-    console.error('Missing required fields after normalization', { userEmail, emailType })
+    console.error('Missing required fields after normalization', { hasEmail: !!userEmail, emailType })
     return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 

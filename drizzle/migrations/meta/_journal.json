@@ -162,6 +162,13 @@
       "when": 1792044462509,
       "tag": "0022_reviews_admin_list",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792044687970,
+      "tag": "0023_current_user_email_confirmed_only",
+      "breakpoints": true
     }
   ]
 }

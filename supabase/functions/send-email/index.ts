@@ -84,12 +84,17 @@ const STATUS_TEXTS_PICKUP: Record<string, { subject: string; title: string; intr
 const BRAND = "#00cc66";
 
 /** Namen sauber kapitalisieren: "max muster" -> "Max Muster" */
+const escHtml = (v: unknown) =>
+  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+
 const formattedName = (name: string) =>
-  (name || "")
-    .split(" ")
-    .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
+  escHtml(
+    (name || "")
+      .split(" ")
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" "),
+  );
 
 const STATUS_EMOJIS: Record<string, string> = {
   datei_erhalten: "📄",
@@ -163,7 +168,8 @@ function buildOrderEmail(opts: {
   restbetrag?: number | null;
   lieferart?: string | null;
 }): { subject: string; html: string } {
-  const { type, customerName, orderNr, orderName, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag, lieferart } = opts;
+  const { type, customerName, orderNr, datum, paymentUrl, trackingNr, akontoPercent, akontoBetrag, restbetrag, lieferart } = opts;
+  const orderName = escHtml(opts.orderName);
   const isPickup = lieferart === "abholung";
 
   const greet = `<p>Guten Tag ${formattedName(customerName)},</p>`;

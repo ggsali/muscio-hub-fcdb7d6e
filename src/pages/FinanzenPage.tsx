@@ -251,7 +251,13 @@ export default function FinanzenPage() {
         ];
       }),
     ];
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
+    // Text, der mit =, +, -, @ beginnt, würde Excel als Formel ausführen → mit ' entschärfen (Zahlen bleiben unverändert).
+    const cell = (v: unknown) => {
+      let s = String(v ?? "");
+      if (typeof v !== "number" && /^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+    const csv = rows.map(r => r.map(cell).join(";")).join("\n");
     const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
     a.href = url;
