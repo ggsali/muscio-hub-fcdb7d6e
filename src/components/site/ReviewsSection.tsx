@@ -5,6 +5,7 @@ import { Star, Quote, PenLine, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScrollReveal } from "./ScrollReveal";
 import { Button } from "@/components/ui/button";
+import { useReviewData } from "@/hooks/useReviewData";
 
 interface Review {
   id: string;
@@ -32,9 +33,12 @@ function formatDate(d: string) {
 }
 
 export function ReviewsSection() {
-  const [reviews, setReviews] = useState<Review[]>([]);
+  // Serverseitig geladene Bewertungen (stehen schon im HTML); ohne Loader weiterhin Laden im Browser
+  const ssr = useReviewData();
+  const [reviews, setReviews] = useState<Review[]>(ssr?.reviews ?? []);
 
   useEffect(() => {
+    if (ssr) return;
     supabase.from("public_reviews")
       .select("id, customer_name, kommentar, rating, created_at")
       .order("created_at", { ascending: false })
@@ -43,12 +47,15 @@ export function ReviewsSection() {
 
   }, []);
 
-  const avg = reviews.length > 0
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : "5.0";
+  const total = ssr?.count ?? reviews.length;
+  const avg = ssr && ssr.count > 0
+    ? ssr.average.toFixed(1)
+    : reviews.length > 0
+      ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+      : "5.0";
 
   return (
-    <section className="py-24 md:py-32 relative overflow-hidden">
+    <section id="kundenstimmen" className="py-24 md:py-32 relative overflow-hidden">
       {/* Background flares */}
       <div className="absolute top-0 -left-40 w-[500px] h-[500px] bg-primary/[0.05] rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 -right-40 w-[500px] h-[500px] bg-primary/[0.04] rounded-full blur-[120px] pointer-events-none" />
@@ -74,7 +81,7 @@ export function ReviewsSection() {
                   </div>
                   <div className="text-left">
                     <p className="font-heading text-xl font-bold leading-none">{avg}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{reviews.length}+ Bewertungen</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{total} Bewertungen</p>
                   </div>
                 </div>
               )}

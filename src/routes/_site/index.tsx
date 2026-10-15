@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import HomePage from "@/pages/site/HomePage";
 import { buildHead } from "@/lib/seo-head";
+import { reviewLoader } from "@/hooks/useReviewData";
 
 export const Route = createFileRoute("/_site/")({
+  loader: reviewLoader,
   component: HomePage,
   head: ({ matches }) =>
     buildHead({

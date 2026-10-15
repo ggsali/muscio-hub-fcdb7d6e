@@ -14,6 +14,7 @@ import { useRef, useEffect, useState } from "react";
 import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 import { supabase } from "@/integrations/supabase/client";
 import { ReviewsSection } from "@/components/site/ReviewsSection";
+import { useReviewData } from "@/hooks/useReviewData";
 import Seo from "@/components/site/Seo";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
@@ -456,6 +457,7 @@ const CTA = () => (
 /* ─── ENTITY / KURZANTWORT ─── */
 const EntityAnswer = () => {
   const resin = useResinEnabled();
+  const reviewData = useReviewData();
   return (
   <section className="py-16">
     <div className="container mx-auto px-4 max-w-4xl">
@@ -471,6 +473,10 @@ const EntityAnswer = () => {
               ["Dateiformate", company.fileFormats.join(", ")],
               ["Produktionszeit", company.productionTime],
               ["Mindestmenge", company.minOrder],
+              ["Preis", "ab CHF 5.– pro Auftrag, Sofortpreis im Online-Kalkulator"],
+              ...(reviewData && reviewData.count > 0
+                ? [["Kundenbewertungen", `${reviewData.average.toFixed(1)} von 5 Sternen aus ${reviewData.count} echten Kundenbewertungen`]]
+                : []),
             ].map(([k, v]) => (
               <div key={k} className="flex flex-col border-t border-border pt-3">
                 <dt className="text-xs uppercase tracking-widest text-primary font-semibold">{k}</dt>
@@ -588,14 +594,38 @@ const SEOContent = () => {
   );
 };
 
-const Index = () => (
+const Index = () => {
+  const reviewData = useReviewData();
+  // Bewertungs-Schema nur aus echten, sichtbaren Daten (identisch mit der Anzeige auf der Seite)
+  const ratingJsonLd = reviewData && reviewData.count > 0
+    ? {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: reviewData.average,
+          reviewCount: reviewData.count,
+          bestRating: 5,
+          worstRating: 1,
+        },
+        review: reviewData.reviews
+          .filter((r) => (r.kommentar ?? "").trim().length > 0)
+          .slice(0, 5)
+          .map((r) => ({
+            "@type": "Review",
+            author: { "@type": "Person", name: r.customer_name.split(" · ")[0] },
+            datePublished: r.created_at.slice(0, 10),
+            reviewBody: r.kommentar,
+            reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+          })),
+      }
+    : {};
+  return (
   <div>
     <Seo
       title="3D-Druckservice Schweiz – FDM & SLA ab 1 Stück | 3DMuscio"
       description="Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Produktion in 48 h versandbereit."
       path="/"
       jsonLd={[
-        localBusinessJsonLd,
+        { ...localBusinessJsonLd, ...ratingJsonLd },
         {
           "@context": "https://schema.org",
           "@type": "WebSite",
@@ -619,6 +649,7 @@ const Index = () => (
     <CTA />
     <SEOContent />
   </div>
-);
+  );
+};
 
 export default Index;

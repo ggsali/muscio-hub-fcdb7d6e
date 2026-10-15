@@ -1,3 +1,4 @@
+import ReviewsStrip from "@/components/site/ReviewsStrip";
 import { useResinEnabled, isResinText, stripResin } from "@/hooks/useResinEnabled";
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "@/lib/router-compat";
@@ -135,6 +136,7 @@ export default function LokalPage() {
           { label: "Materialien", to: "/materialien", text: resin ? "PLA, PETG, ABS, ASA, TPU, Resin." : "PLA, PETG, ABS, ASA, TPU." },
         ].filter((l) => resin || !isResinText(l.label))}
         ctaTitle={`3D-Druck in ${region} anfragen`}
+        afterContent={<ReviewsStrip region={region} />}
       />
     </>
   );

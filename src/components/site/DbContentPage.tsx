@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "@/lib/router-compat";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -23,6 +24,8 @@ interface DbContentPageProps {
   ctaText?: string;
   /** Zusätzliche interne Links am Seitenende */
   related?: { label: string; to: string; text?: string }[];
+  /** Zusätzlicher Inhalt vor dem Abschluss-CTA */
+  afterContent?: ReactNode;
 }
 
 /**
@@ -31,7 +34,7 @@ interface DbContentPageProps {
  * interne Links laufen über den Router.
  */
 export default function DbContentPage({
-  eyebrow, h1, intro, inhalt, faq = [], breadcrumb, ctaTitle, ctaText, related = [],
+  eyebrow, h1, intro, inhalt, faq = [], breadcrumb, ctaTitle, ctaText, related = [], afterContent,
 }: DbContentPageProps) {
   const resin = useResinEnabled();
   if (!resin) {
@@ -136,6 +139,8 @@ export default function DbContentPage({
           </div>
         </section>
       )}
+
+      {afterContent}
 
       <section className="container mx-auto px-4 sm:px-6 max-w-3xl">
         <div className="rounded-2xl border border-border bg-muted/30 p-6 md:p-8 text-center">
