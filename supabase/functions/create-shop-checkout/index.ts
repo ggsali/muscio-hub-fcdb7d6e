@@ -136,7 +136,6 @@ Deno.serve(async (req) => {
       const email = (giftInput.empfaenger_email || "").trim();
       if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Ungültige Empfänger-E-Mail");
 
-      const giftStripe = createStripeClient(environment);
       const giftOrigin = safeOrigin(req.headers.get("origin"));
       const giftStripe = createStripeClient(environment);
       const giftSession = await giftStripe.checkout.sessions.create({
