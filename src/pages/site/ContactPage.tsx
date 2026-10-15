@@ -57,6 +57,7 @@ const ContactPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [sent, setSent] = useState(false);
   const [herkunftInquiryId, setHerkunftInquiryId] = useState<string | null>(null);
+  const [ferienBis, setFerienBis] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -128,12 +129,11 @@ const ContactPage = () => {
       });
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
 
-      toast.success(
-        data?.ferien?.bis
-          ? `Nachricht gesendet! Wir sind bis ${(data.ferien.bis as string).split("-").reverse().join(".")} in den Ferien und antworten danach. Du hast eine Bestätigung per E-Mail erhalten.`
-          : "Nachricht gesendet! Wir antworten innerhalb 24h.",
-        data?.ferien?.bis ? { duration: 10000 } : undefined,
-      );
+      if (data?.ferien?.bis) {
+        setFerienBis((data.ferien.bis as string).split("-").reverse().join("."));
+      } else {
+        toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
+      }
       setSent(true);
       if (data?.inquiry_id && sessionStorage.getItem("herkunft_gefragt") !== "true") {
         setHerkunftInquiryId(data.inquiry_id as string);
@@ -153,6 +153,20 @@ const ContactPage = () => {
 
   return (
     <div className="pt-12 pb-16">
+      <AlertDialog open={!!ferienBis} onOpenChange={(o) => !o && setFerienBis(null)}>
+        <AlertDialogContent className="text-center">
+          <AlertDialogHeader>
+            <div className="mx-auto text-4xl mb-2">🏖️</div>
+            <AlertDialogTitle className="text-center">Nachricht erhalten – wir sind in den Ferien</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Vielen Dank für deine Nachricht! Wir sind bis {ferienBis} in den Ferien und melden uns danach bei dir. Du hast eine Bestätigung per E-Mail erhalten.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction onClick={() => setFerienBis(null)}>Alles klar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Seo
         title="Kontakt & Anfrage – 3DMuscio 3D Druckservice Schweiz"
         description="Kontakt zu 3DMuscio in Eschlikon TG: Anfrage senden, Dateien hochladen oder direkt per E-Mail an info@3dmuscio.com. Antwort in der Regel innerhalb eines Werktags."
