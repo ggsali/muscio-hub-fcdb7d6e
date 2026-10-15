@@ -100,10 +100,10 @@ Deutsch (Hauptsprache), Englisch auf Anfrage
 - Material TPU: https://3dmuscio.com/materialien/tpu
 - Material Nylon: https://3dmuscio.com/materialien/nylon
 - Material Resin: https://3dmuscio.com/materialien/resin
-- 3D-Druck Thurgau: https://3dmuscio.com/standorte/thurgau
-- 3D-Druck Ostschweiz: https://3dmuscio.com/standorte/ostschweiz
-- 3D-Druck Zürich: https://3dmuscio.com/standorte/zuerich
-- 3D-Druck St. Gallen: https://3dmuscio.com/standorte/st-gallen
+- 3D-Druck Thurgau: https://3dmuscio.com/3d-druck-thurgau
+- 3D-Druck Ostschweiz: https://3dmuscio.com/3d-druck-ostschweiz
+- 3D-Druck Zürich: https://3dmuscio.com/3d-druck-zuerich
+- 3D-Druck St. Gallen: https://3dmuscio.com/3d-druck-st-gallen
 - Projekte: https://3dmuscio.com/projekte
 - Shop: https://3dmuscio.com/shop
 - Blog: https://3dmuscio.com/blog

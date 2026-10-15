@@ -8,6 +8,7 @@ import { useStadtmodellEnabled } from "@/hooks/useStadtmodellEnabled";
 const footerLinks = [
   { label: "Kalkulator", path: "/kalkulator-online" },
   { label: "Stadtmodell", path: "/stadtmodell" },
+  { label: "STL drucken lassen", path: "/stl-drucken-lassen" },
   { label: "3D-Druck Schweiz", path: "/3d-druck-schweiz" },
   { label: "Leistungen", path: "/leistungen" },
   { label: "Materialien", path: "/materialien" },
@@ -81,7 +82,7 @@ export const Footer = () => {
 
           <p className="text-muted-foreground text-sm leading-relaxed mb-5">
             Schweizer 3D-Druckservice für schnelle Prototypen, Ersatzteile und Kleinserien – mit
-            Sofortpreis, persönlichem Service und Produktion in der Schweiz.
+            Sofortpreis, persönlichem Service und Produktion in der Schweiz. Versand in die ganze Schweiz &amp; nach Liechtenstein.
           </p>
 
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-muted/40 text-xs text-muted-foreground">
