@@ -1550,15 +1550,18 @@ const CalculatorOnlinePage = () => {
     [parts],
   );
 
+  const [ferien, setFerien] = useState<{ von: string; bis: string } | null>(null);
+
   useEffect(() => {
-    if (step < 5 || neuerAuftragSekunden <= 0) return;
+    if (step < 5) return;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase.functions.invoke("calc-lieferzeit", {
         body: { neuer_auftrag_sekunden: neuerAuftragSekunden },
       });
-      if (cancelled || error || !data?.lieferdatum) return;
-      setLieferdatum(new Date(data.lieferdatum));
+      if (cancelled || error) return;
+      setFerien(data?.ferien ?? null);
+      if (neuerAuftragSekunden > 0 && data?.lieferdatum) setLieferdatum(new Date(data.lieferdatum));
     })();
     return () => {
       cancelled = true;
@@ -2633,6 +2636,19 @@ const CalculatorOnlinePage = () => {
                     </div>
                   </div>
 
+                  {ferien ? (
+                    <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-4">
+                      <span className="text-lg">🏖️</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-amber-900">
+                          Wir sind bis {ferien.bis.split("-").reverse().join(".")} in den Ferien
+                        </p>
+                        <p className="text-xs text-amber-800 mt-0.5">
+                          Deine Anfrage nehmen wir gerne entgegen. Wir melden uns danach bei dir und nennen dir den Liefertermin.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
                   <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mt-4">
                     <span className="text-lg">📦</span>
                     <div className="flex-1">
@@ -2648,6 +2664,7 @@ const CalculatorOnlinePage = () => {
                       </p>
                     </div>
                   </div>
+                  )}
 
 
                   <div className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">

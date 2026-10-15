@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getActiveFerien } from "../_shared/ferien.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -24,6 +25,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    const ferienCfg = await getActiveFerien(supabase);
 
     const [{ data: offeneAuftraege }, { data: settingRows }] = await Promise.all([
       supabase
@@ -71,6 +74,7 @@ Deno.serve(async (req) => {
         offene_auftraege: offeneAuftraege?.length ?? 0,
         drucker_anzahl: druckerAnzahl,
         druckstunden_pro_tag: druckstundenProTag,
+        ferien: ferienCfg ? { von: ferienCfg.von, bis: ferienCfg.bis } : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
