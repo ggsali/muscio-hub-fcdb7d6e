@@ -699,7 +699,7 @@ const CalculatorOnlinePage = () => {
   }, []);
 
   /**
-   * Die Server-Analyse hängt nur von der Datei ab und läuft einmal beim Hochladen.
+   * Die Server-Analyse hängt von Datei, Material und Qualität ab.
    * Neu gerechnet wird nur dort, wo kein Slicer-Ergebnis vorliegt (Fallback für den Preis).
    */
   const runKiAnalysisAll = useCallback(() => {
@@ -1031,6 +1031,8 @@ const CalculatorOnlinePage = () => {
       if (todo.some((p) => !sliceCache.current.has(sliceKey(p.id, false, quality)))) startProgress();
       todo.forEach((p) => runSlicer(p.id, false));
     }
+    // Fallback-Preis (Server-Analyse) hängt von der Qualität ab
+    runKiAnalysisAll();
   };
 
   const MIN_PRICE = calcParams.min_price;
@@ -1228,7 +1230,8 @@ const CalculatorOnlinePage = () => {
       startProgress();
       missing.forEach((p) => {
         runSlicer(p.id, false);
-        if (p.stlBase64 && !p.kiAnalysis) runKiAnalysis(p.id);
+        // Server-Preis hängt vom Material ab → bei fehlendem Slicer-Ergebnis neu holen
+        if (p.stlBase64) runKiAnalysis(p.id);
       });
     }
   };
