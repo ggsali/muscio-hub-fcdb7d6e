@@ -52,6 +52,7 @@ import { Route as SiteKalkulatorOnlineRouteImport } from './routes/_site/kalkula
 import { Route as SiteKontaktRouteImport } from './routes/_site/kontakt'
 import { Route as SiteMaschinenRouteImport } from './routes/_site/maschinen'
 import { Route as SiteStadtmodellRouteImport } from './routes/_site/stadtmodell'
+import { Route as SiteStlDruckenLassenRouteImport } from './routes/_site/stl-drucken-lassen'
 import { Route as SiteUeberKiRouteImport } from './routes/_site/ueber-ki'
 import { Route as SiteUeberUnsRouteImport } from './routes/_site/ueber-uns'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
@@ -348,6 +349,11 @@ const SiteMaschinenRoute = SiteMaschinenRouteImport.update({
 const SiteStadtmodellRoute = SiteStadtmodellRouteImport.update({
   id: '/stadtmodell',
   path: '/stadtmodell',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteStlDruckenLassenRoute = SiteStlDruckenLassenRouteImport.update({
+  id: '/stl-drucken-lassen',
+  path: '/stl-drucken-lassen',
   getParentRoute: () => SiteRoute,
 } as any)
 const SiteUeberKiRoute = SiteUeberKiRouteImport.update({
@@ -819,6 +825,7 @@ export interface FileRoutesByFullPath {
   '/kontakt': typeof SiteKontaktRoute
   '/maschinen': typeof SiteMaschinenRoute
   '/stadtmodell': typeof SiteStadtmodellRoute
+  '/stl-drucken-lassen': typeof SiteStlDruckenLassenRoute
   '/ueber-ki': typeof SiteUeberKiRoute
   '/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
@@ -942,6 +949,7 @@ export interface FileRoutesByTo {
   '/kontakt': typeof SiteKontaktRoute
   '/maschinen': typeof SiteMaschinenRoute
   '/stadtmodell': typeof SiteStadtmodellRoute
+  '/stl-drucken-lassen': typeof SiteStlDruckenLassenRoute
   '/ueber-ki': typeof SiteUeberKiRoute
   '/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
@@ -1071,6 +1079,7 @@ export interface FileRoutesById {
   '/_site/kontakt': typeof SiteKontaktRoute
   '/_site/maschinen': typeof SiteMaschinenRoute
   '/_site/stadtmodell': typeof SiteStadtmodellRoute
+  '/_site/stl-drucken-lassen': typeof SiteStlDruckenLassenRoute
   '/_site/ueber-ki': typeof SiteUeberKiRoute
   '/_site/ueber-uns': typeof SiteUeberUnsRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
@@ -1201,6 +1210,7 @@ export interface FileRouteTypes {
     | '/kontakt'
     | '/maschinen'
     | '/stadtmodell'
+    | '/stl-drucken-lassen'
     | '/ueber-ki'
     | '/ueber-uns'
     | '/admin/anfragen'
@@ -1324,6 +1334,7 @@ export interface FileRouteTypes {
     | '/kontakt'
     | '/maschinen'
     | '/stadtmodell'
+    | '/stl-drucken-lassen'
     | '/ueber-ki'
     | '/ueber-uns'
     | '/admin/anfragen'
@@ -1452,6 +1463,7 @@ export interface FileRouteTypes {
     | '/_site/kontakt'
     | '/_site/maschinen'
     | '/_site/stadtmodell'
+    | '/_site/stl-drucken-lassen'
     | '/_site/ueber-ki'
     | '/_site/ueber-uns'
     | '/admin/anfragen'
@@ -1879,6 +1891,13 @@ declare module '@tanstack/react-router' {
       path: '/stadtmodell'
       fullPath: '/stadtmodell'
       preLoaderRoute: typeof SiteStadtmodellRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/stl-drucken-lassen': {
+      id: '/_site/stl-drucken-lassen'
+      path: '/stl-drucken-lassen'
+      fullPath: '/stl-drucken-lassen'
+      preLoaderRoute: typeof SiteStlDruckenLassenRouteImport
       parentRoute: typeof SiteRoute
     }
     '/_site/ueber-ki': {
@@ -2482,6 +2501,7 @@ interface SiteRouteChildren {
   SiteKontaktRoute: typeof SiteKontaktRoute
   SiteMaschinenRoute: typeof SiteMaschinenRoute
   SiteStadtmodellRoute: typeof SiteStadtmodellRoute
+  SiteStlDruckenLassenRoute: typeof SiteStlDruckenLassenRoute
   SiteUeberKiRoute: typeof SiteUeberKiRoute
   SiteUeberUnsRoute: typeof SiteUeberUnsRoute
   SiteIndexRoute: typeof SiteIndexRoute
@@ -2519,6 +2539,7 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteKontaktRoute: SiteKontaktRoute,
   SiteMaschinenRoute: SiteMaschinenRoute,
   SiteStadtmodellRoute: SiteStadtmodellRoute,
+  SiteStlDruckenLassenRoute: SiteStlDruckenLassenRoute,
   SiteUeberKiRoute: SiteUeberKiRoute,
   SiteUeberUnsRoute: SiteUeberUnsRoute,
   SiteIndexRoute: SiteIndexRoute,

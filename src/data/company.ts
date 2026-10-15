@@ -23,11 +23,11 @@ export const company = {
   },
   /** Kurze, zitierfähige Entity-Beschreibung (identisch überall verwenden) */
   shortDescription:
-    "3DMuscio ist ein 3D-Druckservice aus Eschlikon im Kanton Thurgau (Schweiz). Wir fertigen Einzelteile, Prototypen, Funktionsteile, Ersatzteile und Kleinserien im FDM- und SLA/Resin-Verfahren für Privatkunden, KMU, Startups und Unternehmen in der ganzen Schweiz.",
+    "3DMuscio ist ein 3D-Druckservice aus Eschlikon im Kanton Thurgau (Schweiz). Wir fertigen Einzelteile, Prototypen, Funktionsteile, Ersatzteile und Kleinserien im FDM- und SLA/Resin-Verfahren für Privatkunden, KMU, Startups und Unternehmen in der ganzen Schweiz und in Liechtenstein.",
   /** Längere Variante für Über-uns / llms.txt */
   longDescription:
-    "3DMuscio ist ein 3D-Druckservice mit Sitz in Eschlikon TG, Schweiz. Angeboten werden FDM-Druck (PLA, PETG, ABS, ASA, TPU) und SLA/Resin-Druck. Typische Aufträge sind Prototypen, Funktionsteile, Ersatzteile, Modelle und Kleinserien ab 1 Stück – ohne Mindestbestellmenge. Dateien können als STL, STEP, 3MF oder OBJ hochgeladen und im Online-Kalkulator direkt kalkuliert werden. Die Standard-Produktionszeit beträgt 48 Stunden ab Auftragsbestätigung, danach Versand innerhalb der Schweiz oder Abholung in Eschlikon TG.",
-  targetMarket: "Schweiz",
+    "3DMuscio ist ein 3D-Druckservice mit Sitz in Eschlikon TG, Schweiz. Angeboten werden FDM-Druck (PLA, PETG, ABS, ASA, TPU) und SLA/Resin-Druck. Typische Aufträge sind Prototypen, Funktionsteile, Ersatzteile, Modelle und Kleinserien ab 1 Stück – ohne Mindestbestellmenge. Dateien können als STL, STEP, 3MF oder OBJ hochgeladen und im Online-Kalkulator direkt kalkuliert werden. Die Standard-Produktionszeit beträgt 48 Stunden ab Auftragsbestätigung, danach Versand in die ganze Schweiz und nach Liechtenstein.",
+  targetMarket: "Schweiz und Liechtenstein",
   audiences: ["Privatkunden", "KMU", "Startups", "Unternehmen"],
   processes: ["FDM (Fused Deposition Modeling)", "SLA / Resin"],
   services: [
@@ -42,7 +42,7 @@ export const company = {
   productionTime: "48 Stunden ab Auftragsbestätigung (Standard)",
   tolerance: "typisch ±0.2 mm",
   minOrder: "ab 1 Stück, keine Mindestbestellmenge",
-  shipping: "Versand mit Post oder DHL innerhalb der Schweiz, Abholung in Eschlikon TG möglich",
+  shipping: "Versand mit der Post in die ganze Schweiz und nach Liechtenstein",
 } as const;
 
 export const fullAddress = `${company.address.city} ${company.address.regionCode}, ${company.address.country}`;
@@ -62,7 +62,7 @@ export const localBusinessJsonLd = {
     addressRegion: company.address.region,
     addressCountry: company.address.countryCode,
   },
-  areaServed: { "@type": "Country", name: "Schweiz" },
+  areaServed: [{ "@type": "Country", name: "Schweiz" }, { "@type": "Country", name: "Liechtenstein" }],
   knowsAbout: [
     "3D-Druck",
     "FDM 3D-Druck",
@@ -102,5 +102,5 @@ export const serviceJsonLd = (name: string, description: string, path: string) =
   serviceType: "3D-Druck",
   url: `${SITE_URL}${path}`,
   provider: { "@id": `${SITE_URL}/#organization` },
-  areaServed: { "@type": "Country", name: "Schweiz" },
+  areaServed: [{ "@type": "Country", name: "Schweiz" }, { "@type": "Country", name: "Liechtenstein" }],
 });

@@ -13,6 +13,7 @@ const fallback: FaqEntry[] = [
   { frage: "Wie lange dauert der 3D-Druck?", antwort: "Standard 48 Stunden ab Auftragsbestätigung. Express auf Anfrage möglich." },
   { frage: "Welche Dateiformate akzeptiert ihr?", antwort: "STL, STEP, 3MF und OBJ. Für Anfragen reicht meist eine STL-Datei." },
   { frage: "Wie genau sind die Drucke?", antwort: "Toleranzen typisch ±0.2 mm. Bei höheren Anforderungen sprich uns an." },
+  { frage: "Liefert ihr auch nach Liechtenstein?", antwort: "Ja. Wir versenden mit der Post in die ganze Schweiz und nach Liechtenstein." },
   { frage: "Was kostet ein Druck?", antwort: "Online im Preisrechner direkt kalkulieren – Material, Zeit und Nachbearbeitung sind transparent ausgewiesen." },
 ];
 
@@ -32,11 +33,6 @@ export default function FaqPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-6 py-12 md:py-16">
       <Helmet>
-        <title>FAQ – Häufige Fragen zum 3D-Druck | 3DMuscio</title>
-        <meta name="description" content="Antworten auf häufige Fragen zu Lieferzeit, Dateiformaten, Genauigkeit und Preisen im 3D-Druck bei 3DMuscio." />
-        <meta property="og:title" content="FAQ – Häufige Fragen zum 3D-Druck | 3DMuscio" />
-        <meta property="og:description" content="Antworten auf häufige Fragen zum 3D-Druck bei 3DMuscio." />
-        <meta property="og:url" content="https://3dmuscio.com/faq" />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "FAQPage",
