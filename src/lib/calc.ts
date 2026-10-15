@@ -24,23 +24,8 @@ export const DEFAULT_SETTINGS: Settings = {
   investitions_fonds_prozent: 20,
 };
 
-/**
- * Öffentliche Preisparameter für Besucher ohne Admin-Rechte (settings ist admin-only).
- * Liefert nur Maschinenstunde, Setup-Pauschale, Qualitätsstufen und Kalkulationsparameter.
- */
-export async function fetchPublicCalcRows(): Promise<{ key: string; value: string }[]> {
-  try {
-    const { data, error } = await (supabase.rpc as any)("get_public_calc_settings");
-    if (error || !data || typeof data !== "object") return [];
-    return Object.entries(data as Record<string, unknown>).map(([key, value]) => ({ key, value: String(value) }));
-  } catch {
-    return [];
-  }
-}
-
 export async function loadSettings(): Promise<Settings> {
-  const { data: raw } = await supabase.from("settings").select("*");
-  const data = raw && raw.length > 0 ? raw : await fetchPublicCalcRows();
+  const { data } = await supabase.from("settings").select("*");
   if (!data || data.length === 0) return DEFAULT_SETTINGS;
   const s: Partial<Settings> = {};
   const numericKeys = new Set(Object.keys(DEFAULT_SETTINGS));

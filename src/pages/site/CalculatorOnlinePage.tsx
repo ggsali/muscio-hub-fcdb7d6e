@@ -27,8 +27,8 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import {
-  loadQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
-  type QualityPreset, type CalcParams,
+  loadQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS, loadWebsitePreise,
+  type QualityPreset, type CalcParams, type WebsitePreise,
 } from "@/lib/calcConfig";
 
 
@@ -453,6 +453,12 @@ const CalculatorOnlinePage = () => {
     });
   }, []);
 
+  // Nur-Website-Preise (Admin → Einstellungen → Website-Kalkulator). Ohne Eintrag gelten wie bisher die alten Quellen.
+  const [websitePreise, setWebsitePreise] = useState<WebsitePreise>({ maschinenzeit_pro_h: null, setup_pauschale: null });
+  useEffect(() => { loadWebsitePreise().then(setWebsitePreise); }, []);
+  const maschinenRate = websitePreise.maschinenzeit_pro_h ?? (settings.maschinenzeit_pro_h || 3);
+  const setupPauschale = websitePreise.setup_pauschale ?? (calcParams.fix_cost || 20);
+
   useEffect(() => {
     console.log("Maschinenzeit:", settings.maschinenzeit_pro_h);
   }, [settings.maschinenzeit_pro_h]);
@@ -665,8 +671,8 @@ const CalculatorOnlinePage = () => {
         infill: quality.infill,
         speedFactor: quality.speedFactor,
         quantity: part.quantity,
-        maschinenzeit: settings.maschinenzeit_pro_h || 3,
-        setupFee: settings.setup_pauschale ?? 20,
+        maschinenzeit: maschinenRate,
+        setupFee: setupPauschale,
         minPrice: calcParams.min_price || 5,
         minuten_pro_gramm: 2.5,
         overhang_schwellwert: 30,
@@ -686,7 +692,7 @@ const CalculatorOnlinePage = () => {
         ? { ...p, kiAnalysis: data as KiAnalysis, kiAnalysisLoading: false, kiAnalysisError: null }
         : p));
     }
-  }, [parts, materials, qualityPresets, qualityKey, settings.maschinenzeit_pro_h, settings.setup_pauschale, calcParams]);
+  }, [parts, materials, qualityPresets, qualityKey, maschinenRate, setupPauschale, calcParams]);
 
   const kiFnRef = useRef(runKiAnalysisNow);
   useEffect(() => { kiFnRef.current = runKiAnalysisNow; }, [runKiAnalysisNow]);
@@ -1036,8 +1042,7 @@ const CalculatorOnlinePage = () => {
   };
 
   const MIN_PRICE = calcParams.min_price;
-  // Setup-Pauschale = Verrechnungssatz aus dem Admin (1:1 wie im Auftrag)
-  const FIX_COST = settings.setup_pauschale;
+  const FIX_COST = setupPauschale;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
   /** Slicer-Daten bevorzugt, dann KI-Analyse, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
@@ -1054,7 +1059,7 @@ const CalculatorOnlinePage = () => {
       const druckzeitMin = p.slicerResult.printTimeMinutes ||
         weightG * 2.5 * (presetByInfill(p.infill).speedFactor || 1);
       const materialCost = weightG * mat.pricePerGram;
-      const machineCost = (druckzeitMin / 60) * (settings.maschinenzeit_pro_h || 3);
+      const machineCost = (druckzeitMin / 60) * maschinenRate;
       const supportCost = p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
       const unit = materialCost + machineCost + supportCost;
       return {
@@ -1099,7 +1104,7 @@ const CalculatorOnlinePage = () => {
 
     // Maschinenzeit schätzen
     const baseHours = (weight / 10) * quality.speedFactor;
-    const machineCost = baseHours * (settings.maschinenzeit_pro_h || 3.0);
+    const machineCost = baseHours * maschinenRate;
 
     const unit = materialCost + machineCost;
 
@@ -1114,7 +1119,7 @@ const CalculatorOnlinePage = () => {
   const kiLoading = parts.some((p) => p.kiAnalysisLoading || p.slicerLoading);
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
-  const setupFee = parts.length > 0 ? (FIX_COST ?? 20) : 0;
+  const setupFee = parts.length > 0 ? FIX_COST : 0;
   const subtotal = materialTotal + setupFee;
   const shippingGrams = calcs.reduce((sum, { part, calc }) => sum + calc.weight * part.quantity, 0);
   const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : shippingCostForGrams(shippingGrams);
@@ -1530,15 +1535,15 @@ const CalculatorOnlinePage = () => {
     parts.forEach((p) => {
       const mat = materials.find((m) => m.id === (p.materialId || materials[0]?.id));
       if (!mat || !p.hasVolume || p.volumeCm3 <= 0) return;
-      const unit = calcQuickPrice(p.volumeCm3, mat, quality, settings.maschinenzeit_pro_h || 3, calcParams.min_price);
+      const unit = calcQuickPrice(p.volumeCm3, mat, quality, maschinenRate, calcParams.min_price);
       sum += unit * p.quantity;
       grams += p.estimatedWeight * p.quantity;
     });
-    const setup = parts.length > 0 ? (settings.setup_pauschale ?? 20) : 0;
+    const setup = parts.length > 0 ? setupPauschale : 0;
     const sub = sum + setup;
     const ship = sub === 0 ? 0 : sub >= SHIPPING_FREE_FROM ? 0 : shippingCostForGrams(grams);
     return Math.max(sub + ship, calcParams.min_price || 5);
-  }, [parts, materials, qualityKey, qualityPresets, settings.maschinenzeit_pro_h, settings.setup_pauschale, calcParams, hasStep]);
+  }, [parts, materials, qualityKey, qualityPresets, maschinenRate, setupPauschale, calcParams, hasStep]);
 
   const priceBadge = parts.length === 0 || hasStep ? null : quickTotal;
 
@@ -1847,7 +1852,7 @@ const CalculatorOnlinePage = () => {
                             ) : (
                               <div className="text-right flex-shrink-0">
                                 <p className="font-bold text-sm text-primary">
-                                  ca. {CHF(calcQuickPrice(p.volumeCm3, materials.find((m) => m.id === (p.materialId || materials[0]?.id)) || materials[0], qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1], settings.maschinenzeit_pro_h || 3, calcParams.min_price))}
+                                  ca. {CHF(calcQuickPrice(p.volumeCm3, materials.find((m) => m.id === (p.materialId || materials[0]?.id)) || materials[0], qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1], maschinenRate, calcParams.min_price))}
                                 </p>
                               </div>
                             )}

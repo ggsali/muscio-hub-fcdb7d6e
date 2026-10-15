@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { fetchPublicCalcRows } from "@/lib/calc";
 
 export interface QualityPreset {
   key: string;
@@ -40,12 +39,10 @@ function num(v: unknown, fallback: number): number {
 
 export async function loadQualityConfig(): Promise<{ presets: QualityPreset[]; params: CalcParams }> {
   try {
-    const { data: raw } = await supabase
+    const { data } = await supabase
       .from("settings")
       .select("key, value")
       .in("key", [QUALITY_PRESETS_KEY, CALC_PARAMS_KEY]);
-    // Besucher ohne Admin-Rechte sehen "settings" nicht → öffentliche Preisparameter über RPC
-    const data = raw && raw.length > 0 ? raw : await fetchPublicCalcRows();
 
     let presets = DEFAULT_QUALITY_PRESETS;
     let params = DEFAULT_CALC_PARAMS;
@@ -90,4 +87,49 @@ export async function saveQualityConfig(presets: QualityPreset[], params: CalcPa
     ],
     { onConflict: "key" },
   );
+}
+
+/** Preise, die nur für den öffentlichen Website-Kalkulator gelten (Admin/Aufträge/PDF bleiben unberührt). */
+export interface WebsitePreise {
+  maschinenzeit_pro_h: number | null;
+  setup_pauschale: number | null;
+}
+
+export const WEBSITE_MASCHINENZEIT_KEY = "website_maschinenzeit_pro_h";
+export const WEBSITE_SETUP_KEY = "website_setup_pauschale";
+
+/** Admin liest direkt aus "settings", Besucher über die freigegebene Funktion (nur diese zwei Keys). */
+export async function loadWebsitePreise(): Promise<WebsitePreise> {
+  const out: WebsitePreise = { maschinenzeit_pro_h: null, setup_pauschale: null };
+  try {
+    const { data } = await supabase
+      .from("settings")
+      .select("key, value")
+      .in("key", [WEBSITE_MASCHINENZEIT_KEY, WEBSITE_SETUP_KEY]);
+    let rows: { key: string; value: unknown }[] = data || [];
+    if (rows.length === 0) {
+      const { data: pub } = await (supabase.rpc as any)("get_website_calc_preise");
+      if (pub && typeof pub === "object") {
+        rows = Object.entries(pub as Record<string, unknown>).map(([key, value]) => ({ key, value }));
+      }
+    }
+    for (const r of rows) {
+      const n = parseFloat(String(r.value));
+      if (!Number.isFinite(n) || n < 0) continue;
+      if (r.key === WEBSITE_MASCHINENZEIT_KEY) out.maschinenzeit_pro_h = n;
+      if (r.key === WEBSITE_SETUP_KEY) out.setup_pauschale = n;
+    }
+  } catch (e) {
+    console.warn("Website-Preise konnten nicht geladen werden", e);
+  }
+  return out;
+}
+
+export async function saveWebsitePreise(p: { maschinenzeit_pro_h: number | null; setup_pauschale: number | null }): Promise<void> {
+  const now = new Date().toISOString();
+  const rows: { key: string; value: string; updated_at: string }[] = [];
+  if (p.maschinenzeit_pro_h != null) rows.push({ key: WEBSITE_MASCHINENZEIT_KEY, value: String(p.maschinenzeit_pro_h), updated_at: now });
+  if (p.setup_pauschale != null) rows.push({ key: WEBSITE_SETUP_KEY, value: String(p.setup_pauschale), updated_at: now });
+  if (rows.length === 0) return;
+  await supabase.from("settings").upsert(rows, { onConflict: "key" });
 }

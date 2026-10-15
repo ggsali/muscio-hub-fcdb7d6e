@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { loadReviewMailSettings, REVIEW_DEFAULT_SUBJECT, buildReviewBody } from "@/lib/reviewEmail";
 
 import {
-  loadQualityConfig, saveQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS,
+  loadQualityConfig, saveQualityConfig, DEFAULT_QUALITY_PRESETS, DEFAULT_CALC_PARAMS, loadWebsitePreise, saveWebsitePreise,
   type QualityPreset, type CalcParams,
 } from "@/lib/calcConfig";
 
@@ -66,9 +66,18 @@ export default function EinstellungenPage() {
   const [tab, setTab] = useState<Tab>("raten");
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
   const [websiteSettings, setWebsiteSettings] = useState<Record<string, number>>({
+    postProcessingFee: 5,
+    shippingCost: 8.9,
+    freeShippingThreshold: 100,
+    bulkDiscount5: 0.05,
+    bulkDiscount10: 0.10,
+    mwst: 0.081,
     drucker_anzahl: 2,
     druckstunden_pro_tag: 20,
   });
+  // Nur für den Website-Kalkulator (leer = bisheriger Wert wird weiterverwendet)
+  const [webMaschine, setWebMaschine] = useState<number | null>(null);
+  const [webSetup, setWebSetup] = useState<number | null>(null);
   const [googleReviewUrl, setGoogleReviewUrl] = useState<string>("");
   const [reviewSubject, setReviewSubject] = useState<string>(REVIEW_DEFAULT_SUBJECT);
   const [reviewBody, setReviewBody] = useState<string>(buildReviewBody("{{name}}"));
@@ -93,6 +102,7 @@ export default function EinstellungenPage() {
   useEffect(() => {
     loadPresets();
     loadWebsiteSettings();
+    loadWebsitePreise().then(p => { setWebMaschine(p.maschinenzeit_pro_h); setWebSetup(p.setup_pauschale); });
     loadGoogleReviewUrl();
     loadQualityConfig().then(({ presets, params }) => {
       setQualityPresets(presets);
@@ -137,6 +147,7 @@ export default function EinstellungenPage() {
 
   const loadWebsiteSettings = async () => {
     const { data } = await supabase.from("settings").select("*").in("key", [
+      "postProcessingFee", "shippingCost", "freeShippingThreshold", "bulkDiscount5", "bulkDiscount10", "mwst",
       "drucker_anzahl", "druckstunden_pro_tag",
     ]);
     if (data && data.length > 0) {
@@ -150,18 +161,12 @@ export default function EinstellungenPage() {
     const entries = Object.entries(websiteSettings).map(([key, value]) => ({
       key, value: String(value), updated_at: new Date().toISOString(),
     }));
-    // Preise des Website-Kalkulators = Verrechnungssätze (eine Quelle für Admin, Offerte, Rechnung und Kalkulator)
-    const now = new Date().toISOString();
-    entries.push(
-      { key: "maschinenzeit_pro_h", value: String(Number(localSettings.maschinenzeit_pro_h) || 0), updated_at: now },
-      { key: "setup_pauschale", value: String(Number(localSettings.setup_pauschale) || 0), updated_at: now },
-    );
+    // Nur-Website-Preise: leer lassen = bisheriger Wert gilt weiter
+    await saveWebsitePreise({ maschinenzeit_pro_h: webMaschine, setup_pauschale: webSetup });
     for (const entry of entries) {
       await supabase.from("settings").upsert(entry, { onConflict: "key" });
     }
-    await reloadSettings();
     flashSaved();
-    toast.success("✓ Gespeichert – gilt sofort für den Website-Kalkulator und alle Aufträge.");
   };
 
   const loadPresets = async () => {
@@ -484,10 +489,11 @@ export default function EinstellungenPage() {
 
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
             <h3 className="font-semibold text-sm">Globale Kalkulationsparameter</h3>
-            <p className="text-xs text-muted-foreground">Maschinenstundenkosten und Setup-Pauschale stellst du im Tab «Website-Kalkulator» ein.</p>
             {[
+              { label: "Fixkosten pro Auftrag", unit: "CHF", step: "0.5", value: calcParams.fix_cost, set: (v: number) => setCalcParams({ ...calcParams, fix_cost: v }) },
               { label: "Support-Aufschlag", unit: "CHF", step: "0.5", value: calcParams.support_surcharge, set: (v: number) => setCalcParams({ ...calcParams, support_surcharge: v }) },
               { label: "Mindestpreis", unit: "CHF", step: "0.5", value: calcParams.min_price, set: (v: number) => setCalcParams({ ...calcParams, min_price: v }) },
+              { label: "Maschinenzeit", unit: "CHF / h", step: "0.5", value: localSettings.maschinenzeit_pro_h, set: (v: number) => setLocalSettings({ ...localSettings, maschinenzeit_pro_h: v }) },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-between gap-4">
                 <div className="flex-1">
@@ -513,25 +519,26 @@ export default function EinstellungenPage() {
       {tab === "website" && (
         <div className="space-y-4 max-w-full md:max-w-lg">
           <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground">
-            Hier stellst du die zwei Preise ein, die der öffentliche Kalkulator selbst bestimmt. Alles andere übernimmt der Kalkulator automatisch aus den bestehenden Quellen (siehe unten). Die Werte gelten auch für Aufträge, Offerten und Rechnungen, damit Kunde und Admin immer denselben Preis sehen.
+            Diese zwei Preise gelten <strong>nur im öffentlichen Website-Kalkulator</strong>. Verrechnungssätze, Aufträge, Offerten, Rechnungen und alle anderen Einstellungen bleiben unverändert. Alles andere übernimmt der Kalkulator aus den bestehenden Quellen (siehe unten).
           </div>
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <h3 className="font-semibold text-sm">Preise im Website-Kalkulator</h3>
             {[
-              { label: "Maschinenstundenkosten", unit: "CHF pro Stunde", step: "0.5", value: localSettings.maschinenzeit_pro_h, set: (v: number) => setLocalSettings({ ...localSettings, maschinenzeit_pro_h: v }) },
-              { label: "Setup-Pauschale", unit: "CHF, 1× pro Bestellung", step: "0.5", value: localSettings.setup_pauschale, set: (v: number) => setLocalSettings({ ...localSettings, setup_pauschale: v }) },
+              { label: "Maschinenstundenkosten", unit: "CHF pro Stunde", fallback: localSettings.maschinenzeit_pro_h, value: webMaschine, set: setWebMaschine },
+              { label: "Setup-Pauschale", unit: "CHF, 1× pro Bestellung", fallback: calcParams.fix_cost, value: webSetup, set: setWebSetup },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-between gap-4">
                 <div className="flex-1">
                   <Label className="text-sm">{f.label}</Label>
-                  <div className="text-xs text-muted-foreground">{f.unit}</div>
+                  <div className="text-xs text-muted-foreground">{f.unit}{f.value == null ? ` · bisher: CHF ${Number(f.fallback).toFixed(2)}` : ""}</div>
                 </div>
                 <Input
                   type="number"
-                  step={f.step}
+                  step="0.5"
                   min="0"
+                  placeholder={Number(f.fallback).toFixed(2)}
                   value={f.value ?? ""}
-                  onChange={e => f.set(parseFloat(e.target.value) || 0)}
+                  onChange={e => f.set(e.target.value === "" ? null : Math.max(0, parseFloat(e.target.value) || 0))}
                   className="w-28 md:w-32 bg-input border-border text-right tabular-nums flex-shrink-0"
                 />
               </div>
