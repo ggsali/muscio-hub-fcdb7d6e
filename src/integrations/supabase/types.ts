@@ -3253,6 +3253,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_website_calc_preise: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

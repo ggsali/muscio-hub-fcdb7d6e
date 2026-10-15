@@ -183,6 +183,13 @@
       "when": 1792058175251,
       "tag": "0025_gutschein_menge_kalkulator",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792058183515,
+      "tag": "0026_website_calc_preise",
+      "breakpoints": true
     }
   ]
 }
