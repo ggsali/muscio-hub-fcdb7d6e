@@ -1470,7 +1470,12 @@ const CalculatorOnlinePage = () => {
 
       trackCalc("schritt_5_bestellung_abgesendet", { teile: parts.length });
 
-      toast.success("Anfrage gesendet! Wir melden uns innerhalb 24h.");
+      toast.success(
+        data?.ferien?.bis
+          ? `Anfrage gesendet! Wir sind bis ${(data.ferien.bis as string).split("-").reverse().join(".")} in den Ferien und melden uns danach. Du hast eine Bestätigung per E-Mail erhalten.`
+          : "Anfrage gesendet! Wir melden uns innerhalb 24h.",
+        data?.ferien?.bis ? { duration: 10000 } : undefined,
+      );
 
       // Herkunfts-Frage vorbereiten (nur einmal pro Sitzung)
       if (data?.inquiry_id && sessionStorage.getItem("herkunft_gefragt") !== "true") {

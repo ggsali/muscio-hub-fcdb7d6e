@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2";
+import { getActiveFerien, buildFerienMail, FERIEN_MARKER } from "../_shared/ferien.ts";
 
 // Inbound-Webhook für eingehende E-Mails (Resend Inbound oder kompatibel).
 // Erwartet JSON mit: from, to, subject, text/html, message_id, in_reply_to, references
@@ -124,6 +126,50 @@ Deno.serve(async (req) => {
 
     // Status zurück auf "Neu" wenn Kunde antwortet
     await supabase.from("inquiries").update({ status: "Neu", updated_at: new Date().toISOString() }).eq("id", inquiryId);
+
+    // Ferienmodus: höchstens eine Auto-Antwort pro Anfrage/Absender innerhalb von 7 Tagen,
+    // nie an Systemadressen oder automatische Mails (verhindert Mail-Schleifen)
+    try {
+      const autoHeader = String(data.headers?.["auto-submitted"] || data.headers?.["Auto-Submitted"] || "").toLowerCase();
+      const isSystem = /(no-?reply|mailer-daemon|postmaster|bounce|do-?not-?reply)/i.test(fromEmail) ||
+        (autoHeader && autoHeader !== "no") || /^(auto|automatische|out of office|abwesen)/i.test(subject);
+      const cfg = isSystem || !fromEmail ? null : await getActiveFerien(supabase);
+      if (cfg) {
+        const since = new Date(Date.now() - 7 * 24 * 3600_000).toISOString();
+        const { data: already } = await supabase
+          .from("inquiry_messages")
+          .select("id")
+          .eq("direction", "out")
+          .eq("to_email", fromEmail)
+          .like("subject", `${FERIEN_MARKER}%`)
+          .gte("created_at", since)
+          .limit(1);
+        if (!already || already.length === 0) {
+          const mail = buildFerienMail(cfg, fromName || "");
+          const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
+          await resend.emails.send({
+            from: "3DMuscio <noreply@3dmuscio.com>",
+            reply_to: "info@3dmuscio.com",
+            to: [fromEmail],
+            subject: mail.subject,
+            text: mail.text,
+            html: mail.html,
+            headers: { "Auto-Submitted": "auto-replied" },
+          });
+          await supabase.from("inquiry_messages").insert({
+            inquiry_id: inquiryId,
+            direction: "out",
+            from_email: "noreply@3dmuscio.com",
+            from_name: "3DMuscio",
+            to_email: fromEmail,
+            subject: `${FERIEN_MARKER} ${mail.subject}`,
+            body: mail.text,
+          });
+        }
+      }
+    } catch (ferienErr) {
+      console.error("Ferien-Autoantwort Fehler:", ferienErr);
+    }
 
     return new Response(JSON.stringify({ success: true, inquiry_id: inquiryId }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {

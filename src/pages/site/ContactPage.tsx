@@ -128,7 +128,12 @@ const ContactPage = () => {
       });
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
 
-      toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
+      toast.success(
+        data?.ferien?.bis
+          ? `Nachricht gesendet! Wir sind bis ${(data.ferien.bis as string).split("-").reverse().join(".")} in den Ferien und antworten danach. Du hast eine Bestätigung per E-Mail erhalten.`
+          : "Nachricht gesendet! Wir antworten innerhalb 24h.",
+        data?.ferien?.bis ? { duration: 10000 } : undefined,
+      );
       setSent(true);
       if (data?.inquiry_id && sessionStorage.getItem("herkunft_gefragt") !== "true") {
         setHerkunftInquiryId(data.inquiry_id as string);

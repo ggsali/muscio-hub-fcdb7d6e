@@ -24,6 +24,7 @@ export default function WebsiteEinstellungenPage() {
   const [saving, setSaving] = useState(false);
 
   const [wartung, setWartung] = useState({ aktiv: false, nachricht: "" });
+  const [ferien, setFerien] = useState({ von: "", bis: "", betreff: "", text: "" });
   const [resinEnabled, setResinEnabled] = useState({ aktiv: true });
   const [stadtmodell, setStadtmodell] = useState({ aktiv: true });
   const [kontakt, setKontakt] = useState({ email: "", telefon: "", adresse: "" });
@@ -45,6 +46,7 @@ export default function WebsiteEinstellungenPage() {
       if (data) {
         for (const row of data) {
           if (row.key === "wartungsmodus") setWartung(row.value as any);
+          if (row.key === "ferienmodus") setFerien({ von: "", bis: "", betreff: "", text: "", ...(row.value as any) });
           if (row.key === "resin_enabled") setResinEnabled({ aktiv: (row.value as any)?.aktiv !== false });
           if (row.key === "stadtmodell_enabled") setStadtmodell({ aktiv: (row.value as any)?.aktiv !== false });
           if (row.key === "kontakt_info") setKontakt(row.value as any);
@@ -116,6 +118,7 @@ export default function WebsiteEinstellungenPage() {
     setSaving(true);
     const errs = await Promise.all([
       saveOne("wartungsmodus", wartung),
+      saveOne("ferienmodus", ferien),
       saveOne("resin_enabled", resinEnabled),
       saveOne("stadtmodell_enabled", stadtmodell),
       saveOne("kontakt_info", kontakt),
@@ -189,6 +192,53 @@ export default function WebsiteEinstellungenPage() {
 
       {/* Aufklappbare Sektionen */}
       <Accordion type="multiple" defaultValue={["wartung"]} className="space-y-3">
+
+      {/* Ferienmodus */}
+      <AccordionItem value="ferien" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">
+          <span className="flex items-center gap-2">
+            Ferienmodus
+            {(() => {
+              const heute = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Zurich" });
+              if (!ferien.von || !ferien.bis) return <span className="text-xs font-normal text-muted-foreground">nicht eingerichtet</span>;
+              if (heute >= ferien.von && heute <= ferien.bis) return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 border border-amber-500/30">aktiv</span>;
+              if (heute < ferien.von) return <span className="text-xs font-normal text-muted-foreground">geplant</span>;
+              return <span className="text-xs font-normal text-muted-foreground">abgelaufen</span>;
+            })()}
+          </span>
+        </AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Im Zeitraum bekommen alle, die eine Anfrage senden (Kontaktformular, Kalkulator) oder dir eine E-Mail schreiben, automatisch eine Ferien-Mail.
+            Der Modus schaltet sich selbst ein und aus. Eingehende E-Mails erhalten höchstens alle 7 Tage eine Antwort. Nach dem Speichern oben gilt es sofort.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="text-sm space-y-1">
+              <span className="text-muted-foreground">Ferien von (erster Tag)</span>
+              <Input type="date" value={ferien.von} onChange={e => setFerien({ ...ferien, von: e.target.value })} className="bg-input border-border" />
+            </label>
+            <label className="text-sm space-y-1">
+              <span className="text-muted-foreground">Ferien bis (letzter Tag)</span>
+              <Input type="date" value={ferien.bis} min={ferien.von || undefined} onChange={e => setFerien({ ...ferien, bis: e.target.value })} className="bg-input border-border" />
+            </label>
+          </div>
+          <label className="text-sm space-y-1 block">
+            <span className="text-muted-foreground">Betreff (leer = Standard)</span>
+            <Input value={ferien.betreff} onChange={e => setFerien({ ...ferien, betreff: e.target.value })}
+              placeholder="Wir sind in den Ferien – deine Anfrage ist angekommen" className="bg-input border-border" />
+          </label>
+          <label className="text-sm space-y-1 block">
+            <span className="text-muted-foreground">Text (leer = Standard). Platzhalter: {"{name}"}, {"{von}"}, {"{bis}"}, {"{rueckkehr}"}</span>
+            <Textarea rows={7} value={ferien.text} onChange={e => setFerien({ ...ferien, text: e.target.value })}
+              placeholder={"Hallo {name}\n\nvielen Dank für deine Nachricht. Wir sind vom {von} bis {bis} in den Ferien. Deine Anfrage ist bei uns eingegangen, wir melden uns ab dem {rueckkehr} bei dir.\n\nFreundliche Grüsse\n3DMuscio"}
+              className="bg-input border-border w-full" />
+          </label>
+          {ferien.von && ferien.bis && ferien.bis < ferien.von && (
+            <p className="text-xs text-destructive">Das Enddatum liegt vor dem Startdatum.</p>
+          )}
+          <Button type="button" variant="outline" size="sm" onClick={() => setFerien({ von: "", bis: "", betreff: "", text: "" })}>Ferienmodus zurücksetzen</Button>
+        </AccordionContent>
+      </AccordionItem>
 
       {/* Wartungsmodus */}
       <AccordionItem value="wartung" className="bg-card border border-border rounded-lg px-4 md:px-5">

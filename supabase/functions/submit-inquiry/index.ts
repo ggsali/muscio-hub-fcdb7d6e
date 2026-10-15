@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2";
+import { getActiveFerien, buildFerienMail, FERIEN_MARKER } from "../_shared/ferien.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -162,10 +163,43 @@ Deno.serve(async (req) => {
       console.error("Admin-Mail Fehler:", mailErr);
     }
 
+    // Ferienmodus: Auto-Antwort an den Kunden (Fehler hier nicht blockierend)
+    let ferien: { bis: string } | null = null;
+    try {
+      const cfg = await getActiveFerien(supabase);
+      if (cfg && email) {
+        ferien = { bis: cfg.bis };
+        const mail = buildFerienMail(cfg, name);
+        const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
+        await resend.emails.send({
+          from: "3DMuscio <noreply@3dmuscio.com>",
+          reply_to: "info@3dmuscio.com",
+          to: [email],
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html,
+        });
+        if (insertedInquiry?.id) {
+          await supabase.from("inquiry_messages").insert({
+            inquiry_id: insertedInquiry.id,
+            direction: "out",
+            from_email: "noreply@3dmuscio.com",
+            from_name: "3DMuscio",
+            to_email: email,
+            subject: `${FERIEN_MARKER} ${mail.subject}`,
+            body: mail.text,
+          });
+        }
+      }
+    } catch (ferienErr) {
+      console.error("Ferien-Mail Fehler:", ferienErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         inquiry_id: insertedInquiry?.id ?? null,
+        ferien,
       }),
       {
         status: 200,
