@@ -8,8 +8,9 @@ import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 const serviceJsonLd = {
   "@context": "https://schema.org",
   "@type": "Service",
-  name: "3D Druckservice Schweiz",
-  provider: { "@type": "LocalBusiness", name: "3DMuscio" },
+  "@id": "https://3dmuscio.com/leistungen#service",
+  name: "3D Druckleistungen",
+  provider: { "@id": "https://3dmuscio.com/#organization" },
   serviceType: "3D Druck",
   description:
     "FDM und SLA 3D Druckservice für B2B-Kunden in der Schweiz. Materialien: PLA, PETG, ABS, ASA, TPU, Resin.",

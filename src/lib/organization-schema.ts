@@ -23,6 +23,7 @@ export const buildOrganizationJsonLd = (rating: OrgRatingData = {}) => ({
       address: {
         "@type": "PostalAddress",
         addressLocality: "Eschlikon",
+        postalCode: "8360",
         addressRegion: "Thurgau",
         addressCountry: "CH",
       },
@@ -30,11 +31,10 @@ export const buildOrganizationJsonLd = (rating: OrgRatingData = {}) => ({
       areaServed: [{ "@type": "Country", name: "Schweiz" }, { "@type": "Country", name: "Liechtenstein" }],
       knowsAbout: ["3D-Druck", "FDM 3D-Druck", "SLA Resin 3D-Druck", "Rapid Prototyping", "Ersatzteilfertigung", "Kleinserienfertigung"],
       ...rating,
-      serviceType: ["FDM 3D-Druck", "SLA 3D-Druck", "Rapid Prototyping", "Kleinserienfertigung"],
-      priceRange: "CHF 5 – CHF 500",
+      priceRange: "ab CHF 5",
       currenciesAccepted: "CHF",
       paymentAccepted: "Kreditkarte, TWINT, Banküberweisung",
-      openingHours: "Mo-Fr 08:00-18:00",
+      openingHours: ["Mo-Fr 08:00-18:00", "Sa 09:00-14:00"],
       sameAs: ["https://www.instagram.com/3dmuscio", "https://www.linkedin.com/company/3dmuscio"],
       makesOffer: [
         { "@type": "Offer", itemOffered: { "@type": "Service", name: "FDM 3D Druck" } },
@@ -79,9 +79,10 @@ export const buildOrganizationJsonLd = (rating: OrgRatingData = {}) => ({
     },
     {
       "@type": "Service",
+      "@id": "https://3dmuscio.com/#service",
       name: "3D Druckservice Schweiz",
       provider: { "@id": "https://3dmuscio.com/#organization" },
-      serviceType: "3D Druck",
+      serviceType: ["3D Druck", "FDM 3D-Druck", "SLA 3D-Druck", "Rapid Prototyping", "Kleinserienfertigung"],
       description:
         "FDM und SLA 3D Druckservice für B2B-Kunden in der Schweiz. Materialien: PLA, PETG, ABS, ASA, TPU, Nylon, Resin.",
       areaServed: { "@type": "Country", name: "Schweiz" },
