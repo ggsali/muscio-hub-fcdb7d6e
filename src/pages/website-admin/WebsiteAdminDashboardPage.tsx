@@ -22,14 +22,14 @@ export default function WebsiteAdminDashboardPage() {
     (async () => {
       const [orders, revPending, projects, chats, customers] = await Promise.all([
         supabase.from("shop_orders").select("id", { count: "exact", head: true }),
-        supabase.from("reviews").select("id", { count: "exact", head: true }).eq("freigegeben", false),
+        (supabase.rpc as any)("admin_list_reviews"),
         supabase.from("projekte").select("id", { count: "exact", head: true }).eq("aktiv", true),
         supabase.from("chat_sessions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("customers").select("id", { count: "exact", head: true }),
       ]);
       setStats({
         orders: orders.count || 0,
-        reviewsPending: revPending.count || 0,
+        reviewsPending: ((revPending.data as { freigegeben: boolean }[] | null) ?? []).filter(r => !r.freigegeben).length,
         projects: projects.count || 0,
         chats: chats.count || 0,
         customers: customers.count || 0,

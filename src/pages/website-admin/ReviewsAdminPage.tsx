@@ -55,9 +55,9 @@ export default function ReviewsAdminPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("reviews")
-      .select("id, customer_name, customer_email, kommentar, rating, freigegeben, sichtbar_auf_website, source, created_at")
-      .order("created_at", { ascending: false });
+    // Admin liest über die Funktion admin_list_reviews (Tabelle selbst ist für eingeloggte Nutzer gesperrt)
+    const { data, error } = await (supabase.rpc as any)("admin_list_reviews");
+    if (error) toast.error(`Bewertungen konnten nicht geladen werden: ${error.message}`);
     setReviews((data as Review[]) || []);
     setLoading(false);
   };
