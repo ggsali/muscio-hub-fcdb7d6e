@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicCalcRows } from "@/lib/calc";
 
 export interface QualityPreset {
   key: string;
@@ -39,10 +40,12 @@ function num(v: unknown, fallback: number): number {
 
 export async function loadQualityConfig(): Promise<{ presets: QualityPreset[]; params: CalcParams }> {
   try {
-    const { data } = await supabase
+    const { data: raw } = await supabase
       .from("settings")
       .select("key, value")
       .in("key", [QUALITY_PRESETS_KEY, CALC_PARAMS_KEY]);
+    // Besucher ohne Admin-Rechte sehen "settings" nicht → öffentliche Preisparameter über RPC
+    const data = raw && raw.length > 0 ? raw : await fetchPublicCalcRows();
 
     let presets = DEFAULT_QUALITY_PRESETS;
     let params = DEFAULT_CALC_PARAMS;

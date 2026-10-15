@@ -66,12 +66,6 @@ export default function EinstellungenPage() {
   const [tab, setTab] = useState<Tab>("raten");
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
   const [websiteSettings, setWebsiteSettings] = useState<Record<string, number>>({
-    postProcessingFee: 5,
-    shippingCost: 8.9,
-    freeShippingThreshold: 100,
-    bulkDiscount5: 0.05,
-    bulkDiscount10: 0.10,
-    mwst: 0.081,
     drucker_anzahl: 2,
     druckstunden_pro_tag: 20,
   });
@@ -143,7 +137,6 @@ export default function EinstellungenPage() {
 
   const loadWebsiteSettings = async () => {
     const { data } = await supabase.from("settings").select("*").in("key", [
-      "postProcessingFee", "shippingCost", "freeShippingThreshold", "bulkDiscount5", "bulkDiscount10", "mwst",
       "drucker_anzahl", "druckstunden_pro_tag",
     ]);
     if (data && data.length > 0) {
@@ -157,10 +150,18 @@ export default function EinstellungenPage() {
     const entries = Object.entries(websiteSettings).map(([key, value]) => ({
       key, value: String(value), updated_at: new Date().toISOString(),
     }));
+    // Preise des Website-Kalkulators = Verrechnungssätze (eine Quelle für Admin, Offerte, Rechnung und Kalkulator)
+    const now = new Date().toISOString();
+    entries.push(
+      { key: "maschinenzeit_pro_h", value: String(Number(localSettings.maschinenzeit_pro_h) || 0), updated_at: now },
+      { key: "setup_pauschale", value: String(Number(localSettings.setup_pauschale) || 0), updated_at: now },
+    );
     for (const entry of entries) {
       await supabase.from("settings").upsert(entry, { onConflict: "key" });
     }
+    await reloadSettings();
     flashSaved();
+    toast.success("✓ Gespeichert – gilt sofort für den Website-Kalkulator und alle Aufträge.");
   };
 
   const loadPresets = async () => {
@@ -483,11 +484,10 @@ export default function EinstellungenPage() {
 
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-4">
             <h3 className="font-semibold text-sm">Globale Kalkulationsparameter</h3>
+            <p className="text-xs text-muted-foreground">Maschinenstundenkosten und Setup-Pauschale stellst du im Tab «Website-Kalkulator» ein.</p>
             {[
-              { label: "Fixkosten pro Auftrag", unit: "CHF", step: "0.5", value: calcParams.fix_cost, set: (v: number) => setCalcParams({ ...calcParams, fix_cost: v }) },
               { label: "Support-Aufschlag", unit: "CHF", step: "0.5", value: calcParams.support_surcharge, set: (v: number) => setCalcParams({ ...calcParams, support_surcharge: v }) },
               { label: "Mindestpreis", unit: "CHF", step: "0.5", value: calcParams.min_price, set: (v: number) => setCalcParams({ ...calcParams, min_price: v }) },
-              { label: "Maschinenzeit", unit: "CHF / h", step: "0.5", value: localSettings.maschinenzeit_pro_h, set: (v: number) => setLocalSettings({ ...localSettings, maschinenzeit_pro_h: v }) },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-between gap-4">
                 <div className="flex-1">
@@ -513,19 +513,15 @@ export default function EinstellungenPage() {
       {tab === "website" && (
         <div className="space-y-4 max-w-full md:max-w-lg">
           <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 text-sm text-muted-foreground">
-            Diese Einstellungen steuern den öffentlichen Kalkulator auf der <strong>3D Print Studio Website</strong>. Änderungen werden sofort für Besucher übernommen.
+            Hier stellst du die zwei Preise ein, die der öffentliche Kalkulator selbst bestimmt. Alles andere übernimmt der Kalkulator automatisch aus den bestehenden Quellen (siehe unten). Die Werte gelten auch für Aufträge, Offerten und Rechnungen, damit Kunde und Admin immer denselben Preis sehen.
           </div>
           <div className="bg-card border border-border rounded-lg p-5 space-y-4">
-            <h3 className="font-semibold text-sm">Kalkulator-Parameter</h3>
+            <h3 className="font-semibold text-sm">Preise im Website-Kalkulator</h3>
             {[
-              { key: "postProcessingFee", label: "Nachbearbeitung Pauschale", unit: "CHF / Bestellung", step: "0.5" },
-              { key: "shippingCost", label: "Versandkosten", unit: "CHF", step: "0.1" },
-              { key: "freeShippingThreshold", label: "Gratis-Versand ab", unit: "CHF", step: "5" },
-              { key: "bulkDiscount5", label: "Mengenrabatt ab 5 Stk.", unit: "Faktor (0.05 = 5%)", step: "0.01" },
-              { key: "bulkDiscount10", label: "Mengenrabatt ab 10 Stk.", unit: "Faktor (0.10 = 10%)", step: "0.01" },
-              { key: "mwst", label: "Mehrwertsteuer", unit: "Faktor (0.081 = 8.1%)", step: "0.001" },
+              { label: "Maschinenstundenkosten", unit: "CHF pro Stunde", step: "0.5", value: localSettings.maschinenzeit_pro_h, set: (v: number) => setLocalSettings({ ...localSettings, maschinenzeit_pro_h: v }) },
+              { label: "Setup-Pauschale", unit: "CHF, 1× pro Bestellung", step: "0.5", value: localSettings.setup_pauschale, set: (v: number) => setLocalSettings({ ...localSettings, setup_pauschale: v }) },
             ].map(f => (
-              <div key={f.key} className="flex items-center justify-between gap-4">
+              <div key={f.label} className="flex items-center justify-between gap-4">
                 <div className="flex-1">
                   <Label className="text-sm">{f.label}</Label>
                   <div className="text-xs text-muted-foreground">{f.unit}</div>
@@ -533,8 +529,9 @@ export default function EinstellungenPage() {
                 <Input
                   type="number"
                   step={f.step}
-                  value={websiteSettings[f.key] ?? ""}
-                  onChange={e => setWebsiteSettings(prev => ({ ...prev, [f.key]: parseFloat(e.target.value) || 0 }))}
+                  min="0"
+                  value={f.value ?? ""}
+                  onChange={e => f.set(parseFloat(e.target.value) || 0)}
                   className="w-28 md:w-32 bg-input border-border text-right tabular-nums flex-shrink-0"
                 />
               </div>
@@ -561,14 +558,15 @@ export default function EinstellungenPage() {
               </div>
             ))}
           </div>
-          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
-            <h3 className="font-semibold text-sm">Verrechnungssätze (wird vom ERP übernommen)</h3>
-            <p className="text-xs text-muted-foreground">Die Preise pro Gramm, Druckzeit etc. werden aus den Verrechnungssätzen oben automatisch für den Website-Kalkulator verwendet.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-              <div className="flex justify-between"><span className="text-muted-foreground">Material / g:</span><span className="font-mono">CHF {settings.material_verkauf_pro_g.toFixed(3)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Maschinenzeit / h:</span><span className="font-mono">CHF {settings.maschinenzeit_pro_h.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Material Einkauf / kg:</span><span className="font-mono">CHF {settings.material_einkauf_pro_kg.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Strom & Verschleiß / h:</span><span className="font-mono">CHF {settings.strom_verschleiss_pro_h.toFixed(2)}</span></div>
+          <div className="bg-card border border-border rounded-lg p-5 space-y-3">
+            <h3 className="font-semibold text-sm">Wird automatisch übernommen (hier nicht änderbar)</h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between gap-4"><span className="text-muted-foreground">Material pro Gramm, Farben</span><span className="text-right">aus <strong>Filamente</strong> (Verkaufspreis je Filament)</span></div>
+              <div className="flex justify-between gap-4"><span className="text-muted-foreground">Qualitätsstufen (Schichthöhe, Infill, Tempo)</span><span className="text-right">aus Tab «Kalkulator &amp; Qualität»</span></div>
+              <div className="flex justify-between gap-4"><span className="text-muted-foreground">Support-Aufschlag</span><span className="font-mono">CHF {Number(calcParams.support_surcharge).toFixed(2)} <span className="text-muted-foreground font-sans">(Tab «Kalkulator &amp; Qualität»)</span></span></div>
+              <div className="flex justify-between gap-4"><span className="text-muted-foreground">Mindestpreis</span><span className="font-mono">CHF {Number(calcParams.min_price).toFixed(2)} <span className="text-muted-foreground font-sans">(Tab «Kalkulator &amp; Qualität»)</span></span></div>
+              <div className="flex justify-between gap-4"><span className="text-muted-foreground">Versand</span><span className="text-right">PostPac nach Gewicht, Gratis-Versand ab CHF 65 (wie im Auftrag)</span></div>
+              <div className="flex justify-between gap-4"><span className="text-muted-foreground">Mengenrabatt</span><span className="text-right">ab 5 Stk. 10 %, ab 10 Stk. 15 %</span></div>
             </div>
           </div>
           <SaveButton saved={saved} onClick={handleSaveWebsiteSettings} />

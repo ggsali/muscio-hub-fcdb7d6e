@@ -666,7 +666,7 @@ const CalculatorOnlinePage = () => {
         speedFactor: quality.speedFactor,
         quantity: part.quantity,
         maschinenzeit: settings.maschinenzeit_pro_h || 3,
-        setupFee: calcParams.fix_cost || 20,
+        setupFee: settings.setup_pauschale ?? 20,
         minPrice: calcParams.min_price || 5,
         minuten_pro_gramm: 2.5,
         overhang_schwellwert: 30,
@@ -686,7 +686,7 @@ const CalculatorOnlinePage = () => {
         ? { ...p, kiAnalysis: data as KiAnalysis, kiAnalysisLoading: false, kiAnalysisError: null }
         : p));
     }
-  }, [parts, materials, qualityPresets, qualityKey, settings.maschinenzeit_pro_h, calcParams]);
+  }, [parts, materials, qualityPresets, qualityKey, settings.maschinenzeit_pro_h, settings.setup_pauschale, calcParams]);
 
   const kiFnRef = useRef(runKiAnalysisNow);
   useEffect(() => { kiFnRef.current = runKiAnalysisNow; }, [runKiAnalysisNow]);
@@ -1036,7 +1036,8 @@ const CalculatorOnlinePage = () => {
   };
 
   const MIN_PRICE = calcParams.min_price;
-  const FIX_COST = calcParams.fix_cost;
+  // Setup-Pauschale = Verrechnungssatz aus dem Admin (1:1 wie im Auftrag)
+  const FIX_COST = settings.setup_pauschale;
   const SUPPORT_SURCHARGE = calcParams.support_surcharge;
 
   /** Slicer-Daten bevorzugt, dann KI-Analyse, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
@@ -1113,7 +1114,7 @@ const CalculatorOnlinePage = () => {
   const kiLoading = parts.some((p) => p.kiAnalysisLoading || p.slicerLoading);
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
-  const setupFee = parts.length > 0 ? (FIX_COST || 20) : 0;
+  const setupFee = parts.length > 0 ? (FIX_COST ?? 20) : 0;
   const subtotal = materialTotal + setupFee;
   const shippingGrams = calcs.reduce((sum, { part, calc }) => sum + calc.weight * part.quantity, 0);
   const shipping = subtotal === 0 ? 0 : subtotal >= SHIPPING_FREE_FROM ? 0 : shippingCostForGrams(shippingGrams);
@@ -1533,11 +1534,11 @@ const CalculatorOnlinePage = () => {
       sum += unit * p.quantity;
       grams += p.estimatedWeight * p.quantity;
     });
-    const setup = parts.length > 0 ? (calcParams.fix_cost || 20) : 0;
+    const setup = parts.length > 0 ? (settings.setup_pauschale ?? 20) : 0;
     const sub = sum + setup;
     const ship = sub === 0 ? 0 : sub >= SHIPPING_FREE_FROM ? 0 : shippingCostForGrams(grams);
     return Math.max(sub + ship, calcParams.min_price || 5);
-  }, [parts, materials, qualityKey, qualityPresets, settings.maschinenzeit_pro_h, calcParams, hasStep]);
+  }, [parts, materials, qualityKey, qualityPresets, settings.maschinenzeit_pro_h, settings.setup_pauschale, calcParams, hasStep]);
 
   const priceBadge = parts.length === 0 || hasStep ? null : quickTotal;
 
