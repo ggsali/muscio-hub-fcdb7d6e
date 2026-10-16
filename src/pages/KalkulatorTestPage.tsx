@@ -1,3 +1,4 @@
+import { slicerErrorMessage } from "@/lib/slicerError";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { takePendingUploads } from "@/lib/pendingUpload";
@@ -63,7 +64,7 @@ async function sliceOnNas(file: File, layerHeight: number, infill: number): Prom
     body,
   });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json?.error || `Slicer ${res.status}`);
+  if (!res.ok) throw new Error(slicerErrorMessage(res.status, json?.error));
   const st = json.stats || {};
   return {
     printTimeMinutes: (st.print_time_s ?? 0) / 60,
@@ -803,7 +804,7 @@ const KalkulatorTestPage = () => {
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, slicerLoading: false, slicerError: "Slicer nicht verfügbar – Schätzung wird verwendet" }
+        ? { ...p, slicerLoading: false, slicerError: `${err instanceof Error && err.message ? err.message : "Slicer nicht verfügbar"} – Schätzung wird verwendet` }
         : p));
     }
   }, [parts, materials, qualityPresets, qualityKey, slice]);

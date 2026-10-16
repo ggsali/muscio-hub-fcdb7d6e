@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Download, Printer, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { slicerErrorMessage } from "@/lib/slicerError";
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slicer-test`;
 const QUALITIES = ["0.08", "0.12", "0.16", "0.20"];
@@ -29,12 +30,8 @@ async function authHeaders(): Promise<Record<string, string>> {
   };
 }
 
-function friendlyError(status: number, message?: string): string {
-  if (status === 401 || status === 403) return "Keine Berechtigung (Admin-Anmeldung oder Slicer-Schlüssel prüfen).";
-  if (status === 413) return `Die Datei ist zu gross (max. ${MAX_MB} MB).`;
-  if (status === 504) return message ?? "Der Slicer hat nicht rechtzeitig geantwortet.";
-  if (status === 422) return message ?? "Der Slicer konnte das Modell nicht verarbeiten.";
-  return message ?? `Unerwarteter Fehler (${status}).`;
+function friendlyError(status: number, message?: unknown): string {
+  return slicerErrorMessage(status, message, MAX_MB);
 }
 
 export default function SlicerTestPage() {
@@ -134,7 +131,7 @@ export default function SlicerTestPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setQueueMsg(`Fehler: ${data?.error ?? res.status}`);
+        setQueueMsg(`Fehler: ${friendlyError(res.status, data?.error)}`);
         return;
       }
       const id = data?.simplyprint?.queue_item_id;
