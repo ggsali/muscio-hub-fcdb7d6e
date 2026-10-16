@@ -114,7 +114,21 @@ export default function BuchhaltungPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DraftBuchung | null>(null);
   const [scanKategorie, setScanKategorie] = useState<Kategorie | null>(null);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ url: string; pdf: boolean } | null>(null);
+  const [belegFehler, setBelegFehler] = useState(false);
+
+  /** Beleg öffnen: frische signierte URL aus dem Speicherpfad (alte gespeicherte Links können abgelaufen/ungültig sein); PDFs nicht als Bild laden */
+  const openBeleg = async (r: { beleg_url: string | null; beleg_storage_path: string | null }) => {
+    setBelegFehler(false);
+    let url = r.beleg_url;
+    if (r.beleg_storage_path) {
+      const { data, error } = await supabase.storage.from("belege").createSignedUrl(r.beleg_storage_path, 60 * 60);
+      if (!error && data?.signedUrl) url = data.signedUrl;
+    }
+    if (!url) { toast.error("Beleg konnte nicht geladen werden."); return; }
+    const name = (r.beleg_storage_path || (r.beleg_url ?? "")).split("?")[0].toLowerCase();
+    setLightbox({ url, pdf: name.endsWith(".pdf") });
+  };
   const [syncBusy, setSyncBusy] = useState(false);
   const [pendingSync, setPendingSync] = useState<number | null>(null);
 
@@ -626,8 +640,8 @@ export default function BuchhaltungPage() {
                   <td className="p-2 text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       {r.beleg ?? "–"}
-                      {r.beleg_url && (
-                        <button onClick={() => setLightbox(r.beleg_url!)} title="Beleg ansehen" className="text-primary hover:opacity-70">
+                      {(r.beleg_url || r.beleg_storage_path) && (
+                        <button onClick={() => openBeleg(r)} title="Beleg ansehen" className="text-primary hover:opacity-70">
                           <ReceiptText className="w-4 h-4" />
                         </button>
                       )}
@@ -876,7 +890,16 @@ export default function BuchhaltungPage() {
           <button className="absolute top-4 right-4 p-2 rounded-lg bg-background/90" onClick={() => setLightbox(null)}>
             <X className="w-5 h-5" />
           </button>
-          <img src={lightbox} alt="Beleg" className="max-h-[90vh] max-w-full rounded-xl object-contain" onClick={e => e.stopPropagation()} />
+          {lightbox.pdf ? (
+            <iframe src={lightbox.url} title="Beleg" className="w-full max-w-4xl h-[90vh] rounded-xl bg-white" onClick={e => e.stopPropagation()} />
+          ) : belegFehler ? (
+            <div className="bg-card rounded-xl p-6 text-sm text-center space-y-2" onClick={e => e.stopPropagation()}>
+              <p>Das Bild konnte nicht angezeigt werden.</p>
+              <a href={lightbox.url} target="_blank" rel="noreferrer" className="text-primary underline">Beleg in neuem Tab öffnen</a>
+            </div>
+          ) : (
+            <img src={lightbox.url} alt="Beleg" onError={() => setBelegFehler(true)} className="max-h-[90vh] max-w-full rounded-xl object-contain" onClick={e => e.stopPropagation()} />
+          )}
         </div>
       )}
     </div>
