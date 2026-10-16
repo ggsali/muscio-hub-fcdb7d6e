@@ -70,8 +70,8 @@ import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
-import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
 import { Route as AdminSlicerTestRouteImport } from './routes/admin/slicer-test'
+import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
@@ -442,14 +442,14 @@ const AdminScanRoute = AdminScanRouteImport.update({
   path: '/scan',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminStadtmodelleRoute = AdminStadtmodelleRouteImport.update({
-  id: '/stadtmodelle',
-  path: '/stadtmodelle',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminSlicerTestRoute = AdminSlicerTestRouteImport.update({
   id: '/slicer-test',
   path: '/slicer-test',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStadtmodelleRoute = AdminStadtmodelleRouteImport.update({
+  id: '/stadtmodelle',
+  path: '/stadtmodelle',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTeileRoute = AdminTeileRouteImport.update({
@@ -848,8 +848,8 @@ export interface FileRoutesByFullPath {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
-  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
+  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -973,8 +973,8 @@ export interface FileRoutesByTo {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
-  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
+  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1104,8 +1104,8 @@ export interface FileRoutesById {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
-  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
+  '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1236,8 +1236,8 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
-    | '/admin/stadtmodelle'
     | '/admin/slicer-test'
+    | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1361,8 +1361,8 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
-    | '/admin/stadtmodelle'
     | '/admin/slicer-test'
+    | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1491,8 +1491,8 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
-    | '/admin/stadtmodelle'
     | '/admin/slicer-test'
+    | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin_/login'
     | '/auftraege/$id'
@@ -2031,18 +2031,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminScanRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/stadtmodelle': {
-      id: '/admin/stadtmodelle'
-      path: '/stadtmodelle'
-      fullPath: '/admin/stadtmodelle'
-      preLoaderRoute: typeof AdminStadtmodelleRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/slicer-test': {
       id: '/admin/slicer-test'
       path: '/slicer-test'
       fullPath: '/admin/slicer-test'
       preLoaderRoute: typeof AdminSlicerTestRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/stadtmodelle': {
+      id: '/admin/stadtmodelle'
+      path: '/stadtmodelle'
+      fullPath: '/admin/stadtmodelle'
+      preLoaderRoute: typeof AdminStadtmodelleRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/teile': {
@@ -2616,8 +2616,8 @@ interface AdminRouteChildren {
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminScanRoute: typeof AdminScanRoute
-  AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
   AdminSlicerTestRoute: typeof AdminSlicerTestRoute
+  AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
@@ -2649,8 +2649,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminScanRoute: AdminScanRoute,
-  AdminStadtmodelleRoute: AdminStadtmodelleRoute,
   AdminSlicerTestRoute: AdminSlicerTestRoute,
+  AdminStadtmodelleRoute: AdminStadtmodelleRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,
