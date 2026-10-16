@@ -72,6 +72,7 @@ import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
 import { Route as AdminSlicerTestRouteImport } from './routes/admin/slicer-test'
 import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
+import { Route as AdminKalkulatorTestRouteImport } from './routes/admin/kalkulator-test'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
@@ -450,6 +451,11 @@ const AdminSlicerTestRoute = AdminSlicerTestRouteImport.update({
 const AdminStadtmodelleRoute = AdminStadtmodelleRouteImport.update({
   id: '/stadtmodelle',
   path: '/stadtmodelle',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKalkulatorTestRoute = AdminKalkulatorTestRouteImport.update({
+  id: '/kalkulator-test',
+  path: '/kalkulator-test',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTeileRoute = AdminTeileRouteImport.update({
@@ -850,6 +856,7 @@ export interface FileRoutesByFullPath {
   '/admin/scan': typeof AdminScanRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
+  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -975,6 +982,7 @@ export interface FileRoutesByTo {
   '/admin/scan': typeof AdminScanRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
+  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1106,6 +1114,7 @@ export interface FileRoutesById {
   '/admin/scan': typeof AdminScanRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
+  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1238,6 +1247,7 @@ export interface FileRouteTypes {
     | '/admin/scan'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
+    | '/admin/kalkulator-test'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1363,6 +1373,7 @@ export interface FileRouteTypes {
     | '/admin/scan'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
+    | '/admin/kalkulator-test'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1493,6 +1504,7 @@ export interface FileRouteTypes {
     | '/admin/scan'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
+    | '/admin/kalkulator-test'
     | '/admin/teile'
     | '/admin_/login'
     | '/auftraege/$id'
@@ -2043,6 +2055,13 @@ declare module '@tanstack/react-router' {
       path: '/stadtmodelle'
       fullPath: '/admin/stadtmodelle'
       preLoaderRoute: typeof AdminStadtmodelleRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/kalkulator-test': {
+      id: '/admin/kalkulator-test'
+      path: '/kalkulator-test'
+      fullPath: '/admin/kalkulator-test'
+      preLoaderRoute: typeof AdminKalkulatorTestRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/teile': {
@@ -2618,6 +2637,7 @@ interface AdminRouteChildren {
   AdminScanRoute: typeof AdminScanRoute
   AdminSlicerTestRoute: typeof AdminSlicerTestRoute
   AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
+  AdminKalkulatorTestRoute: typeof AdminKalkulatorTestRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
@@ -2651,6 +2671,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminScanRoute: AdminScanRoute,
   AdminSlicerTestRoute: AdminSlicerTestRoute,
   AdminStadtmodelleRoute: AdminStadtmodelleRoute,
+  AdminKalkulatorTestRoute: AdminKalkulatorTestRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,
