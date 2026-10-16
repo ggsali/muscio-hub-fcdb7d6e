@@ -48,6 +48,7 @@ const navGroups: NavGroup[] = [
       { to: "/admin/stadtmodelle", icon: <Building2 className={ic} />, label: "Stadtmodelle" },
 
       { to: "/admin/teile", icon: <Library className={ic} />, label: "Teile-Bibliothek" },
+      { to: "/admin/slicer-test", icon: <Printer className={ic} />, label: "Slicer-Test", badge: "TEST" },
     ],
   },
   {

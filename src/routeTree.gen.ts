@@ -71,6 +71,7 @@ import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
 import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
+import { Route as AdminSlicerTestRouteImport } from './routes/admin/slicer-test'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
@@ -444,6 +445,11 @@ const AdminScanRoute = AdminScanRouteImport.update({
 const AdminStadtmodelleRoute = AdminStadtmodelleRouteImport.update({
   id: '/stadtmodelle',
   path: '/stadtmodelle',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSlicerTestRoute = AdminSlicerTestRouteImport.update({
+  id: '/slicer-test',
+  path: '/slicer-test',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTeileRoute = AdminTeileRouteImport.update({
@@ -843,6 +849,7 @@ export interface FileRoutesByFullPath {
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
+  '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -967,6 +974,7 @@ export interface FileRoutesByTo {
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
+  '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1097,6 +1105,7 @@ export interface FileRoutesById {
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
+  '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1228,6 +1237,7 @@ export interface FileRouteTypes {
     | '/admin/newsletter'
     | '/admin/scan'
     | '/admin/stadtmodelle'
+    | '/admin/slicer-test'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1352,6 +1362,7 @@ export interface FileRouteTypes {
     | '/admin/newsletter'
     | '/admin/scan'
     | '/admin/stadtmodelle'
+    | '/admin/slicer-test'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1481,6 +1492,7 @@ export interface FileRouteTypes {
     | '/admin/newsletter'
     | '/admin/scan'
     | '/admin/stadtmodelle'
+    | '/admin/slicer-test'
     | '/admin/teile'
     | '/admin_/login'
     | '/auftraege/$id'
@@ -2024,6 +2036,13 @@ declare module '@tanstack/react-router' {
       path: '/stadtmodelle'
       fullPath: '/admin/stadtmodelle'
       preLoaderRoute: typeof AdminStadtmodelleRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/slicer-test': {
+      id: '/admin/slicer-test'
+      path: '/slicer-test'
+      fullPath: '/admin/slicer-test'
+      preLoaderRoute: typeof AdminSlicerTestRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/teile': {
@@ -2598,6 +2617,7 @@ interface AdminRouteChildren {
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminScanRoute: typeof AdminScanRoute
   AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
+  AdminSlicerTestRoute: typeof AdminSlicerTestRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
@@ -2630,6 +2650,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminScanRoute: AdminScanRoute,
   AdminStadtmodelleRoute: AdminStadtmodelleRoute,
+  AdminSlicerTestRoute: AdminSlicerTestRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,
