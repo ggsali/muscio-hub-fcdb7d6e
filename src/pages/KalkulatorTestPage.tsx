@@ -1,3 +1,4 @@
+import { slicerErrorMessage } from "@/lib/slicerError";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { takePendingUploads } from "@/lib/pendingUpload";
