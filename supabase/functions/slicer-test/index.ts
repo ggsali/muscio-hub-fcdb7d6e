@@ -52,8 +52,19 @@ serve(async (req) => {
     // ---- G-Code herunterladen: JSON {action:"gcode", job_id} ----
     if (contentType.includes("application/json")) {
       const body = await req.json().catch(() => ({}));
-      if (body?.action !== "gcode" || !JOB_ID_RE.test(String(body?.job_id ?? ""))) {
+      if (!["gcode", "queue"].includes(body?.action) || !JOB_ID_RE.test(String(body?.job_id ?? ""))) {
         return json({ error: "Ungültige Anfrage" }, 400);
+      }
+      if (body.action === "queue") {
+        // G-Code des Auftrags an SimplyPrint schicken (Zugangsdaten liegen auf dem NAS)
+        const qres = await fetch(`${base}/jobs/${body.job_id}/simplyprint`, {
+          method: "POST",
+          headers,
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+        const qdata = await qres.json().catch(() => ({}));
+        if (!qres.ok) return json({ error: qdata?.detail || `Slicer antwortet mit ${qres.status}` }, qres.status);
+        return json({ ok: true, simplyprint: qdata?.simplyprint ?? null });
       }
       const res = await fetch(`${base}/jobs/${body.job_id}/gcode`, {
         headers,

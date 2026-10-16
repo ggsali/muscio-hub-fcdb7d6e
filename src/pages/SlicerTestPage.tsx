@@ -123,10 +123,32 @@ export default function SlicerTestPage() {
     }
   };
 
+  const [queueMsg, setQueueMsg] = useState("");
+  const sendToSimplyPrint = async (r: SliceResult) => {
+    setQueueMsg("Wird an SimplyPrint gesendet …");
+    try {
+      const res = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "queue", job_id: r.job_id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setQueueMsg(`Fehler: ${data?.error ?? res.status}`);
+        return;
+      }
+      const id = data?.simplyprint?.queue_item_id;
+      setQueueMsg(`In SimplyPrint eingereiht${id ? ` (Queue-Eintrag ${id})` : ""}.`);
+    } catch {
+      setQueueMsg("Verbindung fehlgeschlagen.");
+    }
+  };
+
   const reset = () => {
     setFile(null);
     if (fileRef.current) fileRef.current.value = "";
     setResult(null);
+    setQueueMsg("");
     setError("");
     setInfill("");
     setWalls("");
@@ -229,6 +251,10 @@ export default function SlicerTestPage() {
                 <Button type="button" variant="outline" onClick={() => downloadGcode(result)} className="gap-2">
                   <Download className="w-4 h-4" /> G-Code herunterladen
                 </Button>
+                <Button type="button" variant="outline" onClick={() => sendToSimplyPrint(result)} className="gap-2 ml-2">
+                  <Printer className="w-4 h-4" /> An SimplyPrint senden
+                </Button>
+                {queueMsg && <p className="text-xs text-muted-foreground">{queueMsg}</p>}
               </div>
             )}
           </form>
