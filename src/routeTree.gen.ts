@@ -66,13 +66,13 @@ import { Route as AdminFilamentverbrauchRouteImport } from './routes/admin/filam
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
+import { Route as AdminKalkulatorTestRouteImport } from './routes/admin/kalkulator-test'
 import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
 import { Route as AdminSlicerTestRouteImport } from './routes/admin/slicer-test'
 import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
-import { Route as AdminKalkulatorTestRouteImport } from './routes/admin/kalkulator-test'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
@@ -423,6 +423,11 @@ const AdminKalkulatorRoute = AdminKalkulatorRouteImport.update({
   path: '/kalkulator',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminKalkulatorTestRoute = AdminKalkulatorTestRouteImport.update({
+  id: '/kalkulator-test',
+  path: '/kalkulator-test',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminKiOfferteRoute = AdminKiOfferteRouteImport.update({
   id: '/ki-offerte',
   path: '/ki-offerte',
@@ -451,11 +456,6 @@ const AdminSlicerTestRoute = AdminSlicerTestRouteImport.update({
 const AdminStadtmodelleRoute = AdminStadtmodelleRouteImport.update({
   id: '/stadtmodelle',
   path: '/stadtmodelle',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKalkulatorTestRoute = AdminKalkulatorTestRouteImport.update({
-  id: '/kalkulator-test',
-  path: '/kalkulator-test',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTeileRoute = AdminTeileRouteImport.update({
@@ -850,13 +850,13 @@ export interface FileRoutesByFullPath {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
-  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -976,13 +976,13 @@ export interface FileRoutesByTo {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
-  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1108,13 +1108,13 @@ export interface FileRoutesById {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
+  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
-  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
@@ -1241,13 +1241,13 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
-    | '/admin/kalkulator-test'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1367,13 +1367,13 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
-    | '/admin/kalkulator-test'
     | '/admin/teile'
     | '/admin/login'
     | '/auftraege/$id'
@@ -1498,13 +1498,13 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
+    | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
-    | '/admin/kalkulator-test'
     | '/admin/teile'
     | '/admin_/login'
     | '/auftraege/$id'
@@ -2015,6 +2015,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminKalkulatorRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/kalkulator-test': {
+      id: '/admin/kalkulator-test'
+      path: '/kalkulator-test'
+      fullPath: '/admin/kalkulator-test'
+      preLoaderRoute: typeof AdminKalkulatorTestRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/ki-offerte': {
       id: '/admin/ki-offerte'
       path: '/ki-offerte'
@@ -2055,13 +2062,6 @@ declare module '@tanstack/react-router' {
       path: '/stadtmodelle'
       fullPath: '/admin/stadtmodelle'
       preLoaderRoute: typeof AdminStadtmodelleRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/kalkulator-test': {
-      id: '/admin/kalkulator-test'
-      path: '/kalkulator-test'
-      fullPath: '/admin/kalkulator-test'
-      preLoaderRoute: typeof AdminKalkulatorTestRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/teile': {
@@ -2631,13 +2631,13 @@ interface AdminRouteChildren {
   AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
+  AdminKalkulatorTestRoute: typeof AdminKalkulatorTestRoute
   AdminKiOfferteRoute: typeof AdminKiOfferteRoute
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminScanRoute: typeof AdminScanRoute
   AdminSlicerTestRoute: typeof AdminSlicerTestRoute
   AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
-  AdminKalkulatorTestRoute: typeof AdminKalkulatorTestRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
@@ -2665,13 +2665,13 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
+  AdminKalkulatorTestRoute: AdminKalkulatorTestRoute,
   AdminKiOfferteRoute: AdminKiOfferteRoute,
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminScanRoute: AdminScanRoute,
   AdminSlicerTestRoute: AdminSlicerTestRoute,
   AdminStadtmodelleRoute: AdminStadtmodelleRoute,
-  AdminKalkulatorTestRoute: AdminKalkulatorTestRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,
