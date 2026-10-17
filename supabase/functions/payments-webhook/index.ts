@@ -6,7 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-let _supabase: ReturnType<typeof createClient> | null = null;
+// Der Client bleibt bewusst untypisiert: ReturnType<typeof createClient> würde
+// die Tabellenzeilen zu `never` machen und damit jede Abfrage unbenutzbar.
+let _supabase: any = null;
 function getSupabase() {
   if (!_supabase) {
     _supabase = createClient(
