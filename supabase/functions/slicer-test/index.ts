@@ -96,9 +96,14 @@ serve(async (req) => {
     const quality = String(form.get("quality") ?? "0.20");
     if (!QUALITIES.includes(quality)) return json({ error: "Ungültige Qualität" }, 422);
 
+    // auto=true: NAS wählt den freien Drucker, bewertet das Teil und reiht es (optional) ein
+    const auto = form.get("auto") === "true";
+    const enqueue = form.get("enqueue") === "true";
+
     const out = new FormData();
     out.append("file", file, file.name);
-    out.append("printer", "k1c");
+    if (!auto) out.append("printer", "k1c");
+    if (auto) out.append("enqueue", enqueue ? "true" : "false");
     out.append("material", "pla");
     out.append("quality", quality);
     for (const name of ["infill", "walls"]) {
@@ -114,7 +119,7 @@ serve(async (req) => {
 
     let res: Response;
     try {
-      res = await fetch(`${base}/slice`, {
+      res = await fetch(`${base}${auto ? "/auto" : "/slice"}`, {
         method: "POST",
         headers,
         body: out,

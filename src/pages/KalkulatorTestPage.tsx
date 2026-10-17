@@ -42,7 +42,26 @@ const TEST_MODE = true;
 const SLICER_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slicer-test`;
 const NAS_QUALITIES = [0.08, 0.12, 0.16, 0.2];
 
-async function sliceOnNas(file: File, layerHeight: number, infill: number): Promise<SlicerResult> {
+/** Ergebnis der NAS-Automatik (Druckerwahl, Einschätzung, Queue) */
+interface NasInfo {
+  printer: string | null;
+  printerReason?: string;
+  level: string; // "einfach" | "kompliziert"
+  reasons: string[];
+  queued: boolean;
+  dryRun: boolean;
+  queueItemId?: number | string | null;
+  queueError?: string | null;
+}
+type NasResult = SlicerResult & { nas?: NasInfo };
+
+const PRINTER_LABELS: Record<string, string> = {
+  k1c: "Creality K1C",
+  k1: "Creality K1",
+  a1: "Bambu Lab A1",
+};
+
+async function sliceOnNas(file: File, layerHeight: number, infill: number, enqueue: boolean): Promise<NasResult> {
   // nächstliegende Schichthöhe der K1C-Profile (bei Gleichstand die gröbere)
   const quality = NAS_QUALITIES.reduce(
     (best, q) => (Math.abs(q - layerHeight) <= Math.abs(best - layerHeight) ? q : best),
@@ -54,6 +73,8 @@ async function sliceOnNas(file: File, layerHeight: number, infill: number): Prom
   body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
   body.append("supports", "true");
   body.append("orient", "true");
+  body.append("auto", "true");
+  body.append("enqueue", enqueue ? "true" : "false");
   const { data: sess } = await supabase.auth.getSession();
   const res = await fetch(SLICER_FN_URL, {
     method: "POST",
@@ -73,6 +94,18 @@ async function sliceOnNas(file: File, layerHeight: number, infill: number): Prom
     density: 1.25, // Dichte des PLA-Profils im Slicer
     layers: st.layers ?? 0,
     hasSupport: !!st.has_support,
+    nas: json.auto
+      ? {
+          printer: json.auto.printer_choice?.printer ?? json.printer ?? null,
+          printerReason: json.auto.printer_choice?.reason,
+          level: json.auto.assessment?.level ?? "unbekannt",
+          reasons: json.auto.assessment?.reasons ?? [],
+          queued: json.auto.queued === true,
+          dryRun: json.auto.next === "dry_run",
+          queueItemId: json.simplyprint?.queue_item_id ?? null,
+          queueError: json.simplyprint_error ?? null,
+        }
+      : undefined,
   };
 }
 
@@ -143,7 +176,7 @@ interface Part {
   images: PartImage[];
   stlBase64: string | null;
   stlArrayBuffer: ArrayBuffer | null;
-  slicerResult: SlicerResult | null;
+  slicerResult: NasResult | null;
   slicerLoading: boolean;
   slicerError: string | null;
   kiAnalysis: KiAnalysis | null;
@@ -312,7 +345,7 @@ function isStepFile(name: string): boolean {
 }
 
 /** Gramm bei anderer Materialdichte umrechnen – gleicher Slice, anderes Material */
-const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => {
+const rescaleForMaterial = <T extends SlicerResult>(r: T, density?: number): T => {
   if (!density || !r.density || r.density === density) return r;
   return { ...r, filamentGrams: Math.round(((r.filamentGrams * density) / r.density) * 10) / 10, density };
 };
@@ -352,6 +385,10 @@ const MATERIAL_HINTS: Record<string, string> = {
 
 const KalkulatorTestPage = () => {
   const [step, setStep] = useState(1);
+  // Testschalter: Teile wirklich in die SimplyPrint-Queue stellen (Standard: nur Probelauf)
+  const [nasEnqueue, setNasEnqueue] = useState(false);
+  const nasEnqueueRef = useRef(false);
+  useEffect(() => { nasEnqueueRef.current = nasEnqueue; }, [nasEnqueue]);
   const [parts, setParts] = useState<Part[]>([]);
   const [allMaterials, setMaterials] = useState<Material[]>([]);
   const resinEnabled = useResinEnabled();
@@ -783,7 +820,7 @@ const KalkulatorTestPage = () => {
       : p));
 
     try {
-      const result = (!quickSlice && part.file) ? rescaleForMaterial(await sliceOnNas(part.file, quality.layerHeight, quality.infill), mat?.density) : await slice(part.stlArrayBuffer.slice(0), {
+      const result = (!quickSlice && part.file) ? rescaleForMaterial(await sliceOnNas(part.file, quality.layerHeight, quality.infill, nasEnqueueRef.current), mat?.density) : await slice(part.stlArrayBuffer.slice(0), {
         material: mat?.materialType || mat?.name.split(" ")[0] || "PLA",
         layerHeight: quality.layerHeight,
         infill: quality.infill,
@@ -1662,7 +1699,15 @@ const KalkulatorTestPage = () => {
         path="/admin/kalkulator-test"
       />
       <div className="bg-amber-500/15 border-b border-amber-500/40 text-sm px-4 py-2 text-center">
-        TESTVERSION (nur Admin): genauer Slice über den NAS-Slicer (Creality K1C, PLA). Es wird nichts gespeichert und keine Anfrage gesendet.
+        TESTVERSION (nur Admin): NAS-Automatik mit Druckerwahl (K1C/K1) und Einschätzung, PLA. Es wird nichts gespeichert und keine Anfrage gesendet.
+        <label className="mt-1 flex items-center justify-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={nasEnqueue}
+            onChange={(e) => setNasEnqueue(e.target.checked)}
+          />
+          Einfache Teile wirklich in die SimplyPrint-Queue stellen (sie druckt dann!). Gilt für neue Berechnungen; ohne Häkchen nur Probelauf.
+        </label>
       </div>
 
       {!submitted && (
@@ -2515,6 +2560,35 @@ const KalkulatorTestPage = () => {
                                 </p>
                                 {p.slicerResult.hasSupport && (
                                   <p className="text-xs text-muted-foreground">⚠️ Support erkannt</p>
+                                )}
+                                {p.slicerResult.nas && (
+                                  <div className="mt-1 rounded-md border border-border bg-muted/40 px-2 py-1.5 text-xs space-y-0.5">
+                                    <p className="font-medium">NAS-Automatik (Test)</p>
+                                    <p>
+                                      Einschätzung:{" "}
+                                      <span className={p.slicerResult.nas.level === "einfach" ? "text-success" : "text-orange-500"}>
+                                        {p.slicerResult.nas.level}
+                                      </span>
+                                      {p.slicerResult.nas.reasons.length > 0 && ` – ${p.slicerResult.nas.reasons.join(", ")}`}
+                                    </p>
+                                    <p>
+                                      Gewählter Drucker:{" "}
+                                      {p.slicerResult.nas.printer
+                                        ? PRINTER_LABELS[p.slicerResult.nas.printer] ?? p.slicerResult.nas.printer
+                                        : "–"}
+                                      {p.slicerResult.nas.printerReason && ` (${p.slicerResult.nas.printerReason})`}
+                                    </p>
+                                    <p>
+                                      Queue:{" "}
+                                      {p.slicerResult.nas.queued
+                                        ? `eingereiht in SimplyPrint${p.slicerResult.nas.queueItemId ? ` (Eintrag ${p.slicerResult.nas.queueItemId})` : ""}`
+                                        : p.slicerResult.nas.dryRun
+                                          ? "nur Probelauf, nichts eingereiht"
+                                          : p.slicerResult.nas.queueError
+                                            ? `Fehler: ${p.slicerResult.nas.queueError}`
+                                            : "nicht eingereiht – manuelle Prüfung nötig"}
+                                    </p>
+                                  </div>
                                 )}
                               </div>
                             )}
