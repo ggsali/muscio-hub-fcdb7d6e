@@ -804,7 +804,10 @@ const KalkulatorTestPage = () => {
   }, [parts, runKiAnalysis]);
 
   /** Browser-Slicing via three-slicer Web Worker (OrcaSlicer-Kernel) */
-  const runSlicerNow = useCallback(async (partId: string, quickSlice = false) => {
+  const runSlicerNow = useCallback(async (partId: string, quickSliceRequested = false) => {
+    // Testversion: es gibt nur den NAS-Slicer, keinen Browser-Slicer / QuickSlice mehr
+    void quickSliceRequested;
+    const quickSlice = false;
     const part = parts.find((p) => p.id === partId);
     if (!part?.stlArrayBuffer || isStepFile(part.fileName)) return;
 
@@ -830,13 +833,11 @@ const KalkulatorTestPage = () => {
       : p));
 
     try {
-      const result = (!quickSlice && part.file) ? rescaleForMaterial(await sliceOnNas(part.file, quality.layerHeight, quality.infill, nasEnqueueRef.current), mat?.density) : await slice(part.stlArrayBuffer.slice(0), {
-        material: mat?.materialType || mat?.name.split(" ")[0] || "PLA",
-        layerHeight: quality.layerHeight,
-        infill: quality.infill,
-        speedFactor: quality.speedFactor,
-        density: mat?.density,
-      }, quickSlice ? 1 : 0);
+      if (!part.file) throw new Error("Datei fehlt");
+      const result = rescaleForMaterial(
+        await sliceOnNas(part.file, quality.layerHeight, quality.infill, nasEnqueueRef.current),
+        mat?.density,
+      );
       console.log("[Slicer]", result);
       sliceCache.current.set(cacheKey, result);
       setParts((prev) => prev.map((p) => p.id === partId
@@ -851,7 +852,7 @@ const KalkulatorTestPage = () => {
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, slicerLoading: false, slicerError: `${err instanceof Error && err.message ? err.message : "Slicer nicht verfügbar"} – Schätzung wird verwendet` }
+        ? { ...p, slicerLoading: false, slicerError: `${err instanceof Error && err.message ? err.message : "NAS-Slicer nicht verfügbar"} – geometrische Schätzung wird verwendet` }
         : p));
     }
   }, [parts, materials, qualityPresets, qualityKey, slice]);
@@ -1722,7 +1723,7 @@ const KalkulatorTestPage = () => {
         path="/admin/kalkulator-test"
       />
       <div className="bg-amber-500/15 border-b border-amber-500/40 text-sm px-4 py-2 text-center">
-        TESTVERSION (nur Admin): NAS-Automatik mit Druckerwahl (K1C/K1) und Einschätzung, PLA. Es wird nichts gespeichert und keine Anfrage gesendet.
+        TESTVERSION (nur Admin): Slicen nur über den NAS (Druckerwahl K1C/K1, Einschätzung, PLA), kein Browser-Slicer. Es wird nichts gespeichert und keine Anfrage gesendet.
         <label className="mt-1 flex items-center justify-center gap-2 text-xs">
           <input
             type="checkbox"
@@ -2617,7 +2618,7 @@ const KalkulatorTestPage = () => {
                             )}
                             {p.slicerError && (
                               <p className="text-xs text-orange-500 mt-1">
-                                {p.slicerResult ? "⚠️ NAS-Slicer fehlgeschlagen – angezeigt wird die Browser-Schätzung: " : "~ Schätzung – "}
+                                {"⚠️ NAS-Slicer: "}
                                 {p.slicerError}
                               </p>
                             )}
