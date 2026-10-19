@@ -870,6 +870,19 @@ const KalkulatorTestPage = () => {
   }, [parts, runSlicer]);
 
 
+  // Testversion: Ab Schritt "Qualität" immer den genauen NAS-Slice starten, falls nur der
+  // schnelle Browser-Slice vorliegt (verhindert, dass die NAS-Automatik übersprungen wird).
+  useEffect(() => {
+    if (step < 5) return;
+    parts.forEach((p) => {
+      if (p.stlArrayBuffer && !isStepFile(p.fileName) && p.isQuickSlice !== false
+        && !p.slicerLoading && !p.slicerError) {
+        runSlicer(p.id, false);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, parts.map((p) => `${p.id}-${p.stlArrayBuffer ? 1 : 0}-${p.isQuickSlice}-${p.slicerLoading}-${p.slicerError ? 1 : 0}`).join(",")]);
+
   const addFile = useCallback(async (file: File) => {
     const id = crypto.randomUUID();
     const defaultMat = materials[0];
