@@ -72,6 +72,7 @@ import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
 import { Route as AdminSlicerTestRouteImport } from './routes/admin/slicer-test'
+import { Route as AdminSliceFreigabeRouteImport } from './routes/admin/slice-freigabe'
 import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
@@ -446,6 +447,11 @@ const AdminNewsletterRoute = AdminNewsletterRouteImport.update({
 const AdminScanRoute = AdminScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSliceFreigabeRoute = AdminSliceFreigabeRouteImport.update({
+  id: '/slice-freigabe',
+  path: '/slice-freigabe',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSlicerTestRoute = AdminSlicerTestRouteImport.update({
@@ -855,6 +861,7 @@ export interface FileRoutesByFullPath {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
+  '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
@@ -981,6 +988,7 @@ export interface FileRoutesByTo {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
+  '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
@@ -1113,6 +1121,7 @@ export interface FileRoutesById {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/scan': typeof AdminScanRoute
+  '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
@@ -1246,6 +1255,7 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
+    | '/admin/slice-freigabe'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
@@ -1372,6 +1382,7 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
+    | '/admin/slice-freigabe'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
@@ -1503,6 +1514,7 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/scan'
+    | '/admin/slice-freigabe'
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
@@ -2048,6 +2060,13 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/admin/scan'
       preLoaderRoute: typeof AdminScanRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/slice-freigabe': {
+      id: '/admin/slice-freigabe'
+      path: '/slice-freigabe'
+      fullPath: '/admin/slice-freigabe'
+      preLoaderRoute: typeof AdminSliceFreigabeRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/slicer-test': {
@@ -2636,6 +2655,7 @@ interface AdminRouteChildren {
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminScanRoute: typeof AdminScanRoute
+  AdminSliceFreigabeRoute: typeof AdminSliceFreigabeRoute
   AdminSlicerTestRoute: typeof AdminSlicerTestRoute
   AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
   AdminTeileRoute: typeof AdminTeileRoute
@@ -2670,6 +2690,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminScanRoute: AdminScanRoute,
+  AdminSliceFreigabeRoute: AdminSliceFreigabeRoute,
   AdminSlicerTestRoute: AdminSlicerTestRoute,
   AdminStadtmodelleRoute: AdminStadtmodelleRoute,
   AdminTeileRoute: AdminTeileRoute,
