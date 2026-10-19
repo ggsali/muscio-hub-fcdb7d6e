@@ -88,7 +88,8 @@ export default function SliceFreigabePage() {
   };
 
   const decide = async (job: SliceJob, action: "approve" | "reject") => {
-    if (action === "approve" && !window.confirm(`"${job.filename}" jetzt in die SimplyPrint-Queue stellen? Der Drucker startet, sobald er frei ist.`)) return;
+    const warn = job.assessment?.easy === true ? "" : "\n\n⚠️ Die automatische Analyse stuft das Teil als KOMPLIZIERT ein" + (job.assessment?.reasons?.length ? ` (${job.assessment.reasons.join(", ")})` : "") + ".";
+    if (action === "approve" && !window.confirm(`"${job.filename}" jetzt in die SimplyPrint-Queue stellen? Der Drucker startet, sobald er frei ist.${warn}`)) return;
     setBusy(job.id);
     try {
       const res = await callDecision(action, job.id);

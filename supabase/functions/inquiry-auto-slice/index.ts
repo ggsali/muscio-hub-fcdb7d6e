@@ -139,11 +139,13 @@ Deno.serve(async (req) => {
           <td style="padding:8px;border-bottom:1px solid #e5e7eb">${esc(st.print_time_human ?? "–")}<br>${esc(st.filament_g ?? "–")} g</td>
           <td style="padding:8px;border-bottom:1px solid #e5e7eb;color:${easy ? "#15803d" : "#c2410c"}">${note}</td></tr>`;
       }).join("");
+      const allEasy = results.every((r) => r.ok && r.payload.auto?.assessment?.easy === true);
+      const tag = allEasy ? "✅ einfach" : "⚠️ kompliziert – bitte genau prüfen";
       const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);
       await resend.emails.send({
         from: "3DMuscio <noreply@3dmuscio.com>",
         to: ["anfrage@3dmuscio.com"],
-        subject: `🖨️ Slice bereit zur Freigabe – ${String(inquiry!.name ?? "").replace(/[\r\n]/g, " ")}`,
+        subject: `🖨️ Slice bereit (${tag}) – ${String(inquiry!.name ?? "").replace(/[\r\n]/g, " ")}`,
         html: `
           <div style="font-family:ui-sans-serif,system-ui,sans-serif;max-width:640px;margin:0 auto;color:#111827">
             <div style="background:#FF5A00;padding:20px;text-align:center"><h1 style="color:#fff;margin:0;font-size:18px">🖨️ Slice bereit zur Freigabe</h1></div>
