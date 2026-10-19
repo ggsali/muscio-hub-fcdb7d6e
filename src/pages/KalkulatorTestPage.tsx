@@ -38,7 +38,8 @@ import {
 // - genauer Slice läuft über den Auto-Slicer auf dem NAS (Edge Function slicer-test)
 // - es wird nichts in Datenbank/Storage geschrieben, kein Tracking, keine Anfrage gesendet
 // ============================================================================
-const TEST_MODE = true;
+// Veränderbar: mit dem Schalter im Banner werden echte Anfragen (Upload, Speichern, Mail) möglich.
+let TEST_MODE = true;
 const SLICER_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slicer-test`;
 const NAS_QUALITIES = [0.08, 0.12, 0.16, 0.2];
 
@@ -396,6 +397,8 @@ const MATERIAL_HINTS: Record<string, string> = {
 const KalkulatorTestPage = () => {
   const [step, setStep] = useState(1);
   // Testschalter: Teile wirklich in die SimplyPrint-Queue stellen (Standard: nur Probelauf)
+  const [realMode, setRealMode] = useState(false);
+  TEST_MODE = !realMode;
   const [nasEnqueue, setNasEnqueue] = useState(false);
   const nasEnqueueRef = useRef(false);
   useEffect(() => { nasEnqueueRef.current = nasEnqueue; }, [nasEnqueue]);
@@ -1572,7 +1575,7 @@ const KalkulatorTestPage = () => {
           name: resolvedName,
           email: resolvedEmail,
           telefon: resolvedPhone || null,
-          betreff: "Preisanfrage Kalkulator",
+          betreff: "Preisanfrage Kalkulator (Admin-Test)",
           nachricht,
           strasse: form.strasse || null,
           plz: form.plz || null,
@@ -1725,7 +1728,15 @@ const KalkulatorTestPage = () => {
         path="/admin/kalkulator-test"
       />
       <div className="bg-amber-500/15 border-b border-amber-500/40 text-sm px-4 py-2 text-center">
-        TESTVERSION (nur Admin): Slicen nur über den NAS (Druckerwahl K1C/K1, Einschätzung, PLA), kein Browser-Slicer. Es wird nichts gespeichert und keine Anfrage gesendet.
+        TESTVERSION (nur Admin): Slicen nur über den NAS (Druckerwahl K1C/K1, Einschätzung, PLA), kein Browser-Slicer. Ohne Häkchen «Echte Anfrage» wird nichts gespeichert und keine Anfrage gesendet.
+        <label className="mt-1 flex items-center justify-center gap-2 text-xs font-medium">
+          <input
+            type="checkbox"
+            checked={realMode}
+            onChange={(e) => setRealMode(e.target.checked)}
+          />
+          Echte Anfrage senden (Dateien hochladen, Anfrage speichern, Mails). Vor dem Hochladen der Datei anhaken!
+        </label>
         <label className="mt-1 flex items-center justify-center gap-2 text-xs">
           <input
             type="checkbox"
