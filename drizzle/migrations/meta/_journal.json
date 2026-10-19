@@ -190,6 +190,20 @@
       "when": 1792058183515,
       "tag": "0026_website_calc_preise",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1792396880624,
+      "tag": "0027_slice_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792396895000,
+      "tag": "0028_slice_jobs_api_grants",
+      "breakpoints": true
     }
   ]
 }

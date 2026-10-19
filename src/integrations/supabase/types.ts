@@ -2803,6 +2803,77 @@ export type Database = {
           },
         ]
       }
+      slice_jobs: {
+        Row: {
+          assessment: Json | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          error: string | null
+          farbe: string | null
+          filename: string
+          id: string
+          infill: number | null
+          inquiry_id: string | null
+          layer_height: number | null
+          material: string | null
+          nas_job_id: string | null
+          printer: string | null
+          quantity: number
+          simplyprint: Json | null
+          stats: Json | null
+          status: string
+        }
+        Insert: {
+          assessment?: Json | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          error?: string | null
+          farbe?: string | null
+          filename: string
+          id?: string
+          infill?: number | null
+          inquiry_id?: string | null
+          layer_height?: number | null
+          material?: string | null
+          nas_job_id?: string | null
+          printer?: string | null
+          quantity?: number
+          simplyprint?: Json | null
+          stats?: Json | null
+          status?: string
+        }
+        Update: {
+          assessment?: Json | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          error?: string | null
+          farbe?: string | null
+          filename?: string
+          id?: string
+          infill?: number | null
+          inquiry_id?: string | null
+          layer_height?: number | null
+          material?: string | null
+          nas_job_id?: string | null
+          printer?: string | null
+          quantity?: number
+          simplyprint?: Json | null
+          stats?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slice_jobs_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stadtmodell_bestellungen: {
         Row: {
           created_at: string
