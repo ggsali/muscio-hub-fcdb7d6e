@@ -2592,8 +2592,11 @@ const KalkulatorTestPage = () => {
                                 )}
                               </div>
                             )}
-                            {p.slicerError && !p.slicerResult && (
-                              <p className="text-xs text-orange-500 mt-1">~ Schätzung – {p.slicerError}</p>
+                            {p.slicerError && (
+                              <p className="text-xs text-orange-500 mt-1">
+                                {p.slicerResult ? "⚠️ NAS-Slicer fehlgeschlagen – angezeigt wird die Browser-Schätzung: " : "~ Schätzung – "}
+                                {p.slicerError}
+                              </p>
                             )}
 
                             {p.kiAnalysisLoading && (
