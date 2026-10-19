@@ -105,7 +105,17 @@ async function sliceOnNas(file: File, layerHeight: number, infill: number, enque
           queueItemId: json.simplyprint?.queue_item_id ?? null,
           queueError: json.simplyprint_error ?? null,
         }
-      : undefined,
+      : {
+          // Antwort vom NAS ohne Automatik-Daten: Edge Function oder NAS läuft noch auf altem Stand
+          printer: json.printer ?? null,
+          printerReason: "feste Auswahl (alte Funktion)",
+          level: "unbekannt",
+          reasons: ["Antwort ohne Automatik-Daten: Edge Function slicer-test oder NAS-Update fehlt"],
+          queued: false,
+          dryRun: false,
+          queueItemId: null,
+          queueError: null,
+        },
   };
 }
 
