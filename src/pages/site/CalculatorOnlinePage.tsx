@@ -273,19 +273,21 @@ const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => 
 };
 
 
-/** Prüft (5 Min. gecacht), ob die NAS-Schätzung eingeschaltet ist: ohne Datei antwortet die Funktion 503 (aus) oder 400 (an). */
+/** Prüft (5 Min. gecacht), ob die NAS-Schätzung eingeschaltet ist: die Funktion antwortet auf probe=1 mit enabled true/false. */
 let nasProbe: { at: number; on: boolean } | null = null;
 async function nasSliceEnabled(): Promise<boolean> {
   if (nasProbe && Date.now() - nasProbe.at < 5 * 60_000) return nasProbe.on;
   let on = false;
   try {
+    const probe = new FormData();
+    probe.append("probe", "1");
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
       method: "POST",
       headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
-      body: new FormData(),
+      body: probe,
       signal: AbortSignal.timeout(5000),
     });
-    on = res.status === 400;
+    on = res.ok && (await res.json().catch(() => ({})))?.enabled === true;
   } catch { on = false; }
   nasProbe = { at: Date.now(), on };
   return on;
@@ -306,6 +308,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number): Pro
   });
   const json = await res.json().catch(() => ({}));
   const st = json?.stats;
+  if (json?.detail) console.info("[Slicer] NAS-Meldung:", json.detail);
   if (!res.ok || !st || !(st.filament_g > 0) || !(st.print_time_s > 0)) throw new Error("NAS-Slicer nicht verfügbar");
   return {
     printTimeMinutes: st.print_time_s / 60,

@@ -17,8 +17,9 @@ const RATE_WINDOW_MS = 10 * 60_000;
 const RATE_MAX = 12; // Slices pro IP und 10 Minuten
 const MAX_PARALLEL = 3; // gleichzeitige Slices insgesamt (NAS schonen)
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+// Fehler werden bewusst mit HTTP 200 und ok:false beantwortet: der Kalkulator fällt dann still auf den Browser-Slicer zurück.
+const json = (body: unknown, _status = 200) =>
+  new Response(JSON.stringify(body), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -30,7 +31,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: flag } = await supabase.from("settings").select("value").eq("key", "public_nas_slice_enabled").maybeSingle();
-    if (flag?.value !== "true") return json({ error: "deaktiviert" }, 503);
+    if (flag?.value !== "true") return json({ ok: false, enabled: false, error: "deaktiviert" });
 
     const base = (Deno.env.get("SLICER_URL") || "").replace(/\/+$/, "");
     const key = Deno.env.get("SLICER_API_KEY") || "";
@@ -46,8 +47,9 @@ serve(async (req) => {
     store.set(ip, hits);
 
     const form = await req.formData();
+    if (form.get("probe") === "1") return json({ ok: true, enabled: true });
     const file = form.get("file");
-    if (!(file instanceof File)) return json({ error: "Datei fehlt" }, 400);
+    if (!(file instanceof File)) return json({ ok: false, error: "Datei fehlt" });
     const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
     if (!ALLOWED_EXT.includes(ext)) return json({ error: "Dateityp nicht erlaubt" }, 422);
     if (file.size > MAX_BYTES) return json({ error: "Datei zu gross" }, 413);
@@ -75,12 +77,12 @@ serve(async (req) => {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     const payload = await res.json().catch(() => ({}));
-    if (!res.ok) return json({ error: "Slicer-Fehler", status: res.status }, 502);
+    if (!res.ok) return json({ ok: false, error: "Slicer-Fehler", status: res.status, detail: String(payload?.detail ?? "").slice(0, 300) });
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
-    return json({ stats: payload.stats ?? null });
+    return json({ ok: true, stats: payload.stats ?? null });
   } catch (e) {
     console.error("slice-public error:", e);
-    return json({ error: "Slicer nicht erreichbar" }, 504);
+    return json({ ok: false, error: "Slicer nicht erreichbar" });
   } finally {
     if (counted) g.__sliceInflight = Math.max(0, g.__sliceInflight - 1);
   }
