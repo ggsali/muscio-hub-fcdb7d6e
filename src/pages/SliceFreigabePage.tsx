@@ -53,7 +53,6 @@ export default function SliceFreigabePage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [publicSlice, setPublicSlice] = useState(false);
-  const [nasOnly, setNasOnly] = useState(false);
   const [debugLog, setDebugLog] = useState("");
   const [error, setError] = useState("");
 
@@ -72,8 +71,6 @@ export default function SliceFreigabePage() {
     setEnabled(flag?.value === "true");
     const { data: pflag } = await db.from("settings").select("value").eq("key", "public_nas_slice_enabled").maybeSingle();
     setPublicSlice(pflag?.value === "true");
-    const { data: oflag } = await db.from("settings").select("value").eq("key", "public_nas_only").maybeSingle();
-    setNasOnly(oflag?.value === "true");
     const { data: dl } = await db.from("settings").select("value").eq("key", "slice_debug_log").maybeSingle();
     try {
       const arr = JSON.parse(dl?.value ?? "[]") as Array<Record<string, unknown>>;
@@ -109,19 +106,6 @@ export default function SliceFreigabePage() {
       toast.error("Schalter konnte nicht gespeichert werden");
     } else {
       toast.success(on ? "Online-Kalkulator slict jetzt über den NAS" : "Online-Kalkulator nutzt wieder den Browser-Slicer");
-    }
-  };
-
-  const toggleNasOnly = async (on: boolean) => {
-    setNasOnly(on);
-    const { error: err } = await (supabase as any)
-      .from("settings")
-      .upsert({ key: "public_nas_only", value: on ? "true" : "false" }, { onConflict: "key" });
-    if (err) {
-      setNasOnly(!on);
-      toast.error("Schalter konnte nicht gespeichert werden");
-    } else {
-      toast.success(on ? "Browser-Slicer ausgeschaltet – nur noch NAS" : "Browser-Slicer wieder als Ausweichlösung aktiv");
     }
   };
 
@@ -181,11 +165,7 @@ export default function SliceFreigabePage() {
       </div>
       <label className="flex items-center gap-2 text-sm">
         <Switch checked={publicSlice} onCheckedChange={togglePublic} />
-        Online-Kalkulator: Schätzung über den NAS-Slicer (bei Ausfall automatisch Browser-Slicer)
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <Switch checked={nasOnly} disabled={!publicSlice} onCheckedChange={toggleNasOnly} />
-        Browser-Slicer ausschalten – ausschliesslich NAS-Slicer verwenden
+        Online-Kalkulator: alles über den NAS-Slicer (aus = alles im Browser)
       </label>
       <p className="text-sm text-muted-foreground">
         Neue Anfragen mit Modelldateien werden automatisch auf dem NAS geslict. Du bekommst eine Mail, prüfst hier das Ergebnis und gibst frei:

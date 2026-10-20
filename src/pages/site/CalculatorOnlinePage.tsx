@@ -295,7 +295,7 @@ async function nasSliceEnabled(): Promise<boolean> {
     });
     const j = res.ok ? await res.json().catch(() => ({})) : {};
     on = j?.enabled === true;
-    only = j?.nasOnly === true;
+    only = on; // Schalter an: alles über den NAS (kein Browser-Slicer), aus: alles im Browser
   } catch (e) { on = false; nasDebug(`Probe fehlgeschlagen: ${(e as Error)?.message ?? e}`); }
   nasProbe = { at: Date.now(), on, only };
   return on;
@@ -786,9 +786,12 @@ const CalculatorOnlinePage = () => {
   /** Browser-Slicing via three-slicer Web Worker (OrcaSlicer-Kernel) */
   const runSlicerNow = useCallback(async (partId: string, quickSlice = false) => {
     const part = parts.find((p) => p.id === partId);
-    if (!part?.stlArrayBuffer || isStepFile(part.fileName)) return;
+    if (!part || isStepFile(part.fileName)) return;
     const nasOnly = await nasOnlyMode();
     if (nasOnly && quickSlice) return; // kein Browser-Sofortpreis, NAS rechnet direkt
+    // Browser braucht den STL-Puffer; der NAS slict jede Modelldatei (STL, OBJ, 3MF) direkt aus der Datei
+    if (!nasOnly && !part.stlArrayBuffer) return;
+    if (nasOnly && !part.file) return;
 
     const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
 
@@ -858,7 +861,7 @@ const CalculatorOnlinePage = () => {
   }, []);
 
   const runSlicerAll = useCallback((quickSlice = false) => {
-    parts.forEach((p) => { if (p.stlArrayBuffer) runSlicer(p.id, quickSlice); });
+    parts.forEach((p) => { if (p.stlArrayBuffer || p.file) runSlicer(p.id, quickSlice); });
   }, [parts, runSlicer]);
 
 
@@ -948,6 +951,11 @@ const CalculatorOnlinePage = () => {
     }
 
 
+
+    // OBJ/3MF: Browser-Slicer kann sie nicht, der NAS schon (nur wenn der NAS-Schalter an ist)
+    if (ext === "obj" || ext === "3mf") {
+      void nasSliceEnabled().then((on) => { if (on) runSlicer(id, false); });
+    }
 
     // Upload im Hintergrund
     try {
@@ -1118,7 +1126,7 @@ const CalculatorOnlinePage = () => {
     const quality = qualityPresets.find((q) => q.key === key);
     // Nur neu slicen wenn sich Qualität vom QuickSlice unterscheidet; Cache-Treffer sind sofort da
     if (quality && quality.layerHeight !== 0.3) {
-      const todo = parts.filter((p) => p.stlArrayBuffer && !isStepFile(p.fileName));
+      const todo = parts.filter((p) => (p.stlArrayBuffer || p.file) && !isStepFile(p.fileName));
       if (todo.some((p) => !sliceCache.current.has(sliceKey(p.id, false, quality)))) startProgress();
       todo.forEach((p) => runSlicer(p.id, false));
     }
@@ -1309,7 +1317,7 @@ const CalculatorOnlinePage = () => {
   /** Materialwechsel: vorhandene Slicer-Ergebnisse nur umrechnen (Dichte), nur ohne Ergebnis neu rechnen */
   const refreshForMaterial = (ids: string[], matId: string) => {
     const density = materials.find((m) => m.id === matId)?.density;
-    const missing = parts.filter((p) => ids.includes(p.id) && p.stlArrayBuffer && !p.slicerResult && !isStepFile(p.fileName));
+    const missing = parts.filter((p) => ids.includes(p.id) && (p.stlArrayBuffer || p.file) && !p.slicerResult && !isStepFile(p.fileName));
     setParts((prev) => prev.map((p) => ids.includes(p.id)
       ? {
           ...p,
