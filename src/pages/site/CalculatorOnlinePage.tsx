@@ -296,9 +296,23 @@ async function nasSliceEnabled(): Promise<boolean> {
     const j = res.ok ? await res.json().catch(() => ({})) : {};
     on = j?.enabled === true;
     only = j?.nasOnly === true;
-  } catch { on = false; }
+  } catch (e) { on = false; nasDebug(`Probe fehlgeschlagen: ${(e as Error)?.message ?? e}`); }
   nasProbe = { at: Date.now(), on, only };
   return on;
+}
+
+/** Meldet Probleme der NAS-Schätzung an das Debug-Protokoll (Admin → Slice-Freigabe). Fehler hier sind egal. */
+function nasDebug(msg: string) {
+  try {
+    const f = new FormData();
+    f.append("log", "1");
+    f.append("msg", msg);
+    void fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+      method: "POST",
+      headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+      body: f,
+    }).catch(() => {});
+  } catch { /* ignore */ }
 }
 
 /** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
@@ -317,7 +331,10 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number): Pro
   const json = await res.json().catch(() => ({}));
   const st = json?.stats;
   if (json?.detail) console.info("[Slicer] NAS-Meldung:", json.detail);
-  if (!res.ok || !st || !(st.filament_g > 0) || !(st.print_time_s > 0)) throw new Error("NAS-Slicer nicht verfügbar");
+  if (!res.ok || !st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
+    nasDebug(`Fallback: http=${res.status} ok=${json?.ok} err=${json?.error ?? ""} detail=${json?.detail ?? ""} stats=${st ? JSON.stringify(st).slice(0, 150) : "keine"}`);
+    throw new Error("NAS-Slicer nicht verfügbar");
+  }
   return {
     printTimeMinutes: st.print_time_s / 60,
     filamentGrams: st.filament_g,
@@ -801,6 +818,7 @@ const CalculatorOnlinePage = () => {
           result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill), mat?.density);
         } catch (nasErr) {
           console.info("[Slicer] NAS nicht genutzt, Browser-Slicer als Fallback:", nasErr);
+          nasDebug(`Browser-Fallback: ${(nasErr as Error)?.message ?? nasErr}`);
         }
       }
       if (!result && nasOnly) throw new Error("NAS_ONLY");

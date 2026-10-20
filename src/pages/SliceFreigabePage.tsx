@@ -54,6 +54,7 @@ export default function SliceFreigabePage() {
   const [enabled, setEnabled] = useState(false);
   const [publicSlice, setPublicSlice] = useState(false);
   const [nasOnly, setNasOnly] = useState(false);
+  const [debugLog, setDebugLog] = useState("");
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -73,6 +74,11 @@ export default function SliceFreigabePage() {
     setPublicSlice(pflag?.value === "true");
     const { data: oflag } = await db.from("settings").select("value").eq("key", "public_nas_only").maybeSingle();
     setNasOnly(oflag?.value === "true");
+    const { data: dl } = await db.from("settings").select("value").eq("key", "slice_debug_log").maybeSingle();
+    try {
+      const arr = JSON.parse(dl?.value ?? "[]") as Array<Record<string, unknown>>;
+      setDebugLog(arr.slice().reverse().map((e) => JSON.stringify(e)).join("\n"));
+    } catch { setDebugLog(dl?.value ?? ""); }
     setLoading(false);
   }, []);
 
@@ -195,6 +201,14 @@ export default function SliceFreigabePage() {
       {!loading && !error && jobs.length === 0 && (
         <p className="text-sm text-muted-foreground">Noch keine geslicten Anfragen.</p>
       )}
+
+      <details className="rounded-lg border border-border p-3 text-xs">
+        <summary className="cursor-pointer font-medium">Debug-Protokoll Online-Kalkulator (neueste zuerst)</summary>
+        <div className="mt-2 space-y-2">
+          <Button variant="outline" size="sm" onClick={() => { void navigator.clipboard.writeText(debugLog); toast.success("Kopiert"); }}>Kopieren</Button>
+          <pre className="whitespace-pre-wrap break-all max-h-80 overflow-auto">{debugLog || "Noch keine Einträge. Datei im Kalkulator hochladen und hier «Aktualisieren» klicken."}</pre>
+        </div>
+      </details>
 
       <div className="space-y-3">
         {jobs.map((job) => {

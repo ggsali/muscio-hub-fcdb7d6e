@@ -21,6 +21,17 @@ const MAX_PARALLEL = 3; // gleichzeitige Slices insgesamt (NAS schonen)
 const json = (body: unknown, _status = 200) =>
   new Response(JSON.stringify(body), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+// Debug-Protokoll: letzte 40 Ereignisse in settings.slice_debug_log (im Admin unter Slice-Freigabe sichtbar)
+async function dbg(supabase: any, entry: Record<string, unknown>) {
+  try {
+    const { data } = await supabase.from("settings").select("value").eq("key", "slice_debug_log").maybeSingle();
+    let arr: unknown[] = [];
+    try { arr = JSON.parse(data?.value ?? "[]"); } catch { arr = []; }
+    arr.push({ t: new Date().toISOString(), ...entry });
+    await supabase.from("settings").upsert({ key: "slice_debug_log", value: JSON.stringify(arr.slice(-40)) }, { onConflict: "key" });
+  } catch (e) { console.error("dbg failed", e); }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Nur POST erlaubt" }, 405);
@@ -31,7 +42,7 @@ serve(async (req) => {
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: flag } = await supabase.from("settings").select("value").eq("key", "public_nas_slice_enabled").maybeSingle();
-    if (flag?.value !== "true") return json({ ok: false, enabled: false, error: "deaktiviert" });
+    if (flag?.value !== "true") { await dbg(supabase, { ev: "aus", flag: flag?.value ?? null }); return json({ ok: false, enabled: false, error: "deaktiviert" }); }
 
     const base = (Deno.env.get("SLICER_URL") || "").replace(/\/+$/, "");
     const key = Deno.env.get("SLICER_API_KEY") || "";
@@ -47,12 +58,17 @@ serve(async (req) => {
     store.set(ip, hits);
 
     const form = await req.formData();
+    if (form.get("log") === "1") {
+      await dbg(supabase, { ev: "client", msg: String(form.get("msg") ?? "").slice(0, 400) });
+      return json({ ok: true });
+    }
     if (form.get("probe") === "1") {
+      await dbg(supabase, { ev: "probe" });
       const { data: only } = await supabase.from("settings").select("value").eq("key", "public_nas_only").maybeSingle();
       return json({ ok: true, enabled: true, nasOnly: only?.value === "true" });
     }
     const file = form.get("file");
-    if (!(file instanceof File)) return json({ ok: false, error: "Datei fehlt" });
+    if (!(file instanceof File)) { await dbg(supabase, { ev: "keine-datei" }); return json({ ok: false, error: "Datei fehlt" }); }
     const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
     if (!ALLOWED_EXT.includes(ext)) return json({ error: "Dateityp nicht erlaubt" }, 422);
     if (file.size > MAX_BYTES) return json({ error: "Datei zu gross" }, 413);
@@ -71,8 +87,10 @@ serve(async (req) => {
     out.append("orient", "true");
     out.append("reference", "public-calc");
 
+    await dbg(supabase, { ev: "slice-start", datei: file.name, bytes: file.size, quality, infill });
     g.__sliceInflight++;
     counted = true;
+    const t0 = Date.now();
     const res = await fetch(`${base}/slice`, {
       method: "POST",
       headers: { "X-API-Key": key },
@@ -80,11 +98,13 @@ serve(async (req) => {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     const payload = await res.json().catch(() => ({}));
+    await dbg(supabase, { ev: "nas-antwort", status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
     if (!res.ok) return json({ ok: false, error: "Slicer-Fehler", status: res.status, detail: String(payload?.detail ?? "").slice(0, 300) });
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
     return json({ ok: true, stats: payload.stats ?? null });
   } catch (e) {
     console.error("slice-public error:", e);
+    try { await dbg(createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!), { ev: "fehler", msg: String((e as Error)?.message ?? e).slice(0, 300) }); } catch { /* ignore */ }
     return json({ ok: false, error: "Slicer nicht erreichbar" });
   } finally {
     if (counted) g.__sliceInflight = Math.max(0, g.__sliceInflight - 1);
