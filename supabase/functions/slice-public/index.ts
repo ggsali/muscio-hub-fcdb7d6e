@@ -8,6 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 const MAX_BYTES = 30 * 1024 * 1024;
 const TIMEOUT_MS = 100_000;
@@ -22,6 +23,17 @@ const json = (body: unknown, status = 200) =>
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "GET") {
+    // Status-Abfrage für den Kalkulator (statt Prüfung mit leerer Datei -> 400)
+    try {
+      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const { data: flag } = await sb.from("settings").select("value").eq("key", "public_nas_slice_enabled").maybeSingle();
+      const ok = flag?.value === "true" && !!Deno.env.get("SLICER_URL") && !!Deno.env.get("SLICER_API_KEY");
+      return json({ enabled: ok });
+    } catch {
+      return json({ enabled: false });
+    }
+  }
   if (req.method !== "POST") return json({ error: "Nur POST erlaubt" }, 405);
 
   const g = globalThis as any;
@@ -75,7 +87,8 @@ serve(async (req) => {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     const payload = await res.json().catch(() => ({}));
-    if (!res.ok) return json({ error: "Slicer-Fehler", status: res.status }, 502);
+    // Modell vom NAS abgelehnt (z. B. 422): kein Fehler, der Kalkulator nutzt dann den Browser-Slicer
+    if (!res.ok) return json({ stats: null, reason: "slicer_rejected", status: res.status });
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
     return json({ stats: payload.stats ?? null });
   } catch (e) {
