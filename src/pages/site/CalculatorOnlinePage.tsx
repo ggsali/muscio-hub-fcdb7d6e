@@ -792,6 +792,7 @@ const CalculatorOnlinePage = () => {
     // Browser braucht den STL-Puffer; der NAS slict jede Modelldatei (STL, OBJ, 3MF) direkt aus der Datei
     if (!nasOnly && !part.stlArrayBuffer) return;
     if (nasOnly && !part.file) return;
+    const stlBuffer = part.stlArrayBuffer;
 
     const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
 
@@ -825,13 +826,16 @@ const CalculatorOnlinePage = () => {
         }
       }
       if (!result && nasOnly) throw new Error("NAS_ONLY");
-      if (!result) result = await slice(part.stlArrayBuffer.slice(0), {
-        material: mat?.materialType || mat?.name.split(" ")[0] || "PLA",
-        layerHeight: quality.layerHeight,
-        infill: quality.infill,
-        speedFactor: quality.speedFactor,
-        density: mat?.density,
-      }, quickSlice ? 1 : 0);
+      if (!result) {
+        if (!stlBuffer) throw new Error("NO_STL");
+        result = await slice(stlBuffer.slice(0), {
+          material: mat?.materialType || mat?.name.split(" ")[0] || "PLA",
+          layerHeight: quality.layerHeight,
+          infill: quality.infill,
+          speedFactor: quality.speedFactor,
+          density: mat?.density,
+        }, quickSlice ? 1 : 0);
+      }
       console.log("[Slicer]", result);
       sliceCache.current.set(cacheKey, result);
       setParts((prev) => prev.map((p) => p.id === partId
