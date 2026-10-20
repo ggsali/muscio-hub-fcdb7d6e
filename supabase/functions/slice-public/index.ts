@@ -101,15 +101,17 @@ serve(async (req) => {
         body: buildForm(printer),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
-    // Drucker-Profil: K1C bevorzugt, sonst K1 (falls das NAS K1C-Profile nicht kennt)
-    let res = await slice("k1c");
+    // Drucker-Reihenfolge: K1C (klein) -> K1 (falls K1C-Profil fehlt) -> xl (420x420x420 mm, wenn das Teil nicht aufs kleine Bett passt)
+    let res!: Response;
     let used = "k1c";
-    if (res.status === 422) {
+    for (const printer of ["k1c", "k1", "xl"]) {
+      res = await slice(printer);
+      used = printer;
+      if (res.status !== 422) break;
       const peek = await res.clone().json().catch(() => ({}));
-      if (String(peek?.detail ?? "").includes("Unbekannter Drucker")) {
-        res = await slice("k1");
-        used = "k1";
-      }
+      const d = String(peek?.detail ?? "");
+      if (!d.includes("Unbekannter Drucker") && !d.includes("Slicen fehlgeschlagen")) break;
+      await dbg(supabase, { ev: "drucker-wechsel", von: printer, grund: d.slice(0, 200) });
     }
     const payload = await res.json().catch(() => ({}));
     await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
