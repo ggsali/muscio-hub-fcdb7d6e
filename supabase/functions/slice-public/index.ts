@@ -47,7 +47,10 @@ serve(async (req) => {
     store.set(ip, hits);
 
     const form = await req.formData();
-    if (form.get("probe") === "1") return json({ ok: true, enabled: true });
+    if (form.get("probe") === "1") {
+      const { data: only } = await supabase.from("settings").select("value").eq("key", "public_nas_only").maybeSingle();
+      return json({ ok: true, enabled: true, nasOnly: only?.value === "true" });
+    }
     const file = form.get("file");
     if (!(file instanceof File)) return json({ ok: false, error: "Datei fehlt" });
     const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
