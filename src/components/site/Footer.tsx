@@ -49,7 +49,7 @@ export const Footer = () => {
   const visibleMaterials = resin ? materials : materials.filter((m) => !isResinText(m.label) && !isResinText(m.path));
 
   return (
-  <footer className="border-t-2 border-foreground bg-background relative overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}>
+  <footer className="border-t border-border bg-background relative overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 16px)' }}>
     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-primary/[0.04] rounded-full blur-[80px] pointer-events-none" />
 
     <div className="container mx-auto px-4 py-16 relative z-10">
@@ -66,7 +66,7 @@ export const Footer = () => {
               <img
                 src={logo}
                 alt="3DMuscio 3D-Druck Schweiz"
-                className="h-10 w-10 object-contain border-[1.5px] border-foreground"
+                className="h-10 w-10 object-contain rounded-md"
               />
               
             </div>
@@ -85,8 +85,8 @@ export const Footer = () => {
             Sofortpreis, persönlichem Service und Produktion in der Schweiz. Versand in die ganze Schweiz &amp; nach Liechtenstein.
           </p>
 
-          <div className="tag inline-flex items-center gap-2 normal-case">
-            <span className="w-1.5 h-1.5 bg-primary" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-muted/40 text-xs text-muted-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
             Aufträge offen — schnelle Fertigung
           </div>
         </motion.div>

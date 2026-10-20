@@ -319,117 +319,70 @@
 
 
 /* ==========================================================================
- * ÖFFENTLICHE WEBSITE – Look "Werkstatt": Papier, Tinte, Konstruktionsraster,
- * harte Kanten, Mono-Beschriftungen. Gilt nur innerhalb von .site-theme
- * (Dashboard, Admin und Kalkulator-Logik bleiben unberührt).
+ * ÖFFENTLICHE WEBSITE – ruhiger, unternehmerischer Look: klare Flächen,
+ * dünne Linien, IBM Plex Sans, Markengrün sparsam. Gilt nur innerhalb von
+ * .site-theme (Dashboard, Admin und Kalkulator-Logik bleiben unberührt).
  * ========================================================================== */
 .site-theme {
-  --background: 42 28% 94%;          /* Zeichenpapier */
-  --foreground: 160 14% 7%;          /* Tinte */
-  --card: 42 40% 97.5%;
-  --card-foreground: 160 14% 7%;
-  --popover: 42 40% 97.5%;
-  --popover-foreground: 160 14% 7%;
-  --primary: 156 100% 36%;           /* bestehendes Markengrün, etwas tiefer für Lesbarkeit */
-  --primary-foreground: 160 14% 6%;  /* Tinte auf Grün */
+  --background: 0 0% 100%;
+  --foreground: 200 25% 10%;          /* tiefes Anthrazit mit leichtem Blau */
+  --card: 0 0% 100%;
+  --card-foreground: 200 25% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 200 25% 10%;
+  --primary: 156 100% 28%;            /* Markengrün, tiefer: weisse Schrift bleibt lesbar */
+  --primary-foreground: 0 0% 100%;
   --secondary: 18 100% 55%;
-  --muted: 42 22% 90%;
-  --muted-foreground: 160 8% 30%;
-  --accent: 42 30% 89%;
-  --accent-foreground: 160 14% 7%;
-  --border: 160 10% 16%;
-  --input: 160 10% 16%;
-  --ring: 156 100% 30%;
-  --radius: 0.1875rem;
+  --muted: 200 18% 96%;               /* helle Flächen für abwechselnde Sektionen */
+  --muted-foreground: 200 10% 38%;
+  --accent: 156 35% 94%;
+  --accent-foreground: 200 25% 10%;
+  --border: 200 14% 88%;
+  --input: 200 14% 84%;
+  --ring: 156 100% 28%;
+  --radius: 0.375rem;
 
-  --font-heading: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-heading: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   font-family: "IBM Plex Sans", system-ui, sans-serif;
   color: hsl(var(--foreground));
   background-color: hsl(var(--background));
-  /* feines Konstruktionsraster hinter allem */
-  background-image:
-    linear-gradient(hsl(var(--foreground) / 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--foreground) / 0.045) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-image: none;
 }
-.site-theme ::selection { background: hsl(156 100% 45%); color: hsl(160 14% 6%); }
+.site-theme ::selection { background: hsl(156 100% 28% / 0.18); }
 
-/* Überschriften: schwer, eng, kompakt – Archivo in enger Breite */
 .site-theme h1, .site-theme h2, .site-theme h3, .site-theme .font-heading {
   font-family: var(--font-heading);
-  font-stretch: 82%;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
 }
-.site-theme h1 { font-weight: 800; line-height: 0.98; }
-.site-theme h2 { font-weight: 800; line-height: 1.02; }
-.site-theme h3 { font-weight: 700; }
+.site-theme h1 { font-weight: 700; line-height: 1.08; }
+.site-theme h2 { font-weight: 700; line-height: 1.12; }
+.site-theme h3 { font-weight: 600; }
 
-/* Dünne Linien wirken hier wie Zeichnungsstriche: Karten & Rahmen bekommen echte Tintenkante */
-.site-theme .border,
-.site-theme [class*="border-border"] { border-color: hsl(var(--border)); }
-.site-theme .border-border\/50, .site-theme .border-border\/60, .site-theme .border-border\/40 { border-color: hsl(var(--border) / 0.35); }
-
-/* Weiche KI-Schatten, Glow und Unschärfe-Blobs raus */
+/* Dekorative Unschärfe-Flecken und Glow weg, Schatten nur ganz dezent */
 .site-theme [class*="blur-3xl"], .site-theme [class*="blur-2xl"], .site-theme [class*="blur-[1"] { display: none !important; }
 .site-theme .glow-primary { box-shadow: none; }
-.site-theme .shadow-sm, .site-theme .shadow, .site-theme .shadow-md,
-.site-theme .shadow-lg, .site-theme .shadow-xl, .site-theme .shadow-2xl { box-shadow: none; }
-.site-theme [class*="shadow-[0_"] { box-shadow: none !important; }
+.site-theme [class*="shadow-[0_"] { box-shadow: 0 1px 2px hsl(200 25% 10% / 0.06) !important; }
+.site-theme .shadow-xl, .site-theme .shadow-2xl { box-shadow: 0 8px 24px -8px hsl(200 25% 10% / 0.18); }
 
-/* Karten: harter Versatzschatten statt weichem Schweben */
-.site-theme .bg-card.border { box-shadow: 4px 4px 0 hsl(var(--foreground) / 0.9); }
-.site-theme a.bg-card.border:hover, .site-theme button.bg-card.border:hover {
-  transform: translate(2px, 2px); box-shadow: 2px 2px 0 hsl(var(--foreground) / 0.9);
-}
-.site-theme .hover\:scale-\[1\.02\]:hover { transform: translate(2px, 2px); }
+/* Karten: weisse Fläche, feine Linie, ruhige Hover-Reaktion */
+.site-theme .bg-card.border { box-shadow: 0 1px 2px hsl(200 25% 10% / 0.05); }
+.site-theme a.bg-card.border:hover { border-color: hsl(var(--primary) / 0.55); }
+.site-theme .hover\:scale-\[1\.02\]:hover { transform: none; }
 
-/* Buttons: kräftig, kantig, mit Versatz */
-.site-theme a.bg-primary, .site-theme button.bg-primary,
-.site-theme a[class*="bg-primary "], .site-theme button[class*="bg-primary "] {
-  border: 1.5px solid hsl(var(--foreground));
-  box-shadow: 3px 3px 0 hsl(var(--foreground));
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  transition: transform .12s ease, box-shadow .12s ease;
-}
-.site-theme a.bg-primary:hover, .site-theme button.bg-primary:hover {
-  transform: translate(2px, 2px); box-shadow: 1px 1px 0 hsl(var(--foreground));
-}
-.site-theme .rounded-full:not(img):not([class*="w-"]):not([class*="h-"]) { border-radius: 2px; }
+/* Buttons: klare Flächen, ohne Spielereien */
+.site-theme a.bg-primary, .site-theme button.bg-primary { font-weight: 600; letter-spacing: 0; }
+.site-theme a.bg-primary:hover, .site-theme button.bg-primary:hover { background-color: hsl(156 100% 24%); }
 
-/* Wiederverwendbare Werkstatt-Bausteine */
+/* Wiederverwendbare Bausteine */
 .site-theme .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.72rem; font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: hsl(var(--foreground));
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: hsl(var(--primary));
 }
-.site-theme .eyebrow::before { content: "▮ "; color: hsl(var(--primary)); }
+.site-theme .eyebrow::before { content: ""; display: inline-block; width: 18px; height: 2px; background: hsl(var(--primary)); vertical-align: middle; margin-right: 10px; }
 .site-theme .mono { font-family: var(--font-mono); }
 .site-theme .tag {
-  display: inline-block; font-family: var(--font-mono); font-size: 0.7rem;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  border: 1.5px solid hsl(var(--foreground)); padding: 2px 8px; background: hsl(var(--card));
+  display: inline-block; font-size: 0.75rem; font-weight: 500; color: hsl(var(--muted-foreground));
+  border: 1px solid hsl(var(--border)); border-radius: 999px; padding: 3px 12px; background: hsl(var(--muted));
 }
-.site-theme .marker {  /* Textmarker-Hinterlegung für ein Schlüsselwort */
-  background: linear-gradient(transparent 58%, hsl(156 100% 45% / 0.85) 58%, hsl(156 100% 45% / 0.85) 92%, transparent 92%);
-  padding: 0 .1em;
-}
-.site-theme .dim-line {  /* Masslinie mit Pfeilen */
-  position: relative; height: 1px; background: hsl(var(--foreground));
-}
-.site-theme .dim-line::before, .site-theme .dim-line::after {
-  content: ""; position: absolute; top: -4px; width: 1px; height: 9px; background: hsl(var(--foreground));
-}
-.site-theme .dim-line::before { left: 0; } .site-theme .dim-line::after { right: 0; }
-.site-theme .reg-mark::before, .site-theme .reg-mark::after {  /* Passkreuz-Ecken */
-  content: ""; position: absolute; width: 14px; height: 14px; border: 1.5px solid hsl(var(--foreground));
-}
-.site-theme .reg-mark { position: relative; }
-.site-theme .reg-mark::before { top: -7px; left: -7px; border-right: 0; border-bottom: 0; }
-.site-theme .reg-mark::after { bottom: -7px; right: -7px; border-left: 0; border-top: 0; }
-
-.site-theme .bg-card.border .bg-card.border { box-shadow: none; }
-.site-theme .bg-card.border .bg-card.border:hover { transform: none; }

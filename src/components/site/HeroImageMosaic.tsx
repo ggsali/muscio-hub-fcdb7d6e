@@ -74,7 +74,7 @@ const Slot = ({
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
       {badge && (
-        <span className="absolute top-3 left-3 px-2 py-0.5 bg-card border-[1.5px] border-foreground font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-foreground">
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-background/90 border border-border text-[10px] font-semibold uppercase tracking-widest text-foreground">
           Echte Kundenteile
         </span>
       )}
@@ -98,7 +98,7 @@ const Slot = ({
       {image}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
       {badge && (
-        <span className="absolute top-3 left-3 px-2 py-0.5 bg-card border-[1.5px] border-foreground font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-foreground">
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-background/90 border border-border text-[10px] font-semibold uppercase tracking-widest text-foreground">
           Echte Kundenteile
         </span>
       )}
@@ -195,10 +195,10 @@ export const HeroImageMosaic = () => {
         eager
         badge
         direction={1}
-        className="col-span-2 aspect-[16/11] border-2 border-foreground"
+        className="col-span-2 rounded-lg aspect-[16/11]"
       />
-      <Slot shots={shots} offset={1} step={step} delay={0.12} direction={-1} className="aspect-square md:-mt-6 border-2 border-foreground" />
-      <Slot shots={shots} offset={2} step={step} delay={0.24} direction={1} className="aspect-square md:mt-4 border-2 border-foreground" />
+      <Slot shots={shots} offset={1} step={step} delay={0.12} direction={-1} className="rounded-lg aspect-square md:-mt-6" />
+      <Slot shots={shots} offset={2} step={step} delay={0.24} direction={1} className="rounded-lg aspect-square md:mt-4" />
     </motion.div>
   );
 };
