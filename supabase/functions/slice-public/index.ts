@@ -77,28 +77,42 @@ serve(async (req) => {
     const infill = String(form.get("infill") ?? "").trim();
     if (infill && !/^\d{1,3}$/.test(infill)) return json({ error: "Ungültiger Infill" }, 422);
 
-    const out = new FormData();
-    out.append("file", file, `upload${ext}`);
-    out.append("printer", "k1c");
-    out.append("material", "pla");
-    out.append("quality", quality);
-    if (infill) out.append("infill", infill);
-    out.append("supports", "true");
-    out.append("orient", "true");
-    out.append("reference", "public-calc");
+    const buildForm = (printer: string) => {
+      const out = new FormData();
+      out.append("file", file, `upload${ext}`);
+      out.append("printer", printer);
+      out.append("material", "pla");
+      out.append("quality", quality);
+      if (infill) out.append("infill", infill);
+      out.append("supports", "true");
+      out.append("orient", "true");
+      out.append("reference", "public-calc");
+      return out;
+    };
 
     await dbg(supabase, { ev: "slice-start", datei: file.name, bytes: file.size, quality, infill });
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
-    const res = await fetch(`${base}/slice`, {
-      method: "POST",
-      headers: { "X-API-Key": key },
-      body: out,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    const slice = (printer: string) =>
+      fetch(`${base}/slice`, {
+        method: "POST",
+        headers: { "X-API-Key": key },
+        body: buildForm(printer),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+    // Drucker-Profil: K1C bevorzugt, sonst K1 (falls das NAS K1C-Profile nicht kennt)
+    let res = await slice("k1c");
+    let used = "k1c";
+    if (res.status === 422) {
+      const peek = await res.clone().json().catch(() => ({}));
+      if (String(peek?.detail ?? "").includes("Unbekannter Drucker")) {
+        res = await slice("k1");
+        used = "k1";
+      }
+    }
     const payload = await res.json().catch(() => ({}));
-    await dbg(supabase, { ev: "nas-antwort", status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
+    await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
     if (!res.ok) return json({ ok: false, error: "Slicer-Fehler", status: res.status, detail: String(payload?.detail ?? "").slice(0, 300) });
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
     return json({ ok: true, stats: payload.stats ?? null });
