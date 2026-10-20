@@ -17,6 +17,7 @@ import { ReviewsSection } from "@/components/site/ReviewsSection";
 import { useReviewData } from "@/hooks/useReviewData";
 import Seo from "@/components/site/Seo";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
+import { PrintVisual, usePinnedProgress, StatementReveal, ServicesHorizontal, ProcessSticky, ScrollBar, Rise } from "@/components/site/HomeMotion";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
 import { toast } from "sonner";
 import { company, fullAddress, faqJsonLd } from "@/data/company";
@@ -107,7 +108,9 @@ const HeroBento = () => {
   const resin = useResinEnabled();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const [drag, setDrag] = useState(false);
+  const { progress, live } = usePinnedProgress(sectionRef);
 
   const handleFiles = (files: File[]) => {
     const accepted = files.filter((f) => isAcceptedModel(f.name));
@@ -119,94 +122,92 @@ const HeroBento = () => {
     navigate("/kalkulator-online");
   };
 
+  const word = (i: number) => ({
+    initial: { opacity: 0, y: 28 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.7, delay: 0.1 + i * 0.09, ease: [0.22, 1, 0.36, 1] as const },
+  });
+  const G = "text-[hsl(156_100%_46%)]";
+  const lnk = "text-background underline underline-offset-4 decoration-background/30 hover:decoration-[hsl(156_100%_46%)]";
+
   return (
-  <section className="relative bg-foreground text-background overflow-hidden">
-    <div
-      className="absolute inset-0 pointer-events-none opacity-[0.07]"
-      style={{
-        backgroundImage:
-          "linear-gradient(hsl(0 0% 100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100%) 1px, transparent 1px)",
-        backgroundSize: "56px 56px",
-      }}
-    />
-    <div className="container mx-auto px-4 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center pt-14 pb-16 md:pt-24 md:pb-28">
-      <div className="lg:col-span-7">
-        <p className="mb-6 flex items-center gap-3 text-[13px] font-semibold uppercase tracking-[0.14em] text-[hsl(156_100%_46%)]">
-          <span className="h-px w-8 bg-[hsl(156_100%_46%)]" />
-          Eschlikon TG · 3D-Druck in nur 48 Stunden*
-        </p>
+  <section ref={sectionRef} className="relative bg-foreground text-background" style={live ? { height: "270vh" } : undefined}>
+    <div className={live ? "sticky top-0 h-screen overflow-hidden" : "overflow-hidden"}>
+      <motion.div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "linear-gradient(hsl(0 0% 100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100%) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+          backgroundPositionY: useTransform(progress, [0, 1], ["0px", "-280px"]),
+        }}
+      />
+      <div className={`container mx-auto px-4 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center ${live ? "h-full pt-[150px] pb-8" : "pt-14 pb-16 md:pt-20"}`}>
+        <div className="lg:col-span-6">
+          <motion.p {...word(0)} className={`mb-5 flex items-center gap-3 text-[13px] font-semibold uppercase tracking-[0.14em] ${G}`}>
+            <span className="h-px w-8 bg-[hsl(156_100%_46%)]" />
+            Eschlikon TG · 3D-Druck in nur 48 Stunden*
+          </motion.p>
 
-        <h1 className="font-heading text-[clamp(2.4rem,5.6vw,4.9rem)] font-bold leading-[1.02] tracking-[-0.03em] text-background mb-6">
-          3D-Druckservice Schweiz – <span className="text-[hsl(156_100%_46%)]">{resin ? "FDM & SLA" : "FDM"}</span> ab&nbsp;1&nbsp;Stück.
-        </h1>
-
-        <p className="text-base md:text-lg text-background/75 max-w-2xl mb-3 leading-relaxed">
-          3DMuscio fertigt in Eschlikon TG Prototypen, Funktionsteile, Ersatzteile und Kleinserien
-          für Privatkunden, Entwickler, Startups und Unternehmen. Datei hochladen, Sofortpreis
-          sehen – schnelle Fertigung, hohe Qualität und zuverlässiger Versand in der ganzen Schweiz.
-        </p>
-        <p className="text-xs text-background/50 mb-6 max-w-2xl">
-          *Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab.
-        </p>
-        <p className="text-sm text-background/60 mb-8">
-          Verfahren:{" "}
-          <Link to="/leistungen/fdm-3d-druck" className="text-background underline underline-offset-4 decoration-background/30 hover:decoration-[hsl(156_100%_46%)]">FDM 3D-Druck</Link> für belastbare Teile ·{" "}
-          {resin && (<>
-          <Link to="/leistungen/sla-3d-druck" className="text-background underline underline-offset-4 decoration-background/30 hover:decoration-[hsl(156_100%_46%)]">SLA / Resin 3D-Druck</Link> für feine Details ·{" "}
-          </>)}
-          <Link to="/3d-druck-schweiz" className="text-background underline underline-offset-4 decoration-background/30 hover:decoration-[hsl(156_100%_46%)]">Überblick 3D-Druck Schweiz</Link>
-        </p>
-
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          accept=".stl,.step,.stp,.3mf,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*"
-          className="hidden"
-          onChange={(e) => { handleFiles(Array.from(e.target.files || [])); e.target.value = ""; }}
-        />
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-          onDragLeave={() => setDrag(false)}
-          onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(Array.from(e.dataTransfer.files || [])); }}
-          className={`group w-full max-w-2xl flex items-center gap-5 rounded-lg border-2 border-dashed px-6 py-6 text-left transition-colors ${drag ? "border-[hsl(156_100%_46%)] bg-[hsl(156_100%_46%)]/10" : "border-background/35 hover:border-[hsl(156_100%_46%)] hover:bg-background/5"}`}
-        >
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-[hsl(156_100%_46%)] text-foreground">
-            <Upload className="h-6 w-6" strokeWidth={2.25} />
-          </span>
-          <span className="min-w-0">
-            <span className="block font-heading text-lg font-semibold text-background">3D-Datei hier ablegen oder auswählen</span>
-            <span className="block text-sm text-background/60">STL · STEP · 3MF · OBJ – Preis in Sekunden, echt berechnet</span>
-          </span>
-          <ArrowRight className="ml-auto hidden h-5 w-5 shrink-0 text-background/50 transition-transform group-hover:translate-x-1 sm:block" />
-        </button>
-      </div>
-
-      {/* Beispiel-Angebot: zeigt, was der Kalkulator liefert */}
-      <div className="lg:col-span-5">
-        <div className="rounded-lg bg-background text-foreground p-6 md:p-7 shadow-2xl">
-          <div className="flex items-center justify-between mb-5">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Beispiel-Angebot</span>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"><CheckCircle className="h-3.5 w-3.5" /> Gesliced</span>
-          </div>
-          <p className="font-heading text-lg font-semibold mb-1">Gehäuse_Lite3.stl</p>
-          <p className="text-sm text-muted-foreground mb-5">PLA · Schwarz · Standard 0.20 mm</p>
-          <dl className="divide-y divide-border border-y border-border text-sm">
-            {[["Druckzeit", "15.2 h"], ["Filament", "425 g"], ["Schichten", "1180"], ["Support", "keiner nötig"]].map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between py-2.5">
-                <dt className="text-muted-foreground">{k}</dt>
-                <dd className="font-medium tabular-nums">{v}</dd>
-              </div>
+          <h1 className="font-heading text-[clamp(2.2rem,4.7vw,4.3rem)] font-bold leading-[1.03] tracking-[-0.03em] text-background mb-5">
+            {["3D-Druckservice", "Schweiz", "–"].map((w, i) => (
+              <motion.span key={w + i} {...word(i + 1)} className="mr-[0.25em] inline-block">{w}</motion.span>
             ))}
-          </dl>
-          <div className="flex items-end justify-between pt-5">
-            <span className="text-xs text-muted-foreground max-w-[10rem] leading-snug">Berechnet mit dem Slicer, nicht geschätzt.</span>
-            <span className="font-heading text-4xl font-bold tabular-nums">CHF 50.72</span>
-          </div>
+            <motion.span {...word(4)} className={`mr-[0.25em] inline-block ${G}`}>{resin ? "FDM & SLA" : "FDM"}</motion.span>
+            <motion.span {...word(5)} className="inline-block">ab&nbsp;1&nbsp;Stück.</motion.span>
+          </h1>
+
+          <motion.p {...word(6)} className="text-base md:text-[17px] text-background/75 max-w-xl mb-3 leading-relaxed">
+            3DMuscio fertigt in Eschlikon TG Prototypen, Funktionsteile, Ersatzteile und Kleinserien
+            für Privatkunden, Entwickler, Startups und Unternehmen. Datei hochladen, Sofortpreis
+            sehen – schnelle Fertigung, hohe Qualität und zuverlässiger Versand in der ganzen Schweiz.
+          </motion.p>
+          <p className="text-xs text-background/50 mb-4 max-w-xl">
+            *Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab.
+          </p>
+          <p className="text-sm text-background/60 mb-6">
+            Verfahren: <Link to="/leistungen/fdm-3d-druck" className={lnk}>FDM 3D-Druck</Link> für belastbare Teile ·{" "}
+            {resin && (<><Link to="/leistungen/sla-3d-druck" className={lnk}>SLA / Resin 3D-Druck</Link> für feine Details ·{" "}</>)}
+            <Link to="/3d-druck-schweiz" className={lnk}>Überblick 3D-Druck Schweiz</Link>
+          </p>
+
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept=".stl,.step,.stp,.3mf,.obj,model/stl,model/x.stl-ascii,model/x.stl-binary,application/sla,application/vnd.ms-pki.stl,application/octet-stream,*/*"
+            className="hidden"
+            onChange={(e) => { handleFiles(Array.from(e.target.files || [])); e.target.value = ""; }}
+          />
+          <motion.button
+            {...word(7)}
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+            onDragLeave={() => setDrag(false)}
+            onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(Array.from(e.dataTransfer.files || [])); }}
+            whileHover={{ scale: 1.012 }}
+            whileTap={{ scale: 0.99 }}
+            className={`group w-full max-w-xl flex items-center gap-5 rounded-lg border-2 border-dashed px-5 py-4 text-left transition-colors ${drag ? "border-[hsl(156_100%_46%)] bg-[hsl(156_100%_46%)]/10" : "border-background/35 hover:border-[hsl(156_100%_46%)] hover:bg-background/5"}`}
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[hsl(156_100%_46%)] text-foreground">
+              <Upload className="h-5 w-5" strokeWidth={2.25} />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-heading text-base md:text-lg font-semibold text-background">3D-Datei hier ablegen oder auswählen</span>
+              <span className="block text-sm text-background/60">STL · STEP · 3MF · OBJ – Preis in Sekunden, echt berechnet</span>
+            </span>
+            <ArrowRight className="ml-auto hidden h-5 w-5 shrink-0 text-background/50 transition-transform group-hover:translate-x-1 sm:block" />
+          </motion.button>
         </div>
-        <p className="mt-3 text-center text-xs text-background/45">Beispielwerte zur Veranschaulichung</p>
+
+        <div className="lg:col-span-6">
+          <PrintVisual progress={progress} />
+          <p className="mt-3 text-center text-xs text-background/45">
+            {live ? "Scrollen: das Teil wird Schicht für Schicht gedruckt und berechnet – Beispielwerte" : "So rechnet unser Kalkulator – Beispielwerte"}
+          </p>
+        </div>
       </div>
     </div>
   </section>
@@ -252,74 +253,26 @@ const StepNumber = ({ value, shouldReduceMotion }: { value: number; shouldReduce
   );
 };
 
-const HowItWorks = () => (
-  <section className="py-20 md:py-28 bg-muted">
-    <div className="container mx-auto px-4">
-      <div className="max-w-2xl mb-14">
-        <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.14em] text-primary">Ablauf</p>
-        <h2 className="font-heading text-3xl md:text-5xl font-bold tracking-tight">Vom Modell zum Bauteil in vier Schritten.</h2>
-      </div>
-      <ol className="grid grid-cols-1 md:grid-cols-4 gap-px bg-border border border-border rounded-lg overflow-hidden">
-        {steps.map((step, i) => (
-          <li key={step.title} className="bg-card p-7 md:p-8">
-            <span className="block font-heading text-5xl font-bold text-primary/25 tabular-nums mb-6">0{i + 1}</span>
-            <step.icon className="h-6 w-6 text-primary mb-4" strokeWidth={2} />
-            <h3 className="font-heading text-xl font-semibold mb-2">{step.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-          </li>
-        ))}
-      </ol>
-    </div>
-  </section>
-);
+const HowItWorks = () => <ProcessSticky steps={steps} />;
 
 /* ─── LEISTUNGEN ─── */
 const Services = () => {
   const resin = useResinEnabled();
   const items = [
-    { t: "FDM 3D-Druck", d: "Belastbare Funktionsteile, Gehäuse und Halterungen in PLA, PETG, ABS, ASA, TPU und Nylon.", to: "/leistungen/fdm-3d-druck", big: true },
+    { t: "FDM 3D-Druck", d: "Belastbare Funktionsteile, Gehäuse und Halterungen in PLA, PETG, ABS, ASA, TPU und Nylon.", to: "/leistungen/fdm-3d-druck" },
     ...(resin ? [{ t: "SLA Resin Druck", d: "Feine Details und glatte Oberflächen bis 0.025 mm.", to: "/leistungen/sla-3d-druck" }] : []),
-    { t: "Prototypen", d: "Vom ersten Entwurf zum greifbaren Muster.", to: "/leistungen/3d-druck-prototypen" },
-    { t: "Ersatzteile", d: "Nicht mehr lieferbar? Wir drucken es nach.", to: "/leistungen/3d-druck-ersatzteile" },
+    { t: "Prototypen", d: "Vom ersten Entwurf zum greifbaren Muster – schnell iterieren.", to: "/leistungen/3d-druck-prototypen" },
+    { t: "Ersatzteile", d: "Nicht mehr lieferbar? Wir drucken es nach, passgenau.", to: "/leistungen/3d-druck-ersatzteile" },
     { t: "Kleinserien", d: "Reproduzierbare Parameter, ab 5 Stück mit Mengenrabatt.", to: "/leistungen/3d-druck-kleinserien" },
   ];
-  return (
-    <section className="py-20 md:py-28">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-12">
-          <div className="max-w-2xl">
-            <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.14em] text-primary">Leistungen</p>
-            <h2 className="font-heading text-3xl md:text-5xl font-bold tracking-tight">Was wir für Sie fertigen.</h2>
-          </div>
-          <Link to="/leistungen" className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline underline-offset-4">
-            Alle Leistungen <ArrowUpRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {items.map((it, i) => (
-            <Link
-              key={it.t}
-              to={it.to}
-              className={`group relative flex flex-col justify-between rounded-lg border border-border bg-card p-7 no-underline transition-colors hover:border-primary ${it.big ? "lg:col-span-2 lg:row-span-2 min-h-[260px] bg-accent" : ""} ${!it.big && items.length === 4 && i === 3 ? "lg:col-span-2" : ""}`}>
-              <div>
-                <span className="mb-4 block font-heading text-sm font-semibold text-muted-foreground tabular-nums">0{i + 1}</span>
-                <h3 className={`font-heading font-semibold mb-2 ${it.big ? "text-3xl" : "text-xl"}`}>{it.t}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{it.d}</p>
-              </div>
-              <ArrowUpRight className="mt-6 h-5 w-5 text-muted-foreground transition-all group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <ServicesHorizontal items={items} />;
 };
 
 /* ─── WERKSTATT / PROJEKTE ─── */
 const Werkstatt = () => (
   <section className="py-20 md:py-28 bg-muted">
     <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-      <div className="lg:col-span-5">
+      <Rise className="lg:col-span-5">
         <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.14em] text-primary">Projekte</p>
         <h2 className="font-heading text-3xl md:text-5xl font-bold tracking-tight mb-5">Echte Teile aus Eschlikon.</h2>
         <p className="text-muted-foreground leading-relaxed mb-8 max-w-md">
@@ -328,8 +281,8 @@ const Werkstatt = () => (
         <Button asChild size="lg" className="rounded-md">
           <Link to="/projekte">Alle Projekte ansehen <ArrowRight className="ml-2 h-4 w-4" /></Link>
         </Button>
-      </div>
-      <div className="lg:col-span-7"><HeroImageMosaic /></div>
+      </Rise>
+      <Rise className="lg:col-span-7" delay={0.15}><HeroImageMosaic /></Rise>
     </div>
   </section>
 );
@@ -377,14 +330,14 @@ const MaterialsTeaser = () => {
 
       <div className="divide-y divide-background/15 border-y border-background/15">
         {materialTeaser.map((m, i) => (
-          <Link key={i} to="/materialien" className="group grid grid-cols-[1fr_auto] md:grid-cols-[14rem_1fr_auto] items-center gap-x-8 gap-y-1 py-5 no-underline text-background transition-colors hover:bg-background/5 md:px-3 -mx-0">
+          <Rise key={i} delay={i * 0.07}><Link to="/materialien" className="group grid grid-cols-[1fr_auto] md:grid-cols-[14rem_1fr_auto] items-center gap-x-8 gap-y-1 py-5 no-underline text-background transition-colors hover:bg-background/5 md:px-3 -mx-0">
             <div className="flex items-center gap-3">
               <h3 className="font-heading text-xl font-semibold">{m.name}</h3>
               {m.tag && <span className="text-[10px] font-semibold px-2 py-0.5 rounded border border-background/30 tracking-wider uppercase">{m.tag}</span>}
             </div>
             <p className="hidden md:block text-sm text-background/60">{m.desc}</p>
             <span className="font-heading font-semibold text-[hsl(156_100%_46%)] tabular-nums whitespace-nowrap">ab CHF {m.price}/g</span>
-          </Link>
+          </Link></Rise>
         ))}
       </div>
     </div>
@@ -447,7 +400,7 @@ const FAQ = () => {
 /* ─── CTA ─── */
 const CTA = () => (
   <section className="bg-primary text-primary-foreground">
-    <div className="container mx-auto px-4 py-16 md:py-24 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+    <Rise className="container mx-auto px-4 py-16 md:py-24 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
       <div className="max-w-2xl">
         <h2 className="font-heading text-3xl md:text-5xl font-bold tracking-tight mb-3">Bereit, dein Teil zu drucken?</h2>
         <p className="text-primary-foreground/80 text-lg">Sofort Preis berechnen – schnelle Fertigung bei geeigneten Aufträgen.</p>
@@ -455,7 +408,7 @@ const CTA = () => (
       <Button size="lg" asChild className="rounded-md bg-background text-foreground hover:bg-background/90 min-h-[56px] px-9 text-base font-semibold shrink-0">
         <Link to="/kalkulator-online">Jetzt starten <ArrowRight className="w-4 h-4 ml-2" /></Link>
       </Button>
-    </div>
+    </Rise>
   </section>
 );
 
@@ -607,8 +560,13 @@ const Index = () => {
       description="Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Fertigung bei geeigneten Aufträgen in 48 h möglich."
       path="/"
     />
+    <ScrollBar />
     <HeroBento />
     <StatsTrust />
+    <StatementReveal
+      eyebrow="Unser Anspruch"
+      text="Wir raten keine Preise. Jedes Teil wird auf unserer eigenen Slicing-Anlage in der Schweiz durchgerechnet, Schicht für Schicht, damit Zeit, Material und Preis stimmen."
+    />
     <Services />
     <HowItWorks />
     <MaterialsTeaser />

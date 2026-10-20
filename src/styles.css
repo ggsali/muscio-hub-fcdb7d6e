@@ -221,7 +221,7 @@
 
   /* Mobile-Fixes */
   html, body {
-    overflow-x: hidden;
+    overflow-x: clip; /* clip statt hidden: erzeugt keinen Scroll-Container, position: sticky bleibt funktionsfähig */
     max-width: 100vw;
   }
   input, textarea, select {
