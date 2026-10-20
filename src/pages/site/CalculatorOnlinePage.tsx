@@ -889,9 +889,10 @@ const CalculatorOnlinePage = () => {
         fileName: file.name,
         file,
         uploading: true,
-        materialId: defaultMatId,
-        color: defaultColor,
-        infill: 20,
+        // weitere Teile übernehmen Material, Farbe und Infill des zuletzt hinzugefügten Teils
+        materialId: p.length ? (p[p.length - 1].materialId || defaultMatId) : defaultMatId,
+        color: p.length ? (p[p.length - 1].color || defaultColor) : defaultColor,
+        infill: p.length ? (p[p.length - 1].infill ?? 20) : 20,
         quantity: 1,
         volumeCm3: 0,
         hasVolume: false,
