@@ -506,6 +506,9 @@ const CalculatorOnlinePage = () => {
 
   const isMobile = useIsMobile();
   const { slice } = useSlicerWorker();
+  // NAS-Schalter (aus dem Admin): an = Hinweise nur vom Orca-Slicer, die Server-Analyse zeigt keine eigenen Support-Meldungen
+  const [nasMode, setNasMode] = useState(false);
+  useEffect(() => { void nasOnlyMode().then(setNasMode); }, [parts.length]);
   /** Slice-Ergebnisse pro Teil, Schichthöhe und Infill – Material/Farbe/Menge lösen keinen neuen Slice aus */
   const sliceCache = useRef<Map<string, SlicerResult>>(new Map());
   const sliceKey = (partId: string, quick: boolean, q: { layerHeight: number; infill: number }) =>
@@ -2577,18 +2580,18 @@ const CalculatorOnlinePage = () => {
 
                             {p.kiAnalysis && !p.kiAnalysisLoading && (
                               <div className="mt-1 space-y-0.5">
-                                {p.kiAnalysis.orientierung !== "Original (Z oben)" && (
+                                {!(nasMode && p.slicerResult) && p.kiAnalysis.orientierung !== "Original (Z oben)" && (
                                   <p className="text-xs text-primary">
                                     🔄 {p.kiAnalysis.orientierung} – Support {p.kiAnalysis.orientierung_original_ueberhang}% → {p.kiAnalysis.orientierung_beste_ueberhang}%
                                   </p>
                                 )}
-                                {p.kiAnalysis.hat_support ? (
+                                {!(nasMode && p.slicerResult) && (p.kiAnalysis.hat_support ? (
                                   <p className="text-xs text-muted-foreground">
                                     ⚠️ Support nötig – Nachbearbeitung {CHF(p.kiAnalysis.support_nachbearbeitung)}
                                   </p>
                                 ) : (
                                   <p className="text-xs text-success">✅ Kein Support nötig</p>
-                                )}
+                                ))}
                                 <details className="mt-1">
                                   <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
                                     ℹ️ Wie wird der Preis berechnet?
