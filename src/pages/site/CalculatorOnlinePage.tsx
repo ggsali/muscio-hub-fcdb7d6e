@@ -1521,8 +1521,6 @@ const CalculatorOnlinePage = () => {
             menge: Math.max(1, Math.floor(Number(p.quantity) || 1)),
             material: materials.find(m => m.id === p.materialId)?.name || p.materialId || null,
             farbe: p.color || null,
-            layer_height: presetByInfill(p.infill).layerHeight,
-            infill: presetByInfill(p.infill).infill,
           })),
         ...partImageAttachments,
         ...refImages

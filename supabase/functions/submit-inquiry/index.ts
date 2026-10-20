@@ -176,25 +176,6 @@ Deno.serve(async (req) => {
       console.error("Admin-Mail Fehler:", mailErr);
     }
 
-    // Automatik: Modelle auf dem NAS slicen und dir eine Freigabe-Mail schicken.
-    // Die Funktion prüft selbst den Schalter "auto_slice_enabled" und antwortet sofort (202);
-    // Fehler hier blockieren die Anfrage nie.
-    try {
-      if (insertedInquiry?.id && attachments && attachments.length > 0) {
-        await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/inquiry-auto-slice`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-          },
-          body: JSON.stringify({ inquiry_id: insertedInquiry.id }),
-          signal: AbortSignal.timeout(8000),
-        });
-      }
-    } catch (autoErr) {
-      console.error("Auto-Slice Aufruf Fehler:", autoErr);
-    }
-
     // Ferienmodus: Auto-Antwort an den Kunden (Fehler hier nicht blockierend)
     let ferien: { bis: string } | null = null;
     try {
