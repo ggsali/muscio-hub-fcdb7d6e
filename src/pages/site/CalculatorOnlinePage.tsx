@@ -280,12 +280,11 @@ async function nasSliceEnabled(): Promise<boolean> {
   let on = false;
   try {
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
-      method: "POST",
+      method: "GET",
       headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
-      body: new FormData(),
       signal: AbortSignal.timeout(5000),
     });
-    on = res.status === 400;
+    on = res.ok && (await res.json().catch(() => ({})))?.enabled === true;
   } catch { on = false; }
   nasProbe = { at: Date.now(), on };
   return on;
