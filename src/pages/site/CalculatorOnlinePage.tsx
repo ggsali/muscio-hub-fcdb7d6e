@@ -508,6 +508,7 @@ const CalculatorOnlinePage = () => {
   const { slice } = useSlicerWorker();
   // NAS-Schalter (aus dem Admin): an = Hinweise nur vom Orca-Slicer, die Server-Analyse zeigt keine eigenen Support-Meldungen
   const [nasMode, setNasMode] = useState(false);
+  const [editMatFor, setEditMatFor] = useState<string | null>(null); // Übersicht: Teil, dessen Material gerade geändert wird
   useEffect(() => { void nasOnlyMode().then(setNasMode); }, [parts.length]);
   /** Slice-Ergebnisse pro Teil, Schichthöhe und Infill – Material/Farbe/Menge lösen keinen neuen Slice aus */
   const sliceCache = useRef<Map<string, SlicerResult>>(new Map());
@@ -2541,7 +2542,36 @@ const CalculatorOnlinePage = () => {
                             <p className="font-medium text-sm truncate">{p.fileName}</p>
                             <p className="text-xs text-muted-foreground mt-1">
                               {materials.find((m) => m.id === p.materialId)?.name} · {p.color || "Farbe n. A."} · {presetByInfill(p.infill).label}
+                              {" · "}
+                              <button type="button" className="text-primary underline underline-offset-2 hover:no-underline"
+                                onClick={() => setEditMatFor(editMatFor === p.id ? null : p.id)}>
+                                {editMatFor === p.id ? "Fertig" : "Material ändern"}
+                              </button>
                             </p>
+                            {editMatFor === p.id && (
+                              <div className="mt-1.5 flex flex-wrap gap-2">
+                                <select
+                                  className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                                  value={p.materialId}
+                                  onChange={(e) => {
+                                    const m = materials.find((x) => x.id === e.target.value);
+                                    update(p.id, { materialId: e.target.value, color: m?.farben?.[0] || "" });
+                                    refreshForMaterial([p.id], e.target.value);
+                                  }}
+                                >
+                                  {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                                {(materials.find((m) => m.id === p.materialId)?.farben?.length ?? 0) > 0 && (
+                                  <select
+                                    className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+                                    value={p.color}
+                                    onChange={(e) => update(p.id, { color: e.target.value })}
+                                  >
+                                    {materials.find((m) => m.id === p.materialId)?.farben.map((f) => <option key={f} value={f}>{f}</option>)}
+                                  </select>
+                                )}
+                              </div>
+                            )}
                             {p.hasVolume && (
                               <p className="text-xs text-muted-foreground mt-0.5">
                                 ~ Geschätzter Preis – finale Prüfung durch 3DMuscio · {calc.weight.toFixed(1)} g · Stückpreis {CHF(calc.unit)}
