@@ -2592,6 +2592,7 @@ const CalculatorOnlinePage = () => {
                                 ) : (
                                   <p className="text-xs text-success">✅ Kein Support nötig</p>
                                 ))}
+                                {!(nasMode && p.slicerResult) && (
                                 <details className="mt-1">
                                   <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
                                     ℹ️ Wie wird der Preis berechnet?
@@ -2601,6 +2602,7 @@ const CalculatorOnlinePage = () => {
                                     <p>{p.kiAnalysis.hinweis_fuer_kunden}</p>
                                   </div>
                                 </details>
+                                )}
                               </div>
                             )}
 
