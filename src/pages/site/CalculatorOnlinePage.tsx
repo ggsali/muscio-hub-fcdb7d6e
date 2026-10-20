@@ -273,6 +273,24 @@ const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => 
 };
 
 
+/** Prüft (5 Min. gecacht), ob die NAS-Schätzung eingeschaltet ist: ohne Datei antwortet die Funktion 503 (aus) oder 400 (an). */
+let nasProbe: { at: number; on: boolean } | null = null;
+async function nasSliceEnabled(): Promise<boolean> {
+  if (nasProbe && Date.now() - nasProbe.at < 5 * 60_000) return nasProbe.on;
+  let on = false;
+  try {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+      method: "POST",
+      headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+      body: new FormData(),
+      signal: AbortSignal.timeout(5000),
+    });
+    on = res.status === 400;
+  } catch { on = false; }
+  nasProbe = { at: Date.now(), on };
+  return on;
+}
+
 /** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
 async function sliceViaNas(file: File, layerHeight: number, infill: number): Promise<SlicerResult> {
   const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
@@ -876,6 +894,8 @@ const CalculatorOnlinePage = () => {
         const arrayBuffer = await file.arrayBuffer();
         setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
         runSlicer(id, true); // QuickSlice für schnellen Sofortpreis
+        // Ist die NAS-Schätzung eingeschaltet, kommt der genaue Preis sofort vom NAS (ersetzt den Sofortpreis)
+        void nasSliceEnabled().then((on) => { if (on) runSlicer(id, false); });
       } catch (e) {
         console.warn("STL konnte nicht gelesen werden", e);
         setParts((p) => p.map((x) => (x.id === id ? { ...x, slicerLoading: false } : x)));
