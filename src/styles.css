@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -316,3 +316,120 @@
   }
 }
 
+
+
+/* ==========================================================================
+ * ÖFFENTLICHE WEBSITE – Look "Werkstatt": Papier, Tinte, Konstruktionsraster,
+ * harte Kanten, Mono-Beschriftungen. Gilt nur innerhalb von .site-theme
+ * (Dashboard, Admin und Kalkulator-Logik bleiben unberührt).
+ * ========================================================================== */
+.site-theme {
+  --background: 42 28% 94%;          /* Zeichenpapier */
+  --foreground: 160 14% 7%;          /* Tinte */
+  --card: 42 40% 97.5%;
+  --card-foreground: 160 14% 7%;
+  --popover: 42 40% 97.5%;
+  --popover-foreground: 160 14% 7%;
+  --primary: 156 100% 36%;           /* bestehendes Markengrün, etwas tiefer für Lesbarkeit */
+  --primary-foreground: 160 14% 6%;  /* Tinte auf Grün */
+  --secondary: 18 100% 55%;
+  --muted: 42 22% 90%;
+  --muted-foreground: 160 8% 30%;
+  --accent: 42 30% 89%;
+  --accent-foreground: 160 14% 7%;
+  --border: 160 10% 16%;
+  --input: 160 10% 16%;
+  --ring: 156 100% 30%;
+  --radius: 0.1875rem;
+
+  --font-heading: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+  /* feines Konstruktionsraster hinter allem */
+  background-image:
+    linear-gradient(hsl(var(--foreground) / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--foreground) / 0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.site-theme ::selection { background: hsl(156 100% 45%); color: hsl(160 14% 6%); }
+
+/* Überschriften: schwer, eng, kompakt – Archivo in enger Breite */
+.site-theme h1, .site-theme h2, .site-theme h3, .site-theme .font-heading {
+  font-family: var(--font-heading);
+  font-stretch: 82%;
+  letter-spacing: -0.025em;
+}
+.site-theme h1 { font-weight: 800; line-height: 0.98; }
+.site-theme h2 { font-weight: 800; line-height: 1.02; }
+.site-theme h3 { font-weight: 700; }
+
+/* Dünne Linien wirken hier wie Zeichnungsstriche: Karten & Rahmen bekommen echte Tintenkante */
+.site-theme .border,
+.site-theme [class*="border-border"] { border-color: hsl(var(--border)); }
+.site-theme .border-border\/50, .site-theme .border-border\/60, .site-theme .border-border\/40 { border-color: hsl(var(--border) / 0.35); }
+
+/* Weiche KI-Schatten, Glow und Unschärfe-Blobs raus */
+.site-theme [class*="blur-3xl"], .site-theme [class*="blur-2xl"], .site-theme [class*="blur-[1"] { display: none !important; }
+.site-theme .glow-primary { box-shadow: none; }
+.site-theme .shadow-sm, .site-theme .shadow, .site-theme .shadow-md,
+.site-theme .shadow-lg, .site-theme .shadow-xl, .site-theme .shadow-2xl { box-shadow: none; }
+.site-theme [class*="shadow-[0_"] { box-shadow: none !important; }
+
+/* Karten: harter Versatzschatten statt weichem Schweben */
+.site-theme .bg-card.border { box-shadow: 4px 4px 0 hsl(var(--foreground) / 0.9); }
+.site-theme a.bg-card.border:hover, .site-theme button.bg-card.border:hover {
+  transform: translate(2px, 2px); box-shadow: 2px 2px 0 hsl(var(--foreground) / 0.9);
+}
+.site-theme .hover\:scale-\[1\.02\]:hover { transform: translate(2px, 2px); }
+
+/* Buttons: kräftig, kantig, mit Versatz */
+.site-theme a.bg-primary, .site-theme button.bg-primary,
+.site-theme a[class*="bg-primary "], .site-theme button[class*="bg-primary "] {
+  border: 1.5px solid hsl(var(--foreground));
+  box-shadow: 3px 3px 0 hsl(var(--foreground));
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.site-theme a.bg-primary:hover, .site-theme button.bg-primary:hover {
+  transform: translate(2px, 2px); box-shadow: 1px 1px 0 hsl(var(--foreground));
+}
+.site-theme .rounded-full:not(img):not([class*="w-"]):not([class*="h-"]) { border-radius: 2px; }
+
+/* Wiederverwendbare Werkstatt-Bausteine */
+.site-theme .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: hsl(var(--foreground));
+}
+.site-theme .eyebrow::before { content: "▮ "; color: hsl(var(--primary)); }
+.site-theme .mono { font-family: var(--font-mono); }
+.site-theme .tag {
+  display: inline-block; font-family: var(--font-mono); font-size: 0.7rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1.5px solid hsl(var(--foreground)); padding: 2px 8px; background: hsl(var(--card));
+}
+.site-theme .marker {  /* Textmarker-Hinterlegung für ein Schlüsselwort */
+  background: linear-gradient(transparent 58%, hsl(156 100% 45% / 0.85) 58%, hsl(156 100% 45% / 0.85) 92%, transparent 92%);
+  padding: 0 .1em;
+}
+.site-theme .dim-line {  /* Masslinie mit Pfeilen */
+  position: relative; height: 1px; background: hsl(var(--foreground));
+}
+.site-theme .dim-line::before, .site-theme .dim-line::after {
+  content: ""; position: absolute; top: -4px; width: 1px; height: 9px; background: hsl(var(--foreground));
+}
+.site-theme .dim-line::before { left: 0; } .site-theme .dim-line::after { right: 0; }
+.site-theme .reg-mark::before, .site-theme .reg-mark::after {  /* Passkreuz-Ecken */
+  content: ""; position: absolute; width: 14px; height: 14px; border: 1.5px solid hsl(var(--foreground));
+}
+.site-theme .reg-mark { position: relative; }
+.site-theme .reg-mark::before { top: -7px; left: -7px; border-right: 0; border-bottom: 0; }
+.site-theme .reg-mark::after { bottom: -7px; right: -7px; border-left: 0; border-top: 0; }
+
+.site-theme .bg-card.border .bg-card.border { box-shadow: none; }
+.site-theme .bg-card.border .bg-card.border:hover { transform: none; }

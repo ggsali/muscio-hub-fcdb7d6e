@@ -107,16 +107,6 @@ const HeroBento = () => {
   const resin = useResinEnabled();
   return (
   <section className="relative overflow-hidden pt-8 pb-6 md:pt-12">
-    <div
-      className="absolute inset-0 opacity-[0.03] pointer-events-none"
-      style={{
-        backgroundImage:
-          "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
-        backgroundSize: "60px 60px",
-      }}
-    />
-    <div className="absolute top-0 right-0 w-[600px] h-[500px] bg-primary/[0.07] rounded-full blur-[120px] pointer-events-none" />
-
     <div className="container mx-auto px-4 relative z-10 flex flex-col gap-4 md:gap-6">
       {/* Reihe 1 — Hero-Text + Bild-Moodboard */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
@@ -124,18 +114,18 @@ const HeroBento = () => {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="lg:col-span-7 bg-card border border-border rounded-3xl p-6 md:p-12 shadow-[0_4px_20px_-4px_hsl(var(--foreground)/0.05)] relative overflow-hidden"
+          className="lg:col-span-7 relative py-2 md:py-8 lg:pr-8"
         >
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse mr-2" />
-            3D-Druck in nur 48 Stunden*
-          </span>
+          <div className="flex flex-wrap items-center gap-3 mb-7">
+            <span className="tag">Eschlikon TG</span>
+            <span className="eyebrow">3D-Druck in nur 48 Stunden*</span>
+          </div>
 
-          <h1 className="font-heading text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.1] tracking-tight text-foreground mb-5">
-            3D-Druckservice Schweiz – <span className="text-primary">{resin ? "FDM & SLA" : "FDM"}</span> ab 1 Stück.
+          <h1 className="font-heading text-[clamp(2.5rem,7.2vw,5.6rem)] font-extrabold leading-[0.95] tracking-tight text-foreground mb-6">
+            3D-Druckservice Schweiz – <span className="marker">{resin ? "FDM & SLA" : "FDM"}</span> ab&nbsp;1&nbsp;Stück.
           </h1>
 
-          <p className="text-base md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed">
+          <p className="text-base md:text-lg text-foreground/80 max-w-xl mb-8 leading-relaxed border-l-[3px] border-foreground pl-4">
             3DMuscio fertigt in Eschlikon TG Prototypen, Funktionsteile, Ersatzteile und Kleinserien
             für Privatkunden, Entwickler, Startups und Unternehmen. Datei hochladen, Sofortpreis
             sehen – schnelle Fertigung, hohe Qualität und zuverlässiger Versand in der ganzen Schweiz.
@@ -164,7 +154,7 @@ const HeroBento = () => {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <HeroUploadButton />
-            <Button size="lg" variant="outline" asChild className="rounded-xl min-h-[52px] px-8 text-base">
+            <Button size="lg" variant="outline" asChild className="rounded-none border-2 border-foreground bg-card hover:bg-foreground hover:text-background min-h-[52px] px-8 text-base font-semibold">
               <Link to="/materialien">Materialien entdecken</Link>
             </Button>
           </div>
@@ -176,7 +166,7 @@ const HeroBento = () => {
           transition={{ duration: 0.6, delay: 0.12 }}
           className="lg:col-span-5 flex items-center"
         >
-          <div className="w-full md:pt-6">
+          <div className="w-full md:pt-6 reg-mark">
             <HeroImageMosaic />
           </div>
         </motion.div>
@@ -196,13 +186,13 @@ const StatsTrust = () => (
           <ScrollReveal key={s.label} delay={i * 0.06}>
             <Link
               to={s.link}
-              className="block bg-card border border-border rounded-2xl p-5 md:p-6 h-full cursor-pointer no-underline transition-all hover:scale-[1.02] hover:shadow-[0_8px_24px_-4px_hsl(var(--foreground)/0.12)] group"
+              className="block bg-card border border-border p-5 md:p-6 h-full cursor-pointer no-underline transition-all group"
             >
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3 transition-colors group-hover:bg-primary/20">
-                <s.icon className="w-4.5 h-4.5 text-primary" strokeWidth={2.5} />
+              <div className="w-9 h-9 border-[1.5px] border-foreground bg-primary flex items-center justify-center mb-3">
+                <s.icon className="w-4.5 h-4.5 text-foreground" strokeWidth={2.25} />
               </div>
               <div
-                className={`text-2xl md:text-3xl font-heading font-bold mb-1 ${s.accent ? "text-primary" : "text-foreground"}`}
+                className="text-3xl md:text-4xl font-heading font-extrabold mb-1 text-foreground"
               >
                 {typeof s.value === "string" ? (
                   s.value
@@ -210,7 +200,7 @@ const StatsTrust = () => (
                   <CountUp end={s.value} suffix={s.suffix} />
                 )}
               </div>
-              <div className="text-[11px] md:text-sm text-muted-foreground font-medium uppercase tracking-wider">
+              <div className="mono text-[10.5px] md:text-xs text-muted-foreground font-medium uppercase tracking-[0.12em]">
                 {s.label}
               </div>
             </Link>
@@ -271,7 +261,7 @@ const HowItWorks = () => {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.6 }}
           >
-            <p className="text-xs font-medium text-primary uppercase tracking-widest mb-3">Prozess</p>
+            <p className="mono text-xs font-medium text-primary uppercase tracking-[0.18em] mb-3">▮ Prozess</p>
             <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
               Vom Modell zum Bauteil.
             </h2>
@@ -303,11 +293,11 @@ const HowItWorks = () => {
                   whileHover={shouldReduceMotion ? undefined : { scale: 1.03 }}
                   className="relative z-10 group"
                 >
-                  <div className="bg-background/5 border border-background/10 rounded-2xl p-6 h-full backdrop-blur-sm transition-colors duration-300 group-hover:bg-background/10 group-hover:border-primary/40">
-                    <div className="text-6xl font-heading font-bold text-primary/80 mb-4 tabular-nums leading-none">
+                  <div className="border-2 border-background/70 p-6 h-full transition-colors duration-200 group-hover:border-primary group-hover:bg-background/5">
+                    <div className="text-6xl font-heading font-extrabold text-primary mb-4 tabular-nums leading-none">
                       <StepNumber value={i + 1} shouldReduceMotion={!!shouldReduceMotion} />
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-background/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors duration-300">
+                    <div className="w-10 h-10 border-[1.5px] border-background/70 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-foreground transition-colors duration-200">
                       <motion.div
                         className="text-background"
                         whileHover={shouldReduceMotion ? undefined : { rotate: 5 }}

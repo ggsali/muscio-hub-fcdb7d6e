@@ -148,8 +148,8 @@ export const Header = () => {
       <motion.header
         className={cn(
           "relative w-full transition-all duration-300",
-          "bg-background/85 backdrop-blur-xl border-b border-border/50",
-          scrolled || open ? "shadow-sm" : ""
+          "bg-background border-b-2 border-foreground",
+          scrolled || open ? "" : ""
         )}
         initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -159,19 +159,17 @@ export const Header = () => {
 
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
             <div className="relative">
-              <div className="absolute inset-0 rounded-lg bg-primary/40 blur-md scale-125 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
                 src={logo}
                 alt="3DMuscio 3D-Druck Schweiz"
-                className="relative h-8 w-8 rounded-lg object-contain ring-1 ring-white/20 group-hover:ring-primary/60 transition-all duration-300"
+                className="relative h-8 w-8 object-contain border-[1.5px] border-foreground"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-background animate-pulse" />
             </div>
             <div className="flex flex-col leading-none">
-              <span className="font-heading text-[14px] font-extrabold tracking-tight text-foreground">
+              <span className="font-heading text-[17px] font-extrabold tracking-tight text-foreground">
                 3D<span className="text-primary">Muscio</span>
               </span>
-              <span className="text-[8px] uppercase tracking-[0.2em] font-medium hidden sm:block text-muted-foreground">
+              <span className="mono text-[9px] uppercase tracking-[0.18em] font-medium hidden sm:block text-muted-foreground">
                 3D-Druck Schweiz
               </span>
             </div>
@@ -194,7 +192,7 @@ export const Header = () => {
                       size="sm"
                       asChild
                       className={cn(
-                        "rounded-full h-8 px-4 text-xs font-bold border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors",
+                        "rounded-none h-8 px-4 mono text-[11px] uppercase tracking-wider font-semibold border-[1.5px] border-foreground text-foreground bg-card hover:bg-primary hover:text-primary-foreground transition-colors",
                         active && "bg-primary text-primary-foreground"
                       )}
                     >
@@ -203,10 +201,10 @@ export const Header = () => {
                   ) : (
                     <NavEntry
                       to={l.path}
-                      className="relative px-4 py-1.5 text-sm font-medium transition-colors group flex items-center gap-1"
+                      className="relative px-3.5 py-1.5 mono text-[11.5px] uppercase tracking-wider font-medium transition-colors group flex items-center gap-1"
                     >
                       <motion.span
-                        className="absolute bottom-0 left-4 right-4 h-px bg-primary rounded-full"
+                        className="absolute -bottom-[7px] left-3 right-3 h-[3px] bg-primary"
                         initial={false}
                         animate={{ scaleX: active ? 1 : 0, opacity: active ? 1 : 0 }}
                         transition={{ duration: 0.2 }}
@@ -238,7 +236,7 @@ export const Header = () => {
                         transition={{ duration: 0.15 }}
                         className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 min-w-[200px]"
                       >
-                        <div className="bg-popover border border-border rounded-xl shadow-xl p-1.5">
+                        <div className="bg-popover border-[1.5px] border-foreground p-1" style={{ boxShadow: "4px 4px 0 hsl(var(--foreground))" }}>
                           {l.children!.map((c, idx) =>
                             c.divider ? (
                               <hr key={`divider-${idx}`} className="my-1 border-border" />
@@ -247,7 +245,7 @@ export const Header = () => {
                                 key={c.path}
                                 to={c.path}
                                 onClick={() => setOpenDropdown(null)}
-                                className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                className="block px-3 py-2 text-sm text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                               >
                                 {c.label}
                               </NavEntry>
@@ -265,7 +263,7 @@ export const Header = () => {
           <div className="hidden lg:flex items-center gap-2">
             <button
               onClick={() => setCartOpen(true)}
-              className="relative p-2 rounded-full hover:bg-accent transition-colors"
+              className="relative p-2 hover:bg-accent transition-colors"
               aria-label="Warenkorb"
             >
               <ShoppingCart className="w-4 h-4 text-foreground" />
@@ -277,17 +275,17 @@ export const Header = () => {
             </button>
             {session ? (
               <Button variant="ghost" size="sm" asChild
-                className="rounded-full h-8 px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
+                className="rounded-none h-8 px-3 mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-accent">
                 <Link to={accountTarget}><User className="w-3.5 h-3.5 mr-1" />{accountLabel}</Link>
               </Button>
             ) : (
               <Button variant="ghost" size="sm" asChild
-                className="rounded-full h-8 px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
+                className="rounded-none h-8 px-3 mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-accent">
                 <Link to="/anmelden">Anmelden</Link>
               </Button>
             )}
             <Button variant="default" size="sm" asChild
-              className="rounded-full h-8 px-4 text-xs font-bold shadow-[0_0_20px_hsl(156_100%_40%/0.3)] hover:shadow-[0_0_32px_hsl(156_100%_40%/0.5)] transition-shadow">
+              className="rounded-none h-8 px-4 mono text-[11px] uppercase tracking-wider font-semibold">
               <Link to="/kalkulator-online">
                 <Printer className="w-3.5 h-3.5 mr-1.5" />
                 Preis berechnen
@@ -340,7 +338,7 @@ export const Header = () => {
         <AnimatePresence>
           {open && (
             <motion.div
-              className="lg:hidden absolute left-0 right-0 top-full z-40 bg-foreground/95 backdrop-blur-xl border-b border-white/10 shadow-2xl max-h-[calc(100vh-7rem)] overflow-y-auto"
+              className="lg:hidden absolute left-0 right-0 top-full z-40 bg-foreground border-b-2 border-foreground max-h-[calc(100vh-7rem)] overflow-y-auto"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
@@ -355,7 +353,7 @@ export const Header = () => {
                         to={l.path}
                         onClick={() => setOpen(false)}
                         className={cn(
-                          "flex items-center justify-between px-4 py-3 min-h-[48px] rounded-lg text-sm font-medium transition-colors",
+                          "flex items-center justify-between px-4 py-3 min-h-[48px] mono uppercase tracking-wider text-[13px] font-medium transition-colors",
                           active
                             ? "text-white bg-white/10 font-semibold"
                             : "text-white/55 hover:text-white hover:bg-white/10"
@@ -368,7 +366,7 @@ export const Header = () => {
                   );
                 })}
                 <div className="mt-2 pt-2 border-t border-white/10">
-                  <Button variant="default" className="w-full rounded-lg" asChild>
+                  <Button variant="default" className="w-full rounded-none mono uppercase tracking-wider" asChild>
                     <Link to="/kalkulator-online" onClick={() => setOpen(false)}>
                       <Printer className="w-4 h-4 mr-2" />
                       Preis berechnen
