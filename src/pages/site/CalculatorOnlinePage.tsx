@@ -274,10 +274,16 @@ const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => 
 
 
 /** Prüft (5 Min. gecacht), ob die NAS-Schätzung eingeschaltet ist: die Funktion antwortet auf probe=1 mit enabled true/false. */
-let nasProbe: { at: number; on: boolean } | null = null;
+let nasProbe: { at: number; on: boolean; only: boolean } | null = null;
+/** true = Browser-Slicer im Admin ausgeschaltet, nur NAS verwenden */
+async function nasOnlyMode(): Promise<boolean> {
+  await nasSliceEnabled();
+  return !!nasProbe?.on && !!nasProbe?.only;
+}
 async function nasSliceEnabled(): Promise<boolean> {
   if (nasProbe && Date.now() - nasProbe.at < 5 * 60_000) return nasProbe.on;
   let on = false;
+  let only = false;
   try {
     const probe = new FormData();
     probe.append("probe", "1");
@@ -287,9 +293,11 @@ async function nasSliceEnabled(): Promise<boolean> {
       body: probe,
       signal: AbortSignal.timeout(5000),
     });
-    on = res.ok && (await res.json().catch(() => ({})))?.enabled === true;
+    const j = res.ok ? await res.json().catch(() => ({})) : {};
+    on = j?.enabled === true;
+    only = j?.nasOnly === true;
   } catch { on = false; }
-  nasProbe = { at: Date.now(), on };
+  nasProbe = { at: Date.now(), on, only };
   return on;
 }
 
@@ -762,6 +770,8 @@ const CalculatorOnlinePage = () => {
   const runSlicerNow = useCallback(async (partId: string, quickSlice = false) => {
     const part = parts.find((p) => p.id === partId);
     if (!part?.stlArrayBuffer || isStepFile(part.fileName)) return;
+    const nasOnly = await nasOnlyMode();
+    if (nasOnly && quickSlice) return; // kein Browser-Sofortpreis, NAS rechnet direkt
 
     const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
 
@@ -793,6 +803,7 @@ const CalculatorOnlinePage = () => {
           console.info("[Slicer] NAS nicht genutzt, Browser-Slicer als Fallback:", nasErr);
         }
       }
+      if (!result && nasOnly) throw new Error("NAS_ONLY");
       if (!result) result = await slice(part.stlArrayBuffer.slice(0), {
         material: mat?.materialType || mat?.name.split(" ")[0] || "PLA",
         layerHeight: quality.layerHeight,
@@ -814,7 +825,7 @@ const CalculatorOnlinePage = () => {
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, slicerLoading: false, slicerError: "Slicer nicht verfügbar – Schätzung wird verwendet" }
+        ? { ...p, slicerLoading: false, slicerError: err?.message === "NAS_ONLY" ? "Genaue Berechnung momentan nicht möglich – Schätzung wird verwendet" : "Slicer nicht verfügbar – Schätzung wird verwendet" }
         : p));
     }
   }, [parts, materials, qualityPresets, qualityKey, slice]);
