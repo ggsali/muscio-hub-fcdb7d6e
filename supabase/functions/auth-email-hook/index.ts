@@ -210,7 +210,7 @@ async function handleAuthHook(req: Request): Promise<Response> {
   try {
     const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: userEmail,
       subject: EMAIL_SUBJECTS[emailType] || 'Benachrichtigung',
       html,
