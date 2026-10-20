@@ -51,3 +51,5 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.inquiry-auto-slice]
     verify_jwt = false
+  [functions.slice-public]
+    verify_jwt = false

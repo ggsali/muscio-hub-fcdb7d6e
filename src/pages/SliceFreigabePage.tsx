@@ -52,6 +52,7 @@ export default function SliceFreigabePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [enabled, setEnabled] = useState(false);
+  const [publicSlice, setPublicSlice] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -67,6 +68,8 @@ export default function SliceFreigabePage() {
     else setJobs((data ?? []) as SliceJob[]);
     const { data: flag } = await db.from("settings").select("value").eq("key", "auto_slice_enabled").maybeSingle();
     setEnabled(flag?.value === "true");
+    const { data: pflag } = await db.from("settings").select("value").eq("key", "public_nas_slice_enabled").maybeSingle();
+    setPublicSlice(pflag?.value === "true");
     setLoading(false);
   }, []);
 
@@ -84,6 +87,19 @@ export default function SliceFreigabePage() {
       toast.error("Schalter konnte nicht gespeichert werden");
     } else {
       toast.success(on ? "Automatik ist eingeschaltet" : "Automatik ist ausgeschaltet");
+    }
+  };
+
+  const togglePublic = async (on: boolean) => {
+    setPublicSlice(on);
+    const { error: err } = await (supabase as any)
+      .from("settings")
+      .upsert({ key: "public_nas_slice_enabled", value: on ? "true" : "false" }, { onConflict: "key" });
+    if (err) {
+      setPublicSlice(!on);
+      toast.error("Schalter konnte nicht gespeichert werden");
+    } else {
+      toast.success(on ? "Online-Kalkulator slict jetzt über den NAS" : "Online-Kalkulator nutzt wieder den Browser-Slicer");
     }
   };
 
@@ -141,6 +157,10 @@ export default function SliceFreigabePage() {
           </Button>
         </div>
       </div>
+      <label className="flex items-center gap-2 text-sm">
+        <Switch checked={publicSlice} onCheckedChange={togglePublic} />
+        Online-Kalkulator: Schätzung über den NAS-Slicer (bei Ausfall automatisch Browser-Slicer)
+      </label>
       <p className="text-sm text-muted-foreground">
         Neue Anfragen mit Modelldateien werden automatisch auf dem NAS geslict. Du bekommst eine Mail, prüfst hier das Ergebnis und gibst frei:
         Dann kommt das Teil in die SimplyPrint-Queue des gewählten Druckers.

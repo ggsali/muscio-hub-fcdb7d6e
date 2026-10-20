@@ -272,6 +272,33 @@ const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => 
   return { ...r, filamentGrams: Math.round(((r.filamentGrams * density) / r.density) * 10) / 10, density };
 };
 
+
+/** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
+async function sliceViaNas(file: File, layerHeight: number, infill: number): Promise<SlicerResult> {
+  const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
+  const body = new FormData();
+  body.append("file", file);
+  body.append("quality", quality.toFixed(2));
+  body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+    method: "POST",
+    headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+    body,
+    signal: AbortSignal.timeout(110_000),
+  });
+  const json = await res.json().catch(() => ({}));
+  const st = json?.stats;
+  if (!res.ok || !st || !(st.filament_g > 0) || !(st.print_time_s > 0)) throw new Error("NAS-Slicer nicht verfügbar");
+  return {
+    printTimeMinutes: st.print_time_s / 60,
+    filamentGrams: st.filament_g,
+    filamentMm: st.filament_mm ?? 0,
+    density: 1.25,
+    layers: st.layers ?? 0,
+    hasSupport: !!st.has_support,
+  } as SlicerResult;
+}
+
 const STEPS = ["Datei", "Bilder", "Material", "Farbe", "Qualität", "Übersicht"];
 
 /** Anonymes Funnel-Tracking für den Kalkulator */
@@ -737,7 +764,15 @@ const CalculatorOnlinePage = () => {
       : p));
 
     try {
-      const result = await slice(part.stlArrayBuffer.slice(0), {
+      let result: SlicerResult | null = null;
+      if (!quickSlice && part.file) {
+        try {
+          result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill), mat?.density);
+        } catch (nasErr) {
+          console.info("[Slicer] NAS nicht genutzt, Browser-Slicer als Fallback:", nasErr);
+        }
+      }
+      if (!result) result = await slice(part.stlArrayBuffer.slice(0), {
         material: mat?.materialType || mat?.name.split(" ")[0] || "PLA",
         layerHeight: quality.layerHeight,
         infill: quality.infill,
