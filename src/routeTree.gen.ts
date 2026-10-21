@@ -76,6 +76,7 @@ import { Route as AdminSliceFreigabeRouteImport } from './routes/admin/slice-fre
 import { Route as AdminSlicerTestRouteImport } from './routes/admin/slicer-test'
 import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
+import { Route as AdminTodosRouteImport } from './routes/admin/todos'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
 import { Route as AuftraegeIdRouteImport } from './routes/auftraege.$id'
@@ -475,6 +476,11 @@ const AdminTeileRoute = AdminTeileRouteImport.update({
   path: '/teile',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTodosRoute = AdminTodosRouteImport.update({
+  id: '/todos',
+  path: '/todos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin_/login',
   path: '/admin/login',
@@ -872,6 +878,7 @@ export interface FileRoutesByFullPath {
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
+  '/admin/todos': typeof AdminTodosRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1000,6 +1007,7 @@ export interface FileRoutesByTo {
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
+  '/admin/todos': typeof AdminTodosRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1134,6 +1142,7 @@ export interface FileRoutesById {
   '/admin/slicer-test': typeof AdminSlicerTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
+  '/admin/todos': typeof AdminTodosRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1269,6 +1278,7 @@ export interface FileRouteTypes {
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
+    | '/admin/todos'
     | '/admin/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -1397,6 +1407,7 @@ export interface FileRouteTypes {
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
+    | '/admin/todos'
     | '/admin/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -1530,6 +1541,7 @@ export interface FileRouteTypes {
     | '/admin/slicer-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
+    | '/admin/todos'
     | '/admin_/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -2109,6 +2121,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTeileRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/todos': {
+      id: '/admin/todos'
+      path: '/todos'
+      fullPath: '/admin/todos'
+      preLoaderRoute: typeof AdminTodosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin_/login': {
       id: '/admin_/login'
       path: '/admin/login'
@@ -2680,6 +2699,7 @@ interface AdminRouteChildren {
   AdminSlicerTestRoute: typeof AdminSlicerTestRoute
   AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
   AdminTeileRoute: typeof AdminTeileRoute
+  AdminTodosRoute: typeof AdminTodosRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
   AdminKundenIdRoute: typeof AdminKundenIdRoute
@@ -2715,6 +2735,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSlicerTestRoute: AdminSlicerTestRoute,
   AdminStadtmodelleRoute: AdminStadtmodelleRoute,
   AdminTeileRoute: AdminTeileRoute,
+  AdminTodosRoute: AdminTodosRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,
   AdminKundenIdRoute: AdminKundenIdRoute,

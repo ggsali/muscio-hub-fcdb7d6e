@@ -37,6 +37,7 @@ const PAGES: { label: string; to: string; area?: Area; keys: string }[] = [
   { label: "Newsletter", to: "/admin/newsletter", keys: "mailing email kampagne" },
   { label: "Gutscheine", to: "/admin/gutscheine", keys: "rabatt code voucher" },
   { label: "Bewertungen", to: "/admin/bewertungen", keys: "reviews sterne rezension" },
+  { label: "To-dos", to: "/admin/todos", keys: "aufgaben todo liste erledigen" },
   { label: "Kalender", to: "/admin/kalender", keys: "termine planung" },
   { label: "Einstellungen", to: "/admin/einstellungen", keys: "settings konfiguration preset branding resin" },
   { label: "Website-Übersicht", to: "/website-admin", keys: "website admin" },
