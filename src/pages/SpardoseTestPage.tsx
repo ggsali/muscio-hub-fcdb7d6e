@@ -32,7 +32,7 @@ function axisLabel(text: string, color: string) {
   g.textBaseline = "middle";
   g.fillText(text, 32, 34);
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
-  sp.scale.set(0.5, 0.5, 0.5);
+  sp.scale.set(0.4, 0.4, 0.4);
   return sp;
 }
 
@@ -82,9 +82,9 @@ function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: s
 
     // Orientierungs-Würfel-Ersatz: Achsenkreuz unten rechts (X rot = Breite, Y grün = Höhe, Z blau = Tiefe)
     const gScene = new THREE.Scene();
-    gScene.add(new THREE.AxesHelper(1));
+    gScene.add(new THREE.AxesHelper(0.75));
     const lx = axisLabel("X", "#ef4444"), ly = axisLabel("Y", "#16a34a"), lz = axisLabel("Z", "#2563eb");
-    lx.position.set(1.3, 0, 0); ly.position.set(0, 1.3, 0); lz.position.set(0, 0, 1.3);
+    lx.position.set(0.98, 0, 0); ly.position.set(0, 0.98, 0); lz.position.set(0, 0, 0.98);
     gScene.add(lx, ly, lz);
     const gCam = new THREE.PerspectiveCamera(35, 1, 0.1, 20);
 
@@ -102,7 +102,7 @@ function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: s
       renderer.setScissorTest(true);
       renderer.setViewport(w - GS - 8, 8, GS, GS);
       renderer.setScissor(w - GS - 8, 8, GS, GS);
-      gCam.position.copy(cam.position).sub(controls.target).setLength(4.2);
+      gCam.position.copy(cam.position).sub(controls.target).setLength(3.8);
       gCam.quaternion.copy(cam.quaternion);
       renderer.render(gScene, gCam);
       renderer.setScissorTest(false);
