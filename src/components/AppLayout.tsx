@@ -26,6 +26,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/admin/scan", icon: <ScanLine className={ic} />, label: "Scanner", badge: "NEU" },
       { to: "/admin", icon: <LayoutDashboard className={ic} />, label: "Dashboard", exact: true },
+      { to: "/admin/todos", icon: <ListTodo className={ic} />, label: "To-dos" },
     ],
   },
   {
@@ -83,7 +84,6 @@ const navGroups: NavGroup[] = [
   {
     label: "System",
     items: [
-      { to: "/admin/todos", icon: <ListTodo className={ic} />, label: "To-dos" },
       { to: "/admin/kalender", icon: <CalendarDays className={ic} />, label: "Kalender" },
       { to: "/admin/einstellungen", icon: <Settings className={ic} />, label: "Einstellungen" },
     ],

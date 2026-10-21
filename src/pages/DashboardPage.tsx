@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { useNavigate } from "@/lib/router-compat";
 import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus, ChevronRight, ShoppingBag, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TodosWidget } from "@/components/TodosWidget";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -200,6 +201,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
+
+      {/* To-dos */}
+      <TodosWidget />
 
       {/* KPI Cards – 2 Spalten auf Mobile, 5 auf Desktop */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4">
