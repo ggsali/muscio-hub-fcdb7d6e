@@ -147,6 +147,36 @@ export type Database = {
         }
         Relationships: []
       }
+      advent_tuerchen: {
+        Row: {
+          code: string | null
+          jahr: number
+          tag: number
+          text: string | null
+          titel: string
+          typ: string | null
+          wert: number | null
+        }
+        Insert: {
+          code?: string | null
+          jahr: number
+          tag: number
+          text?: string | null
+          titel: string
+          typ?: string | null
+          wert?: number | null
+        }
+        Update: {
+          code?: string | null
+          jahr?: number
+          tag?: number
+          text?: string | null
+          titel?: string
+          typ?: string | null
+          wert?: number | null
+        }
+        Relationships: []
+      }
       ausgaben: {
         Row: {
           beleg_url: string | null
