@@ -177,6 +177,30 @@ export type Database = {
         }
         Relationships: []
       }
+      advent_versand_log: {
+        Row: {
+          art: string
+          email: string
+          gesendet_am: string
+          jahr: number
+          tag: number
+        }
+        Insert: {
+          art: string
+          email: string
+          gesendet_am?: string
+          jahr: number
+          tag: number
+        }
+        Update: {
+          art?: string
+          email?: string
+          gesendet_am?: string
+          jahr?: number
+          tag?: number
+        }
+        Relationships: []
+      }
       ausgaben: {
         Row: {
           beleg_url: string | null
