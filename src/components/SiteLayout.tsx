@@ -1,6 +1,7 @@
 import { Outlet } from "@/lib/router-compat";
 import { Header } from "./site/Header";
 import { Footer } from "./site/Footer";
+import { CursorSpotlight } from "./site/CursorSpotlight";
 import { CanonicalTag } from "./site/CanonicalTag";
 import { CartDrawer } from "./site/CartDrawer";
 import { ShopPromoBanner } from "./site/ShopPromoBanner";
@@ -17,6 +18,7 @@ export default function SiteLayout() {
     <CartProvider>
       <div className="site-theme min-h-screen flex flex-col">
         <PaymentTestModeBanner />
+        <CursorSpotlight />
         <CanonicalTag />
         {/* Sticky stack: Banner sits above the header — they no longer overlap */}
         <div className="sticky top-0 z-50">

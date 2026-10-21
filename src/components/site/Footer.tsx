@@ -67,9 +67,9 @@ export const Footer = () => {
               <img
                 src={logo}
                 alt="3DMuscio 3D-Druck Schweiz"
-                className="h-10 w-10 object-contain rounded-md"
+                className="h-10 w-10 object-contain rounded-xl shadow-md ring-1 ring-border group-hover:ring-primary/40 transition-all duration-300"
               />
-              
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary border-2 border-background" />
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-heading text-base font-extrabold tracking-tight text-foreground">
@@ -87,7 +87,7 @@ export const Footer = () => {
           </p>
 
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-muted/40 text-xs text-muted-foreground">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             Aufträge offen — schnelle Fertigung
           </div>
         </motion.div>

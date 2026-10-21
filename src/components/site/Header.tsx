@@ -148,8 +148,8 @@ export const Header = () => {
       <motion.header
         className={cn(
           "relative w-full transition-all duration-300",
-          "bg-background border-b border-border",
-          scrolled || open ? "shadow-[0_1px_0_hsl(var(--border))]" : ""
+          "bg-background/85 backdrop-blur-xl border-b border-border/50",
+          scrolled || open ? "shadow-sm" : ""
         )}
         initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -159,11 +159,13 @@ export const Header = () => {
 
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
             <div className="relative">
+              <div className="absolute inset-0 rounded-lg bg-primary/40 blur-md scale-125 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <img
                 src={logo}
                 alt="3DMuscio 3D-Druck Schweiz"
-                className="relative h-8 w-8 rounded-md object-contain"
+                className="relative h-8 w-8 rounded-lg object-contain ring-1 ring-white/20 group-hover:ring-primary/60 transition-all duration-300"
               />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-background animate-pulse" />
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-heading text-[14px] font-extrabold tracking-tight text-foreground">
@@ -192,7 +194,7 @@ export const Header = () => {
                       size="sm"
                       asChild
                       className={cn(
-                        "rounded-md h-8 px-4 text-xs font-semibold border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors",
+                        "rounded-full h-8 px-4 text-xs font-bold border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors",
                         active && "bg-primary text-primary-foreground"
                       )}
                     >
@@ -204,7 +206,7 @@ export const Header = () => {
                       className="relative px-4 py-1.5 text-sm font-medium transition-colors group flex items-center gap-1"
                     >
                       <motion.span
-                        className="absolute -bottom-[9px] left-4 right-4 h-0.5 bg-primary"
+                        className="absolute bottom-0 left-4 right-4 h-px bg-primary rounded-full"
                         initial={false}
                         animate={{ scaleX: active ? 1 : 0, opacity: active ? 1 : 0 }}
                         transition={{ duration: 0.2 }}
@@ -236,7 +238,7 @@ export const Header = () => {
                         transition={{ duration: 0.15 }}
                         className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 min-w-[200px]"
                       >
-                        <div className="bg-popover border border-border rounded-lg shadow-xl p-1.5">
+                        <div className="bg-popover border border-border rounded-xl shadow-xl p-1.5">
                           {l.children!.map((c, idx) =>
                             c.divider ? (
                               <hr key={`divider-${idx}`} className="my-1 border-border" />
@@ -285,7 +287,7 @@ export const Header = () => {
               </Button>
             )}
             <Button variant="default" size="sm" asChild
-              className="rounded-md h-8 px-4 text-xs font-semibold">
+              className="rounded-full h-8 px-4 text-xs font-bold shadow-[0_0_20px_hsl(156_100%_40%/0.3)] hover:shadow-[0_0_32px_hsl(156_100%_40%/0.5)] transition-shadow">
               <Link to="/kalkulator-online">
                 <Printer className="w-3.5 h-3.5 mr-1.5" />
                 Preis berechnen
