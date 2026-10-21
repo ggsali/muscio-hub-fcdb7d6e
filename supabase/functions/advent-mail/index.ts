@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
         const { data: done } = await admin.from("advent_versand_log").select("email").eq("jahr", jahr).eq("tag", tag).eq("art", "daily");
         const already = new Set((done ?? []).map((d: { email: string }) => d.email.toLowerCase()));
         const { data: customers } = await admin
-          .from("customers").select("vorname,name,email").eq("newsletter_aktiv", true).not("email", "is", null);
+          .from("customers").select("vorname,name,email").eq("newsletter_aktiv", true).eq("advent_mail_aktiv", true).not("email", "is", null);
         const seen = new Set<string>();
         for (const c of customers ?? []) {
           const em = String(c.email ?? "").trim().toLowerCase();

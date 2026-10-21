@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Wand2 } from "lucide-react";
+import { Save, Wand2, Users } from "lucide-react";
 
 type Row = { tag: number; titel: string; text: string; typ: string; wert: string };
 const TYPEN = [
@@ -52,6 +52,82 @@ const suggestion = (): Row[] =>
 
 /** Mindestbestellwert für Betrags-Rabatte: ca. das Vierfache des Rabatts. */
 const minOrder = (r: Row) => (r.typ === "betrag" ? Math.round((Number(r.wert) || 0) * 4) : 0);
+
+type Kunde = { id: string; vorname: string | null; name: string | null; email: string | null; newsletter_aktiv: boolean | null; advent_mail_aktiv: boolean | null };
+
+/** Empfängerliste: einzelne Kunden von der täglichen Türchen-Mail ausschliessen. */
+function EmpfaengerAuswahl() {
+  const { toast } = useToast();
+  const [offen, setOffen] = useState(false);
+  const [kunden, setKunden] = useState<Kunde[]>([]);
+  const [suche, setSuche] = useState("");
+  const [laden, setLaden] = useState(false);
+
+  useEffect(() => {
+    if (!offen || kunden.length) return;
+    setLaden(true);
+    (async () => {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id,vorname,name,email,newsletter_aktiv,advent_mail_aktiv" as any)
+        .not("email", "is", null)
+        .order("name");
+      setLaden(false);
+      if (error) { toast({ title: "Kunden konnten nicht geladen werden", description: error.message, variant: "destructive" }); return; }
+      setKunden(((data as unknown) as Kunde[]) ?? []);
+    })();
+  }, [offen]);
+
+  const set = async (ids: string[], aktiv: boolean) => {
+    setKunden((ks) => ks.map((k) => (ids.includes(k.id) ? { ...k, advent_mail_aktiv: aktiv } : k)));
+    const { error } = await supabase.from("customers").update({ advent_mail_aktiv: aktiv } as any).in("id", ids);
+    if (error) toast({ title: "Speichern fehlgeschlagen", description: error.message, variant: "destructive" });
+  };
+
+  const q = suche.trim().toLowerCase();
+  const gefiltert = kunden.filter((k) => !q || `${k.vorname ?? ""} ${k.name ?? ""} ${k.email ?? ""}`.toLowerCase().includes(q));
+  const empfaenger = kunden.filter((k) => k.newsletter_aktiv !== false && k.advent_mail_aktiv !== false).length;
+  const ausgeschlossen = kunden.filter((k) => k.newsletter_aktiv !== false && k.advent_mail_aktiv === false).length;
+  const filterIds = gefiltert.filter((k) => k.newsletter_aktiv !== false).map((k) => k.id);
+
+  return (
+    <div className="space-y-2 rounded-md border border-border p-3">
+      <button type="button" onClick={() => setOffen((o) => !o)} className="flex w-full items-center gap-2 text-left text-sm font-medium">
+        <Users className="h-4 w-4" /> Empfänger der Türchen-Mail {offen ? "▾" : "▸"}
+        {kunden.length > 0 && <span className="ml-auto text-xs font-normal text-muted-foreground">{empfaenger} Empfänger, {ausgeschlossen} ausgeschlossen</span>}
+      </button>
+      {offen && (
+        <>
+          <p className="text-xs text-muted-foreground">
+            Haken = bekommt die tägliche Türchen-Mail. Ohne Haken wird der Kunde ausgeschlossen (nur für den Adventskalender, sein Newsletter bleibt unberührt).
+            Kunden, die den Newsletter abgemeldet haben, bekommen sowieso nichts.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input value={suche} onChange={(e) => setSuche(e.target.value)} placeholder="Suchen (Name oder E-Mail)" className="w-64 bg-input border-border" />
+            <Button type="button" size="sm" variant="outline" onClick={() => set(filterIds, true)}>Gefilterte alle an</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => set(filterIds, false)}>Gefilterte alle aus</Button>
+          </div>
+          {laden && <p className="text-xs text-muted-foreground">Laden…</p>}
+          <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
+            {gefiltert.map((k) => {
+              const nlAus = k.newsletter_aktiv === false;
+              const an = !nlAus && k.advent_mail_aktiv !== false;
+              return (
+                <label key={k.id} className={`flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted/50 ${nlAus ? "opacity-50" : "cursor-pointer"}`}>
+                  <input type="checkbox" checked={an} disabled={nlAus} onChange={(e) => set([k.id], e.target.checked)} />
+                  <span className="truncate">{[k.vorname, k.name].filter(Boolean).join(" ") || "–"}</span>
+                  <span className="truncate text-xs text-muted-foreground">{k.email}</span>
+                  {nlAus && <span className="ml-auto shrink-0 text-xs">Newsletter aus</span>}
+                </label>
+              );
+            })}
+            {!laden && gefiltert.length === 0 && <p className="text-xs text-muted-foreground">Keine Kunden gefunden.</p>}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function AdventAdmin() {
   const { toast } = useToast();
@@ -158,6 +234,7 @@ export function AdventAdmin() {
           <Button type="button" size="sm" disabled={mailBusy} onClick={() => sendDaily(true)}>An alle senden</Button>
         </div>
       </div>
+      <EmpfaengerAuswahl />
       <div className="space-y-2">
         {rows.map((r) => (
           <div key={r.tag} className="grid grid-cols-1 gap-2 rounded-md border border-border p-2 md:grid-cols-[2.5rem_1fr_1.4fr_10rem_5rem] md:items-start">
