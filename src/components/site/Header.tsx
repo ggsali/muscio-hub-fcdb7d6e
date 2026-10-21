@@ -103,6 +103,7 @@ export const Header = () => {
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState<string | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
   const [navItems, setNavItems] = useState<NavItem[]>(NAV_ITEMS);
   const resin = useResinEnabled();
@@ -336,44 +337,33 @@ export const Header = () => {
             </Button>
           </div>
 
-          <div className="lg:hidden flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 lg:hidden">
             <button
               onClick={() => setCartOpen(true)}
-              className="relative p-1.5 rounded-md hover:bg-accent transition-colors"
+              className="relative flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-muted/40 transition-colors active:bg-accent"
               aria-label="Warenkorb"
             >
-              <ShoppingCart className="w-4 h-4 text-foreground" />
+              <ShoppingCart className="h-5 w-5 text-foreground" />
               {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] font-bold rounded-full h-3.5 min-w-3.5 px-1 flex items-center justify-center">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
                   {totalItems}
                 </span>
               )}
             </button>
-            {session ? (
-              <Button variant="ghost" size="sm" asChild className="h-8 px-2 rounded-full text-muted-foreground">
-                <Link to={accountTarget}><User className="w-4 h-4" /></Link>
-              </Button>
-            ) : (
-              <Button variant="ghost" size="sm" asChild className="h-8 px-3 text-xs rounded-full text-muted-foreground">
-                <Link to="/anmelden">Anmelden</Link>
-              </Button>
-            )}
+            <Link
+              to={session ? accountTarget : "/anmelden"}
+              aria-label={session ? "Mein Konto" : "Anmelden"}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-muted/40 transition-colors active:bg-accent"
+            >
+              <User className="h-5 w-5 text-foreground" />
+            </Link>
             <button
-              className="rounded-md p-1.5 transition-colors hover:bg-accent"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors"
               onClick={() => setOpen(!open)}
               aria-label="Menü"
+              aria-expanded={open}
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={open ? "x" : "m"}
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {open ? <X className="w-5 h-5 text-foreground" /> : <Menu className="w-5 h-5 text-foreground" />}
-                </motion.div>
-              </AnimatePresence>
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
@@ -381,35 +371,58 @@ export const Header = () => {
         <AnimatePresence>
           {open && (
             <motion.div
-              className="lg:hidden absolute left-0 right-0 top-full z-40 max-h-[calc(100vh-7rem)] overflow-y-auto border-b border-border bg-background shadow-xl"
+              className="lg:hidden absolute left-0 right-0 top-full z-40 max-h-[calc(100dvh-6rem)] overflow-y-auto border-b border-border bg-background shadow-xl"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <nav className="flex flex-col p-3 gap-0.5">
-                {flattenNav(visibleNav).map((l: NavChild, i: number) => {
-                  const active = location.pathname === l.path || location.pathname + location.hash === l.path;
-                  return (
-                    <motion.div key={l.path} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}>
-                      <NavEntry
-                        to={l.path}
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center justify-between px-4 py-3 min-h-[48px] rounded-md text-sm font-medium transition-colors",
-                          active
-                            ? "bg-accent font-semibold text-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                        )}
-                      >
+              <nav className="flex flex-col gap-1 p-3">
+                {visibleNav.map((l) => {
+                  const kids = (l.children ?? []).filter((c) => !c.divider);
+                  const expanded = mobileOpen === l.path;
+                  const active = location.pathname === l.path;
+                  const rowCls = cn(
+                    "flex min-h-[52px] w-full items-center justify-between rounded-xl px-4 text-base font-medium transition-colors",
+                    active || l.isButton ? "bg-primary/10 text-foreground" : "text-foreground active:bg-accent"
+                  );
+                  if (kids.length === 0) {
+                    return (
+                      <NavEntry key={l.path} to={l.path} onClick={() => setOpen(false)} className={cn(rowCls, l.isButton && "font-semibold text-primary")}>
                         {l.label}
-                        {active && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
                       </NavEntry>
-                    </motion.div>
+                    );
+                  }
+                  return (
+                    <div key={l.path}>
+                      <button type="button" aria-expanded={expanded} onClick={() => setMobileOpen(expanded ? null : l.path)} className={rowCls}>
+                        {l.label}
+                        <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform duration-200", expanded && "rotate-180")} />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {expanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="ml-4 mb-1 flex flex-col border-l border-border pl-2">
+                              {kids.map((c) => (
+                                <NavEntry key={c.path} to={c.path} onClick={() => setOpen(false)} className="flex min-h-[46px] items-center rounded-lg px-3 text-[15px] text-muted-foreground active:bg-accent active:text-foreground">
+                                  {c.label}
+                                </NavEntry>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   );
                 })}
                 <div className="mt-2 border-t border-border pt-2">
-                  <Button variant="default" className="w-full rounded-md" asChild>
+                  <Button variant="default" className="h-12 w-full rounded-xl text-base" asChild>
                     <Link to="/kalkulator-online" onClick={() => setOpen(false)}>
                       <Printer className="w-4 h-4 mr-2" />
                       Preis berechnen
