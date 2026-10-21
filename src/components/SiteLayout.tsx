@@ -12,6 +12,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { usePageViewTracker } from "@/hooks/usePageViewTracker";
 import { useChristmasMode } from "@/hooks/useChristmasMode";
 import { Snowfall } from "./site/Snowfall";
+import { SnowPath } from "./site/SnowPath";
 import { SnowDrift, Snowman } from "./site/XmasDecor";
 import { Link } from "@/lib/router-compat";
 
@@ -23,6 +24,7 @@ export default function SiteLayout() {
       <div className={`site-theme min-h-screen flex flex-col${xmas ? " xmas" : ""}`}>
         {xmas && <Snowfall />}
         {xmas && <Snowman />}
+        {xmas && <SnowPath />}
         <PaymentTestModeBanner />
         <CursorSpotlight />
         <CanonicalTag />
