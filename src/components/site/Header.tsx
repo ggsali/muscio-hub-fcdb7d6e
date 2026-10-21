@@ -257,7 +257,7 @@ export const Header = () => {
                       }
                     }}
                     className={cn(
-                      "group relative my-3 flex h-[calc(100%-1.5rem)] items-center gap-1.5 rounded-xl px-2.5 text-[13px] font-medium transition-all duration-200 xl:px-3 xl:text-sm hover:bg-accent/70",
+                      "group relative my-3 flex h-[calc(100%-1.5rem)] items-center gap-1.5 rounded-xl px-2.5 text-[14px] font-medium transition-all duration-200 xl:px-3 xl:text-[15px] hover:bg-accent/70",
                       active || l.isButton ? "text-foreground bg-primary/10" : "text-muted-foreground hover:text-foreground",
                       l.isButton && !active && "font-semibold text-primary hover:text-primary"
                     )}
