@@ -32,7 +32,7 @@ export const SLOT_THK = +(COIN.t + 2).toFixed(2); // 4,35 mm, in x
 // Grenzen: Kunden können nur Werte wählen, mit denen die Spardose sicher funktioniert
 export const LIMITS = {
   spacing: [0, 10], maxLength: [120, 300], size: [30, 75], rand: [3, 12], wand: [2, 4],
-  tiefe: [50, 80], spiel: [0.2, 0.4], taschenTiefe: [1.5, 3], ueberstand: [0.5, 2.5],
+  tiefe: [55, 80], spiel: [0.2, 0.4], taschenTiefe: [1.5, 3], ueberstand: [0.5, 2.5],
   rillenAbstand: [1, 3], rillenTiefe: [0.2, 0.6], schlitzX: [-60, 60],
 } as const;
 export const NAME_MIN = 2;
@@ -57,7 +57,7 @@ export const DEFAULTS: SpardoseParams = {
   size: 40,
   rand: 8,
   wand: 2.4,
-  tiefe: 50,
+  tiefe: 55,
   rillen: true,
   schlitzX: 0,
   rillenAbstand: 1.2,
@@ -257,6 +257,39 @@ function rdp(pts: Pt[], eps: number): Pt[] {
   return out.length >= 3 ? out : pts;
 }
 
+// Kontur glätten: gleichmässig neu abtasten und mit einem [1 2 1]-Filter von Pixel-Rauschen befreien
+function smoothLoop(pts: Pt[], stepPx: number, iters: number): Pt[] {
+  const n0 = pts.length;
+  if (n0 < 8) return pts;
+  const cum = new Float64Array(n0 + 1);
+  for (let i = 0; i < n0; i++) {
+    const a = pts[i], b = pts[(i + 1) % n0];
+    cum[i + 1] = cum[i] + Math.hypot(b[0] - a[0], b[1] - a[1]);
+  }
+  const L = cum[n0];
+  const n = Math.max(12, Math.round(L / stepPx));
+  if (L < stepPx * 12) return pts;
+  let cur: Pt[] = [];
+  let seg = 0;
+  for (let k = 0; k < n; k++) {
+    const t = (k / n) * L;
+    while (seg < n0 - 1 && cum[seg + 1] < t) seg++;
+    const a = pts[seg], b = pts[(seg + 1) % n0];
+    const len = cum[seg + 1] - cum[seg] || 1e-9;
+    const f = (t - cum[seg]) / len;
+    cur.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+  }
+  for (let it = 0; it < iters; it++) {
+    const nxt: Pt[] = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const a = cur[(i + n - 1) % n], b = cur[i], c = cur[(i + 1) % n];
+      nxt[i] = [0.25 * a[0] + 0.5 * b[0] + 0.25 * c[0], 0.25 * a[1] + 0.5 * b[1] + 0.25 * c[1]];
+    }
+    cur = nxt;
+  }
+  return cur;
+}
+
 function area(p: Pt[]) {
   let a = 0;
   for (let i = 0, j = p.length - 1; i < p.length; j = i++) a += (p[j][0] + p[i][0]) * (p[j][1] - p[i][1]);
@@ -272,7 +305,7 @@ function inside(pt: Pt, poly: Pt[]) {
 }
 
 function toShapes(loops: Pt[][], map: (p: Pt) => THREE.Vector2, epsPx: number): THREE.Shape[] {
-  const polys = loops.map((l) => rdp(l, epsPx)).filter((l) => l.length >= 3);
+  const polys = loops.map((l) => rdp(smoothLoop(l, 0.6, 4), epsPx)).filter((l) => l.length >= 3);
   const ar = polys.map((p) => Math.abs(area(p)));
   const depth = polys.map((p, i) => {
     let d = 0;
@@ -315,7 +348,16 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
   return res;
 }
 
-async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> {
+type Prep = {
+  name: string; warnings: string[]; size: number; ppm: number; W: number; H: number; N: number;
+  tf: Float32Array; sd: Float32Array; lab: Int32Array; big: number; nLab: number; kammern: number;
+  rhoMax: number; capXpx: number; capYpx: number; cxPx: number; cxMm: number; Rpx: number; wallPx: number;
+};
+const prepCache = new Map<string, Prep>();
+const shapeCache = new Map<string, THREE.Shape[]>();
+
+// Aufwendiger Teil (Raster, Distanzfeld, Hohlraum): wird zwischengespeichert, solange sich Name/Schrift/Grösse/Rand/Wand nicht ändern.
+async function prepare(p: SpardoseParams): Promise<Prep | null> {
   const name = sanitizeName(p.name).trim();
   if (!name) return null;
   const font = FONTS.find((f) => f.id === p.font) ?? FONTS[0];
@@ -391,7 +433,7 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
   const cxPx = (minX + maxX) / 2;
   const cxMm = cxPx / ppm;
   const toMm = (pt: Pt) => new THREE.Vector2(pt[0] / ppm - cxMm, (H - pt[1]) / ppm - H / ppm / 2);
-  const epsPx = 0.035 * ppm;
+  const epsPx = 0.012 * ppm;
 
   // Hohlraum: Kammern und größter Innenkreis (für die Kappe)
   const lab = new Int32Array(N);
@@ -432,6 +474,24 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
       if (dx < bestDx) { bestDx = dx; capXpx = i % W; capYpx = Math.floor(i / W); }
     }
   }
+  return { name, warnings, size, ppm, W, H, N, tf, sd, lab, big, nLab, kammern, rhoMax, capXpx, capYpx, cxPx, cxMm, Rpx, wallPx };
+}
+
+async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> {
+  const prepKey = [sanitizeName(p.name), p.font, p.spacing, p.maxLength, p.size, p.rand, p.wand].join("|");
+  let prep = prepCache.get(prepKey) ?? null;
+  if (!prep) {
+    prep = await prepare(p);
+    if (!prep) return null;
+    if (prepCache.size >= 4) prepCache.delete(prepCache.keys().next().value as string);
+    prepCache.set(prepKey, prep);
+  }
+  const { name, size, ppm, W, H, N, tf, sd, lab, big, nLab, kammern, rhoMax, capXpx, capYpx, cxPx, cxMm, Rpx, wallPx } = prep;
+  const warnings = [...prep.warnings];
+  const clrPx = p.spiel * ppm;
+  const toMm = (pt: Pt) => new THREE.Vector2(pt[0] / ppm - cxMm, (H - pt[1]) / ppm - H / ppm / 2);
+  const epsPx = 0.012 * ppm;
+
   // Kappe: Masse nach Vorgabe (Ø30 Hals, Ø36 Konus-Bund, Höhe 7,5, zwei Nasen 1,5 x 2,4, Steg quer dazu), mindestens 12 % grösser
   const CAP = { r: 15, rFl: 18, rLug: 16.5, lugW: 2.4, lugH: 3.46, h: 7.5, neckTop: 5.0, floor: 4.96, rRec: 11.5 };
   // Die Öffnung muss das 5-Franken-Stück IMMER durchlassen: Lochdurchmesser >= Münzdurchmesser + 2 mm.
@@ -478,8 +538,8 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
   const GRT = CAP.lugH + 0.44;
   const Bk = GAP + CAP.h;
   const Ls = SLOT_LEN;
-  const D = Math.max(p.tiefe, F + Bk + Ls + 4);
-  const zs = (F + (D - Bk)) / 2 - Ls / 2;
+  const D = Math.max(p.tiefe, F + Bk + Ls + 4, 2 * (Bk + Ls / 2 + 2)); // Schlitz liegt immer in der Mitte der Tiefe
+  const zs = D / 2 - Ls / 2;
   const NCONE = 8;
   const pitch = Math.max(0.6, p.rillenAbstand), gw = pitch / 3;
   const grooves: [number, number][] = [];
@@ -526,7 +586,8 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
     return f;
   };
 
-  const cache = new Map<string, THREE.Shape[]>();
+  if (shapeCache.size > 400) shapeCache.clear();
+  const scope = `${prepKey}|${p.spiel}|${p.rillenTiefe}|${slotCx}|${slotBottom}|${CAP.r * kc}`;
   const geoCache = new Map<string, THREE.BufferGeometry>();
   const layers: THREE.BufferGeometry[] = [];
   for (let s = 0; s < zlist.length - 1; s++) {
@@ -541,10 +602,10 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
       back: zm > D - Bk ? (zm < D - Bk + GRT ? "groove" : zm < D - CONEH ? "neck" : `cone${Math.min(NCONE - 1, Math.floor(((zm - (D - CONEH)) / CONEH) * NCONE))}`) : "",
     };
     const key = `${+k.g}${+k.pocket}${+k.cav}${k.slotHw.toFixed(2)}${k.back}`;
-    let shapes = cache.get(key);
+    let shapes = shapeCache.get(`${scope}|${key}`);
     if (!shapes) {
       shapes = toShapes(contours(buildField(k), W, H), toMm, epsPx);
-      cache.set(key, shapes);
+      shapeCache.set(`${scope}|${key}`, shapes);
     }
     const gk = `${key}_${(b - a).toFixed(4)}`;
     let g = geoCache.get(gk);

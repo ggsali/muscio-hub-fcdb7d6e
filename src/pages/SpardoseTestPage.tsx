@@ -240,10 +240,14 @@ export default function SpardoseTestPage() {
   const [err, setErr] = useState<string | null>(null);
   const [ms, setMs] = useState<number | null>(null);
   const seq = useRef(0);
+  const prevP = useRef<SpardoseParams>(DEFAULTS);
   const set = <K extends keyof SpardoseParams>(k: K, v: SpardoseParams[K]) => setP((o) => ({ ...o, [k]: v }));
 
   useEffect(() => {
     const id = ++seq.current;
+    // Nur die Schlitzposition geändert -> fast sofort neu berechnen (Zwischenergebnisse sind gespeichert)
+    const onlySlot = (Object.keys(p) as (keyof SpardoseParams)[]).every((k) => k === "schlitzX" || p[k] === prevP.current[k]);
+    prevP.current = p;
     setBusy(true);
     const t = setTimeout(async () => {
       try {
@@ -259,7 +263,7 @@ export default function SpardoseTestPage() {
       } finally {
         if (id === seq.current) setBusy(false);
       }
-    }, 450);
+    }, onlySlot ? 40 : 450);
     return () => clearTimeout(t);
   }, [p]);
 
