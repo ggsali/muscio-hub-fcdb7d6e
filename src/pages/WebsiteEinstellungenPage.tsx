@@ -13,7 +13,6 @@ import { invalidateChristmasCache } from "@/hooks/useChristmasMode";
 import { invalidateStadtmodellCache } from "@/hooks/useStadtmodellEnabled";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { NasSlicerSettings } from "@/components/NasSlicerSettings";
 
 interface FaqEntry { frage: string; antwort: string; }
 interface MaterialPrice { material: string; preis_pro_g: number; }
@@ -281,7 +280,6 @@ export default function WebsiteEinstellungenPage() {
             </div>
             <Switch checked={stadtmodell.aktiv} onCheckedChange={v => setStadtmodell({ aktiv: v })} />
           </div>
-          <NasSlicerSettings />
         </AccordionContent>
       </AccordionItem>
 

@@ -168,8 +168,8 @@ export default function SliceFreigabePage() {
         Online-Kalkulator: alles über den NAS-Slicer (aus = alles im Browser)
       </label>
       <p className="text-sm text-muted-foreground">
-        Neue Anfragen mit Modelldateien werden automatisch auf dem NAS geslict. Du bekommst eine Mail, prüfst hier das Ergebnis und gibst frei:
-        Dann kommt das Teil in die SimplyPrint-Queue des gewählten Druckers.
+        Die Automatik für neue Anfragen ist aktuell nicht an das Live-Formular angeschlossen: Neue Anfragen erscheinen hier nicht und es wird keine Freigabe-Mail verschickt.
+        Freigaben gelten nur für Jobs, die aus dem Test-Kalkulator kommen. Nach Freigabe kommt das Teil in die SimplyPrint-Queue des gewählten Druckers.
       </p>
 
       {loading && (
