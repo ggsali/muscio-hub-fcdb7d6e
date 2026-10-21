@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router-compat";
+import { useChristmasMode } from "@/hooks/useChristmasMode";
 
 /** Realistische Eiszapfen: unregelmässig, spitz zulaufend, glasig mit Glanzlicht (klickdurchlässig). */
 const rnd = (() => { let t = 7; return () => ((t = (t * 16807) % 2147483647) / 2147483647); })();
@@ -118,5 +119,44 @@ export function Snowman() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Lichterkette, die oben in einem Abschnitt hängt (nur im Weihnachtsmodus). Abschnitt braucht `relative`. */
+const BULBS = ["#ff4d4d", "#ffd23f", "#3ddc84", "#4da3ff", "#ff8fd0"];
+export function XmasLights() {
+  const on = useChristmasMode();
+  if (!on) return null;
+  const swags = 8;
+  const w = 1440 / swags;
+  let path = "M0 6";
+  const bulbs: { x: number; y: number; c: string; i: number }[] = [];
+  for (let s = 0; s < swags; s++) {
+    const x0 = s * w;
+    path += ` Q${x0 + w / 2} 44 ${x0 + w} 6`;
+    for (let b = 1; b <= 5; b++) {
+      const t = b / 6;
+      const x = x0 + w * t;
+      const y = (1 - t) * (1 - t) * 6 + 2 * (1 - t) * t * 44 + t * t * 6;
+      bulbs.push({ x, y, c: BULBS[(s * 5 + b) % BULBS.length], i: s * 5 + b });
+    }
+  }
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 1440 70"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute left-0 top-0 z-10 h-10 w-full md:h-14"
+    >
+      <path d={path} fill="none" stroke="#2a2a2a" strokeWidth="1.6" />
+      {bulbs.map(({ x, y, c, i }) => (
+        <g key={i} className="xmas-bulb" style={{ animationDelay: `${(i % 5) * 0.4}s`, color: c }}>
+          <rect x={x - 2} y={y} width="4" height="4" fill="#2a2a2a" />
+          <ellipse cx={x} cy={y + 9} rx="4.2" ry="6" fill="currentColor" />
+          <ellipse cx={x} cy={y + 9} rx="9" ry="11" fill="currentColor" opacity="0.18" />
+          <ellipse cx={x - 1.3} cy={y + 7} rx="1" ry="2" fill="#fff" opacity="0.7" />
+        </g>
+      ))}
+    </svg>
   );
 }

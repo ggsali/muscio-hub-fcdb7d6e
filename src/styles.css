@@ -338,7 +338,10 @@
 @keyframes xmas-wave { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-14deg); } }
 .xmas-snowman { animation: xmas-pop 0.9s cubic-bezier(.2,.9,.3,1.2) 1.2s both; }
 .xmas-arm { transform-origin: 62px 96px; animation: xmas-wave 1.6s ease-in-out 2.2s 4; }
+@keyframes xmas-twinkle { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+.xmas-bulb { animation: xmas-twinkle 2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
+  .xmas-bulb { animation: none; }
   .site-theme.xmas canvas { display: none; }
   .xmas-snowman, .xmas-arm { animation: none; }
 }

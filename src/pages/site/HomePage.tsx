@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "@/lib/router-compat";
+import { XmasLights } from "@/components/site/XmasDecor";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { CountUp } from "@/components/site/CountUp";
@@ -260,7 +261,8 @@ const HowItWorks = () => {
   };
 
   return (
-    <section className="py-20 md:py-28 bg-foreground text-background overflow-hidden">
+    <section className="relative py-20 md:py-28 bg-foreground text-background overflow-hidden">
+    <XmasLights />
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           {/* Titel links */}
@@ -356,7 +358,8 @@ const MaterialsTeaser = () => {
     })();
   }, [resin]);
   return (
-  <section className="py-24 bg-foreground text-background overflow-hidden">
+  <section className="relative py-24 bg-foreground text-background overflow-hidden">
+    <XmasLights />
     <div className="container mx-auto px-4">
       <div className="flex items-end justify-between mb-10">
         <div>
