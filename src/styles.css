@@ -316,3 +316,40 @@
   }
 }
 
+
+/* ---------- Weihnachtsmodus (nur öffentliche Website, per Admin-Schalter) ---------- */
+.site-theme.xmas {
+  --background: 210 40% 98%;
+  --card: 210 60% 99.5%;
+  --muted: 210 45% 95%;
+  --muted-foreground: 215 18% 38%;
+  --border: 210 35% 87%;
+  --accent: 200 55% 94%;
+  background-image:
+    radial-gradient(1200px 380px at 50% -120px, hsl(205 80% 92% / 0.9), transparent 70%),
+    linear-gradient(180deg, hsl(208 60% 97%), hsl(210 40% 98%) 420px);
+  background-repeat: no-repeat;
+}
+.site-theme.xmas .xmas-strip {
+  background: linear-gradient(90deg, hsl(0 68% 42%), hsl(0 62% 36%) 50%, hsl(0 68% 42%));
+  color: #fff;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  position: relative;
+  z-index: 1;
+}
+.site-theme.xmas .xmas-strip a { color: #fff; text-decoration: none; }
+.site-theme.xmas .xmas-strip a:hover { text-decoration: underline; }
+/* Schneekante unter dem Header */
+.site-theme.xmas header {
+  box-shadow: 0 3px 0 0 #fff, 0 4px 10px hsl(205 60% 70% / 0.35);
+}
+.site-theme.xmas main > section:first-child,
+.site-theme.xmas main > div:first-child {
+  background-image: linear-gradient(180deg, hsl(205 85% 94% / 0.8), transparent 85%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-theme.xmas canvas { display: none; }
+}

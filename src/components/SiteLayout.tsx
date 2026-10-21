@@ -11,12 +11,17 @@ import { MobileStickyCta } from "./site/MobileStickyCta";
 import { CartProvider } from "@/contexts/CartContext";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { usePageViewTracker } from "@/hooks/usePageViewTracker";
+import { useChristmasMode } from "@/hooks/useChristmasMode";
+import { Snowfall } from "./site/Snowfall";
+import { Link } from "@/lib/router-compat";
 
 export default function SiteLayout() {
   usePageViewTracker();
+  const xmas = useChristmasMode();
   return (
     <CartProvider>
-      <div className="site-theme min-h-screen flex flex-col">
+      <div className={`site-theme min-h-screen flex flex-col${xmas ? " xmas" : ""}`}>
+        {xmas && <Snowfall />}
         <PaymentTestModeBanner />
         <CursorSpotlight />
         <CanonicalTag />
@@ -26,6 +31,11 @@ export default function SiteLayout() {
           <Header />
         </div>
         <CartDrawer />
+        {xmas && (
+          <div className="xmas-strip">
+            <Link to="/weihnachtsgeschenke">❄ Weihnachtszeit: persönliche Geschenke aus dem 3D-Drucker – jetzt rechtzeitig bestellen →</Link>
+          </div>
+        )}
         <main className="flex-1 pb-24 md:pb-0">
           <Outlet />
         </main>
