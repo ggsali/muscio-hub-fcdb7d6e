@@ -146,27 +146,27 @@ export const Header = () => {
   return (
     <>
       <motion.header
-        className={cn(
-          "relative w-full transition-all duration-300",
-          "bg-background/85 backdrop-blur-xl border-b border-border/50",
-          scrolled || open ? "shadow-sm" : ""
-        )}
+        className="relative w-full px-3 pb-2 pt-2 sm:px-6 sm:pt-3"
         initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="container mx-auto flex items-center justify-between h-14 px-4 sm:px-6">
+        <div
+          className={cn(
+            "mx-auto flex max-w-6xl items-center justify-between rounded-full border px-3 sm:px-5",
+            "bg-background/80 backdrop-blur-xl transition-all duration-300",
+            scrolled || open
+              ? "h-12 border-border bg-background/95 shadow-[0_10px_30px_-12px_rgba(15,23,42,0.35)]"
+              : "h-14 border-border/60 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.25)]"
+          )}
+        >
 
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-lg bg-primary/40 blur-md scale-125 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <img
-                src={logo}
-                alt="3DMuscio 3D-Druck Schweiz"
-                className="relative h-8 w-8 rounded-lg object-contain ring-1 ring-white/20 group-hover:ring-primary/60 transition-all duration-300"
-              />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-background animate-pulse" />
-            </div>
+            <img
+              src={logo}
+              alt="3DMuscio 3D-Druck Schweiz"
+              className="h-8 w-8 rounded-lg object-contain"
+            />
             <div className="flex flex-col leading-none">
               <span className="font-heading text-[14px] font-extrabold tracking-tight text-foreground">
                 3D<span className="text-primary">Muscio</span>
@@ -177,7 +177,7 @@ export const Header = () => {
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-0.5">
             {visibleNav.map((l) => {
               const active = location.pathname === l.path;
               const hasChildren = l.children && l.children.length > 0;
@@ -194,8 +194,8 @@ export const Header = () => {
                       size="sm"
                       asChild
                       className={cn(
-                        "rounded-full h-8 px-4 text-xs font-bold border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors",
-                        active && "bg-primary text-primary-foreground"
+                        "rounded-full h-8 px-4 text-sm font-semibold border-transparent bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors",
+                        active && "bg-primary/20"
                       )}
                     >
                       <NavEntry to={l.path}>{l.label}</NavEntry>
@@ -203,16 +203,11 @@ export const Header = () => {
                   ) : (
                     <NavEntry
                       to={l.path}
-                      className="relative px-4 py-1.5 text-sm font-medium transition-colors group flex items-center gap-1"
+                      className={cn(
+                        "relative flex items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors group",
+                        active ? "bg-accent" : "hover:bg-accent/60"
+                      )}
                     >
-                      <motion.span
-                        className="absolute bottom-0 left-4 right-4 h-px bg-primary rounded-full"
-                        initial={false}
-                        animate={{ scaleX: active ? 1 : 0, opacity: active ? 1 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        style={{ transformOrigin: "left" }}
-                      />
-                      <span className="absolute bottom-0 left-4 right-4 h-px rounded-full bg-foreground/20 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
                       <span className={cn(
                         "transition-colors duration-150",
                         active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
@@ -238,7 +233,7 @@ export const Header = () => {
                         transition={{ duration: 0.15 }}
                         className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 min-w-[200px]"
                       >
-                        <div className="bg-popover border border-border rounded-xl shadow-xl p-1.5">
+                        <div className="bg-popover border border-border rounded-2xl shadow-xl p-1.5">
                           {l.children!.map((c, idx) =>
                             c.divider ? (
                               <hr key={`divider-${idx}`} className="my-1 border-border" />
@@ -247,7 +242,7 @@ export const Header = () => {
                                 key={c.path}
                                 to={c.path}
                                 onClick={() => setOpenDropdown(null)}
-                                className="block px-3 py-2 text-sm rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                className="block px-3 py-2 text-sm rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                               >
                                 {c.label}
                               </NavEntry>
@@ -287,7 +282,7 @@ export const Header = () => {
               </Button>
             )}
             <Button variant="default" size="sm" asChild
-              className="rounded-full h-8 px-4 text-xs font-bold shadow-[0_0_20px_hsl(156_100%_40%/0.3)] hover:shadow-[0_0_32px_hsl(156_100%_40%/0.5)] transition-shadow">
+              className="rounded-full h-9 px-5 text-sm font-semibold shadow-sm">
               <Link to="/kalkulator-online">
                 <Printer className="w-3.5 h-3.5 mr-1.5" />
                 Preis berechnen
@@ -340,7 +335,7 @@ export const Header = () => {
         <AnimatePresence>
           {open && (
             <motion.div
-              className="lg:hidden absolute left-0 right-0 top-full z-40 bg-foreground/95 backdrop-blur-xl border-b border-white/10 shadow-2xl max-h-[calc(100vh-7rem)] overflow-y-auto"
+              className="lg:hidden absolute left-3 right-3 sm:left-6 sm:right-6 top-full z-40 rounded-3xl bg-foreground/95 backdrop-blur-xl border border-white/10 shadow-2xl max-h-[calc(100vh-7rem)] overflow-y-auto"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
