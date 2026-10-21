@@ -22,7 +22,7 @@ export function SnowDrift() {
       aria-hidden="true"
       viewBox="0 0 1440 64"
       preserveAspectRatio="none"
-      className="pointer-events-none absolute left-0 top-full h-8 w-full md:h-11"
+      className="pointer-events-none block h-7 w-full md:h-9"
       style={{ filter: "drop-shadow(0 2px 2px rgba(40,80,120,0.28))" }}
     >
       <defs>
