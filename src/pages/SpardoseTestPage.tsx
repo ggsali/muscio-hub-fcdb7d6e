@@ -293,7 +293,7 @@ export default function SpardoseTestPage() {
             </div>
           )}
           <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={download} disabled={!res || busy}><Download className="mr-2 h-4 w-4" />STL herunterladen (ZIP: Körper, Buchstaben, Kappe)</Button>
+            <Button onClick={download} disabled={!res || busy || !res.valid}><Download className="mr-2 h-4 w-4" />STL herunterladen (ZIP: Körper, Buchstaben, Kappe)</Button>
             <span className="text-xs text-muted-foreground">Körper liegt mit der Vorderseite auf dem Druckbett. Buchstaben mit der flachen Seite nach unten.</span>
           </div>
         </div>

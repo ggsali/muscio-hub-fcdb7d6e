@@ -307,7 +307,7 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
     if (last) { last.body.dispose(); last.letters.dispose(); last.cap.dispose(); }
     last = r;
     if (r.valid || rand >= LIMITS.rand[1]) break;
-    rand = Math.min(LIMITS.rand[1], rand + 1);
+    rand = Math.min(LIMITS.rand[1], Math.max(rand + 1, 7)); // erster Sprung direkt auf 7 mm (spart Rechenzeit)
   }
   const res = last!;
   if (res.valid && rand > base.rand) res.warnings.unshift(`Rand automatisch von ${base.rand} auf ${rand} mm erhöht, damit Hohlraum, Münzschlitz und Kappe funktionieren.`);
