@@ -26,7 +26,21 @@ export function AdventKalender({ fallback = null }: { fallback?: React.ReactNode
   const [door, setDoor] = useState<(Door & { tag: number }) | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const sim = simTag();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [testTag, setTestTag] = useState<number | undefined>(simTag());
+  const sim = testTag;
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: s } = await supabase.auth.getSession();
+      const uid = s.session?.user?.id;
+      if (!uid) return;
+      const { data } = await (supabase.rpc as any)("has_role", { _user_id: uid, _role: "admin" });
+      if (alive && data === true) setIsAdmin(true);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -111,6 +125,27 @@ export function AdventKalender({ fallback = null }: { fallback?: React.ReactNode
           ? "Die Türchen öffnen sich ab dem 1. Dezember."
           : `Heute offen: Türchen ${Math.min(heute, 24)}. Den Code gibst du im Warenkorb ein.`)}
       </p>
+
+      {isAdmin && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-black/25 px-2 py-1.5 text-xs">
+          <span className="font-semibold text-amber-200">Admin-Test</span>
+          <label className="flex items-center gap-1.5">
+            Heute ist:
+            <select
+              value={testTag ?? ""}
+              onChange={(e) => { setMsg(null); setTestTag(e.target.value === "" ? undefined : Number(e.target.value)); }}
+              className="rounded border border-white/30 bg-black/30 px-1.5 py-0.5 text-white"
+            >
+              <option value="">echtes Datum</option>
+              <option value="0">vor dem 1.12.</option>
+              {Array.from({ length: 24 }, (_, i) => i + 1).map((d) => (
+                <option key={d} value={d}>{d}. Dezember</option>
+              ))}
+            </select>
+          </label>
+          <span className="text-white/60">Nur für dich sichtbar. Codes gelten im Warenkorb erst ab ihrem echten Datum.</span>
+        </div>
+      )}
 
       <Dialog open={!!door} onOpenChange={(o) => !o && setDoor(null)}>
         <DialogContent>

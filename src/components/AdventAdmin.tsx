@@ -92,7 +92,7 @@ export function AdventAdmin() {
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
         Türchen {jahr}. Mit Rabatt wird automatisch der Code <code>{codeFor(1).replace("-01", "-TT")}</code> angelegt, gültig ab dem jeweiligen Tag bis 31.12.
-        Leerer Titel = Türchen bleibt leer. Vorschau vor dem 1. Dezember: Startseite mit <code>?advent=5</code> öffnen (nur eingeloggt als Admin).
+        Leerer Titel = Türchen bleibt leer. Testen: als Admin eingeloggt erscheint unter dem Kalender auf der Startseite eine Auswahl „Heute ist: …“.
         Der Kalender erscheint nur bei eingeschaltetem Weihnachtsmodus.
       </p>
       <div className="flex flex-wrap gap-2">
