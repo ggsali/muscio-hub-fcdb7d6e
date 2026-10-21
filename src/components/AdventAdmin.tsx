@@ -25,24 +25,24 @@ const PLAN: Record<number, [string, string, string, string]> = {
   4: ["Tipp: Schichthöhe", "Feinere Schichten sehen glatter aus, brauchen aber mehr Zeit. Für Gehäuse und Halter reicht meist die Standardqualität.", "", ""],
   5: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
   6: ["Nikolaus-Special: 10 %", "Der Nikolaus bringt 10 % auf deine Bestellung.", "prozent", "10"],
-  7: ["Tipp: Füllung sparen", "Oft reichen 15 bis 20 % Füllung. Weniger Material bedeutet einen günstigeren Preis.", "", ""],
+  7: ["Tipp: Bis 15. Dezember bestellen", "Damit dein Geschenk bis Weihnachten ankommt, bestelle bis Mitte Dezember (15. Dezember).", "", ""],
   8: ["CHF 10 Rabatt", "Ab CHF 40 Bestellwert.", "betrag", "10"],
   9: ["5 % Rabatt", "Ein kleines Extra für heute.", "prozent", "5"],
   10: ["Tipp: Alles zusammen bestellen", "Die Rüstkosten fallen pro Auftrag nur einmal an. Mehrere Teile in einer Bestellung sparen Geld.", "", ""],
   11: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
   12: ["10 % Rabatt", "Zwölf Türchen geschafft, 10 % für dich.", "prozent", "10"],
-  13: ["Tipp: Geschenk mit Namen", "Mit einem eigenen Namen oder einer Widmung im Modell wird aus einem Teil ein persönliches Geschenk.", "", ""],
+  13: ["Tipp: Füllung sparen", "Oft reichen 15 bis 20 % Füllung. Weniger Material bedeutet einen günstigeren Preis.", "", ""],
   14: ["CHF 5 Rabatt", "Ab CHF 20 Bestellwert.", "betrag", "5"],
   15: ["Halbzeit: 15 % Rabatt", "Die Hälfte ist geschafft. Heute gibt es 15 % auf deine Bestellung.", "prozent", "15"],
-  16: ["Tipp: Farbe passend wählen", "Farbe und Material bestimmst du direkt im Kalkulator. Schwarz und Weiss sind meist am schnellsten lieferbar.", "", ""],
-  17: ["CHF 10 Rabatt", "Ab CHF 40 Bestellwert.", "betrag", "10"],
-  18: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
-  19: ["10 % Rabatt", "Noch fünf Tage bis Heiligabend.", "prozent", "10"],
-  20: ["Tipp: Jetzt rechtzeitig bestellen", "Je früher du bestellst, desto sicherer ist das Geschenk vor Weihnachten da. Bei Fragen zur Lieferzeit schreib uns kurz.", "", ""],
-  21: ["CHF 15 Rabatt", "Ab CHF 60 Bestellwert.", "betrag", "15"],
-  22: ["12 % Rabatt", "Kurz vor dem Fest noch ein Geschenk drucken lassen.", "prozent", "12"],
-  23: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
-  24: ["Frohe Weihnachten: 20 %", "Zum Abschluss unser grösster Rabatt. Danke für dein Vertrauen.", "prozent", "20"],
+  16: ["Tipp: Geschenk mit Namen", "Mit einem eigenen Namen oder einer Widmung im Modell wird aus einem Teil ein persönliches Geschenk. Bestellungen ab heute kommen erst nach Weihnachten.", "", ""],
+  17: ["CHF 10 Rabatt", "Ab CHF 40 Bestellwert. Bestellungen ab jetzt werden erst nach Weihnachten geliefert.", "betrag", "10"],
+  18: ["Gratis Versand", "Heute ohne Versandkosten bestellen. Bestellungen ab jetzt werden erst nach Weihnachten geliefert.", "gratis_versand", "0"],
+  19: ["10 % Rabatt", "Noch fünf Tage bis Heiligabend. Bestellungen ab jetzt werden erst nach Weihnachten geliefert.", "prozent", "10"],
+  20: ["Last Minute: Geschenkgutschein", "Der 3D-Druck-Gutschein kommt sofort per E-Mail und passt immer. Zu finden unter „Gutschein kaufen“.", "", ""],
+  21: ["CHF 15 Rabatt", "Ab CHF 60 Bestellwert. Bestellungen ab jetzt werden erst nach Weihnachten geliefert.", "betrag", "15"],
+  22: ["12 % Rabatt", "Kurz vor dem Fest noch ein Geschenk drucken lassen. Bestellungen ab jetzt werden erst nach Weihnachten geliefert.", "prozent", "12"],
+  23: ["Gratis Versand", "Heute ohne Versandkosten bestellen. Bestellungen ab jetzt werden erst nach Weihnachten geliefert.", "gratis_versand", "0"],
+  24: ["Frohe Weihnachten: 20 %", "Zum Abschluss unser grösster Rabatt. Danke für dein Vertrauen. Bestellungen ab jetzt werden erst nach Weihnachten geliefert.", "prozent", "20"],
 };
 const suggestion = (): Row[] =>
   empty().map((r) => {
@@ -57,6 +57,9 @@ export function AdventAdmin() {
   const { toast } = useToast();
   const [rows, setRows] = useState<Row[]>(empty());
   const [saving, setSaving] = useState(false);
+  const [mailTag, setMailTag] = useState<string>("");
+  const [testEmail, setTestEmail] = useState("");
+  const [mailBusy, setMailBusy] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -91,7 +94,7 @@ export function AdventAdmin() {
               mindestbestellwert: minOrder(r),
               max_verwendungen: null,
               gueltig_ab: `${jahr}-12-${String(r.tag).padStart(2, "0")}`,
-              gueltig_bis: `${jahr}-12-31`,
+              gueltig_bis: `${jahr}-12-${String(r.tag).padStart(2, "0")}`,
               aktiv: true,
               grund: "Adventskalender",
             } as any,
@@ -114,10 +117,23 @@ export function AdventAdmin() {
     }
   };
 
+  const sendDaily = async (alle: boolean) => {
+    const tag = Number(mailTag);
+    if (!alle && !testEmail.trim()) { toast({ title: "Bitte Test-E-Mail eingeben", variant: "destructive" }); return; }
+    if (alle && !window.confirm(`Türchen-Mail wirklich an ALLE Kunden mit aktivem Newsletter senden?`)) return;
+    setMailBusy(true);
+    const { data, error } = await supabase.functions.invoke("advent-mail", {
+      body: { action: "daily", tag: tag >= 1 && tag <= 24 ? tag : undefined, test_email: alle ? undefined : testEmail.trim() },
+    });
+    setMailBusy(false);
+    if (error || data?.error) { toast({ title: "Versand fehlgeschlagen", description: data?.error || error?.message, variant: "destructive" }); return; }
+    toast({ title: data?.skipped ? "Nichts gesendet" : "Gesendet", description: data?.skipped ?? `${data?.sent ?? 0} E-Mails gesendet${data?.remaining ? `, ${data.remaining} offen (erneut senden)` : ""}.` });
+  };
+
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Türchen {jahr}. Die Codes gelten im Online-Kalkulator und im Shop. Mit Rabatt wird automatisch der Code <code>{codeFor(1).replace("-01", "-TT")}</code> angelegt, gültig ab dem jeweiligen Tag bis 31.12. Bei Betrags-Rabatten gilt automatisch ein Mindestbestellwert von ca. dem Vierfachen.
+        Türchen {jahr}. Die Codes gelten im Online-Kalkulator und im Shop. Mit Rabatt wird automatisch der Code <code>{codeFor(1).replace("-01", "-TT")}</code> angelegt, gültig NUR am jeweiligen Tag (Schweizer Zeit). Bei Betrags-Rabatten gilt automatisch ein Mindestbestellwert von ca. dem Vierfachen.
         Leerer Titel = Türchen bleibt leer. Testen: als Admin eingeloggt erscheint unter dem Kalender auf der Startseite eine Auswahl „Heute ist: …“.
         Der Kalender erscheint nur bei eingeschaltetem Weihnachtsmodus.
       </p>
@@ -128,6 +144,19 @@ export function AdventAdmin() {
         <Button type="button" size="sm" className="gap-2" onClick={save} disabled={saving}>
           <Save className="h-4 w-4" /> {saving ? "Speichern…" : "Kalender speichern"}
         </Button>
+      </div>
+      <div className="space-y-2 rounded-md border border-border p-3">
+        <p className="text-sm font-medium">Tägliche Türchen-Mail</p>
+        <p className="text-xs text-muted-foreground">
+          Geht jeden Tag automatisch an alle Kunden mit aktivem Newsletter (mit Abmelde-Link), sobald der tägliche Versand eingerichtet ist.
+          Hier kannst du ihn testen oder von Hand auslösen. Pro Kunde und Türchen wird nur einmal gesendet.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input value={mailTag} onChange={(e) => setMailTag(e.target.value)} placeholder="Türchen (1–24, leer = heute)" className="w-48 bg-input border-border" inputMode="numeric" />
+          <Input value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="Test-E-Mail" className="w-56 bg-input border-border" />
+          <Button type="button" size="sm" variant="outline" disabled={mailBusy} onClick={() => sendDaily(false)}>Testmail senden</Button>
+          <Button type="button" size="sm" disabled={mailBusy} onClick={() => sendDaily(true)}>An alle senden</Button>
+        </div>
       </div>
       <div className="space-y-2">
         {rows.map((r) => (

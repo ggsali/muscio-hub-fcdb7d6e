@@ -345,3 +345,35 @@
   .site-theme.xmas canvas { display: none; }
   .xmas-snowman, .xmas-arm { animation: none; }
 }
+
+/* ---------- Adventskalender: Türchen mit Öffnen-Animation ---------- */
+.adv-cell { perspective: 520px; }
+.adv-frame { position: relative; width: 100%; height: 100%; border-radius: 6px; }
+.adv-inside {
+  position: absolute; inset: 0; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 55%, #fff3b0 0%, #ffd23f 45%, #c98a0a 100%);
+  box-shadow: inset 0 0 8px rgba(90, 40, 0, 0.55); font-size: 1.2rem;
+}
+.adv-door {
+  position: absolute; inset: 0; border-radius: 6px; transform-origin: left center; backface-visibility: hidden;
+  transition: transform 0.85s cubic-bezier(0.3, 0.7, 0.2, 1), box-shadow 0.2s;
+  display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.35);
+}
+.adv-door-ready { background: linear-gradient(135deg, #1f8f4e, #146b38); color: #fff; cursor: pointer; border-color: #ffd23f; }
+.adv-door-ready:hover { box-shadow: 0 0 10px rgba(255, 210, 63, 0.7); }
+.adv-door-locked { background: linear-gradient(135deg, #a82a31, #7d1a20); color: rgba(255, 255, 255, 0.55); cursor: pointer; }
+.adv-door-today { animation: adv-glow 1.6s ease-in-out infinite; }
+.adv-num { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+.adv-knob { position: absolute; right: 18%; top: 52%; width: 5px; height: 5px; border-radius: 50%; background: #ffd23f; box-shadow: 0 0 2px #000; }
+.adv-frame.is-open .adv-door { transform: rotateY(-118deg); }
+@keyframes adv-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 210, 63, 0.9); } 50% { box-shadow: 0 0 12px 3px rgba(255, 210, 63, 0.9); } }
+.adv-shake { animation: adv-shake 0.5s; }
+@keyframes adv-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
+.adv-confetti { position: absolute; top: -12px; opacity: 0; animation-name: adv-fall; animation-timing-function: ease-in; animation-fill-mode: forwards; }
+@keyframes adv-fall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(520px) rotate(540deg); opacity: 0; } }
+.adv-gift { animation: adv-pop 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+@keyframes adv-pop { 0% { transform: scale(0.2) rotate(-20deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .adv-door, .adv-door-today, .adv-shake, .adv-confetti, .adv-gift { animation: none; transition: none; }
+}

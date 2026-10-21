@@ -366,7 +366,7 @@ Deno.serve(async (req) => {
         .select("*")
         .eq("code", gutscheinCode)
         .maybeSingle();
-      const heute = new Date().toISOString().slice(0, 10);
+      const heute = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Zurich" }).format(new Date()); // YYYY-MM-DD in Schweizer Zeit
       const ungueltig =
         !g ? "Code existiert nicht" :
         !g.aktiv ? "Code ist nicht aktiv" :

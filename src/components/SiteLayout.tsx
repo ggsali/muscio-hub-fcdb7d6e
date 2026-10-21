@@ -32,7 +32,7 @@ export default function SiteLayout() {
           <Header />
           {xmas && (
             <div className="xmas-strip">
-              <Link to="/weihnachtsgeschenke">❄ Weihnachtszeit: persönliche Geschenke aus dem 3D-Drucker – jetzt rechtzeitig bestellen →</Link>
+              <Link to="/weihnachtsgeschenke">❄ Weihnachtszeit: persönliche Geschenke aus dem 3D-Drucker – bestellen bis 15. Dezember →</Link>
             </div>
           )}
         </div>
