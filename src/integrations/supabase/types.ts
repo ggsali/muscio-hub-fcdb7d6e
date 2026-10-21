@@ -635,6 +635,7 @@ export type Database = {
       customers: {
         Row: {
           adresse: string | null
+          advent_mail_aktiv: boolean
           aktiv: boolean | null
           auth_user_id: string | null
           created_at: string | null
@@ -654,6 +655,7 @@ export type Database = {
         }
         Insert: {
           adresse?: string | null
+          advent_mail_aktiv?: boolean
           aktiv?: boolean | null
           auth_user_id?: string | null
           created_at?: string | null
@@ -673,6 +675,7 @@ export type Database = {
         }
         Update: {
           adresse?: string | null
+          advent_mail_aktiv?: boolean
           aktiv?: boolean | null
           auth_user_id?: string | null
           created_at?: string | null
