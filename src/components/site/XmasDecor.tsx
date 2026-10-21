@@ -1,20 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router-compat";
 
-/** Schneehaufen entlang der Menüleiste (liegt unter dem Header, klickdurchlässig). */
+/** Eiszapfen, die von der Menüleiste herunterhängen (klickdurchlässig). */
+const ICICLES: [number, number][] = [
+  [0, 14], [3, 24], [6, 10], [9, 30], [12, 16], [15, 22], [18, 9], [21, 28], [24, 15], [27, 20],
+  [30, 11], [33, 26], [36, 17], [39, 32], [42, 12], [45, 22], [48, 9], [51, 27], [54, 16], [57, 30],
+  [60, 13], [63, 24], [66, 10], [69, 28], [72, 18], [75, 23], [78, 9], [81, 31], [84, 15], [87, 21],
+  [90, 12], [93, 27], [96, 17], [99, 22],
+];
 export function SnowDrift() {
   return (
     <svg
       aria-hidden="true"
-      viewBox="0 0 1440 28"
+      viewBox="0 0 102 36"
       preserveAspectRatio="none"
-      className="pointer-events-none absolute left-0 top-full h-5 w-full md:h-7"
-      style={{ filter: "drop-shadow(0 2px 2px rgba(60,90,120,0.22))" }}
+      className="pointer-events-none absolute left-0 top-full h-6 w-full md:h-8"
+      style={{ filter: "drop-shadow(0 1px 1px rgba(60,90,120,0.35))" }}
     >
-      <path
-        fill="#fff"
-        d="M0 0h1440v6c-30 0-45 14-85 14s-52-9-92-9-48 14-95 14-60-12-104-12-52 11-96 11-58-14-100-14-58 13-104 13-50-10-92-10-60 14-104 14-56-12-98-12-52 11-92 11-60-13-104-13-56 11-98 11-50-9-90-9-52 10-90 10-50-8-86-8-40 8-60 8z"
-      />
+      <rect x="0" y="0" width="102" height="3" fill="#fff" />
+      {ICICLES.map(([x, h]) => (
+        <path key={x} d={`M${x} 2 L${x + 3} 2 L${x + 1.5} ${h} Z`} fill="#e8f4fb" stroke="#fff" strokeWidth="0.35" />
+      ))}
     </svg>
   );
 }
@@ -38,9 +44,9 @@ export function Snowman() {
   };
 
   return (
-    <div className="pointer-events-none fixed bottom-0 left-3 z-[55] hidden md:block">
+    <div className="pointer-events-none fixed bottom-24 left-0 z-[55] hidden md:block">
       <div className="xmas-snowman relative flex items-end">
-        <svg viewBox="0 0 120 150" className="h-36 w-28 drop-shadow-md" aria-hidden="true">
+        <svg viewBox="0 0 120 150" className="h-44 w-36 -ml-14 -rotate-6 drop-shadow-md" aria-hidden="true">
           <ellipse cx="60" cy="146" rx="52" ry="8" fill="#fff" />
           <circle cx="60" cy="112" r="34" fill="#fff" stroke="#d6e0ea" strokeWidth="1.5" />
           <circle cx="60" cy="66" r="25" fill="#fff" stroke="#d6e0ea" strokeWidth="1.5" />
@@ -60,7 +66,7 @@ export function Snowman() {
           </g>
           <path d="M32 102l-22 14" stroke="#6b4a2b" strokeWidth="3" strokeLinecap="round" fill="none" />
         </svg>
-        <div className="pointer-events-auto relative mb-20 -ml-2 w-44 rounded-xl border border-border bg-white p-3 text-sm shadow-lg">
+        <div className="pointer-events-auto relative mb-24 -ml-6 w-44 rounded-xl border border-border bg-white p-3 text-sm shadow-lg">
           <button
             type="button"
             onClick={close}

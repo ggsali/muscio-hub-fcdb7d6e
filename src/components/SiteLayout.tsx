@@ -30,15 +30,15 @@ export default function SiteLayout() {
         {/* Sticky stack: Banner sits above the header — they no longer overlap */}
         <div className="sticky top-0 z-50">
           <ShopPromoBanner />
+          {xmas && (
+            <div className="xmas-strip">
+              <Link to="/weihnachtsgeschenke">❄ Weihnachtszeit: persönliche Geschenke aus dem 3D-Drucker – jetzt rechtzeitig bestellen →</Link>
+            </div>
+          )}
           <Header />
           {xmas && <SnowDrift />}
         </div>
         <CartDrawer />
-        {xmas && (
-          <div className="xmas-strip">
-            <Link to="/weihnachtsgeschenke">❄ Weihnachtszeit: persönliche Geschenke aus dem 3D-Drucker – jetzt rechtzeitig bestellen →</Link>
-          </div>
-        )}
         <main className="flex-1 pb-24 md:pb-0">
           <Outlet />
         </main>
