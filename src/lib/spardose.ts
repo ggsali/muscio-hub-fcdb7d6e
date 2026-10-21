@@ -71,11 +71,12 @@ export const FONTS: { id: string; label: string; css: string }[] = [
   { id: "Fredoka", label: "Rund (Fredoka)", css: '700 {px}px "Fredoka"' },
   { id: "Baloo 2", label: "Weich (Baloo)", css: '800 {px}px "Baloo 2"' },
   { id: "Lilita One", label: "Kräftig (Lilita)", css: '400 {px}px "Lilita One"' },
+  { id: "Sniglet", label: "Pummelig (Sniglet)", css: '800 {px}px "Sniglet"' },
   { id: "Chewy", label: "Verspielt (Chewy)", css: '400 {px}px "Chewy"' },
 ];
 
 export const FONT_CSS_URL =
-  "https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Baloo+2:wght@800&family=Lilita+One&family=Chewy&display=swap";
+  "https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Baloo+2:wght@800&family=Lilita+One&family=Sniglet:wght@800&family=Chewy&display=swap";
 
 export type SpardoseResult = {
   name: string;
@@ -594,9 +595,16 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
         }
         if (k.back) {
           const dx = x - holeCx, dy = y - holeCy;
-          const circ = Math.hypot(dx, dy) - (k.back === "groove" ? rIn : coneIdx >= 0 ? rCone : rOut);
-          let hole = circ;
-          if (k.back === "neck") hole = Math.min(circ, Math.max(Math.abs(dx) - nl, Math.abs(dy) - nw));
+          const r = Math.hypot(dx, dy);
+          const notch = Math.max(Math.abs(dx) - nl, Math.abs(dy) - nw); // Einführschlitz für die Nasen (±x)
+          let hole: number;
+          if (k.back === "groove") {
+            // Bajonettkanal: Nase fährt vom Einführschlitz 90° im Kreis bis zum Anschlag
+            const sec = Math.min(Math.max(-(dx + nw), -(dy + nw)), Math.max(-(-dx + nw), -(-dy + nw)));
+            hole = Math.min(r - rOut, Math.max(r - rIn, sec));
+            hole = Math.min(hole, notch);
+          } else if (coneIdx >= 0) hole = Math.min(r - rCone, notch);
+          else hole = Math.min(r - rOut, notch);
           v = Math.max(v, -hole);
         }
         f[i] = v;
