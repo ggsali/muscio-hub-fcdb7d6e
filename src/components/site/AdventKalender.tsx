@@ -132,7 +132,7 @@ export function AdventKalender({ fallback = null }: { fallback?: React.ReactNode
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.trim())) { setMailError("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
     setMailState("sending");
     const { data, error } = await supabase.functions.invoke("advent-mail", {
-      body: { action: "send_code", tag: door.tag, email: email.trim(), consent },
+      body: { action: "send_code", tag: door.tag, email: email.trim(), consent, sim_tag: sim },
     });
     if (error || !data || data.error) {
       setMailState("idle");

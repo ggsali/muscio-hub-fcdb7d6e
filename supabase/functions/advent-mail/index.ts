@@ -59,8 +59,19 @@ Deno.serve(async (req) => {
       const consent = body?.consent === true;
       if (!Number.isInteger(tag) || tag < 1 || tag > 24) return json({ error: "Ungültiges Türchen" }, 400);
       if (!EMAIL_RE.test(email)) return json({ error: "Bitte gültige E-Mail-Adresse eingeben." }, 400);
-      if (tag > heute) return json({ error: "Dieses Türchen ist noch zu." }, 403);
-      if (tag < heute) return json({ error: "Der Code dieses Türchens war nur am jeweiligen Tag gültig." }, 410);
+      // Admin-Test: simulierter Tag gilt nur für eingeloggte Admins
+      let effHeute = heute;
+      const sim = Number(body?.sim_tag);
+      if (Number.isInteger(sim) && sim >= 1 && sim <= 24) {
+        const token = (req.headers.get("authorization") ?? "").replace("Bearer ", "");
+        const { data: u } = token ? await admin.auth.getUser(token) : { data: null };
+        if (u?.user) {
+          const { data: ok } = await admin.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
+          if (ok) effHeute = sim;
+        }
+      }
+      if (tag > effHeute) return json({ error: "Dieses Türchen ist noch zu." }, 403);
+      if (tag < effHeute) return json({ error: "Der Code dieses Türchens war nur am jeweiligen Tag gültig." }, 410);
 
       const { data: door } = await admin.from("advent_tuerchen").select("titel,text,code").eq("jahr", jahr).eq("tag", tag).maybeSingle();
       if (!door || !door.code) return json({ error: "Zu diesem Türchen gibt es keinen Code." }, 404);
