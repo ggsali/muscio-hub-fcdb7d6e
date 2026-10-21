@@ -147,7 +147,7 @@ export const Header = () => {
   return (
     <>
       <motion.header
-        className="relative w-full border-b border-border bg-background"
+        className="relative z-40 w-full border-b border-border/50 bg-background/95 backdrop-blur-xl"
         initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -169,13 +169,13 @@ export const Header = () => {
           </div>
         </div>
 
-        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
+        <div className="container mx-auto flex min-h-20 items-center justify-between gap-3 px-4 sm:px-6 lg:my-3 lg:min-h-[76px] lg:rounded-[26px] lg:border lg:border-border/70 lg:bg-background/95 lg:px-5 lg:shadow-[0_12px_45px_-20px_hsl(var(--foreground)/0.22)] xl:px-7">
 
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
             <img
               src={logo}
               alt="3DMuscio 3D-Druck Schweiz"
-              className="h-9 w-9 rounded-md object-contain"
+              className="h-11 w-11 rounded-xl object-contain transition-transform duration-300 group-hover:scale-105"
             />
             <div className="flex flex-col leading-none">
               <span className="font-heading text-[16px] font-extrabold tracking-tight text-foreground">
@@ -187,7 +187,7 @@ export const Header = () => {
             </div>
           </Link>
 
-          <nav className="hidden items-stretch gap-1 self-stretch lg:flex">
+          <nav className="hidden items-center gap-0.5 self-stretch lg:flex">
             {visibleNav.map((l) => {
               const active = location.pathname === l.path;
               const hasChildren = l.children && l.children.length > 0;
@@ -201,8 +201,8 @@ export const Header = () => {
                   <NavEntry
                     to={l.path}
                     className={cn(
-                      "relative flex h-full items-center gap-1 px-3.5 text-[15px] font-medium transition-colors group",
-                      active || l.isButton ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                      "group relative my-3 flex h-[calc(100%-1.5rem)] items-center gap-1.5 rounded-xl px-2.5 text-[13px] font-medium transition-all duration-200 xl:px-3 xl:text-sm hover:bg-accent/70",
+                      active || l.isButton ? "text-foreground bg-primary/10" : "text-muted-foreground hover:text-foreground",
                       l.isButton && !active && "font-semibold text-primary hover:text-primary"
                     )}
                   >
@@ -212,7 +212,7 @@ export const Header = () => {
                     )}
                     <span
                       className={cn(
-                        "absolute inset-x-3.5 bottom-0 h-[3px] bg-primary transition-transform duration-200 origin-left",
+                        "absolute inset-x-3 bottom-1 h-0.5 rounded-full bg-primary transition-transform duration-200 origin-left",
                         active || openDropdown === l.path ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
                       )}
                     />
@@ -225,9 +225,9 @@ export const Header = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.97 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute left-0 top-full z-50 min-w-[230px]"
+                        className="absolute left-0 top-[calc(100%-2px)] z-50 min-w-[270px] pt-2"
                       >
-                        <div className="border border-border border-t-2 border-t-primary bg-popover p-1 shadow-lg">
+                        <div className="overflow-hidden rounded-2xl border border-border/70 bg-popover/95 p-2 shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.25)] backdrop-blur-xl">
                           {l.children!.map((c, idx) =>
                             c.divider ? (
                               <hr key={`divider-${idx}`} className="my-1 border-border" />
@@ -236,7 +236,7 @@ export const Header = () => {
                                 key={c.path}
                                 to={c.path}
                                 onClick={() => setOpenDropdown(null)}
-                                className="block px-3.5 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                className="block rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-primary/10 hover:pl-5 hover:text-foreground"
                               >
                                 {c.label}
                               </NavEntry>
@@ -251,10 +251,10 @@ export const Header = () => {
             })}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden shrink-0 items-center gap-2 lg:flex">
             <button
               onClick={() => setCartOpen(true)}
-              className="relative rounded-md p-2 transition-colors hover:bg-accent"
+              className="relative rounded-full border border-border/60 bg-muted/40 p-2.5 transition-all hover:border-primary/40 hover:bg-primary/10"
               aria-label="Warenkorb"
             >
               <ShoppingCart className="h-[18px] w-[18px] text-foreground" />
@@ -264,7 +264,7 @@ export const Header = () => {
                 </span>
               )}
             </button>
-            <Button variant="default" size="sm" asChild className="h-10 rounded-md px-5 text-sm font-semibold">
+            <Button variant="default" size="sm" asChild className="h-11 rounded-full px-4 text-xs font-semibold shadow-md shadow-primary/15 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20 xl:px-5 xl:text-sm">
               <Link to="/kalkulator-online">
                 <Printer className="mr-2 h-4 w-4" />
                 Preis berechnen
