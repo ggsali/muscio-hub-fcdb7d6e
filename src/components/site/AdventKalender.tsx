@@ -146,8 +146,6 @@ export function AdventKalender({ fallback = null }: { fallback?: React.ReactNode
     setMailState("sent");
   };
 
-  const codeExpired = door ? door.tag < heute : false;
-
   return (
     <div className="rounded-3xl border border-border bg-gradient-to-br from-[#7a1f24] to-[#4d1115] p-4 md:p-5 shadow-lg text-white">
       <div className="mb-3 flex items-end justify-between gap-3">
@@ -245,12 +243,10 @@ export function AdventKalender({ fallback = null }: { fallback?: React.ReactNode
                 </div>
               </div>
               <p className="text-center text-xs text-amber-50/80">
-                {codeExpired
-                  ? `Dieser Code galt nur am ${door.tag}. Dezember.`
-                  : "Gilt nur heute: im Online-Kalkulator oder im Shop-Warenkorb im Feld „Gutschein-Code“ einlösen."}
+                {`Gilt nur am ${door.tag}. Dezember: im Online-Kalkulator oder im Shop-Warenkorb im Feld „Gutschein-Code“ einlösen.`}
               </p>
 
-              {!codeExpired && (
+              {(
                 <div className="rounded-lg bg-black/20 p-3">
                   {mailState === "sent" ? (
                     <p className="flex items-center gap-2 text-sm text-amber-100">

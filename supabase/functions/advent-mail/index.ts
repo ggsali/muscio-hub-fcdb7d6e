@@ -59,19 +59,17 @@ Deno.serve(async (req) => {
       const consent = body?.consent === true;
       if (!Number.isInteger(tag) || tag < 1 || tag > 24) return json({ error: "Ungültiges Türchen" }, 400);
       if (!EMAIL_RE.test(email)) return json({ error: "Bitte gültige E-Mail-Adresse eingeben." }, 400);
-      // Admin-Test: simulierter Tag gilt nur für eingeloggte Admins
-      let effHeute = heute;
-      const sim = Number(body?.sim_tag);
-      if (Number.isInteger(sim) && sim >= 1 && sim <= 24) {
-        const token = (req.headers.get("authorization") ?? "").replace("Bearer ", "");
-        const { data: u } = token ? await admin.auth.getUser(token) : { data: null };
+      // Admin (Login) darf zum Testen jedes Türchen mailen; alle anderen nur bereits offene Türchen
+      let adminTest = false;
+      const tok = (req.headers.get("authorization") ?? "").replace("Bearer ", "");
+      if (tok) {
+        const { data: u } = await admin.auth.getUser(tok);
         if (u?.user) {
           const { data: ok } = await admin.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
-          if (ok) effHeute = sim;
+          adminTest = ok === true;
         }
       }
-      if (tag > effHeute) return json({ error: "Dieses Türchen ist noch zu." }, 403);
-      if (tag < effHeute) return json({ error: "Der Code dieses Türchens war nur am jeweiligen Tag gültig." }, 410);
+      if (tag > heute && !adminTest) return json({ error: "Dieses Türchen ist noch zu." }, 403);
 
       const { data: door } = await admin.from("advent_tuerchen").select("titel,text,code").eq("jahr", jahr).eq("tag", tag).maybeSingle();
       if (!door || !door.code) return json({ error: "Zu diesem Türchen gibt es keinen Code." }, 404);
@@ -93,20 +91,20 @@ Deno.serve(async (req) => {
       }
 
       // Nur einmal pro Adresse und Türchen senden
-      const { error: logErr } = await admin.from("advent_versand_log").insert({ jahr, tag, email, art: "code" });
+      const { error: logErr } = adminTest ? { error: null } : await admin.from("advent_versand_log").insert({ jahr, tag, email, art: "code" });
       if (logErr) return json({ ok: true, already: true });
 
       const inhalt =
-        `Frohe Adventszeit!\n\nHinter Türchen ${tag} wartet heute auf dich: ${door.titel}\n\n` +
+        `Frohe Adventszeit!\n\nHinter Türchen ${tag} wartet auf dich: ${door.titel}\n\n` +
         (door.text ? `${door.text}\n\n` : "") +
-        `Dein Code: ${door.code}\n\nLöse ihn heute im Online-Kalkulator oder im Shop-Warenkorb im Feld "Gutschein-Code" ein. Er gilt nur heute.\n\n` +
+        `Dein Code: ${door.code}\n\nLöse ihn im Online-Kalkulator oder im Shop-Warenkorb im Feld "Gutschein-Code" ein. Er gilt nur am ${tag}. Dezember.\n\n` +
         `${SITE}/kalkulator-online\n\nSchöne Adventszeit wünscht dein 3DMuscio-Team`;
       const html = renderNewsletter({ inhalt, name: null, email, trackId: null });
       const { error } = await resend.emails.send({
         from: FROM, to: [email], subject: `🎁 Dein Code von Türchen ${tag}: ${door.titel}`, html,
       });
       if (error) {
-        await admin.from("advent_versand_log").delete().eq("jahr", jahr).eq("tag", tag).eq("email", email).eq("art", "code");
+        if (!adminTest) await admin.from("advent_versand_log").delete().eq("jahr", jahr).eq("tag", tag).eq("email", email).eq("art", "code");
         console.error("advent send_code Resend-Fehler", error);
         return json({ error: "E-Mail konnte nicht gesendet werden." }, 502);
       }
