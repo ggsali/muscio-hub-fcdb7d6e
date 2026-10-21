@@ -225,6 +225,13 @@
       "when": 1792571150699,
       "tag": "0031_advent_mail_ausschluss",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792572453824,
+      "tag": "0032_website_settings_weihnachtsmodus_public",
+      "breakpoints": true
     }
   ]
 }
