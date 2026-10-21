@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation } from "@/lib/router-compat";
+import { company } from "@/data/company";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Printer, User, ShoppingCart, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -146,38 +147,47 @@ export const Header = () => {
   return (
     <>
       <motion.header
-        className="relative w-full px-3 pb-2 pt-2 sm:px-6 sm:pt-3"
+        className="relative w-full border-b border-border bg-background"
         initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div
-          className={cn(
-            "mx-auto flex max-w-6xl items-center justify-between rounded-full border px-3 sm:px-5",
-            "bg-background/80 backdrop-blur-xl transition-all duration-300",
-            scrolled || open
-              ? "h-12 border-border bg-background/95 shadow-[0_10px_30px_-12px_rgba(15,23,42,0.35)]"
-              : "h-14 border-border/60 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.25)]"
-          )}
-        >
+        {/* Schmale Info-Leiste (nur Desktop) */}
+        <div className="hidden bg-foreground text-background/80 lg:block">
+          <div className="container mx-auto flex h-8 items-center justify-between px-6 text-xs">
+            <span>Schweizer 3D-Druckservice · Eschlikon TG · Fertigung bei geeigneten Aufträgen in 48 h möglich*</span>
+            <div className="flex items-center gap-5">
+              <a href={`mailto:${company.email}`} className="transition-colors hover:text-background">{company.email}</a>
+              {session ? (
+                <Link to={accountTarget} className="flex items-center gap-1.5 transition-colors hover:text-background">
+                  <User className="h-3 w-3" />{accountLabel}
+                </Link>
+              ) : (
+                <Link to="/anmelden" className="transition-colors hover:text-background">Anmelden</Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
 
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
             <img
               src={logo}
               alt="3DMuscio 3D-Druck Schweiz"
-              className="h-8 w-8 rounded-lg object-contain"
+              className="h-9 w-9 rounded-md object-contain"
             />
             <div className="flex flex-col leading-none">
-              <span className="font-heading text-[14px] font-extrabold tracking-tight text-foreground">
+              <span className="font-heading text-[16px] font-extrabold tracking-tight text-foreground">
                 3D<span className="text-primary">Muscio</span>
               </span>
-              <span className="text-[8px] uppercase tracking-[0.2em] font-medium hidden sm:block text-muted-foreground">
+              <span className="mt-0.5 hidden text-[9px] font-medium uppercase tracking-[0.18em] text-muted-foreground sm:block">
                 3D-Druck Schweiz
               </span>
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-0.5">
+          <nav className="hidden items-stretch gap-1 self-stretch lg:flex">
             {visibleNav.map((l) => {
               const active = location.pathname === l.path;
               const hasChildren = l.children && l.children.length > 0;
@@ -188,41 +198,25 @@ export const Header = () => {
                   onMouseEnter={() => hasChildren && handleEnter(l.path)}
                   onMouseLeave={() => hasChildren && handleLeave()}
                 >
-                  {l.isButton ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
+                  <NavEntry
+                    to={l.path}
+                    className={cn(
+                      "relative flex h-full items-center gap-1 px-3.5 text-[15px] font-medium transition-colors group",
+                      active || l.isButton ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                      l.isButton && !active && "font-semibold text-primary hover:text-primary"
+                    )}
+                  >
+                    {l.label}
+                    {hasChildren && (
+                      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", openDropdown === l.path && "rotate-180")} />
+                    )}
+                    <span
                       className={cn(
-                        "rounded-full h-8 px-4 text-sm font-semibold border-transparent bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-colors",
-                        active && "bg-primary/20"
+                        "absolute inset-x-3.5 bottom-0 h-[3px] bg-primary transition-transform duration-200 origin-left",
+                        active || openDropdown === l.path ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
                       )}
-                    >
-                      <NavEntry to={l.path}>{l.label}</NavEntry>
-                    </Button>
-                  ) : (
-                    <NavEntry
-                      to={l.path}
-                      className={cn(
-                        "relative flex items-center gap-1 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors group",
-                        active ? "bg-accent" : "hover:bg-accent/60"
-                      )}
-                    >
-                      <span className={cn(
-                        "transition-colors duration-150",
-                        active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
-                      )}>
-                        {l.label}
-                      </span>
-                      {hasChildren && (
-                        <ChevronDown className={cn(
-                          "w-3 h-3 transition-transform duration-200",
-                          active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
-                          openDropdown === l.path && "rotate-180"
-                        )} />
-                      )}
-                    </NavEntry>
-                  )}
+                    />
+                  </NavEntry>
 
                   <AnimatePresence>
                     {hasChildren && openDropdown === l.path && (
@@ -231,9 +225,9 @@ export const Header = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.97 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute left-1/2 -translate-x-1/2 top-full pt-2 z-50 min-w-[200px]"
+                        className="absolute left-0 top-full z-50 min-w-[230px]"
                       >
-                        <div className="bg-popover border border-border rounded-2xl shadow-xl p-1.5">
+                        <div className="border border-border border-t-2 border-t-primary bg-popover p-1 shadow-lg">
                           {l.children!.map((c, idx) =>
                             c.divider ? (
                               <hr key={`divider-${idx}`} className="my-1 border-border" />
@@ -242,7 +236,7 @@ export const Header = () => {
                                 key={c.path}
                                 to={c.path}
                                 onClick={() => setOpenDropdown(null)}
-                                className="block px-3 py-2 text-sm rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                className="block px-3.5 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                               >
                                 {c.label}
                               </NavEntry>
@@ -257,34 +251,22 @@ export const Header = () => {
             })}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden items-center gap-3 lg:flex">
             <button
               onClick={() => setCartOpen(true)}
-              className="relative p-2 rounded-full hover:bg-accent transition-colors"
+              className="relative rounded-md p-2 transition-colors hover:bg-accent"
               aria-label="Warenkorb"
             >
-              <ShoppingCart className="w-4 h-4 text-foreground" />
+              <ShoppingCart className="h-[18px] w-[18px] text-foreground" />
               {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
                   {totalItems}
                 </span>
               )}
             </button>
-            {session ? (
-              <Button variant="ghost" size="sm" asChild
-                className="rounded-full h-8 px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
-                <Link to={accountTarget}><User className="w-3.5 h-3.5 mr-1" />{accountLabel}</Link>
-              </Button>
-            ) : (
-              <Button variant="ghost" size="sm" asChild
-                className="rounded-full h-8 px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
-                <Link to="/anmelden">Anmelden</Link>
-              </Button>
-            )}
-            <Button variant="default" size="sm" asChild
-              className="rounded-full h-9 px-5 text-sm font-semibold shadow-sm">
+            <Button variant="default" size="sm" asChild className="h-10 rounded-md px-5 text-sm font-semibold">
               <Link to="/kalkulator-online">
-                <Printer className="w-3.5 h-3.5 mr-1.5" />
+                <Printer className="mr-2 h-4 w-4" />
                 Preis berechnen
               </Link>
             </Button>
@@ -313,7 +295,7 @@ export const Header = () => {
               </Button>
             )}
             <button
-              className="p-1.5 rounded-md bg-black/5 hover:bg-black/10 transition-colors"
+              className="rounded-md p-1.5 transition-colors hover:bg-accent"
               onClick={() => setOpen(!open)}
               aria-label="Menü"
             >
@@ -335,7 +317,7 @@ export const Header = () => {
         <AnimatePresence>
           {open && (
             <motion.div
-              className="lg:hidden absolute left-3 right-3 sm:left-6 sm:right-6 top-full z-40 rounded-3xl bg-foreground/95 backdrop-blur-xl border border-white/10 shadow-2xl max-h-[calc(100vh-7rem)] overflow-y-auto"
+              className="lg:hidden absolute left-0 right-0 top-full z-40 max-h-[calc(100vh-7rem)] overflow-y-auto border-b border-border bg-background shadow-xl"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
@@ -350,10 +332,10 @@ export const Header = () => {
                         to={l.path}
                         onClick={() => setOpen(false)}
                         className={cn(
-                          "flex items-center justify-between px-4 py-3 min-h-[48px] rounded-lg text-sm font-medium transition-colors",
+                          "flex items-center justify-between px-4 py-3 min-h-[48px] rounded-md text-sm font-medium transition-colors",
                           active
-                            ? "text-white bg-white/10 font-semibold"
-                            : "text-white/55 hover:text-white hover:bg-white/10"
+                            ? "bg-accent font-semibold text-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
                         )}
                       >
                         {l.label}
@@ -362,8 +344,8 @@ export const Header = () => {
                     </motion.div>
                   );
                 })}
-                <div className="mt-2 pt-2 border-t border-white/10">
-                  <Button variant="default" className="w-full rounded-lg" asChild>
+                <div className="mt-2 border-t border-border pt-2">
+                  <Button variant="default" className="w-full rounded-md" asChild>
                     <Link to="/kalkulator-online" onClick={() => setOpen(false)}>
                       <Printer className="w-4 h-4 mr-2" />
                       Preis berechnen
