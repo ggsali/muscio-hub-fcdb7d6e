@@ -53,3 +53,5 @@ project_id = "ukqtjdsjmtxgzhklvqky"
     verify_jwt = false
   [functions.slice-public]
     verify_jwt = false
+  [functions.advent-tuerchen]
+    verify_jwt = false

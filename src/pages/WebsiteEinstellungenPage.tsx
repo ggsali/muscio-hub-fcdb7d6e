@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { COLOR_MAP, colorHex } from "@/lib/colorMap";
 import { invalidateResinCache } from "@/hooks/useResinEnabled";
 import { invalidateChristmasCache } from "@/hooks/useChristmasMode";
+import { AdventAdmin } from "@/components/AdventAdmin";
 import { invalidateStadtmodellCache } from "@/hooks/useStadtmodellEnabled";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -280,6 +281,14 @@ export default function WebsiteEinstellungenPage() {
             </div>
             <Switch checked={stadtmodell.aktiv} onCheckedChange={v => setStadtmodell({ aktiv: v })} />
           </div>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* Adventskalender */}
+      <AccordionItem value="advent" className="bg-card border border-border rounded-lg px-4 md:px-5">
+        <AccordionTrigger className="font-semibold hover:no-underline">Adventskalender 🎁</AccordionTrigger>
+        <AccordionContent>
+          <AdventAdmin />
         </AccordionContent>
       </AccordionItem>
 

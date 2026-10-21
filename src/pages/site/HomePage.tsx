@@ -18,6 +18,8 @@ import { ReviewsSection } from "@/components/site/ReviewsSection";
 import { useReviewData } from "@/hooks/useReviewData";
 import Seo from "@/components/site/Seo";
 import { HeroImageMosaic } from "@/components/site/HeroImageMosaic";
+import { AdventKalender } from "@/components/site/AdventKalender";
+import { useChristmasMode } from "@/hooks/useChristmasMode";
 import { isAcceptedModel, setPendingUploads } from "@/lib/pendingUpload";
 import { toast } from "sonner";
 import { company, fullAddress, faqJsonLd } from "@/data/company";
@@ -106,6 +108,7 @@ const HeroUploadButton = () => {
 
 const HeroBento = () => {
   const resin = useResinEnabled();
+  const xmas = useChristmasMode();
   return (
   <section className="relative overflow-hidden pt-8 pb-6 md:pt-12">
     <div
@@ -178,7 +181,7 @@ const HeroBento = () => {
           className="lg:col-span-5 flex items-center"
         >
           <div className="w-full md:pt-6">
-            <HeroImageMosaic />
+            {xmas ? <AdventKalender fallback={<HeroImageMosaic />} /> : <HeroImageMosaic />}
           </div>
         </motion.div>
       </div>
