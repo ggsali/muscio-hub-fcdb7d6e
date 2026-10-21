@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULTS, FONTS, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
 
 // ADMIN-TESTVERSION des Spardose-Generators (nur unter /admin/spardose-test)
 
-const COLORS = ["#1f2937", "#6b7280", "#e5e7eb", "#ef4444", "#f97316", "#facc15", "#84cc16", "#16a34a", "#14b8a6", "#0ea5e9", "#2563eb", "#a855f7", "#ec4899", "#8b5a2b"];
 
 function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: string; base: string; cap: string } }) {
   const host = useRef<HTMLDivElement>(null);
@@ -86,26 +86,44 @@ function Field({ label, children, value }: { label: string; children: React.Reac
   );
 }
 
-function Swatches({ value, onChange }: { value: string; onChange: (c: string) => void }) {
+function Swatches({ colors, value, onChange }: { colors: { name: string; hex: string }[]; value: string; onChange: (hex: string) => void }) {
+  if (colors.length === 0) return <p className="text-[11px] text-muted-foreground">Keine PLA-Farben in der Bibliothek.</p>;
+  const sel = colors.find((c) => c.hex === value);
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {COLORS.map((c) => (
-        <button
-          key={c}
-          type="button"
-          aria-label={c}
-          onClick={() => onChange(c)}
-          className={cn("h-6 w-6 rounded-full border border-black/10 transition-transform hover:scale-110", value === c && "ring-2 ring-primary ring-offset-2 ring-offset-background")}
-          style={{ backgroundColor: c }}
-        />
-      ))}
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1.5">
+        {colors.map((c) => (
+          <button
+            key={c.name}
+            type="button"
+            title={c.name}
+            aria-label={c.name}
+            onClick={() => onChange(c.hex)}
+            className={cn("h-6 w-6 rounded-full border border-black/10 transition-transform hover:scale-110", value === c.hex && "ring-2 ring-primary ring-offset-2 ring-offset-background")}
+            style={{ backgroundColor: c.hex }}
+          />
+        ))}
+      </div>
+      {sel && <div className="text-[11px] text-muted-foreground">{sel.name}</div>}
     </div>
   );
 }
 
 export default function SpardoseTestPage() {
   const [p, setP] = useState<SpardoseParams>(DEFAULTS);
+  const { farbenFor } = useMaterialFarben();
+  const plaFarben = farbenFor("PLA");
   const [colors, setColors] = useState({ text: "#0ea5e9", base: "#374151", cap: "#0ea5e9" });
+  useEffect(() => {
+    // Standardfarben aus der Bibliothek, sobald sie geladen ist (nur PLA)
+    if (plaFarben.length === 0) return;
+    setColors((o) => {
+      const ok = (h: string) => plaFarben.some((c) => c.hex === h);
+      const dunkel = plaFarben.find((c) => /schwarz|grau|dunkel/i.test(c.name)) ?? plaFarben[0];
+      const hell = plaFarben.find((c) => /blau|gelb|rot|orange|gr/i.test(c.name) && c !== dunkel) ?? plaFarben[plaFarben.length - 1];
+      return { text: ok(o.text) ? o.text : hell.hex, base: ok(o.base) ? o.base : dunkel.hex, cap: ok(o.cap) ? o.cap : hell.hex };
+    });
+  }, [plaFarben.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const [res, setRes] = useState<SpardoseResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -180,6 +198,10 @@ export default function SpardoseTestPage() {
           <Field label="Maximale Länge" value={`${p.maxLength} mm`}>
             <Slider min={100} max={300} step={5} value={[p.maxLength]} onValueChange={([v]) => set("maxLength", v)} />
           </Field>
+          <Field label="Rand um die Schrift" value={`${p.rand.toFixed(1)} mm`}>
+            <Slider min={3} max={10} step={0.5} value={[p.rand]} onValueChange={([v]) => set("rand", v)} />
+            <p className="text-[11px] text-muted-foreground">Abstand von den Buchstaben bis zum Rand der Spardose (min. 3 mm). Mehr Rand = grössere Kappe.</p>
+          </Field>
           <Field label="Buchstabenhöhe" value={`${p.size} mm`}>
             <Slider min={25} max={75} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
           </Field>
@@ -188,7 +210,6 @@ export default function SpardoseTestPage() {
             <summary className="cursor-pointer font-medium">Erweitert (Passung &amp; Aufbau)</summary>
             <div className="mt-3 space-y-4">
               <Field label="Tiefe der Dose" value={`${p.tiefe} mm`}><Slider min={25} max={70} step={1} value={[p.tiefe]} onValueChange={([v]) => set("tiefe", v)} /></Field>
-              <Field label="Rand um die Schrift" value={`${p.rand.toFixed(1)} mm`}><Slider min={4} max={9} step={0.5} value={[p.rand]} onValueChange={([v]) => set("rand", v)} /></Field>
               <Field label="Wandstärke" value={`${p.wand.toFixed(1)} mm`}><Slider min={1.6} max={4} step={0.2} value={[p.wand]} onValueChange={([v]) => set("wand", v)} /></Field>
               <Field label="Spiel (Passung)" value={`${p.spiel.toFixed(2)} mm`}><Slider min={0.1} max={0.5} step={0.05} value={[p.spiel]} onValueChange={([v]) => set("spiel", v)} /></Field>
               <Field label="Tiefe der Vertiefung" value={`${p.taschenTiefe.toFixed(1)} mm`}><Slider min={1} max={4} step={0.5} value={[p.taschenTiefe]} onValueChange={([v]) => set("taschenTiefe", v)} /></Field>
@@ -230,16 +251,17 @@ export default function SpardoseTestPage() {
         </div>
 
         <div className="space-y-4 rounded-xl border bg-card p-4">
+          <Field label="Material"><div className="inline-flex rounded-md bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">PLA</div></Field>
           <Field label="Abmessungen">
             <div className="text-sm tabular-nums">
               {res ? <>X {res.dims.x.toFixed(1)} · Y {res.dims.y.toFixed(1)} · Z {res.dims.z.toFixed(1)} mm</> : "–"}
             </div>
             {res && <div className="text-[11px] text-muted-foreground">Berechnet in {ms} ms · Raster {res.info.ppm} px/mm · Kappe Ø {(res.info.capR * 2).toFixed(0)} mm</div>}
           </Field>
-          <Field label="Buchstaben (Farbe)"><Swatches value={colors.text} onChange={(c) => setColors((o) => ({ ...o, text: c }))} /></Field>
-          <Field label="Körper (Farbe)"><Swatches value={colors.base} onChange={(c) => setColors((o) => ({ ...o, base: c }))} /></Field>
-          <Field label="Kappe (Farbe)"><Swatches value={colors.cap} onChange={(c) => setColors((o) => ({ ...o, cap: c }))} /></Field>
-          <p className="text-[11px] text-muted-foreground">Die Farben sind hier nur Vorschau. Später kommen deine echten Filamentfarben.</p>
+          <Field label="Buchstaben (Farbe)"><Swatches colors={plaFarben} value={colors.text} onChange={(c) => setColors((o) => ({ ...o, text: c }))} /></Field>
+          <Field label="Körper (Farbe)"><Swatches colors={plaFarben} value={colors.base} onChange={(c) => setColors((o) => ({ ...o, base: c }))} /></Field>
+          <Field label="Kappe (Farbe)"><Swatches colors={plaFarben} value={colors.cap} onChange={(c) => setColors((o) => ({ ...o, cap: c }))} /></Field>
+          <p className="text-[11px] text-muted-foreground">Es stehen nur PLA-Farben aus deiner Filament-Bibliothek zur Auswahl.</p>
         </div>
       </div>
     </div>
