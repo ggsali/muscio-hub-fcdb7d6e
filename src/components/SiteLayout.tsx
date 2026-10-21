@@ -12,7 +12,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { usePageViewTracker } from "@/hooks/usePageViewTracker";
 import { useChristmasMode } from "@/hooks/useChristmasMode";
 import { Snowfall } from "./site/Snowfall";
-import { SnowDrift, Snowman } from "./site/XmasDecor";
+import { Snowman } from "./site/XmasDecor";
 import { Link } from "@/lib/router-compat";
 
 export default function SiteLayout() {
@@ -28,7 +28,6 @@ export default function SiteLayout() {
         <CanonicalTag />
         {/* Sticky stack: Banner sits above the header — they no longer overlap */}
         <div className="sticky top-0 z-50">
-          {xmas && <SnowDrift />}
           <Header />
           {xmas && (
             <div className="xmas-strip">
