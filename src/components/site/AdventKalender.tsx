@@ -123,7 +123,7 @@ export function AdventKalender({ fallback = null }: { fallback?: React.ReactNode
       <p className="mt-3 min-h-[1.25rem] text-xs text-white/80" role="status">
         {msg ?? (heute === 0
           ? "Die Türchen öffnen sich ab dem 1. Dezember."
-          : `Heute offen: Türchen ${Math.min(heute, 24)}. Den Code gibst du im Warenkorb ein.`)}
+          : `Heute offen: Türchen ${Math.min(heute, 24)}. Den Code gibst du im Kalkulator oder Warenkorb ein.`)}
       </p>
 
       {isAdmin && (
@@ -162,11 +162,11 @@ export function AdventKalender({ fallback = null }: { fallback?: React.ReactNode
                   {copied ? "Kopiert" : "Kopieren"}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">Im Warenkorb im Feld „Gutschein-Code“ einlösen. Gültig bis Ende Dezember.</p>
+              <p className="text-xs text-muted-foreground">Im Online-Kalkulator oder im Shop-Warenkorb im Feld „Gutschein-Code“ einlösen. Gültig bis Ende Dezember.</p>
             </div>
           )}
           <Button asChild>
-            <Link to="/shop">Zum Shop</Link>
+            <Link to="/kalkulator-online">Zum Kalkulator</Link>
           </Button>
         </DialogContent>
       </Dialog>

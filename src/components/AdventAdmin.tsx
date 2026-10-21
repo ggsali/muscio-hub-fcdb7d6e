@@ -17,15 +17,41 @@ const jahr = new Date().getFullYear();
 const codeFor = (tag: number) => `ADVENT${jahr}-${String(tag).padStart(2, "0")}`;
 const empty = (): Row[] => Array.from({ length: 24 }, (_, i) => ({ tag: i + 1, titel: "", text: "", typ: "", wert: "" }));
 
-/** Vorschlag: kleine Rabatte, Sonntage/Sonderzahlen etwas grösser. */
+/** Vorschlag: Mix aus Rabatten (steigend), Gratis-Versand-Tagen und nützlichen Druck-Tipps. */
+const PLAN: Record<number, [string, string, string, string]> = {
+  1: ["Los geht's: 5 % Rabatt", "Zum Start ein kleines Dankeschön auf deinen nächsten 3D-Druck.", "prozent", "5"],
+  2: ["Tipp: PLA oder PETG?", "PLA ist günstig und einfach zu drucken, PETG ist zäher und hält mehr aus. Im Kalkulator siehst du beide Preise sofort.", "", ""],
+  3: ["CHF 5 Rabatt", "Ab CHF 20 Bestellwert.", "betrag", "5"],
+  4: ["Tipp: Schichthöhe", "Feinere Schichten sehen glatter aus, brauchen aber mehr Zeit. Für Gehäuse und Halter reicht meist die Standardqualität.", "", ""],
+  5: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
+  6: ["Nikolaus-Special: 10 %", "Der Nikolaus bringt 10 % auf deine Bestellung.", "prozent", "10"],
+  7: ["Tipp: Füllung sparen", "Oft reichen 15 bis 20 % Füllung. Weniger Material bedeutet einen günstigeren Preis.", "", ""],
+  8: ["CHF 10 Rabatt", "Ab CHF 40 Bestellwert.", "betrag", "10"],
+  9: ["5 % Rabatt", "Ein kleines Extra für heute.", "prozent", "5"],
+  10: ["Tipp: Alles zusammen bestellen", "Die Rüstkosten fallen pro Auftrag nur einmal an. Mehrere Teile in einer Bestellung sparen Geld.", "", ""],
+  11: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
+  12: ["10 % Rabatt", "Zwölf Türchen geschafft, 10 % für dich.", "prozent", "10"],
+  13: ["Tipp: Geschenk mit Namen", "Mit einem eigenen Namen oder einer Widmung im Modell wird aus einem Teil ein persönliches Geschenk.", "", ""],
+  14: ["CHF 5 Rabatt", "Ab CHF 20 Bestellwert.", "betrag", "5"],
+  15: ["Halbzeit: 15 % Rabatt", "Die Hälfte ist geschafft. Heute gibt es 15 % auf deine Bestellung.", "prozent", "15"],
+  16: ["Tipp: Farbe passend wählen", "Farbe und Material bestimmst du direkt im Kalkulator. Schwarz und Weiss sind meist am schnellsten lieferbar.", "", ""],
+  17: ["CHF 10 Rabatt", "Ab CHF 40 Bestellwert.", "betrag", "10"],
+  18: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
+  19: ["10 % Rabatt", "Noch fünf Tage bis Heiligabend.", "prozent", "10"],
+  20: ["Tipp: Jetzt rechtzeitig bestellen", "Je früher du bestellst, desto sicherer ist das Geschenk vor Weihnachten da. Bei Fragen zur Lieferzeit schreib uns kurz.", "", ""],
+  21: ["CHF 15 Rabatt", "Ab CHF 60 Bestellwert.", "betrag", "15"],
+  22: ["12 % Rabatt", "Kurz vor dem Fest noch ein Geschenk drucken lassen.", "prozent", "12"],
+  23: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
+  24: ["Frohe Weihnachten: 20 %", "Zum Abschluss unser grösster Rabatt. Danke für dein Vertrauen.", "prozent", "20"],
+};
 const suggestion = (): Row[] =>
   empty().map((r) => {
-    if (r.tag === 24) return { ...r, titel: "Weihnachts-Überraschung", text: "Zum Schluss ein grosses Dankeschön.", typ: "prozent", wert: "15" };
-    if (r.tag % 6 === 0) return { ...r, titel: "Gratis Versand", text: "Heute ohne Versandkosten.", typ: "gratis_versand", wert: "0" };
-    if (r.tag % 5 === 0) return { ...r, titel: "10 % auf alles", text: "Nur für kurze Zeit.", typ: "prozent", wert: "10" };
-    if (r.tag % 2 === 0) return { ...r, titel: "5 % Rabatt", text: "Ein kleines Dankeschön.", typ: "prozent", wert: "5" };
-    return { ...r, titel: "Geschenkidee des Tages", text: "Schau heute im Shop vorbei, vielleicht ist das Richtige dabei.", typ: "", wert: "" };
+    const [titel, text, typ, wert] = PLAN[r.tag];
+    return { ...r, titel, text, typ, wert };
   });
+
+/** Mindestbestellwert für Betrags-Rabatte: ca. das Vierfache des Rabatts. */
+const minOrder = (r: Row) => (r.typ === "betrag" ? Math.round((Number(r.wert) || 0) * 4) : 0);
 
 export function AdventAdmin() {
   const { toast } = useToast();
@@ -62,7 +88,7 @@ export function AdventAdmin() {
               code: code!,
               typ: r.typ,
               wert: r.typ === "gratis_versand" ? 0 : Number(r.wert) || 0,
-              mindestbestellwert: 0,
+              mindestbestellwert: minOrder(r),
               max_verwendungen: null,
               gueltig_ab: `${jahr}-12-${String(r.tag).padStart(2, "0")}`,
               gueltig_bis: `${jahr}-12-31`,
@@ -91,7 +117,7 @@ export function AdventAdmin() {
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Türchen {jahr}. Mit Rabatt wird automatisch der Code <code>{codeFor(1).replace("-01", "-TT")}</code> angelegt, gültig ab dem jeweiligen Tag bis 31.12.
+        Türchen {jahr}. Die Codes gelten im Online-Kalkulator und im Shop. Mit Rabatt wird automatisch der Code <code>{codeFor(1).replace("-01", "-TT")}</code> angelegt, gültig ab dem jeweiligen Tag bis 31.12. Bei Betrags-Rabatten gilt automatisch ein Mindestbestellwert von ca. dem Vierfachen.
         Leerer Titel = Türchen bleibt leer. Testen: als Admin eingeloggt erscheint unter dem Kalender auf der Startseite eine Auswahl „Heute ist: …“.
         Der Kalender erscheint nur bei eingeschaltetem Weihnachtsmodus.
       </p>
