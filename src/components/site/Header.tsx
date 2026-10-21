@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation } from "@/lib/router-compat";
-import { company } from "@/data/company";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Printer, User, ShoppingCart, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +8,7 @@ import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo.jpeg";
 import { cn } from "@/lib/utils";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
+import { useChristmasMode } from "@/hooks/useChristmasMode";
 import type { Session } from "@supabase/supabase-js";
 
 interface NavChild { label: string; path: string; divider?: boolean; }
@@ -77,6 +77,7 @@ export const Header = () => {
   const { totalItems, setIsOpen: setCartOpen } = useCart();
   const [navItems, setNavItems] = useState<NavItem[]>(NAV_ITEMS);
   const resin = useResinEnabled();
+  const christmasMode = useChristmasMode();
 
   // Resin ausgeschaltet: Resin-Einträge (auch aus der Admin-Navigation) verbergen.
   const visibleNav: NavItem[] = resin
@@ -152,24 +153,38 @@ export const Header = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Schmale Info-Leiste (nur Desktop) */}
-        <div className="hidden bg-foreground text-background/80 lg:block">
-          <div className="container mx-auto flex h-8 items-center justify-between px-6 text-xs">
-            <span>Schweizer 3D-Druckservice · Eschlikon TG · Fertigung bei geeigneten Aufträgen in 48 h möglich*</span>
-            <div className="flex items-center gap-5">
-              <a href={`mailto:${company.email}`} className="transition-colors hover:text-background">{company.email}</a>
-              {session ? (
-                <Link to={accountTarget} className="flex items-center gap-1.5 transition-colors hover:text-background">
-                  <User className="h-3 w-3" />{accountLabel}
-                </Link>
-              ) : (
-                <Link to="/anmelden" className="transition-colors hover:text-background">Anmelden</Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto flex min-h-20 items-center justify-between gap-3 px-4 sm:px-6 lg:my-3 lg:min-h-[76px] lg:rounded-[26px] lg:border lg:border-border/70 lg:bg-background/95 lg:px-5 lg:shadow-[0_12px_45px_-20px_hsl(var(--foreground)/0.22)] xl:px-7">
+        {christmasMode && (
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            viewBox="0 0 1200 46"
+            preserveAspectRatio="none"
+            className="pointer-events-none absolute left-1/2 top-0 z-10 hidden h-11 w-[min(calc(100%-3rem),1200px)] -translate-x-1/2 overflow-visible lg:block"
+          >
+            <defs>
+              <linearGradient id="nav-icicle-ice" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#eefaff" stopOpacity="0.96" />
+                <stop offset="65%" stopColor="#b9e8f7" stopOpacity="0.92" />
+                <stop offset="100%" stopColor="#7cbfd9" stopOpacity="0.72" />
+              </linearGradient>
+            </defs>
+            {Array.from({ length: 30 }, (_, i) => {
+              const x = i * 40;
+              const length = 13 + ((i * 13) % 26);
+              return (
+                <path
+                  key={i}
+                  d={`M${x} 0 h28 l-5 7 -4 0 -5 ${length} -4 -${length - 4} -5 5 -5 -8 Z`}
+                  fill="url(#nav-icicle-ice)"
+                  stroke="#e8faff"
+                  strokeOpacity="0.75"
+                  strokeWidth="0.8"
+                />
+              );
+            })}
+          </svg>
+        )}
+        <div className="container mx-auto flex min-h-20 items-center justify-between gap-3 px-4 sm:px-6 lg:my-3 lg:min-h-[76px] lg:relative lg:rounded-[26px] lg:border lg:border-border/70 lg:bg-background/95 lg:px-5 lg:shadow-[0_12px_45px_-20px_hsl(var(--foreground)/0.22)] xl:px-7">
 
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
             <img
@@ -252,6 +267,14 @@ export const Header = () => {
           </nav>
 
           <div className="hidden shrink-0 items-center gap-2 lg:flex">
+            <Link
+              to={session ? accountTarget : "/anmelden"}
+              aria-label={session ? "Mein Konto" : "Anmelden"}
+              title={session ? "Mein Konto" : "Anmelden"}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-muted/40 text-foreground transition-all hover:border-primary/40 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <User className="h-[18px] w-[18px]" aria-hidden="true" />
+            </Link>
             <button
               onClick={() => setCartOpen(true)}
               className="relative rounded-full border border-border/60 bg-muted/40 p-2.5 transition-all hover:border-primary/40 hover:bg-primary/10"
