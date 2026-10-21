@@ -39,6 +39,9 @@ const VORSCHLAEGE: { titel: string; prioritaet: Prio; notiz?: string }[] = [
   { titel: "Google Search Console: /weihnachtsgeschenke zur Indexierung einreichen", prioritaet: "normal" },
   { titel: "Blogartikel für Weihnachtsgeschenke schreiben", prioritaet: "niedrig" },
   { titel: "Navigationsleiste: Design entscheiden", prioritaet: "niedrig" },
+  { titel: "Spardose-Generator: Passungstest drucken (Vertiefung-Offset 0,2 / 0,25 / 0,3 mm, Bajonett-Kappe)", prioritaet: "normal", notiz: "Name als Spardose, Buchstaben separat zum Einlegen, runde Drehkappe hinten. Nur Buchstaben A–Z und Ziffern, keine Sonderzeichen." },
+  { titel: "Spardose-Generator: Prototyp Vorschau (Name → 3D-Körper, Schlitz, Vertiefung, Kappe)", prioritaet: "niedrig" },
+  { titel: "Spardose-Generator: Preisregel, Bestellung und Produktseite", prioritaet: "niedrig" },
 ];
 
 export default function TodosPage() {
