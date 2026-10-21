@@ -55,6 +55,7 @@ import { Route as SiteStadtmodellRouteImport } from './routes/_site/stadtmodell'
 import { Route as SiteStlDruckenLassenRouteImport } from './routes/_site/stl-drucken-lassen'
 import { Route as SiteUeberKiRouteImport } from './routes/_site/ueber-ki'
 import { Route as SiteUeberUnsRouteImport } from './routes/_site/ueber-uns'
+import { Route as SiteWeihnachtsgeschenkeRouteImport } from './routes/_site/weihnachtsgeschenke'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnfragenRouteImport } from './routes/admin/anfragen'
 import { Route as AdminBewertungenRouteImport } from './routes/admin/bewertungen'
@@ -367,6 +368,11 @@ const SiteUeberKiRoute = SiteUeberKiRouteImport.update({
 const SiteUeberUnsRoute = SiteUeberUnsRouteImport.update({
   id: '/ueber-uns',
   path: '/ueber-uns',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteWeihnachtsgeschenkeRoute = SiteWeihnachtsgeschenkeRouteImport.update({
+  id: '/weihnachtsgeschenke',
+  path: '/weihnachtsgeschenke',
   getParentRoute: () => SiteRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -846,6 +852,7 @@ export interface FileRoutesByFullPath {
   '/stl-drucken-lassen': typeof SiteStlDruckenLassenRoute
   '/ueber-ki': typeof SiteUeberKiRoute
   '/ueber-uns': typeof SiteUeberUnsRoute
+  '/weihnachtsgeschenke': typeof SiteWeihnachtsgeschenkeRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
@@ -973,6 +980,7 @@ export interface FileRoutesByTo {
   '/stl-drucken-lassen': typeof SiteStlDruckenLassenRoute
   '/ueber-ki': typeof SiteUeberKiRoute
   '/ueber-uns': typeof SiteUeberUnsRoute
+  '/weihnachtsgeschenke': typeof SiteWeihnachtsgeschenkeRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
@@ -1106,6 +1114,7 @@ export interface FileRoutesById {
   '/_site/stl-drucken-lassen': typeof SiteStlDruckenLassenRoute
   '/_site/ueber-ki': typeof SiteUeberKiRoute
   '/_site/ueber-uns': typeof SiteUeberUnsRoute
+  '/_site/weihnachtsgeschenke': typeof SiteWeihnachtsgeschenkeRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
@@ -1240,6 +1249,7 @@ export interface FileRouteTypes {
     | '/stl-drucken-lassen'
     | '/ueber-ki'
     | '/ueber-uns'
+    | '/weihnachtsgeschenke'
     | '/admin/anfragen'
     | '/admin/bewertungen'
     | '/admin/buchhaltung'
@@ -1367,6 +1377,7 @@ export interface FileRouteTypes {
     | '/stl-drucken-lassen'
     | '/ueber-ki'
     | '/ueber-uns'
+    | '/weihnachtsgeschenke'
     | '/admin/anfragen'
     | '/admin/bewertungen'
     | '/admin/buchhaltung'
@@ -1499,6 +1510,7 @@ export interface FileRouteTypes {
     | '/_site/stl-drucken-lassen'
     | '/_site/ueber-ki'
     | '/_site/ueber-uns'
+    | '/_site/weihnachtsgeschenke'
     | '/admin/anfragen'
     | '/admin/bewertungen'
     | '/admin/buchhaltung'
@@ -1948,6 +1960,13 @@ declare module '@tanstack/react-router' {
       path: '/ueber-uns'
       fullPath: '/ueber-uns'
       preLoaderRoute: typeof SiteUeberUnsRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/weihnachtsgeschenke': {
+      id: '/_site/weihnachtsgeschenke'
+      path: '/weihnachtsgeschenke'
+      fullPath: '/weihnachtsgeschenke'
+      preLoaderRoute: typeof SiteWeihnachtsgeschenkeRouteImport
       parentRoute: typeof SiteRoute
     }
     '/admin/': {
@@ -2561,6 +2580,7 @@ interface SiteRouteChildren {
   SiteStlDruckenLassenRoute: typeof SiteStlDruckenLassenRoute
   SiteUeberKiRoute: typeof SiteUeberKiRoute
   SiteUeberUnsRoute: typeof SiteUeberUnsRoute
+  SiteWeihnachtsgeschenkeRoute: typeof SiteWeihnachtsgeschenkeRoute
   SiteIndexRoute: typeof SiteIndexRoute
   SiteBlogSlugRoute: typeof SiteBlogSlugRoute
   SiteLeistungenSlugRoute: typeof SiteLeistungenSlugRoute
@@ -2599,6 +2619,7 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteStlDruckenLassenRoute: SiteStlDruckenLassenRoute,
   SiteUeberKiRoute: SiteUeberKiRoute,
   SiteUeberUnsRoute: SiteUeberUnsRoute,
+  SiteWeihnachtsgeschenkeRoute: SiteWeihnachtsgeschenkeRoute,
   SiteIndexRoute: SiteIndexRoute,
   SiteBlogSlugRoute: SiteBlogSlugRoute,
   SiteLeistungenSlugRoute: SiteLeistungenSlugRoute,

@@ -20,6 +20,7 @@ const footerLinks = [
   { label: "3D-Druck Winterthur", path: "/3d-druck-winterthur" },
   { label: "3D-Druck Zürich", path: "/3d-druck-zuerich" },
   { label: "Über uns", path: "/ueber-uns" },
+  { label: "Weihnachtsgeschenke", path: "/weihnachtsgeschenke" },
   { label: "Gutschein kaufen", path: "/gutschein" },
   { label: "Blog", path: "/blog" },
   { label: "Kontakt", path: "/kontakt" },
