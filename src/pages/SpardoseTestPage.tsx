@@ -6,11 +6,16 @@ import JSZip from "jszip";
 import { Download, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
+import { Slider as BaseSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULTS, FONTS, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
+
+// Regler in den 3DMuscio-Farben (der Standard-Slider nutzt die Sekundärfarbe Orange für die Spur)
+const Slider = (props: React.ComponentProps<typeof BaseSlider>) => (
+  <BaseSlider {...props} className={cn("[&>span:first-child]:bg-muted [&>span:first-child]:border [&>span:first-child]:border-border", props.className)} />
+);
 
 // ADMIN-TESTVERSION des Spardose-Generators (nur unter /admin/spardose-test)
 
@@ -120,7 +125,7 @@ export default function SpardoseTestPage() {
     setColors((o) => {
       const ok = (h: string) => plaFarben.some((c) => c.hex === h);
       const dunkel = plaFarben.find((c) => /schwarz|grau|dunkel/i.test(c.name)) ?? plaFarben[0];
-      const hell = plaFarben.find((c) => /blau|gelb|rot|orange|gr/i.test(c.name) && c !== dunkel) ?? plaFarben[plaFarben.length - 1];
+      const hell = plaFarben.find((c) => /blau|gelb|rot|gr/i.test(c.name) && c !== dunkel) ?? plaFarben[plaFarben.length - 1];
       return { text: ok(o.text) ? o.text : hell.hex, base: ok(o.base) ? o.base : dunkel.hex, cap: ok(o.cap) ? o.cap : hell.hex };
     });
   }, [plaFarben.length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -177,8 +182,8 @@ export default function SpardoseTestPage() {
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4 sm:p-6">
       <div>
-        <h1 className="text-xl font-bold">Spardose-Generator <span className="ml-2 rounded bg-amber-500/15 px-2 py-0.5 align-middle text-xs font-semibold text-amber-600">TEST</span></h1>
-        <p className="text-sm text-muted-foreground">Name als Spardose: hohler Körper mit Schlitz oben in der Mitte, Buchstaben zum Einlegen, Bajonett-Kappe hinten. Nur im Admin sichtbar.</p>
+        <h1 className="text-xl font-bold">Spardose-Generator <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 align-middle text-xs font-semibold text-primary">TEST</span></h1>
+        <p className="text-sm text-muted-foreground">Name als Spardose: hohler Körper mit Münzschlitz oben in der Mitte (längs in der Tiefe), Buchstaben zum Einlegen, Bajonett-Kappe hinten. Nur im Admin sichtbar.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[300px_1fr_260px]">
@@ -209,13 +214,13 @@ export default function SpardoseTestPage() {
           <details className="rounded-lg border p-3 text-sm">
             <summary className="cursor-pointer font-medium">Erweitert (Passung &amp; Aufbau)</summary>
             <div className="mt-3 space-y-4">
-              <Field label="Tiefe der Dose" value={`${p.tiefe} mm`}><Slider min={25} max={70} step={1} value={[p.tiefe]} onValueChange={([v]) => set("tiefe", v)} /></Field>
+              <Field label="Tiefe der Dose (mind. nach Schlitz)" value={`${p.tiefe} mm`}><Slider min={30} max={80} step={1} value={[p.tiefe]} onValueChange={([v]) => set("tiefe", v)} /></Field>
               <Field label="Wandstärke" value={`${p.wand.toFixed(1)} mm`}><Slider min={1.6} max={4} step={0.2} value={[p.wand]} onValueChange={([v]) => set("wand", v)} /></Field>
               <Field label="Spiel (Passung)" value={`${p.spiel.toFixed(2)} mm`}><Slider min={0.1} max={0.5} step={0.05} value={[p.spiel]} onValueChange={([v]) => set("spiel", v)} /></Field>
               <Field label="Tiefe der Vertiefung" value={`${p.taschenTiefe.toFixed(1)} mm`}><Slider min={1} max={4} step={0.5} value={[p.taschenTiefe]} onValueChange={([v]) => set("taschenTiefe", v)} /></Field>
               <Field label="Buchstaben stehen vor" value={`${p.ueberstand.toFixed(1)} mm`}><Slider min={0} max={3} step={0.5} value={[p.ueberstand]} onValueChange={([v]) => set("ueberstand", v)} /></Field>
-              <Field label="Schlitz Länge" value={`${p.schlitzLaenge} mm`}><Slider min={25} max={40} step={1} value={[p.schlitzLaenge]} onValueChange={([v]) => set("schlitzLaenge", v)} /></Field>
-              <Field label="Schlitz Breite" value={`${p.schlitzBreite.toFixed(1)} mm`}><Slider min={2.5} max={5} step={0.1} value={[p.schlitzBreite]} onValueChange={([v]) => set("schlitzBreite", v)} /></Field>
+              <Field label="Schlitz Länge (in der Tiefe)" value={`${p.schlitzLaenge} mm`}><Slider min={25} max={40} step={1} value={[p.schlitzLaenge]} onValueChange={([v]) => set("schlitzLaenge", v)} /></Field>
+              <Field label="Schlitz Breite (Münzdicke)" value={`${p.schlitzBreite.toFixed(1)} mm`}><Slider min={2.5} max={5} step={0.1} value={[p.schlitzBreite]} onValueChange={([v]) => set("schlitzBreite", v)} /></Field>
               <div className="flex items-center justify-between"><span className="text-xs font-medium">Rillen (Schichten-Look)</span><Switch checked={p.rillen} onCheckedChange={(v) => set("rillen", v)} /></div>
               {p.rillen && (
                 <>
@@ -240,8 +245,8 @@ export default function SpardoseTestPage() {
           </div>
           {err && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">Fehler: {err}</div>}
           {res && res.warnings.length > 0 && (
-            <div className="space-y-1 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
-              {res.warnings.map((w) => <div key={w} className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{w}</div>)}
+            <div className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-foreground">
+              {res.warnings.map((w) => <div key={w} className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />{w}</div>)}
             </div>
           )}
           <div className="flex flex-wrap items-center gap-3">

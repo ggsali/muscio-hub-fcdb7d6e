@@ -30,9 +30,9 @@ export const DEFAULTS: SpardoseParams = {
   spacing: 0,
   maxLength: 255,
   size: 40,
-  rand: 6,
+  rand: 8,
   wand: 2.4,
-  tiefe: 35,
+  tiefe: 50,
   rillen: true,
   rillenAbstand: 1.2,
   rillenTiefe: 0.4,
@@ -389,13 +389,15 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
       if (dx < bestDx) { bestDx = dx; capXpx = i % W; capYpx = Math.floor(i / W); }
     }
   }
-  const LUG = 3, LUGW = 6;
-  let Rc = Math.min(13, rhoMax / ppm - LUG - 0.6);
-  if (Rc < 7) warnings.push("Der Innenraum ist für die Kappe sehr klein. Buchstabenhöhe oder Rand erhöhen, sonst ist die Kappe nicht sicher.");
-  Rc = Math.max(Rc, 5);
+  // Kappe: Masse nach Vorgabe (Ø30 Hals, Ø36 Konus-Bund, Höhe 7,5, zwei Nasen 1,5 x 2,4, Steg quer dazu)
+  const CAP = { r: 15, rFl: 18, rLug: 16.5, lugW: 2.4, lugH: 3.46, h: 7.5, neckTop: 5.0, floor: 4.96, rRec: 11.5 };
+  const rhoC = rhoMax / ppm;
+  let kc = Math.min(1, (rhoC - 0.4 - p.spiel) / CAP.r, (rhoC + p.wand - 1.2 - p.spiel) / CAP.rFl);
+  if (kc < 0.75) warnings.push(`Die Kappe musste auf ${Math.round(Math.max(kc, 0.45) * 100)} % verkleinert werden (Ø ${(CAP.r * 2 * Math.max(kc, 0.45)).toFixed(0)} mm statt 30 mm). Für die volle Grösse mehr Rand oder grössere Buchstaben wählen.`);
+  kc = Math.max(kc, 0.45);
 
-  // Münzschlitz: oben in der Mitte
-  const hwPx = (p.schlitzLaenge / 2) * ppm;
+  // Münzschlitz: oben in der Mitte, lang in der Tiefe (um 90° gedreht), schmal in x
+  const hwPx = (p.schlitzBreite / 2) * ppm;
   let slotBottom = -1, colsNoCavity = 0;
   for (let x = Math.max(0, Math.round(cxPx - hwPx)); x <= Math.min(W - 1, Math.round(cxPx + hwPx)); x++) {
     let top = -1;
@@ -409,16 +411,19 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
   // Z-Aufbau
   const P = p.taschenTiefe;
   const F = P + 2;
-  // Rückwand von aussen nach innen: Bund-Vertiefung (FH) -> Hals (NECK) -> Nut für die Nasen (GR)
-  const FH = 1.6, NECK = 2.0, GR = 2.6, FLW = 2.2;
-  const Bk = FH + NECK + GR;
-  const T = p.schlitzBreite;
-  const D = Math.max(p.tiefe, F + Bk + T + 6);
-  const zs = (F + (D - Bk)) / 2 - T / 2;
+  // Rückwand von aussen nach innen: Konus-Senkung (2,5) -> Hals (1,3) -> Nut für die Nasen (3,9)
+  const GAP = 0.2, CONEH = CAP.h - CAP.neckTop, NECKT = 1.3;
+  const GRT = CAP.lugH + 0.44;
+  const Bk = GAP + CAP.h;
+  const Ls = p.schlitzLaenge, T = p.schlitzBreite;
+  const D = Math.max(p.tiefe, F + Bk + Ls + 4);
+  const zs = (F + (D - Bk)) / 2 - Ls / 2;
+  const NCONE = 8;
   const pitch = Math.max(0.6, p.rillenAbstand), gw = pitch / 3;
   const grooves: [number, number][] = [];
   if (p.rillen) for (let k = 1; k * pitch <= D - 1; k++) if (k * pitch - gw >= 1) grooves.push([k * pitch - gw, k * pitch]);
-  const bps = new Set<number>([0, P, F, zs, zs + T, D - Bk, D - Bk + GR, D - FH, D]);
+  const bps = new Set<number>([0, P, F, zs, zs + Ls, D - Bk, D - Bk + GRT, D - CONEH]);
+  for (let i = 0; i <= NCONE; i++) bps.add(D - CONEH + (CONEH * i) / NCONE);
   grooves.forEach(([a, b]) => { bps.add(a); bps.add(b); });
   const zlist = [...bps].filter((z) => z >= 0 && z <= D).sort((a, b) => a - b);
   const isGroove = (z: number) => grooves.some(([a, b]) => z > a && z < b);
@@ -427,9 +432,12 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
   const holeCx = capXpx, holeCy = capYpx;
   const slotCy = slotBottom / 2, slotHh = slotBottom / 2 + 1;
 
-  const buildField = (k: { g: boolean; pocket: boolean; cav: boolean; slot: boolean; back: "" | "groove" | "neck" | "flange" }) => {
+  const buildField = (k: { g: boolean; pocket: boolean; cav: boolean; slot: boolean; back: string }) => {
     const f = new Float32Array(N);
-    const rIn = (Rc + LUG + p.spiel) * ppm, rOut = Rc * ppm, rFl = (Rc + FLW + p.spiel) * ppm, nl = (Rc + LUG + p.spiel) * ppm, nw = ((LUGW + 2 * p.spiel) / 2) * ppm;
+    const rIn = (CAP.rLug * kc + p.spiel) * ppm, rOut = (CAP.r * kc + p.spiel) * ppm;
+    const nl = rIn, nw = ((CAP.lugW + 2 * p.spiel) / 2) * ppm;
+    const coneIdx = k.back.startsWith("cone") ? Number(k.back.slice(4)) : -1;
+    const rCone = coneIdx >= 0 ? ((CAP.r + (CAP.rFl - CAP.r) * ((coneIdx + 0.5) / NCONE)) * kc + p.spiel) * ppm : 0;
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const i = y * W + x;
@@ -443,7 +451,7 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
         }
         if (k.back) {
           const dx = x - holeCx, dy = y - holeCy;
-          const circ = Math.hypot(dx, dy) - (k.back === "groove" ? rIn : k.back === "flange" ? rFl : rOut);
+          const circ = Math.hypot(dx, dy) - (k.back === "groove" ? rIn : coneIdx >= 0 ? rCone : rOut);
           let hole = circ;
           if (k.back === "neck") hole = Math.min(circ, Math.max(Math.abs(dx) - nl, Math.abs(dy) - nw));
           v = Math.max(v, -hole);
@@ -465,8 +473,8 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
       g: isGroove(zm),
       pocket: zm < P,
       cav: zm > F && zm < D - Bk,
-      slot: zm > zs && zm < zs + T,
-      back: (zm > D - Bk ? (zm < D - Bk + GR ? "groove" : zm < D - FH ? "neck" : "flange") : "") as "" | "groove" | "neck" | "flange",
+      slot: zm > zs && zm < zs + Ls,
+      back: zm > D - Bk ? (zm < D - Bk + GRT ? "groove" : zm < D - CONEH ? "neck" : `cone${Math.min(NCONE - 1, Math.floor(((zm - (D - CONEH)) / CONEH) * NCONE))}`) : "",
     };
     const key = `${+k.g}${+k.pocket}${+k.cav}${+k.slot}${k.back}`;
     let shapes = cache.get(key);
@@ -493,31 +501,50 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
   const letters = new THREE.ExtrudeGeometry(letterShapes, { depth: P + p.ueberstand - 0.0, bevelEnabled: false, curveSegments: 1 });
   letters.translate(0, 0, -p.ueberstand);
 
-  // Kappe (lokal: Innenseite bei z = 0, Oberseite bündig mit der Rückwand)
-  // Aufbau: Zylinder (Hals) + Bund-Ring oben + versenkter Griffsteg + zwei Nasen unten (Bajonett)
-  const capR = Rc - p.spiel;
-  const flR = Rc + FLW - p.spiel;
-  const Hc = Bk - 0.2;
-  const REC = 1.2; // Tiefe der Griffmulde
+  // Kappe (lokal: Unterseite bei z = 0, Oberseite bündig bei z = 7,5):
+  // Hals Ø30, Konus-Bund bis Ø36, Griffmulde mit Steg quer zu den Nasen, zwei Nasen 1,5 x 2,4 mm.
   const parts: THREE.BufferGeometry[] = [];
   const ni = (g: THREE.BufferGeometry) => { const n = g.index ? g.toNonIndexed() : g; if (n !== g) g.dispose(); return n; };
-  const cyl = new THREE.CylinderGeometry(capR, capR, Hc - REC, 64);
-  cyl.rotateX(Math.PI / 2); cyl.translate(0, 0, (Hc - REC) / 2);
-  parts.push(ni(cyl));
-  const ringShape = new THREE.Shape();
-  ringShape.absarc(0, 0, flR, 0, Math.PI * 2, false);
-  const hole = new THREE.Path();
-  hole.absarc(0, 0, capR - 1.0, 0, Math.PI * 2, true);
-  ringShape.holes.push(hole);
-  const ring = new THREE.ExtrudeGeometry(ringShape, { depth: FH, bevelEnabled: false, curveSegments: 64 });
-  ring.translate(0, 0, Hc - FH);
-  parts.push(ring);
-  const bar = new THREE.BoxGeometry(2 * (capR - 0.6), 4.2, REC + 0.4);
-  bar.translate(0, 0, Hc - (REC + 0.4) / 2);
-  parts.push(ni(bar));
-  const lugT = GR - 0.4;
-  const lug = new THREE.BoxGeometry(2 * (Rc + LUG - p.spiel), LUGW, lugT);
-  lug.translate(0, 0, lugT / 2);
+  const outward = (g: THREE.BufferGeometry) => {
+    const pos = g.getAttribute("position") as THREE.BufferAttribute;
+    let vol = 0;
+    for (let i = 0; i < pos.count; i += 3) {
+      const ax = pos.getX(i), ay = pos.getY(i), az = pos.getZ(i);
+      const bx = pos.getX(i + 1), by = pos.getY(i + 1), bz = pos.getZ(i + 1);
+      const cx2 = pos.getX(i + 2), cy2 = pos.getY(i + 2), cz2 = pos.getZ(i + 2);
+      vol += (ax * (by * cz2 - bz * cy2) - ay * (bx * cz2 - bz * cx2) + az * (bx * cy2 - by * cx2)) / 6;
+    }
+    if (vol < 0) {
+      for (let i = 0; i < pos.count; i += 3) {
+        const x = pos.getX(i + 1), y = pos.getY(i + 1), z = pos.getZ(i + 1);
+        pos.setXYZ(i + 1, pos.getX(i + 2), pos.getY(i + 2), pos.getZ(i + 2));
+        pos.setXYZ(i + 2, x, y, z);
+      }
+      g.computeVertexNormals();
+    }
+    return g;
+  };
+  const k = kc;
+  const prof = [
+    [0, 0], [CAP.r * k, 0], [CAP.r * k, CAP.neckTop], [CAP.rFl * k, CAP.h],
+    [CAP.r * k, CAP.h], [CAP.rRec * k, CAP.floor], [0, CAP.floor],
+  ].map(([r, y]) => new THREE.Vector2(r, y));
+  const lathe = new THREE.LatheGeometry(prof, 96);
+  lathe.rotateX(Math.PI / 2);
+  parts.push(outward(ni(lathe)));
+  // Steg (3 mm, oben 4 mm breit), bündig mit dem Bund
+  const webL = 2 * (CAP.r * k + 0.3);
+  const web = new THREE.Shape([
+    new THREE.Vector2(-1.5, CAP.floor - 0.1), new THREE.Vector2(1.5, CAP.floor - 0.1), new THREE.Vector2(1.5, 6.0),
+    new THREE.Vector2(2.0, CAP.h), new THREE.Vector2(-2.0, CAP.h), new THREE.Vector2(-1.5, 6.0),
+  ]);
+  const webG = new THREE.ExtrudeGeometry(web, { depth: webL, bevelEnabled: false });
+  webG.translate(0, 0, -webL / 2);
+  webG.rotateX(Math.PI / 2);
+  parts.push(outward(webG));
+  // Nasen (Bajonett)
+  const lug = new THREE.BoxGeometry(2 * CAP.rLug * k, CAP.lugW, CAP.lugH);
+  lug.translate(0, 0, CAP.lugH / 2);
   parts.push(ni(lug));
   const cap = mergeGeometries(parts, false)!;
   parts.forEach((g) => g.dispose());
@@ -528,9 +555,9 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
   return {
     name,
     body, letters, cap,
-    capPose: { x: capC.x, y: capC.y, z: D - Bk + 0.2 },
+    capPose: { x: capC.x, y: capC.y, z: D - CAP.h },
     dims: { x: bb.max.x - bb.min.x, y: bb.max.y - bb.min.y, z: D },
     warnings,
-    info: { sizeUsed: size, capR: Rc, kammern, ppm },
+    info: { sizeUsed: size, capR: CAP.r * kc, kammern, ppm },
   };
 }
