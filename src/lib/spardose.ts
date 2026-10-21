@@ -350,7 +350,7 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
 
 type Prep = {
   name: string; warnings: string[]; size: number; ppm: number; W: number; H: number; N: number;
-  tf: Float32Array; sd: Float32Array; lab: Int32Array; big: number; nLab: number; kammern: number;
+  tf: Float32Array; sd: Float32Array; sdo: Float32Array; lab: Int32Array; big: number; nLab: number; kammern: number;
   rhoMax: number; capXpx: number; capYpx: number; cxPx: number; cxMm: number; Rpx: number; wallPx: number;
 };
 const prepCache = new Map<string, Prep>();
@@ -428,6 +428,25 @@ async function prepare(p: SpardoseParams): Promise<Prep | null> {
   const dt = edt(seed, W, H);
   const sd = new Float32Array(N);
   for (let i = 0; i < N; i++) sd[i] = Math.sqrt(dt[i]);
+  // Silhouette = Buchstaben + deren Innenräume (Löcher gefüllt): Der Rand wird nur AUSSEN angesetzt,
+  // in den Innenräumen (R, b, e, o ...) gibt es keinen Offset-Ring, der Körper schliesst bündig an die Buchstabenkante an.
+  const bgFlag = new Uint8Array(N);
+  {
+    const q = new Int32Array(N);
+    let qh = 0, qt = 0;
+    q[qt++] = 0; bgFlag[0] = 1;
+    while (qh < qt) {
+      const cur = q[qh++];
+      const x = cur % W;
+      const nb = [x > 0 ? cur - 1 : -1, x < W - 1 ? cur + 1 : -1, cur >= W ? cur - W : -1, cur < N - W ? cur + W : -1];
+      for (const n2 of nb) if (n2 >= 0 && !bgFlag[n2] && seed[n2] > 0) { bgFlag[n2] = 1; q[qt++] = n2; }
+    }
+  }
+  const seed2 = new Float32Array(N);
+  for (let i = 0; i < N; i++) seed2[i] = bgFlag[i] ? 1e12 : 0;
+  const dt2 = edt(seed2, W, H);
+  const sdo = new Float32Array(N);
+  for (let i = 0; i < N; i++) sdo[i] = Math.sqrt(dt2[i]);
 
   const Rpx = p.rand * ppm, wallPx = p.wand * ppm, clrPx = p.spiel * ppm;
   const cxPx = (minX + maxX) / 2;
@@ -441,7 +460,7 @@ async function prepare(p: SpardoseParams): Promise<Prep | null> {
   const sizes: number[] = [0];
   const queue = new Int32Array(N);
   for (let i = 0; i < N; i++) {
-    if (lab[i] || sd[i] - Rpx + wallPx >= 0) continue;
+    if (lab[i] || sdo[i] - Rpx + wallPx >= 0) continue;
     nLab++;
     let qh = 0, qt = 0, cnt = 0;
     queue[qt++] = i; lab[i] = nLab;
@@ -449,7 +468,7 @@ async function prepare(p: SpardoseParams): Promise<Prep | null> {
       const cur = queue[qh++]; cnt++;
       const x = cur % W;
       const nb = [x > 0 ? cur - 1 : -1, x < W - 1 ? cur + 1 : -1, cur >= W ? cur - W : -1, cur < N - W ? cur + W : -1];
-      for (const q of nb) if (q >= 0 && !lab[q] && sd[q] - Rpx + wallPx < 0) { lab[q] = nLab; queue[qt++] = q; }
+      for (const q of nb) if (q >= 0 && !lab[q] && sdo[q] - Rpx + wallPx < 0) { lab[q] = nLab; queue[qt++] = q; }
     }
     sizes.push(cnt);
   }
@@ -474,7 +493,7 @@ async function prepare(p: SpardoseParams): Promise<Prep | null> {
       if (dx < bestDx) { bestDx = dx; capXpx = i % W; capYpx = Math.floor(i / W); }
     }
   }
-  return { name, warnings, size, ppm, W, H, N, tf, sd, lab, big, nLab, kammern, rhoMax, capXpx, capYpx, cxPx, cxMm, Rpx, wallPx };
+  return { name, warnings, size, ppm, W, H, N, tf, sd, sdo, lab, big, nLab, kammern, rhoMax, capXpx, capYpx, cxPx, cxMm, Rpx, wallPx };
 }
 
 async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> {
@@ -486,7 +505,7 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
     if (prepCache.size >= 4) prepCache.delete(prepCache.keys().next().value as string);
     prepCache.set(prepKey, prep);
   }
-  const { name, size, ppm, W, H, N, tf, sd, lab, big, nLab, kammern, rhoMax, capXpx, capYpx, cxPx, cxMm, Rpx, wallPx } = prep;
+  const { name, size, ppm, W, H, N, tf, sd, sdo, lab, big, nLab, kammern, rhoMax, capXpx, capYpx, cxPx, cxMm, Rpx, wallPx } = prep;
   const warnings = [...prep.warnings];
   const clrPx = p.spiel * ppm;
   const toMm = (pt: Pt) => new THREE.Vector2(pt[0] / ppm - cxMm, (H - pt[1]) / ppm - H / ppm / 2);
@@ -565,7 +584,7 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const i = y * W + x;
-        const so = sd[i] - Rpx;
+        const so = sdo[i] - Rpx;
         let v = k.g ? so + dg : so;
         if (k.cav) v = Math.max(v, -(so + wallPx));
         if (k.pocket) v = Math.max(v, -(sd[i] - clrPx));
