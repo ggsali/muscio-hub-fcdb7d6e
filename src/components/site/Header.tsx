@@ -153,32 +153,34 @@ export const Header = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
+        {/* Eisrand am oberen Seitenrand, vor der Navigation und ohne Interaktion zu blockieren. */}
         {christmasMode && (
           <svg
             aria-hidden="true"
             focusable="false"
-            viewBox="0 0 1200 46"
+            viewBox="0 0 1200 34"
             preserveAspectRatio="none"
-            className="pointer-events-none absolute left-1/2 top-0 z-10 hidden h-11 w-[min(calc(100%-3rem),1200px)] -translate-x-1/2 overflow-visible lg:block"
+            className="pointer-events-none absolute inset-x-0 top-0 z-[70] hidden h-[34px] w-full overflow-visible lg:block"
           >
             <defs>
-              <linearGradient id="nav-icicle-ice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#eefaff" stopOpacity="0.96" />
-                <stop offset="65%" stopColor="#b9e8f7" stopOpacity="0.92" />
-                <stop offset="100%" stopColor="#7cbfd9" stopOpacity="0.72" />
+              <linearGradient id="site-top-icicle-ice" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f6fcff" stopOpacity="0.95" />
+                <stop offset="65%" stopColor="#d2edf8" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#98cce3" stopOpacity="0.7" />
               </linearGradient>
             </defs>
-            {Array.from({ length: 30 }, (_, i) => {
-              const x = i * 40;
-              const length = 13 + ((i * 13) % 26);
+            <path d="M0 0 H1200 V5 H0 Z" fill="url(#site-top-icicle-ice)" />
+            {Array.from({ length: 24 }, (_, i) => {
+              const x = i * 50 + 9;
+              const length = 10 + ((i * 7) % 13);
               return (
                 <path
                   key={i}
-                  d={`M${x} 0 h28 l-5 7 -4 0 -5 ${length} -4 -${length - 4} -5 5 -5 -8 Z`}
-                  fill="url(#nav-icicle-ice)"
-                  stroke="#e8faff"
-                  strokeOpacity="0.75"
-                  strokeWidth="0.8"
+                  d={`M${x} 3 Q${x + 5} 7 ${x + 9} 4 L${x + 13} ${length + 5} Q${x + 15} ${length + 9} ${x + 17} ${length + 4} L${x + 22} 4 Q${x + 28} 7 ${x + 34} 3 Z`}
+                  fill="url(#site-top-icicle-ice)"
+                  stroke="#c6e9f7"
+                  strokeOpacity="0.65"
+                  strokeWidth="0.7"
                 />
               );
             })}
