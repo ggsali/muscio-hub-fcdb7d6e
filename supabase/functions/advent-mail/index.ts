@@ -97,9 +97,12 @@ Deno.serve(async (req) => {
       const inhalt =
         `Frohe Adventszeit!\n\nHinter Türchen ${tag} wartet auf dich: ${door.titel}\n\n` +
         (door.text ? `${door.text}\n\n` : "") +
-        `Dein Code: ${door.code}\n\nLöse ihn im Online-Kalkulator oder im Shop-Warenkorb im Feld "Gutschein-Code" ein. Er gilt nur am ${tag}. Dezember.\n\n` +
-        `${SITE}/kalkulator-online\n\nSchöne Adventszeit wünscht dein 3DMuscio-Team`;
-      const html = renderNewsletter({ inhalt, name: null, email, trackId: null });
+        `Löse ihn im Online-Kalkulator oder im Shop-Warenkorb im Feld "Gutschein-Code" ein.\n\nSchöne Adventszeit wünscht dein 3DMuscio-Team`;
+      const html = renderNewsletter({
+        inhalt, name: null, email, trackId: null, xmas: true,
+        codeBox: { code: door.code, hinweis: `Gilt nur am ${tag}. Dezember.` },
+        ctaLabel: "Jetzt einlösen →", ctaUrl: `${SITE}/kalkulator-online`,
+      });
       const { error } = await resend.emails.send({
         from: FROM, to: [email], subject: `🎁 Dein Code von Türchen ${tag}: ${door.titel}`, html,
       });
@@ -170,7 +173,7 @@ Deno.serve(async (req) => {
           `Hallo [Kundenname]\n\nTürchen ${tag} im 3DMuscio-Adventskalender ist offen!\n\n` +
           `Heute wartet auf dich: ${door.titel}\n\nÖffne das Türchen auf unserer Startseite:\n${SITE}/\n\n` +
           `Schöne Adventszeit wünscht dein 3DMuscio-Team`;
-        const html = renderNewsletter({ inhalt, name: r.name, email: r.email, trackId: null });
+        const html = renderNewsletter({ inhalt, name: r.name, email: r.email, trackId: null, xmas: true, ctaLabel: "Türchen öffnen →", ctaUrl: `${SITE}/` });
         const { error } = await resend.emails.send({
           from: FROM, to: [r.email], subject: `🎄 Türchen ${tag} ist offen: ${door.titel}`, html,
         });
