@@ -25,27 +25,29 @@ export function SnowDrift() {
   );
 }
 
-/** Schneemann, der unten links hochploppt und zur Weihnachtsseite führt. */
+// Modulweite Merker: gelten nur bis zum nächsten vollständigen Neuladen der Website,
+// nicht beim Seitenwechsel innerhalb der Website.
+let snowmanClosed = false;
+let snowmanPlayed = false;
+
+/** Schneemann, der seitlich hereinguckt und zur Weihnachtsseite führt. */
 export function Snowman() {
-  const [hidden, setHidden] = useState(true);
+  const [hidden, setHidden] = useState(snowmanClosed);
+  const [animate] = useState(!snowmanPlayed);
 
   useEffect(() => {
-    try {
-      setHidden(sessionStorage.getItem("xmas-snowman-closed") === "1");
-    } catch {
-      setHidden(false);
-    }
+    snowmanPlayed = true;
   }, []);
 
   if (hidden) return null;
   const close = () => {
+    snowmanClosed = true;
     setHidden(true);
-    try { sessionStorage.setItem("xmas-snowman-closed", "1"); } catch { /* ignore */ }
   };
 
   return (
     <div className="pointer-events-none fixed bottom-24 left-0 z-[55] hidden md:block">
-      <div className="xmas-snowman relative flex items-end">
+      <div className={`${animate ? "xmas-snowman" : ""} relative flex items-end`}>
         <svg viewBox="0 0 120 150" className="h-44 w-36 -ml-14 -rotate-6 drop-shadow-md" aria-hidden="true">
           <ellipse cx="60" cy="146" rx="52" ry="8" fill="#fff" />
           <circle cx="60" cy="112" r="34" fill="#fff" stroke="#d6e0ea" strokeWidth="1.5" />
@@ -61,7 +63,7 @@ export function Snowman() {
           <rect x="32" y="40" width="56" height="5" rx="2" fill="#222" />
           <rect x="42" y="18" width="36" height="24" rx="3" fill="#222" />
           <rect x="42" y="33" width="36" height="5" fill="#c0272d" />
-          <g className="xmas-arm">
+          <g className={animate ? "xmas-arm" : undefined}>
             <path d="M88 100l24-22M106 84l8-4M108 90l9 1" stroke="#6b4a2b" strokeWidth="3" strokeLinecap="round" fill="none" />
           </g>
           <path d="M32 102l-22 14" stroke="#6b4a2b" strokeWidth="3" strokeLinecap="round" fill="none" />
