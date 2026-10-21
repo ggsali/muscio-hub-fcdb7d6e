@@ -4,7 +4,6 @@ import { Footer } from "./site/Footer";
 import { CursorSpotlight } from "./site/CursorSpotlight";
 import { CanonicalTag } from "./site/CanonicalTag";
 import { CartDrawer } from "./site/CartDrawer";
-import { ShopPromoBanner } from "./site/ShopPromoBanner";
 import { ChatWidget } from "./site/ChatWidget";
 import { ChatFab } from "./site/ChatFab";
 import { MobileStickyCta } from "./site/MobileStickyCta";
@@ -29,7 +28,6 @@ export default function SiteLayout() {
         <CanonicalTag />
         {/* Sticky stack: Banner sits above the header — they no longer overlap */}
         <div className="sticky top-0 z-50">
-          <ShopPromoBanner />
           {xmas && (
             <div className="xmas-strip">
               <Link to="/weihnachtsgeschenke">❄ Weihnachtszeit: persönliche Geschenke aus dem 3D-Drucker – jetzt rechtzeitig bestellen →</Link>
