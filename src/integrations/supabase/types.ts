@@ -147,6 +147,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_todos: {
+        Row: {
+          created_at: string
+          erledigt: boolean
+          erledigt_am: string | null
+          faellig_am: string | null
+          id: string
+          notiz: string | null
+          prioritaet: string
+          titel: string
+        }
+        Insert: {
+          created_at?: string
+          erledigt?: boolean
+          erledigt_am?: string | null
+          faellig_am?: string | null
+          id?: string
+          notiz?: string | null
+          prioritaet?: string
+          titel: string
+        }
+        Update: {
+          created_at?: string
+          erledigt?: boolean
+          erledigt_am?: string | null
+          faellig_am?: string | null
+          id?: string
+          notiz?: string | null
+          prioritaet?: string
+          titel?: string
+        }
+        Relationships: []
+      }
       advent_tuerchen: {
         Row: {
           code: string | null

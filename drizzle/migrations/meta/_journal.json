@@ -232,6 +232,13 @@
       "when": 1792572453824,
       "tag": "0032_website_settings_weihnachtsmodus_public",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792579290827,
+      "tag": "0033_admin_todos",
+      "breakpoints": true
     }
   ]
 }
