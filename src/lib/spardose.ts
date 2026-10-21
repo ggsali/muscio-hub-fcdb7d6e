@@ -579,7 +579,7 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
   const buildField = (k: { g: boolean; pocket: boolean; cav: boolean; slotHw: number; back: string }) => {
     const f = new Float32Array(N);
     const rIn = (CAP.rLug * kc + p.spiel) * ppm, rOut = (CAP.r * kc + p.spiel) * ppm;
-    const nl = rIn, nw = ((CAP.lugW + 2 * p.spiel) / 2) * ppm;
+    const nl = rIn, nw = ((CAP.lugW + 2 * p.spiel + 0.6) / 2) * ppm;
     const coneIdx = k.back.startsWith("cone") ? Number(k.back.slice(4)) : -1;
     const rCone = coneIdx >= 0 ? ((CAP.r + (CAP.rFl - CAP.r) * ((coneIdx + 0.5) / NCONE)) * kc + p.spiel) * ppm : 0;
     for (let y = 0; y < H; y++) {
@@ -685,7 +685,7 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
   lathe.rotateX(Math.PI / 2);
   parts.push(outward(ni(lathe)));
   // Steg (3 mm, oben 4 mm breit), bündig mit dem Bund
-  const webL = 2 * (CAP.r * k + 0.3);
+  const webL = 2 * (CAP.r * k - 0.2);
   const web = new THREE.Shape([
     new THREE.Vector2(-1.5, CAP.floor - 0.1), new THREE.Vector2(1.5, CAP.floor - 0.1), new THREE.Vector2(1.5, 6.0),
     new THREE.Vector2(2.0, CAP.h), new THREE.Vector2(-2.0, CAP.h), new THREE.Vector2(-1.5, 6.0),
