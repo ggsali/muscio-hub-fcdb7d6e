@@ -20,15 +20,32 @@ const Slider = (props: React.ComponentProps<typeof BaseSlider>) => (
 // ADMIN-TESTVERSION des Spardose-Generators (nur unter /admin/spardose-test)
 
 
+type ViewName = "front" | "back" | "left" | "right" | "top" | "bottom" | "iso";
+
+function axisLabel(text: string, color: string) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d")!;
+  g.fillStyle = color;
+  g.font = "bold 40px sans-serif";
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(text, 32, 34);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true }));
+  sp.scale.set(0.5, 0.5, 0.5);
+  return sp;
+}
+
 function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: string; base: string; cap: string } }) {
   const host = useRef<HTMLDivElement>(null);
-  const st = useRef<{ scene: THREE.Scene; group: THREE.Group; cam: THREE.PerspectiveCamera; controls: OrbitControls; fitKey: string } | null>(null);
+  const st = useRef<{ group: THREE.Group; cam: THREE.PerspectiveCamera; controls: OrbitControls; fitKey: string } | null>(null);
 
   useEffect(() => {
     const el = host.current!;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(el.clientWidth, el.clientHeight);
+    renderer.autoClear = false;
     el.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(35, el.clientWidth / el.clientHeight, 1, 5000);
@@ -40,25 +57,68 @@ function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: s
     const group = new THREE.Group();
     group.rotation.y = Math.PI; // Druckrichtung -> Ansicht von vorn
     scene.add(group);
+
+    // CAD-Steuerung: links drehen, Mitte/rechts verschieben, Mausrad zoomt in kleinen Schritten
     const controls = new OrbitControls(cam, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
-    controls.zoomSpeed = 0.7;
-    controls.zoomToCursor = true;
+    controls.dampingFactor = 0.12;
+    controls.rotateSpeed = 0.8;
     controls.screenSpacePanning = true;
-    controls.minPolarAngle = 0.02;
-    controls.maxPolarAngle = Math.PI - 0.02;
+    controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
     renderer.domElement.style.touchAction = "none";
-    st.current = { scene, group, cam, controls, fitKey: "" };
+    const onWheel = (e: WheelEvent) => {
+      // Ein Rasten des Mausrads = ca. 8 % (statt eines grossen Sprungs); Trackpads zoomen fein
+      e.preventDefault();
+      e.stopPropagation();
+      const dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY;
+      const f = Math.exp(Math.max(-120, Math.min(120, dy)) * 0.0007);
+      const v = cam.position.clone().sub(controls.target);
+      const len = Math.min(controls.maxDistance, Math.max(controls.minDistance, v.length() * f));
+      cam.position.copy(controls.target).add(v.setLength(len));
+    };
+    controls.enableZoom = false; // eigener, sanfter Zoom
+    renderer.domElement.addEventListener("wheel", onWheel, { passive: false, capture: true });
+
+    // Orientierungs-Würfel-Ersatz: Achsenkreuz unten rechts (X rot = Breite, Y grün = Höhe, Z blau = Tiefe)
+    const gScene = new THREE.Scene();
+    gScene.add(new THREE.AxesHelper(1));
+    const lx = axisLabel("X", "#ef4444"), ly = axisLabel("Y", "#16a34a"), lz = axisLabel("Z", "#2563eb");
+    lx.position.set(1.3, 0, 0); ly.position.set(0, 1.3, 0); lz.position.set(0, 0, 1.3);
+    gScene.add(lx, ly, lz);
+    const gCam = new THREE.PerspectiveCamera(35, 1, 0.1, 20);
+
+    st.current = { group, cam, controls, fitKey: "" };
     let raf = 0;
-    const loop = () => { controls.update(); renderer.render(scene, cam); raf = requestAnimationFrame(loop); };
+    const GS = 96;
+    const loop = () => {
+      controls.update();
+      const w = el.clientWidth, h = el.clientHeight;
+      renderer.setScissorTest(false);
+      renderer.setViewport(0, 0, w, h);
+      renderer.clear();
+      renderer.render(scene, cam);
+      renderer.clearDepth();
+      renderer.setScissorTest(true);
+      renderer.setViewport(w - GS - 8, 8, GS, GS);
+      renderer.setScissor(w - GS - 8, 8, GS, GS);
+      gCam.position.copy(cam.position).sub(controls.target).setLength(4.2);
+      gCam.quaternion.copy(cam.quaternion);
+      renderer.render(gScene, gCam);
+      renderer.setScissorTest(false);
+      raf = requestAnimationFrame(loop);
+    };
     loop();
     const ro = new ResizeObserver(() => {
       cam.aspect = el.clientWidth / el.clientHeight; cam.updateProjectionMatrix();
       renderer.setSize(el.clientWidth, el.clientHeight);
     });
     ro.observe(el);
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); controls.dispose(); renderer.dispose(); el.removeChild(renderer.domElement); st.current = null; };
+    return () => {
+      cancelAnimationFrame(raf); ro.disconnect(); controls.dispose();
+      renderer.domElement.removeEventListener("wheel", onWheel, { capture: true });
+      renderer.dispose(); el.removeChild(renderer.domElement); st.current = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -74,17 +134,30 @@ function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: s
     cap.rotation.z = Math.PI / 2;
     s.group.add(cap);
     const key = `${res.name}|${res.dims.x.toFixed(0)}`;
+    s.controls.minDistance = Math.max(res.dims.x * 0.25, 40);
+    s.controls.maxDistance = res.dims.x * 4;
     if (s.fitKey !== key) {
       s.fitKey = key;
-      const dist = Math.max(res.dims.x * 1.35, 140);
-      s.controls.minDistance = Math.max(res.dims.x * 0.3, 50);
-      s.controls.maxDistance = res.dims.x * 4;
-      s.controls.target.set(0, 0, -res.dims.z / 2);
-      s.cam.position.set(dist * 0.3, dist * 0.22, dist * 0.95);
-      s.controls.update();
+      setView("iso", true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [res, colors]);
 
+  // Standardansichten wie im CAD (Blick auf die Mitte der Dose, Drehpunkt = Mitte)
+  const setView = (name: ViewName, fit = false) => {
+    const s = st.current;
+    if (!s || !res) return;
+    const t = new THREE.Vector3(0, 0, -res.dims.z / 2);
+    const base = Math.max(res.dims.x * 1.35, 140);
+    const len = fit ? base : Math.min(s.controls.maxDistance, Math.max(s.controls.minDistance, s.cam.position.distanceTo(s.controls.target)));
+    const dir: Record<ViewName, [number, number, number]> = {
+      front: [0, 0, 1], back: [0, 0, -1], left: [1, 0, 0], right: [-1, 0, 0], top: [0, 1, 0.0001], bottom: [0, -1, 0.0001], iso: [0.45, 0.35, 0.82],
+    };
+    const d = new THREE.Vector3(...dir[name]).normalize();
+    s.controls.target.copy(t);
+    s.cam.position.copy(t).add(d.multiplyScalar(len));
+    s.controls.update();
+  };
   const zoom = (f: number) => {
     const s = st.current;
     if (!s) return;
@@ -93,28 +166,20 @@ function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: s
     s.cam.position.copy(s.controls.target).add(v.setLength(len));
     s.controls.update();
   };
-  const view = (name: "front" | "back" | "top" | "reset") => {
-    const s = st.current;
-    if (!s || !res) return;
-    const len = name === "reset" ? Math.max(res.dims.x * 1.35, 140) * 1.02 : s.cam.position.distanceTo(s.controls.target);
-    const t = s.controls.target;
-    if (name === "reset") { s.controls.target.set(0, 0, -res.dims.z / 2); s.cam.position.set(len * 0.3, len * 0.22, -res.dims.z / 2 + len * 0.95); }
-    else if (name === "front") s.cam.position.set(t.x, t.y, t.z + len);
-    else if (name === "back") s.cam.position.set(t.x, t.y, t.z - len);
-    else s.cam.position.set(t.x, t.y + len, t.z + 0.01);
-    s.controls.update();
-  };
   const btn = "flex h-8 items-center justify-center rounded-md border bg-background/90 px-2 text-xs font-medium shadow-sm transition-colors hover:bg-accent";
   return (
-    <div className="relative h-full min-h-[360px] w-full">
+    <div className="relative h-full min-h-[360px] w-full" onDoubleClick={() => setView("iso", true)}>
       <div ref={host} className="h-full w-full" />
-      <div className="absolute bottom-3 left-3 flex gap-1.5">
-        <button type="button" className={btn} onClick={() => zoom(0.8)} aria-label="Hineinzoomen"><Plus className="h-4 w-4" /></button>
-        <button type="button" className={btn} onClick={() => zoom(1.25)} aria-label="Herauszoomen"><Minus className="h-4 w-4" /></button>
-        <button type="button" className={btn} onClick={() => view("reset")} aria-label="Ansicht zurücksetzen"><RotateCcw className="h-4 w-4" /></button>
-        <button type="button" className={btn} onClick={() => view("front")}>Vorne</button>
-        <button type="button" className={btn} onClick={() => view("back")}>Hinten</button>
-        <button type="button" className={btn} onClick={() => view("top")}>Oben</button>
+      <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+        {([["front", "Vorne"], ["back", "Hinten"], ["left", "Links"], ["right", "Rechts"], ["top", "Oben"], ["bottom", "Unten"], ["iso", "Iso"]] as [ViewName, string][]).map(([k, l]) => (
+          <button key={k} type="button" className={btn} onClick={() => setView(k)}>{l}</button>
+        ))}
+      </div>
+      <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+        <button type="button" className={btn} onClick={() => zoom(0.85)} aria-label="Hineinzoomen"><Plus className="h-4 w-4" /></button>
+        <button type="button" className={btn} onClick={() => zoom(1.18)} aria-label="Herauszoomen"><Minus className="h-4 w-4" /></button>
+        <button type="button" className={btn} onClick={() => setView("iso", true)} aria-label="Ansicht zurücksetzen"><RotateCcw className="h-4 w-4" /></button>
+        <span className="ml-2 hidden text-[11px] text-muted-foreground sm:inline">Links ziehen: drehen · Mitte/Rechts ziehen: verschieben · Doppelklick: zurücksetzen</span>
       </div>
     </div>
   );
