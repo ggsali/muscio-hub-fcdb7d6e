@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode, type MouseEvent } from "react";
 import { Link, useLocation } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Printer, User, ShoppingCart, ChevronDown } from "lucide-react";
@@ -85,7 +85,7 @@ const NavEntry = ({ to, className, children, onClick }: {
   to: string;
   className?: string;
   children: ReactNode;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent) => void;
 }) =>
   isExternal(to) ? (
     <a href={to} target="_blank" rel="noopener noreferrer" className={className} onClick={onClick}>
@@ -103,7 +103,6 @@ export const Header = () => {
   const location = useLocation();
   const [session, setSession] = useState<Session | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const dropdownTimer = useRef<number | null>(null);
   const { totalItems, setIsOpen: setCartOpen } = useCart();
   const [navItems, setNavItems] = useState<NavItem[]>(NAV_ITEMS);
   const resin = useResinEnabled();
@@ -166,14 +165,19 @@ export const Header = () => {
   const accountTarget = "/portal";
   const accountLabel = "Mein Konto";
 
-  const handleEnter = (path: string) => {
-    if (dropdownTimer.current) window.clearTimeout(dropdownTimer.current);
-    setOpenDropdown(path);
-  };
-  const handleLeave = () => {
-    if (dropdownTimer.current) window.clearTimeout(dropdownTimer.current);
-    dropdownTimer.current = window.setTimeout(() => setOpenDropdown(null), 300);
-  };
+  useEffect(() => {
+    if (!openDropdown) return;
+    const close = (e: Event) => {
+      if (!(e.target as HTMLElement).closest?.("[data-nav-dd]")) setOpenDropdown(null);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpenDropdown(null);
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [openDropdown]);
 
   return (
     <>
@@ -242,11 +246,16 @@ export const Header = () => {
                 <div
                   key={l.path}
                   className="relative"
-                  onMouseEnter={() => hasChildren && handleEnter(l.path)}
-                  onMouseLeave={() => hasChildren && handleLeave()}
+                  data-nav-dd
                 >
                   <NavEntry
                     to={l.path}
+                    onClick={(e) => {
+                      if (hasChildren) {
+                        e.preventDefault();
+                        setOpenDropdown(openDropdown === l.path ? null : l.path);
+                      }
+                    }}
                     className={cn(
                       "group relative my-3 flex h-[calc(100%-1.5rem)] items-center gap-1.5 rounded-xl px-2.5 text-[13px] font-medium transition-all duration-200 xl:px-3 xl:text-sm hover:bg-accent/70",
                       active || l.isButton ? "text-foreground bg-primary/10" : "text-muted-foreground hover:text-foreground",
