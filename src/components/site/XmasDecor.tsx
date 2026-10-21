@@ -1,26 +1,59 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/lib/router-compat";
 
-/** Eiszapfen, die von der Menüleiste herunterhängen (klickdurchlässig). */
-const ICICLES: [number, number][] = [
-  [0, 14], [3, 24], [6, 10], [9, 30], [12, 16], [15, 22], [18, 9], [21, 28], [24, 15], [27, 20],
-  [30, 11], [33, 26], [36, 17], [39, 32], [42, 12], [45, 22], [48, 9], [51, 27], [54, 16], [57, 30],
-  [60, 13], [63, 24], [66, 10], [69, 28], [72, 18], [75, 23], [78, 9], [81, 31], [84, 15], [87, 21],
-  [90, 12], [93, 27], [96, 17], [99, 22],
-];
+/** Realistische Eiszapfen: unregelmässig, spitz zulaufend, glasig mit Glanzlicht (klickdurchlässig). */
+const rnd = (() => { let t = 7; return () => ((t = (t * 16807) % 2147483647) / 2147483647); })();
+const ICICLES = (() => {
+  const out: { x: number; w: number; h: number }[] = [];
+  let x = 6;
+  while (x < 1440) {
+    const big = rnd() > 0.72;
+    const w = big ? 14 + rnd() * 8 : 6 + rnd() * 7;
+    const h = big ? 38 + rnd() * 22 : 10 + rnd() * 24;
+    out.push({ x, w, h });
+    x += w * (0.7 + rnd() * 0.9) + 2;
+  }
+  return out;
+})();
+
 export function SnowDrift() {
   return (
     <svg
       aria-hidden="true"
-      viewBox="0 0 102 36"
+      viewBox="0 0 1440 64"
       preserveAspectRatio="none"
-      className="pointer-events-none absolute left-0 top-full h-6 w-full md:h-8"
-      style={{ filter: "drop-shadow(0 1px 1px rgba(60,90,120,0.35))" }}
+      className="pointer-events-none absolute left-0 top-full h-8 w-full md:h-11"
+      style={{ filter: "drop-shadow(0 2px 2px rgba(40,80,120,0.28))" }}
     >
-      <rect x="0" y="0" width="102" height="3" fill="#fff" />
-      {ICICLES.map(([x, h]) => (
-        <path key={x} d={`M${x} 2 L${x + 3} 2 L${x + 1.5} ${h} Z`} fill="#e8f4fb" stroke="#fff" strokeWidth="0.35" />
-      ))}
+      <defs>
+        <linearGradient id="ice-g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.98" />
+          <stop offset="0.55" stopColor="#d4ecf9" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#a9d6ee" stopOpacity="0.75" />
+        </linearGradient>
+      </defs>
+      {ICICLES.map(({ x, w, h }, i) => {
+        const l = x - w / 2, r = x + w / 2, tip = x + (rnd() - 0.5) * 2;
+        const d = `M${l} 0 C${l + 0.5} ${h * 0.45}, ${x - w * 0.14} ${h * 0.78}, ${tip} ${h} C${x + w * 0.14} ${h * 0.78}, ${r - 0.5} ${h * 0.45}, ${r} 0 Z`;
+        return (
+          <g key={i}>
+            <path d={d} fill="url(#ice-g)" stroke="#bfe0f2" strokeWidth="0.6" />
+            <path
+              d={`M${l + w * 0.28} ${h * 0.08} C${l + w * 0.26} ${h * 0.4}, ${x - w * 0.1} ${h * 0.62}, ${x - w * 0.03} ${h * 0.82}`}
+              stroke="#fff"
+              strokeOpacity="0.95"
+              strokeWidth={Math.max(1, w * 0.12)}
+              strokeLinecap="round"
+              fill="none"
+            />
+          </g>
+        );
+      })}
+      {/* Schneekante oben */}
+      <path
+        d="M0 0H1440V5C1400 9 1380 3 1340 6S1270 10 1230 5 1160 3 1120 7 1050 10 1010 5 940 3 900 7 830 10 790 5 720 3 680 7 610 10 570 5 500 3 460 7 390 10 350 5 280 3 240 7 170 10 130 5 60 3 0 7Z"
+        fill="#fff"
+      />
     </svg>
   );
 }
