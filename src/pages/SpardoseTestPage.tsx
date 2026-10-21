@@ -3,14 +3,14 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { STLExporter } from "three/examples/jsm/exporters/STLExporter.js";
 import JSZip from "jszip";
-import { Download, Loader2, AlertTriangle } from "lucide-react";
+import { Download, Loader2, AlertTriangle, Plus, Minus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider as BaseSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useMaterialFarben } from "@/lib/material-farben";
-import { DEFAULTS, FONTS, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
+import { DEFAULTS, FONTS, LIMITS, NAME_MIN, SLOT_LEN, SLOT_THK, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
 
 // Regler in den 3DMuscio-Farben (der Standard-Slider nutzt die Sekundärfarbe Orange für die Spur)
 const Slider = (props: React.ComponentProps<typeof BaseSlider>) => (
@@ -42,6 +42,13 @@ function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: s
     scene.add(group);
     const controls = new OrbitControls(cam, renderer.domElement);
     controls.enableDamping = true;
+    controls.dampingFactor = 0.1;
+    controls.zoomSpeed = 0.7;
+    controls.zoomToCursor = true;
+    controls.screenSpacePanning = true;
+    controls.minPolarAngle = 0.02;
+    controls.maxPolarAngle = Math.PI - 0.02;
+    renderer.domElement.style.touchAction = "none";
     st.current = { scene, group, cam, controls, fitKey: "" };
     let raf = 0;
     const loop = () => { controls.update(); renderer.render(scene, cam); raf = requestAnimationFrame(loop); };
@@ -70,13 +77,47 @@ function Viewer({ res, colors }: { res: SpardoseResult | null; colors: { text: s
     if (s.fitKey !== key) {
       s.fitKey = key;
       const dist = Math.max(res.dims.x * 1.35, 140);
+      s.controls.minDistance = Math.max(res.dims.x * 0.3, 50);
+      s.controls.maxDistance = res.dims.x * 4;
       s.controls.target.set(0, 0, -res.dims.z / 2);
       s.cam.position.set(dist * 0.3, dist * 0.22, dist * 0.95);
       s.controls.update();
     }
   }, [res, colors]);
 
-  return <div ref={host} className="h-full min-h-[360px] w-full" />;
+  const zoom = (f: number) => {
+    const s = st.current;
+    if (!s) return;
+    const v = s.cam.position.clone().sub(s.controls.target);
+    const len = Math.min(s.controls.maxDistance, Math.max(s.controls.minDistance, v.length() * f));
+    s.cam.position.copy(s.controls.target).add(v.setLength(len));
+    s.controls.update();
+  };
+  const view = (name: "front" | "back" | "top" | "reset") => {
+    const s = st.current;
+    if (!s || !res) return;
+    const len = name === "reset" ? Math.max(res.dims.x * 1.35, 140) * 1.02 : s.cam.position.distanceTo(s.controls.target);
+    const t = s.controls.target;
+    if (name === "reset") { s.controls.target.set(0, 0, -res.dims.z / 2); s.cam.position.set(len * 0.3, len * 0.22, -res.dims.z / 2 + len * 0.95); }
+    else if (name === "front") s.cam.position.set(t.x, t.y, t.z + len);
+    else if (name === "back") s.cam.position.set(t.x, t.y, t.z - len);
+    else s.cam.position.set(t.x, t.y + len, t.z + 0.01);
+    s.controls.update();
+  };
+  const btn = "flex h-8 items-center justify-center rounded-md border bg-background/90 px-2 text-xs font-medium shadow-sm transition-colors hover:bg-accent";
+  return (
+    <div className="relative h-full min-h-[360px] w-full">
+      <div ref={host} className="h-full w-full" />
+      <div className="absolute bottom-3 left-3 flex gap-1.5">
+        <button type="button" className={btn} onClick={() => zoom(0.8)} aria-label="Hineinzoomen"><Plus className="h-4 w-4" /></button>
+        <button type="button" className={btn} onClick={() => zoom(1.25)} aria-label="Herauszoomen"><Minus className="h-4 w-4" /></button>
+        <button type="button" className={btn} onClick={() => view("reset")} aria-label="Ansicht zurücksetzen"><RotateCcw className="h-4 w-4" /></button>
+        <button type="button" className={btn} onClick={() => view("front")}>Vorne</button>
+        <button type="button" className={btn} onClick={() => view("back")}>Hinten</button>
+        <button type="button" className={btn} onClick={() => view("top")}>Oben</button>
+      </div>
+    </div>
+  );
 }
 
 function Field({ label, children, value }: { label: string; children: React.ReactNode; value?: string }) {
@@ -190,7 +231,7 @@ export default function SpardoseTestPage() {
         <div className="space-y-4 rounded-xl border bg-card p-4">
           <Field label="Name" value={`${p.name.length}/12`}>
             <Input value={p.name} maxLength={12} onChange={(e) => set("name", sanitizeName(e.target.value))} placeholder="z. B. Nora" />
-            <p className="text-[11px] text-muted-foreground">Nur Buchstaben A–Z und Ziffern, keine Sonderzeichen.</p>
+            <p className="text-[11px] text-muted-foreground">Mindestens 2 Zeichen: Buchstaben A–Z und Ziffern, ohne Sonderzeichen und Leerzeichen.</p>
           </Field>
           <Field label="Schrift">
             <select className="h-9 w-full rounded-md border bg-background px-2 text-sm" value={p.font} onChange={(e) => set("font", e.target.value)}>
@@ -198,34 +239,36 @@ export default function SpardoseTestPage() {
             </select>
           </Field>
           <Field label="Buchstabenabstand" value={`${p.spacing.toFixed(1)} mm`}>
-            <Slider min={-5} max={10} step={0.5} value={[p.spacing]} onValueChange={([v]) => set("spacing", v)} />
+            <Slider min={LIMITS.spacing[0]} max={LIMITS.spacing[1]} step={0.5} value={[p.spacing]} onValueChange={([v]) => set("spacing", v)} />
           </Field>
           <Field label="Maximale Länge" value={`${p.maxLength} mm`}>
-            <Slider min={100} max={300} step={5} value={[p.maxLength]} onValueChange={([v]) => set("maxLength", v)} />
+            <Slider min={LIMITS.maxLength[0]} max={LIMITS.maxLength[1]} step={5} value={[p.maxLength]} onValueChange={([v]) => set("maxLength", v)} />
+          </Field>
+          <Field label="Schlitzposition" value={p.schlitzX === 0 ? "Mitte" : `${p.schlitzX > 0 ? "+" : ""}${p.schlitzX} mm`}>
+            <Slider min={LIMITS.schlitzX[0]} max={LIMITS.schlitzX[1]} step={1} value={[p.schlitzX]} onValueChange={([v]) => set("schlitzX", v)} />
+            <p className="text-[11px] text-muted-foreground">Verschiebt den Münzschlitz nach links oder rechts. Liegt unter der Stelle kein Hohlraum, rutscht er automatisch zur nächsten passenden Stelle.</p>
           </Field>
           <Field label="Rand um die Schrift" value={`${p.rand.toFixed(1)} mm`}>
-            <Slider min={3} max={10} step={0.5} value={[p.rand]} onValueChange={([v]) => set("rand", v)} />
-            <p className="text-[11px] text-muted-foreground">Abstand von den Buchstaben bis zum Rand der Spardose (min. 3 mm). Mehr Rand = grössere Kappe.</p>
+            <Slider min={LIMITS.rand[0]} max={LIMITS.rand[1]} step={0.5} value={[p.rand]} onValueChange={([v]) => set("rand", v)} />
+            <p className="text-[11px] text-muted-foreground">Abstand von den Buchstaben bis zum Rand der Spardose (min. 3 mm). Wird automatisch erhöht, falls die Dose sonst nicht funktioniert.</p>
           </Field>
           <Field label="Buchstabenhöhe" value={`${p.size} mm`}>
-            <Slider min={25} max={75} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
+            <Slider min={LIMITS.size[0]} max={LIMITS.size[1]} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
           </Field>
 
           <details className="rounded-lg border p-3 text-sm">
             <summary className="cursor-pointer font-medium">Erweitert (Passung &amp; Aufbau)</summary>
             <div className="mt-3 space-y-4">
-              <Field label="Tiefe der Dose (mind. nach Schlitz)" value={`${p.tiefe} mm`}><Slider min={30} max={80} step={1} value={[p.tiefe]} onValueChange={([v]) => set("tiefe", v)} /></Field>
-              <Field label="Wandstärke" value={`${p.wand.toFixed(1)} mm`}><Slider min={1.6} max={4} step={0.2} value={[p.wand]} onValueChange={([v]) => set("wand", v)} /></Field>
-              <Field label="Spiel (Passung)" value={`${p.spiel.toFixed(2)} mm`}><Slider min={0.1} max={0.5} step={0.05} value={[p.spiel]} onValueChange={([v]) => set("spiel", v)} /></Field>
-              <Field label="Tiefe der Vertiefung" value={`${p.taschenTiefe.toFixed(1)} mm`}><Slider min={1} max={4} step={0.5} value={[p.taschenTiefe]} onValueChange={([v]) => set("taschenTiefe", v)} /></Field>
-              <Field label="Buchstaben stehen vor" value={`${p.ueberstand.toFixed(1)} mm`}><Slider min={0} max={3} step={0.5} value={[p.ueberstand]} onValueChange={([v]) => set("ueberstand", v)} /></Field>
-              <Field label="Schlitz Länge (in der Tiefe)" value={`${p.schlitzLaenge} mm`}><Slider min={25} max={40} step={1} value={[p.schlitzLaenge]} onValueChange={([v]) => set("schlitzLaenge", v)} /></Field>
-              <Field label="Schlitz Breite (Münzdicke)" value={`${p.schlitzBreite.toFixed(1)} mm`}><Slider min={2.5} max={5} step={0.1} value={[p.schlitzBreite]} onValueChange={([v]) => set("schlitzBreite", v)} /></Field>
+              <Field label="Tiefe der Dose (mind. nach Schlitz)" value={`${p.tiefe} mm`}><Slider min={LIMITS.tiefe[0]} max={LIMITS.tiefe[1]} step={1} value={[p.tiefe]} onValueChange={([v]) => set("tiefe", v)} /></Field>
+              <Field label="Wandstärke" value={`${p.wand.toFixed(1)} mm`}><Slider min={LIMITS.wand[0]} max={LIMITS.wand[1]} step={0.2} value={[p.wand]} onValueChange={([v]) => set("wand", v)} /></Field>
+              <Field label="Spiel (Passung)" value={`${p.spiel.toFixed(2)} mm`}><Slider min={LIMITS.spiel[0]} max={LIMITS.spiel[1]} step={0.05} value={[p.spiel]} onValueChange={([v]) => set("spiel", v)} /></Field>
+              <Field label="Tiefe der Vertiefung" value={`${p.taschenTiefe.toFixed(1)} mm`}><Slider min={LIMITS.taschenTiefe[0]} max={LIMITS.taschenTiefe[1]} step={0.5} value={[p.taschenTiefe]} onValueChange={([v]) => set("taschenTiefe", v)} /></Field>
+              <Field label="Buchstaben stehen vor" value={`${p.ueberstand.toFixed(1)} mm`}><Slider min={LIMITS.ueberstand[0]} max={LIMITS.ueberstand[1]} step={0.5} value={[p.ueberstand]} onValueChange={([v]) => set("ueberstand", v)} /></Field>
               <div className="flex items-center justify-between"><span className="text-xs font-medium">Rillen (Schichten-Look)</span><Switch checked={p.rillen} onCheckedChange={(v) => set("rillen", v)} /></div>
               {p.rillen && (
                 <>
-                  <Field label="Rillen-Abstand" value={`${p.rillenAbstand.toFixed(1)} mm`}><Slider min={0.8} max={3} step={0.2} value={[p.rillenAbstand]} onValueChange={([v]) => set("rillenAbstand", v)} /></Field>
-                  <Field label="Rillen-Tiefe" value={`${p.rillenTiefe.toFixed(2)} mm`}><Slider min={0.2} max={0.8} step={0.05} value={[p.rillenTiefe]} onValueChange={([v]) => set("rillenTiefe", v)} /></Field>
+                  <Field label="Rillen-Abstand" value={`${p.rillenAbstand.toFixed(1)} mm`}><Slider min={LIMITS.rillenAbstand[0]} max={LIMITS.rillenAbstand[1]} step={0.2} value={[p.rillenAbstand]} onValueChange={([v]) => set("rillenAbstand", v)} /></Field>
+                  <Field label="Rillen-Tiefe" value={`${p.rillenTiefe.toFixed(2)} mm`}><Slider min={LIMITS.rillenTiefe[0]} max={LIMITS.rillenTiefe[1]} step={0.05} value={[p.rillenTiefe]} onValueChange={([v]) => set("rillenTiefe", v)} /></Field>
                 </>
               )}
               <Button variant="outline" size="sm" onClick={() => setP({ ...DEFAULTS, name: p.name, font: p.font })}>Auf Standard zurücksetzen</Button>
@@ -241,7 +284,7 @@ export default function SpardoseTestPage() {
                 <Loader2 className="h-3.5 w-3.5 animate-spin" /> berechne…
               </div>
             )}
-            {!res && !busy && <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">Name eingeben</div>}
+            {!res && !busy && <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">Name mit mindestens {NAME_MIN} Zeichen eingeben</div>}
           </div>
           {err && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">Fehler: {err}</div>}
           {res && res.warnings.length > 0 && (
@@ -256,12 +299,16 @@ export default function SpardoseTestPage() {
         </div>
 
         <div className="space-y-4 rounded-xl border bg-card p-4">
+          <Field label="Münzschlitz (fest)">
+            <div className="text-sm tabular-nums">{SLOT_LEN} × {SLOT_THK} mm</div>
+            <div className="text-[11px] text-muted-foreground">Passt für das 5-Franken-Stück (Ø 31,45 × 2,35 mm) plus je 1 mm Spiel.</div>
+          </Field>
           <Field label="Material"><div className="inline-flex rounded-md bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">PLA</div></Field>
           <Field label="Abmessungen">
             <div className="text-sm tabular-nums">
               {res ? <>X {res.dims.x.toFixed(1)} · Y {res.dims.y.toFixed(1)} · Z {res.dims.z.toFixed(1)} mm</> : "–"}
             </div>
-            {res && <div className="text-[11px] text-muted-foreground">Berechnet in {ms} ms · Raster {res.info.ppm} px/mm · Kappe Ø {(res.info.capR * 2).toFixed(0)} mm</div>}
+            {res && <div className="text-[11px] text-muted-foreground">Berechnet in {ms} ms · Raster {res.info.ppm} px/mm · Kappe Ø {(res.info.capR * 2).toFixed(0)} mm · Rand {res.info.randUsed} mm</div>}
           </Field>
           <Field label="Buchstaben (Farbe)"><Swatches colors={plaFarben} value={colors.text} onChange={(c) => setColors((o) => ({ ...o, text: c }))} /></Field>
           <Field label="Körper (Farbe)"><Swatches colors={plaFarben} value={colors.base} onChange={(c) => setColors((o) => ({ ...o, base: c }))} /></Field>

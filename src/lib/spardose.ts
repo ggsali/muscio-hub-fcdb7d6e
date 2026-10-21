@@ -15,14 +15,39 @@ export type SpardoseParams = {
   wand: number; // Wandstärke mm
   tiefe: number; // Tiefe der Dose mm
   rillen: boolean;
+  schlitzX: number; // Position des Münzschlitzes in mm von der Mitte (nach rechts +)
   rillenAbstand: number; // mm
   rillenTiefe: number; // mm
   spiel: number; // Passungsspiel mm
   taschenTiefe: number; // Tiefe der Vertiefung für Buchstaben mm
   ueberstand: number; // Buchstaben stehen so weit vor mm
-  schlitzLaenge: number; // mm
-  schlitzBreite: number; // mm (Dicke Münze)
 };
+
+// 5-Franken-Stück (grösste Schweizer Münze, Swissmint): Ø 31,45 mm, Dicke 2,35 mm
+// Schlitz: Durchmesser + 2 mm (je 1 mm pro Seite), Dicke + 1 mm je Seite
+export const COIN = { d: 31.45, t: 2.35 };
+export const SLOT_LEN = +(COIN.d + 2).toFixed(2); // 33,45 mm, längs in der Tiefe
+export const SLOT_THK = +(COIN.t + 2).toFixed(2); // 4,35 mm, in x
+
+// Grenzen: Kunden können nur Werte wählen, mit denen die Spardose sicher funktioniert
+export const LIMITS = {
+  spacing: [0, 10], maxLength: [120, 300], size: [30, 75], rand: [3, 12], wand: [2, 4],
+  tiefe: [50, 80], spiel: [0.2, 0.4], taschenTiefe: [1.5, 3], ueberstand: [0.5, 2.5],
+  rillenAbstand: [1, 3], rillenTiefe: [0.2, 0.6], schlitzX: [-60, 60],
+} as const;
+export const NAME_MIN = 2;
+
+const clampP = (v: number, [lo, hi]: readonly [number, number]) => Math.min(hi, Math.max(lo, Number.isFinite(v) ? v : lo));
+export function clampParams(p: SpardoseParams): SpardoseParams {
+  return {
+    ...p,
+    spacing: clampP(p.spacing, LIMITS.spacing), maxLength: clampP(p.maxLength, LIMITS.maxLength), size: clampP(p.size, LIMITS.size),
+    rand: clampP(p.rand, LIMITS.rand), wand: clampP(p.wand, LIMITS.wand), tiefe: clampP(p.tiefe, LIMITS.tiefe),
+    spiel: clampP(p.spiel, LIMITS.spiel), taschenTiefe: clampP(p.taschenTiefe, LIMITS.taschenTiefe), ueberstand: clampP(p.ueberstand, LIMITS.ueberstand),
+    rillenAbstand: clampP(p.rillenAbstand, LIMITS.rillenAbstand), rillenTiefe: clampP(p.rillenTiefe, LIMITS.rillenTiefe),
+    schlitzX: Math.min(LIMITS.schlitzX[1], Math.max(LIMITS.schlitzX[0], Number.isFinite(p.schlitzX) ? p.schlitzX : 0)),
+  };
+}
 
 export const DEFAULTS: SpardoseParams = {
   name: "Nora",
@@ -34,13 +59,12 @@ export const DEFAULTS: SpardoseParams = {
   wand: 2.4,
   tiefe: 50,
   rillen: true,
+  schlitzX: 0,
   rillenAbstand: 1.2,
   rillenTiefe: 0.4,
   spiel: 0.25,
   taschenTiefe: 2,
   ueberstand: 1.5,
-  schlitzLaenge: 34,
-  schlitzBreite: 3.4,
 };
 
 export const FONTS: { id: string; label: string; css: string }[] = [
@@ -61,12 +85,13 @@ export type SpardoseResult = {
   capPose: { x: number; y: number; z: number };
   dims: { x: number; y: number; z: number };
   warnings: string[];
-  info: { sizeUsed: number; capR: number; kammern: number; ppm: number };
+  info: { sizeUsed: number; capR: number; kammern: number; ppm: number; randUsed: number };
+  valid: boolean;
 };
 
 export function sanitizeName(s: string) {
-  // keine Sonderzeichen: nur A-Z, a-z, 0-9 und Leerzeichen
-  return s.replace(/[^A-Za-z0-9 ]/g, "").replace(/\s+/g, " ").trimStart().slice(0, 12);
+  // keine Sonderzeichen und keine Leerzeichen (ein Leerzeichen würde den Körper trennen): nur A-Z, a-z, 0-9
+  return s.replace(/[^A-Za-z0-9]/g, "").slice(0, 12);
 }
 
 let fontsRequested = false;
@@ -272,7 +297,25 @@ function toShapes(loops: Pt[][], map: (p: Pt) => THREE.Vector2, epsPx: number): 
 
 // ---------- Hauptfunktion ----------
 export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseResult | null> {
-  const p: SpardoseParams = { ...pIn, rand: Math.max(3, pIn.rand) }; // Rand nie unter 3 mm
+  const base = clampParams(pIn);
+  if (sanitizeName(base.name).length < NAME_MIN) return null;
+  // Rand automatisch erhöhen, bis Hohlraum, Schlitz und Kappe sicher funktionieren
+  let rand = base.rand, last: SpardoseResult | null = null;
+  for (let i = 0; i < 10; i++) {
+    const r = await buildSpardose({ ...base, rand });
+    if (!r) return null;
+    if (last) { last.body.dispose(); last.letters.dispose(); last.cap.dispose(); }
+    last = r;
+    if (r.valid || rand >= LIMITS.rand[1]) break;
+    rand = Math.min(LIMITS.rand[1], rand + 1);
+  }
+  const res = last!;
+  if (res.valid && rand > base.rand) res.warnings.unshift(`Rand automatisch von ${base.rand} auf ${rand} mm erhöht, damit Hohlraum, Münzschlitz und Kappe funktionieren.`);
+  if (!res.valid) res.warnings.unshift("Mit diesem Namen und diesen Einstellungen funktioniert die Spardose nicht sicher. Längeren Namen oder grössere Buchstaben wählen.");
+  return res;
+}
+
+async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> {
   const name = sanitizeName(p.name).trim();
   if (!name) return null;
   const font = FONTS.find((f) => f.id === p.font) ?? FONTS[0];
@@ -291,7 +334,7 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
   let size = p.size;
   const widthMm = (sz: number) => (sumAdv * sz) / capRatio + fixed;
   if (widthMm(size) + 2 * p.rand > p.maxLength) {
-    size = Math.max(10, (p.maxLength - 2 * p.rand - fixed) / (sumAdv / capRatio));
+    size = Math.max(LIMITS.size[0], (p.maxLength - 2 * p.rand - fixed) / (sumAdv / capRatio));
     warnings.push(`Name ist zu lang: Buchstabenhöhe automatisch auf ${size.toFixed(0)} mm verkleinert (max. Länge ${p.maxLength} mm).`);
   }
 
@@ -389,24 +432,43 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
       if (dx < bestDx) { bestDx = dx; capXpx = i % W; capYpx = Math.floor(i / W); }
     }
   }
-  // Kappe: Masse nach Vorgabe (Ø30 Hals, Ø36 Konus-Bund, Höhe 7,5, zwei Nasen 1,5 x 2,4, Steg quer dazu)
+  // Kappe: Masse nach Vorgabe (Ø30 Hals, Ø36 Konus-Bund, Höhe 7,5, zwei Nasen 1,5 x 2,4, Steg quer dazu), mindestens 12 % grösser
   const CAP = { r: 15, rFl: 18, rLug: 16.5, lugW: 2.4, lugH: 3.46, h: 7.5, neckTop: 5.0, floor: 4.96, rRec: 11.5 };
+  // Die Öffnung muss das 5-Franken-Stück IMMER durchlassen: Lochdurchmesser >= Münzdurchmesser + 2 mm.
+  // Die Kappe wird dafür nie kleiner skaliert (Mindestfaktor), stattdessen wird der Rand erhöht (siehe Wrapper).
   const rhoC = rhoMax / ppm;
-  let kc = Math.min(1, (rhoC - 0.4 - p.spiel) / CAP.r, (rhoC + p.wand - 1.2 - p.spiel) / CAP.rFl);
-  if (kc < 0.75) warnings.push(`Die Kappe musste auf ${Math.round(Math.max(kc, 0.45) * 100)} % verkleinert werden (Ø ${(CAP.r * 2 * Math.max(kc, 0.45)).toFixed(0)} mm statt 30 mm). Für die volle Grösse mehr Rand oder grössere Buchstaben wählen.`);
-  kc = Math.max(kc, 0.45);
+  const kc = Math.max(1.12, ((COIN.d + 2) / 2 - p.spiel) / CAP.r + 0.01);
+  const kapOk = rhoC - 0.4 - p.spiel >= CAP.r * kc && rhoC + p.wand - 1.2 - p.spiel >= CAP.rFl * kc;
 
-  // Münzschlitz: oben in der Mitte, lang in der Tiefe (um 90° gedreht), schmal in x
-  const hwPx = (p.schlitzBreite / 2) * ppm;
-  let slotBottom = -1, colsNoCavity = 0;
-  for (let x = Math.max(0, Math.round(cxPx - hwPx)); x <= Math.min(W - 1, Math.round(cxPx + hwPx)); x++) {
-    let top = -1;
-    for (let y = 0; y < H; y++) if (lab[y * W + x] === big) { top = y; break; }
-    if (top < 0) colsNoCavity++;
-    else slotBottom = Math.max(slotBottom, top);
+  // Münzschlitz: oben, Position einstellbar (0 = Mitte), lang in der Tiefe, schmal in x, mit runden Enden.
+  // Die Position wird automatisch auf die nächste Stelle gesetzt, unter der ein Hohlraum liegt.
+  const hwPx = (SLOT_THK / 2) * ppm;
+  const colsInfo = (cxc: number) => {
+    let bottom = -1, missing = 0;
+    for (let x = Math.max(0, Math.round(cxc - hwPx)); x <= Math.min(W - 1, Math.round(cxc + hwPx)); x++) {
+      let top = -1;
+      for (let y = 0; y < H; y++) if (lab[y * W + x] === big) { top = y; break; }
+      if (top < 0) missing++;
+      else bottom = Math.max(bottom, top);
+    }
+    return { bottom, missing };
+  };
+  const wantX = Math.round(cxPx - p.schlitzX * ppm); // Raster ist gespiegelt
+  let slotCx = wantX, slotInfo = colsInfo(wantX), slotAdjusted = false;
+  if (slotInfo.missing > 0 || slotInfo.bottom < 0) {
+    slotInfo = { bottom: -1, missing: 1 };
+    for (let d = 1; d < W && slotInfo.bottom < 0; d++) {
+      for (const sg of [1, -1]) {
+        const c = wantX + sg * d;
+        if (c < hwPx || c > W - hwPx) continue;
+        const inf = colsInfo(c);
+        if (inf.missing === 0 && inf.bottom >= 0) { slotCx = c; slotInfo = inf; slotAdjusted = true; break; }
+      }
+    }
   }
-  if (slotBottom < 0) warnings.push("Kein Hohlraum unter der Schlitz-Mitte: Münzschlitz konnte nicht angelegt werden.");
-  else if (colsNoCavity > 0) warnings.push("Unter Teilen des Münzschlitzes liegt kein Hohlraum (Name zu kurz oder zu schmal in der Mitte).");
+  const slotBottom = slotInfo.bottom, colsNoCavity = slotInfo.missing;
+  if (slotBottom < 0) warnings.push("Kein Hohlraum für den Münzschlitz gefunden.");
+  else if (slotAdjusted) warnings.push("Die Schlitzposition wurde automatisch verschoben, weil dort kein Hohlraum liegt.");
 
   // Z-Aufbau
   const P = p.taschenTiefe;
@@ -415,14 +477,16 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
   const GAP = 0.2, CONEH = CAP.h - CAP.neckTop, NECKT = 1.3;
   const GRT = CAP.lugH + 0.44;
   const Bk = GAP + CAP.h;
-  const Ls = p.schlitzLaenge, T = p.schlitzBreite;
+  const Ls = SLOT_LEN;
   const D = Math.max(p.tiefe, F + Bk + Ls + 4);
   const zs = (F + (D - Bk)) / 2 - Ls / 2;
   const NCONE = 8;
   const pitch = Math.max(0.6, p.rillenAbstand), gw = pitch / 3;
   const grooves: [number, number][] = [];
   if (p.rillen) for (let k = 1; k * pitch <= D - 1; k++) if (k * pitch - gw >= 1) grooves.push([k * pitch - gw, k * pitch]);
+  const SLR = SLOT_THK / 2, NS = 6;
   const bps = new Set<number>([0, P, F, zs, zs + Ls, D - Bk, D - Bk + GRT, D - CONEH]);
+  for (let i = 1; i < NS; i++) { bps.add(zs + (SLR * i) / NS); bps.add(zs + Ls - (SLR * i) / NS); }
   for (let i = 0; i <= NCONE; i++) bps.add(D - CONEH + (CONEH * i) / NCONE);
   grooves.forEach(([a, b]) => { bps.add(a); bps.add(b); });
   const zlist = [...bps].filter((z) => z >= 0 && z <= D).sort((a, b) => a - b);
@@ -432,7 +496,7 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
   const holeCx = capXpx, holeCy = capYpx;
   const slotCy = slotBottom / 2, slotHh = slotBottom / 2 + 1;
 
-  const buildField = (k: { g: boolean; pocket: boolean; cav: boolean; slot: boolean; back: string }) => {
+  const buildField = (k: { g: boolean; pocket: boolean; cav: boolean; slotHw: number; back: string }) => {
     const f = new Float32Array(N);
     const rIn = (CAP.rLug * kc + p.spiel) * ppm, rOut = (CAP.r * kc + p.spiel) * ppm;
     const nl = rIn, nw = ((CAP.lugW + 2 * p.spiel) / 2) * ppm;
@@ -445,8 +509,8 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
         let v = k.g ? so + dg : so;
         if (k.cav) v = Math.max(v, -(so + wallPx));
         if (k.pocket) v = Math.max(v, -(sd[i] - clrPx));
-        if (k.slot && slotBottom >= 0) {
-          const bx = Math.max(Math.abs(x - cxPx) - hwPx, Math.abs(y - slotCy) - slotHh);
+        if (k.slotHw > 0 && slotBottom >= 0) {
+          const bx = Math.max(Math.abs(x - slotCx) - k.slotHw * ppm, Math.abs(y - slotCy) - slotHh);
           v = Math.max(v, -bx);
         }
         if (k.back) {
@@ -473,10 +537,10 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
       g: isGroove(zm),
       pocket: zm < P,
       cav: zm > F && zm < D - Bk,
-      slot: zm > zs && zm < zs + Ls,
+      slotHw: zm > zs && zm < zs + Ls ? (() => { const d = Math.min(zm - zs, zs + Ls - zm); return d >= SLR ? SLR : Math.max(0.15, Math.sqrt(SLR * SLR - (SLR - d) * (SLR - d))); })() : 0,
       back: zm > D - Bk ? (zm < D - Bk + GRT ? "groove" : zm < D - CONEH ? "neck" : `cone${Math.min(NCONE - 1, Math.floor(((zm - (D - CONEH)) / CONEH) * NCONE))}`) : "",
     };
-    const key = `${+k.g}${+k.pocket}${+k.cav}${+k.slot}${k.back}`;
+    const key = `${+k.g}${+k.pocket}${+k.cav}${k.slotHw.toFixed(2)}${k.back}`;
     let shapes = cache.get(key);
     if (!shapes) {
       shapes = toShapes(contours(buildField(k), W, H), toMm, epsPx);
@@ -558,6 +622,7 @@ export async function generateSpardose(pIn: SpardoseParams): Promise<SpardoseRes
     capPose: { x: capC.x, y: capC.y, z: D - CAP.h },
     dims: { x: bb.max.x - bb.min.x, y: bb.max.y - bb.min.y, z: D },
     warnings,
-    info: { sizeUsed: size, capR: CAP.r * kc, kammern, ppm },
+    info: { sizeUsed: size, capR: CAP.r * kc, kammern, ppm, randUsed: p.rand },
+    valid: nLab > 0 && kammern === 1 && slotBottom >= 0 && colsNoCavity === 0 && kapOk,
   };
 }
