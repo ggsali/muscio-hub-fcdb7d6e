@@ -246,6 +246,8 @@ export default function OrderStatusWorkflow({
         `Für diesen Auftrag gibt es schon die Sendungsnummer ${trackingNr}.\nWirklich eine neue Etikette mit neuer Nummer erstellen?`,
       );
       if (!ok) return;
+    } else if (!window.confirm("Wirklich eine Post-Paketetikette für diesen Auftrag erstellen und drucken?")) {
+      return;
     }
     setLabelLoading(true);
     setLabelError(null);
@@ -318,6 +320,7 @@ export default function OrderStatusWorkflow({
 
   /** Briefpost: Adressetikette auf dem Etikettendrucker (50 × 30 mm) drucken */
   const handlePrintAddress = async () => {
+    if (!window.confirm("Wirklich eine Adressetikette (Brief) für diesen Auftrag drucken?")) return;
     setLabelError(null);
     const res = await printAddressLabel(orderId);
     if (!res.ok) {

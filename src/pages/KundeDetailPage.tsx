@@ -373,6 +373,7 @@ export default function KundeDetailPage() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2" onClick={async () => {
+                  if (!window.confirm("Wirklich eine Post-Paketetikette erstellen und drucken?")) return;
                   const t = toast.loading("Paketetikette wird erstellt...");
                   const r = await createShippingLabel(null, id);
                   toast.dismiss(t);
@@ -382,6 +383,7 @@ export default function KundeDetailPage() {
                   <Box className="w-4 h-4" /> Paketetikette drucken (Post)
                 </DropdownMenuItem>
                 <DropdownMenuItem className="gap-2" onClick={async () => {
+                  if (!window.confirm("Wirklich eine Adressetikette (Brief) drucken?")) return;
                   const r = await printAddressLabel(null, id);
                   if (!r.ok) toast.error(r.error || "Fehler");
                 }}>
