@@ -269,7 +269,7 @@ export default function SpardoseTestPage() {
     return () => clearTimeout(t);
   }, [p]);
 
-  type Job = { label: string; hex: string; count: number; min: number; g: number };
+  type Job = { label: string; hex: string; count: number; min: number; g: number; rects: { x: number; y: number; w: number; h: number; name: string }[] };
   const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; preis?: number; step?: string }>({ state: "idle" });
   useEffect(() => { setFin({ state: "idle" }); }, [res, colors]);
 
@@ -301,7 +301,7 @@ export default function SpardoseTestPage() {
           setFin({ state: "err", msg: `Slicer (${pl.label}): ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}` });
           return;
         }
-        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g });
+        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, rects: pl.rects });
       }
       const s = await loadSettings();
       const g = jobs.reduce((a, j) => a + j.g, 0), h = jobs.reduce((a, j) => a + j.min, 0) / 60;
@@ -425,6 +425,13 @@ export default function SpardoseTestPage() {
                     <span className="font-medium">{j.label}</span>
                     <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g</span>
                   </div>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {fin.jobs.map((j) => (
+                  <svg key={j.hex} viewBox={`0 0 ${PLATE.x} ${PLATE.y}`} className="h-40 w-40 rounded border bg-background">
+                    {j.rects.map((r, i) => <rect key={i} x={r.x} y={PLATE.y - r.y - r.h} width={r.w} height={r.h} fill={j.hex} stroke="currentColor" strokeWidth={2} opacity={0.85} />)}
+                  </svg>
                 ))}
               </div>
               <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung.</div>
