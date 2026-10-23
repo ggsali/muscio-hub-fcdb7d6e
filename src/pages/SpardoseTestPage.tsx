@@ -271,7 +271,7 @@ export default function SpardoseTestPage() {
     return () => clearTimeout(t);
   }, [p]);
 
-  type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; rects: { x: number; y: number; w: number; h: number; name: string }[] };
+  type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[] };
   const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; preis?: number; step?: string }>({ state: "idle" });
   const plansRef = useRef<PlatePlan[]>([]);
   useEffect(() => { setFin({ state: "idle" }); plansRef.current = []; }, [res, colors]);
@@ -283,7 +283,7 @@ export default function SpardoseTestPage() {
       const plans = buildPlates(res, colors, (hex) => plaFarben.find((c) => c.hex === hex)?.name ?? hex);
       plansRef.current = plans;
       const bad = plans.find((pl) => !pl.fits);
-      if (bad) { setFin({ state: "err", msg: `Die Teile in ${bad.label} passen nicht auf eine Platte (${PLATE.x}×${PLATE.y} mm).` }); return; }
+      if (bad) { setFin({ state: "err", msg: `Die Teile in ${bad.label} passen auf keinen Drucker (grösster Bauraum ${PLATE.x}×${PLATE.y} mm).` }); return; }
       const jobs: Job[] = [];
       for (let i = 0; i < plans.length; i++) {
         const pl = plans[i];
@@ -291,6 +291,7 @@ export default function SpardoseTestPage() {
         const body = new FormData();
         body.append("file", new File([pl.blob], `spardose-platte-${i + 1}.stl`));
         body.append("plate", "1");
+        body.append("printer", pl.printer);
         body.append("quality", "0.20");
         body.append("infill", "15");
         const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
@@ -305,7 +306,7 @@ export default function SpardoseTestPage() {
           setFin({ state: "err", msg: `Slicer (${pl.label}): ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}` });
           return;
         }
-        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, rects: pl.rects });
+        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, printerName: pl.printerName, bed: pl.bed, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, rects: pl.rects });
       }
       const s = await loadSettings();
       const g = jobs.reduce((a, j) => a + j.g, 0), h = jobs.reduce((a, j) => a + j.min, 0) / 60;
@@ -462,19 +463,19 @@ export default function SpardoseTestPage() {
                 {fin.jobs.map((j) => (
                   <div key={j.hex} className="flex items-center gap-2">
                     <span className="inline-block h-3 w-3 rounded-full border" style={{ background: j.hex }} />
-                    <span className="font-medium">{j.label}</span>
+                    <span className="font-medium">{j.label}</span><span className="rounded bg-muted px-1.5 text-xs">{j.printerName}</span>
                     <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g · Stützen: {j.sup ? "ja" : "nein"}</span>
                   </div>
                 ))}
               </div>
               <div className="mt-3 flex flex-wrap gap-3">
                 {fin.jobs.map((j) => (
-                  <svg key={j.hex} viewBox={`0 0 ${PLATE.x} ${PLATE.y}`} className="h-40 w-40 rounded border bg-background">
-                    {j.rects.map((r, i) => <rect key={i} x={r.x} y={PLATE.y - r.y - r.h} width={r.w} height={r.h} fill={j.hex} stroke="currentColor" strokeWidth={2} opacity={0.85} />)}
+                  <svg key={j.hex} viewBox={`0 0 ${j.bed.x} ${j.bed.y}`} className="h-40 w-40 rounded border bg-background">
+                    {j.rects.map((r, i) => <rect key={i} x={r.x} y={j.bed.y - r.y - r.h} width={r.w} height={r.h} fill={j.hex} stroke="currentColor" strokeWidth={2} opacity={0.85} />)}
                   </svg>
                 ))}
               </div>
-              <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
+              <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte, jede weitere Farbe auf eigener Platte. Gesliced wird für den kleinsten Drucker, auf den die Teile passen. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
             </div>
           )}
           

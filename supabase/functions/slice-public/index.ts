@@ -79,6 +79,8 @@ serve(async (req) => {
 
     // Plattenmodus (Spardose-Generator): alle Teile liegen schon fertig angeordnet auf einer Platte -> nur grosser Drucker, ohne Auto-Orient, mit Stützen
     const plate = form.get("plate") === "1";
+    const plateReq = String(form.get("printer") ?? "xl");
+    const plateRaw = ["k1c", "a1", "xl"].includes(plateReq) ? plateReq : "xl";
     const buildForm = (printer: string) => {
       const out = new FormData();
       out.append("file", file, `upload${ext}`);
@@ -107,7 +109,7 @@ serve(async (req) => {
     // Drucker-Reihenfolge: K1C (klein) -> K1 (falls K1C-Profil fehlt) -> xl (420x420x420 mm, wenn das Teil nicht aufs kleine Bett passt)
     let res!: Response;
     let used = "k1c";
-    for (const printer of plate ? ["xl"] : ["k1c", "k1", "xl"]) {
+    for (const printer of plate ? [plateRaw] : ["k1c", "k1", "xl"]) {
       res = await slice(printer);
       used = printer;
       if (res.status !== 422) break;

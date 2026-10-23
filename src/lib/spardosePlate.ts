@@ -4,11 +4,17 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import type { SpardoseResult } from "@/lib/spardose";
 
 // Ordnet die Einzelteile auf Platten des grossen Druckers an: gleiche Farbe = gleiche Platte, jede andere Farbe = eigene Platte.
-export const PLATE = { x: 420, y: 420, z: 420, gap: 5, margin: 8 };
+export const PLATE = { x: 420, y: 420, z: 420, gap: 5, margin: 8 }; // wird je nach Drucker gesetzt
+// Drucker aufsteigend nach Bauraum: Es wird der kleinste gewählt, auf den alle Teile einer Farbe passen.
+export const PRINTERS = [
+  { id: "k1c", name: "Creality K1C", x: 220, y: 220, z: 250 },
+  { id: "a1", name: "Bambu Lab A1", x: 256, y: 256, z: 256 },
+  { id: "xl", name: "XL (420 mm)", x: 420, y: 420, z: 420 },
+] as const;
 
 type Piece = { g: THREE.BufferGeometry; name: string };
 type Placed = { g: THREE.BufferGeometry; w: number; h: number; name: string };
-export type PlatePlan = { hex: string; label: string; blob: Blob; fits: boolean; count: number; info: string; rects: { x: number; y: number; w: number; h: number; name: string }[] };
+export type PlatePlan = { hex: string; label: string; blob: Blob; fits: boolean; count: number; info: string; printer: string; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[] };
 
 /** Trennt eine Geometrie in zusammenhängende Einzelteile (z. B. jeder Buchstabe separat). */
 function splitComponents(src: THREE.BufferGeometry): THREE.BufferGeometry[] {
@@ -49,9 +55,8 @@ function splitComponents(src: THREE.BufferGeometry): THREE.BufferGeometry[] {
 }
 
 /** Buchstaben bleiben in Namensreihenfolge in einer Reihe (bei Bedarf umgebrochen). */
-function letterRow(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
-  const info = parts.map((g) => { g.computeBoundingBox(); const b = g.boundingBox!; return { g, b, cx: (b.min.x + b.max.x) / 2 }; }).sort((a, b) => a.cx - b.cx);
-  const maxW = 380;
+function letterRow(parts: THREE.BufferGeometry[], maxW = 380): THREE.BufferGeometry {
+  const info = parts.map((src) => { const g = src.clone(); return g; }).map((g) => { g.computeBoundingBox(); const b = g.boundingBox!; return { g, b, cx: (b.min.x + b.max.x) / 2 }; }).sort((a, b) => a.cx - b.cx);
   let x = 0, y = 0, rowH = 0;
   const out: THREE.BufferGeometry[] = [];
   for (const it of info) {
@@ -151,14 +156,29 @@ export function buildPlates(res: SpardoseResult, colors: { text: string; base: s
   const groups = new Map<string, Piece[]>();
   const add = (hex: string, p: Piece) => { (groups.get(hex) ?? groups.set(hex, []).get(hex)!).push(p); };
   add(colors.base, { g: res.body, name: "Körper" });
-  add(colors.text, { g: letterRow(splitComponents(letters)), name: "Buchstaben" });
+  const comps = splitComponents(letters);
+  add(colors.text, { g: letterRow(comps), name: "Buchstaben" });
   add(colors.cap, { g: res.cap, name: "Kappe" });
   letters.dispose();
   const plans: PlatePlan[] = [];
   groups.forEach((pieces, hex) => {
-    const { blob, fits, rects } = buildOne(pieces);
-    plans.push({ hex, label: labelOf(hex), blob, fits, count: pieces.length, info: pieces.map((p) => p.name).join(", "), rects });
+    let chosen: (typeof PRINTERS)[number] = PRINTERS[PRINTERS.length - 1];
+    let built = null as ReturnType<typeof buildOne> | null;
+    for (const pr of PRINTERS) {
+      Object.assign(PLATE, { x: pr.x, y: pr.y, z: pr.z });
+      // Buchstabenreihe passend zur Breite des Druckbetts umbrechen
+      const pcs = pieces.map((pc) => {
+        if (pc.name !== "Buchstaben") return pc;
+        return { g: letterRow(comps, pr.x - 2 * PLATE.margin), name: pc.name, tmp: true };
+      });
+      const b = buildOne(pcs);
+      pcs.forEach((pc: any) => { if (pc.tmp) pc.g.dispose(); });
+      built = b; chosen = pr;
+      if (b.fits) break;
+    }
+    plans.push({ hex, label: labelOf(hex), blob: built!.blob, fits: built!.fits, count: pieces.length, info: pieces.map((p) => p.name).join(", "), printer: chosen.id, printerName: chosen.name, bed: { x: chosen.x, y: chosen.y }, rects: built!.rects });
   });
   groups.forEach((pieces) => pieces.forEach((p) => { if (p.name === "Buchstaben") p.g.dispose(); }));
+  comps.forEach((g) => g.dispose());
   return plans;
 }
