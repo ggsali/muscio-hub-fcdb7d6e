@@ -24,7 +24,7 @@ const EMPTY = { vorname: "", nachname: "", email: "", phone: "", strasse: "", pl
 
 export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, labelOf }: Props) {
   const [form, setForm] = useState(EMPTY);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [needAddress, setNeedAddress] = useState(true); // Adresse nur weglassen, wenn sie beim eingeloggten Kunden schon gespeichert ist
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -32,7 +32,12 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      setIsLoggedIn(true);
+      const { data: cust } = await supabase.from("customers").select("strasse, plz, ort, land").eq("auth_user_id", user.id).maybeSingle();
+      if (cust?.strasse && cust?.plz && cust?.ort) {
+        setNeedAddress(false);
+      } else if (cust) {
+        setForm((f) => ({ ...f, strasse: cust.strasse || "", plz: cust.plz || "", ort: cust.ort || "", land: cust.land || "Schweiz" }));
+      }
       const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("user_id", user.id).maybeSingle();
       const fullName = profile?.full_name || (user.user_metadata?.full_name as string) || "";
       const ps = fullName.trim().split(/\s+/);
@@ -75,7 +80,7 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
       }
 
       const platten = jobs.map((j, i) => `Platte ${i + 1}: ${j.label} – ${j.count} Teil${j.count === 1 ? "" : "e"}, ${Math.floor(j.min / 60)} h ${Math.round(j.min % 60)} min, ${j.g.toFixed(0)} g`).join("\n");
-      const addressLine = !user && (form.strasse || form.plz || form.ort) ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}` : "";
+      const addressLine = needAddress && (form.strasse || form.plz || form.ort) ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}` : "";
       const nachricht =
         `SPARDOSE-BESTELLUNG\nName auf der Spardose: ${params.name}\nSchrift: ${params.font}\n` +
         `Farben: Buchstaben ${labelOf(colors.text)}, Körper ${labelOf(colors.base)}, Kappe ${labelOf(colors.cap)}\nMaterial: PLA\n\n${platten}\n\n` +
@@ -88,7 +93,7 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
           telefon: form.phone.trim() || null,
           betreff: `Spardose-Bestellung: ${params.name}`,
           nachricht,
-          strasse: form.strasse || null, plz: form.plz || null, ort: form.ort || null, land: form.land || "Schweiz",
+          strasse: needAddress ? form.strasse || null : null, plz: needAddress ? form.plz || null : null, ort: needAddress ? form.ort || null : null, land: form.land || "Schweiz",
           attachments,
         },
       });
@@ -125,7 +130,7 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
         <div><Label className="text-xs">E-Mail *</Label><Input type="email" required value={form.email} onChange={(e) => set("email", e.target.value)} className="mt-1 text-base" /></div>
         <div><Label className="text-xs">Telefon *</Label><Input type="tel" required value={form.phone} onChange={(e) => set("phone", e.target.value)} className="mt-1 text-base" /></div>
       </div>
-      {!isLoggedIn && (
+      {needAddress && (
         <>
           <div><Label className="text-xs">Strasse & Hausnummer *</Label><Input required value={form.strasse} onChange={(e) => set("strasse", e.target.value)} className="mt-1 text-base" /></div>
           <div className="grid grid-cols-3 gap-3">
