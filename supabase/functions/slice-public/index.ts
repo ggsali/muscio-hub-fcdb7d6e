@@ -10,7 +10,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 const MAX_BYTES = 30 * 1024 * 1024;
-const TIMEOUT_MS = 100_000;
+const TIMEOUT_MS = 120_000;
 const ALLOWED_EXT = [".stl", ".obj", ".3mf"];
 const QUALITIES = ["0.08", "0.12", "0.16", "0.20"];
 const RATE_WINDOW_MS = 10 * 60_000;
@@ -128,7 +128,7 @@ serve(async (req) => {
         gcodeError = "Slicer lieferte keine Job-ID (alte Slicer-Version?)";
       } else {
         try {
-          const gres = await fetch(`${base}/jobs/${jid}/gcode`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(60_000) });
+          const gres = await fetch(`${base}/jobs/${jid}/gcode`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(25_000) });
           if (!gres.ok) {
             gcodeError = `G-Code-Download vom NAS: HTTP ${gres.status}`;
           } else {

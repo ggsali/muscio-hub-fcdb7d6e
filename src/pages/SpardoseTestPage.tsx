@@ -307,7 +307,7 @@ export default function SpardoseTestPage() {
           method: "POST",
           headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
           body,
-          signal: AbortSignal.timeout(110_000),
+          signal: AbortSignal.timeout(165_000),
         });
         const j = await r.json().catch(() => ({}));
         const st = j?.stats;
