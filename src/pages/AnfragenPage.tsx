@@ -341,6 +341,7 @@ export default function AnfragenPage() {
         return IMAGE_EXTS.includes(ext);
       };
 
+      const groupParts = new Map<string, string>();
       if (attachments.length > 0) {
         // Create each part individually so we can attach its file directly via the returned id
         for (let i = 0; i < attachments.length; i++) {
@@ -376,44 +377,69 @@ export default function AnfragenPage() {
             continue;
           }
 
-          const teilname = att.filename?.replace(/\.[^.]+$/, "") || `Teil ${i + 1}`;
-
-          const sl = att as unknown as {
-            slicer_druckzeit_sekunden?: number | null;
-            slicer_filament_gramm?: number | null;
-            slicer_hat_supports?: boolean | null;
-            slicer_layer_anzahl?: number | null;
-            menge?: number | null;
-            material?: string | null;
-            farbe?: string | null;
-          };
-          const slSeconds = sl.slicer_druckzeit_sekunden ?? null;
-          const slGrams = sl.slicer_filament_gramm ?? null;
-
-          const { data: part, error: partErr } = await supabase.from("parts").insert({
-            order_id: order.id,
-            customer_id: customerId,
-            teilname,
-            material: "PLA",
-            menge: Math.max(1, Math.floor(Number(sl.menge) || 1)),
-            gewicht_g: slGrams ?? 0,
-            druckzeit_h: slSeconds ? Math.round((slSeconds / 3600) * 100) / 100 : 0,
-            nachbearbeitung_h: 0,
-            konstruktion_h: 0,
-            preis_pro_stueck: 0,
-            preis_total: 0,
-            status: "Ausstehend",
-            notizen: `Datei: ${att.filename}${sl.menge ? ` · Kunde: ${sl.menge}×` : ""}${sl.material ? ` ${sl.material}` : ""}${sl.farbe ? `, ${sl.farbe}` : ""}`,
-            slicer_druckzeit_sekunden: slSeconds,
-            slicer_filament_gramm: slGrams,
-            slicer_hat_supports: sl.slicer_hat_supports ?? null,
-            slicer_layer_anzahl: sl.slicer_layer_anzahl ?? null,
-          } as any).select().single();
-
-
-          if (partErr || !part) {
-            console.error("Part insert error:", partErr);
+          // Auftragsblatt (PDF): als Auftragsdatei speichern, kein Teil erstellen
+          if ((att as any).kind === "auftragsblatt") {
+            if (!att.storage_path) continue;
+            try {
+              const { data: fileData, error: dlErr } = await supabase.storage.from(att.bucket || "project-uploads").download(att.storage_path);
+              if (dlErr || !fileData) continue;
+              const safeName = (att.filename || "auftragsblatt.pdf").replace(/[^\w.\-]+/g, "_");
+              const newPath = `${order.id}/${Date.now()}_${safeName}`;
+              const { error: upErr } = await supabase.storage.from("part-files").upload(newPath, fileData, { upsert: true, contentType: "application/pdf" });
+              if (upErr) continue;
+              await supabase.from("part_files").insert({
+                part_id: null, order_id: order.id, customer_id: customerId, filename: att.filename,
+                storage_path: newPath, file_type: "application/pdf", file_size_bytes: att.size_bytes ?? (fileData as Blob).size ?? null,
+              });
+            } catch (e) { console.error("Auftragsblatt kopieren fehlgeschlagen:", e); }
             continue;
+          }
+
+          // Zusammengehörige Dateien (z. B. STL + G-Code einer Platte) liegen in EINEM Teil
+          const gruppe = (att as any).gruppe as string | undefined;
+          let partId: string | null = gruppe ? groupParts.get(gruppe) ?? null : null;
+
+          if (!partId) {
+            const teilname = ((att as any).teilname as string | undefined) || att.filename?.replace(/\.[^.]+$/, "") || `Teil ${i + 1}`;
+            const sl = att as unknown as {
+              slicer_druckzeit_sekunden?: number | null;
+              slicer_filament_gramm?: number | null;
+              slicer_hat_supports?: boolean | null;
+              slicer_layer_anzahl?: number | null;
+              menge?: number | null;
+              material?: string | null;
+              farbe?: string | null;
+            };
+            const slSeconds = sl.slicer_druckzeit_sekunden ?? null;
+            const slGrams = sl.slicer_filament_gramm ?? null;
+
+            const { data: part, error: partErr } = await supabase.from("parts").insert({
+              order_id: order.id,
+              customer_id: customerId,
+              teilname,
+              material: "PLA",
+              menge: Math.max(1, Math.floor(Number(sl.menge) || 1)),
+              gewicht_g: slGrams ?? 0,
+              druckzeit_h: slSeconds ? Math.round((slSeconds / 3600) * 100) / 100 : 0,
+              nachbearbeitung_h: 0,
+              konstruktion_h: 0,
+              preis_pro_stueck: 0,
+              preis_total: 0,
+              status: "Ausstehend",
+              notizen: `Datei: ${att.filename}${sl.menge ? ` · Kunde: ${sl.menge}×` : ""}${sl.material ? ` ${sl.material}` : ""}${sl.farbe ? `, ${sl.farbe}` : ""}`,
+              slicer_druckzeit_sekunden: slSeconds,
+              slicer_filament_gramm: slGrams,
+              slicer_hat_supports: sl.slicer_hat_supports ?? null,
+              slicer_layer_anzahl: sl.slicer_layer_anzahl ?? null,
+            } as any).select().single();
+
+
+            if (partErr || !part) {
+              console.error("Part insert error:", partErr);
+              continue;
+            }
+            partId = part.id;
+            if (gruppe) groupParts.set(gruppe, part.id);
           }
           if (!att.storage_path) continue;
 
@@ -431,7 +457,7 @@ export default function AnfragenPage() {
             const fileType = (fileData as Blob).type || mimeMap[ext] || "application/octet-stream";
 
             const safeName = (att.filename || "datei").replace(/[^\w.\-]+/g, "_");
-            const newPath = `${order.id}/${part.id}/${Date.now()}_${safeName}`;
+            const newPath = `${order.id}/${partId}/${Date.now()}_${safeName}`;
             const { error: upErr } = await supabase.storage
               .from("part-files")
               .upload(newPath, fileData, { upsert: true, contentType: fileType });
@@ -442,7 +468,7 @@ export default function AnfragenPage() {
             }
 
             const { error: insErr } = await supabase.from("part_files").insert({
-              part_id: part.id,
+              part_id: partId,
               order_id: order.id,
               customer_id: customerId,
               filename: att.filename,

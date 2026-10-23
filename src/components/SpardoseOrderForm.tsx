@@ -78,10 +78,12 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
         const { error } = await supabase.storage.from("project-uploads").upload(path, pl.blob, { upsert: false, contentType: "model/stl" });
         if (error) throw error;
         const stlName = `Spardose ${params.name} – Platte ${i + 1} (${pl.label}).stl`;
-        attachments.push({ filename: stlName, storage_path: path, size_bytes: pl.blob.size, bucket: "project-uploads", menge: 1, material: "PLA", farbe: pl.label });
+        attachments.push({ filename: stlName, storage_path: path, size_bytes: pl.blob.size, bucket: "project-uploads", menge: 1, material: "PLA", farbe: pl.label,
+          gruppe: `platte-${i + 1}`, teilname: `Spardose ${params.name} – Platte ${i + 1} (${pl.label})`,
+          slicer_druckzeit_sekunden: jobs[i] ? Math.round(jobs[i].min * 60) : null, slicer_filament_gramm: jobs[i]?.g ?? null, slicer_hat_supports: jobs[i]?.sup ?? null });
         const gj = jobs[i];
         sheetJobs.push({ ...gj, image: await renderPlatePng(pl.blob, pl.bed, pl.hex), stlName, gcodeName: gj?.gcodePath ? `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode` : undefined });
-        if (gj?.gcodePath) attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode`, storage_path: gj.gcodePath, size_bytes: gj.gcodeSize ?? null, bucket: "project-uploads", kind: "gcode", menge: 1, material: "PLA", farbe: pl.label });
+        if (gj?.gcodePath) attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode`, storage_path: gj.gcodePath, size_bytes: gj.gcodeSize ?? null, bucket: "project-uploads", kind: "gcode", gruppe: `platte-${i + 1}`, menge: 1, material: "PLA", farbe: pl.label });
       }
 
       // Übersichtsblatt (PDF) mit Teilen, Farben, Drucker und Dateien
