@@ -8,13 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { PlatePlan } from "@/lib/spardosePlate";
 import type { SpardoseParams } from "@/lib/spardose";
+import { buildSheet } from "@/lib/spardoseSheet";
 
 // Bestellformular des Spardose-Generators: gleiche Kontaktdaten-Abfrage wie im Online-Kalkulator,
 // sendet eine Anfrage (submit-inquiry) mit den fertigen Druckplatten als Anhang -> erscheint im Admin unter Anfragen.
 type Props = {
   params: SpardoseParams;
   plans: PlatePlan[];
-  jobs: { label: string; hex: string; count: number; min: number; g: number; gcodePath?: string; gcodeSize?: number }[];
+  jobs: { label: string; hex: string; count: number; min: number; g: number; sup: boolean; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[]; gcodePath?: string; gcodeSize?: number }[];
   preis: number;
   colors: { text: string; base: string; cap: string };
   labelOf: (hex: string) => string;
@@ -69,17 +70,29 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
       const id = crypto.randomUUID().slice(0, 8);
       const safeName = params.name.replace(/[^a-zA-Z0-9]/g, "") || "name";
       const attachments: Record<string, unknown>[] = [];
+      const sheetJobs: Parameters<typeof buildSheet>[0]["jobs"] = [];
       for (let i = 0; i < plans.length; i++) {
         const pl = plans[i];
         const path = `kalkulator/spardose-${id}-${safeName}-platte${i + 1}.stl`;
         const { error } = await supabase.storage.from("project-uploads").upload(path, pl.blob, { upsert: false, contentType: "model/stl" });
         if (error) throw error;
-        attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}).stl`, storage_path: path, size_bytes: pl.blob.size, bucket: "project-uploads", menge: 1, material: "PLA", farbe: pl.label });
+        const stlName = `Spardose ${params.name} – Platte ${i + 1} (${pl.label}).stl`;
+        attachments.push({ filename: stlName, storage_path: path, size_bytes: pl.blob.size, bucket: "project-uploads", menge: 1, material: "PLA", farbe: pl.label });
         const gj = jobs[i];
+        sheetJobs.push({ ...gj, stlName, gcodeName: gj?.gcodePath ? `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode` : undefined });
         if (gj?.gcodePath) attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode`, storage_path: gj.gcodePath, size_bytes: gj.gcodeSize ?? null, bucket: "project-uploads", kind: "gcode", menge: 1, material: "PLA", farbe: pl.label });
       }
 
-      const platten = jobs.map((j, i) => `Platte ${i + 1}: ${j.label} – ${j.count} Teil${j.count === 1 ? "" : "e"}, ${Math.floor(j.min / 60)} h ${Math.round(j.min % 60)} min, ${j.g.toFixed(0)} g`).join("\n");
+      // Übersichtsblatt (PDF) mit Teilen, Farben, Drucker und Dateien
+      try {
+        const sheet = buildSheet({ params, customer: name, email, preis, jobs: sheetJobs, colors, labelOf });
+        const spath = `kalkulator/spardose-${id}-${safeName}-auftragsblatt.pdf`;
+        const { error: sErr } = await supabase.storage.from("project-uploads").upload(spath, sheet, { upsert: false, contentType: "application/pdf" });
+        if (!sErr) attachments.push({ filename: `Spardose ${params.name} – Auftragsblatt.pdf`, storage_path: spath, size_bytes: sheet.size, bucket: "project-uploads", kind: "auftragsblatt", menge: 1 });
+        else console.warn("Auftragsblatt konnte nicht gespeichert werden", sErr);
+      } catch (e) { console.warn("Auftragsblatt fehlgeschlagen", e); }
+
+      const platten = jobs.map((j, i) => `Platte ${i + 1}: ${j.label} – ${j.count} Teil${j.count === 1 ? "" : "e"}, ${Math.floor(j.min / 60)} h ${Math.round(j.min % 60)} min, ${j.g.toFixed(0)} g, ${j.printerName}, Stützen: ${j.sup ? "ja" : "nein"} – Teile: ${j.rects.map((r) => r.name).join(", ")}`).join("\n");
       const addressLine = needAddress && (form.strasse || form.plz || form.ort) ? `\n\nAdresse: ${form.strasse}, ${form.plz} ${form.ort}, ${form.land}` : "";
       const nachricht =
         `SPARDOSE-BESTELLUNG\nName auf der Spardose: ${params.name}\nSchrift: ${params.font}\n` +
