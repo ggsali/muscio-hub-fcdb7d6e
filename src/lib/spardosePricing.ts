@@ -1,3 +1,4 @@
+import { baueFarbenMap } from "@/lib/material-farben";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_CALC_PARAMS, loadQualityConfig, loadWebsitePreise, type CalcParams } from "@/lib/calcConfig";
 import { loadSettings } from "@/lib/calc";
@@ -30,7 +31,7 @@ export async function loadPricingContext(): Promise<PricingContext> {
     loadQualityConfig().catch(() => ({ params: DEFAULT_CALC_PARAMS as CalcParams })),
     loadWebsitePreise().catch(() => ({ maschinenzeit_pro_h: null, setup_pauschale: null })),
     loadSettings().catch(() => null),
-    supabase.from("filaments").select("material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g").eq("aktiv", true).eq("nur_intern", false).ilike("material", "PLA"),
+    supabase.from("filaments").select("material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g").eq("aktiv", true).ilike("material", "PLA"),
   ]);
   const proFarbe: Record<string, number> = {};
   const preise: number[] = [];
@@ -38,10 +39,8 @@ export async function loadPricingContext(): Promise<PricingContext> {
     const p = Number(f.verkaufspreis_pro_g ?? f.public_preis_pro_g ?? 0);
     if (!(p > 0)) continue;
     preise.push(p);
-    const namen: string[] = Array.isArray(f.farben) && f.farben.length
-      ? f.farben.map((c: any) => String(typeof c === "string" ? c : c?.name ?? ""))
-      : f.farbe ? [String(f.farbe)] : [];
-    namen.filter(Boolean).forEach((n) => { proFarbe[n.trim().toLowerCase()] = p; });
+    const farben = baueFarbenMap([f])["PLA"] ?? [];
+    farben.forEach((c) => { proFarbe[c.name.trim().toLowerCase()] = p; proFarbe[c.hex.trim().toLowerCase()] = p; });
   }
   return {
     maschinenRate: web.maschinenzeit_pro_h ?? (settings?.maschinenzeit_pro_h || 3),
@@ -64,7 +63,7 @@ export function berechnePreis(
   rabatt: (zwischensumme: number, versand: number) => number = () => 0,
 ): Preis & { rabatt: number; totalMitRabatt: number } {
   const zeilen: PreisZeile[] = jobs.map((j) => {
-    const proG = ctx.plaPreisProG[j.label.trim().toLowerCase()] ?? ctx.plaDurchschnitt;
+    const proG = ctx.plaPreisProG[j.hex.trim().toLowerCase()] ?? ctx.plaPreisProG[j.label.trim().toLowerCase()] ?? ctx.plaDurchschnitt;
     const material = j.g * proG;
     const maschine = (j.min / 60) * ctx.maschinenRate;
     const support = j.sup ? ctx.supportZuschlag : 0;
