@@ -2,20 +2,10 @@ import { baueFarbenMap } from "@/lib/material-farben";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_CALC_PARAMS, loadQualityConfig, loadWebsitePreise, type CalcParams } from "@/lib/calcConfig";
 import { loadSettings } from "@/lib/calc";
+import { DEFAULT_VERSAND, berechneVersand, loadVersandConfig, type VersandConfig } from "@/lib/versandConfig";
 
 // Preisberechnung des Spardose-Generators: gleiche Bausteine und Einstellungen wie der Online-Kalkulator
 // (Material, Maschinenzeit, Stützen-Zuschlag, Setup 1× pro Bestellung, Versand nach Gewicht, Mindestpreis, Gutschein).
-
-/** PostPac Priority – gleiche Preise wie im Kalkulator/Admin */
-const POSTPAC_PREISE = [
-  { bisKg: 2, preis: 10.5 },
-  { bisKg: 10, preis: 13.5 },
-  { bisKg: 30, preis: 22.5 },
-];
-export const versandFuerGramm = (grams: number) => {
-  const kg = grams / 1000;
-  return (POSTPAC_PREISE.find((t) => kg <= t.bisKg) ?? POSTPAC_PREISE[POSTPAC_PREISE.length - 1]).preis;
-};
 
 export type PricingContext = {
   maschinenRate: number;      // CHF pro Stunde
@@ -24,14 +14,16 @@ export type PricingContext = {
   minPreis: number;
   plaPreisProG: Record<string, number>; // Farbname (klein) -> CHF/g
   plaDurchschnitt: number;
+  versandCfg: VersandConfig;
 };
 
 export async function loadPricingContext(): Promise<PricingContext> {
-  const [{ params }, web, settings, fil] = await Promise.all([
+  const [{ params }, web, settings, fil, versandCfg] = await Promise.all([
     loadQualityConfig().catch(() => ({ params: DEFAULT_CALC_PARAMS as CalcParams })),
     loadWebsitePreise().catch(() => ({ maschinenzeit_pro_h: null, setup_pauschale: null })),
     loadSettings().catch(() => null),
     supabase.from("filaments").select("material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g").eq("aktiv", true).eq("nur_intern", false).ilike("material", "PLA"),
+    loadVersandConfig().catch(() => DEFAULT_VERSAND),
   ]);
   const proFarbe: Record<string, number> = {};
   const preise: number[] = [];
@@ -47,6 +39,7 @@ export async function loadPricingContext(): Promise<PricingContext> {
     setup: web.setup_pauschale ?? (params.fix_cost || 20),
     supportZuschlag: params.support_surcharge || 2.5,
     minPreis: params.min_price || 5,
+    versandCfg,
     plaPreisProG: proFarbe,
     plaDurchschnitt: preise.length ? preise.reduce((a, b) => a + b, 0) / preise.length : 0.06,
   };
@@ -54,7 +47,7 @@ export async function loadPricingContext(): Promise<PricingContext> {
 
 export type PreisZeile = { label: string; hex: string; gramm: number; proG: number; min: number; sup: boolean; material: number; maschine: number; support: number; summe: number };
 export type Preis = {
-  zeilen: PreisZeile[]; teile: number; setup: number; zwischensumme: number; versand: number; total: number; mindestpreisGreift: boolean;
+  zeilen: PreisZeile[]; teile: number; setup: number; zwischensumme: number; versand: number; verpackung: number; total: number; mindestpreisGreift: boolean;
 };
 
 export function berechnePreis(
@@ -72,9 +65,11 @@ export function berechnePreis(
   const teile = zeilen.reduce((s, z) => s + z.summe, 0);
   const zwischensumme = teile + ctx.setup;
   const grammGesamt = zeilen.reduce((s, z) => s + z.gramm, 0);
-  const versand = zwischensumme === 0 ? 0 : versandFuerGramm(grammGesamt);
-  const roh = zwischensumme + versand;
+  const vs = berechneVersand(ctx.versandCfg, grammGesamt, zwischensumme);
+  const versand = zwischensumme === 0 ? 0 : vs.versand;
+  const verpackung = zwischensumme === 0 ? 0 : vs.verpackung;
+  const roh = zwischensumme + versand + verpackung;
   const total = Math.max(roh, ctx.minPreis);
   const r = Math.min(rabatt(zwischensumme, versand), total);
-  return { zeilen, teile, setup: ctx.setup, zwischensumme, versand, total, mindestpreisGreift: roh < ctx.minPreis, rabatt: r, totalMitRabatt: Math.max(total - r, 0) };
+  return { zeilen, teile, setup: ctx.setup, zwischensumme, versand, verpackung, total, mindestpreisGreift: roh < ctx.minPreis, rabatt: r, totalMitRabatt: Math.max(total - r, 0) };
 }

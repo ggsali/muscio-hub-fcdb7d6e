@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, CheckCircle, Upload, Plus, Trash2, Star, ShieldCheck, ShieldOff, Loader2, QrCode } from "lucide-react";
+import VersandPreiseCard from "@/components/VersandPreiseCard";
 import AdminAllowlistManager from "@/components/AdminAllowlistManager";
 import { toast } from "sonner";
 import { loadReviewMailSettings, REVIEW_DEFAULT_SUBJECT, buildReviewBody } from "@/lib/reviewEmail";
@@ -812,6 +813,7 @@ export default function EinstellungenPage() {
 
       {tab === "versand" && (
         <div className="space-y-6">
+          <VersandPreiseCard />
           <SwissPostSettingsCard />
         </div>
       )}

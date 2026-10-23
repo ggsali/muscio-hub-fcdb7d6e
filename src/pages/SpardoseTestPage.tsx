@@ -554,6 +554,7 @@ export default function SpardoseTestPage() {
                   ))}
                   <div className="mt-2 border-t pt-2" />
                   <div className="flex justify-between text-muted-foreground"><span>Setup-Pauschale <span className="text-xs">(1× pro Bestellung)</span></span><span className="tabular-nums text-foreground">{CHF(pr.setup)}</span></div>
+                  {pr.verpackung > 0 && <div className="flex justify-between text-muted-foreground"><span>Verpackung</span><span className="tabular-nums text-foreground">{CHF(pr.verpackung)}</span></div>}
                   <div className="flex justify-between text-muted-foreground"><span>Versand (Post)</span><span className="tabular-nums text-foreground">{pr.versand === 0 ? "Gratis" : CHF(pr.versand)}</span></div>
                   {pr.mindestpreisGreift && <div className="text-xs text-muted-foreground">Mindestbestellwert angewendet.</div>}
                   {gutschein && <div className="flex justify-between text-primary"><span>Gutschein {gutschein.code}</span><span className="tabular-nums">− {CHF(pr.rabatt)}</span></div>}
