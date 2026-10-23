@@ -66,9 +66,9 @@ export function berechnePreis(
   const zwischensumme = teile + ctx.setup;
   const grammGesamt = zeilen.reduce((s, z) => s + z.gramm, 0);
   const vs = berechneVersand(ctx.versandCfg, grammGesamt, zwischensumme);
-  const versand = zwischensumme === 0 ? 0 : vs.versand;
+  const versand = zwischensumme === 0 ? 0 : vs.versand + vs.verpackung; // Versand inkl. Verpackung = ein Preis
   const verpackung = zwischensumme === 0 ? 0 : vs.verpackung;
-  const roh = zwischensumme + versand + verpackung;
+  const roh = zwischensumme + versand;
   const total = Math.max(roh, ctx.minPreis);
   const r = Math.min(rabatt(zwischensumme, versand), total);
   return { zeilen, teile, setup: ctx.setup, zwischensumme, versand, verpackung, total, mindestpreisGreift: roh < ctx.minPreis, rabatt: r, totalMitRabatt: Math.max(total - r, 0) };

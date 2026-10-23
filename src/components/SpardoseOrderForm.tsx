@@ -104,7 +104,7 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, pricing,
       const nachricht =
         `SPARDOSE-BESTELLUNG\nName auf der Spardose: ${params.name}\nSchrift: ${params.font}\n` +
         `Farben: Buchstaben ${labelOf(colors.text)}, Körper ${labelOf(colors.base)}, Kappe ${labelOf(colors.cap)}\nMaterial: PLA\n\n${platten}\n\n` +
-        `${pricing ? pricing.zeilen.map((z, i) => `Platte ${i + 1} (${z.label}): Material CHF ${z.material.toFixed(2)}, Maschinenzeit CHF ${z.maschine.toFixed(2)}${z.support > 0 ? `, Support CHF ${z.support.toFixed(2)}` : ""}`).join("\n") + `\nSetup-Pauschale: CHF ${pricing.setup.toFixed(2)}\n${pricing.verpackung > 0 ? `Verpackung: CHF ${pricing.verpackung.toFixed(2)}\n` : ""}Versand: CHF ${pricing.versand.toFixed(2)}` : ""}${gutschein && pricing ? `\nGutschein: ${gutschein.code} (${gutscheinWertLabel(gutschein)}) – Rabatt CHF ${pricing.rabatt.toFixed(2)}` : ""}\nGeschätzter Gesamtpreis: CHF ${preis.toFixed(2)}${addressLine}\n\nNachricht: ${form.message}\n\n` +
+        `${pricing ? pricing.zeilen.map((z, i) => `Platte ${i + 1} (${z.label}): Material CHF ${z.material.toFixed(2)}, Maschinenzeit CHF ${z.maschine.toFixed(2)}${z.support > 0 ? `, Support CHF ${z.support.toFixed(2)}` : ""}`).join("\n") + `\nSetup-Pauschale: CHF ${pricing.setup.toFixed(2)}\nVersand & Verpackung: CHF ${pricing.versand.toFixed(2)}` : ""}${gutschein && pricing ? `\nGutschein: ${gutschein.code} (${gutscheinWertLabel(gutschein)}) – Rabatt CHF ${pricing.rabatt.toFixed(2)}` : ""}\nGeschätzter Gesamtpreis: CHF ${preis.toFixed(2)}${addressLine}\n\nNachricht: ${form.message}\n\n` +
         `Konfiguration (JSON): ${JSON.stringify(params)}`;
 
       const { data, error } = await supabase.functions.invoke("submit-inquiry", {

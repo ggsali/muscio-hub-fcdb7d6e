@@ -22,22 +22,23 @@ export default function VersandPreiseCard() {
     <div className="space-y-4 rounded-lg border border-border bg-card p-4 md:p-5">
       <div>
         <h3 className="text-sm font-semibold">Versandpreise &amp; Verpackung</h3>
-        <p className="text-xs text-muted-foreground">Gilt für den Spardosen-Generator. Der Tarif wird nach Gesamtgewicht gewählt (erster Tarif, dessen Limit nicht überschritten ist).</p>
+        <p className="text-xs text-muted-foreground">Gilt für den Spardosen-Generator. Die Verpackung wird zum Versandpreis addiert, Kunden sehen einen Preis «Versand & Verpackung» (Spalte Total). Der Tarif wird nach Gesamtgewicht gewählt (erster Tarif, dessen Limit nicht überschritten ist).</p>
       </div>
       <div className="space-y-2">
-        <div className="grid grid-cols-[1fr_90px_100px_36px] gap-2 text-xs text-muted-foreground"><span>Paketart</span><span>bis kg</span><span>Preis CHF</span><span /></div>
+        <div className="grid grid-cols-[1fr_80px_90px_110px_36px] gap-2 text-xs text-muted-foreground"><span>Paketart</span><span>bis kg</span><span>Versand CHF</span><span>Total inkl. Verpackung</span><span /></div>
         {c.tarife.map((t, i) => (
-          <div key={i} className="grid grid-cols-[1fr_90px_100px_36px] gap-2">
+          <div key={i} className="grid grid-cols-[1fr_80px_90px_110px_36px] gap-2">
             <Input value={t.name} onChange={(e) => setT(i, "name", e.target.value)} placeholder="z. B. PostPac Priority" />
             <Input type="number" step="0.1" value={t.bisKg} onChange={(e) => setT(i, "bisKg", e.target.value)} className="text-right tabular-nums" />
             <Input type="number" step="0.05" value={t.preis} onChange={(e) => setT(i, "preis", e.target.value)} className="text-right tabular-nums" />
+            <div className="flex h-10 items-center justify-end rounded-md bg-muted px-3 text-sm font-semibold tabular-nums">CHF {(t.preis + c.verpackung + c.verpackungProKg * t.bisKg).toFixed(2)}</div>
             <Button type="button" variant="ghost" size="icon" disabled={c.tarife.length <= 1} onClick={() => setC((o) => ({ ...o, tarife: o.tarife.filter((_, j) => j !== i) }))}><Trash2 className="h-4 w-4" /></Button>
           </div>
         ))}
         <Button type="button" variant="outline" size="sm" onClick={() => setC((o) => ({ ...o, tarife: [...o.tarife, { name: "", bisKg: (o.tarife[o.tarife.length - 1]?.bisKg ?? 0) + 5, preis: 0 }] }))}><Plus className="mr-1 h-4 w-4" />Tarif hinzufügen</Button>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
-        <div><Label className="text-xs">Verpackung pro Bestellung (CHF)</Label><Input type="number" step="0.05" value={c.verpackung} onChange={(e) => setC({ ...c, verpackung: parseFloat(e.target.value) || 0 })} /></div>
+        <div><Label className="text-xs">Verpackung (CHF, wird zum Versand addiert)</Label><Input type="number" step="0.05" value={c.verpackung} onChange={(e) => setC({ ...c, verpackung: parseFloat(e.target.value) || 0 })} /></div>
         <div><Label className="text-xs">Verpackung pro kg zusätzlich (CHF)</Label><Input type="number" step="0.05" value={c.verpackungProKg} onChange={(e) => setC({ ...c, verpackungProKg: parseFloat(e.target.value) || 0 })} /></div>
         <div><Label className="text-xs">Versand gratis ab (CHF)</Label><Input type="number" step="1" value={c.gratisAb ?? ""} placeholder="nie" onChange={(e) => setC({ ...c, gratisAb: e.target.value === "" ? null : parseFloat(e.target.value) || null })} /></div>
       </div>
