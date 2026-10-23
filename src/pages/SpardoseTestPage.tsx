@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Slider as BaseSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { buildPlates, PLATE } from "@/lib/spardosePlate";
+import SpardoseOrderForm from "@/components/SpardoseOrderForm";
+import { buildPlates, PLATE, type PlatePlan } from "@/lib/spardosePlate";
 import { calcUmsatz, loadSettings } from "@/lib/calc";
 import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULTS, FONTS, LIMITS, NAME_MIN, SLOT_LEN, SLOT_THK, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
@@ -271,13 +272,15 @@ export default function SpardoseTestPage() {
 
   type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; rects: { x: number; y: number; w: number; h: number; name: string }[] };
   const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; preis?: number; step?: string }>({ state: "idle" });
-  useEffect(() => { setFin({ state: "idle" }); }, [res, colors]);
+  const plansRef = useRef<PlatePlan[]>([]);
+  useEffect(() => { setFin({ state: "idle" }); plansRef.current = []; }, [res, colors]);
 
   const fertig = async () => {
     if (!res) return;
     setFin({ state: "busy", step: "Teile anordnen …" });
     try {
       const plans = buildPlates(res, colors, (hex) => plaFarben.find((c) => c.hex === hex)?.name ?? hex);
+      plansRef.current = plans;
       const bad = plans.find((pl) => !pl.fits);
       if (bad) { setFin({ state: "err", msg: `Die Teile in ${bad.label} passen nicht auf eine Platte (${PLATE.x}×${PLATE.y} mm).` }); return; }
       const jobs: Job[] = [];
@@ -436,6 +439,16 @@ export default function SpardoseTestPage() {
               </div>
               <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
             </div>
+          )}
+          {fin.state === "ok" && fin.jobs && plansRef.current.length > 0 && (
+            <SpardoseOrderForm
+              params={p}
+              plans={plansRef.current}
+              jobs={fin.jobs}
+              preis={fin.preis!}
+              colors={colors}
+              labelOf={(hex) => plaFarben.find((c) => c.hex === hex)?.name ?? hex}
+            />
           )}
         </div>
 
