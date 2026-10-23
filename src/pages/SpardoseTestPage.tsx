@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Slider as BaseSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { buildPlate, PLATE } from "@/lib/spardosePlate";
+import { calcUmsatz, loadSettings } from "@/lib/calc";
 import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULTS, FONTS, LIMITS, NAME_MIN, SLOT_LEN, SLOT_THK, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
 
@@ -267,6 +269,41 @@ export default function SpardoseTestPage() {
     return () => clearTimeout(t);
   }, [p]);
 
+  const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; min?: number; g?: number; preis?: number; info?: string }>({ state: "idle" });
+  useEffect(() => { setFin({ state: "idle" }); }, [res]);
+
+  const fertig = async () => {
+    if (!res) return;
+    setFin({ state: "busy" });
+    try {
+      const plate = buildPlate(res);
+      if (!plate.fits) { setFin({ state: "err", msg: `Die Teile passen nicht auf die Platte (${PLATE.x}×${PLATE.y} mm). ${plate.info}` }); return; }
+      const body = new FormData();
+      body.append("file", new File([plate.blob], "spardose-platte.stl"));
+      body.append("plate", "1");
+      body.append("quality", "0.20");
+      body.append("infill", "15");
+      const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+        method: "POST",
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+        body,
+        signal: AbortSignal.timeout(110_000),
+      });
+      const j = await r.json().catch(() => ({}));
+      const st = j?.stats;
+      if (!st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
+        setFin({ state: "err", msg: `Slicer: ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}` });
+        return;
+      }
+      const s = await loadSettings();
+      const h = st.print_time_s / 3600;
+      const preis = Math.round(calcUmsatz(s, st.filament_g, h, 0.5, 0) * 20) / 20;
+      setFin({ state: "ok", min: st.print_time_s / 60, g: st.filament_g, preis, info: plate.info });
+    } catch (e) {
+      setFin({ state: "err", msg: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
   const download = async () => {
     if (!res) return;
     const ex = new STLExporter();
@@ -363,8 +400,20 @@ export default function SpardoseTestPage() {
           )}
           <div className="flex flex-wrap items-center gap-3">
             <Button onClick={download} disabled={!res || busy || !res.valid}><Download className="mr-2 h-4 w-4" />STL herunterladen (ZIP: Körper, Buchstaben, Kappe)</Button>
+            <Button variant="secondary" onClick={fertig} disabled={!res || busy || !res.valid || fin.state === "busy"}>
+              {fin.state === "busy" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Fertig – Preis berechnen
+            </Button>
             <span className="text-xs text-muted-foreground">Körper liegt mit der Vorderseite auf dem Druckbett. Buchstaben mit der flachen Seite nach unten.</span>
           </div>
+          {fin.state === "busy" && <div className="rounded-lg border bg-muted/40 p-3 text-sm">Teile werden auf einer Platte angeordnet und auf dem NAS gesliced … (kann bis zu 2 Minuten dauern)</div>}
+          {fin.state === "err" && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{fin.msg}</div>}
+          {fin.state === "ok" && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <div className="text-2xl font-bold tabular-nums">CHF {fin.preis!.toFixed(2)}</div>
+              <div className="mt-1 text-sm text-muted-foreground">Druckzeit {Math.floor(fin.min! / 60)} h {Math.round(fin.min! % 60)} min · Filament {fin.g!.toFixed(0)} g · 1 Platte ({PLATE.x}×{PLATE.y} mm)</div>
+              <div className="mt-1 text-[11px] text-muted-foreground">{fin.info}. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung.</div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4 rounded-xl border bg-card p-4">

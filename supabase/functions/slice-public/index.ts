@@ -77,6 +77,8 @@ serve(async (req) => {
     const infill = String(form.get("infill") ?? "").trim();
     if (infill && !/^\d{1,3}$/.test(infill)) return json({ error: "Ungültiger Infill" }, 422);
 
+    // Plattenmodus (Spardose-Generator): alle Teile liegen schon fertig angeordnet auf einer Platte -> nur grosser Drucker, ohne Auto-Orient und ohne Stützen
+    const plate = form.get("plate") === "1";
     const buildForm = (printer: string) => {
       const out = new FormData();
       out.append("file", file, `upload${ext}`);
@@ -84,9 +86,9 @@ serve(async (req) => {
       out.append("material", "pla");
       out.append("quality", quality);
       if (infill) out.append("infill", infill);
-      out.append("supports", "true");
-      out.append("orient", "true");
-      out.append("reference", "public-calc");
+      out.append("supports", plate ? "false" : "true");
+      out.append("orient", plate ? "false" : "true");
+      out.append("reference", plate ? "spardose-plate" : "public-calc");
       return out;
     };
 
@@ -104,7 +106,7 @@ serve(async (req) => {
     // Drucker-Reihenfolge: K1C (klein) -> K1 (falls K1C-Profil fehlt) -> xl (420x420x420 mm, wenn das Teil nicht aufs kleine Bett passt)
     let res!: Response;
     let used = "k1c";
-    for (const printer of ["k1c", "k1", "xl"]) {
+    for (const printer of plate ? ["xl"] : ["k1c", "k1", "xl"]) {
       res = await slice(printer);
       used = printer;
       if (res.status !== 422) break;
