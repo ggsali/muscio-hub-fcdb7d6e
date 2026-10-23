@@ -493,34 +493,6 @@ export default function SpardoseTestPage() {
                   </div>
                 ))}
               </div>
-              {pr && (
-                <div className="mt-4 space-y-1.5 rounded-lg border bg-card p-4 text-sm">
-                  <div className="mb-1 font-semibold">Preisübersicht</div>
-                  {pr.zeilen.map((z, i) => (
-                    <div key={z.hex + i} className="space-y-0.5">
-                      <div className="flex justify-between"><span>Platte {i + 1} – {z.label}</span><span className="tabular-nums">{CHF(z.summe)}</span></div>
-                      <div className="ml-3 space-y-0.5 border-l pl-3 text-xs text-muted-foreground">
-                        <div className="flex justify-between"><span>Materialkosten ({z.gramm.toFixed(0)} g)</span><span className="tabular-nums">{CHF(z.material)}</span></div>
-                        <div className="flex justify-between"><span>Maschinenzeit ({Math.floor(z.min / 60)} h {Math.round(z.min % 60)} min)</span><span className="tabular-nums">{CHF(z.maschine)}</span></div>
-                        {z.support > 0 && <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(z.support)}</span></div>}
-                      </div>
-                    </div>
-                  ))}
-                  <div className="mt-2 border-t pt-2" />
-                  <div className="flex justify-between text-muted-foreground"><span>Setup-Pauschale <span className="text-xs">(1× pro Bestellung)</span></span><span className="tabular-nums text-foreground">{CHF(pr.setup)}</span></div>
-                  <div className="flex justify-between text-muted-foreground"><span>Versand (Post)</span><span className="tabular-nums text-foreground">{pr.versand === 0 ? "Gratis" : CHF(pr.versand)}</span></div>
-                  {pr.mindestpreisGreift && <div className="text-xs text-muted-foreground">Mindestbestellwert angewendet.</div>}
-                  {gutschein && <div className="flex justify-between text-primary"><span>Gutschein {gutschein.code}</span><span className="tabular-nums">− {CHF(pr.rabatt)}</span></div>}
-                  <div className="flex gap-2 pt-1">
-                    <Input value={gInput} onChange={(e) => setGInput(e.target.value.toUpperCase())} placeholder="Gutschein-Code" className="h-9 text-sm" />
-                    {gutschein
-                      ? <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { setGutschein(null); setGInput(""); }}>Entfernen</Button>
-                      : <Button type="button" variant="outline" size="sm" className="h-9" onClick={gutscheinEinloesen} disabled={gBusy || !gInput.trim()}>{gBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Einlösen"}</Button>}
-                  </div>
-                  <div className="mt-2 flex items-center justify-between border-t pt-3"><span className="font-bold">Total</span><span className="text-xl font-bold tabular-nums text-primary">{CHF(pr.totalMitRabatt)}</span></div>
-                  <div className="text-[11px] text-muted-foreground">Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.</div>
-                </div>
-              )}
               <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte, jede weitere Farbe auf eigener Platte. Gesliced wird für den kleinsten Drucker, auf den die Teile passen. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
             </div>
           )}
@@ -565,6 +537,34 @@ export default function SpardoseTestPage() {
             )}
             {!res && !busy && <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">Name mit mindestens {NAME_MIN} Zeichen eingeben</div>}
           </div>
+          {pr && step >= 4 && (
+                <div className="space-y-1.5 rounded-lg border bg-card p-4 text-sm">
+                  <div className="mb-1 font-semibold">Preisübersicht</div>
+                  {pr.zeilen.map((z, i) => (
+                    <div key={z.hex + i} className="space-y-0.5">
+                      <div className="flex justify-between"><span>Platte {i + 1} – {z.label}</span><span className="tabular-nums">{CHF(z.summe)}</span></div>
+                      <div className="ml-3 space-y-0.5 border-l pl-3 text-xs text-muted-foreground">
+                        <div className="flex justify-between"><span>Materialkosten ({z.gramm.toFixed(0)} g)</span><span className="tabular-nums">{CHF(z.material)}</span></div>
+                        <div className="flex justify-between"><span>Maschinenzeit ({Math.floor(z.min / 60)} h {Math.round(z.min % 60)} min)</span><span className="tabular-nums">{CHF(z.maschine)}</span></div>
+                        {z.support > 0 && <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(z.support)}</span></div>}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="mt-2 border-t pt-2" />
+                  <div className="flex justify-between text-muted-foreground"><span>Setup-Pauschale <span className="text-xs">(1× pro Bestellung)</span></span><span className="tabular-nums text-foreground">{CHF(pr.setup)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Versand (Post)</span><span className="tabular-nums text-foreground">{pr.versand === 0 ? "Gratis" : CHF(pr.versand)}</span></div>
+                  {pr.mindestpreisGreift && <div className="text-xs text-muted-foreground">Mindestbestellwert angewendet.</div>}
+                  {gutschein && <div className="flex justify-between text-primary"><span>Gutschein {gutschein.code}</span><span className="tabular-nums">− {CHF(pr.rabatt)}</span></div>}
+                  <div className="flex gap-2 pt-1">
+                    <Input value={gInput} onChange={(e) => setGInput(e.target.value.toUpperCase())} placeholder="Gutschein-Code" className="h-9 text-sm" />
+                    {gutschein
+                      ? <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { setGutschein(null); setGInput(""); }}>Entfernen</Button>
+                      : <Button type="button" variant="outline" size="sm" className="h-9" onClick={gutscheinEinloesen} disabled={gBusy || !gInput.trim()}>{gBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Einlösen"}</Button>}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t pt-3"><span className="font-bold">Total</span><span className="text-xl font-bold tabular-nums text-primary">{CHF(pr.totalMitRabatt)}</span></div>
+                  <div className="text-[11px] text-muted-foreground">Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.</div>
+                </div>
+          )}
           {err && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">Fehler: {err}</div>}
           {res && res.warnings.length > 0 && (
             <div className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-foreground">
