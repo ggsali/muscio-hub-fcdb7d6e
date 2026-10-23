@@ -229,7 +229,10 @@ function Swatches({ colors, value, onChange }: { colors: { name: string; hex: st
 export default function SpardoseTestPage() {
   const [p, setP] = useState<SpardoseParams>(DEFAULTS);
   const { farbenFor } = useMaterialFarben();
-  const plaFarben = farbenFor("PLA");
+  const [ctx, setCtx] = useState<PricingContext | null>(null);
+  useEffect(() => { void loadPricingContext().then(setCtx).catch(() => {}); }, []);
+  // nur Farben anbieten, die in der Bibliothek einen Verkaufspreis haben (wie im Kalkulator)
+  const plaFarben = farbenFor("PLA").filter((c) => !ctx || ctx.plaPreisProG[c.hex.toLowerCase()] != null || ctx.plaPreisProG[c.name.toLowerCase()] != null);
   const [colors, setColors] = useState({ text: "#0ea5e9", base: "#374151", cap: "#0ea5e9" });
   useEffect(() => {
     // Standardfarben aus der Bibliothek, sobald sie geladen ist (nur PLA)
@@ -276,7 +279,6 @@ export default function SpardoseTestPage() {
 
   type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; gcodeError?: string; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[] };
   const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; step?: string }>({ state: "idle" });
-  const [ctx, setCtx] = useState<PricingContext | null>(null);
   const [gutschein, setGutschein] = useState<Gutschein | null>(null);
   const [gInput, setGInput] = useState("");
   const [gBusy, setGBusy] = useState(false);
@@ -544,7 +546,7 @@ export default function SpardoseTestPage() {
                     <div key={z.hex + i} className="space-y-0.5">
                       <div className="flex justify-between"><span>Platte {i + 1} – {z.label}</span><span className="tabular-nums">{CHF(z.summe)}</span></div>
                       <div className="ml-3 space-y-0.5 border-l pl-3 text-xs text-muted-foreground">
-                        <div className="flex justify-between"><span>Materialkosten ({z.gramm.toFixed(0)} g)</span><span className="tabular-nums">{CHF(z.material)}</span></div>
+                        <div className="flex justify-between"><span>Material ({z.gramm.toFixed(0)} g × CHF {z.proG.toFixed(3)}/g)</span><span className="tabular-nums">{CHF(z.material)}</span></div>
                         <div className="flex justify-between"><span>Maschinenzeit ({Math.floor(z.min / 60)} h {Math.round(z.min % 60)} min)</span><span className="tabular-nums">{CHF(z.maschine)}</span></div>
                         {z.support > 0 && <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(z.support)}</span></div>}
                       </div>

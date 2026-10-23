@@ -31,7 +31,7 @@ export async function loadPricingContext(): Promise<PricingContext> {
     loadQualityConfig().catch(() => ({ params: DEFAULT_CALC_PARAMS as CalcParams })),
     loadWebsitePreise().catch(() => ({ maschinenzeit_pro_h: null, setup_pauschale: null })),
     loadSettings().catch(() => null),
-    supabase.from("filaments").select("material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g").eq("aktiv", true).ilike("material", "PLA"),
+    supabase.from("filaments").select("material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g").eq("aktiv", true).eq("nur_intern", false).ilike("material", "PLA"),
   ]);
   const proFarbe: Record<string, number> = {};
   const preise: number[] = [];
@@ -52,7 +52,7 @@ export async function loadPricingContext(): Promise<PricingContext> {
   };
 }
 
-export type PreisZeile = { label: string; hex: string; gramm: number; min: number; sup: boolean; material: number; maschine: number; support: number; summe: number };
+export type PreisZeile = { label: string; hex: string; gramm: number; proG: number; min: number; sup: boolean; material: number; maschine: number; support: number; summe: number };
 export type Preis = {
   zeilen: PreisZeile[]; teile: number; setup: number; zwischensumme: number; versand: number; total: number; mindestpreisGreift: boolean;
 };
@@ -67,7 +67,7 @@ export function berechnePreis(
     const material = j.g * proG;
     const maschine = (j.min / 60) * ctx.maschinenRate;
     const support = j.sup ? ctx.supportZuschlag : 0;
-    return { label: j.label, hex: j.hex, gramm: j.g, min: j.min, sup: j.sup, material, maschine, support, summe: material + maschine + support };
+    return { label: j.label, hex: j.hex, gramm: j.g, proG, min: j.min, sup: j.sup, material, maschine, support, summe: material + maschine + support };
   });
   const teile = zeilen.reduce((s, z) => s + z.summe, 0);
   const zwischensumme = teile + ctx.setup;
