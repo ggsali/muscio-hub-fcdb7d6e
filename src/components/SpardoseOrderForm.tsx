@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import type { PlatePlan } from "@/lib/spardosePlate";
 import type { SpardoseParams } from "@/lib/spardose";
 import { renderPlatePng } from "@/lib/platePreview3d";
+import { erfasseGutscheinVerwendung, gutscheinWertLabel, type Gutschein } from "@/lib/gutschein";
+import type { berechnePreis } from "@/lib/spardosePricing";
 import { buildSheet } from "@/lib/spardoseSheet";
 
 // Bestellformular des Spardose-Generators: gleiche Kontaktdaten-Abfrage wie im Online-Kalkulator,
@@ -18,13 +20,15 @@ type Props = {
   plans: PlatePlan[];
   jobs: { label: string; hex: string; count: number; min: number; g: number; sup: boolean; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[]; gcodePath?: string; gcodeSize?: number }[];
   preis: number;
+  pricing: (ReturnType<typeof berechnePreis>) | null;
+  gutschein: Gutschein | null;
   colors: { text: string; base: string; cap: string };
   labelOf: (hex: string) => string;
 };
 
 const EMPTY = { vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" };
 
-export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, labelOf }: Props) {
+export default function SpardoseOrderForm({ params, plans, jobs, preis, pricing, gutschein, colors, labelOf }: Props) {
   const [form, setForm] = useState(EMPTY);
   const [needAddress, setNeedAddress] = useState(true); // Adresse nur weglassen, wenn sie beim eingeloggten Kunden schon gespeichert ist
   const [submitting, setSubmitting] = useState(false);
@@ -100,7 +104,7 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
       const nachricht =
         `SPARDOSE-BESTELLUNG\nName auf der Spardose: ${params.name}\nSchrift: ${params.font}\n` +
         `Farben: Buchstaben ${labelOf(colors.text)}, Körper ${labelOf(colors.base)}, Kappe ${labelOf(colors.cap)}\nMaterial: PLA\n\n${platten}\n\n` +
-        `Geschätzter Gesamtpreis: CHF ${preis.toFixed(2)}${addressLine}\n\nNachricht: ${form.message}\n\n` +
+        `${pricing ? pricing.zeilen.map((z, i) => `Platte ${i + 1} (${z.label}): Material CHF ${z.material.toFixed(2)}, Maschinenzeit CHF ${z.maschine.toFixed(2)}${z.support > 0 ? `, Support CHF ${z.support.toFixed(2)}` : ""}`).join("\n") + `\nSetup-Pauschale: CHF ${pricing.setup.toFixed(2)}\nVersand: CHF ${pricing.versand.toFixed(2)}` : ""}${gutschein && pricing ? `\nGutschein: ${gutschein.code} (${gutscheinWertLabel(gutschein)}) – Rabatt CHF ${pricing.rabatt.toFixed(2)}` : ""}\nGeschätzter Gesamtpreis: CHF ${preis.toFixed(2)}${addressLine}\n\nNachricht: ${form.message}\n\n` +
         `Konfiguration (JSON): ${JSON.stringify(params)}`;
 
       const { data, error } = await supabase.functions.invoke("submit-inquiry", {
@@ -111,9 +115,11 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
           nachricht,
           strasse: needAddress ? form.strasse || null : null, plz: needAddress ? form.plz || null : null, ort: needAddress ? form.ort || null : null, land: form.land || "Schweiz",
           attachments,
+          gutschein: gutschein && pricing ? { code: gutschein.code, typ: gutschein.typ, wert: gutschein.wert, rabatt: pricing.rabatt } : null,
         },
       });
       if (error || !data?.success) throw new Error(error?.message || data?.error || "Fehler beim Senden");
+      if (gutschein && pricing) await erfasseGutscheinVerwendung({ gutschein, rabattBetrag: pricing.rabatt, orderId: data?.inquiry_id ?? null });
       toast.success(data?.ferien?.bis
         ? `Bestellung gesendet! Wir sind bis ${(data.ferien.bis as string).split("-").reverse().join(".")} in den Ferien und melden uns danach.`
         : "Bestellung gesendet! Wir melden uns innerhalb 24h.");

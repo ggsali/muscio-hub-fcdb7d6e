@@ -12,7 +12,9 @@ import { cn } from "@/lib/utils";
 import PlateViewer3D from "@/components/PlateViewer3D";
 import SpardoseOrderForm from "@/components/SpardoseOrderForm";
 import { buildPlates, PLATE, type PlatePlan } from "@/lib/spardosePlate";
-import { calcUmsatz, loadSettings } from "@/lib/calc";
+import { berechnePreis, loadPricingContext, type PricingContext } from "@/lib/spardosePricing";
+import { berechneRabatt, gutscheinWertLabel, pruefeGutschein, type Gutschein } from "@/lib/gutschein";
+import { toast } from "sonner";
 import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULTS, FONTS, LIMITS, NAME_MIN, SLOT_LEN, SLOT_THK, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
 
@@ -273,7 +275,11 @@ export default function SpardoseTestPage() {
   }, [p]);
 
   type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; gcodeError?: string; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[] };
-  const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; preis?: number; step?: string }>({ state: "idle" });
+  const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; step?: string }>({ state: "idle" });
+  const [ctx, setCtx] = useState<PricingContext | null>(null);
+  const [gutschein, setGutschein] = useState<Gutschein | null>(null);
+  const [gInput, setGInput] = useState("");
+  const [gBusy, setGBusy] = useState(false);
   const plansRef = useRef<PlatePlan[]>([]);
   useEffect(() => { setFin({ state: "idle" }); plansRef.current = []; }, [res, colors]);
 
@@ -309,10 +315,8 @@ export default function SpardoseTestPage() {
         }
         jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, printerName: pl.printerName, bed: pl.bed, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, gcodeError: j?.gcode_error ?? (j?.gcode_path ? undefined : "Antwort ohne G-Code (Edge Function slice-public nicht neu deployed?)"), rects: pl.rects });
       }
-      const s = await loadSettings();
-      const g = jobs.reduce((a, j) => a + j.g, 0), h = jobs.reduce((a, j) => a + j.min, 0) / 60;
-      const preis = Math.round(calcUmsatz(s, g, h, 0.5, 0) * 20) / 20;
-      setFin({ state: "ok", jobs, preis });
+      setCtx(await loadPricingContext());
+      setFin({ state: "ok", jobs });
     } catch (e) {
       setFin({ state: "err", msg: e instanceof Error ? e.message : String(e) });
     }
@@ -340,6 +344,19 @@ export default function SpardoseTestPage() {
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   };
 
+  const pr = ctx && fin.state === "ok" && fin.jobs
+    ? berechnePreis(ctx, fin.jobs.map((j) => ({ label: j.label, hex: j.hex, g: j.g, min: j.min, sup: j.sup })), (sub, vers) => (gutschein ? berechneRabatt(gutschein, sub, vers).rabatt : 0))
+    : null;
+  const gutscheinEinloesen = async () => {
+    if (!pr) return;
+    setGBusy(true);
+    const r = await pruefeGutschein(gInput, pr.zwischensumme);
+    setGBusy(false);
+    if (!r.ok) { setGutschein(null); toast.error(r.error); return; }
+    setGutschein(r.gutschein);
+    toast.success(`Gutschein aktiviert: ${gutscheinWertLabel(r.gutschein)}`);
+  };
+  const CHF = (n: number) => `CHF ${n.toFixed(2)}`;
   const STEPS = ["Name", "Form", "Farben", "Preis", "Bestellen"];
   const canNext = step === 1 ? p.name.length >= NAME_MIN : step === 2 || step === 3 ? !!res && !busy && res.valid : step === 4 ? fin.state === "ok" : false;
   const goTo = (n: number) => { setStep(n); window.scrollTo({ top: 0, behavior: "smooth" }); };
@@ -459,7 +476,6 @@ export default function SpardoseTestPage() {
           {fin.state === "err" && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{fin.msg}</div>}
           {fin.state === "ok" && fin.jobs && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-              <div className="text-2xl font-bold tabular-nums">CHF {fin.preis!.toFixed(2)}</div>
               <div className="mt-2 space-y-1 text-sm">
                 {fin.jobs.map((j) => (
                   <div key={j.hex} className="flex items-center gap-2">
@@ -477,6 +493,34 @@ export default function SpardoseTestPage() {
                   </div>
                 ))}
               </div>
+              {pr && (
+                <div className="mt-4 space-y-1.5 rounded-lg border bg-card p-4 text-sm">
+                  <div className="mb-1 font-semibold">Preisübersicht</div>
+                  {pr.zeilen.map((z, i) => (
+                    <div key={z.hex + i} className="space-y-0.5">
+                      <div className="flex justify-between"><span>Platte {i + 1} – {z.label}</span><span className="tabular-nums">{CHF(z.summe)}</span></div>
+                      <div className="ml-3 space-y-0.5 border-l pl-3 text-xs text-muted-foreground">
+                        <div className="flex justify-between"><span>Materialkosten ({z.gramm.toFixed(0)} g)</span><span className="tabular-nums">{CHF(z.material)}</span></div>
+                        <div className="flex justify-between"><span>Maschinenzeit ({Math.floor(z.min / 60)} h {Math.round(z.min % 60)} min)</span><span className="tabular-nums">{CHF(z.maschine)}</span></div>
+                        {z.support > 0 && <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(z.support)}</span></div>}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="mt-2 border-t pt-2" />
+                  <div className="flex justify-between text-muted-foreground"><span>Setup-Pauschale <span className="text-xs">(1× pro Bestellung)</span></span><span className="tabular-nums text-foreground">{CHF(pr.setup)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Versand (Post)</span><span className="tabular-nums text-foreground">{pr.versand === 0 ? "Gratis" : CHF(pr.versand)}</span></div>
+                  {pr.mindestpreisGreift && <div className="text-xs text-muted-foreground">Mindestbestellwert angewendet.</div>}
+                  {gutschein && <div className="flex justify-between text-primary"><span>Gutschein {gutschein.code}</span><span className="tabular-nums">− {CHF(pr.rabatt)}</span></div>}
+                  <div className="flex gap-2 pt-1">
+                    <Input value={gInput} onChange={(e) => setGInput(e.target.value.toUpperCase())} placeholder="Gutschein-Code" className="h-9 text-sm" />
+                    {gutschein
+                      ? <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { setGutschein(null); setGInput(""); }}>Entfernen</Button>
+                      : <Button type="button" variant="outline" size="sm" className="h-9" onClick={gutscheinEinloesen} disabled={gBusy || !gInput.trim()}>{gBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Einlösen"}</Button>}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t pt-3"><span className="font-bold">Total</span><span className="text-xl font-bold tabular-nums text-primary">{CHF(pr.totalMitRabatt)}</span></div>
+                  <div className="text-[11px] text-muted-foreground">Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.</div>
+                </div>
+              )}
               <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte, jede weitere Farbe auf eigener Platte. Gesliced wird für den kleinsten Drucker, auf den die Teile passen. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
             </div>
           )}
@@ -490,13 +534,15 @@ export default function SpardoseTestPage() {
                 <div className="rounded-lg border bg-muted/30 p-3 text-sm">
                   <div className="font-semibold">Spardose «{p.name}» · PLA</div>
                   <div className="text-muted-foreground">Buchstaben {plaFarben.find((c) => c.hex === colors.text)?.name}, Körper {plaFarben.find((c) => c.hex === colors.base)?.name}, Kappe {plaFarben.find((c) => c.hex === colors.cap)?.name}</div>
-                  <div className="mt-1 text-lg font-bold tabular-nums">CHF {fin.preis!.toFixed(2)}</div>
+                  <div className="mt-1 text-lg font-bold tabular-nums">{pr ? CHF(pr.totalMitRabatt) : ""}</div>
                 </div>
                 <SpardoseOrderForm
                   params={p}
                   plans={plansRef.current}
                   jobs={fin.jobs}
-                  preis={fin.preis!}
+                  preis={pr ? pr.totalMitRabatt : 0}
+                  pricing={pr}
+                  gutschein={gutschein}
                   colors={colors}
                   labelOf={(hex) => plaFarben.find((c) => c.hex === hex)?.name ?? hex}
                 />
