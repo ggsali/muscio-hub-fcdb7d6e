@@ -160,24 +160,20 @@ export function buildPlates(res: SpardoseResult, colors: { text: string; base: s
   add(colors.text, { g: letterRow(comps), name: "Buchstaben" });
   add(colors.cap, { g: res.cap, name: "Kappe" });
   letters.dispose();
-  const plans: PlatePlan[] = [];
-  groups.forEach((pieces, hex) => {
-    let chosen: (typeof PRINTERS)[number] = PRINTERS[PRINTERS.length - 1];
-    let built = null as ReturnType<typeof buildOne> | null;
-    for (const pr of PRINTERS) {
-      Object.assign(PLATE, { x: pr.x, y: pr.y, z: pr.z });
+  // Alle Platten laufen auf demselben Drucker: der kleinste, auf den jede Farbplatte passt
+  let plans: PlatePlan[] = [];
+  for (const pr of PRINTERS) {
+    Object.assign(PLATE, { x: pr.x, y: pr.y, z: pr.z });
+    plans = [];
+    groups.forEach((pieces, hex) => {
       // Buchstabenreihe passend zur Breite des Druckbetts umbrechen
-      const pcs = pieces.map((pc) => {
-        if (pc.name !== "Buchstaben") return pc;
-        return { g: letterRow(comps, pr.x - 2 * PLATE.margin), name: pc.name, tmp: true };
-      });
-      const b = buildOne(pcs);
+      const pcs = pieces.map((pc) => (pc.name !== "Buchstaben" ? pc : { g: letterRow(comps, pr.x - 2 * PLATE.margin), name: pc.name, tmp: true }));
+      const built = buildOne(pcs);
       pcs.forEach((pc: any) => { if (pc.tmp) pc.g.dispose(); });
-      built = b; chosen = pr;
-      if (b.fits) break;
-    }
-    plans.push({ hex, label: labelOf(hex), blob: built!.blob, fits: built!.fits, count: pieces.length, info: pieces.map((p) => p.name).join(", "), printer: chosen.id, printerName: chosen.name, bed: { x: chosen.x, y: chosen.y }, rects: built!.rects });
-  });
+      plans.push({ hex, label: labelOf(hex), blob: built.blob, fits: built.fits, count: pieces.length, info: pieces.map((p) => p.name).join(", "), printer: pr.id, printerName: pr.name, bed: { x: pr.x, y: pr.y }, rects: built.rects });
+    });
+    if (plans.every((pl) => pl.fits)) break;
+  }
   groups.forEach((pieces) => pieces.forEach((p) => { if (p.name === "Buchstaben") p.g.dispose(); }));
   comps.forEach((g) => g.dispose());
   return plans;
