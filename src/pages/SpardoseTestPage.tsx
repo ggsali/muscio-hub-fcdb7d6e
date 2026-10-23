@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Slider as BaseSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { buildPlate, PLATE } from "@/lib/spardosePlate";
+import { buildPlates, PLATE } from "@/lib/spardosePlate";
 import { calcUmsatz, loadSettings } from "@/lib/calc";
 import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULTS, FONTS, LIMITS, NAME_MIN, SLOT_LEN, SLOT_THK, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
@@ -269,36 +269,44 @@ export default function SpardoseTestPage() {
     return () => clearTimeout(t);
   }, [p]);
 
-  const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; min?: number; g?: number; preis?: number; info?: string }>({ state: "idle" });
-  useEffect(() => { setFin({ state: "idle" }); }, [res]);
+  type Job = { label: string; hex: string; count: number; min: number; g: number };
+  const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; preis?: number; step?: string }>({ state: "idle" });
+  useEffect(() => { setFin({ state: "idle" }); }, [res, colors]);
 
   const fertig = async () => {
     if (!res) return;
-    setFin({ state: "busy" });
+    setFin({ state: "busy", step: "Teile anordnen …" });
     try {
-      const plate = buildPlate(res);
-      if (!plate.fits) { setFin({ state: "err", msg: `Die Teile passen nicht auf die Platte (${PLATE.x}×${PLATE.y} mm). ${plate.info}` }); return; }
-      const body = new FormData();
-      body.append("file", new File([plate.blob], "spardose-platte.stl"));
-      body.append("plate", "1");
-      body.append("quality", "0.20");
-      body.append("infill", "15");
-      const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
-        method: "POST",
-        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
-        body,
-        signal: AbortSignal.timeout(110_000),
-      });
-      const j = await r.json().catch(() => ({}));
-      const st = j?.stats;
-      if (!st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
-        setFin({ state: "err", msg: `Slicer: ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}` });
-        return;
+      const plans = buildPlates(res, colors, (hex) => plaFarben.find((c) => c.hex === hex)?.name ?? hex);
+      const bad = plans.find((pl) => !pl.fits);
+      if (bad) { setFin({ state: "err", msg: `Die Teile in ${bad.label} passen nicht auf eine Platte (${PLATE.x}×${PLATE.y} mm).` }); return; }
+      const jobs: Job[] = [];
+      for (let i = 0; i < plans.length; i++) {
+        const pl = plans[i];
+        setFin({ state: "busy", step: `Platte ${i + 1} von ${plans.length} (${pl.label}) wird gesliced …` });
+        const body = new FormData();
+        body.append("file", new File([pl.blob], `spardose-platte-${i + 1}.stl`));
+        body.append("plate", "1");
+        body.append("quality", "0.20");
+        body.append("infill", "15");
+        const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+          method: "POST",
+          headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+          body,
+          signal: AbortSignal.timeout(110_000),
+        });
+        const j = await r.json().catch(() => ({}));
+        const st = j?.stats;
+        if (!st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
+          setFin({ state: "err", msg: `Slicer (${pl.label}): ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}` });
+          return;
+        }
+        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g });
       }
       const s = await loadSettings();
-      const h = st.print_time_s / 3600;
-      const preis = Math.round(calcUmsatz(s, st.filament_g, h, 0.5, 0) * 20) / 20;
-      setFin({ state: "ok", min: st.print_time_s / 60, g: st.filament_g, preis, info: plate.info });
+      const g = jobs.reduce((a, j) => a + j.g, 0), h = jobs.reduce((a, j) => a + j.min, 0) / 60;
+      const preis = Math.round(calcUmsatz(s, g, h, 0.5, 0) * 20) / 20;
+      setFin({ state: "ok", jobs, preis });
     } catch (e) {
       setFin({ state: "err", msg: e instanceof Error ? e.message : String(e) });
     }
@@ -405,13 +413,21 @@ export default function SpardoseTestPage() {
             </Button>
             <span className="text-xs text-muted-foreground">Körper liegt mit der Vorderseite auf dem Druckbett. Buchstaben mit der flachen Seite nach unten.</span>
           </div>
-          {fin.state === "busy" && <div className="rounded-lg border bg-muted/40 p-3 text-sm">Teile werden auf einer Platte angeordnet und auf dem NAS gesliced … (kann bis zu 2 Minuten dauern)</div>}
+          {fin.state === "busy" && <div className="rounded-lg border bg-muted/40 p-3 text-sm">{fin.step} (kann einige Minuten dauern)</div>}
           {fin.state === "err" && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{fin.msg}</div>}
-          {fin.state === "ok" && (
+          {fin.state === "ok" && fin.jobs && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
               <div className="text-2xl font-bold tabular-nums">CHF {fin.preis!.toFixed(2)}</div>
-              <div className="mt-1 text-sm text-muted-foreground">Druckzeit {Math.floor(fin.min! / 60)} h {Math.round(fin.min! % 60)} min · Filament {fin.g!.toFixed(0)} g · 1 Platte ({PLATE.x}×{PLATE.y} mm)</div>
-              <div className="mt-1 text-[11px] text-muted-foreground">{fin.info}. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung.</div>
+              <div className="mt-2 space-y-1 text-sm">
+                {fin.jobs.map((j) => (
+                  <div key={j.hex} className="flex items-center gap-2">
+                    <span className="inline-block h-3 w-3 rounded-full border" style={{ background: j.hex }} />
+                    <span className="font-medium">{j.label}</span>
+                    <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung.</div>
             </div>
           )}
         </div>
