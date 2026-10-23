@@ -147,7 +147,7 @@ function buildOne(pieces: Piece[]): { blob: Blob; fits: boolean; rects: PlatePla
 
 export function buildPlates(res: SpardoseResult, colors: { text: string; base: string; cap: string }, labelOf: (hex: string) => string): PlatePlan[] {
   const letters = res.letters.clone();
-  letters.rotateX(Math.PI); // flache Rückseite nach unten
+  // Buchstaben nicht drehen: die glatte Vorderseite liegt auf dem Druckbett
   const groups = new Map<string, Piece[]>();
   const add = (hex: string, p: Piece) => { (groups.get(hex) ?? groups.set(hex, []).get(hex)!).push(p); };
   add(colors.base, { g: res.body, name: "Körper" });

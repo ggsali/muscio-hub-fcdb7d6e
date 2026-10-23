@@ -317,7 +317,7 @@ export default function SpardoseTestPage() {
     const ex = new STLExporter();
     const stl = (g: THREE.BufferGeometry) => ex.parse(new THREE.Mesh(g), { binary: true }) as unknown as DataView;
     const letters = res.letters.clone();
-    letters.rotateX(Math.PI); // flache Rückseite nach unten
+    // Vorderseite (glatte Fläche) liegt auf dem Druckbett
     letters.computeBoundingBox();
     letters.translate(0, 0, -letters.boundingBox!.min.z);
     const zip = new JSZip();
@@ -411,7 +411,7 @@ export default function SpardoseTestPage() {
             <Button variant="secondary" onClick={fertig} disabled={!res || busy || !res.valid || fin.state === "busy"}>
               {fin.state === "busy" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Fertig – Preis berechnen
             </Button>
-            <span className="text-xs text-muted-foreground">Körper liegt mit der Vorderseite auf dem Druckbett. Buchstaben mit der flachen Seite nach unten.</span>
+            <span className="text-xs text-muted-foreground">Körper liegt mit der Vorderseite auf dem Druckbett. Buchstaben mit der glatten Vorderseite nach unten.</span>
           </div>
           {fin.state === "busy" && <div className="rounded-lg border bg-muted/40 p-3 text-sm">{fin.step} (kann einige Minuten dauern)</div>}
           {fin.state === "err" && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{fin.msg}</div>}
@@ -434,7 +434,7 @@ export default function SpardoseTestPage() {
                   </svg>
                 ))}
               </div>
-              <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung.</div>
+              <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
             </div>
           )}
         </div>
