@@ -293,9 +293,10 @@ export default function SpardoseTestPage() {
       plansRef.current = plans;
       const bad = plans.find((pl) => !pl.fits);
       if (bad) { setFin({ state: "err", msg: `Die Teile in ${bad.label} passen auf keinen Drucker (grösster Bauraum ${PLATE.x}×${PLATE.y} mm).` }); return; }
-      setFin({ state: "busy", step: `${plans.length} Platte${plans.length === 1 ? "" : "n"} werden gleichzeitig gesliced …` });
-      const ctxP = loadPricingContext();
-      const sliceOne = async (pl: PlatePlan, i: number): Promise<Job> => {
+      const jobs: Job[] = [];
+      for (let i = 0; i < plans.length; i++) {
+        const pl = plans[i];
+        setFin({ state: "busy", step: `Platte ${i + 1} von ${plans.length} (${pl.label}) wird gesliced …` });
         const body = new FormData();
         body.append("file", new File([pl.blob], `spardose-platte-${i + 1}.stl`));
         body.append("plate", "1");
@@ -311,14 +312,13 @@ export default function SpardoseTestPage() {
         const j = await r.json().catch(() => ({}));
         const st = j?.stats;
         if (!st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
-          throw new Error(`Slicer (${pl.label}): ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}`);
+          setFin({ state: "err", msg: `Slicer (${pl.label}): ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}` });
+          return;
         }
-        return { label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, printerName: pl.printerName, bed: pl.bed, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, gcodeError: j?.gcode_error ?? (j?.gcode_path ? undefined : "Antwort ohne G-Code (Edge Function slice-public nicht neu deployed?)"), rects: pl.rects };
-      };
-      const jobs: Job[] = await Promise.all(plans.map(sliceOne));
-      setCtx(await ctxP);
+        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, printerName: pl.printerName, bed: pl.bed, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, gcodeError: j?.gcode_error ?? (j?.gcode_path ? undefined : "Antwort ohne G-Code (Edge Function slice-public nicht neu deployed?)"), rects: pl.rects });
+      }
+      setCtx(await loadPricingContext());
       setFin({ state: "ok", jobs });
-      return;
     } catch (e) {
       setFin({ state: "err", msg: e instanceof Error ? e.message : String(e) });
     }
