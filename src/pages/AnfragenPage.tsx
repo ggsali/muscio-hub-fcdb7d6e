@@ -393,6 +393,16 @@ export default function AnfragenPage() {
                 part_id: null, order_id: order.id, customer_id: customerId, filename: att.filename,
                 storage_path: newPath, file_type: "application/pdf", file_size_bytes: att.size_bytes ?? (fileData as Blob).size ?? null,
               });
+              // zusätzlich im Reiter "Dokumente" ablegen (gleicher Ort wie hochgeladene Dokumente)
+              try {
+                const docPath = `${order.id}/uploads/${Date.now()}_${safeName}`;
+                const { error: docErr } = await supabase.storage.from("bills").upload(docPath, fileData, { upsert: false, contentType: "application/pdf" });
+                if (!docErr) {
+                  await (supabase.from as any)("bills").insert({
+                    order_id: order.id, titel: "Auftragsblatt", betrag: 0, bezahlt: true, file_path: docPath, filename: att.filename || "Auftragsblatt.pdf",
+                  });
+                }
+              } catch (e) { console.error("Auftragsblatt in Dokumente fehlgeschlagen:", e); }
             } catch (e) { console.error("Auftragsblatt kopieren fehlgeschlagen:", e); }
             continue;
           }
