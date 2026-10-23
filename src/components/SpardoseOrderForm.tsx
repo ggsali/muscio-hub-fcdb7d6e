@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { PlatePlan } from "@/lib/spardosePlate";
 import type { SpardoseParams } from "@/lib/spardose";
+import { renderPlatePng } from "@/lib/platePreview3d";
 import { buildSheet } from "@/lib/spardoseSheet";
 
 // Bestellformular des Spardose-Generators: gleiche Kontaktdaten-Abfrage wie im Online-Kalkulator,
@@ -79,7 +80,7 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
         const stlName = `Spardose ${params.name} – Platte ${i + 1} (${pl.label}).stl`;
         attachments.push({ filename: stlName, storage_path: path, size_bytes: pl.blob.size, bucket: "project-uploads", menge: 1, material: "PLA", farbe: pl.label });
         const gj = jobs[i];
-        sheetJobs.push({ ...gj, stlName, gcodeName: gj?.gcodePath ? `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode` : undefined });
+        sheetJobs.push({ ...gj, image: await renderPlatePng(pl.blob, pl.bed, pl.hex), stlName, gcodeName: gj?.gcodePath ? `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode` : undefined });
         if (gj?.gcodePath) attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode`, storage_path: gj.gcodePath, size_bytes: gj.gcodeSize ?? null, bucket: "project-uploads", kind: "gcode", menge: 1, material: "PLA", farbe: pl.label });
       }
 

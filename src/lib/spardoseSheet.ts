@@ -5,7 +5,7 @@ import type { SpardoseParams } from "@/lib/spardose";
 export type SheetJob = {
   label: string; hex: string; count: number; min: number; g: number; sup: boolean; printerName: string;
   bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[];
-  stlName: string; gcodeName?: string;
+  stlName: string; gcodeName?: string; image?: string | null;
 };
 export type SheetInput = {
   params: SpardoseParams; customer: string; email: string; preis: number; jobs: SheetJob[];
@@ -62,14 +62,19 @@ export function buildSheet(i: SheetInput): Blob {
     ];
     let ly = y + 14;
     lines.forEach((l) => { const parts = doc.splitTextToSize(l, 105) as string[]; doc.text(parts, M + 4, ly); ly += 5 * parts.length + 1; });
-    // Plattenskizze
-    const sx = 52, sy = 52, k = Math.min(sx / j.bed.x, sy / j.bed.y);
-    const ox = W - M - 4 - j.bed.x * k, oy = y + 10;
-    doc.setDrawColor(100).setFillColor(245, 245, 245).rect(ox, oy, j.bed.x * k, j.bed.y * k, "FD");
-    for (const r of j.rects) {
-      doc.setFillColor(...rgb(j.hex)).setDrawColor(60).rect(ox + r.x * k, oy + (j.bed.y - r.y - r.h) * k, Math.max(r.w * k, 0.6), Math.max(r.h * k, 0.6), "FD");
+    // 3D-Ansicht der Platte (Bild), sonst einfache Skizze
+    const sx = 52, sy = 52;
+    if (j.image) {
+      doc.addImage(j.image, "PNG", W - M - 4 - sy, y + 7, sy, sy);
+    } else {
+      const k = Math.min(sx / j.bed.x, sy / j.bed.y);
+      const ox = W - M - 4 - j.bed.x * k, oy = y + 10;
+      doc.setDrawColor(100).setFillColor(245, 245, 245).rect(ox, oy, j.bed.x * k, j.bed.y * k, "FD");
+      for (const r of j.rects) {
+        doc.setFillColor(...rgb(j.hex)).setDrawColor(60).rect(ox + r.x * k, oy + (j.bed.y - r.y - r.h) * k, Math.max(r.w * k, 0.6), Math.max(r.h * k, 0.6), "FD");
+      }
     }
-    doc.setFontSize(7).setTextColor(110).text(`Bett ${j.bed.x}×${j.bed.y} mm`, ox, oy + j.bed.y * k + 3.5).setTextColor(0);
+    doc.setFontSize(7).setTextColor(110).text(`Bett ${j.bed.x}×${j.bed.y} mm`, W - M - 4 - sy, y + boxH - 1.5).setTextColor(0);
     y += boxH + 5;
   });
 

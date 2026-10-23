@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Slider as BaseSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import PlateViewer3D from "@/components/PlateViewer3D";
 import SpardoseOrderForm from "@/components/SpardoseOrderForm";
 import { buildPlates, PLATE, type PlatePlan } from "@/lib/spardosePlate";
 import { calcUmsatz, loadSettings } from "@/lib/calc";
@@ -468,11 +469,12 @@ export default function SpardoseTestPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-3 flex flex-wrap gap-3">
-                {fin.jobs.map((j) => (
-                  <svg key={j.hex} viewBox={`0 0 ${j.bed.x} ${j.bed.y}`} className="h-40 w-40 rounded border bg-background">
-                    {j.rects.map((r, i) => <rect key={i} x={r.x} y={j.bed.y - r.y - r.h} width={r.w} height={r.h} fill={j.hex} stroke="currentColor" strokeWidth={2} opacity={0.85} />)}
-                  </svg>
+              <div className="mt-3 space-y-3">
+                {fin.jobs.map((j, i) => (
+                  <div key={j.hex}>
+                    <div className="mb-1 text-xs text-muted-foreground">Platte {i + 1} – {j.label} · {j.printerName} (Bett {j.bed.x}×{j.bed.y} mm) · mit der Maus drehen und zoomen</div>
+                    {plansRef.current[i] && <PlateViewer3D blob={plansRef.current[i].blob} bed={j.bed} hex={j.hex} />}
+                  </div>
                 ))}
               </div>
               <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte, jede weitere Farbe auf eigener Platte. Gesliced wird für den kleinsten Drucker, auf den die Teile passen. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
