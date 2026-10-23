@@ -478,28 +478,6 @@ export default function SpardoseTestPage() {
             </div>
           )}
           
-                {fin.state === "ok" && fin.jobs && (
-                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-                    <div className="text-2xl font-bold tabular-nums">CHF {fin.preis!.toFixed(2)}</div>
-                    <div className="mt-2 space-y-1 text-sm">
-                      {fin.jobs.map((j) => (
-                        <div key={j.hex} className="flex flex-wrap items-center gap-2">
-                          <span className="inline-block h-3 w-3 rounded-full border" style={{ background: j.hex }} />
-                          <span className="font-medium">{j.label}</span>
-                          <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g · Stützen: {j.sup ? "ja" : "nein"}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-3">
-                      {fin.jobs.map((j) => (
-                        <svg key={j.hex} viewBox={`0 0 ${PLATE.x} ${PLATE.y}`} className="h-36 w-36 rounded border bg-background">
-                          {j.rects.map((r, i) => <rect key={i} x={r.x} y={PLATE.y - r.y - r.h} width={r.w} height={r.h} fill={j.hex} stroke="currentColor" strokeWidth={2} opacity={0.85} />)}
-                        </svg>
-                      ))}
-                    </div>
-                    <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis inkl. Nachbearbeitung, PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
-                  </div>
-                )}
                 {fin.state === "err" && <Button variant="outline" onClick={() => void fertig()}>Erneut versuchen</Button>}
                 <Button variant="ghost" size="sm" onClick={download} disabled={!res || !res.valid}><Download className="mr-2 h-4 w-4" />STL-Dateien herunterladen (Test)</Button>
               </>
