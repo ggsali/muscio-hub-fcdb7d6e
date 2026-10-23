@@ -476,8 +476,6 @@ export default function SpardoseTestPage() {
           {fin.state === "err" && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{fin.msg}</div>}
           {fin.state === "ok" && fin.jobs && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-              <div>
               <div className="mt-2 space-y-1 text-sm">
                 {fin.jobs.map((j) => (
                   <div key={j.hex} className="flex items-center gap-2">
@@ -495,9 +493,8 @@ export default function SpardoseTestPage() {
                   </div>
                 ))}
               </div>
-              </div>
               {pr && (
-                <div className="space-y-1.5 rounded-lg border bg-card p-4 text-sm lg:sticky lg:top-4">
+                <div className="mt-4 space-y-1.5 rounded-lg border bg-card p-4 text-sm">
                   <div className="mb-1 font-semibold">Preisübersicht</div>
                   {pr.zeilen.map((z, i) => (
                     <div key={z.hex + i} className="space-y-0.5">
@@ -524,8 +521,7 @@ export default function SpardoseTestPage() {
                   <div className="text-[11px] text-muted-foreground">Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.</div>
                 </div>
               )}
-             </div>
-              <div className="mt-3 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte, jede weitere Farbe auf eigener Platte. Gesliced wird für den kleinsten Drucker, auf den die Teile passen. PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
+              <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte, jede weitere Farbe auf eigener Platte. Gesliced wird für den kleinsten Drucker, auf den die Teile passen. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
             </div>
           )}
           
