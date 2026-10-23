@@ -15,6 +15,8 @@ export type PricingContext = {
   plaPreisProG: Record<string, number>; // Farbname (klein) -> CHF/g
   plaDurchschnitt: number;
   versandCfg: VersandConfig;
+  nbRate: number;                       // Nachbearbeitung CHF/h (Admin), für "Stützen entfernen" in Stunden
+  plaFilamentId: Record<string, string>; // Farbname/Hex -> filaments.id
 };
 
 export async function loadPricingContext(): Promise<PricingContext> {
@@ -22,17 +24,18 @@ export async function loadPricingContext(): Promise<PricingContext> {
     loadQualityConfig().catch(() => ({ params: DEFAULT_CALC_PARAMS as CalcParams })),
     loadWebsitePreise().catch(() => ({ maschinenzeit_pro_h: null, setup_pauschale: null })),
     loadSettings().catch(() => null),
-    supabase.from("filaments").select("material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g").eq("aktiv", true).eq("nur_intern", false).ilike("material", "PLA"),
+    supabase.from("filaments").select("id, material, farbe, farben, verkaufspreis_pro_g, public_preis_pro_g").eq("aktiv", true).eq("nur_intern", false).ilike("material", "PLA"),
     loadVersandConfig().catch(() => DEFAULT_VERSAND),
   ]);
   const proFarbe: Record<string, number> = {};
+  const idMap: Record<string, string> = {};
   const preise: number[] = [];
   for (const f of (fil.data ?? []) as any[]) {
     const p = Number(f.verkaufspreis_pro_g ?? f.public_preis_pro_g ?? 0);
     if (!(p > 0)) continue;
     preise.push(p);
     const farben = baueFarbenMap([f])["PLA"] ?? [];
-    farben.forEach((c) => { proFarbe[c.name.trim().toLowerCase()] = p; proFarbe[c.hex.trim().toLowerCase()] = p; });
+    farben.forEach((c) => { proFarbe[c.name.trim().toLowerCase()] = p; proFarbe[c.hex.trim().toLowerCase()] = p; idMap[c.name.trim().toLowerCase()] = f.id; idMap[c.hex.trim().toLowerCase()] = f.id; });
   }
   return {
     maschinenRate: web.maschinenzeit_pro_h ?? (settings?.maschinenzeit_pro_h || 3),
@@ -40,14 +43,16 @@ export async function loadPricingContext(): Promise<PricingContext> {
     supportZuschlag: params.support_surcharge || 2.5,
     minPreis: params.min_price || 5,
     versandCfg,
+    nbRate: settings?.nachbearbeitung_pro_h || 0,
+    plaFilamentId: idMap,
     plaPreisProG: proFarbe,
     plaDurchschnitt: preise.length ? preise.reduce((a, b) => a + b, 0) / preise.length : 0.06,
   };
 }
 
-export type PreisZeile = { label: string; hex: string; gramm: number; proG: number; min: number; sup: boolean; material: number; maschine: number; support: number; summe: number };
+export type PreisZeile = { label: string; hex: string; gramm: number; proG: number; filamentId: string | null; stuetzenH: number; min: number; sup: boolean; material: number; maschine: number; support: number; summe: number };
 export type Preis = {
-  zeilen: PreisZeile[]; teile: number; setup: number; zwischensumme: number; versand: number; verpackung: number; total: number; mindestpreisGreift: boolean;
+  zeilen: PreisZeile[]; teile: number; setup: number; zwischensumme: number; versand: number; verpackung: number; versandTarif: number; total: number; mindestpreisGreift: boolean;
 };
 
 export function berechnePreis(
@@ -60,7 +65,9 @@ export function berechnePreis(
     const material = j.g * proG;
     const maschine = (j.min / 60) * ctx.maschinenRate;
     const support = j.sup ? ctx.supportZuschlag : 0;
-    return { label: j.label, hex: j.hex, gramm: j.g, proG, min: j.min, sup: j.sup, material, maschine, support, summe: material + maschine + support };
+    const filamentId = ctx.plaFilamentId[j.hex.trim().toLowerCase()] ?? ctx.plaFilamentId[j.label.trim().toLowerCase()] ?? null;
+    const stuetzenH = j.sup && ctx.nbRate > 0 ? Math.round((ctx.supportZuschlag / ctx.nbRate) * 1000) / 1000 : 0;
+    return { label: j.label, hex: j.hex, gramm: j.g, proG, filamentId, stuetzenH, min: j.min, sup: j.sup, material, maschine, support, summe: material + maschine + support };
   });
   const teile = zeilen.reduce((s, z) => s + z.summe, 0);
   const zwischensumme = teile + ctx.setup;
@@ -71,5 +78,5 @@ export function berechnePreis(
   const roh = zwischensumme + versand;
   const total = Math.max(roh, ctx.minPreis);
   const r = Math.min(rabatt(zwischensumme, versand), total);
-  return { zeilen, teile, setup: ctx.setup, zwischensumme, versand, verpackung, total, mindestpreisGreift: roh < ctx.minPreis, rabatt: r, totalMitRabatt: Math.max(total - r, 0) };
+  return { zeilen, teile, setup: ctx.setup, zwischensumme, versand, verpackung, versandTarif: Math.max(versand - verpackung, 0), total, mindestpreisGreift: roh < ctx.minPreis, rabatt: r, totalMitRabatt: Math.max(total - r, 0) };
 }

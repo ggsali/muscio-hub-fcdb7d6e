@@ -84,7 +84,10 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, pricing,
         const stlName = `Spardose ${params.name} – Platte ${i + 1} (${pl.label}).stl`;
         attachments.push({ filename: stlName, storage_path: path, size_bytes: pl.blob.size, bucket: "project-uploads", menge: 1, material: "PLA", farbe: pl.label,
           gruppe: `platte-${i + 1}`, teilname: `Spardose ${params.name} – Platte ${i + 1} (${pl.label})`,
-          slicer_druckzeit_sekunden: jobs[i] ? Math.round(jobs[i].min * 60) : null, slicer_filament_gramm: jobs[i]?.g ?? null, slicer_hat_supports: jobs[i]?.sup ?? null });
+          slicer_druckzeit_sekunden: jobs[i] ? Math.round(jobs[i].min * 60) : null, slicer_filament_gramm: jobs[i]?.g ?? null, slicer_hat_supports: jobs[i]?.sup ?? null,
+          // Kosten für den Auftrag im Admin: Filament aus der Bibliothek, Stützen entfernen (Std.), Setup nur 1× (erste Platte), Versand/Verpackung am Auftrag
+          filament_id: pricing?.zeilen[i]?.filamentId ?? null, stuetzen_h: pricing?.zeilen[i]?.stuetzenH ?? 0, setup_anzahl: i === 0 ? 1 : 0,
+          ...(i === 0 && pricing ? { auftrag_versand: pricing.versandTarif, auftrag_verpackung: pricing.verpackung } : {}) });
         const gj = jobs[i];
         sheetJobs.push({ ...gj, image: await renderPlatePng(pl.blob, pl.bed, pl.hex), stlName, gcodeName: gj?.gcodePath ? `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode` : undefined });
         if (gj?.gcodePath) attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode`, storage_path: gj.gcodePath, size_bytes: gj.gcodeSize ?? null, bucket: "project-uploads", kind: "gcode", gruppe: `platte-${i + 1}`, menge: 1, material: "PLA", farbe: pl.label });

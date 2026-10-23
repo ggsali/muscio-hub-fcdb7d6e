@@ -307,6 +307,7 @@ export default function AnfragenPage() {
       }
       const fallbackTitle = filenames[0]?.replace(/\.[^.]+$/, "") || inq.betreff || ("Anfrage vom " + new Date().toLocaleDateString("de-CH"));
 
+      const spardoseMeta = ((inq.attachments || []) as any[]).find((a) => a?.auftrag_versand != null) as { auftrag_versand?: number; auftrag_verpackung?: number } | undefined;
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         customer_id: customerId,
         beschreibung: inq.nachricht || inq.betreff || "",
@@ -314,6 +315,8 @@ export default function AnfragenPage() {
         status: "Offen",
         source: "website",
         name: aiTitle || fallbackTitle,
+        // Spardosen-Generator: Versand/Verpackung/Setup direkt übernehmen
+        ...(spardoseMeta ? { versandkosten: Number(spardoseMeta.auftrag_versand) || 0, verpackungskosten: Number(spardoseMeta.auftrag_verpackung) || 0, setup_anzahl: 1 } : {}),
         // Gutschein aus dem Kalkulator: Abzug wird im Auftrag als eigene Zeile berechnet
         ...(inq.gutschein?.code
           ? { gutschein_code: inq.gutschein.code, gutschein_typ: inq.gutschein.typ, gutschein_wert: Number(inq.gutschein.wert) || 0 }
@@ -408,7 +411,11 @@ export default function AnfragenPage() {
               menge?: number | null;
               material?: string | null;
               farbe?: string | null;
+              filament_id?: string | null;
+              stuetzen_h?: number | null;
+              setup_anzahl?: number | null;
             };
+            const stuetzenH = Number(sl.stuetzen_h) || 0;
             const slSeconds = sl.slicer_druckzeit_sekunden ?? null;
             const slGrams = sl.slicer_filament_gramm ?? null;
 
@@ -420,7 +427,10 @@ export default function AnfragenPage() {
               menge: Math.max(1, Math.floor(Number(sl.menge) || 1)),
               gewicht_g: slGrams ?? 0,
               druckzeit_h: slSeconds ? Math.round((slSeconds / 3600) * 100) / 100 : 0,
-              nachbearbeitung_h: 0,
+              nachbearbeitung_h: stuetzenH,
+              ...(stuetzenH > 0 ? { nachbearbeitungs_schritte: [{ name: "Stützen entfernen", stunden: stuetzenH }] } : {}),
+              ...(sl.filament_id ? { filament_id: sl.filament_id } : {}),
+              ...(sl.setup_anzahl != null ? { setup_pauschale_anzahl: Math.max(0, Math.floor(Number(sl.setup_anzahl))) } : {}),
               konstruktion_h: 0,
               preis_pro_stueck: 0,
               preis_total: 0,
