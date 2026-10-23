@@ -4,6 +4,7 @@ import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
+import { persistChatMessage } from "@/lib/chat-messages";
 
 interface Message {
   id?: string;
@@ -106,10 +107,6 @@ export function ChatWidget() {
     return id;
   };
 
-  const saveMessage = async (sid: string, role: string, content: string) => {
-    await supabase.from("chat_messages").insert({ session_id: sid, role, content });
-  };
-
   const streamAI = async (sid: string, allMessages: Message[]) => {
     const resp = await fetch(CHAT_URL, {
       method: "POST",
@@ -148,8 +145,8 @@ export function ChatWidget() {
       }
     }
     if (fullContent) {
-      const { data } = await supabase.from("chat_messages").insert({ session_id: sid, role: "assistant", content: fullContent }).select().single();
-      if (data) setMessages(prev => prev.map(m => m.id === placeholderId ? (data as Message) : m));
+      const saved = await persistChatMessage(sid, "assistant", fullContent);
+      setMessages(prev => prev.map(m => m.id === placeholderId ? saved : m));
     }
   };
 
@@ -163,9 +160,16 @@ export function ChatWidget() {
       sid = await createSession(userInfo.name, userInfo.email);
       if (!sid) { setLoading(false); return; }
     }
-    const userMsg: Message = { role: "user", content: text };
+    let userMsg: Message;
+    try {
+      userMsg = await persistChatMessage(sid, "user", text);
+    } catch (error) {
+      setInput(text);
+      setMessages(prev => [...prev, { role: "assistant", content: error instanceof Error ? error.message : "Nachricht konnte nicht gespeichert werden." }]);
+      setLoading(false);
+      return;
+    }
     setMessages(prev => [...prev, userMsg]);
-    await saveMessage(sid, "user", text);
     const { data: botOn } = await supabase.rpc("get_chat_bot_enabled", { p_session_id: sid });
     if (botOn !== false) {
       try { await streamAI(sid, [...messages, userMsg]); }
@@ -175,9 +179,12 @@ export function ChatWidget() {
           localStorage.removeItem(SESSION_KEY);
           const newSid = userInfo.name ? await createSession(userInfo.name, userInfo.email) : null;
           if (newSid) {
-            setMessages([userMsg]);
-            await saveMessage(newSid, "user", text);
-            try { await streamAI(newSid, [userMsg]); }
+            sid = newSid;
+            try {
+              userMsg = await persistChatMessage(newSid, "user", text);
+              setMessages([userMsg]);
+              await streamAI(newSid, [userMsg]);
+            }
             catch (e2: any) { setMessages(prev => [...prev, { role: "assistant", content: `Entschuldigung: ${e2.message}` }]); }
           } else {
             setMessages(prev => [...prev, { role: "assistant", content: "Die Chat-Sitzung ist abgelaufen. Bitte starte den Chat neu." }]);
@@ -210,12 +217,18 @@ export function ChatWidget() {
     setInput(""); setLoading(true);
     const sid = await createSession(userInfo.name, userInfo.email);
     if (!sid) { setLoading(false); return; }
-    const userMsg: Message = { role: "user", content: text };
-    setMessages([userMsg]);
-    await saveMessage(sid, "user", text);
-    try { await streamAI(sid, [userMsg]); }
-    catch (e: any) { setMessages(prev => [...prev, { role: "assistant", content: `Fehler: ${e.message}` }]); }
-    setLoading(false);
+    let saved = false;
+    try {
+      const userMsg = await persistChatMessage(sid, "user", text);
+      saved = true;
+      setMessages([userMsg]);
+      await streamAI(sid, [userMsg]);
+    } catch (e: any) {
+      if (!saved) setInput(text);
+      setMessages(prev => [...prev, { role: "assistant", content: `Fehler: ${e.message}` }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -292,7 +305,7 @@ export function ChatWidget() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 setOpen(false);
-                                window.history.pushState({}, "", internalHref!);
+                                window.history.pushState({}, "", internalHref);
                                 window.dispatchEvent(new PopStateEvent("popstate"));
                               }}
                               className="underline underline-offset-2 font-medium hover:opacity-80 cursor-pointer"
