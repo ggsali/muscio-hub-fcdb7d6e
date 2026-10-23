@@ -122,24 +122,36 @@ serve(async (req) => {
     await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
     if (!res.ok) return json({ ok: false, error: "Slicer-Fehler", status: res.status, detail: String(payload?.detail ?? "").slice(0, 300) });
     // Plattenmodus: G-Code serverseitig vom NAS holen und im Storage ablegen, damit er der Bestellung angehängt werden kann
-    if (plate && payload?.job_id && /^[A-Za-z0-9_-]{6,80}$/.test(String(payload.job_id))) {
-      try {
-        const gres = await fetch(`${base}/jobs/${payload.job_id}/gcode`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(60_000) });
-        if (gres.ok) {
-          const buf = new Uint8Array(await gres.arrayBuffer());
-          const gpath = `kalkulator/spardose-${crypto.randomUUID().slice(0, 8)}-platte.gcode`;
-          const { error: upErr } = await supabase.storage.from("project-uploads").upload(gpath, buf, { contentType: "text/plain", upsert: false });
-          if (!upErr) return json({ ok: true, stats: payload.stats ?? null, gcode_path: gpath, gcode_size: buf.byteLength });
-          await dbg(supabase, { ev: "gcode-upload-fehler", msg: String(upErr.message).slice(0, 200) });
-        } else {
-          await dbg(supabase, { ev: "gcode-download-fehler", status: gres.status });
+    let gcodeError = "";
+    if (plate) {
+      const jid = String(payload?.job_id ?? "");
+      if (!/^[A-Za-z0-9_-]{6,80}$/.test(jid)) {
+        gcodeError = "Slicer lieferte keine Job-ID (alte Slicer-Version?)";
+      } else {
+        try {
+          const gres = await fetch(`${base}/jobs/${jid}/gcode`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(60_000) });
+          if (!gres.ok) {
+            gcodeError = `G-Code-Download vom NAS: HTTP ${gres.status}`;
+          } else {
+            const buf = new Uint8Array(await gres.arrayBuffer());
+            const gpath = `kalkulator/spardose-${crypto.randomUUID().slice(0, 8)}-platte.gcode`;
+            let upErr: { message: string } | null = null;
+            for (const ct of ["text/plain", "application/octet-stream"]) {
+              const r = await supabase.storage.from("project-uploads").upload(gpath, buf, { contentType: ct, upsert: false });
+              upErr = r.error as { message: string } | null;
+              if (!upErr) break;
+            }
+            if (!upErr) return json({ ok: true, stats: payload.stats ?? null, gcode_path: gpath, gcode_size: buf.byteLength });
+            gcodeError = `Speichern fehlgeschlagen: ${String(upErr.message).slice(0, 120)} (${Math.round(buf.byteLength / 1024)} KB)`;
+          }
+        } catch (e) {
+          gcodeError = `G-Code-Fehler: ${String((e as Error)?.message ?? e).slice(0, 120)}`;
         }
-      } catch (e) {
-        await dbg(supabase, { ev: "gcode-fehler", msg: String((e as Error)?.message ?? e).slice(0, 200) });
       }
+      await dbg(supabase, { ev: "gcode-fehler", msg: gcodeError });
     }
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
-    return json({ ok: true, stats: payload.stats ?? null });
+    return json({ ok: true, stats: payload.stats ?? null, ...(gcodeError ? { gcode_error: gcodeError } : {}) });
   } catch (e) {
     console.error("slice-public error:", e);
     try { await dbg(createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!), { ev: "fehler", msg: String((e as Error)?.message ?? e).slice(0, 300) }); } catch { /* ignore */ }

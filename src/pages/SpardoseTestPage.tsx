@@ -272,7 +272,7 @@ export default function SpardoseTestPage() {
     return () => clearTimeout(t);
   }, [p]);
 
-  type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[] };
+  type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; gcodeError?: string; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[] };
   const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; preis?: number; step?: string }>({ state: "idle" });
   const plansRef = useRef<PlatePlan[]>([]);
   useEffect(() => { setFin({ state: "idle" }); plansRef.current = []; }, [res, colors]);
@@ -307,7 +307,7 @@ export default function SpardoseTestPage() {
           setFin({ state: "err", msg: `Slicer (${pl.label}): ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}` });
           return;
         }
-        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, printerName: pl.printerName, bed: pl.bed, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, rects: pl.rects });
+        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, printerName: pl.printerName, bed: pl.bed, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, gcodeError: j?.gcode_error ?? (j?.gcode_path ? undefined : "Antwort ohne G-Code (Edge Function slice-public nicht neu deployed?)"), rects: pl.rects });
       }
       const s = await loadSettings();
       const g = jobs.reduce((a, j) => a + j.g, 0), h = jobs.reduce((a, j) => a + j.min, 0) / 60;
@@ -465,7 +465,7 @@ export default function SpardoseTestPage() {
                   <div key={j.hex} className="flex items-center gap-2">
                     <span className="inline-block h-3 w-3 rounded-full border" style={{ background: j.hex }} />
                     <span className="font-medium">{j.label}</span><span className="rounded bg-muted px-1.5 text-xs">{j.printerName}</span>
-                    <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g · Stützen: {j.sup ? "ja" : "nein"}</span>
+                    <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g · Stützen: {j.sup ? "ja" : "nein"} · G-Code: {j.gcodePath ? "gespeichert" : <span className="text-destructive">fehlt – {j.gcodeError}</span>}</span>
                   </div>
                 ))}
               </div>
