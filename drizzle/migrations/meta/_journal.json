@@ -239,6 +239,13 @@
       "when": 1792579290827,
       "tag": "0033_admin_todos",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792755982427,
+      "tag": "0034_fix_chat_message_insert_session_validation",
+      "breakpoints": true
     }
   ]
 }
