@@ -14,7 +14,7 @@ import type { SpardoseParams } from "@/lib/spardose";
 type Props = {
   params: SpardoseParams;
   plans: PlatePlan[];
-  jobs: { label: string; hex: string; count: number; min: number; g: number }[];
+  jobs: { label: string; hex: string; count: number; min: number; g: number; gcodePath?: string; gcodeSize?: number }[];
   preis: number;
   colors: { text: string; base: string; cap: string };
   labelOf: (hex: string) => string;
@@ -70,6 +70,8 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, colors, 
         const { error } = await supabase.storage.from("project-uploads").upload(path, pl.blob, { upsert: false, contentType: "model/stl" });
         if (error) throw error;
         attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}).stl`, storage_path: path, size_bytes: pl.blob.size, bucket: "project-uploads", menge: 1, material: "PLA", farbe: pl.label });
+        const gj = jobs[i];
+        if (gj?.gcodePath) attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode`, storage_path: gj.gcodePath, size_bytes: gj.gcodeSize ?? null, bucket: "project-uploads", kind: "gcode", menge: 1, material: "PLA", farbe: pl.label });
       }
 
       const platten = jobs.map((j, i) => `Platte ${i + 1}: ${j.label} – ${j.count} Teil${j.count === 1 ? "" : "e"}, ${Math.floor(j.min / 60)} h ${Math.round(j.min % 60)} min, ${j.g.toFixed(0)} g`).join("\n");

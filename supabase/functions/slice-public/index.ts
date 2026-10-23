@@ -118,6 +118,23 @@ serve(async (req) => {
     const payload = await res.json().catch(() => ({}));
     await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
     if (!res.ok) return json({ ok: false, error: "Slicer-Fehler", status: res.status, detail: String(payload?.detail ?? "").slice(0, 300) });
+    // Plattenmodus: G-Code serverseitig vom NAS holen und im Storage ablegen, damit er der Bestellung angehängt werden kann
+    if (plate && payload?.job_id && /^[A-Za-z0-9_-]{6,80}$/.test(String(payload.job_id))) {
+      try {
+        const gres = await fetch(`${base}/jobs/${payload.job_id}/gcode`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(60_000) });
+        if (gres.ok) {
+          const buf = new Uint8Array(await gres.arrayBuffer());
+          const gpath = `kalkulator/spardose-${crypto.randomUUID().slice(0, 8)}-platte.gcode`;
+          const { error: upErr } = await supabase.storage.from("project-uploads").upload(gpath, buf, { contentType: "text/plain", upsert: false });
+          if (!upErr) return json({ ok: true, stats: payload.stats ?? null, gcode_path: gpath, gcode_size: buf.byteLength });
+          await dbg(supabase, { ev: "gcode-upload-fehler", msg: String(upErr.message).slice(0, 200) });
+        } else {
+          await dbg(supabase, { ev: "gcode-download-fehler", status: gres.status });
+        }
+      } catch (e) {
+        await dbg(supabase, { ev: "gcode-fehler", msg: String((e as Error)?.message ?? e).slice(0, 200) });
+      }
+    }
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
     return json({ ok: true, stats: payload.stats ?? null });
   } catch (e) {

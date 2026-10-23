@@ -270,7 +270,7 @@ export default function SpardoseTestPage() {
     return () => clearTimeout(t);
   }, [p]);
 
-  type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; rects: { x: number; y: number; w: number; h: number; name: string }[] };
+  type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; rects: { x: number; y: number; w: number; h: number; name: string }[] };
   const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; preis?: number; step?: string }>({ state: "idle" });
   const plansRef = useRef<PlatePlan[]>([]);
   useEffect(() => { setFin({ state: "idle" }); plansRef.current = []; }, [res, colors]);
@@ -304,7 +304,7 @@ export default function SpardoseTestPage() {
           setFin({ state: "err", msg: `Slicer (${pl.label}): ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}` });
           return;
         }
-        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, rects: pl.rects });
+        jobs.push({ label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, rects: pl.rects });
       }
       const s = await loadSettings();
       const g = jobs.reduce((a, j) => a + j.g, 0), h = jobs.reduce((a, j) => a + j.min, 0) / 60;
