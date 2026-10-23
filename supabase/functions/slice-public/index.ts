@@ -87,6 +87,7 @@ serve(async (req) => {
       out.append("quality", quality);
       if (infill) out.append("infill", infill);
       out.append("supports", "true");
+      if (plate) out.append("support_everywhere", "true");
       out.append("orient", plate ? "false" : "true");
       out.append("reference", plate ? "spardose-plate" : "public-calc");
       return out;
