@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Send, MessageCircle, ArrowLeft, Trash2, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,7 @@ interface ChatSession {
   bot_enabled?: boolean;
   last_message?: string;
   unread_count?: number;
+  last_at?: string;
 }
 
 interface ChatMessage {
@@ -40,6 +41,8 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevSessionCount = useRef(0);
+  const prevUnread = useRef<number | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
 
 
   // Realtime + Polling kombinieren
@@ -68,13 +71,32 @@ export default function ChatPage() {
     const interval = setInterval(() => {
       loadSessions();
       if (selectedSession) loadMessages(selectedSession);
-    }, 10000);
+    }, 4000);
+    const onVis = () => { if (document.visibilityState === "visible") { loadSessions(); if (selectedSession) loadMessages(selectedSession); } };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onVis);
 
     return () => {
       supabase.removeChannel(channel);
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onVis);
     };
   }, [selectedSession]);
+
+  // Link aus der Benachrichtigungs-Mail (?session=...) öffnet die Konversation direkt
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sid = new URLSearchParams(window.location.search).get("session");
+    if (sid) { setSelectedSession(sid); loadMessages(sid); }
+  }, []);
+
+  // Neue Nachricht in bestehender Konversation melden
+  useEffect(() => {
+    const total = sessions.reduce((a, c) => a + (c.unread_count || 0), 0);
+    if (prevUnread.current !== null && total > prevUnread.current) toast.info("💬 Neue Chat-Nachricht!");
+    prevUnread.current = total;
+  }, [sessions]);
 
   // Benachrichtigung bei neuer Chat-Anfrage
   useEffect(() => {
@@ -107,6 +129,7 @@ export default function ChatPage() {
       .from("chat_sessions")
       .select("*")
       .order("updated_at", { ascending: false });
+    setLoadErr(error ? error.message : null);
 
     console.log("[ChatPage] Sessions geladen:", data?.length, error);
 
@@ -114,7 +137,7 @@ export default function ChatPage() {
       const enriched = await Promise.all((data as ChatSession[]).map(async (s) => {
         const { data: msgs } = await supabase
           .from("chat_messages")
-          .select("content, is_read, role")
+          .select("content, is_read, role, created_at")
           .eq("session_id", s.id)
           .order("created_at", { ascending: false })
           .limit(1);
@@ -127,9 +150,11 @@ export default function ChatPage() {
         return {
           ...s,
           last_message: msgs?.[0]?.content || "",
+          last_at: (msgs?.[0] as any)?.created_at || s.updated_at,
           unread_count: count || 0,
         };
       }));
+      enriched.sort((a: any, b: any) => new Date(b.last_at).getTime() - new Date(a.last_at).getTime());
       setSessions(enriched);
     }
   };
@@ -201,6 +226,7 @@ export default function ChatPage() {
       )}>
         <div className="p-4 border-b border-border">
           <h2 className="font-bold text-lg">Konversationen</h2>
+          {loadErr && <div className="mt-2 rounded border border-destructive/40 bg-destructive/10 p-2 text-xs text-destructive">Chats konnten nicht geladen werden: {loadErr}</div>}
         </div>
         <div className="flex-1 overflow-y-auto">
           {sessions.map(conv => (
@@ -283,31 +309,35 @@ export default function ChatPage() {
 
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.map(msg => (
-                <div key={msg.id} className={cn("flex", msg.role !== "user" ? "justify-end" : "justify-start")}>
-                  <div className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
-                    msg.role === "user"
-                      ? "bg-muted text-foreground rounded-tl-sm"
-                      : msg.role === "admin"
-                        ? "bg-primary text-primary-foreground rounded-tr-sm"
-                        : "bg-secondary text-secondary-foreground rounded-tr-sm"
-                  )}>
-                    {msg.role === "assistant" && (
-                      <span className="text-[10px] flex items-center gap-1 mb-1 opacity-70">
-                        <Bot className="w-3 h-3" /> KI-Assistent
-                      </span>
+              {messages.map((msg, i) => {
+                const d = new Date(msg.created_at);
+                const neuerTag = i === 0 || !isSameDay(d, new Date(messages[i - 1].created_at));
+                const kunde = msg.role === "user";
+                return (
+                  <React.Fragment key={msg.id}>
+                    {neuerTag && (
+                      <div className="flex justify-center py-1">
+                        <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] text-muted-foreground">{format(d, "EEEE, d. MMMM yyyy", { locale: de })}</span>
+                      </div>
                     )}
-                    <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                    <p className={cn(
-                      "text-[10px] mt-1 text-right",
-                      msg.role === "admin" ? "text-primary-foreground/70" : "text-muted-foreground"
-                    )}>
-                      {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: de })}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                    <div className={cn("flex flex-col", kunde ? "items-start" : "items-end")}>
+                      <span className="mb-0.5 px-1 text-[11px] font-medium text-muted-foreground">
+                        {kunde ? (activeConv?.user_name || "Kunde") : msg.role === "admin" ? "Du (Mitarbeiter)" : "KI-Assistent"} · {format(d, "HH:mm")}
+                      </span>
+                      <div className={cn(
+                        "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm",
+                        kunde
+                          ? "bg-muted text-foreground rounded-tl-sm"
+                          : msg.role === "admin"
+                            ? "bg-primary text-primary-foreground rounded-tr-sm"
+                            : "bg-secondary text-secondary-foreground rounded-tr-sm"
+                      )}>
+                        <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
+                      </div>
+                    </div>
+                  </React.Fragment>
+                );
+              })}
               <div ref={bottomRef} />
             </div>
 

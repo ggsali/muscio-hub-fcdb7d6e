@@ -16,16 +16,9 @@ interface Message {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/website-chat`;
 const SESSION_KEY = "3dmuscio_chat_session";
 
-const triggerWords = [
-  "mitarbeiter", "mensch", "person", "sprechen", "anrufen",
-  "rückruf", "direkt", "persönlich", "meldet sich", "weiterleiten",
-  "telefon", "ansprechpartner", "jemanden erreichen",
-];
-
-const shouldNotify = (userMessage: string): boolean => {
-  const lower = userMessage.toLowerCase();
-  return triggerWords.some(word => lower.includes(word));
-};
+// Nur echte Wünsche nach einem Menschen melden (nicht jedes "direkt" oder "Person")
+const HUMAN_RE = /(mitarbeiter|ansprechpartner|r(ü|ue)ckruf|zur(ü|ue)ckrufen|anrufen|anruf\b|telefonisch|pers(ö|oe)nlich|echten? mensch|mit (einem|einer|jemand\w*) (\w+ )?(sprechen|reden|schreiben)|(mensch|person) (sprechen|erreichen)|jemanden erreichen|weiterleiten|menschen sprechen)/i;
+const shouldNotify = (userMessage: string): boolean => HUMAN_RE.test(userMessage);
 
 export function ChatWidget() {
   const resin = useResinEnabled();

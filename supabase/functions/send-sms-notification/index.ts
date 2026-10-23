@@ -23,6 +23,12 @@ const isOpeningHours = (): boolean => {
 };
 
 
+// Wochenende (Sa/So, Zeit Zürich): keine Benachrichtigung
+const isWeekend = (): boolean => {
+  const wd = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Zurich", weekday: "short" }).format(new Date());
+  return wd === "Sat" || wd === "Sun";
+};
+
 const escapeHtml = (s: unknown): string =>
   String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -67,6 +73,9 @@ Deno.serve(async (req) => {
     // Only allow safe session id chars (uuid/hex/dashes)
     const sessionId = /^[a-zA-Z0-9-]+$/.test(rawSessionId) ? rawSessionId : "";
 
+    if (isWeekend()) {
+      return new Response(JSON.stringify({ success: true, skipped: "weekend" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const openNow = isOpeningHours();
     console.log("Chat notification triggered", {
       hasResendKey: !!Deno.env.get("RESEND_API_KEY"),
@@ -84,12 +93,12 @@ Deno.serve(async (req) => {
 
     const chatLink = `https://3dmuscio.com/admin/chat${sessionId ? `?session=${encodeURIComponent(sessionId)}` : ""}`;
     const html = `
-      <h2>💬 Neue Chat-Anfrage auf 3dmuscio.com</h2>
+      <h2>💬 Jemand möchte mit einem Mitarbeiter sprechen</h2>
       <p><strong>Name:</strong> ${escapeHtml(customerName) || "Nicht angegeben"}</p>
       <p><strong>E-Mail:</strong> ${escapeHtml(customerEmail) || "Nicht angegeben"}</p>
       <p><strong>Nachricht:</strong> ${escapeHtml(message)}</p>
       <p><strong>Zeitpunkt:</strong> ${new Date().toLocaleString("de-CH", { timeZone: "Europe/Zurich" })}${openNow ? "" : " (ausserhalb Öffnungszeiten)"}</p>
-      <p><a href="${chatLink}" style="display:inline-block;padding:10px 18px;background:#FF5A00;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Zur Anfragen-Übersicht →</a></p>
+      <p><a href="${chatLink}" style="display:inline-block;padding:10px 18px;background:#FF5A00;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Zum Chat →</a></p>
     `;
 
     const { error } = await resend.emails.send({
