@@ -120,9 +120,20 @@ export default function ChatPage() {
   }, []);
 
 
+  // Nur scrollen, wenn wirklich eine neue Nachricht kommt (oder eine andere Konversation geöffnet wird) –
+  // nicht bei jedem Nachladen. Nur der Chat-Bereich scrollt, nie die ganze Seite.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const lastMsgKey = useRef<string>("");
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const el = scrollRef.current;
+    const last = messages[messages.length - 1];
+    const key = `${selectedSession}:${messages.length}:${last?.id ?? ""}`;
+    if (!el || key === lastMsgKey.current) return;
+    const sessionChanged = !lastMsgKey.current.startsWith(`${selectedSession}:`);
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
+    lastMsgKey.current = key;
+    if (sessionChanged || nearBottom) el.scrollTo({ top: el.scrollHeight });
+  }, [messages, selectedSession]);
 
   const loadSessions = async () => {
     const { data, error } = await supabase
@@ -308,7 +319,7 @@ export default function ChatPage() {
             </div>
 
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((msg, i) => {
                 const d = new Date(msg.created_at);
                 const neuerTag = i === 0 || !isSameDay(d, new Date(messages[i - 1].created_at));
