@@ -508,7 +508,7 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
   const warnings = [...prep.warnings];
   const clrPx = p.spiel * ppm;
   const toMm = (pt: Pt) => new THREE.Vector2(pt[0] / ppm - cxMm, (H - pt[1]) / ppm - H / ppm / 2);
-  const epsPx = 0.012 * ppm;
+  const epsPx = 0.03 * ppm;
 
   // Kappe: Masse nach Vorgabe (Ø30 Hals, Ø36 Konus-Bund, Höhe 7,5, zwei Nasen 1,5 x 2,4, Steg quer dazu), mindestens 12 % grösser
   const CAP = { r: 15, rFl: 18, rLug: 16.5, lugW: 2.4, lugH: 3.46, h: 7.5, neckTop: 5.0, floor: 4.96, rRec: 11.5 };
@@ -615,6 +615,7 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
   const scope = `${prepKey}|${p.spiel}|${p.rillenTiefe}|${slotCx}|${slotBottom}|${CAP.r * kc}`;
   const geoCache = new Map<string, THREE.BufferGeometry>();
   const layers: THREE.BufferGeometry[] = [];
+  const merged: { key: string; a: number; b: number; shapes: THREE.Shape[] }[] = [];
   for (let s = 0; s < zlist.length - 1; s++) {
     const a = zlist[s], b = zlist[s + 1];
     if (b - a < 1e-6) continue;
@@ -632,6 +633,13 @@ async function buildSpardose(p: SpardoseParams): Promise<SpardoseResult | null> 
       shapes = toShapes(contours(buildField(k), W, H), toMm, epsPx);
       shapeCache.set(`${scope}|${key}`, shapes);
     }
+    // Aufeinanderfolgende Scheiben mit identischem Querschnitt zu EINER Extrusion verschmelzen (verlustfrei, spart viele Dreiecke)
+    const prev = merged[merged.length - 1];
+    if (prev && prev.key === key && Math.abs(prev.b - a) < 1e-6) { prev.b = b; continue; }
+    merged.push({ key, a, b, shapes });
+  }
+  for (const m of merged) {
+    const { key, a, b, shapes } = m;
     const gk = `${key}_${(b - a).toFixed(4)}`;
     let g = geoCache.get(gk);
     if (!g) {
