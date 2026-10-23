@@ -238,6 +238,7 @@ export default function SpardoseTestPage() {
       return { text: ok(o.text) ? o.text : hell.hex, base: ok(o.base) ? o.base : dunkel.hex, cap: ok(o.cap) ? o.cap : hell.hex };
     });
   }, [plaFarben.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [step, setStep] = useState(1);
   const [res, setRes] = useState<SpardoseResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -337,16 +338,44 @@ export default function SpardoseTestPage() {
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   };
 
+  const STEPS = ["Name", "Form", "Farben", "Preis", "Bestellen"];
+  const canNext = step === 1 ? p.name.length >= NAME_MIN : step === 2 || step === 3 ? !!res && !busy && res.valid : step === 4 ? fin.state === "ok" : false;
+  const goTo = (n: number) => { setStep(n); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const next = () => {
+    if (step === 3) { goTo(4); void fertig(); return; }
+    goTo(Math.min(STEPS.length, step + 1));
+  };
+
   return (
-    <div className="mx-auto max-w-[1400px] space-y-4 p-4 sm:p-6">
+    <div className="mx-auto max-w-[1200px] space-y-4 p-4 sm:p-6">
       <div>
         <h1 className="text-xl font-bold">Spardose-Generator <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 align-middle text-xs font-semibold text-primary">TEST</span></h1>
         <p className="text-sm text-muted-foreground">Name als Spardose: hohler Körper mit Münzschlitz oben in der Mitte (längs in der Tiefe), Buchstaben zum Einlegen, Bajonett-Kappe hinten. Nur im Admin sichtbar.</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[300px_1fr_260px]">
-        <div className="space-y-4 rounded-xl border bg-card p-4">
-          <Field label="Name" value={`${p.name.length}/12`}>
+
+      <ol className="flex items-center gap-1 overflow-x-auto pb-1">
+        {STEPS.map((t, i) => {
+          const n = i + 1;
+          const active = n === step, done = n < step;
+          return (
+            <li key={t} className="flex items-center gap-1">
+              <button type="button" disabled={n > step} onClick={() => goTo(n)} className={cn("flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", active ? "border-primary bg-primary text-primary-foreground" : done ? "border-primary/40 bg-primary/10 text-primary" : "text-muted-foreground")}>
+                <span className="text-xs tabular-nums">{n}</span>{t}
+              </button>
+              {n < STEPS.length && <span className="h-px w-4 bg-border" />}
+            </li>
+          );
+        })}
+      </ol>
+
+      <div className="grid gap-4 lg:grid-cols-[440px_1fr]">
+        <div className="order-2 space-y-4 lg:order-1">
+          <div className="space-y-4 rounded-xl border bg-card p-5">
+            {step === 1 && (
+              <>
+                <h2 className="text-lg font-bold">Name &amp; Schrift</h2>
+                <Field label="Name" value={`${p.name.length}/12`}>
             <Input value={p.name} maxLength={12} onChange={(e) => set("name", sanitizeName(e.target.value))} placeholder="z. B. Nora" />
             <p className="text-[11px] text-muted-foreground">Mindestens 2 Zeichen: Buchstaben A–Z und Ziffern, ohne Sonderzeichen und Leerzeichen.</p>
           </Field>
@@ -361,7 +390,17 @@ export default function SpardoseTestPage() {
           <Field label="Maximale Länge" value={`${p.maxLength} mm`}>
             <Slider min={LIMITS.maxLength[0]} max={LIMITS.maxLength[1]} step={5} value={[p.maxLength]} onValueChange={([v]) => set("maxLength", v)} />
           </Field>
-          <Field label="Schlitzposition" value={p.schlitzX === 0 ? "Mitte" : `${p.schlitzX > 0 ? "+" : ""}${p.schlitzX} mm`}>
+          <Field label="Buchstabenhöhe" value={`${p.size} mm`}>
+            <Slider min={LIMITS.size[0]} max={LIMITS.size[1]} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
+          </Field>
+
+          
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <h2 className="text-lg font-bold">Form &amp; Grösse</h2>
+                <Field label="Schlitzposition" value={p.schlitzX === 0 ? "Mitte" : `${p.schlitzX > 0 ? "+" : ""}${p.schlitzX} mm`}>
             <Slider min={LIMITS.schlitzX[0]} max={LIMITS.schlitzX[1]} step={1} value={[p.schlitzX]} onValueChange={([v]) => set("schlitzX", v)} />
             <p className="text-[11px] text-muted-foreground">Verschiebt den Münzschlitz nach links oder rechts. Liegt unter der Stelle kein Hohlraum, rutscht er automatisch zur nächsten passenden Stelle.</p>
           </Field>
@@ -369,10 +408,17 @@ export default function SpardoseTestPage() {
             <Slider min={LIMITS.rand[0]} max={LIMITS.rand[1]} step={0.5} value={[p.rand]} onValueChange={([v]) => set("rand", v)} />
             <p className="text-[11px] text-muted-foreground">Abstand von den Buchstaben bis zum Rand der Spardose (min. 3 mm). Wird automatisch erhöht, falls die Dose sonst nicht funktioniert.</p>
           </Field>
-          <Field label="Buchstabenhöhe" value={`${p.size} mm`}>
-            <Slider min={LIMITS.size[0]} max={LIMITS.size[1]} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
+          <Field label="Münzschlitz (fest)">
+            <div className="text-sm tabular-nums">{SLOT_LEN} × {SLOT_THK} mm</div>
+            <div className="text-[11px] text-muted-foreground">Passt für das 5-Franken-Stück (Ø 31,45 × 2,35 mm) plus je 1 mm Spiel.</div>
           </Field>
-
+          <Field label="Material"><div className="inline-flex rounded-md bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">PLA</div></Field>
+          <Field label="Abmessungen">
+            <div className="text-sm tabular-nums">
+              {res ? <>X {res.dims.x.toFixed(1)} · Y {res.dims.y.toFixed(1)} · Z {res.dims.z.toFixed(1)} mm</> : "–"}
+            </div>
+            {res && <div className="text-[11px] text-muted-foreground">Berechnet in {ms} ms · Raster {res.info.ppm} px/mm · Kappe Ø {(res.info.capR * 2).toFixed(0)} mm · Rand {res.info.randUsed} mm</div>}
+          </Field>
           <details className="rounded-lg border p-3 text-sm">
             <summary className="cursor-pointer font-medium">Erweitert (Passung &amp; Aufbau)</summary>
             <div className="mt-3 space-y-4">
@@ -391,32 +437,23 @@ export default function SpardoseTestPage() {
               <Button variant="outline" size="sm" onClick={() => setP({ ...DEFAULTS, name: p.name, font: p.font })}>Auf Standard zurücksetzen</Button>
             </div>
           </details>
-        </div>
-
-        <div className="space-y-3">
-          <div className="relative overflow-hidden rounded-xl border bg-gradient-to-b from-muted/40 to-muted">
-            <div className="h-[460px]"><Viewer res={res} colors={colors} /></div>
-            {busy && (
-              <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-background/90 px-3 py-1 text-xs shadow">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> berechne…
-              </div>
+              </>
             )}
-            {!res && !busy && <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">Name mit mindestens {NAME_MIN} Zeichen eingeben</div>}
-          </div>
-          {err && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">Fehler: {err}</div>}
-          {res && res.warnings.length > 0 && (
-            <div className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-foreground">
-              {res.warnings.map((w) => <div key={w} className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />{w}</div>)}
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={download} disabled={!res || busy || !res.valid}><Download className="mr-2 h-4 w-4" />STL herunterladen (ZIP: Körper, Buchstaben, Kappe)</Button>
-            <Button variant="secondary" onClick={fertig} disabled={!res || busy || !res.valid || fin.state === "busy"}>
-              {fin.state === "busy" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Fertig – Preis berechnen
-            </Button>
-            <span className="text-xs text-muted-foreground">Körper liegt mit der Vorderseite auf dem Druckbett. Buchstaben mit der glatten Vorderseite nach unten.</span>
-          </div>
-          {fin.state === "busy" && <div className="rounded-lg border bg-muted/40 p-3 text-sm">{fin.step} (kann einige Minuten dauern)</div>}
+            {step === 3 && (
+              <>
+                <h2 className="text-lg font-bold">Farben</h2>
+                <Field label="Material"><div className="inline-flex rounded-md bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">PLA</div></Field>
+                <Field label="Buchstaben (Farbe)"><Swatches colors={plaFarben} value={colors.text} onChange={(c) => setColors((o) => ({ ...o, text: c }))} /></Field>
+          <Field label="Körper (Farbe)"><Swatches colors={plaFarben} value={colors.base} onChange={(c) => setColors((o) => ({ ...o, base: c }))} /></Field>
+          <Field label="Kappe (Farbe)"><Swatches colors={plaFarben} value={colors.cap} onChange={(c) => setColors((o) => ({ ...o, cap: c }))} /></Field>
+          <p className="text-[11px] text-muted-foreground">Es stehen nur PLA-Farben aus deiner Filament-Bibliothek zur Auswahl.</p>
+              </>
+            )}
+            {step === 4 && (
+              <>
+                <h2 className="text-lg font-bold">Preis</h2>
+                {fin.state === "idle" && <p className="text-sm text-muted-foreground">Die Teile werden auf Druckplatten angeordnet und auf dem NAS gesliced.</p>}
+                {fin.state === "busy" && <div className="rounded-lg border bg-muted/40 p-3 text-sm">{fin.step} (kann einige Minuten dauern)</div>}
           {fin.state === "err" && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{fin.msg}</div>}
           {fin.state === "ok" && fin.jobs && (
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
@@ -440,34 +477,74 @@ export default function SpardoseTestPage() {
               <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis aus den Kalkulations-Einstellungen (inkl. 0.5 h Nachbearbeitung), PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
             </div>
           )}
-          {fin.state === "ok" && fin.jobs && plansRef.current.length > 0 && (
-            <SpardoseOrderForm
-              params={p}
-              plans={plansRef.current}
-              jobs={fin.jobs}
-              preis={fin.preis!}
-              colors={colors}
-              labelOf={(hex) => plaFarben.find((c) => c.hex === hex)?.name ?? hex}
-            />
-          )}
+          
+                {fin.state === "ok" && fin.jobs && (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                    <div className="text-2xl font-bold tabular-nums">CHF {fin.preis!.toFixed(2)}</div>
+                    <div className="mt-2 space-y-1 text-sm">
+                      {fin.jobs.map((j) => (
+                        <div key={j.hex} className="flex flex-wrap items-center gap-2">
+                          <span className="inline-block h-3 w-3 rounded-full border" style={{ background: j.hex }} />
+                          <span className="font-medium">{j.label}</span>
+                          <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g · Stützen: {j.sup ? "ja" : "nein"}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {fin.jobs.map((j) => (
+                        <svg key={j.hex} viewBox={`0 0 ${PLATE.x} ${PLATE.y}`} className="h-36 w-36 rounded border bg-background">
+                          {j.rects.map((r, i) => <rect key={i} x={r.x} y={PLATE.y - r.y - r.h} width={r.w} height={r.h} fill={j.hex} stroke="currentColor" strokeWidth={2} opacity={0.85} />)}
+                        </svg>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-[11px] text-muted-foreground">Gleiche Farben liegen zusammen auf einer Platte ({PLATE.x}×{PLATE.y} mm), jede weitere Farbe auf eigener Platte. Richtpreis inkl. Nachbearbeitung, PLA, 0.20 mm, 15 % Füllung, mit Stützen.</div>
+                  </div>
+                )}
+                {fin.state === "err" && <Button variant="outline" onClick={() => void fertig()}>Erneut versuchen</Button>}
+                <Button variant="ghost" size="sm" onClick={download} disabled={!res || !res.valid}><Download className="mr-2 h-4 w-4" />STL-Dateien herunterladen (Test)</Button>
+              </>
+            )}
+            {step === 5 && fin.state === "ok" && fin.jobs && plansRef.current.length > 0 && (
+              <>
+                <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                  <div className="font-semibold">Spardose «{p.name}» · PLA</div>
+                  <div className="text-muted-foreground">Buchstaben {plaFarben.find((c) => c.hex === colors.text)?.name}, Körper {plaFarben.find((c) => c.hex === colors.base)?.name}, Kappe {plaFarben.find((c) => c.hex === colors.cap)?.name}</div>
+                  <div className="mt-1 text-lg font-bold tabular-nums">CHF {fin.preis!.toFixed(2)}</div>
+                </div>
+                <SpardoseOrderForm
+                  params={p}
+                  plans={plansRef.current}
+                  jobs={fin.jobs}
+                  preis={fin.preis!}
+                  colors={colors}
+                  labelOf={(hex) => plaFarben.find((c) => c.hex === hex)?.name ?? hex}
+                />
+              </>
+            )}
+            <div className="flex items-center justify-between pt-1">
+              <Button variant="outline" onClick={() => goTo(Math.max(1, step - 1))} disabled={step === 1 || fin.state === "busy"}>Zurück</Button>
+              {step < STEPS.length && <Button onClick={next} disabled={!canNext || fin.state === "busy"}>{step === 3 ? "Preis berechnen" : "Weiter"}</Button>}
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-4 rounded-xl border bg-card p-4">
-          <Field label="Münzschlitz (fest)">
-            <div className="text-sm tabular-nums">{SLOT_LEN} × {SLOT_THK} mm</div>
-            <div className="text-[11px] text-muted-foreground">Passt für das 5-Franken-Stück (Ø 31,45 × 2,35 mm) plus je 1 mm Spiel.</div>
-          </Field>
-          <Field label="Material"><div className="inline-flex rounded-md bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">PLA</div></Field>
-          <Field label="Abmessungen">
-            <div className="text-sm tabular-nums">
-              {res ? <>X {res.dims.x.toFixed(1)} · Y {res.dims.y.toFixed(1)} · Z {res.dims.z.toFixed(1)} mm</> : "–"}
+        <div className="order-1 space-y-3 lg:order-2 lg:sticky lg:top-4 lg:self-start">
+          <div className="relative overflow-hidden rounded-xl border bg-gradient-to-b from-muted/40 to-muted">
+            <div className="h-[460px]"><Viewer res={res} colors={colors} /></div>
+            {busy && (
+              <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-background/90 px-3 py-1 text-xs shadow">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> berechne…
+              </div>
+            )}
+            {!res && !busy && <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">Name mit mindestens {NAME_MIN} Zeichen eingeben</div>}
+          </div>
+          {err && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">Fehler: {err}</div>}
+          {res && res.warnings.length > 0 && (
+            <div className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-foreground">
+              {res.warnings.map((w) => <div key={w} className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />{w}</div>)}
             </div>
-            {res && <div className="text-[11px] text-muted-foreground">Berechnet in {ms} ms · Raster {res.info.ppm} px/mm · Kappe Ø {(res.info.capR * 2).toFixed(0)} mm · Rand {res.info.randUsed} mm</div>}
-          </Field>
-          <Field label="Buchstaben (Farbe)"><Swatches colors={plaFarben} value={colors.text} onChange={(c) => setColors((o) => ({ ...o, text: c }))} /></Field>
-          <Field label="Körper (Farbe)"><Swatches colors={plaFarben} value={colors.base} onChange={(c) => setColors((o) => ({ ...o, base: c }))} /></Field>
-          <Field label="Kappe (Farbe)"><Swatches colors={plaFarben} value={colors.cap} onChange={(c) => setColors((o) => ({ ...o, cap: c }))} /></Field>
-          <p className="text-[11px] text-muted-foreground">Es stehen nur PLA-Farben aus deiner Filament-Bibliothek zur Auswahl.</p>
+          )}
+          
         </div>
       </div>
     </div>
