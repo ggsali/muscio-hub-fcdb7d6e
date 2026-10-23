@@ -51,7 +51,7 @@ export function clampParams(p: SpardoseParams): SpardoseParams {
 
 export const DEFAULTS: SpardoseParams = {
   name: "Nora",
-  font: "Fredoka",
+  font: "Sniglet",
   spacing: 0,
   maxLength: 255,
   size: 40,
@@ -68,7 +68,6 @@ export const DEFAULTS: SpardoseParams = {
 };
 
 export const FONTS: { id: string; label: string; css: string }[] = [
-  { id: "Fredoka", label: "Rund (Fredoka)", css: '700 {px}px "Fredoka"' },
   { id: "Baloo 2", label: "Weich (Baloo)", css: '800 {px}px "Baloo 2"' },
   { id: "Lilita One", label: "Kräftig (Lilita)", css: '400 {px}px "Lilita One"' },
   { id: "Sniglet", label: "Pummelig (Sniglet)", css: '800 {px}px "Sniglet"' },
@@ -76,7 +75,7 @@ export const FONTS: { id: string; label: string; css: string }[] = [
 ];
 
 export const FONT_CSS_URL =
-  "https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Baloo+2:wght@800&family=Lilita+One&family=Sniglet:wght@800&family=Chewy&display=swap";
+  "https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Lilita+One&family=Sniglet:wght@800&family=Chewy&display=swap";
 
 export type SpardoseResult = {
   name: string;
