@@ -50,7 +50,7 @@ const formatBytes = (n?: number | null) => {
 
 async function downloadAttachment(att: Attachment) {
   const bucket = att.bucket || "project-uploads";
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(att.storage_path, 60 * 10);
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(att.storage_path, 60 * 10, { download: att.filename || true });
   if (error || !data?.signedUrl) {
     console.error(error);
     return;
@@ -58,7 +58,6 @@ async function downloadAttachment(att: Attachment) {
   const a = document.createElement("a");
   a.href = data.signedUrl;
   a.download = att.filename;
-  a.target = "_blank";
   document.body.appendChild(a);
   a.click();
   a.remove();

@@ -200,8 +200,8 @@ export default function OrderUploadRequests({ orderId, customerId, orderName }: 
   };
 
   const downloadFile = async (f: UploadFile) => {
-    const { data } = await supabase.storage.from("project-uploads").createSignedUrl(f.storage_path, 60);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    const { data } = await supabase.storage.from("project-uploads").createSignedUrl(f.storage_path, 60, { download: (f as { filename?: string }).filename || true });
+    if (data?.signedUrl) window.open(data.signedUrl, "_self");
   };
 
   const filesForLink = (id: string) => files.filter(f => f.upload_link_id === id);

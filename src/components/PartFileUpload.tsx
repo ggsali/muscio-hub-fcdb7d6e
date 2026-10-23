@@ -133,8 +133,8 @@ export default function PartFileUpload({ partId, orderId, customerId, disabled }
   };
 
   const handleDownload = async (f: PartFile) => {
-    const { data } = await supabase.storage.from("part-files").createSignedUrl(f.storage_path, 60);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    const { data } = await supabase.storage.from("part-files").createSignedUrl(f.storage_path, 60, { download: f.filename || true });
+    if (data?.signedUrl) window.open(data.signedUrl, "_self");
   };
 
   return (

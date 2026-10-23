@@ -63,7 +63,7 @@ const KalkulatorUploadsPage = () => {
   const handleDownload = async (item: CalcUpload) => {
     const { data, error } = await supabase.storage
       .from(item.bucket || "project-uploads")
-      .createSignedUrl(item.storage_path, 60 * 10);
+      .createSignedUrl(item.storage_path, 60 * 10, { download: true });
     if (error || !data?.signedUrl) {
       toast.error("Download-Link konnte nicht erstellt werden");
       return;
