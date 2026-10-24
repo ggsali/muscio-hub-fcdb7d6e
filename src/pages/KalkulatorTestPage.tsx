@@ -2759,7 +2759,7 @@ const KalkulatorTestPage = () => {
 
                     <div className="border-t border-border pt-2 mt-2" />
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Setup-Pauschale <span className="text-xs text-muted-foreground/70">(1× pro Bestellung)</span></span>
+                      <span>Setup-Pauschale</span>
                       <span className="text-foreground tabular-nums">{CHF(setupFee)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
