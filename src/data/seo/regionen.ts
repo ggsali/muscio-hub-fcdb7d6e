@@ -165,7 +165,7 @@ export const regionen: RegionContent[] = [
           "Ersatzteile für Maschinen, wenn das Original nicht mehr lieferbar ist",
           "Prototypen für Industrie- und Textilprojekte",
           "Vorrichtungen und Lehren für die Fertigung",
-          "Kleinserien ab 1 Stück, mit Mengenrabatt ab 5 bzw. 10 Stück",
+          "Kleinserien ab 1 Stück",
         ],
       },
       {

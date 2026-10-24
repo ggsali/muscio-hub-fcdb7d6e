@@ -128,7 +128,7 @@ export const services: ServiceContent[] = [
       },
       {
         title: "Preis und Kalkulation",
-        text: "Der Preis richtet sich nach Bauteilvolumen, Materialverbrauch, Druckzeit und Nachbearbeitung. Im Kalkulator siehst du den Preis sofort und ohne Anmeldung – bei mehreren Stücken wird der Mengenrabatt automatisch berücksichtigt.",
+        text: "Der Preis richtet sich nach Bauteilvolumen, Materialverbrauch, Druckzeit und Nachbearbeitung. Im Kalkulator siehst du den Preis sofort und ohne Anmeldung.",
       },
       {
         title: "Technische Angaben",
@@ -276,9 +276,9 @@ export const services: ServiceContent[] = [
     h1: "3D-Druck Kleinserien – Serienteile ohne Werkzeugkosten",
     title: "Kleinserien 3D-Druck Schweiz | Ohne Spritzgussform | 3DMuscio",
     description:
-      "Kleinserien ab 1 Stück ohne Formkosten: Schweizer 3D-Druckservice für Serienteile – Sofortpreis, persönlicher Service, Produktion in der Schweiz, Mengenrabatt.",
+      "Kleinserien ab 1 Stück ohne Formkosten: Schweizer 3D-Druckservice für Serienteile – Sofortpreis, persönlicher Service, Produktion in der Schweiz.",
     shortAnswer:
-      "Kleinserien im 3D-Druck lohnen sich, solange die Stückzahl zu klein für eine Spritzgussform ist – typischerweise bis in den Bereich einiger hundert Teile. Es fallen keine Werkzeugkosten an, Änderungen sind jederzeit möglich, und wir produzieren ab 1 Stück in Eschlikon TG mit Mengenrabatt.",
+      "Kleinserien im 3D-Druck lohnen sich, solange die Stückzahl zu klein für eine Spritzgussform ist – typischerweise bis in den Bereich einiger hundert Teile. Es fallen keine Werkzeugkosten an, Änderungen sind jederzeit möglich, und wir produzieren ab 1 Stück in Eschlikon TG.",
     sections: [
       {
         title: "Wann 3D-Druck der Serienfertigung überlegen ist",
@@ -296,7 +296,7 @@ export const services: ServiceContent[] = [
       },
       {
         title: "Kostenfaktoren bei Serien",
-        text: "Rüstkosten fallen pro Auftrag nur einmal an, danach zählen Material und Druckzeit pro Teil. Grössere Mengen werden dadurch pro Stück günstiger – der Kalkulator zeigt den Mengenrabatt direkt bei der Stückzahl an. Kleinere Bauteile mit reduzierter Wandstärke und passender Orientierung senken die Kosten weiter.",
+        text: "Rüstkosten fallen pro Auftrag nur einmal an, danach zählen Material und Druckzeit pro Teil. Grössere Mengen werden dadurch pro Stück günstiger. Kleinere Bauteile mit reduzierter Wandstärke und passender Orientierung senken die Kosten weiter.",
       },
       {
         title: "Gleichbleibende Qualität",
@@ -304,7 +304,6 @@ export const services: ServiceContent[] = [
       },
     ],
     faqs: [
-      { q: "Ab welcher Menge gibt es Rabatt?", a: "Der Mengenrabatt wird im Online-Kalkulator automatisch berechnet und direkt bei der Stückzahl angezeigt." },
       { q: "Kann ich Teile nachbestellen?", a: "Ja. Wir hinterlegen deine Teile, damit Nachbestellungen mit denselben Parametern gefertigt werden." },
       { q: "Sind grössere Serien möglich?", a: "Für grössere Serien erstellen wir gern ein individuelles Angebot – melde dich über das Kontaktformular mit Datei, Stückzahl und Zieltermin." },
     ],
@@ -322,7 +321,7 @@ export const services: ServiceContent[] = [
     description:
       "3D-Druck für Schweizer Firmen: Prototypen, Ersatzteile und Kleinserien mit Sofortpreis, persönlichem Service, Rechnung mit QR-Zahlteil und Produktion in der Schweiz.",
     shortAnswer:
-      "3DMuscio fertigt für Schweizer Unternehmen Prototypen, Betriebsmittel, Ersatzteile und Kleinserien im FDM- und SLA-Verfahren. Firmenkunden bestellen auf Rechnung (Schweizer QR-Rechnung), erhalten Mengenrabatt bereits ab kleinen Stückzahlen und wählen aus technischen Materialien wie PETG, ABS, ASA, TPU und Resin. Produziert wird in Eschlikon TG; bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich.",
+      "3DMuscio fertigt für Schweizer Unternehmen Prototypen, Betriebsmittel, Ersatzteile und Kleinserien im FDM- und SLA-Verfahren. Firmenkunden bestellen auf Rechnung (Schweizer QR-Rechnung) und wählen aus technischen Materialien wie PETG, ABS, ASA, TPU und Resin. Produziert wird in Eschlikon TG; bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich.",
     sections: [
       {
         title: "Was Firmenkunden bei uns bestellen",
@@ -345,8 +344,8 @@ export const services: ServiceContent[] = [
         ],
       },
       {
-        title: "Preise und Mengenrabatt",
-        text: "Der Preis setzt sich aus Material, Maschinenzeit und einmaligen Rüstkosten pro Auftrag zusammen. Weil die Rüstkosten nur einmal anfallen, wird jedes weitere Teil pro Stück günstiger – der Online-Kalkulator zeigt den Mengenrabatt direkt bei der Stückzahl. Für grössere Serien oder Rahmenmengen erstellen wir ein individuelles Angebot.",
+        title: "Preise bei Kleinserien",
+        text: "Der Preis setzt sich aus Material, Maschinenzeit und einmaligen Rüstkosten pro Auftrag zusammen. Weil die Rüstkosten nur einmal anfallen, wird jedes weitere Teil pro Stück günstiger. Für grössere Serien oder Rahmenmengen erstellen wir ein individuelles Angebot.",
       },
       {
         title: "Materialien und Verfahren",
@@ -359,7 +358,7 @@ export const services: ServiceContent[] = [
     ],
     faqs: [
       { q: "Können wir als Firma auf Rechnung bestellen?", a: "Ja. Für Firmenkunden stellen wir eine Schweizer QR-Rechnung mit Zahlteil aus. Karte, TWINT und Apple Pay sind ebenfalls möglich." },
-      { q: "Gibt es eine Mindestbestellmenge?", a: "Nein. Wir fertigen ab 1 Stück – Mengenrabatt wird im Kalkulator automatisch berücksichtigt." },
+      { q: "Gibt es eine Mindestbestellmenge?", a: "Nein. Wir fertigen ab 1 Stück." },
       { q: "Erhalten wir vorab ein Angebot?", a: "Ja. Sende Datei, Stückzahl und Zieltermin über das Kontaktformular, dann erstellen wir ein schriftliches Angebot." },
       { q: "Welche Materialien eignen sich für technische Bauteile?", a: "PETG für allgemeine Funktionsteile, ABS und ASA für höhere Temperatur- und UV-Belastung, TPU für flexible Teile, Resin für feine Details." },
       { q: "Wie lange dauert die Produktion?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand, in der Regel 1–2 Werktage innerhalb der Schweiz." },

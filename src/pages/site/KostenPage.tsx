@@ -16,10 +16,6 @@ const faqs = [
     a: "Nein. Die Rüstkosten fallen pro Auftrag nur einmal an, nicht pro Stück. Deshalb sinkt der Stückpreis, wenn du mehrere Teile zusammen bestellst.",
   },
   {
-    q: "Gibt es Mengenrabatt?",
-    a: "Ja. Der Mengenrabatt wird im Kalkulator automatisch berechnet und direkt bei der Stückzahl angezeigt.",
-  },
-  {
     q: "Kostet der Preisvorschlag etwas?",
     a: "Nein. Die Kalkulation im Online-Kalkulator ist kostenlos und benötigt keine Anmeldung.",
   },
@@ -40,7 +36,7 @@ const table = {
     ["Stützstrukturen", "zusätzliches Material und Zeit", "Geometrie druckgerecht gestalten"],
     ["Nachbearbeitung", "Aufwand pro Teil", "nur bestellen, was gebraucht wird"],
     ["Rüstkosten", "einmal pro Auftrag", "mehrere Teile zusammen bestellen"],
-    ["Stückzahl", "Mengenrabatt", "Serien statt Einzelbestellungen"],
+    ["Stückzahl", "Rüstkosten verteilt", "Serien statt Einzelbestellungen"],
   ],
 };
 
@@ -51,7 +47,7 @@ export default function KostenPage() {
     <>
       <Seo
         title="3D-Druck Kosten Schweiz: Preise & Faktoren | 3DMuscio"
-        description="Was kostet 3D-Druck in der Schweiz? Alle Preisfaktoren erklärt: Material, Druckzeit, Qualität, Nachbearbeitung, Rüstkosten und Mengenrabatt. Ab CHF 5.–."
+        description="Was kostet 3D-Druck in der Schweiz? Alle Preisfaktoren erklärt: Material, Druckzeit, Qualität, Nachbearbeitung, und Rüstkosten. Ab CHF 5.–."
         path={path}
         jsonLd={[
           {
@@ -59,7 +55,7 @@ export default function KostenPage() {
             "@type": "Article",
             headline: "3D-Druck Kosten Schweiz – so entsteht der Preis",
             description:
-              "Erklärung aller Preisfaktoren im 3D-Druck: Materialverbrauch, Druckzeit, Qualitätsstufe, Nachbearbeitung, Rüstkosten und Mengenrabatt.",
+              "Erklärung aller Preisfaktoren im 3D-Druck: Materialverbrauch, Druckzeit, Qualitätsstufe, Nachbearbeitung, und Rüstkosten.",
             url: `${SITE_URL}${path}`,
             publisher: { "@id": `${SITE_URL}/#organization` },
           },
@@ -93,7 +89,7 @@ export default function KostenPage() {
               "Qualitätsstufe an die Funktion anpassen",
               "Bauteil so gestalten, dass wenig Stützmaterial nötig ist",
               "mehrere Teile in einem Auftrag bestellen (Rüstkosten nur einmal)",
-              "grössere Stückzahlen für Mengenrabatt nutzen",
+              "mehrere Teile in einem Auftrag bestellen",
             ],
           },
           {
@@ -115,7 +111,7 @@ export default function KostenPage() {
           { label: "Online-Kalkulator", to: "/kalkulator-online", text: "Preis für deine Datei in 60 Sekunden." },
           { label: "Materialien und Preise", to: "/materialien", text: "Eigenschaften und Preis pro Gramm." },
           { label: "3D-Druck vs Spritzguss", to: "/vergleich/3d-druck-vs-spritzguss", text: "Ab wann sich eine Form lohnt." },
-          { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien", text: "Mengenrabatt und Serienpreise." },
+          { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien", text: "Serienpreise ohne Formkosten." },
         ]}
         ctaTitle="Exakten Preis für dein Teil berechnen"
         ctaText="Datei hochladen, Material wählen, Preis mit vollständiger Aufschlüsselung sehen."

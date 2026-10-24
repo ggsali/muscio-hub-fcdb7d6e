@@ -239,9 +239,7 @@ Deno.serve(async (req) => {
     const preisProStueck = Math.round((materialkosten + maschinenkosten + supportNachbearbeitung) * 100) / 100;
 
     const qty = Math.max(1, Number(quantity) || 1);
-    let discount = 0;
-    if (qty >= 10) discount = 0.15;
-    else if (qty >= 5) discount = 0.1;
+    const discount = 0;
 
     const teilpreis = preisProStueck * qty * (1 - discount);
     const zwischensumme = teilpreis + setupFee;
@@ -337,8 +335,7 @@ SCHRITT 7 – PREIS PRO STÜCK:
 preisProStueck = materialkosten + maschinenkosten + supportNachbearbeitung = ?
 
 SCHRITT 8 – GESAMTPREIS:
-mengenrabatt = ${qty >= 10 ? "15%" : qty >= 5 ? "10%" : "0%"}
-subtotal = preisProStueck × ${qty} × (1 - mengenrabatt) = ?
+subtotal = preisProStueck × ${qty} = ?
 gesamtPreis = subtotal + CHF ${setupFee} Setup = ?
 versand = CHF ${versandkosten} (immer)
 total = gesamtPreis + versand = ?

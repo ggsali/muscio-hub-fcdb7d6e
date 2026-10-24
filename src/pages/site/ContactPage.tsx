@@ -29,7 +29,6 @@ import HerkunftBanner from "@/components/site/HerkunftBanner";
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
   { q: "Wie schnell erhalte ich mein Teil?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand mit Post oder DHL." },
-  { q: "Gibt es Mengenrabatte?", a: "Ab 5 Stück 10%, ab 10 Stück 15% Rabatt. Ab grösseren Mengen sprechen wir individuelle Konditionen ab." },
 ];
 
 type UploadedAttachment = {

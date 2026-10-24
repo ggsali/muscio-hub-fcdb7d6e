@@ -53,7 +53,6 @@ Schnelle Fertigung: bei geeigneten Aufträgen innerhalb von 48 Stunden möglich,
 - Materialkosten: ab CHF 0.04/g je nach Material
 - Versand: je nach Gewicht (PostPac Priority bzw. Briefpost), nicht kostenlos
 - Mindestpreis: CHF 5
-- Mengenrabatt: 10% ab 5 Stück, 15% ab 10 Stück
 - Transparente Preisberechnung via Online-Kalkulator
 
 ## Referenzprojekte
