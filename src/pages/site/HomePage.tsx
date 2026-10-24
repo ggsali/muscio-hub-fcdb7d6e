@@ -404,12 +404,12 @@ const MaterialsTeaser = () => {
 
 /* ─── FAQ ─── */
 const FAQS_ALL = [
-  { q: "Was kostet ein 3D-Druck in der Schweiz?", a: "Der Preis ergibt sich aus Material, Druckzeit und Nachbearbeitung — Kleinteile gibt es bereits ab CHF 5.–. Im Online-Kalkulator sehen Sie den Preis sofort und transparent aufgeschlüsselt, ab CHF 0.055 pro Gramm Material. Ab 5 Stück erhalten Sie 10 % Mengenrabatt, ab 10 Stück 15 %." },
+  { q: "Was kostet ein 3D-Druck in der Schweiz?", a: "Der Preis ergibt sich aus Material, Druckzeit und Nachbearbeitung — Kleinteile gibt es bereits ab CHF 5.–. Im Online-Kalkulator sehen Sie den Preis sofort und transparent aufgeschlüsselt, ab CHF 0.055 pro Gramm Material." },
   { q: "Was ist der Unterschied zwischen FDM- und SLA-Druck?", a: "Beim FDM-Druck wird geschmolzener Kunststoff Schicht für Schicht aufgetragen — ideal für robuste Funktionsteile, Ersatzteile und grössere Bauteile. SLA härtet flüssiges Resin mit Licht aus und erreicht Auflösungen bis 0.025 mm für sehr feine Details und glatte Oberflächen. Wir beraten Sie kostenlos, welches Verfahren für Ihr Bauteil das richtige ist." },
   { q: "Welche Materialien stehen zur Auswahl?", a: "Im FDM-Verfahren drucken wir PLA, PETG, ABS, ASA, TPU und Nylon in über 12 Farben. Für höchste Detailtreue steht im SLA-Verfahren Resin zur Verfügung. Unsicher bei der Materialwahl? Unsere kostenlose KI-Materialberatung im Kalkulator hilft Ihnen weiter." },
   { q: "Wie lange dauert die Lieferung?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach versenden wir mit der Schweizer Post oder DHL innerhalb der Schweiz, was in der Regel 1–2 Werktage dauert. Express-Fertigung ist auf Anfrage möglich, Abholung in Eschlikon TG jederzeit." },
   { q: "Wo befindet sich 3DMuscio?", a: "Unser Standort ist in Eschlikon im Kanton Thurgau, zentral in der Ostschweiz zwischen Winterthur und St. Gallen. Wir fertigen alle Teile lokal in der Schweiz — ohne Zoll und ohne lange Wartezeiten aus dem Ausland. Bestellungen können Sie schweizweit online aufgeben oder direkt vor Ort abholen." },
-  { q: "Gibt es eine Mindestbestellmenge?", a: "Nein, bei uns gibt es keine Mindestbestellmenge — wir drucken auch ein einzelnes Teil ab CHF 5.–. Vom Einzelstück über Prototypen bis zur Kleinserie mit reproduzierbaren Parametern ist alles möglich. Ab 5 Stück profitieren Sie zusätzlich von Mengenrabatten." },
+  { q: "Gibt es eine Mindestbestellmenge?", a: "Nein, bei uns gibt es keine Mindestbestellmenge — wir drucken auch ein einzelnes Teil ab CHF 5.–. Vom Einzelstück über Prototypen bis zur Kleinserie mit reproduzierbaren Parametern ist alles möglich." },
   { q: "Welche Dateiformate werden unterstützt?", a: "Wir verarbeiten STL, STEP/STP, 3MF und OBJ bis 500 MB Dateigrösse. Der Online-Kalkulator berechnet Volumen, Gewicht und Preis automatisch aus Ihrer Datei. Eine manuelle Eingabe von Massen ist nicht nötig." },
   { q: "Wie stellen Sie die Qualität sicher?", a: "Jedes Teil wird vor dem Versand visuell und dimensionell geprüft — FDM typisch mit Toleranzen von ±0.1 bis ±0.2 mm. Fehldrucke verlassen unser Haus nicht. Bei Abweichungen drucken wir Ihr Teil kostenlos nach." },
 ];
@@ -561,9 +561,9 @@ const SEOContent = () => {
         <ScrollReveal delay={0.1}>
           <div className="space-y-6">
             <div>
-              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Faire Preise und Mengenrabatte</h3>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-2">Faire Preise</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Transparente Preise ab CHF 0.055/g für PLA-Druck. Mengenrabatte ab 5 Stück (10%) und ab 10 Stück (15%). Online-Kalkulator für sofortige Preisberechnung. Keine versteckten Kosten, verbindliches Angebot innerhalb 24 Stunden.
+                Transparente Preise ab CHF 0.055/g für PLA-Druck. Online-Kalkulator für sofortige Preisberechnung. Keine versteckten Kosten, verbindliches Angebot innerhalb 24 Stunden.
               </p>
             </div>
             <div>

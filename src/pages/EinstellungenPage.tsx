@@ -574,7 +574,6 @@ export default function EinstellungenPage() {
               <div className="flex justify-between gap-4"><span className="text-muted-foreground">Support-Aufschlag</span><span className="font-mono">CHF {Number(calcParams.support_surcharge).toFixed(2)} <span className="text-muted-foreground font-sans">(Tab «Kalkulator &amp; Qualität»)</span></span></div>
               <div className="flex justify-between gap-4"><span className="text-muted-foreground">Mindestpreis</span><span className="font-mono">CHF {Number(calcParams.min_price).toFixed(2)} <span className="text-muted-foreground font-sans">(Tab «Kalkulator &amp; Qualität»)</span></span></div>
               <div className="flex justify-between gap-4"><span className="text-muted-foreground">Versand</span><span className="text-right">PostPac nach Gewicht, immer berechnet (wie im Auftrag)</span></div>
-              <div className="flex justify-between gap-4"><span className="text-muted-foreground">Mengenrabatt</span><span className="text-right">ab 5 Stk. 10 %, ab 10 Stk. 15 %</span></div>
             </div>
           </div>
           <SaveButton saved={saved} onClick={handleSaveWebsiteSettings} />

@@ -342,7 +342,7 @@ export const comparisons: ComparisonContent[] = [
       { q: "Bietet 3DMuscio Spritzguss an?", a: "Nein. Wir fertigen im 3D-Druck und sagen dir, wenn eine Serienfertigung für dich sinnvoller wäre." },
       { q: "Sind gedruckte Teile so gut wie Spritzgussteile?", a: "Nicht identisch, aber für viele Anwendungen ausreichend. Entscheidend sind Material, Wandstärke und Druckrichtung." },
       { q: "Ab welcher Stückzahl lohnt sich Spritzguss?", a: "Das hängt stark vom Teil ab – als grobe Orientierung oft erst ab mehreren tausend Stück. Rechne Formkosten plus Stückkosten gegen unsere Druckpreise, wir helfen dir bei der Abschätzung." },
-      { q: "Kann ich bei euch Kleinserien vor der Form bestellen?", a: "Genau dafür ist unser Kleinserien-Angebot gedacht: Mengenrabatt, konsistente Qualität und die Möglichkeit, das Design zwischen den Serien anzupassen." },
+      { q: "Kann ich bei euch Kleinserien vor der Form bestellen?", a: "Genau dafür ist unser Kleinserien-Angebot gedacht: konsistente Qualität und die Möglichkeit, das Design zwischen den Serien anzupassen." },
     ],
     related: [
       { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien" },

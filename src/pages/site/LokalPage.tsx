@@ -54,7 +54,7 @@ const faqFor = (region: string): DbFaq[] => [
   { frage: `Wie lange dauert die Lieferung nach ${region}?`, antwort: `Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach dauert der Versand innerhalb der Schweiz in der Regel 1–2 Werktage.` },
   { frage: "Kann ich die Teile abholen?", antwort: `Ja, Abholung in ${company.address.city} ist nach Absprache möglich.` },
   { frage: "Welche Dateiformate werden akzeptiert?", antwort: "STL, STEP, 3MF und OBJ – direkt im Online-Kalkulator hochladen." },
-  { frage: "Gibt es eine Mindestbestellmenge?", antwort: "Nein, wir drucken ab 1 Stück. Ab 5 bzw. 10 Stück gibt es Mengenrabatt." },
+  { frage: "Gibt es eine Mindestbestellmenge?", antwort: "Nein, wir drucken ab 1 Stück." },
 ];
 
 export default function LokalPage() {

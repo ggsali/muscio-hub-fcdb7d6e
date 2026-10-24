@@ -1158,8 +1158,6 @@ const KalkulatorTestPage = () => {
     const mat = materials.find((m) => m.id === p.materialId);
 
     let discount = 0;
-    if (p.quantity >= 10) discount = 0.15;
-    else if (p.quantity >= 5) discount = 0.1;
 
     // 1) Echte Slicer-Daten
     if (p.slicerResult && !p.slicerLoading && mat && p.slicerResult.filamentGrams > 0) {
@@ -2058,7 +2056,6 @@ const KalkulatorTestPage = () => {
 
                   <div className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">
                     <p className="font-semibold text-foreground flex items-center gap-1.5"><Package className="w-4 h-4 text-success" /> Mehr bestellen = mehr sparen</p>
-                    <p className="text-muted-foreground mt-1">5+ Stück → 10% Rabatt · 10+ Stück → 15% Rabatt</p>
                   </div>
 
 
@@ -2688,12 +2685,6 @@ const KalkulatorTestPage = () => {
                                 {isStepFile(p.fileName) ? "Auf Anfrage" : CHF(calc.subtotal)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <span className="text-xs text-muted-foreground">Mengenrabatt:</span>
-                              <span className={`text-xs font-semibold ${p.quantity >= 5 ? "text-primary" : "text-muted-foreground"}`}>
-                                {p.quantity >= 10 ? "15% Rabatt ✓" : p.quantity >= 5 ? "10% Rabatt ✓" : "5+ Stück → 10% · 10+ Stück → 15%"}
-                              </span>
-                            </div>
                           </div>
                         </div>
 
@@ -2848,7 +2839,6 @@ const KalkulatorTestPage = () => {
 
                   <div className="rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">
                     <p className="font-semibold text-foreground flex items-center gap-1.5"><Package className="w-4 h-4 text-success" /> Mehr bestellen = mehr sparen</p>
-                    <p className="text-muted-foreground mt-1">5+ Stück → 10% Rabatt · 10+ Stück → 15% Rabatt</p>
                   </div>
 
 
