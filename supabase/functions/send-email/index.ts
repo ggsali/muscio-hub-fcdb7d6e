@@ -178,7 +178,7 @@ function buildOrderEmail(opts: {
   const paymentBtn = paymentUrl
     ? `<div style="margin:24px 0;text-align:center;">
         <a href="${paymentUrl}" style="display:inline-block;background:#00cc66;color:#fff;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">💳 Jetzt online bezahlen</a>
-        <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Sichere Zahlung via Stripe</p>
+        <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Sichere Zahlung via Payrexx (TWINT, PostFinance, Karte)</p>
       </div>`
     : "";
 
