@@ -8,7 +8,6 @@ import { ChatWidget } from "./site/ChatWidget";
 import { ChatFab } from "./site/ChatFab";
 import { MobileStickyCta } from "./site/MobileStickyCta";
 import { CartProvider } from "@/contexts/CartContext";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { usePageViewTracker } from "@/hooks/usePageViewTracker";
 import { useChristmasMode } from "@/hooks/useChristmasMode";
 import { Snowfall } from "./site/Snowfall";
@@ -23,7 +22,6 @@ export default function SiteLayout() {
       <div className={`site-theme min-h-screen flex flex-col${xmas ? " xmas" : ""}`}>
         {xmas && <Snowfall />}
         {xmas && <Snowman />}
-        <PaymentTestModeBanner />
         <CursorSpotlight />
         <CanonicalTag />
         {/* Sticky stack: Banner sits above the header — they no longer overlap */}

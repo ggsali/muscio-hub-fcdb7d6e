@@ -163,7 +163,7 @@ export default function OrderStatusWorkflow({
     setSavingPayment(true);
     try {
       const notiz = method === "stripe"
-        ? "Manuell bestätigt – Zahlung via Stripe"
+        ? "Manuell bestätigt – Online-Zahlung (Payrexx)"
         : "Manuell als bezahlt markiert – Zahlung per Rechnung/Überweisung";
       const today = new Date().toISOString().slice(0, 10);
       if (method === "rechnung") {
@@ -579,9 +579,9 @@ export default function OrderStatusWorkflow({
               disabled={savingPayment}
               className="w-full text-left border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-primary/5 transition-colors disabled:opacity-50"
             >
-              <div className="text-sm font-medium">Per Stripe (automatisch)</div>
+              <div className="text-sm font-medium">Online via Payrexx (automatisch)</div>
               <div className="text-[11px] text-muted-foreground mt-0.5">
-                Stripe-Zahlungen werden normalerweise automatisch erkannt. Nur bestätigen, falls die automatische Erkennung fehlgeschlagen ist.
+                Online-Zahlungen werden normalerweise automatisch erkannt. Nur bestätigen, falls die automatische Erkennung fehlgeschlagen ist.
               </div>
             </button>
             <button

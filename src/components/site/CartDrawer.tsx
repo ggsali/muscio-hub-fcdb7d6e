@@ -8,7 +8,7 @@ import { X, Minus, Plus, ShoppingBag, Trash2, ShoppingCart, Ticket, Loader2 } fr
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
-import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { useShopCheckout } from "@/hooks/useShopCheckout";
 import { pruefeGutschein, berechneRabatt, gutscheinWertLabel, type Gutschein } from "@/lib/gutschein";
 
 const RESUME_CHECKOUT_KEY = "muscio_resume_checkout";
@@ -18,7 +18,7 @@ export const CartDrawer = () => {
   const { toast } = useToast();
   const { user } = useCustomerAuth();
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
-  const { openCheckout, checkoutElement } = useStripeCheckout();
+  const { openCheckout, busy: checkoutBusy } = useShopCheckout();
   const [codeInput, setCodeInput] = useState("");
   const [gutschein, setGutschein] = useState<Gutschein | null>(null);
   const [checkingCode, setCheckingCode] = useState(false);
@@ -97,15 +97,8 @@ export const CartDrawer = () => {
         ? {
             email: user.email ?? "",
             name: profile.full_name || "",
-            phone: profile.phone || "",
-            address: profile.address || "",
-            city: profile.city || "",
-            postal_code: profile.postal_code || "",
-            country: profile.country || "Schweiz",
           }
         : { email: user.email ?? "" },
-      userId: user.id,
-      returnUrl: `${window.location.origin}/payment-success`,
       gutscheinCode: gutschein?.code,
       onError: (message) => {
         if (/gutschein/i.test(message)) {
@@ -121,7 +114,6 @@ export const CartDrawer = () => {
         toast({ title: "Checkout fehlgeschlagen", description: message, variant: "destructive" });
       },
     });
-    setIsOpen(false);
   }, [items, user, navigate, setIsOpen, toast, openCheckout, gutschein]);
 
   // Nach Login automatisch Checkout fortsetzen
@@ -140,7 +132,6 @@ export const CartDrawer = () => {
     <>
       {/* Checkout-Modal ausserhalb des Drawers rendern, damit es beim Schliessen
           des Warenkorbs nicht sofort wieder unmountet wird. */}
-      {checkoutElement}
       <AnimatePresence>
       {isOpen && (
         <>
@@ -273,9 +264,9 @@ export const CartDrawer = () => {
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground">Versand wird im Checkout berechnet.</p>
-                <Button className="w-full gap-2" onClick={handleCheckout}>
+                <Button className="w-full gap-2" onClick={handleCheckout} disabled={checkoutBusy}>
                   <ShoppingCart className="w-4 h-4" />
-                  Zur Kasse
+                  {checkoutBusy ? "Weiterleitung zur Zahlung …" : "Zur Kasse"}
                 </Button>
                 <button onClick={clearCart} className="w-full text-xs text-muted-foreground hover:text-destructive transition-colors py-1">
                   Warenkorb leeren

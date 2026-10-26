@@ -135,6 +135,7 @@ import { Route as AdminKundenIdRouteImport } from './routes/admin/kunden.$id'
 import { Route as AdminWebsiteBestellungenRouteImport } from './routes/admin/website.bestellungen'
 import { Route as AdminWebsiteEinstellungenRouteImport } from './routes/admin/website.einstellungen'
 import { Route as AdminWebsiteKundenRouteImport } from './routes/admin/website.kunden'
+import { Route as ApiPublicPayrexxWebhookRouteImport } from './routes/api/public/payrexx-webhook'
 import { Route as ApiPublicTrackEmailRouteImport } from './routes/api/public/track-email'
 import { Route as WebsiteAdminBestellungenIndexRouteImport } from './routes/website-admin/bestellungen.index'
 import { Route as WebsiteAdminBestellungenIdRouteImport } from './routes/website-admin/bestellungen.$id'
@@ -778,6 +779,11 @@ const AdminWebsiteKundenRoute = AdminWebsiteKundenRouteImport.update({
   path: '/website/kunden',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPublicPayrexxWebhookRoute = ApiPublicPayrexxWebhookRouteImport.update({
+  id: '/api/public/payrexx-webhook',
+  path: '/api/public/payrexx-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTrackEmailRoute = ApiPublicTrackEmailRouteImport.update({
   id: '/api/public/track-email',
   path: '/api/public/track-email',
@@ -935,6 +941,7 @@ export interface FileRoutesByFullPath {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
+  '/api/public/payrexx-webhook': typeof ApiPublicPayrexxWebhookRoute
   '/api/public/track-email': typeof ApiPublicTrackEmailRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/blog/': typeof SiteBlogIndexRoute
@@ -1066,6 +1073,7 @@ export interface FileRoutesByTo {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
+  '/api/public/payrexx-webhook': typeof ApiPublicPayrexxWebhookRoute
   '/api/public/track-email': typeof ApiPublicTrackEmailRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/blog': typeof SiteBlogIndexRoute
@@ -1202,6 +1210,7 @@ export interface FileRoutesById {
   '/admin/website/bestellungen': typeof AdminWebsiteBestellungenRoute
   '/admin/website/einstellungen': typeof AdminWebsiteEinstellungenRoute
   '/admin/website/kunden': typeof AdminWebsiteKundenRoute
+  '/api/public/payrexx-webhook': typeof ApiPublicPayrexxWebhookRoute
   '/api/public/track-email': typeof ApiPublicTrackEmailRoute
   '/website-admin/bestellungen/$id': typeof WebsiteAdminBestellungenIdRoute
   '/_site/blog/': typeof SiteBlogIndexRoute
@@ -1338,6 +1347,7 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
+    | '/api/public/payrexx-webhook'
     | '/api/public/track-email'
     | '/website-admin/bestellungen/$id'
     | '/blog/'
@@ -1469,6 +1479,7 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
+    | '/api/public/payrexx-webhook'
     | '/api/public/track-email'
     | '/website-admin/bestellungen/$id'
     | '/blog'
@@ -1604,6 +1615,7 @@ export interface FileRouteTypes {
     | '/admin/website/bestellungen'
     | '/admin/website/einstellungen'
     | '/admin/website/kunden'
+    | '/api/public/payrexx-webhook'
     | '/api/public/track-email'
     | '/website-admin/bestellungen/$id'
     | '/_site/blog/'
@@ -1659,6 +1671,7 @@ export interface RootRouteChildren {
   BewertungIndexRoute: typeof BewertungIndexRoute
   KundenIndexRoute: typeof KundenIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  ApiPublicPayrexxWebhookRoute: typeof ApiPublicPayrexxWebhookRoute
   ApiPublicTrackEmailRoute: typeof ApiPublicTrackEmailRoute
 }
 
@@ -2546,6 +2559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWebsiteKundenRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/public/payrexx-webhook': {
+      id: '/api/public/payrexx-webhook'
+      path: '/api/public/payrexx-webhook'
+      fullPath: '/api/public/payrexx-webhook'
+      preLoaderRoute: typeof ApiPublicPayrexxWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/track-email': {
       id: '/api/public/track-email'
       path: '/api/public/track-email'
@@ -2872,6 +2892,7 @@ const rootRouteChildren: RootRouteChildren = {
   BewertungIndexRoute: BewertungIndexRoute,
   KundenIndexRoute: KundenIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  ApiPublicPayrexxWebhookRoute: ApiPublicPayrexxWebhookRoute,
   ApiPublicTrackEmailRoute: ApiPublicTrackEmailRoute,
 }
 export const routeTree = rootRouteImport
