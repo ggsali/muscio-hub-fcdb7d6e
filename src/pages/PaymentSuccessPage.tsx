@@ -7,7 +7,7 @@ export default function PaymentSuccessPage() {
   const [params] = useSearchParams();
   const cleared = useRef(false);
   const orderNr = params.get("order_id")?.slice(0, 8).toUpperCase();
-  const sessionId = params.get("session_id")?.slice(0, 16);
+  const sessionId = params.get("ref")?.slice(0, 16);
 
   // Nach erfolgreicher Zahlung Warenkorb leeren (nur einmal)
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function PaymentSuccessPage() {
             <p className="text-sm text-muted-foreground">Auftrag Nr. {orderNr}</p>
           )}
           {sessionId && !orderNr && (
-            <p className="text-sm text-muted-foreground">Session: {sessionId}...</p>
+            <p className="text-sm text-muted-foreground">Referenz: {sessionId.toUpperCase()}</p>
           )}
         </div>
         <div className="bg-card border border-border rounded-2xl p-6 space-y-2 shadow-sm">

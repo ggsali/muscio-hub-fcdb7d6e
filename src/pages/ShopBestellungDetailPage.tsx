@@ -248,10 +248,10 @@ export default function ShopBestellungDetailPage() {
         </div>
       </div>
 
-      {/* Stripe + Notizen */}
+      {/* Zahlung + Notizen */}
       <div className="bg-card border border-border rounded-lg p-4 space-y-3">
         <div>
-          <p className="text-xs text-muted-foreground">Stripe Session</p>
+          <p className="text-xs text-muted-foreground">Zahlungs-Referenz</p>
           {order.stripe_session_id ? (
             <a
               href={`https://dashboard.stripe.com/payments?query=${order.stripe_session_id}`}

@@ -40,6 +40,8 @@ import { sendReviewRequestForOrder } from "@/lib/reviewEmail";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useServerFn } from "@tanstack/react-start";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useServerFn } from "@tanstack/react-start";
+import { createOrderPaymentLink } from "@/lib/payrexx.functions";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -197,6 +199,7 @@ export default function AuftragDetailPage() {
   type Tab = typeof TABS[number];
   const [activeTab, setActiveTab] = useState<Tab>("Übersicht");
   const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
+  const createPaymentLinkFn = useServerFn(createOrderPaymentLink);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [manualStatus, setManualStatus] = useState("");
   const [duplicating, setDuplicating] = useState(false);
