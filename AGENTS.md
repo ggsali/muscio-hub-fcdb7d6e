@@ -1,5 +1,6 @@
 # Architecture rules
 - Public chat inserts validate session eligibility through a boolean security-definer helper, never public session SELECT; browser persistence checks insert errors without selecting private rows back.
+- Returning visitor messages check the public session-eligibility helper before insert and replace only ineligible sessions, so deleted or expired conversations cannot trap visitors and network errors do not discard active history.
 - Public website visibility uses the `_site` route context and React context backed by a public read-only server function, so SSR, metadata and browser content share one setting without per-component reads.
 - Every public website setting key must be listed in the anon SELECT policy allowlist on `website_settings`; a missing key returns no row instead of an error, so readers silently fall back to the default value.
 - Shared public copy and structured-data filtering lives in `src/lib/resin-content.ts`, so every content renderer applies the same visibility rules without editing stored content.

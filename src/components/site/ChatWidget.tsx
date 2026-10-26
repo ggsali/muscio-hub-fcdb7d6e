@@ -4,7 +4,7 @@ import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
-import { persistChatMessage } from "@/lib/chat-messages";
+import { persistChatMessage, persistVisitorChatMessage } from "@/lib/chat-messages";
 
 interface Message {
   id?: string;
@@ -154,18 +154,22 @@ export function ChatWidget() {
       if (!sid) { setLoading(false); return; }
     }
     let userMsg: Message;
+    let history = messages;
     try {
-      userMsg = await persistChatMessage(sid, "user", text);
+      const sent = await persistVisitorChatMessage(sid, text, () => createSession(userInfo.name, userInfo.email));
+      sid = sent.sessionId;
+      userMsg = sent.message;
+      if (sent.renewed) history = [];
     } catch (error) {
       setInput(text);
       setMessages(prev => [...prev, { role: "assistant", content: error instanceof Error ? error.message : "Nachricht konnte nicht gespeichert werden." }]);
       setLoading(false);
       return;
     }
-    setMessages(prev => [...prev, userMsg]);
+    setMessages([...history, userMsg]);
     const { data: botOn } = await supabase.rpc("get_chat_bot_enabled", { p_session_id: sid });
     if (botOn !== false) {
-      try { await streamAI(sid, [...messages, userMsg]); }
+      try { await streamAI(sid, [...history, userMsg]); }
       catch (e: any) {
         if (/sitzung ungültig/i.test(String(e?.message || ""))) {
           // Abgelaufene Sitzung verwerfen und neue anlegen, dann erneut senden
