@@ -264,9 +264,9 @@ export const CartDrawer = () => {
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground">Versand wird im Checkout berechnet.</p>
-                <Button className="w-full gap-2" onClick={handleCheckout}>
+                <Button className="w-full gap-2" onClick={handleCheckout} disabled={checkoutBusy}>
                   <ShoppingCart className="w-4 h-4" />
-                  Zur Kasse
+                  {checkoutBusy ? "Weiterleitung zur Zahlung …" : "Zur Kasse"}
                 </Button>
                 <button onClick={clearCart} className="w-full text-xs text-muted-foreground hover:text-destructive transition-colors py-1">
                   Warenkorb leeren
