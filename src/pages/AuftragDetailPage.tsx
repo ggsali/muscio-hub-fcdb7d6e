@@ -236,7 +236,7 @@ export default function AuftragDetailPage() {
       ));
   }, [id, isNew]);
 
-  // Stripe-Zahlung angelegt, aber noch nicht als bezahlt erfasst?
+  // Payrexx-Zahlung angelegt, aber noch nicht als bezahlt erfasst?
   useEffect(() => {
     if (!id || isNew) { setStripePending(false); return; }
     (supabase.from as any)("shop_orders")
@@ -1816,7 +1816,7 @@ export default function AuftragDetailPage() {
         )}
       </div>
 
-      {/* Fehler-Banner: Stripe-Zahlung ausstehend */}
+      {/* Fehler-Banner: Payrexx-Zahlung ausstehend */}
       {!isNew && stripePending && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
