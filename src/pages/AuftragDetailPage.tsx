@@ -255,11 +255,9 @@ export default function AuftragDetailPage() {
     setCreatingPaymentLink(true);
     try {
       const { customerEmail } = await getCustomerData();
-      const { data, error } = await supabase.functions.invoke("create-stripe-payment-link", {
-        body: { orderId: id, betrag: totalMitVersand, orderName, customerEmail },
-      });
-      if (error || data?.error) {
-        toast({ title: "Stripe Fehler", description: data?.error || error?.message, variant: "destructive" });
+      const data = await createPaymentLinkFn({ data: { orderId: id, orderName: orderName || undefined, customerEmail: customerEmail || undefined } });
+      if (data.error) {
+        toast({ title: "Zahlungslink fehlgeschlagen", description: data.error, variant: "destructive" });
       } else if (data?.url) {
         try { await navigator.clipboard.writeText(data.url); } catch {}
         toast({ title: "Zahlungslink erstellt ✓", description: "Link in Zwischenablage kopiert." });
@@ -1038,21 +1036,19 @@ export default function AuftragDetailPage() {
       if (type === "rechnung" || type === "offerte") {
         const { customerName, customerFirma, customerEmail, customerTelefon, customerAdresse } = await getCustomerData();
         if (type === "rechnung") {
-          // Optionally generate Stripe payment link
+          // Optional Payrexx-Zahlungslink erzeugen
           if (withPaymentLink && totalMitVersand > 0) {
             try {
-              const { data: plData, error: plErr } = await supabase.functions.invoke("create-stripe-payment-link", {
-                body: { orderId: id, betrag: totalMitVersand, orderName, customerEmail },
-              });
-              if (plErr || plData?.error) {
+              const plData = await createPaymentLinkFn({ data: { orderId: id!, orderName: orderName || undefined, customerEmail: customerEmail || undefined } });
+              if (plData.error) {
                 setSendingEmail(null);
-                toast({ title: "Stripe Fehler", description: plData?.error || plErr?.message || "Zahlungslink konnte nicht erstellt werden.", variant: "destructive" });
+                toast({ title: "Zahlungslink fehlgeschlagen", description: plData.error, variant: "destructive" });
                 return;
               }
               if (plData?.url) paymentUrl = plData.url;
             } catch (e) {
               setSendingEmail(null);
-              toast({ title: "Stripe Fehler", description: "Zahlungslink konnte nicht erstellt werden.", variant: "destructive" });
+              toast({ title: "Zahlungslink fehlgeschlagen", description: "Zahlungslink konnte nicht erstellt werden.", variant: "destructive" });
               return;
             }
           }
@@ -1823,9 +1819,9 @@ export default function AuftragDetailPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
           <span className="text-sm text-amber-800">
-            Zahlung via Stripe ausstehend –
-            <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noreferrer" className="underline ml-1">
-              In Stripe prüfen →
+            Online-Zahlung ausstehend –
+            <a href="https://login.payrexx.com" target="_blank" rel="noreferrer" className="underline ml-1">
+              In Payrexx prüfen →
             </a>
           </span>
         </div>
@@ -1894,7 +1890,7 @@ export default function AuftragDetailPage() {
                     className="h-4 w-4 rounded border-border accent-primary"
                   />
                   <span>
-                    💳 Stripe Zahlungslink hinzufügen{" "}
+                    💳 Payrexx-Zahlungslink hinzufügen{" "}
                     <span className="text-muted-foreground text-xs">(CHF {totalMitVersand.toFixed(2)} – Kunde kann online bezahlen)</span>
                   </span>
                 </label>
@@ -3217,7 +3213,7 @@ export default function AuftragDetailPage() {
                   </span>
                 </div>
                 {stripePending && (
-                  <p className="text-xs text-amber-600">Stripe-Zahlung ausstehend.</p>
+                  <p className="text-xs text-amber-600">Online-Zahlung ausstehend.</p>
                 )}
               </div>
             );
@@ -3231,7 +3227,7 @@ export default function AuftragDetailPage() {
               <Button onClick={() => setConfirmEmailType("rechnung")} disabled={!!sendingEmail} variant="outline" className="justify-start gap-2 border-border"><Mail className="w-4 h-4" /> Rechnung senden</Button>
               <Button onClick={() => setShowAkontoDialog(true)} variant="outline" className="justify-start gap-2 border-border"><FileDown className="w-4 h-4" /> Akontorechnung erstellen</Button>
               <Button onClick={handleCreatePaymentLink} disabled={creatingPaymentLink || totalMitVersand <= 0} variant="outline" className="justify-start gap-2 border-border">
-                {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Stripe Zahlungslink erstellen
+                {creatingPaymentLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Payrexx-Zahlungslink erstellen
               </Button>
             </div>
           </div>
