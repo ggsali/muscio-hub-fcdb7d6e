@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ShoppingBag, ExternalLink, Save, Mail } from "lucide-react";
+import { ArrowLeft, ShoppingBag, ExternalLink, Save, Mail, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -122,6 +126,13 @@ export default function ShopBestellungDetailPage() {
     setStatusBusy(null);
   };
 
+  const handleDelete = async () => {
+    const { error } = await (supabase.from as any)("shop_orders").delete().eq("id", order.id);
+    if (error) { toast.error("Löschen fehlgeschlagen"); return; }
+    toast.success("Bestellung gelöscht");
+    navigate("/website-admin/bestellungen");
+  };
+
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Laden...</div>;
   if (!order) return <div className="p-6 text-sm text-muted-foreground">Bestellung nicht gefunden.</div>;
 
@@ -145,9 +156,32 @@ export default function ShopBestellungDetailPage() {
             {new Date(order.created_at).toLocaleString("de-CH")}
           </p>
         </div>
-        <span className={cn("inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold", statusClass(order.status))}>
-          {STATUS_LABELS[order.status] || order.status}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={cn("inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold", statusClass(order.status))}>
+            {STATUS_LABELS[order.status] || order.status}
+          </span>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 text-destructive border-destructive/40 hover:bg-destructive/10">
+                <Trash2 className="w-4 h-4" /> Löschen
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Bestellung löschen?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Die Shop-Bestellung #{String(order.id).slice(0, 8).toUpperCase()} und ihre Positionen werden endgültig gelöscht. Ein daraus erstellter Auftrag bleibt bestehen.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Endgültig löschen
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       {/* Status ändern */}
