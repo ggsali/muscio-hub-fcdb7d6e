@@ -2100,6 +2100,14 @@ export default function AuftragDetailPage() {
               paketGroesse={paketGroesse}
               onStatusChange={setStatus}
               onTrackingNrChange={setTrackingNr}
+            buildLieferschein={async (tn) => {
+              const c = await getCustomerData();
+              return await exportLieferscheinPDF({ orderId: id || "neu", datum, beschreibung: fullBeschreibung, ...c, parts: pdfParts, company, returnBase64: true, trackingNr: tn || undefined });
+            }}
+              buildLieferschein={async (tn) => {
+                const c = await getCustomerData();
+                return await exportLieferscheinPDF({ orderId: id || "neu", datum, beschreibung: fullBeschreibung, ...c, parts: pdfParts, company, returnBase64: true, trackingNr: tn || undefined });
+              }}
             />
           )}
 

@@ -91,10 +91,12 @@ interface Props {
   paketGroesse?: string;
   onStatusChange: (newStatus: string) => void;
   onTrackingNrChange?: (nr: string) => void;
+  /** Erstellt den Lieferschein als PDF für den Anhang der Versand-Mail */
+  buildLieferschein?: (trackingNr: string | null) => Promise<{ base64: string; filename: string } | null>;
 }
 
 export default function OrderStatusWorkflow({
-  orderId, currentStatus, parts, trackingNr = "", lieferart = "versand", customerId, paketGroesse, onStatusChange, onTrackingNrChange
+  orderId, currentStatus, parts, trackingNr = "", lieferart = "versand", customerId, paketGroesse, onStatusChange, onTrackingNrChange, buildLieferschein
 }: Props) {
   const navigate = useNavigate();
   const [log, setLog] = useState<LogEntry[]>([]);
@@ -187,8 +189,13 @@ export default function OrderStatusWorkflow({
     const tplKey = STATUS_TO_TEMPLATE[newStatus];
     if (tplKey) {
       try {
+        const tn = trackingInput || trackingNr || null;
+        let pdf: { base64: string; filename: string } | null = null;
+        if (tplKey === "versandt" && lieferart === "versand" && buildLieferschein) {
+          try { pdf = await buildLieferschein(tn); } catch (e) { console.error("Lieferschein fehlgeschlagen", e); }
+        }
         await supabase.functions.invoke("send-email", {
-          body: { kind: "status", orderId, statusKey: tplKey, trackingNr: trackingInput || trackingNr || null, lieferart, versandart: paketGroesse || null },
+          body: { kind: "status", orderId, statusKey: tplKey, trackingNr: tn, lieferart, versandart: paketGroesse || null, pdfBase64: pdf?.base64, pdfFilename: pdf?.filename },
         });
         // Log mail sent
         const mailLabels: Record<string, string> = {
