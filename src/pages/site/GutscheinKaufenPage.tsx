@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { createGiftCheckout } from "@/lib/payrexx.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +16,6 @@ export default function GutscheinKaufenPage() {
   const [empfaengerEmail, setEmpfaengerEmail] = useState("");
   const [empfaengerName, setEmpfaengerName] = useState("");
   const [nachricht, setNachricht] = useState("");
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [starting, setStarting] = useState(false);
   const [erfolg, setErfolg] = useState(false);
 
@@ -28,26 +26,7 @@ export default function GutscheinKaufenPage() {
 
   const finalBetrag = custom ? Math.round(Number(custom) * 100) / 100 : betrag;
 
-  const fetchClientSecret = async (): Promise<string> => {
-    const { data, error } = await supabase.functions.invoke("create-shop-checkout", {
-      body: {
-        environment: getStripeEnvironment(),
-        gutschein: {
-          betrag: finalBetrag,
-          empfaenger_email: empfaengerEmail.trim() || null,
-          empfaenger_name: empfaengerName.trim() || null,
-          nachricht: nachricht.trim() || null,
-        },
-        returnUrl: `${window.location.origin}/gutschein?erfolg=1`,
-      },
-    });
-    if (error || !data?.clientSecret) {
-      const msg = error?.message || data?.error || "Checkout konnte nicht gestartet werden";
-      toast.error(msg);
-      throw new Error(msg);
-    }
-    return data.clientSecret as string;
-  };
+  const startGift = useServerFn(createGiftCheckout);
 
   const start = () => {
     if (!finalBetrag || finalBetrag < 10) return toast.error("Mindestbetrag CHF 10.–");
@@ -56,8 +35,17 @@ export default function GutscheinKaufenPage() {
       return toast.error("Bitte gültige Empfänger-E-Mail eingeben.");
     }
     setStarting(true);
-    setCheckoutOpen(true);
-    setStarting(false);
+    startGift({ data: {
+      betrag: finalBetrag,
+      empfaenger_email: empfaengerEmail.trim() || null,
+      empfaenger_name: empfaengerName.trim() || null,
+      nachricht: nachricht.trim() || null,
+      origin: window.location.origin,
+    } }).then((res) => {
+      if (res.url) { window.location.href = res.url; return; }
+      toast.error(res.error || "Bezahlung konnte nicht gestartet werden");
+      setStarting(false);
+    }).catch(() => { toast.error("Bezahlung konnte nicht gestartet werden"); setStarting(false); });
   };
 
   if (erfolg) {
@@ -101,19 +89,7 @@ export default function GutscheinKaufenPage() {
         ))}
       </div>
 
-      {checkoutOpen ? (
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-semibold">Gutschein CHF {finalBetrag.toFixed(2)}</p>
-            <Button variant="ghost" size="sm" onClick={() => setCheckoutOpen(false)}>Zurück</Button>
-          </div>
-          <div className="min-h-[500px]">
-            <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret }}>
-              <EmbeddedCheckout />
-            </EmbeddedCheckoutProvider>
-          </div>
-        </div>
-      ) : (
+      {(
         <div className="bg-card border border-border rounded-2xl p-5 md:p-6 space-y-5">
           <div>
             <Label className="text-xs">Betrag wählen</Label>
