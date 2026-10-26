@@ -8,7 +8,6 @@ import { Box, Check, Clock, Loader2, MapPin, Package, Ruler, Search, ShieldCheck
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { createStadtmodellCheckout, listStadtmodellFilamente } from "@/lib/stadtmodell.functions";
 import {
@@ -60,7 +59,6 @@ export default function StadtmodellKonfigurator() {
   const [suche, setSuche] = useState("");
   const [geo, setGeo] = useState<THREE.BufferGeometry | null>(null);
   const [laden, setLaden] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const mm = modellMm(kante, massstab);
   const grenzeOk = mm >= MODELL_MIN_MM && mm <= MODELL_MAX_MM;
