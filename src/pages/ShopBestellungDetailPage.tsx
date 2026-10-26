@@ -254,7 +254,7 @@ export default function ShopBestellungDetailPage() {
           <p className="text-xs text-muted-foreground">Zahlungs-Referenz</p>
           {order.stripe_session_id ? (
             <a
-              href={`https://dashboard.stripe.com/payments?query=${order.stripe_session_id}`}
+              href="https://login.payrexx.com"
               target="_blank"
               rel="noreferrer"
               className="text-sm text-primary hover:underline inline-flex items-center gap-1 break-all"
