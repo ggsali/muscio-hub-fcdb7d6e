@@ -3,7 +3,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import ModellViewer from "./ModellViewer";
 import * as THREE from "three";
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { toast } from "sonner";
 import { Box, Check, Clock, Loader2, MapPin, Package, Ruler, Search, ShieldCheck, Sparkles, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createStadtmodellCheckout, listStadtmodellFilamente } from "@/lib/stadtmodell.functions";
 import {
   KANTE_MAX, KANTE_MIN, MASSSTAEBE, MODELL_MAX_MM, MODELL_MIN_MM, QUELLE, SOCKEL_MAX, SOCKEL_MIN, VERSAND,
@@ -153,20 +151,21 @@ export default function StadtmodellKonfigurator() {
     try {
       setLaden("Bereite Bestellung vor …");
       const res = await createStadtmodellCheckout({ data: {
-        environment: getStripeEnvironment(), lat: center[0], lon: center[1], kantenlaenge_m: kante,
+        lat: center[0], lon: center[1], kantenlaenge_m: kante,
         massstab, sockel_mm: sockel, filament_id: filamentId, versand, origin: window.location.origin,
       } });
       setLaden("Lade 3D-Datei hoch …");
       const blob = await exportStl(geo);
       const { error } = await supabase.storage.from("stadtmodelle").uploadToSignedUrl(res.path, res.uploadToken, blob, { contentType: "model/stl" });
       if (error) throw new Error("Upload der 3D-Datei fehlgeschlagen");
-      setClientSecret(res.clientSecret);
+      setLaden("Weiterleitung zur Zahlung …");
+      window.location.href = res.url;
+      return;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Bestellung fehlgeschlagen");
     } finally { setLaden(null); }
   }
 
-  const checkoutOptions = useMemo(() => clientSecret ? { fetchClientSecret: () => Promise.resolve(clientSecret) } : null, [clientSecret]);
   const kannBestellen = !!geo && grenzeOk && !!filament && !laden;
 
   const [istAdmin, setIstAdmin] = useState(false);
@@ -335,21 +334,11 @@ export default function StadtmodellKonfigurator() {
             <Button size="lg" className="h-12 w-full text-base" disabled={!kannBestellen} onClick={bestellen}>
               {laden && geo ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{laden}</> : "Jetzt bestellen"}
             </Button>
-            <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Sichere Zahlung über Stripe</p>
+            <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Sichere Zahlung über Payrexx – TWINT, PostFinance, Karte</p>
           </div>
         </div>
       </aside>
 
-      <Dialog open={!!checkoutOptions} onOpenChange={(o) => !o && setClientSecret(null)}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-          <DialogHeader><DialogTitle>Bezahlung</DialogTitle></DialogHeader>
-          {checkoutOptions && (
-            <EmbeddedCheckoutProvider stripe={getStripe()} options={checkoutOptions}>
-              <EmbeddedCheckout />
-            </EmbeddedCheckoutProvider>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

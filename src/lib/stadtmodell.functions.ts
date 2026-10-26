@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { COLOR_MAP } from "./colorMap";
 import {
-  MASSSTAEBE, MODELL_MAX_MM, MODELL_MIN_MM, QUELLE, VERSAND, berechnePreis, modellMm,
+  MASSSTAEBE, MODELL_MAX_MM, MODELL_MIN_MM, VERSAND, berechnePreis, modellMm,
   type StadtmodellFilament, type VersandKey,
 } from "./stadtmodell";
 
@@ -33,7 +33,6 @@ async function ladeFreigegebene() {
 export const listStadtmodellFilamente = createServerFn({ method: "GET" }).handler(async () => ladeFreigegebene());
 
 const Input = z.object({
-  environment: z.enum(["sandbox", "live"]),
   lat: z.number().gt(45.7).lt(47.9),
   lon: z.number().gt(5.9).lt(10.6),
   kantenlaenge_m: z.number().int().min(100).max(500),
@@ -43,17 +42,6 @@ const Input = z.object({
   versand: z.enum(Object.keys(VERSAND) as [VersandKey, ...VersandKey[]]),
   origin: z.string().url(),
 });
-
-function form(obj: Record<string, unknown>, prefix = "", out = new URLSearchParams()) {
-  for (const [k, v] of Object.entries(obj)) {
-    const key = prefix ? `${prefix}[${k}]` : k;
-    if (v === undefined || v === null) continue;
-    if (Array.isArray(v)) v.forEach((x, i) => (typeof x === "object" ? form(x as any, `${key}[${i}]`, out) : out.append(`${key}[${i}]`, String(x))));
-    else if (typeof v === "object") form(v as any, key, out);
-    else out.append(key, String(v));
-  }
-  return out;
-}
 
 export const createStadtmodellCheckout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => Input.parse(d))
@@ -78,41 +66,18 @@ export const createStadtmodellCheckout = createServerFn({ method: "POST" })
     const { data: up, error: upErr } = await supabaseAdmin.storage.from("stadtmodelle").createSignedUploadUrl(path);
     if (upErr || !up) throw new Error("Upload konnte nicht vorbereitet werden");
 
-    const conn = data.environment === "sandbox" ? process.env.STRIPE_SANDBOX_API_KEY : process.env.STRIPE_LIVE_API_KEY;
-    const lovKey = process.env.LOVABLE_API_KEY;
-    if (!conn || !lovKey) throw new Error("Zahlung ist nicht konfiguriert");
-    const name = `Stadtmodell ${data.kantenlaenge_m}×${data.kantenlaenge_m} m, 1:${data.massstab} (${mm}×${mm} mm), ${materialLabel}`;
-    const body = form({
-      mode: "payment",
-      ui_mode: "embedded_page",
-      return_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      line_items: [{ quantity: 1, price_data: { currency: "chf", unit_amount: Math.round(preis * 100),
-        product_data: { name, description: QUELLE, tax_code: "txcd_99999999" } } }],
-      shipping_address_collection: { allowed_countries: ["CH", "LI"] },
-      shipping_options: [{ shipping_rate_data: {
-        type: "fixed_amount", display_name: versand.label,
-        fixed_amount: { amount: Math.round(versand.preis * 100), currency: "chf" },
-      } }],
-      phone_number_collection: { enabled: true },
-      payment_intent_data: { description: name },
-      metadata: { stadtmodell_id: row.id, source: "stadtmodell" },
-    });
-    const res = await fetch("https://connector-gateway.lovable.dev/stripe/v1/checkout/sessions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Stripe-Version": "2026-03-25.dahlia",
-        "X-Connection-Api-Key": conn,
-        "Lovable-API-Key": lovKey,
-      },
-      body,
-    });
-    const session = await res.json();
-    if (!res.ok) {
-      console.error("[stadtmodell checkout]", session);
+    const name = `Stadtmodell ${data.kantenlaenge_m}×${data.kantenlaenge_m} m, 1:${data.massstab} (${mm}×${mm} mm), ${materialLabel} – ${versand.label}`;
+    const { createGateway } = await import("./payrexx.server");
+    let gw: { id: number; link: string };
+    try {
+      gw = await createGateway({
+        amountChf: preis + versand.preis, purpose: name, referenceId: `stadt:${row.id}`,
+        successUrl: `${origin}/payment-success?ref=${row.id.slice(0, 8)}`, cancelUrl: `${origin}/stadtmodell`, adresse: true,
+      });
+    } catch {
       await supabaseAdmin.from("stadtmodell_bestellungen").update({ status: "fehler", fehler: "Checkout fehlgeschlagen" }).eq("id", row.id);
       throw new Error("Zahlung konnte nicht gestartet werden");
     }
-    await supabaseAdmin.from("stadtmodell_bestellungen").update({ stripe_session_id: session.id, stl_path: path }).eq("id", row.id);
-    return { clientSecret: session.client_secret as string, path, uploadToken: up.token };
+    await supabaseAdmin.from("stadtmodell_bestellungen").update({ stripe_session_id: `payrexx:${gw.id}`, stl_path: path }).eq("id", row.id);
+    return { url: gw.link, path, uploadToken: up.token };
   });
