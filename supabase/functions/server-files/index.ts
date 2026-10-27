@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Admin-Dateiansicht für den Server (muscio): leitet nur LESENDE Abfragen an den Slicer weiter
-// (/files/info, /files/list, /files/download, /system/status). Der Slicer sperrt Geheimnisse (.env, Schlüssel) selbst.
+// (/files/info, /files/list, /files/download, /system/status, /system/stream). Der Slicer sperrt Geheimnisse (.env, Schlüssel) selbst.
 // Secrets (Supabase → Edge Functions → Secrets): SLICER_URL, SLICER_API_KEY.
 // Der API-Key verlässt diese Funktion nie.
 
@@ -77,6 +77,25 @@ serve(async (req) => {
 
     if (action === "info") return await proxyJson(`${base}/files/info`);
     if (action === "status") return await proxyJson(`${base}/system/status`);
+
+    // Live-Strom (Server-Sent Events): der Slicer sendet jede Sekunde den Status und schliesst nach ca. 2 Minuten,
+    // der Browser verbindet sich dann neu. So braucht es nur eine Anfrage pro Intervall statt eine pro Sekunde.
+    if (action === "stream") {
+      let res: Response;
+      try {
+        res = await fetch(`${base}/system/stream`, { headers, signal: AbortSignal.timeout(130_000) });
+      } catch (_e) {
+        return json({ error: "Server nicht erreichbar" }, 504);
+      }
+      if (!res.ok || !res.body) {
+        const detail = await res.json().catch(() => ({}));
+        return json({ error: detail?.detail || `Server antwortet mit ${res.status}` }, res.status === 404 ? 501 : res.status);
+      }
+      return new Response(res.body, {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" },
+      });
+    }
 
     if (action === "list") {
       const path = cleanPath(body?.path);

@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Activity, Clock, Cpu, HardDrive, Loader2, MemoryStick, Thermometer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Live-Übersicht über die Auslastung des Servers (muscio). Aktualisiert sich alle 5 Sekunden,
-// solange die Seite sichtbar ist. Daten kommen vom Slicer (/system/status) über die Edge Function server-files.
+// Live-Übersicht über die Auslastung des Servers (muscio). Live-Strom jede Sekunde (Server-Sent Events),
+// mit Rückfall auf Abfrage alle 2 Sekunden. Daten kommen vom Slicer (/system/stream, /system/status) über die Edge Function server-files.
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/server-files`;
-const INTERVALL_MS = 5000;
-const VERLAUF = 60; // Messpunkte (= 5 Minuten)
+const INTERVALL_MS = 2000; // Rückfall: Abfrage alle 2 Sekunden, falls der Live-Strom nicht verfügbar ist
+const VERLAUF = 120; // Messpunkte (bei 1 pro Sekunde = 2 Minuten)
 
 interface SlicerJob {
   id?: string;
@@ -112,53 +112,124 @@ export default function ServerStatusPanel() {
   const [cpuVerlauf, setCpuVerlauf] = useState<number[]>([]);
   const [ramVerlauf, setRamVerlauf] = useState<number[]>([]);
   const [stand, setStand] = useState<Date | null>(null);
-  const laeuft = useRef(false);
+  const [live, setLive] = useState(false);
 
   useEffect(() => {
     let aktiv = true;
+    let abbruch: AbortController | null = null;
 
-    const holen = async () => {
-      if (laeuft.current || document.hidden) return;
-      laeuft.current = true;
-      try {
-        const { data } = await supabase.auth.getSession();
-        const res = await fetch(FUNCTION_URL, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${data.session?.access_token ?? ""}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ action: "status" }),
-        });
+    const uebernehmen = (s: Status) => {
+      setStatus(s);
+      setFehler("");
+      setStand(new Date());
+      if (s.cpu_percent != null) setCpuVerlauf((v) => [...v, s.cpu_percent!].slice(-VERLAUF));
+      const rp = prozent(s.mem?.used, s.mem?.total);
+      if (rp != null) setRamVerlauf((v) => [...v, rp].slice(-VERLAUF));
+    };
+
+    const kopf = async () => {
+      const { data } = await supabase.auth.getSession();
+      return {
+        Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "",
+        "Content-Type": "application/json",
+      };
+    };
+
+    const warten = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+    /** Einmal abfragen (Rückfall). */
+    const einmal = async () => {
+      const res = await fetch(FUNCTION_URL, { method: "POST", headers: await kopf(), body: JSON.stringify({ action: "status" }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || `Fehler ${res.status}`);
+      if (aktiv) uebernehmen(j as Status);
+    };
+
+    /** Live-Strom lesen, bis der Server ihn schliesst. Wirft, wenn der Strom nicht geht. */
+    const strom = async () => {
+      abbruch = new AbortController();
+      const res = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: await kopf(),
+        body: JSON.stringify({ action: "stream" }),
+        signal: abbruch.signal,
+      });
+      if (!res.ok || !res.body) {
         const j = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(j?.error || `Fehler ${res.status}`);
-        if (!aktiv) return;
-        const s = j as Status;
-        setStatus(s);
-        setFehler("");
-        setStand(new Date());
-        if (s.cpu_percent != null) setCpuVerlauf((v) => [...v, s.cpu_percent!].slice(-VERLAUF));
-        const rp = prozent(s.mem?.used, s.mem?.total);
-        if (rp != null) setRamVerlauf((v) => [...v, rp].slice(-VERLAUF));
-      } catch (e) {
-        if (aktiv) setFehler(e instanceof Error ? e.message : "Unbekannter Fehler");
-      } finally {
-        laeuft.current = false;
-        if (aktiv) setErstLaden(false);
+        throw new Error(j?.error || `Fehler ${res.status}`);
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let puffer = "";
+      let gelesen = 0;
+      while (aktiv) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        puffer += dec.decode(value, { stream: true });
+        let ende: number;
+        while ((ende = puffer.indexOf("\n\n")) >= 0) {
+          const block = puffer.slice(0, ende);
+          puffer = puffer.slice(ende + 2);
+          const daten = block
+            .split("\n")
+            .filter((l) => l.startsWith("data:"))
+            .map((l) => l.slice(5).trim())
+            .join("");
+          if (!daten) continue;
+          try {
+            uebernehmen(JSON.parse(daten) as Status);
+            gelesen++;
+            setLive(true);
+          } catch {
+            /* unvollständiger Block ignorieren */
+          }
+        }
+      }
+      setLive(false);
+      if (gelesen === 0) throw new Error("Live-Strom ohne Daten");
+    };
+
+    const schleife = async () => {
+      let fallbackBis = 0;
+      while (aktiv) {
+        if (document.hidden) {
+          abbruch?.abort();
+          await warten(1000);
+          continue;
+        }
+        try {
+          if (Date.now() >= fallbackBis) {
+            await strom(); // läuft ca. 2 Minuten, dann sofort neu verbinden
+            continue;
+          }
+          await einmal();
+          await warten(INTERVALL_MS);
+        } catch (e) {
+          if (!aktiv) break;
+          setLive(false);
+          if (e instanceof DOMException && e.name === "AbortError") {
+            await warten(500);
+            continue;
+          }
+          setFehler(e instanceof Error ? e.message : "Unbekannter Fehler");
+          fallbackBis = Date.now() + 30_000; // 30 s per Abfrage, dann Strom erneut versuchen
+          try {
+            await einmal();
+          } catch {
+            /* Fehler bleibt sichtbar */
+          }
+          await warten(INTERVALL_MS);
+        } finally {
+          if (aktiv) setErstLaden(false);
+        }
       }
     };
 
-    void holen();
-    const t = setInterval(() => void holen(), INTERVALL_MS);
-    const onVisible = () => {
-      if (!document.hidden) void holen();
-    };
-    document.addEventListener("visibilitychange", onVisible);
+    void schleife();
     return () => {
       aktiv = false;
-      clearInterval(t);
-      document.removeEventListener("visibilitychange", onVisible);
+      abbruch?.abort();
     };
   }, []);
 
@@ -190,7 +261,7 @@ export default function ServerStatusPanel() {
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span className={`h-2 w-2 rounded-full ${fehler ? "bg-destructive" : "bg-green-500"}`} />
-          {fehler ? `Verbindung gestört (${fehler})` : "Live, alle 5 Sekunden"}
+          {fehler ? `Verbindung gestört (${fehler})` : live ? "Live (jede Sekunde)" : "Aktualisiert alle 2 Sekunden"}
         </span>
         {stand && <span>Stand {stand.toLocaleTimeString("de-CH")}</span>}
       </div>
