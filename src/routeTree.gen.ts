@@ -65,7 +65,6 @@ import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellu
 import { Route as AdminFilamenteRouteImport } from './routes/admin/filamente'
 import { Route as AdminFilamentverbrauchRouteImport } from './routes/admin/filamentverbrauch'
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
-import { Route as AdminHi3dTestRouteImport } from './routes/admin/hi3d-test'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
 import { Route as AdminKalkulatorTestRouteImport } from './routes/admin/kalkulator-test'
@@ -422,11 +421,6 @@ const AdminFilamentverbrauchRoute = AdminFilamentverbrauchRouteImport.update({
 const AdminGutscheineRoute = AdminGutscheineRouteImport.update({
   id: '/gutscheine',
   path: '/gutscheine',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminHi3dTestRoute = AdminHi3dTestRouteImport.update({
-  id: '/hi3d-test',
-  path: '/hi3d-test',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminKalenderRoute = AdminKalenderRouteImport.update({
@@ -885,7 +879,6 @@ export interface FileRoutesByFullPath {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
-  '/admin/hi3d-test': typeof AdminHi3dTestRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
@@ -1017,7 +1010,6 @@ export interface FileRoutesByTo {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
-  '/admin/hi3d-test': typeof AdminHi3dTestRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
@@ -1155,7 +1147,6 @@ export interface FileRoutesById {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
-  '/admin/hi3d-test': typeof AdminHi3dTestRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
@@ -1294,7 +1285,6 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/filamentverbrauch'
     | '/admin/gutscheine'
-    | '/admin/hi3d-test'
     | '/admin/kalender'
     | '/admin/kalkulator'
     | '/admin/kalkulator-test'
@@ -1426,7 +1416,6 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/filamentverbrauch'
     | '/admin/gutscheine'
-    | '/admin/hi3d-test'
     | '/admin/kalender'
     | '/admin/kalkulator'
     | '/admin/kalkulator-test'
@@ -1563,7 +1552,6 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/filamentverbrauch'
     | '/admin/gutscheine'
-    | '/admin/hi3d-test'
     | '/admin/kalender'
     | '/admin/kalkulator'
     | '/admin/kalkulator-test'
@@ -2079,13 +2067,6 @@ declare module '@tanstack/react-router' {
       path: '/gutscheine'
       fullPath: '/admin/gutscheine'
       preLoaderRoute: typeof AdminGutscheineRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/hi3d-test': {
-      id: '/admin/hi3d-test'
-      path: '/hi3d-test'
-      fullPath: '/admin/hi3d-test'
-      preLoaderRoute: typeof AdminHi3dTestRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/kalender': {
@@ -2746,7 +2727,6 @@ interface AdminRouteChildren {
   AdminFilamenteRoute: typeof AdminFilamenteRouteWithChildren
   AdminFilamentverbrauchRoute: typeof AdminFilamentverbrauchRoute
   AdminGutscheineRoute: typeof AdminGutscheineRoute
-  AdminHi3dTestRoute: typeof AdminHi3dTestRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
   AdminKalkulatorTestRoute: typeof AdminKalkulatorTestRoute
@@ -2784,7 +2764,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminFilamenteRoute: AdminFilamenteRouteWithChildren,
   AdminFilamentverbrauchRoute: AdminFilamentverbrauchRoute,
   AdminGutscheineRoute: AdminGutscheineRoute,
-  AdminHi3dTestRoute: AdminHi3dTestRoute,
   AdminKalenderRoute: AdminKalenderRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
   AdminKalkulatorTestRoute: AdminKalkulatorTestRoute,
