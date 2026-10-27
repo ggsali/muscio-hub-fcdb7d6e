@@ -114,8 +114,10 @@ serve(async (req) => {
       if (res.status !== 422) break;
       const peek = await res.clone().json().catch(() => ({}));
       const d = String(peek?.detail ?? "");
-      if (!d.includes("Unbekannter Drucker") && !d.includes("Slicen fehlgeschlagen")) break;
-      await dbg(supabase, { ev: "drucker-wechsel", von: printer, grund: d.slice(0, 200) });
+      // "model_too_large" = Bauraum-Vorprüfung des Slicers (Modell passt nicht aufs Bett) -> nächsten, grösseren Drucker versuchen
+      const zuGross = peek?.error === "model_too_large" || peek?.detail?.error === "model_too_large";
+      if (!zuGross && !d.includes("Unbekannter Drucker") && !d.includes("Slicen fehlgeschlagen")) break;
+      await dbg(supabase, { ev: "drucker-wechsel", von: printer, grund: zuGross ? "zu gross fuers Bett" : d.slice(0, 200) });
     }
     const payload = await res.json().catch(() => ({}));
     await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
