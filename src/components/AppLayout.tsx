@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Menu, X, CalendarDays, MessageCircle,
   Mail, Receipt, Smartphone, ShoppingBag, FileText, PenLine, Star,
-  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles, Sun, Moon, BookOpen, Building2, ListTodo } from "lucide-react";
+  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles, Sun, Moon, BookOpen, Building2, ListTodo, HardDrive } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -53,6 +53,7 @@ const navGroups: NavGroup[] = [
       { to: "/admin/slicer-test", icon: <Printer className={ic} />, label: "Slicer-Test", badge: "TEST" },
       { to: "/admin/kalkulator-test", icon: <Printer className={ic} />, label: "Kalkulator-Test", badge: "TEST" },
       { to: "/admin/spardose-test", icon: <Printer className={ic} />, label: "Spardose-Test", badge: "TEST" },
+      { to: "/admin/server-dateien", icon: <HardDrive className={ic} />, label: "Server-Dateien", badge: "NEU" },
     ],
   },
   {
