@@ -1,3 +1,4 @@
+// @ts-nocheck — Deno löst die @react-email-Typen (export * aus Unterpaketen) nicht auf; Laufzeit unbeeinflusst.
 import { Resend } from 'npm:resend@4.0.0'
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
