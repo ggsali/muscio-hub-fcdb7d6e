@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronRight, Download, File as FileIcon, Folder, HardDrive, Home, Loader2, RefreshCw, Search } from "lucide-react";
+import { ChevronRight, Download, File as FileIcon, Folder, Home, Loader2, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ServerStatusPanel from "@/components/ServerStatusPanel";
 
 // Admin-Ansicht der Dateien auf dem Server (muscio). Nur lesen und herunterladen.
 // Läuft über die Edge Function server-files, die den Slicer auf dem Server abfragt.
@@ -20,13 +21,6 @@ interface Eintrag {
 interface ListAntwort {
   path: string;
   entries: Eintrag[];
-}
-
-interface InfoAntwort {
-  total_bytes?: number;
-  used_bytes?: number;
-  free_bytes?: number;
-  job_count?: number;
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -66,7 +60,6 @@ function formatDatum(sekunden?: number): string {
 export default function ServerDateienPage() {
   const [pfad, setPfad] = useState("");
   const [eintraege, setEintraege] = useState<Eintrag[]>([]);
-  const [info, setInfo] = useState<InfoAntwort | null>(null);
   const [laden, setLaden] = useState(false);
   const [fehler, setFehler] = useState("");
   const [suche, setSuche] = useState("");
@@ -91,18 +84,9 @@ export default function ServerDateienPage() {
     }
   }, []);
 
-  const ladeInfo = useCallback(async () => {
-    try {
-      setInfo(await callJson<InfoAntwort>({ action: "info" }));
-    } catch {
-      setInfo(null);
-    }
-  }, []);
-
   useEffect(() => {
     void ladeOrdner("");
-    void ladeInfo();
-  }, [ladeOrdner, ladeInfo]);
+  }, [ladeOrdner]);
 
   const teile = useMemo(() => pfad.split("/").filter(Boolean), [pfad]);
 
@@ -140,21 +124,18 @@ export default function ServerDateienPage() {
     }
   };
 
-  const belegt = info?.total_bytes && info.used_bytes != null ? Math.min(100, Math.round((info.used_bytes / info.total_bytes) * 100)) : null;
-
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">Server-Dateien</h1>
-          <p className="text-sm text-muted-foreground">Dateien auf dem Server (muscio). Nur ansehen und herunterladen.</p>
+          <h1 className="text-xl font-semibold">Server</h1>
+          <p className="text-sm text-muted-foreground">Auslastung und Dateien des Servers (muscio). Nur ansehen und herunterladen.</p>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={() => {
             void ladeOrdner(pfad);
-            void ladeInfo();
           }}
           disabled={laden}
         >
@@ -163,25 +144,7 @@ export default function ServerDateienPage() {
         </Button>
       </div>
 
-      {info && (
-        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-card p-4">
-          <HardDrive className="h-5 w-5 text-muted-foreground" />
-          <div className="min-w-[200px] flex-1">
-            <div className="flex justify-between text-sm">
-              <span>
-                {formatBytes(info.used_bytes)} von {formatBytes(info.total_bytes)} belegt
-              </span>
-              <span className="text-muted-foreground">{formatBytes(info.free_bytes)} frei</span>
-            </div>
-            {belegt != null && (
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-                <div className={`h-full ${belegt > 85 ? "bg-destructive" : "bg-primary"}`} style={{ width: `${belegt}%` }} />
-              </div>
-            )}
-          </div>
-          {info.job_count != null && <div className="text-sm text-muted-foreground">{info.job_count} Slicer-Jobs gespeichert</div>}
-        </div>
-      )}
+      <ServerStatusPanel />
 
       <div className="rounded-lg border bg-card">
         <div className="flex flex-wrap items-center gap-2 border-b p-3">

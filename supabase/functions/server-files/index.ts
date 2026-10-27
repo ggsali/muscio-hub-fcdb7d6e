@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Admin-Dateiansicht für den Server (muscio): leitet nur LESENDE Abfragen an den Slicer weiter
-// (/files/info, /files/list, /files/download). Der Slicer sperrt Geheimnisse (.env, Schlüssel) selbst.
+// (/files/info, /files/list, /files/download, /system/status). Der Slicer sperrt Geheimnisse (.env, Schlüssel) selbst.
 // Secrets (Supabase → Edge Functions → Secrets): SLICER_URL, SLICER_API_KEY.
 // Der API-Key verlässt diese Funktion nie.
 
@@ -76,6 +76,7 @@ serve(async (req) => {
     };
 
     if (action === "info") return await proxyJson(`${base}/files/info`);
+    if (action === "status") return await proxyJson(`${base}/system/status`);
 
     if (action === "list") {
       const path = cleanPath(body?.path);
