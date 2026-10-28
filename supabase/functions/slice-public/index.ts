@@ -34,7 +34,7 @@ async function dbg(supabase: any, entry: Record<string, unknown>) {
 }
 
 /** gzip entpacken mit Grössenbremse (Schutz vor "Zip-Bomben"): wirft, wenn mehr als `max` Bytes herauskommen */
-async function gunzipLimited(blob: Blob, max: number): Promise<Uint8Array> {
+async function gunzipLimited(blob: Blob, max: number): Promise<Uint8Array<ArrayBuffer>> {
   const reader = blob.stream().pipeThrough(new DecompressionStream("gzip")).getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
