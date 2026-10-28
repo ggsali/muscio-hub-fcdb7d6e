@@ -1332,7 +1332,7 @@ const CalculatorOnlinePage = () => {
 
   // Schnell-Schätzung: sobald analysiert, globales Material auf Standard setzen
   const quickReady = quickMode && parts.length > 0 && !kiLoading
-    && parts.every((p) => p.hasVolume || isStepFile(p.fileName));
+    && parts.every((p) => p.hasVolume || !!p.slicerResult || isStepFile(p.fileName));
 
   useEffect(() => {
     if (!quickMode || materialId || parts.length === 0) return;
@@ -1690,7 +1690,7 @@ const CalculatorOnlinePage = () => {
   const priceBadge = parts.length === 0 || hasStep ? null : quickTotal;
 
   const canGoNext = step === 1
-    ? parts.length > 0 && parts.every((p) => p.hasVolume || isStepFile(p.fileName))
+    ? parts.length > 0 && parts.every((p) => p.hasVolume || !!p.slicerResult || isStepFile(p.fileName))
     : step === 2 ? true
     : step === 3 ? (individual ? partsMissingMaterial === 0 : !!materialId)
     : step === 4 ? (individual ? allPartColorsOk : !!color)
@@ -1963,9 +1963,9 @@ const CalculatorOnlinePage = () => {
                   </div>
 
                   {/* Hochgeladene Parts */}
-                  {parts.filter(p => p.hasVolume || isStepFile(p.fileName)).length > 0 && (
+                  {parts.length > 0 && (
                     <div className="space-y-3">
-                      {parts.filter(p => p.hasVolume || isStepFile(p.fileName)).map((p) => (
+                      {parts.map((p) => (
                         <div key={p.id} className="bg-card border border-border rounded-2xl p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
