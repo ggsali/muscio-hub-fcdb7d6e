@@ -13,7 +13,7 @@ interface P {
 }
 
 /** Zeigt veröffentlichte Projekte (Tabelle "projekte"), deren Kategorie das Stichwort enthält oder die den Tag tragen, mit Bildvorschau. Ohne Treffer wird nichts angezeigt. */
-export default function ServiceProjects({ tag, title = "Projekte" }: { tag: string; title?: string }) {
+export default function ServiceProjects({ tag, slugs = [], tags = [], title = "Projekte" }: { tag: string; slugs?: string[]; tags?: string[]; title?: string }) {
   const [items, setItems] = useState<P[]>([]);
 
   useEffect(() => {
@@ -22,12 +22,12 @@ export default function ServiceProjects({ tag, title = "Projekte" }: { tag: stri
       .from("projekte")
       .select("id, slug, name, kategorie, kurzbeschreibung, bild_url")
       .eq("aktiv", true)
-      .or(`tags.cs.{${tag}},kategorie.ilike.%${tag}%`)
+      .or([`kategorie.ilike.%${tag}%`, `tags.cs.{${tag}}`, ...tags.map((t) => `tags.cs.{${t}}`), ...(slugs.length ? [`slug.in.(${slugs.join(",")})`] : [])].join(","))
       .order("sort_order", { ascending: true })
       .limit(6)
       .then(({ data }) => { if (alive) setItems((data as P[]) || []); });
     return () => { alive = false; };
-  }, [tag]);
+  }, [tag, slugs.join(","), tags.join(",")]);
 
   if (items.length === 0) return null;
 

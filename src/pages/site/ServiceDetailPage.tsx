@@ -137,7 +137,7 @@ export default function ServiceDetailPage() {
         faqs={service.faqs}
         related={service.related}
       />
-      {service.projectTag && <ServiceProjects tag={service.projectTag} title="Projekte" />}
+      {service.projectTag && <ServiceProjects tag={service.projectTag} slugs={service.projectSlugs} tags={service.projectTags} title="Projekte" />}
     </>
   );
 }
