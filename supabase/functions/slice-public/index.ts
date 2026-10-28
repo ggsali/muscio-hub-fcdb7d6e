@@ -81,8 +81,10 @@ serve(async (req) => {
     const plate = form.get("plate") === "1";
     const plateReq = String(form.get("printer") ?? "xl");
     const plateRaw = ["k1c", "a1", "xl"].includes(plateReq) ? plateReq : "xl";
-    const buildForm = (printer: string) => {
+    const buildForm = (printer: string, allowSplit = false) => {
       const out = new FormData();
+      // allow_split: der Slicer teilt Modelle, die auf keinen Drucker passen, in gleich grosse Stücke (Zuschlag im Kalkulator)
+      if (allowSplit) out.append("allow_split", "true");
       out.append("file", file, `upload${ext}`);
       out.append("printer", printer);
       out.append("material", "pla");
@@ -98,28 +100,41 @@ serve(async (req) => {
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
-    const slice = (printer: string) =>
+    const slice = (printer: string, allowSplit = false) =>
       fetch(`${base}/slice`, {
         method: "POST",
         headers: { "X-API-Key": key },
-        body: buildForm(printer),
+        body: buildForm(printer, allowSplit),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     // Drucker-Reihenfolge: K1C (klein) -> K1 (falls K1C-Profil fehlt) -> xl (420x420x420 mm, wenn das Teil nicht aufs kleine Bett passt)
     let res!: Response;
     let used = "k1c";
+    let letzterZuGross = false;
     for (const printer of plate ? [plateRaw] : ["k1c", "k1", "xl"]) {
       res = await slice(printer);
       used = printer;
+      letzterZuGross = false;
       if (res.status !== 422) break;
       const peek = await res.clone().json().catch(() => ({}));
       const d = String(peek?.detail ?? "");
       // "model_too_large" = Bauraum-Vorprüfung des Slicers (Modell passt nicht aufs Bett) -> nächsten, grösseren Drucker versuchen
       const zuGross = peek?.error === "model_too_large" || peek?.detail?.error === "model_too_large";
+      letzterZuGross = zuGross;
       if (!zuGross && !d.includes("Unbekannter Drucker") && !d.includes("Slicen fehlgeschlagen")) break;
       await dbg(supabase, { ev: "drucker-wechsel", von: printer, grund: zuGross ? "zu gross fuers Bett" : d.slice(0, 200) });
     }
+    // Passt das Modell auf keinen Drucker: auf dem grössten (xl) mit automatischem Teilen erneut versuchen.
+    // Ältere Slicer ignorieren allow_split und antworten wieder mit 422 -> Verhalten wie bisher (Rückfall im Kalkulator).
+    if (!plate && res.status === 422 && letzterZuGross) {
+      await dbg(supabase, { ev: "teilen", grund: "passt auf keinen Drucker, versuche Teilen" });
+      res = await slice("xl", true);
+      used = "xl";
+    }
     const payload = await res.json().catch(() => ({}));
+    const splitRaw = payload?.split ?? payload?.stats?.split ?? null;
+    const splitParts = Number(splitRaw?.parts);
+    const split = Number.isFinite(splitParts) && splitParts >= 2 ? { parts: Math.min(splitParts, 4) } : null;
     await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
     if (!res.ok) return json({ ok: false, error: "Slicer-Fehler", status: res.status, detail: String(payload?.detail ?? "").slice(0, 300) });
     // Plattenmodus: G-Code serverseitig vom NAS holen und im Storage ablegen, damit er der Bestellung angehängt werden kann
@@ -152,7 +167,7 @@ serve(async (req) => {
       await dbg(supabase, { ev: "gcode-fehler", msg: gcodeError });
     }
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
-    return json({ ok: true, stats: payload.stats ?? null, ...(gcodeError ? { gcode_error: gcodeError } : {}) });
+    return json({ ok: true, stats: payload.stats ?? null, ...(split ? { split } : {}), ...(gcodeError ? { gcode_error: gcodeError } : {}) });
   } catch (e) {
     console.error("slice-public error:", e);
     try { await dbg(createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!), { ev: "fehler", msg: String((e as Error)?.message ?? e).slice(0, 300) }); } catch { /* ignore */ }

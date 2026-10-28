@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import ModelPreview from "@/components/site/ModelPreview";
 import HerkunftBanner from "@/components/site/HerkunftBanner";
 import { colorHex } from "@/lib/colorMap";
+import { splitFee } from "@/lib/splitSurcharge";
 import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
 import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
@@ -342,6 +343,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number): Pro
     density: 1.25,
     layers: st.layers ?? 0,
     hasSupport: !!st.has_support,
+    ...(Number(json?.split?.parts) >= 2 ? { splitParts: Math.min(4, Math.floor(Number(json.split.parts))) } : {}),
   } as SlicerResult;
 }
 
@@ -1161,7 +1163,9 @@ const CalculatorOnlinePage = () => {
       const materialCost = weightG * mat.pricePerGram;
       const machineCost = (druckzeitMin / 60) * maschinenRate;
       const supportCost = p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
-      const unit = materialCost + machineCost + supportCost;
+      // Zuschlag fürs Teilen und Verkleben: pro Schnitt und pro Stück (Modell grösser als das grösste Druckbett)
+      const splitCost = splitFee(p.slicerResult.splitParts);
+      const unit = materialCost + machineCost + supportCost + splitCost;
       return {
         weight: weightG,
         unit,
@@ -1169,7 +1173,7 @@ const CalculatorOnlinePage = () => {
         discount,
         exact: true,
         druckzeitMin,
-        breakdown: { material: materialCost, machine: machineCost, support: supportCost },
+        breakdown: { material: materialCost, machine: machineCost, support: supportCost, split: splitCost },
       };
     }
 
@@ -1188,6 +1192,7 @@ const CalculatorOnlinePage = () => {
           material: p.kiAnalysis.materialkosten,
           machine: p.kiAnalysis.maschinenkosten,
           support: p.kiAnalysis.support_nachbearbeitung,
+          split: 0,
         },
       };
     }
@@ -1493,7 +1498,13 @@ const CalculatorOnlinePage = () => {
     setSubmitting(true);
     try {
       const summary = parts
-        .map((p) => `${p.fileName} (${p.quantity}× ${(materials.find(m => m.id === p.materialId)?.name || p.materialId)}, ${p.color}, ${qualityAdminLabel(p.infill)})`)
+        .map((p) => {
+          const teile = p.slicerResult?.splitParts ?? 1;
+          const teilen = teile > 1
+            ? ` – GETEILT in ${teile} Teile und verklebt (Zuschlag ${CHF(splitFee(teile))} pro Stück, Teil grösser als 420 mm)`
+            : "";
+          return `${p.fileName} (${p.quantity}× ${(materials.find(m => m.id === p.materialId)?.name || p.materialId)}, ${p.color}, ${qualityAdminLabel(p.infill)})${teilen}`;
+        })
         .join("; ");
       const { data: { user } } = await supabase.auth.getUser();
       let resolvedVorname = form.vorname.trim();
@@ -2591,6 +2602,11 @@ const CalculatorOnlinePage = () => {
                                 {p.slicerResult.hasSupport && (
                                   <p className="text-xs text-muted-foreground">⚠️ Support erkannt</p>
                                 )}
+                                {(p.slicerResult.splitParts ?? 1) > 1 && (
+                                  <p className="text-xs text-muted-foreground">
+                                    ✂️ Das Teil ist grösser als unser Druckbett (42 cm). Es wird in {p.slicerResult.splitParts} Teile geteilt und danach verklebt (+{CHF(splitFee(p.slicerResult.splitParts))} pro Stück).
+                                  </p>
+                                )}
                               </div>
                             )}
                             {p.slicerError && !p.slicerResult && (
@@ -2716,6 +2732,9 @@ const CalculatorOnlinePage = () => {
                             <div className="flex justify-between"><span>Maschinenzeit</span><span className="tabular-nums">{CHF(calc.breakdown.machine)}</span></div>
                             {calc.breakdown.support > 0 && (
                               <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(calc.breakdown.support)}</span></div>
+                            )}
+                            {calc.breakdown.split > 0 && (
+                              <div className="flex justify-between"><span>Teilen &amp; Verkleben ({p.slicerResult?.splitParts} Teile)</span><span className="tabular-nums">{CHF(calc.breakdown.split)}</span></div>
                             )}
                             <div className="flex justify-between"><span>× {p.quantity} Stück{calc.discount > 0 ? ` (−${Math.round(calc.discount * 100)}%)` : ""}</span><span className="tabular-nums text-foreground">{CHF(calc.subtotal)}</span></div>
                           </div>
