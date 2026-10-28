@@ -128,6 +128,9 @@ serve(async (req) => {
     const infill = String(form.get("infill") ?? "").trim();
     if (infill && !/^\d{1,3}$/.test(infill)) return json({ error: "Ungültiger Infill" }, 422);
 
+    // Menge: N Kopien des Teils vom Slicer auf Platten anordnen lassen (nur Kalkulator, nicht Plattenmodus)
+    const copiesRaw = parseInt(String(form.get("copies") ?? "1"), 10);
+    const copies = !plate && Number.isFinite(copiesRaw) ? Math.min(500, Math.max(1, copiesRaw)) : 1;
     const plateReq = String(form.get("printer") ?? "xl");
     const plateRaw = ["k1c", "a1", "xl"].includes(plateReq) ? plateReq : "xl";
     const buildForm = (printer: string, allowSplit = false, plain = false) => {
@@ -145,6 +148,7 @@ serve(async (req) => {
       out.append("material", "pla");
       out.append("quality", quality);
       if (infill) out.append("infill", infill);
+      if (copies > 1) out.append("copies", String(copies));
       out.append("supports", "true");
       out.append("orient", plate ? "false" : "true");
       out.append("reference", plate ? "spardose-plate" : "public-calc");
@@ -187,7 +191,9 @@ serve(async (req) => {
     let used = "k1c";
     let letzterZuGross = false;
     const versuche: { p: string; s: number; ms: number }[] = []; // Zeit pro Slicer-Aufruf (jeder lädt die Datei neu hoch)
-    for (const printer of plate ? [plateRaw] : ["k1c", "k1", "xl"]) {
+    // Mehrere Stück: kleine Teile auf A1/K1C, grössere auf K2 Plus/H2C (Profile, die der Slicer nicht kennt, werden übersprungen)
+    const druckerFolge = copies > 1 ? ["a1", "k1c", "k2plus", "h2c", "xl"] : ["k1c", "k1", "xl"];
+    for (const printer of plate ? [plateRaw] : druckerFolge) {
       const ta = Date.now();
       res = await slice(printer);
       versuche.push({ p: printer, s: res.status, ms: Date.now() - ta });
@@ -204,7 +210,7 @@ serve(async (req) => {
     }
     // Passt das Modell auf keinen Drucker: auf dem grössten (xl) mit automatischem Teilen erneut versuchen.
     // Ältere Slicer ignorieren allow_split und antworten wieder mit 422 -> Verhalten wie bisher (Rückfall im Kalkulator).
-    if (!plate && res.status === 422 && letzterZuGross) {
+    if (!plate && copies === 1 && res.status === 422 && letzterZuGross) {
       await dbg(supabase, { ev: "teilen", grund: "passt auf keinen Drucker, versuche Teilen" });
       const ta = Date.now();
       res = await slice("xl", true);
@@ -260,7 +266,12 @@ serve(async (req) => {
       await dbg(supabase, { ev: "gcode-fehler", msg: gcodeError });
     }
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
-    return json({ ok: true, stats: payload.stats ?? null, ...(split ? { split } : {}), ...(gcodeError ? { gcode_error: gcodeError } : {}) });
+    const platten = Number(payload?.plates ?? payload?.stats?.plates);
+    const kopien = Number(payload?.copies ?? payload?.stats?.copies);
+    const mengeInfo = copies > 1 && Number.isFinite(platten) && platten >= 1 && kopien === copies
+      ? { batch: { copies: kopien, plates: Math.min(500, Math.floor(platten)), printer: used } }
+      : {};
+    return json({ ok: true, stats: payload.stats ?? null, ...(split ? { split } : {}), ...mengeInfo, ...(gcodeError ? { gcode_error: gcodeError } : {}) });
   } catch (e) {
     console.error("slice-public error:", e);
     try { await dbg(createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!), { ev: "fehler", msg: String((e as Error)?.message ?? e).slice(0, 300) }); } catch { /* ignore */ }

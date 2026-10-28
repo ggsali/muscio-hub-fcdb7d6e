@@ -309,6 +309,8 @@ export default function AnfragenPage() {
       const fallbackTitle = filenames[0]?.replace(/\.[^.]+$/, "") || inq.betreff || ("Anfrage vom " + new Date().toLocaleDateString("de-CH"));
 
       const spardoseMeta = ((inq.attachments || []) as any[]).find((a) => a?.auftrag_versand != null) as { auftrag_versand?: number; auftrag_verpackung?: number } | undefined;
+      // Kalkulator-Anfrage mit Mengenrechnung ("– N Platten (Setup ×N …"): Setup-Anzahl des Auftrags = Summe der Platten
+      const plattenSumme = Array.from((inq.nachricht || "").matchAll(/ – (\d+) Platten? \(Setup ×/g)).reduce((sum, m) => sum + parseInt(m[1], 10), 0);
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         customer_id: customerId,
         beschreibung: inq.nachricht || inq.betreff || "",
@@ -317,7 +319,8 @@ export default function AnfragenPage() {
         source: "website",
         name: aiTitle || fallbackTitle,
         // Spardosen-Generator: Versand/Verpackung/Setup direkt übernehmen
-        ...(spardoseMeta ? { versandkosten: Number(spardoseMeta.auftrag_versand) || 0, verpackungskosten: Number(spardoseMeta.auftrag_verpackung) || 0, setup_anzahl: 1 } : {}),
+        ...(spardoseMeta ? { versandkosten: Number(spardoseMeta.auftrag_versand) || 0, verpackungskosten: Number(spardoseMeta.auftrag_verpackung) || 0, setup_anzahl: 1 } : {})
+        ...(!spardoseMeta && plattenSumme > 0 ? { setup_anzahl: plattenSumme } : {}),
         // Gutschein aus dem Kalkulator: Abzug wird im Auftrag als eigene Zeile berechnet
         ...(inq.gutschein?.code
           ? { gutschein_code: inq.gutschein.code, gutschein_typ: inq.gutschein.typ, gutschein_wert: Number(inq.gutschein.wert) || 0 }

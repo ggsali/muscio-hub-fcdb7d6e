@@ -10,6 +10,8 @@ export interface SlicerResult {
   hasSupport: boolean;
   /** Wurde das Modell wegen seiner Grösse in mehrere Teile geteilt (Server-Slicer)? Anzahl der Teile, sonst leer */
   splitParts?: number;
+  /** Mengenrechnung des Server-Slicers: so viele Kopien auf so vielen Platten (Werte dieses Ergebnisses gelten pro Stück) */
+  batch?: { copies: number; plates: number; printer?: string };
   /** Gewählte Ausrichtung (Überhangfläche in mm² vorher/nachher) */
   orientation?: { name: string; before: number; after: number };
 }

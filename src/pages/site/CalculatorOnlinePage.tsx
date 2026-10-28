@@ -108,7 +108,9 @@ interface Part {
   kiAnalysisError: string | null;
   isQuickSlice?: boolean;
   quickSliceResult?: SlicerResult;
-
+  /** Server-Anordnung für die gewünschte Menge (Werte pro Stück, inkl. Platten) */
+  batch?: SlicerResult & { batch: { copies: number; plates: number; printer?: string } };
+  batchLoading?: boolean;
 }
 
 
@@ -318,7 +320,7 @@ function nasDebug(msg: string) {
 }
 
 /** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
-async function sliceViaNas(file: File, layerHeight: number, infill: number): Promise<SlicerResult> {
+async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1): Promise<SlicerResult> {
   const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
   const tStart = performance.now(); // Zeitmessung: Browser -> Edge Function -> Slicer -> Browser
   const senden = async (komprimiert: boolean) => {
@@ -331,6 +333,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number): Pro
     if (up.gz) body.append("gz", "1");
     body.append("quality", quality.toFixed(2));
     body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
+    if (copies > 1) body.append("copies", String(copies));
     const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
       method: "POST",
       headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
@@ -351,7 +354,21 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number): Pro
     nasDebug(`Fallback nach ${gesamtMs} ms (Datei ${mb} MB): http=${res.status} ok=${json?.ok} err=${json?.error ?? ""} detail=${json?.detail ?? ""} stats=${st ? JSON.stringify(st).slice(0, 150) : "keine"}`);
     throw new Error("NAS-Slicer nicht verfügbar");
   }
-  nasDebug(`Browser-Zeit gesamt: ${gesamtMs} ms (Datei ${mb} MB, inkl. Upload und Antwort)`);
+  nasDebug(`Browser-Zeit gesamt: ${gesamtMs} ms (Datei ${mb} MB, inkl. Upload und Antwort${copies > 1 ? `, ${copies} Stück` : ""})`);
+  if (copies > 1) {
+    // Der Slicer muss die Menge bestätigen (copies/plates); ältere Slicer ignorieren sie -> kein Mengenergebnis
+    const b = json?.batch;
+    if (!b || Number(b.copies) !== copies || !(Number(b.plates) >= 1)) throw new Error("Slicer kennt keine Mengenrechnung");
+    return {
+      printTimeMinutes: st.print_time_s / 60 / copies,
+      filamentGrams: st.filament_g / copies,
+      filamentMm: (st.filament_mm ?? 0) / copies,
+      density: 1.25,
+      layers: st.layers ?? 0,
+      hasSupport: !!st.has_support,
+      batch: { copies, plates: Math.floor(Number(b.plates)), printer: typeof b.printer === "string" ? b.printer : undefined },
+    } as SlicerResult;
+  }
   return {
     printTimeMinutes: st.print_time_s / 60,
     filamentGrams: st.filament_g,
@@ -830,13 +847,13 @@ const CalculatorOnlinePage = () => {
     if (cached) {
       const r = rescaleForMaterial(cached, mat?.density);
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, slicerResult: r, slicerLoading: false, slicerError: null, isQuickSlice: quickSlice, quickSliceResult: quickSlice ? r : p.quickSliceResult }
+        ? { ...p, slicerResult: r, slicerLoading: false, slicerError: null, isQuickSlice: quickSlice, quickSliceResult: quickSlice ? r : p.quickSliceResult, ...(quickSlice ? {} : { batch: undefined }) }
         : p));
       return;
     }
 
     setParts((prev) => prev.map((p) => p.id === partId
-      ? { ...p, slicerLoading: true, slicerError: null, isQuickSlice: quickSlice }
+      ? { ...p, slicerLoading: true, slicerError: null, isQuickSlice: quickSlice, ...(quickSlice ? {} : { batch: undefined }) }
       : p));
 
     try {
@@ -882,6 +899,43 @@ const CalculatorOnlinePage = () => {
   const slicerFnRef = useRef(runSlicerNow);
   useEffect(() => { slicerFnRef.current = runSlicerNow; }, [runSlicerNow]);
   const slicerTimers = useRef<Record<string, number>>({});
+
+  // Menge ab 2 Stück: der NAS-Slicer ordnet alle Kopien auf den Platten an (Plattenzahl, Zeit und Material für die ganze Menge).
+  // Ohne Antwort (Slicer kennt es nicht / nicht erreichbar) bleibt es bei Einzelpreis x Menge.
+  const batchTried = useRef<Set<string>>(new Set());
+  const batchTimers = useRef<Record<string, number>>({});
+  useEffect(() => {
+    const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+    parts.forEach((p) => {
+      if (isStepFile(p.fileName) || !p.file || !p.slicerResult || p.slicerLoading || p.isQuickSlice) return;
+      if (p.quantity < 2) {
+        if (p.batch) setParts((prev) => prev.map((x) => (x.id === p.id ? { ...x, batch: undefined, batchLoading: false } : x)));
+        return;
+      }
+      if (p.batch && p.batch.batch.copies === p.quantity) return;
+      const key = `${p.id}|${p.quantity}|${quality.layerHeight}|${quality.infill}`;
+      if (batchTried.current.has(key)) return;
+      window.clearTimeout(batchTimers.current[p.id]);
+      const copies = p.quantity;
+      const file = p.file;
+      batchTimers.current[p.id] = window.setTimeout(async () => {
+        if (batchTried.current.has(key)) return;
+        batchTried.current.add(key);
+        if (!(await nasSliceEnabled())) return;
+        setParts((prev) => prev.map((x) => (x.id === p.id ? { ...x, batchLoading: true } : x)));
+        try {
+          const mat = materials.find((m) => m.id === (p.materialId || materials[0]?.id));
+          const r = rescaleForMaterial(await sliceViaNas(file, quality.layerHeight, quality.infill, copies), mat?.density);
+          setParts((prev) => prev.map((x) => (x.id === p.id && x.quantity === copies
+            ? { ...x, batch: r as Part["batch"], batchLoading: false }
+            : x.id === p.id ? { ...x, batchLoading: false } : x)));
+        } catch (e) {
+          console.info("[Slicer] Mengenrechnung nicht möglich, Einzelpreis x Menge:", e);
+          setParts((prev) => prev.map((x) => (x.id === p.id ? { ...x, batchLoading: false } : x)));
+        }
+      }, 900);
+    });
+  }, [parts, qualityPresets, qualityKey, materials]);
 
   const runSlicer = useCallback((partId: string, quickSlice = false) => {
     window.clearTimeout(slicerTimers.current[partId]);
@@ -1175,15 +1229,21 @@ const CalculatorOnlinePage = () => {
 
     // 1) Echte Slicer-Daten
     if (p.slicerResult && !p.slicerLoading && mat && p.slicerResult.filamentGrams > 0) {
-      const weightG = p.slicerResult.filamentGrams;
-      const druckzeitMin = p.slicerResult.printTimeMinutes ||
+      // Mengenrechnung des Slicers (Kopien auf Platten angeordnet) hat Vorrang, solange sie zur gewählten Menge passt
+      const batchOk = p.quantity >= 2 && p.batch && p.batch.batch.copies === p.quantity && p.batch.filamentGrams > 0 ? p.batch : null;
+      const src = batchOk ?? p.slicerResult;
+      const weightG = src.filamentGrams;
+      const druckzeitMin = src.printTimeMinutes ||
         weightG * 2.5 * (presetByInfill(p.infill).speedFactor || 1);
       const materialCost = weightG * mat.pricePerGram;
       const machineCost = (druckzeitMin / 60) * maschinenRate;
-      const supportCost = p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
+      // Nachbearbeitung bei Mengen geschätzt, eher grosszügig: Minuten pro Stück (mit Stützen mehr) +30 % Sicherheit
+      const postMinPerPiece = batchOk ? (src.hasSupport ? 6 : 2) * 1.3 : 0;
+      const postCost = (postMinPerPiece / 60) * (settings.nachbearbeitung_pro_h || 50);
+      const supportCost = !batchOk && p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
       // Zuschlag fürs Teilen und Verkleben: pro Schnitt und pro Stück (Modell grösser als das grösste Druckbett)
       const splitCost = splitFee(p.slicerResult.splitParts);
-      const unit = materialCost + machineCost + supportCost + splitCost;
+      const unit = materialCost + machineCost + supportCost + splitCost + postCost;
       return {
         weight: weightG,
         unit,
@@ -1191,7 +1251,8 @@ const CalculatorOnlinePage = () => {
         discount,
         exact: true,
         druckzeitMin,
-        breakdown: { material: materialCost, machine: machineCost, support: supportCost, split: splitCost },
+        plates: batchOk ? batchOk.batch.plates : undefined,
+        breakdown: { material: materialCost, machine: machineCost, support: supportCost, split: splitCost, post: postCost },
       };
     }
 
@@ -1211,6 +1272,7 @@ const CalculatorOnlinePage = () => {
           machine: p.kiAnalysis.maschinenkosten,
           support: p.kiAnalysis.support_nachbearbeitung,
           split: 0,
+          post: 0,
         },
       };
     }
@@ -1255,7 +1317,10 @@ const CalculatorOnlinePage = () => {
   }, [ladeStatus]);
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
-  const setupFee = parts.length > 0 ? FIX_COST : 0;
+  // Setup-Pauschale je Druckerbestückung: bei Mengen so oft, wie der Slicer Platten braucht (sonst 1x)
+  const plateCount = calcs.reduce((sum, { calc }) => sum + ((calc as { plates?: number }).plates ?? 0), 0);
+  const setupCount = Math.max(1, plateCount);
+  const setupFee = parts.length > 0 ? FIX_COST * setupCount : 0;
   const subtotal = materialTotal + setupFee;
   const shippingGrams = calcs.reduce((sum, { part, calc }) => sum + calc.weight * part.quantity, 0);
   const shipping = subtotal === 0 ? 0 : shippingCostForGrams(shippingGrams);
@@ -1366,6 +1431,7 @@ const CalculatorOnlinePage = () => {
           ...p,
           slicerResult: p.slicerResult ? rescaleForMaterial(p.slicerResult, density) : p.slicerResult,
           quickSliceResult: p.quickSliceResult ? rescaleForMaterial(p.quickSliceResult, density) : p.quickSliceResult,
+          batch: p.batch ? (rescaleForMaterial(p.batch, density) as Part["batch"]) : p.batch,
         }
       : p));
     if (missing.length > 0) {
@@ -1534,7 +1600,9 @@ const CalculatorOnlinePage = () => {
           const teilen = teile > 1
             ? ` – GETEILT in ${teile} Teile und verklebt (Zuschlag ${CHF(splitFee(teile))} pro Stück, Teil grösser als 420 mm)`
             : "";
-          return `${p.fileName} (${p.quantity}× ${(materials.find(m => m.id === p.materialId)?.name || p.materialId)}, ${p.color}, ${qualityAdminLabel(p.infill)})${teilen}`;
+          const platten = p.quantity >= 2 && p.batch && p.batch.batch.copies === p.quantity ? p.batch.batch.plates : 0;
+          const plattenText = platten > 0 ? ` – ${platten} ${platten === 1 ? "Platte" : "Platten"} (Setup ×${platten}${p.batch?.batch.printer ? `, ${p.batch.batch.printer.toUpperCase()}` : ""}, Nachbearbeitung geschätzt)` : "";
+          return `${p.fileName} (${p.quantity}× ${(materials.find(m => m.id === p.materialId)?.name || p.materialId)}, ${p.color}, ${qualityAdminLabel(p.infill)})${teilen}${plattenText}`;
         })
         .join("; ");
       const { data: { user } } = await supabase.auth.getUser();
@@ -2764,6 +2832,9 @@ const CalculatorOnlinePage = () => {
                             {calc.breakdown.support > 0 && (
                               <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(calc.breakdown.support)}</span></div>
                             )}
+                            {calc.breakdown.post > 0 && (
+                              <div className="flex justify-between"><span>Nachbearbeitung (geschätzt)</span><span className="tabular-nums">{CHF(calc.breakdown.post)}</span></div>
+                            )}
                             {calc.breakdown.split > 0 && (
                               <div className="flex justify-between"><span>Teilen &amp; Verkleben ({p.slicerResult?.splitParts} Teile)</span><span className="tabular-nums">{CHF(calc.breakdown.split)}</span></div>
                             )}
@@ -2775,7 +2846,7 @@ const CalculatorOnlinePage = () => {
 
                     <div className="border-t border-border pt-2 mt-2" />
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Setup-Pauschale</span>
+                      <span>Setup-Pauschale{setupCount > 1 ? ` (${setupCount} Platten)` : ""}</span>
                       <span className="text-foreground tabular-nums">{CHF(setupFee)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
