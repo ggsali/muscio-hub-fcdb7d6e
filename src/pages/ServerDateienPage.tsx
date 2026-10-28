@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronRight, Download, File as FileIcon, Folder, Home, Loader2, RefreshCw, Search } from "lucide-react";
+import { ChevronRight, Download, File as FileIcon, Folder, Home, Loader2, RefreshCw, Search, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ServerStatusPanel from "@/components/ServerStatusPanel";
 
-// Admin-Ansicht der Dateien auf dem Server (muscio). Nur lesen und herunterladen.
+// Admin-Ansicht der Dateien auf dem Server (muscio): ansehen, herunterladen und (mit Bestätigung) löschen.
 // Läuft über die Edge Function server-files, die den Slicer auf dem Server abfragt.
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/server-files`;
@@ -64,6 +68,8 @@ export default function ServerDateienPage() {
   const [fehler, setFehler] = useState("");
   const [suche, setSuche] = useState("");
   const [laedtRunter, setLaedtRunter] = useState<string | null>(null);
+  const [loeschen, setLoeschen] = useState<Eintrag | null>(null);
+  const [loeschtGerade, setLoeschtGerade] = useState(false);
 
   const ladeOrdner = useCallback(async (p: string) => {
     setLaden(true);
@@ -124,12 +130,28 @@ export default function ServerDateienPage() {
     }
   };
 
+  const loeschenAusfuehren = async () => {
+    if (!loeschen) return;
+    const voll = pfad ? `${pfad}/${loeschen.name}` : loeschen.name;
+    setLoeschtGerade(true);
+    try {
+      const r = await callJson<{ ok: boolean; freed_bytes: number | null }>({ action: "delete", path: voll });
+      toast.success(`Gelöscht: ${loeschen.name}${r.freed_bytes ? ` (${formatBytes(r.freed_bytes)} frei)` : ""}`);
+      setLoeschen(null);
+      await ladeOrdner(pfad);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
+    } finally {
+      setLoeschtGerade(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-4 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Server</h1>
-          <p className="text-sm text-muted-foreground">Auslastung und Dateien des Servers (muscio). Nur ansehen und herunterladen.</p>
+          <p className="text-sm text-muted-foreground">Auslastung und Dateien des Servers (muscio). Ansehen, herunterladen und löschen.</p>
         </div>
         <Button
           variant="outline"
@@ -211,12 +233,38 @@ export default function ServerDateienPage() {
                   ) : (
                     <span className="w-10" />
                   )}
+                  <Button variant="ghost" size="icon" onClick={() => setLoeschen(e)} title="Löschen" className="text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </li>
               );
             })}
           </ul>
         )}
       </div>
+
+      <AlertDialog open={!!loeschen} onOpenChange={(o) => { if (!o && !loeschtGerade) setLoeschen(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{loeschen?.type === "dir" ? "Ordner löschen?" : "Datei löschen?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-mono break-all">{pfad ? `${pfad}/` : ""}{loeschen?.name}</span>
+              {loeschen?.type === "dir" ? " wird mit allem Inhalt vom Server gelöscht." : loeschen?.size != null ? ` (${formatBytes(loeschen.size)}) wird vom Server gelöscht.` : " wird vom Server gelöscht."}
+              {" "}Das kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loeschtGerade}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={loeschtGerade}
+              onClick={(ev) => { ev.preventDefault(); void loeschenAusfuehren(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {loeschtGerade ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

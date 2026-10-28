@@ -1,8 +1,8 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Admin-Dateiansicht für den Server (muscio): leitet nur LESENDE Abfragen an den Slicer weiter
-// (/files/info, /files/list, /files/download, /system/status, /system/stream). Der Slicer sperrt Geheimnisse (.env, Schlüssel) selbst.
+// Admin-Dateiansicht für den Server (muscio): leitet Abfragen an den Slicer weiter
+// (/files/info, /files/list, /files/download, /system/status, /system/stream) und auf ausdrückliche Anweisung eines Admins das Löschen (/files/delete). Der Slicer sperrt Geheimnisse (.env, Schlüssel) selbst.
 // Secrets (Supabase → Edge Functions → Secrets): SLICER_URL, SLICER_API_KEY.
 // Der API-Key verlässt diese Funktion nie.
 
@@ -129,6 +129,31 @@ serve(async (req) => {
       const len = res.headers.get("content-length");
       if (len) outHeaders["Content-Length"] = len;
       return new Response(res.body, { status: 200, headers: outHeaders });
+    }
+
+    // Löschen (nur Admin, nur innerhalb des Server-Datenordners; der Slicer prüft Pfad und geschützte Dateien selbst)
+    if (action === "delete") {
+      const path = cleanPath(body?.path);
+      if (!path) return json({ error: "Ungültiger Pfad (der Hauptordner kann nicht gelöscht werden)" }, 400);
+      if (path.split("/").some((seg) => /^(\.env.*|\.ssh|secrets?|keys?|id_rsa.*|config\.json)$/i.test(seg))) {
+        return json({ error: "Geschützte Datei, kann nicht gelöscht werden" }, 403);
+      }
+      let res: Response;
+      try {
+        res = await fetch(`${base}/files/delete`, {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ path }),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+      } catch (_e) {
+        return json({ error: "Server nicht erreichbar" }, 504);
+      }
+      const payload = await res.json().catch(() => ({}));
+      if (res.status === 404 && !payload?.detail) return json({ error: "Der Slicer kann noch nicht löschen (Slicer-Update auf dem Server fehlt)" }, 501);
+      if (!res.ok) return json({ error: payload?.detail || payload?.error || `Server antwortet mit ${res.status}` }, res.status);
+      console.log("server-files delete:", uid, path);
+      return json({ ok: true, deleted: payload?.deleted ?? null, freed_bytes: payload?.freed_bytes ?? null });
     }
 
     return json({ error: "Ungültige Anfrage" }, 400);
