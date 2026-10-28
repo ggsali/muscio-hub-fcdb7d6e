@@ -51,7 +51,7 @@ function parseStl(bytes: Uint8Array) {
   const sizeMatches = binCount >= 0 && 84 + binCount * 50 === bytes.byteLength;
   const headStr = new TextDecoder().decode(bytes.subarray(0, Math.min(512, bytes.byteLength)));
   const looksAscii = /^\s*solid/.test(headStr) && /facet|endsolid/.test(new TextDecoder().decode(bytes.subarray(0, Math.min(2048, bytes.byteLength))));
-  const isBinary = bytes.byteLength >= 84 && (sizeMatches || !looksAscii);
+  let isBinary = bytes.byteLength >= 84 && (sizeMatches || !looksAscii);
   // Normalen + Fläche in einem flachen Float32Array (kein Objekt pro Dreieck)
   let tris = new Float32Array(4 * 4096);
   let triCount = 0;
@@ -88,7 +88,7 @@ function parseStl(bytes: Uint8Array) {
     }
   };
 
-  if (isBinary) {
+  const parseBinary = () => {
     const count = view.getUint32(80, true);
     const safeCount = Math.min(count, Math.floor((bytes.byteLength - 84) / 50));
     for (let i = 0; i < safeCount; i++) {
@@ -99,7 +99,8 @@ function parseStl(bytes: Uint8Array) {
         view.getFloat32(off + 24, true), view.getFloat32(off + 28, true), view.getFloat32(off + 32, true),
       );
     }
-  } else {
+  };
+  const parseAscii = () => {
     const text = new TextDecoder().decode(bytes);
     const re = /vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g;
     const buf: number[] = [];
@@ -111,6 +112,14 @@ function parseStl(bytes: Uint8Array) {
         buf.length = 0;
       }
     }
+  };
+
+  if (isBinary) {
+    parseBinary();
+  } else {
+    parseAscii();
+    // Rückfall: Text-Erkennung fand nichts -> doch Binär-STL mit "solid" in der Kopfzeile
+    if (triCount === 0 && bytes.byteLength >= 84) { isBinary = true; parseBinary(); }
   }
 
   return {
