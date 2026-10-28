@@ -111,6 +111,8 @@ interface Part {
   /** Server-Anordnung für die gewünschte Menge (Werte pro Stück, inkl. Platten) */
   batch?: SlicerResult & { batch: { copies: number; plates: number; printer?: string } };
   batchLoading?: boolean;
+  /** Menge wurde geändert, die Anordnung auf Platten ist noch nicht berechnet */
+  batchPending?: boolean;
 }
 
 
@@ -320,7 +322,7 @@ function nasDebug(msg: string) {
 }
 
 /** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
-async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1): Promise<SlicerResult> {
+async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1, abort?: AbortSignal): Promise<SlicerResult> {
   const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
   const tStart = performance.now(); // Zeitmessung: Browser -> Edge Function -> Slicer -> Browser
   const senden = async (komprimiert: boolean) => {
@@ -338,7 +340,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
       method: "POST",
       headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
       body,
-      signal: AbortSignal.timeout(110_000),
+      signal: abort && typeof AbortSignal.any === "function" ? AbortSignal.any([AbortSignal.timeout(110_000), abort]) : AbortSignal.timeout(110_000),
     });
     return { res: r, json: await r.json().catch(() => ({})), gz: up.gz };
   };
@@ -565,10 +567,12 @@ const CalculatorOnlinePage = () => {
   }, []);
 
   // Nur-Website-Preise (Admin → Einstellungen → Website-Kalkulator). Ohne Eintrag gelten wie bisher die alten Quellen.
-  const [websitePreise, setWebsitePreise] = useState<WebsitePreise>({ maschinenzeit_pro_h: null, setup_pauschale: null });
+  const [websitePreise, setWebsitePreise] = useState<WebsitePreise>({ maschinenzeit_pro_h: null, setup_pauschale: null, nachbearbeitung_pro_h: null });
   useEffect(() => { loadWebsitePreise().then(setWebsitePreise); }, []);
   const maschinenRate = websitePreise.maschinenzeit_pro_h ?? (settings.maschinenzeit_pro_h || 3);
   const setupPauschale = websitePreise.setup_pauschale ?? (calcParams.fix_cost || 20);
+  // Nachbearbeitung: Stundensatz aus dem Admin (für Besucher über die freigegebene Funktion gelesen)
+  const nachbearbeitungRate = websitePreise.nachbearbeitung_pro_h ?? (settings.nachbearbeitung_pro_h || 50);
 
   useEffect(() => {
     console.log("Maschinenzeit:", settings.maschinenzeit_pro_h);
@@ -902,39 +906,70 @@ const CalculatorOnlinePage = () => {
 
   // Menge ab 2 Stück: der NAS-Slicer ordnet alle Kopien auf den Platten an (Plattenzahl, Zeit und Material für die ganze Menge).
   // Ohne Antwort (Slicer kennt es nicht / nicht erreichbar) bleibt es bei Einzelpreis x Menge.
-  const batchTried = useRef<Set<string>>(new Set());
+  const batchSeqKey = useRef<Record<string, string | undefined>>({});
+  const batchCache = useRef<Map<string, NonNullable<Part["batch"]>>>(new Map()); // schon berechnete Mengen: sofort wieder da
   const batchTimers = useRef<Record<string, number>>({});
+  const batchSeq = useRef<Record<string, number>>({}); // nur die jeweils letzte Anfrage pro Teil zählt
+  const batchAbort = useRef<Record<string, AbortController | undefined>>({});
+  const batchFailAt = useRef<Record<string, number>>({});
   useEffect(() => {
     const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
+    const patch = (id: string, u: Partial<Part>) => setParts((prev) => prev.map((x) => (x.id === id ? { ...x, ...u } : x)));
     parts.forEach((p) => {
       if (isStepFile(p.fileName) || !p.file || !p.slicerResult || p.slicerLoading || p.isQuickSlice) return;
       if (p.quantity < 2) {
-        if (p.batch) setParts((prev) => prev.map((x) => (x.id === p.id ? { ...x, batch: undefined, batchLoading: false } : x)));
+        window.clearTimeout(batchTimers.current[p.id]);
+        batchAbort.current[p.id]?.abort();
+        if (p.batch || p.batchPending || p.batchLoading) patch(p.id, { batch: undefined, batchPending: false, batchLoading: false });
         return;
       }
-      if (p.batch && p.batch.batch.copies === p.quantity) return;
+      if (p.batch && p.batch.batch.copies === p.quantity) {
+        if (p.batchPending || p.batchLoading) patch(p.id, { batchPending: false, batchLoading: false });
+        return;
+      }
       const key = `${p.id}|${p.quantity}|${quality.layerHeight}|${quality.infill}`;
-      if (batchTried.current.has(key)) return;
+      const mat = materials.find((m) => m.id === (p.materialId || materials[0]?.id));
+      const cached = batchCache.current.get(key);
+      if (cached) {
+        patch(p.id, { batch: rescaleForMaterial(cached, mat?.density) as Part["batch"], batchPending: false, batchLoading: false });
+        return;
+      }
+      if (Date.now() - (batchFailAt.current[key] ?? 0) < 15_000) { // kürzlich gescheitert: nicht sofort erneut, Einzelpreis x Menge gilt
+        if (p.batchPending || p.batchLoading) patch(p.id, { batchPending: false, batchLoading: false });
+        return;
+      }
+      if (batchSeqKey.current[p.id] === key) return; // läuft schon (oder ist eingeplant)
+      batchSeqKey.current[p.id] = key;
+      if (!p.batchPending) patch(p.id, { batchPending: true });
       window.clearTimeout(batchTimers.current[p.id]);
+      batchAbort.current[p.id]?.abort();
       const copies = p.quantity;
       const file = p.file;
+      const seq = (batchSeq.current[p.id] = (batchSeq.current[p.id] ?? 0) + 1);
       batchTimers.current[p.id] = window.setTimeout(async () => {
-        if (batchTried.current.has(key)) return;
-        batchTried.current.add(key);
-        if (!(await nasSliceEnabled())) return;
-        setParts((prev) => prev.map((x) => (x.id === p.id ? { ...x, batchLoading: true } : x)));
+        const aktuell = () => batchSeq.current[p.id] === seq;
+        if (!(await nasSliceEnabled())) { if (aktuell()) patch(p.id, { batchPending: false, batchLoading: false }); return; }
+        if (!aktuell()) return;
+        const ctrl = new AbortController();
+        batchAbort.current[p.id] = ctrl;
+        patch(p.id, { batchLoading: true });
         try {
-          const mat = materials.find((m) => m.id === (p.materialId || materials[0]?.id));
-          const r = rescaleForMaterial(await sliceViaNas(file, quality.layerHeight, quality.infill, copies), mat?.density);
+          const raw = await sliceViaNas(file, quality.layerHeight, quality.infill, copies, ctrl.signal);
+          if (!aktuell()) return;
+          batchCache.current.set(key, raw as NonNullable<Part["batch"]>);
           setParts((prev) => prev.map((x) => (x.id === p.id && x.quantity === copies
-            ? { ...x, batch: r as Part["batch"], batchLoading: false }
-            : x.id === p.id ? { ...x, batchLoading: false } : x)));
+            ? { ...x, batch: rescaleForMaterial(raw, mat?.density) as Part["batch"], batchPending: false, batchLoading: false }
+            : x)));
         } catch (e) {
+          if (!aktuell()) return; // abgelöst durch eine neuere Menge: die kümmert sich selbst
           console.info("[Slicer] Mengenrechnung nicht möglich, Einzelpreis x Menge:", e);
-          setParts((prev) => prev.map((x) => (x.id === p.id ? { ...x, batchLoading: false } : x)));
+          batchFailAt.current[key] = Date.now();
+          batchSeqKey.current[p.id] = undefined;
+          patch(p.id, { batchPending: false, batchLoading: false });
         }
-      }, 900);
+      }, 1000);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parts, qualityPresets, qualityKey, materials]);
 
   const runSlicer = useCallback((partId: string, quickSlice = false) => {
@@ -1123,6 +1158,7 @@ const CalculatorOnlinePage = () => {
     setParts((p) => p.map((x) => {
       if (x.id !== id) return x;
       const next = { ...x, ...u };
+      if (u.quantity !== undefined && u.quantity !== x.quantity) next.batchPending = u.quantity >= 2 && !!nasProbe?.on;
       if (u.materialId !== undefined && u.materialId !== x.materialId) {
         const newMat = materials.find((m) => m.id === u.materialId);
         const avail = newMat?.farben || [];
@@ -1239,7 +1275,7 @@ const CalculatorOnlinePage = () => {
       const machineCost = (druckzeitMin / 60) * maschinenRate;
       // Nachbearbeitung bei Mengen geschätzt, eher grosszügig: Minuten pro Stück (mit Stützen mehr) +30 % Sicherheit
       const postMinPerPiece = batchOk ? (src.hasSupport ? 6 : 2) * 1.3 : 0;
-      const postCost = (postMinPerPiece / 60) * (settings.nachbearbeitung_pro_h || 50);
+      const postCost = (postMinPerPiece / 60) * nachbearbeitungRate;
       const supportCost = !batchOk && p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
       // Zuschlag fürs Teilen und Verkleben: pro Schnitt und pro Stück (Modell grösser als das grösste Druckbett)
       const splitCost = splitFee(p.slicerResult.splitParts);
@@ -1303,6 +1339,8 @@ const CalculatorOnlinePage = () => {
 
   // Die Server-Analyse (analyze-stl) ist nur der Reserve-Preis: Sobald ein Slicer-Ergebnis vorliegt, wartet niemand mehr darauf.
   const kiLoading = parts.some((p) => (p.kiAnalysisLoading && !p.slicerResult) || p.slicerLoading);
+  /** Anordnung der Menge auf den Platten wird noch berechnet: Preis ist noch nicht endgültig */
+  const batchBusy = parts.some((p) => p.batchPending || p.batchLoading);
 
   // Sicherung: eine Ladeanzeige darf nie endlos drehen (hängende Anfrage, verpasstes Ende). Nach 90 s wird sie beendet;
   // kommt das Ergebnis später noch, wird es trotzdem übernommen.
@@ -1592,6 +1630,7 @@ const CalculatorOnlinePage = () => {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (batchBusy) return; // Menge wird noch auf Platten angeordnet: Preis noch nicht endgültig
     setSubmitting(true);
     try {
       const summary = parts
@@ -1762,7 +1801,7 @@ const CalculatorOnlinePage = () => {
     : step === 2 ? true
     : step === 3 ? (individual ? partsMissingMaterial === 0 : !!materialId)
     : step === 4 ? (individual ? allPartColorsOk : !!color)
-    : step === 5 ? !kiLoading
+    : step === 5 ? !kiLoading && !batchBusy
     : true;
 
   // Realistisches Lieferdatum aus echter Auftragslast (Edge Function)
@@ -1875,6 +1914,8 @@ const CalculatorOnlinePage = () => {
                 >
                   {kiLoading ? (
                     <><Loader2 className="w-3 h-3 animate-spin" /> Analysiert…</>
+                  ) : batchBusy ? (
+                    <><Loader2 className="w-3 h-3 animate-spin" /> Menge wird berechnet…</>
                   ) : hasStep
                     ? "Preis nach Prüfung"
                     : priceBadge !== null
@@ -2609,6 +2650,8 @@ const CalculatorOnlinePage = () => {
                     >
                       {kiLoading
                         ? <><Loader2 className="w-4 h-4 animate-spin" /> 🤖 Analyse läuft…</>
+                        : batchBusy
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Menge wird berechnet…</>
                         : <>Weiter → {STEPS[step] || ""}</>}
                     </Button>
                   </div>
@@ -2978,9 +3021,11 @@ const CalculatorOnlinePage = () => {
                       <Label className="text-xs">Nachricht (optional)</Label>
                       <Textarea rows={3} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="mt-1 text-base" />
                     </div>
-                    <Button type="submit" className="w-full gap-2" disabled={submitting || parts.length === 0 || parts.some(p => p.uploading)}>
+                    <Button type="submit" className="w-full gap-2" disabled={submitting || batchBusy || parts.length === 0 || parts.some(p => p.uploading)}>
                       {submitting ? (
                         <><Loader2 className="w-4 h-4 animate-spin" /> Wird gesendet...</>
+                      ) : batchBusy ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Menge wird berechnet…</>
                       ) : hasStep ? (
                         <><Send className="w-4 h-4" /> Unverbindliche Anfrage senden</>
                       ) : (

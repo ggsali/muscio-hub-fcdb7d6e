@@ -93,19 +93,22 @@ export async function saveQualityConfig(presets: QualityPreset[], params: CalcPa
 export interface WebsitePreise {
   maschinenzeit_pro_h: number | null;
   setup_pauschale: number | null;
+  /** Stundensatz Nachbearbeitung aus dem Admin (Einstellungen → Stundensätze), gilt auch für die Schätzung im Website-Kalkulator */
+  nachbearbeitung_pro_h?: number | null;
 }
 
 export const WEBSITE_MASCHINENZEIT_KEY = "website_maschinenzeit_pro_h";
 export const WEBSITE_SETUP_KEY = "website_setup_pauschale";
+export const NACHBEARBEITUNG_KEY = "nachbearbeitung_pro_h";
 
 /** Admin liest direkt aus "settings", Besucher über die freigegebene Funktion (nur diese zwei Keys). */
 export async function loadWebsitePreise(): Promise<WebsitePreise> {
-  const out: WebsitePreise = { maschinenzeit_pro_h: null, setup_pauschale: null };
+  const out: WebsitePreise = { maschinenzeit_pro_h: null, setup_pauschale: null, nachbearbeitung_pro_h: null };
   try {
     const { data } = await supabase
       .from("settings")
       .select("key, value")
-      .in("key", [WEBSITE_MASCHINENZEIT_KEY, WEBSITE_SETUP_KEY]);
+      .in("key", [WEBSITE_MASCHINENZEIT_KEY, WEBSITE_SETUP_KEY, NACHBEARBEITUNG_KEY]);
     let rows: { key: string; value: unknown }[] = data || [];
     if (rows.length === 0) {
       const { data: pub } = await (supabase.rpc as any)("get_website_calc_preise");
@@ -118,6 +121,7 @@ export async function loadWebsitePreise(): Promise<WebsitePreise> {
       if (!Number.isFinite(n) || n < 0) continue;
       if (r.key === WEBSITE_MASCHINENZEIT_KEY) out.maschinenzeit_pro_h = n;
       if (r.key === WEBSITE_SETUP_KEY) out.setup_pauschale = n;
+      if (r.key === NACHBEARBEITUNG_KEY) out.nachbearbeitung_pro_h = n;
     }
   } catch (e) {
     console.warn("Website-Preise konnten nicht geladen werden", e);
