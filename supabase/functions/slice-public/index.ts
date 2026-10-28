@@ -107,11 +107,14 @@ serve(async (req) => {
     if (!(file instanceof File)) { await dbg(supabase, { ev: "keine-datei" }); return json({ ok: false, error: "Datei fehlt" }); }
     // Der Browser schickt grosse Dateien verlustfrei gzip-komprimiert (gz=1, Name endet auf .gz): das spart Upload-Zeit.
     const gzBytes = file.size;
+    let gzFile: File | null = null; // die komprimierte Originaldatei (wird, wenn der Slicer es kann, komprimiert weitergereicht)
     if (form.get("gz") === "1" && file.name.toLowerCase().endsWith(".gz")) {
       if (gzBytes > maxBytes) return json({ error: "Datei zu gross" }, 413);
       try {
-        const raw = await gunzipLimited(file, maxBytes);
-        file = new File([raw], file.name.slice(0, -3));
+        const original: File = file;
+        const raw = await gunzipLimited(original, maxBytes);
+        file = new File([raw], original.name.slice(0, -3));
+        gzFile = original;
       } catch (_e) {
         return json({ ok: false, error: "Datei konnte nicht entpackt werden" });
       }
@@ -127,11 +130,17 @@ serve(async (req) => {
 
     const plateReq = String(form.get("printer") ?? "xl");
     const plateRaw = ["k1c", "a1", "xl"].includes(plateReq) ? plateReq : "xl";
-    const buildForm = (printer: string, allowSplit = false) => {
+    const buildForm = (printer: string, allowSplit = false, plain = false) => {
       const out = new FormData();
       // allow_split: der Slicer teilt Modelle, die auf keinen Drucker passen, in gleich grosse Stücke (Zuschlag im Kalkulator)
       if (allowSplit) out.append("allow_split", "true");
-      out.append("file", upFile, `upload${ext}`);
+      // Komprimiert weiterreichen (die Übertragung durch den Tunnel ist der Engpass), solange der Slicer das versteht
+      if (gzFile && !plain && g.__serverGz !== false) {
+        out.append("gz", "1");
+        out.append("file", gzFile, `upload${ext}.gz`);
+      } else {
+        out.append("file", upFile, `upload${ext}`);
+      }
       out.append("printer", printer);
       out.append("material", "pla");
       out.append("quality", quality);
@@ -147,13 +156,32 @@ serve(async (req) => {
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
-    const slice = (printer: string, allowSplit = false) =>
-      fetch(`${base}/slice`, {
-        method: "POST",
-        headers: { "X-API-Key": key },
-        body: buildForm(printer, allowSplit),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
+    const slice = async (printer: string, allowSplit = false) => {
+      const senden = (plain = false) =>
+        fetch(`${base}/slice`, {
+          method: "POST",
+          headers: { "X-API-Key": key },
+          body: buildForm(printer, allowSplit, plain),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+      const r = await senden();
+      if (!gzFile || g.__serverGz === false) return r;
+      if (r.ok) { g.__serverGz = true; return r; }
+      // Ein Fehler (4xx) bei komprimierter Übertragung: einmal entpackt wiederholen, ausser das Modell ist schlicht zu gross.
+      // Klappt es entpackt, versteht dieser Slicer noch kein gzip -> ab jetzt entpackt senden.
+      if (r.status >= 400 && r.status < 500) {
+        const txt = JSON.stringify(await r.clone().json().catch(() => ({}))).slice(0, 500);
+        if (!txt.includes("model_too_large") && !txt.includes("Unbekannter Drucker") && !txt.includes("Slicen fehlgeschlagen")) {
+          const r2 = await senden(true);
+          if (r2.ok) {
+            g.__serverGz = false;
+            await dbg(supabase, { ev: "gz-rueckfall", grund: txt.slice(0, 200) });
+          }
+          return r2;
+        }
+      }
+      return r;
+    };
     // Drucker-Reihenfolge: K1C (klein) -> K1 (falls K1C-Profil fehlt) -> xl (420x420x420 mm, wenn das Teil nicht aufs kleine Bett passt)
     let res!: Response;
     let used = "k1c";
