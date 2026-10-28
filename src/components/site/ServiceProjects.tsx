@@ -13,21 +13,25 @@ interface P {
 }
 
 /** Zeigt veröffentlichte Projekte (Tabelle "projekte"), deren Kategorie das Stichwort enthält oder die den Tag tragen, mit Bildvorschau. Ohne Treffer wird nichts angezeigt. */
-export default function ServiceProjects({ tag, slugs = [], tags = [], title = "Projekte" }: { tag: string; slugs?: string[]; tags?: string[]; title?: string }) {
+export default function ServiceProjects({ tag, seite, slugs = [], tags = [], title = "Projekte" }: { tag: string; seite: string; slugs?: string[]; tags?: string[]; title?: string }) {
   const [items, setItems] = useState<P[]>([]);
 
   useEffect(() => {
     let alive = true;
-    supabase
-      .from("projekte")
-      .select("id, slug, name, kategorie, kurzbeschreibung, bild_url")
-      .eq("aktiv", true)
-      .or([`kategorie.ilike.%${tag}%`, `tags.cs.{${tag}}`, ...tags.map((t) => `tags.cs.{${t}}`), ...(slugs.length ? [`slug.in.(${slugs.join(",")})`] : [])].join(","))
-      .order("sort_order", { ascending: true })
-      .limit(6)
-      .then(({ data }) => { if (alive) setItems((data as P[]) || []); });
+    const felder = "id, slug, name, kategorie, kurzbeschreibung, bild_url";
+    const basis = [`kategorie.ilike.%${tag}%`, ...tags.map((t) => `tags.cs.{${t}}`), ...(slugs.length ? [`slug.in.(${slugs.join(",")})`] : [])];
+    const laden = async () => {
+      // Schalter im Admin (Spalte leistungs_seiten); falls die Spalte noch fehlt, ohne sie laden
+      const mit = await supabase.from("projekte").select(felder).eq("aktiv", true)
+        .or([...basis, `leistungs_seiten.cs.{${seite}}`].join(",")).order("sort_order", { ascending: true }).limit(6);
+      if (!mit.error) return mit.data;
+      const ohne = await supabase.from("projekte").select(felder).eq("aktiv", true)
+        .or(basis.join(",")).order("sort_order", { ascending: true }).limit(6);
+      return ohne.data;
+    };
+    laden().then((data) => { if (alive) setItems((data as P[]) || []); });
     return () => { alive = false; };
-  }, [tag, slugs.join(","), tags.join(",")]);
+  }, [tag, seite, slugs.join(","), tags.join(",")]);
 
   if (items.length === 0) return null;
 

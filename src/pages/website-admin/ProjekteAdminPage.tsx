@@ -16,6 +16,7 @@ interface Project {
   gallery_paths: string[] | null;
   stl_url: string | null;
   sort_order: number; featured: boolean; aktiv: boolean;
+  leistungs_seiten?: string[];
 }
 
 const slugify = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -129,7 +130,7 @@ export default function ProjekteAdminPage() {
           <h1 className="font-heading text-xl md:text-3xl font-bold text-foreground mb-1">Projekte / Portfolio</h1>
           <p className="text-muted-foreground">Referenzprojekte für die Website verwalten.</p>
         </div>
-        <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", gallery_paths: [], stl_url: null, sort_order: projects.length + 1, featured: false, aktiv: true })}>
+        <Button onClick={() => setEditing({ id: "", slug: "", name: "", kategorie: "", beschreibung: "", kurzbeschreibung: "", bild_url: null, verfahren: "", material: "", toleranz: "", lieferzeit: "", gallery_paths: [], stl_url: null, sort_order: projects.length + 1, featured: false, aktiv: true, leistungs_seiten: [] })}>
           <Plus className="w-4 h-4 mr-1" /> Neues Projekt
         </Button>
       </div>
@@ -235,6 +236,15 @@ export default function ProjekteAdminPage() {
                 <div className="flex items-end gap-4">
                   <div className="flex items-center gap-2"><Switch checked={editing.featured} onCheckedChange={v => setEditing({ ...editing, featured: v })} /><Label>Featured</Label></div>
                   <div className="flex items-center gap-2"><Switch checked={editing.aktiv} onCheckedChange={v => setEditing({ ...editing, aktiv: v })} /><Label>Aktiv</Label></div>
+                  {[{ key: "architekturmodelle", label: "Auf Seite «Architekturmodelle» anzeigen" }, { key: "miniaturmaschinen", label: "Auf Seite «Miniaturmaschinen» anzeigen" }].map(o => {
+                    const sel = editing.leistungs_seiten || [];
+                    return (
+                      <div key={o.key} className="flex items-center gap-2">
+                        <Switch checked={sel.includes(o.key)} onCheckedChange={v => setEditing({ ...editing, leistungs_seiten: v ? [...sel.filter(x => x !== o.key), o.key] : sel.filter(x => x !== o.key) })} />
+                        <Label>{o.label}</Label>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4">
