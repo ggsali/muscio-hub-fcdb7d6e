@@ -133,7 +133,7 @@ serve(async (req) => {
     const copies = !plate && Number.isFinite(copiesRaw) ? Math.min(500, Math.max(1, copiesRaw)) : 1;
     const plateReq = String(form.get("printer") ?? "xl");
     const plateRaw = ["k1c", "a1", "xl"].includes(plateReq) ? plateReq : "xl";
-    const buildForm = (printer: string, allowSplit = false, plain = false) => {
+    const buildForm = (printer: string, allowSplit = false, plain = false, kopien = copies) => {
       const out = new FormData();
       // allow_split: der Slicer teilt Modelle, die auf keinen Drucker passen, in gleich grosse Stücke (Zuschlag im Kalkulator)
       if (allowSplit) out.append("allow_split", "true");
@@ -148,7 +148,7 @@ serve(async (req) => {
       out.append("material", "pla");
       out.append("quality", quality);
       if (infill) out.append("infill", infill);
-      if (copies > 1) out.append("copies", String(copies));
+      if (kopien > 1) out.append("copies", String(kopien));
       out.append("supports", "true");
       out.append("orient", plate ? "false" : "true");
       out.append("reference", plate ? "spardose-plate" : "public-calc");
@@ -160,12 +160,12 @@ serve(async (req) => {
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
-    const slice = async (printer: string, allowSplit = false) => {
+    const slice = async (printer: string, allowSplit = false, kopien = copies) => {
       const senden = (plain = false) =>
         fetch(`${base}/slice`, {
           method: "POST",
           headers: { "X-API-Key": key },
-          body: buildForm(printer, allowSplit, plain),
+          body: buildForm(printer, allowSplit, plain, kopien),
           signal: AbortSignal.timeout(TIMEOUT_MS),
         });
       const r = await senden();
@@ -226,6 +226,17 @@ serve(async (req) => {
     }
     // Passt das Modell auf keinen Drucker: auf dem grössten (xl) mit automatischem Teilen erneut versuchen.
     // Ältere Slicer ignorieren allow_split und antworten wieder mit 422 -> Verhalten wie bisher (Rückfall im Kalkulator).
+    // Mehrere Stück eines Teils, das auf keinen Drucker passt: ein Stück (geteilt) auf dem grössten Drucker slicen, Menge selbst hochrechnen.
+    // Jedes geteilte Stück belegt eine eigene Platte (die Teile eines Stücks passen zusammen auf eine Platte, sonst meldet der Slicer einen Fehler).
+    let teilenMenge = false;
+    if (!plate && copies > 1 && res.status === 422 && letzterZuGross) {
+      await dbg(supabase, { ev: "teilen", grund: `Menge ${copies}: passt auf keinen Drucker, ein Stück geteilt slicen` });
+      const ta = Date.now();
+      res = await slice("xl", true, 1);
+      versuche.push({ p: "xl+teilen(1)", s: res.status, ms: Date.now() - ta });
+      used = "xl";
+      teilenMenge = res.ok;
+    }
     if (!plate && copies === 1 && res.status === 422 && letzterZuGross) {
       await dbg(supabase, { ev: "teilen", grund: "passt auf keinen Drucker, versuche Teilen" });
       const ta = Date.now();
@@ -282,6 +293,13 @@ serve(async (req) => {
       await dbg(supabase, { ev: "gcode-fehler", msg: gcodeError });
     }
     // nur die Zahlen zurückgeben (keine Job-IDs, kein G-Code-Zugriff)
+    if (teilenMenge && payload?.stats) {
+      // Werte für ein Stück auf die ganze Menge hochrechnen, jedes Stück braucht eine eigene Platte
+      const st = payload.stats as Record<string, number>;
+      payload.stats = { ...st, print_time_s: Number(st.print_time_s) * copies, filament_g: Number(st.filament_g) * copies, ...(st.filament_mm != null ? { filament_mm: Number(st.filament_mm) * copies } : {}) };
+      payload.plates = copies;
+      payload.copies = copies;
+    }
     const platten = Number(payload?.plates ?? payload?.stats?.plates);
     const kopien = Number(payload?.copies ?? payload?.stats?.copies);
     const mengeInfo = copies > 1 && Number.isFinite(platten) && platten >= 1 && kopien === copies
