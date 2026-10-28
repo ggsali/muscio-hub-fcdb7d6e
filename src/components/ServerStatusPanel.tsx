@@ -119,6 +119,7 @@ export default function ServerStatusPanel() {
     let abbruch: AbortController | null = null;
 
     const uebernehmen = (s: Status) => {
+      setErstLaden(false); // sofort anzeigen, sobald der erste Wert da ist (nicht erst nach Ende des Live-Stroms)
       setStatus(s);
       setFehler("");
       setStand(new Date());
@@ -226,6 +227,8 @@ export default function ServerStatusPanel() {
       }
     };
 
+    // Sofort einen ersten Wert holen, während sich der Live-Strom noch verbindet: so ist die Anzeige in ca. 0,5 s da
+    void einmal().catch(() => { /* der Live-Strom meldet Fehler selbst */ });
     void schleife();
     return () => {
       aktiv = false;
