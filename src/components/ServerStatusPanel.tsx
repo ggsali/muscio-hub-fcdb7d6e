@@ -3,10 +3,11 @@ import { Activity, Clock, Cpu, HardDrive, Loader2, MemoryStick, Thermometer } fr
 import { supabase } from "@/integrations/supabase/client";
 
 // Live-Übersicht über die Auslastung des Servers (muscio). Live-Strom jede Sekunde (Server-Sent Events),
-// mit Rückfall auf Abfrage alle 2 Sekunden. Daten kommen vom Slicer (/system/stream, /system/status) über die Edge Function server-files.
+// mit Rückfall auf Abfrage jede Sekunde (Wache bei gepuffertem Strom). Daten kommen vom Slicer (/system/stream, /system/status) über die Edge Function server-files.
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/server-files`;
-const INTERVALL_MS = 2000; // Rückfall: Abfrage alle 2 Sekunden, falls der Live-Strom nicht verfügbar ist
+const INTERVALL_MS = 1000; // Rückfall: Abfrage jede Sekunde, falls der Live-Strom nicht (rechtzeitig) ankommt
+const STROM_STILLE_MS = 5000; // keine Daten im Live-Strom für so lange -> gepuffert, auf Abfrage jede Sekunde wechseln
 const VERLAUF = 120; // Messpunkte (bei 1 pro Sekunde = 2 Minuten)
 
 interface SlicerJob {
@@ -117,6 +118,7 @@ export default function ServerStatusPanel() {
   useEffect(() => {
     let aktiv = true;
     let abbruch: AbortController | null = null;
+    let wacheAusgeloest = false; // true, wenn die Wache den Strom wegen Stille beendet hat
 
     const uebernehmen = (s: Status) => {
       setErstLaden(false); // sofort anzeigen, sobald der erste Wert da ist (nicht erst nach Ende des Live-Stroms)
@@ -150,45 +152,58 @@ export default function ServerStatusPanel() {
     /** Live-Strom lesen, bis der Server ihn schliesst. Wirft, wenn der Strom nicht geht. */
     const strom = async () => {
       abbruch = new AbortController();
-      const res = await fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: await kopf(),
-        body: JSON.stringify({ action: "stream" }),
-        signal: abbruch.signal,
-      });
-      if (!res.ok || !res.body) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j?.error || `Fehler ${res.status}`);
-      }
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let puffer = "";
-      let gelesen = 0;
-      while (aktiv) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        puffer += dec.decode(value, { stream: true });
-        let ende: number;
-        while ((ende = puffer.indexOf("\n\n")) >= 0) {
-          const block = puffer.slice(0, ende);
-          puffer = puffer.slice(ende + 2);
-          const daten = block
-            .split("\n")
-            .filter((l) => l.startsWith("data:"))
-            .map((l) => l.slice(5).trim())
-            .join("");
-          if (!daten) continue;
-          try {
-            uebernehmen(JSON.parse(daten) as Status);
-            gelesen++;
-            setLive(true);
-          } catch {
-            /* unvollständiger Block ignorieren */
+      let letzte = Date.now();
+      // Wache: kommen im Strom keine Daten mehr an (Puffer in Supabase/Tunnel), Strom beenden und per Abfrage weitermachen
+      const wache = window.setInterval(() => {
+        if (Date.now() - letzte > STROM_STILLE_MS) {
+          wacheAusgeloest = true;
+          abbruch?.abort();
+        }
+      }, 1000);
+      try {
+        const res = await fetch(FUNCTION_URL, {
+          method: "POST",
+          headers: await kopf(),
+          body: JSON.stringify({ action: "stream" }),
+          signal: abbruch.signal,
+        });
+        if (!res.ok || !res.body) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j?.error || `Fehler ${res.status}`);
+        }
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let puffer = "";
+        let gelesen = 0;
+        while (aktiv) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          puffer += dec.decode(value, { stream: true });
+          let ende: number;
+          while ((ende = puffer.indexOf("\n\n")) >= 0) {
+            const block = puffer.slice(0, ende);
+            puffer = puffer.slice(ende + 2);
+            const daten = block
+              .split("\n")
+              .filter((l) => l.startsWith("data:"))
+              .map((l) => l.slice(5).trim())
+              .join("");
+            if (!daten) continue;
+            try {
+              uebernehmen(JSON.parse(daten) as Status);
+              gelesen++;
+              letzte = Date.now();
+              setLive(true);
+            } catch {
+              /* unvollständiger Block ignorieren */
+            }
           }
         }
+        setLive(false);
+        if (gelesen === 0) throw new Error("Live-Strom ohne Daten");
+      } finally {
+        window.clearInterval(wache);
       }
-      setLive(false);
-      if (gelesen === 0) throw new Error("Live-Strom ohne Daten");
     };
 
     const schleife = async () => {
@@ -204,12 +219,19 @@ export default function ServerStatusPanel() {
             await strom(); // läuft ca. 2 Minuten, dann sofort neu verbinden
             continue;
           }
+          const t = Date.now();
           await einmal();
-          await warten(INTERVALL_MS);
+          await warten(Math.max(0, INTERVALL_MS - (Date.now() - t))); // gleichmässig jede Sekunde
         } catch (e) {
           if (!aktiv) break;
           setLive(false);
           if (e instanceof DOMException && e.name === "AbortError") {
+            if (wacheAusgeloest) {
+              // Strom kam gepuffert an: 60 s lang jede Sekunde abfragen, dann den Strom erneut versuchen
+              wacheAusgeloest = false;
+              fallbackBis = Date.now() + 60_000;
+              continue;
+            }
             await warten(500);
             continue;
           }
@@ -264,7 +286,7 @@ export default function ServerStatusPanel() {
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span className={`h-2 w-2 rounded-full ${fehler ? "bg-destructive" : "bg-green-500"}`} />
-          {fehler ? `Verbindung gestört (${fehler})` : live ? "Live (jede Sekunde)" : "Aktualisiert alle 2 Sekunden"}
+          {fehler ? `Verbindung gestört (${fehler})` : live ? "Live (jede Sekunde)" : "Live (Abfrage jede Sekunde)"}
         </span>
         {stand && <span>Stand {stand.toLocaleTimeString("de-CH")}</span>}
       </div>
