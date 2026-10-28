@@ -83,6 +83,9 @@ A: FDM für Funktionsteile und günstige Prototypen. SLA für Sichtteile mit gla
 - Leistungen: https://3dmuscio.com/leistungen
 - FDM 3D-Druck: https://3dmuscio.com/leistungen/fdm-3d-druck
 - SLA 3D-Druck: https://3dmuscio.com/leistungen/sla-3d-druck
+- 3D-Druck für Unternehmen (B2B): https://3dmuscio.com/leistungen/b2b-3d-druck
+- Architekturmodelle 3D-Druck: https://3dmuscio.com/leistungen/3d-druck-architekturmodelle
+- Miniaturmaschinen / Anlagenmodelle 3D-Druck: https://3dmuscio.com/leistungen/3d-druck-miniaturmaschinen
 - Materialien: https://3dmuscio.com/materialien
 - Projekte: https://3dmuscio.com/projekte
 - Blog: https://3dmuscio.com/blog
