@@ -1601,7 +1601,7 @@ const CalculatorOnlinePage = () => {
             ? ` – GETEILT in ${teile} Teile und verklebt (Zuschlag ${CHF(splitFee(teile))} pro Stück, Teil grösser als 420 mm)`
             : "";
           const platten = p.quantity >= 2 && p.batch && p.batch.batch.copies === p.quantity ? p.batch.batch.plates : 0;
-          const plattenText = platten > 0 ? ` – ${platten} ${platten === 1 ? "Platte" : "Platten"} (Setup ×${platten}${p.batch?.batch.printer ? `, ${p.batch.batch.printer.toUpperCase()}` : ""}, Nachbearbeitung geschätzt)` : "";
+          const plattenText = platten > 0 ? ` – ${platten} ${platten === 1 ? "Platte" : "Platten"} (Setup ×${platten}${p.batch?.batch.printer ? `, ${({ a1: "A1", k1c: "K1C", k1: "K1", k2plus: "K2 Plus", xl: "XL" } as Record<string, string>)[p.batch.batch.printer] ?? p.batch.batch.printer}` : ""}, Nachbearbeitung geschätzt)` : "";
           return `${p.fileName} (${p.quantity}× ${(materials.find(m => m.id === p.materialId)?.name || p.materialId)}, ${p.color}, ${qualityAdminLabel(p.infill)})${teilen}${plattenText}`;
         })
         .join("; ");

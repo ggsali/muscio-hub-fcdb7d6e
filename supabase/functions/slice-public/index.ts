@@ -208,6 +208,22 @@ serve(async (req) => {
       if (!zuGross && !d.includes("Unbekannter Drucker") && !d.includes("Slicen fehlgeschlagen")) break;
       await dbg(supabase, { ev: "drucker-wechsel", von: printer, grund: zuGross ? "zu gross fuers Bett" : d.slice(0, 200) });
     }
+    // Mehrere Stück: braucht der kleine Drucker mehrere Platten, auch den K2 Plus (grösseres Bett) probieren und die Variante
+    // mit weniger Platten nehmen (jede Platte = eine Druckerbestückung = eine Setup-Pauschale). Bei Gleichstand der kleinere Drucker.
+    if (copies > 1 && !plate && res.ok && used !== "k2plus") {
+      const p1 = await res.clone().json().catch(() => ({}));
+      const n1 = Number(p1?.plates);
+      if (Number.isFinite(n1) && n1 > 1) {
+        const ta = Date.now();
+        const alt = await slice("k2plus");
+        versuche.push({ p: "k2plus-vergleich", s: alt.status, ms: Date.now() - ta });
+        if (alt.ok) {
+          const p2 = await alt.clone().json().catch(() => ({}));
+          const n2 = Number(p2?.plates);
+          if (Number.isFinite(n2) && n2 >= 1 && n2 < n1) { res = alt; used = "k2plus"; }
+        }
+      }
+    }
     // Passt das Modell auf keinen Drucker: auf dem grössten (xl) mit automatischem Teilen erneut versuchen.
     // Ältere Slicer ignorieren allow_split und antworten wieder mit 422 -> Verhalten wie bisher (Rückfall im Kalkulator).
     if (!plate && copies === 1 && res.status === 422 && letzterZuGross) {
