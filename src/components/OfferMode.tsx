@@ -178,6 +178,24 @@ export default function OfferMode({ orderId, orderName, customerId, datum, besch
       });
       if (error || data?.error) throw new Error(data?.error || error?.message);
       toast({ title: "Offerte per E-Mail gesendet ✓" });
+      // PDF ablegen und im Aktivitätsverlauf verlinken
+      let storedPath: string | null = null;
+      let storedFilename: string | null = null;
+      try {
+        if (result && "base64" in result && result.base64) {
+          const pdfBlob = await fetch(`data:application/pdf;base64,${result.base64}`).then((r) => r.blob());
+          const pdfPath = `${orderId}/offerte-${Date.now()}.pdf`;
+          const { error: upErr } = await supabase.storage.from("bills").upload(pdfPath, pdfBlob, { contentType: "application/pdf", upsert: false });
+          if (!upErr) { storedPath = pdfPath; storedFilename = ("filename" in result && result.filename) || `offerte-${orderId}.pdf`; }
+        }
+      } catch { /* Upload ist optional */ }
+      await (supabase.from as any)("order_status_log").insert({
+        order_id: orderId,
+        status: "✉️ Offerte per Mail gesendet",
+        notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
+        file_path: storedPath,
+        filename: storedFilename,
+      });
     } catch (e: any) {
       toast({ title: "Fehler", description: e.message, variant: "destructive" });
     }

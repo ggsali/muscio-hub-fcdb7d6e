@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, FolderDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X, ScanLine, Cpu } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, FolderDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X, ScanLine, Cpu, FileText } from "lucide-react";
 import SlicerScanModal from "@/components/SlicerScanModal";
 import PartSliceDialog from "@/components/PartSliceDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -1154,6 +1154,8 @@ export default function AuftragDetailPage() {
             order_id: id,
             status: `✉️ ${labelsMap[type]} per Mail gesendet`,
             notiz: sentDate,
+            file_path: storedPath,
+            filename: storedFilename,
           });
         }
       }
@@ -1225,6 +1227,20 @@ export default function AuftragDetailPage() {
               betrag: Math.round(totalMitVersand * akontoPercent) / 100,
               notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               bezahlt: false,
+              file_path: storedPath,
+              filename: storedFilename,
+            });
+            await (supabase.from as any)("order_status_log").insert({
+              order_id: id,
+              status: `✉️ Akontorechnung per Mail gesendet`,
+              notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
+              file_path: storedPath,
+              filename: storedFilename,
+            });
+            await (supabase.from as any)("order_status_log").insert({
+              order_id: id,
+              status: `✉️ Schlussrechnung per Mail gesendet`,
+              notiz: `Gesendet am ${new Date().toLocaleDateString("de-CH")}`,
               file_path: storedPath,
               filename: storedFilename,
             });
@@ -3454,7 +3470,13 @@ function activityStyle(status: string) {
 }
 
 function OrderActivityLog({ orderId }: { orderId: string }) {
-  const [entries, setEntries] = useState<{ id: string; status: string; notiz: string | null; created_at: string }[]>([]);
+  const { toast } = useToast();
+  const [entries, setEntries] = useState<{ id: string; status: string; notiz: string | null; created_at: string; file_path?: string | null; filename?: string | null }[]>([]);
+  const openDokument = async (path: string) => {
+    const { data, error } = await supabase.storage.from("bills").createSignedUrl(path, 3600);
+    if (error || !data?.signedUrl) { toast({ title: "Dokument nicht gefunden", variant: "destructive" }); return; }
+    window.open(data.signedUrl, "_blank", "noopener");
+  };
   const [loading, setLoading] = useState(true);
 
   const fetchEntries = async () => {
@@ -3509,6 +3531,11 @@ function OrderActivityLog({ orderId }: { orderId: string }) {
                   </span>
                 </div>
                 {e.notiz && <p className="mt-0.5 text-muted-foreground">{e.notiz}</p>}
+                {e.file_path && (
+                  <button onClick={() => openDokument(e.file_path!)} className="mt-1 inline-flex items-center gap-1 text-primary hover:underline">
+                    <FileText className="w-3 h-3" />{e.filename || "PDF ansehen"}
+                  </button>
+                )}
               </div>
             </div>
           );
