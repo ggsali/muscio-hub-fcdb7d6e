@@ -57,16 +57,59 @@ export function dimsFromObj(text: string): Mass3 | null {
   return d.every((v) => Number.isFinite(v) && v >= 0) ? d : null;
 }
 
-/** Passen alle Teile flach gestapelt in einen Umschlag mit den Höchstmassen? (Dicke = Summe der kleinsten Seiten) */
+// Sicherheitsabstände: Umschlag-Innenmass = Höchstmass minus Rand, Teile mit Luft zueinander (damit es beim Versand nie knapp wird)
+const RAND_MM = 10;      // Gesamtrand in Länge und Breite (je 5 mm pro Seite)
+const POLSTER_MM = 3;    // von der Höchstdicke abgezogen (Papier/Polster)
+const LUFT_MM = 2;       // Luft pro Teil in jeder Richtung
+
+type Rect = { w: number; h: number };
+type Regal = { y: number; h: number; x: number };
+type Lage = { regale: Regal[]; hoehe: number };
+
+/** Legt ein Rechteck in eine Lage (Regal-Verfahren, auch gedreht). true = platziert. */
+function inLageLegen(lage: Lage, r: Rect, W: number, H: number): boolean {
+  for (const [w, h] of [[r.w, r.h], [r.h, r.w]] as [number, number][]) {
+    if (w > W || h > H) continue;
+    // bestehendes Regal mit genug Höhe und Restbreite
+    for (const g of lage.regale) {
+      if (h <= g.h && g.x + w <= W) { g.x += w; return true; }
+    }
+    // neues Regal
+    const y = lage.regale.reduce((m, g) => Math.max(m, g.y + g.h), 0);
+    if (y + h <= H) { lage.regale.push({ y, h, x: w }); return true; }
+  }
+  return false;
+}
+
+/** Passen ALLE Stücke in einen Umschlag? Teile liegen flach (kleinste Seite = Dicke), werden in Lagen nebeneinander und übereinander
+ *  gepackt. Mit Rand und Luft gerechnet, damit es nicht knapp wird. */
 function passtInBrief(stuecke: { dims: Mass3 | null; qty: number }[], max: Mass3): boolean {
-  let dicke = 0;
+  const L = max[0] - RAND_MM, B = max[1] - RAND_MM, Hmax = max[2] - POLSTER_MM;
+  const teile: { a: number; b: number; d: number }[] = [];
   for (const s of stuecke) {
     if (!s.dims) return false; // Abmessungen unbekannt: sicherheitshalber kein Brief
-    const [d1, d2, d3] = [...s.dims].sort((a, b) => a - b); // d1 dünnste, d3 längste Seite
-    if (d3 > max[0] || d2 > max[1]) return false;
-    dicke += d1 * Math.max(1, s.qty);
+    const [d1, d2, d3] = [...s.dims].sort((x, y) => x - y); // d1 = Dicke, d3 = längste Seite
+    for (let i = 0; i < Math.max(1, s.qty); i++) {
+      teile.push({ a: d3 + LUFT_MM, b: d2 + LUFT_MM, d: d1 + LUFT_MM });
+      if (teile.length > 300) return false; // viel zu viele Stücke für einen Brief
+    }
   }
-  return dicke <= max[2];
+  if (teile.some((t) => t.d > Hmax)) return false; // zu dick für den Umschlag
+  // Dickste und grösste zuerst, dann Lagen füllen
+  teile.sort((x, y) => y.d - x.d || y.a * y.b - x.a * x.b);
+  const lagen: Lage[] = [];
+  for (const t of teile) {
+    let ok = false;
+    for (const lage of lagen) {
+      if (t.d <= lage.hoehe && inLageLegen(lage, { w: t.a, h: t.b }, L, B)) { ok = true; break; }
+    }
+    if (!ok) {
+      const neu: Lage = { regale: [], hoehe: t.d };
+      if (!inLageLegen(neu, { w: t.a, h: t.b }, L, B)) return false;
+      lagen.push(neu);
+    }
+  }
+  return lagen.reduce((sum, l) => sum + l.hoehe, 0) <= Hmax;
 }
 
 /** Wählt die günstigste passende Versandart: Briefpost -> Grossbrief -> Paket. Gewichte in Gramm (Teile ohne Verpackung). */
