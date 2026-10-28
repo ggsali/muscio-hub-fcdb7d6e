@@ -454,6 +454,15 @@ export const services: ServiceContent[] = [
         ],
       },
       {
+        title: "Referenzen: Anlagenmodelle für Bühler",
+        text: "Wir haben Anlagenmodelle für Geschäftsbereiche der Bühler Group gefertigt, darunter für die Bereiche Druckguss und Roasting sowie ein Anlagenmodell für Drying Solutions zur Präsentation an der Interpom. Die Modelle entstehen aus den Konstruktionsdaten der Anlagen und dienen als Schau- und Vertriebsmodelle für Messen und Kundengespräche.",
+        bullets: [
+          "Massstabsmodelle ganzer Anlagen aus CAD-Daten",
+          "Einsatz an Messen, in Präsentationen und als Kundengeschenk",
+          "Erstellt von einem ausgebildeten Konstrukteur EFZ mit Praxis im Anlagenbau",
+        ],
+      },
+      {
         title: "Warum 3D-Druck für Modellbau",
         text: "Maschinenmodelle bestehen oft aus vielen komplexen Einzelteilen in kleiner Stückzahl. Genau dafür ist 3D-Druck geeignet: Es braucht keine Werkzeuge, und Zahnräder, Gehäuse, Gestelle und Gelenke lassen sich direkt aus dem CAD drucken. Änderungen am Modell sind ohne Mehrkosten für Formen möglich.",
         bullets: [
@@ -482,6 +491,7 @@ export const services: ServiceContent[] = [
     ],
     faqs: [
       { q: "Könnt ihr Modelle mit beweglichen Teilen drucken?", a: "Ja. Wichtig sind passende Spiele und Toleranzen in der Konstruktion. Die typische FDM-Genauigkeit liegt bei ±0.2 mm. Wir beraten dich bei der Auslegung." },
+      { q: "Habt ihr Erfahrung mit Anlagenmodellen für die Industrie?", a: "Ja. Wir haben Anlagenmodelle für Geschäftsbereiche der Bühler Group gefertigt (Druckguss, Roasting, Drying Solutions). Die Modelle entstehen aus den CAD-Daten der Anlagen." },
       { q: "Welche Dateiformate werden akzeptiert?", a: "STL, STEP, 3MF oder OBJ. Aus CAD-Programmen wie Fusion 360, SolidWorks, Siemens NX oder Inventor lässt sich in der Regel eine dieser Dateien exportieren." },
       { q: "Wie gross darf eine Miniaturmaschine sein?", a: "Das Druckbett fasst bis etwa 42 cm. Grössere Teile teilen wir automatisch und verkleben sie, Zuschlag CHF 15 pro Schnitt." },
       { q: "Können Firmen auf Rechnung bestellen?", a: "Ja. Firmenkunden erhalten eine Schweizer QR-Rechnung mit Zahlteil. Karte, TWINT und Apple Pay sind ebenfalls möglich." },
