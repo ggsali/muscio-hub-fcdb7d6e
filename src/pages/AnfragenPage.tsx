@@ -1,3 +1,4 @@
+import { splitFee } from "@/lib/splitSurcharge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -344,6 +345,14 @@ export default function AnfragenPage() {
       };
 
       const groupParts = new Map<string, string>();
+      // Geteilte Teile (grösser als Druckbett): Vermerk aus der Anfrage ins Teil übernehmen
+      const geteiltNotiz = (filename?: string | null): string => {
+        if (!filename) return "";
+        const esc = filename.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const m = (inq.nachricht || "").match(new RegExp(esc + "[^;\\n]*?GETEILT in (\\d+) Teile"));
+        const n = m ? parseInt(m[1], 10) : 0;
+        return n > 1 ? `✂️ GETEILT in ${n} Teile und verklebt – Zuschlag CHF ${splitFee(n).toFixed(2)} pro Stück (Teil grösser als 420 mm). ` : "";
+      };
       if (attachments.length > 0) {
         // Create each part individually so we can attach its file directly via the returned id
         for (let i = 0; i < attachments.length; i++) {
@@ -445,7 +454,7 @@ export default function AnfragenPage() {
               preis_pro_stueck: 0,
               preis_total: 0,
               status: "Ausstehend",
-              notizen: `Datei: ${att.filename}${sl.menge ? ` · Kunde: ${sl.menge}×` : ""}${sl.material ? ` ${sl.material}` : ""}${sl.farbe ? `, ${sl.farbe}` : ""}`,
+              notizen: `${geteiltNotiz(att.filename)}Datei: ${att.filename}${sl.menge ? ` · Kunde: ${sl.menge}×` : ""}${sl.material ? ` ${sl.material}` : ""}${sl.farbe ? `, ${sl.farbe}` : ""}`,
               slicer_druckzeit_sekunden: slSeconds,
               slicer_filament_gramm: slGrams,
               slicer_hat_supports: sl.slicer_hat_supports ?? null,
