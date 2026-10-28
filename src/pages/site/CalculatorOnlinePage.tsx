@@ -736,9 +736,11 @@ const CalculatorOnlinePage = () => {
   /** KI-/Slicer-Analyse für ein Teil (Edge Function analyze-stl) */
   const runKiAnalysisNow = useCallback(async (partId: string) => {
     const part = parts.find((p) => p.id === partId);
-    if (!part?.stlBase64 || isStepFile(part.fileName)) return;
+    const analyseAbbrechen = () =>
+      setParts((prev) => prev.map((p) => (p.id === partId && p.kiAnalysisLoading ? { ...p, kiAnalysisLoading: false } : p)));
+    if (!part?.stlBase64 || isStepFile(part.fileName)) { analyseAbbrechen(); return; }
     const mat = materials.find((m) => m.id === (part.materialId || materials[0]?.id));
-    if (!mat) return;
+    if (!mat) { analyseAbbrechen(); return; }
     const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
 
     // Sehr grosse Dateien überschreiten das Speicherlimit der Serveranalyse
@@ -1237,7 +1239,20 @@ const CalculatorOnlinePage = () => {
 
   const calcs = parts.map((p) => ({ part: p, calc: calcPart(p) }));
 
-  const kiLoading = parts.some((p) => p.kiAnalysisLoading || p.slicerLoading);
+  // Die Server-Analyse (analyze-stl) ist nur der Reserve-Preis: Sobald ein Slicer-Ergebnis vorliegt, wartet niemand mehr darauf.
+  const kiLoading = parts.some((p) => (p.kiAnalysisLoading && !p.slicerResult) || p.slicerLoading);
+
+  // Sicherung: eine Ladeanzeige darf nie endlos drehen (hängende Anfrage, verpasstes Ende). Nach 90 s wird sie beendet;
+  // kommt das Ergebnis später noch, wird es trotzdem übernommen.
+  const ladeStatus = parts.map((p) => `${p.id}:${p.kiAnalysisLoading ? 1 : 0}${p.slicerLoading ? 1 : 0}`).join(",");
+  useEffect(() => {
+    if (!parts.some((p) => p.kiAnalysisLoading || p.slicerLoading)) return;
+    const t = window.setTimeout(() => {
+      setParts((prev) => prev.map((p) => (p.kiAnalysisLoading || p.slicerLoading) ? { ...p, kiAnalysisLoading: false, slicerLoading: false } : p));
+    }, 90_000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ladeStatus]);
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   const setupFee = parts.length > 0 ? FIX_COST : 0;
@@ -2629,7 +2644,7 @@ const CalculatorOnlinePage = () => {
                               <p className="text-xs text-orange-500 mt-1">~ Schätzung – {p.slicerError}</p>
                             )}
 
-                            {p.kiAnalysisLoading && (
+                            {p.kiAnalysisLoading && !p.slicerResult && (
                               <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
                                 <Loader2 className="w-3 h-3 animate-spin" /> 🤖 Modell wird analysiert…
                               </p>
