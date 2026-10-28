@@ -70,7 +70,7 @@ MATERIALPREISE (pro Gramm):
 ${filamentListe}
 
 DIENSTLEISTUNGSPREISE:
-- Setup-Pauschale: CHF ${p.setup_pauschale} (einmalig pro Auftrag, IMMER als eigene Position hinzufügen)
+- Setup-Pauschale: CHF ${p.setup_pauschale} (IMMER als eigene Position hinzufügen)
 - Maschinenzeit: CHF ${p.maschinenzeit_pro_h}/h
 - Nachbearbeitung: CHF ${p.nachbearbeitung_pro_h}/h
 - Konstruktionszeit: CHF ${p.konstruktion_pro_h}/h
@@ -90,7 +90,7 @@ Antworte NUR mit gültigem JSON in genau dieser Struktur:
   "titel": "Offerte – [kurze Beschreibung]",
   "positionen": [
     { "bezeichnung": "FDM 3D-Druck PLA Basic Schwarz", "beschreibung": "150g × CHF 0.055/g + 2h Maschinenzeit × CHF ${p.maschinenzeit_pro_h}/h", "menge": 2, "einheit": "Stück", "einzelpreis": 14.25, "total": 28.50 },
-    { "bezeichnung": "Setup-Pauschale", "beschreibung": "Einmalige Bearbeitungsgebühr", "menge": 1, "einheit": "Pauschal", "einzelpreis": ${p.setup_pauschale}, "total": ${p.setup_pauschale} }
+    { "bezeichnung": "Setup-Pauschale", "beschreibung": "", "menge": 1, "einheit": "Pauschal", "einzelpreis": ${p.setup_pauschale}, "total": ${p.setup_pauschale} }
   ],
   "zwischensumme": 48.50,
   "rabatt_prozent": 0,

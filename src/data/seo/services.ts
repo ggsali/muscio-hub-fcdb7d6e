@@ -267,7 +267,7 @@ export const services: ServiceContent[] = [
     faqs: [
       { q: "Ich habe keine 3D-Datei. Was nun?", a: "Schick uns Fotos mit Maßstab und die Hauptmaße über das Kontaktformular. Wir prüfen, ob wir das Teil nachbauen können." },
       { q: "Dürfen markengeschützte Teile nachgedruckt werden?", a: "Wir fertigen keine Teile, die Schutzrechte Dritter verletzen. Für Reparaturteile im Eigenbedarf ist das in der Regel unproblematisch – im Zweifel bitte kurz anfragen." },
-      { q: "Wie viele Teile kann ich bestellen?", a: "Ab 1 Stück, ohne Mindestbestellmenge. Bei mehreren Stück sinkt der Stückpreis, weil die Rüstkosten nur einmal anfallen." },
+      { q: "Wie viele Teile kann ich bestellen?", a: "Ab 1 Stück, ohne Mindestbestellmenge. Bei mehreren Stück sinkt der Stückpreis, weil sich die Rüstkosten verteilen." },
     ],
     related: [
       { label: "Ersatzteil-Service", to: "/leistungen/3d-druck-ersatzteile", text: "Ablauf und Beispiele." },
@@ -301,7 +301,7 @@ export const services: ServiceContent[] = [
       },
       {
         title: "Kostenfaktoren bei Serien",
-        text: "Rüstkosten fallen pro Auftrag nur einmal an, danach zählen Material und Druckzeit pro Teil. Grössere Mengen werden dadurch pro Stück günstiger. Kleinere Bauteile mit reduzierter Wandstärke und passender Orientierung senken die Kosten weiter.",
+        text: "Zu den Rüstkosten für die Bestückung des Druckers kommen Material und Druckzeit pro Teil. Grössere Mengen werden dadurch pro Stück günstiger. Kleinere Bauteile mit reduzierter Wandstärke und passender Orientierung senken die Kosten weiter.",
       },
       {
         title: "Gleichbleibende Qualität",
@@ -350,7 +350,7 @@ export const services: ServiceContent[] = [
       },
       {
         title: "Preise bei Kleinserien",
-        text: "Der Preis setzt sich aus Material, Maschinenzeit und einmaligen Rüstkosten pro Auftrag zusammen. Weil die Rüstkosten nur einmal anfallen, wird jedes weitere Teil pro Stück günstiger. Für grössere Serien oder Rahmenmengen erstellen wir ein individuelles Angebot.",
+        text: "Der Preis setzt sich aus Material, Maschinenzeit und Rüstkosten für die Bestückung des Druckers zusammen. Bei grösseren Mengen sinkt der Preis pro Stück. Für grössere Serien oder Rahmenmengen erstellen wir ein individuelles Angebot.",
       },
       {
         title: "Materialien und Verfahren",

@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: "Wird der Rüstaufwand pro Teil verrechnet?",
-    a: "Nein. Die Rüstkosten fallen pro Auftrag nur einmal an, nicht pro Stück. Deshalb sinkt der Stückpreis, wenn du mehrere Teile zusammen bestellst.",
+    a: "Nein, nicht pro Stück. Der Rüstaufwand richtet sich danach, wie oft wir den Drucker bestücken müssen, nicht nach der Stückzahl.",
   },
   {
     q: "Kostet der Preisvorschlag etwas?",
@@ -35,7 +35,7 @@ const table = {
     ["Qualitätsstufe", "feinere Schichten = mehr Zeit", "nur dort fein drucken, wo es nötig ist"],
     ["Stützstrukturen", "zusätzliches Material und Zeit", "Geometrie druckgerecht gestalten"],
     ["Nachbearbeitung", "Aufwand pro Teil", "nur bestellen, was gebraucht wird"],
-    ["Rüstkosten", "einmal pro Auftrag", "mehrere Teile zusammen bestellen"],
+    ["Rüstkosten", "Aufwand je Druckerbestückung", "mehrere Teile zusammen auf einer Platte drucken"],
     ["Stückzahl", "Rüstkosten verteilt", "Serien statt Einzelbestellungen"],
   ],
 };
@@ -70,7 +70,7 @@ export default function KostenPage() {
       <AnswerLanding
         eyebrow="Wissen"
         h1="3D-Druck Kosten in der Schweiz – so entsteht der Preis"
-        shortAnswer="Der Preis eines 3D-Drucks setzt sich aus Materialverbrauch, Druckzeit, Qualitätsstufe und Nachbearbeitung zusammen; die Rüstkosten fallen pro Auftrag nur einmal an. Bei 3DMuscio starten einfache Teile ab CHF 5.–, und der Online-Kalkulator zeigt dir für deine eigene Datei sofort den exakten Preis samt Aufschlüsselung."
+        shortAnswer="Der Preis eines 3D-Drucks setzt sich aus Materialverbrauch, Druckzeit, Qualitätsstufe und Nachbearbeitung zusammen, dazu kommen Rüstkosten für die Bestückung des Druckers. Bei 3DMuscio starten einfache Teile ab CHF 5.–, und der Online-Kalkulator zeigt dir für deine eigene Datei sofort den exakten Preis samt Aufschlüsselung."
         breadcrumb={[
           { name: "Start", to: "/" },
           { name: "Wissen", to: path },
@@ -88,7 +88,7 @@ export default function KostenPage() {
               "massive Bereiche aushöhlen",
               "Qualitätsstufe an die Funktion anpassen",
               "Bauteil so gestalten, dass wenig Stützmaterial nötig ist",
-              "mehrere Teile in einem Auftrag bestellen (Rüstkosten nur einmal)",
+              "mehrere Teile in einem Auftrag bestellen",
               "mehrere Teile in einem Auftrag bestellen",
             ],
           },

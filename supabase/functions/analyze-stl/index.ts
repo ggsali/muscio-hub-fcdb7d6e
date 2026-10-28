@@ -304,7 +304,7 @@ SpeedFactor: ${speedFactor}
 PREISPARAMETER:
 Materialpreis: CHF ${pricePerGram}/g
 Maschinenzeit: CHF ${maschinenzeit}/h
-Setup-Pauschale: CHF ${setupFee} (einmalig)
+Setup-Pauschale: CHF ${setupFee}
 Mindestpreis: CHF ${minPrice}
 Versand: CHF ${versandkosten} (immer berechnet, keinen Gratis-Versand nennen)
 Menge: ${qty} Stück

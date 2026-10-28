@@ -28,7 +28,7 @@ const PLAN: Record<number, [string, string, string, string]> = {
   7: ["Tipp: Bis 15. Dezember bestellen", "Damit dein Geschenk bis Weihnachten ankommt, bestelle bis Mitte Dezember (15. Dezember).", "", ""],
   8: ["CHF 10 Rabatt", "Ab CHF 40 Bestellwert.", "betrag", "10"],
   9: ["5 % Rabatt", "Ein kleines Extra für heute.", "prozent", "5"],
-  10: ["Tipp: Alles zusammen bestellen", "Die Rüstkosten fallen pro Auftrag nur einmal an. Mehrere Teile in einer Bestellung sparen Geld.", "", ""],
+  10: ["Tipp: Alles zusammen bestellen", "Mehrere Teile in einer Bestellung zusammen drucken lassen spart Geld.", "", ""],
   11: ["Gratis Versand", "Heute ohne Versandkosten bestellen.", "gratis_versand", "0"],
   12: ["10 % Rabatt", "Zwölf Türchen geschafft, 10 % für dich.", "prozent", "10"],
   13: ["Tipp: Füllung sparen", "Oft reichen 15 bis 20 % Füllung. Weniger Material bedeutet einen günstigeren Preis.", "", ""],

@@ -526,7 +526,7 @@ export default function EinstellungenPage() {
             <h3 className="font-semibold text-sm">Preise im Website-Kalkulator</h3>
             {[
               { label: "Maschinenstundenkosten", unit: "CHF pro Stunde", fallback: localSettings.maschinenzeit_pro_h, value: webMaschine, set: setWebMaschine },
-              { label: "Setup-Pauschale", unit: "CHF, 1× pro Bestellung", fallback: calcParams.fix_cost, value: webSetup, set: setWebSetup },
+              { label: "Setup-Pauschale", unit: "CHF", fallback: calcParams.fix_cost, value: webSetup, set: setWebSetup },
             ].map(f => (
               <div key={f.label} className="flex items-center justify-between gap-4">
                 <div className="flex-1">
