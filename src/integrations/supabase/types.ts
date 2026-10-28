@@ -1720,8 +1720,6 @@ export type Database = {
       order_status_log: {
         Row: {
           created_at: string
-          file_path: string | null
-          filename: string | null
           id: string
           notiz: string | null
           order_id: string
@@ -1729,8 +1727,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          file_path?: string | null
-          filename?: string | null
           id?: string
           notiz?: string | null
           order_id: string
@@ -1738,8 +1734,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          file_path?: string | null
-          filename?: string | null
           id?: string
           notiz?: string | null
           order_id?: string
