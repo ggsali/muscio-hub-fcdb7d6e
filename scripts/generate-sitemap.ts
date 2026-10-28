@@ -23,6 +23,7 @@ const serviceSlugs = [
   "3d-druck-kleinserien",
   "b2b-3d-druck",
   "3d-druck-architekturmodelle",
+  "3d-druck-miniaturmaschinen",
 ];
 const comparisonSlugs = [
   "pla-vs-petg",

@@ -18,6 +18,7 @@ const STATIC_URLS = [
   { loc: '/leistungen/3d-druck-kleinserien', changefreq: 'monthly', priority: '0.8' },
   { loc: '/leistungen/b2b-3d-druck', changefreq: 'monthly', priority: '0.8' },
   { loc: '/leistungen/3d-druck-architekturmodelle', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/leistungen/3d-druck-miniaturmaschinen', changefreq: 'monthly', priority: '0.8' },
   { loc: '/3d-druck-zuerich', changefreq: 'monthly', priority: '0.8' },
   { loc: '/3d-druck-winterthur', changefreq: 'monthly', priority: '0.8' },
   { loc: '/3d-druck-st-gallen', changefreq: 'monthly', priority: '0.8' },

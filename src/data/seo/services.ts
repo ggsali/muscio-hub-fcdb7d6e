@@ -433,6 +433,68 @@ export const services: ServiceContent[] = [
       { label: "Preisrechner", to: "/kalkulator-online", text: "Datei hochladen, Preis sofort sehen." },
     ],
   },
+  {
+    slug: "3d-druck-miniaturmaschinen",
+    eyebrow: "Modelle & Funktionsmodelle",
+    h1: "Miniaturmaschinen 3D-drucken – Funktions- und Schaumodelle aus der Schweiz",
+    title: "Miniaturmaschinen 3D-Druck Schweiz | Funktionsmodelle & Schaumodelle | 3DMuscio",
+    description:
+      "Miniaturmaschinen und Maschinenmodelle aus dem 3D-Drucker: Schau-, Funktions- und Lehrmodelle für Firmen, Messen und Ausbildung. Sofortpreis, Rechnung mit QR-Zahlteil, Produktion in Eschlikon TG.",
+    shortAnswer:
+      "3DMuscio fertigt Miniaturmaschinen und Maschinenmodelle nach deinen CAD-Daten: Schaumodelle für Messe und Vertrieb, Funktionsmodelle mit beweglichen Teilen sowie Lehr- und Anschauungsmodelle für Ausbildung und Entwicklung. Gedruckt wird in Eschlikon TG, den Preis siehst du sofort im Online-Kalkulator, Firmen bestellen auf Rechnung.",
+    sections: [
+      {
+        title: "Wofür Miniaturmaschinen gebraucht werden",
+        bullets: [
+          "Schaumodelle für Messen, Showrooms und Kundenpräsentationen",
+          "Funktionsmodelle, die Mechanik und Bewegung zeigen",
+          "Lehr- und Anschauungsmodelle für Ausbildung und Schulung",
+          "Konzept- und Designmodelle in der Produktentwicklung",
+          "Verkleinerte Modelle von Anlagen und Produktionslinien",
+        ],
+      },
+      {
+        title: "Warum 3D-Druck für Modellbau",
+        text: "Maschinenmodelle bestehen oft aus vielen komplexen Einzelteilen in kleiner Stückzahl. Genau dafür ist 3D-Druck geeignet: Es braucht keine Werkzeuge, und Zahnräder, Gehäuse, Gestelle und Gelenke lassen sich direkt aus dem CAD drucken. Änderungen am Modell sind ohne Mehrkosten für Formen möglich.",
+        bullets: [
+          "Komplexe Geometrien und Mechanik in einem Druck",
+          "Einzelstücke und Kleinserien ohne Werkzeugkosten",
+          "Bewegliche Baugruppen und Steckverbindungen mit definiertem Spiel",
+          "Schnelle Anpassung nach Feedback",
+        ],
+      },
+      {
+        title: "Funktionsmodelle mit beweglichen Teilen",
+        text: "Für bewegliche Modelle zählen Toleranzen und Passungen. Die typische FDM-Genauigkeit liegt bei ±0.2 mm; Spiel und Passungen planen wir mit dir anhand deiner Konstruktion. Für feine Details und dünne Strukturen ist SLA/Resin die bessere Wahl. Aus der Konstruktionspraxis kennen wir die üblichen Stolpersteine bei Baugruppen und Toleranzen.",
+      },
+      {
+        title: "Mehrteilige Modelle und Grösse",
+        text: "Das Druckbett fasst bis etwa 42 cm. Grössere Teile teilen wir automatisch und verkleben sie (Zuschlag CHF 15 pro Schnitt, wird im Kalkulator und im Auftrag ausgewiesen). Baugruppen drucken wir als einzelne Teile, die du selbst oder wir montieren.",
+      },
+      {
+        title: "Material, Farbe und Oberfläche",
+        text: "Für Schaumodelle eignen sich PLA und PETG in verschiedenen Farben, für belastete oder bewegte Teile PETG, ABS, ASA oder TPU (flexibel). Auf Wunsch sind feinere Schichthöhen für bessere Oberflächen möglich, die im Kalkulator über die Qualitätsstufe abgebildet werden.",
+      },
+      {
+        title: "Ablauf und Bezahlung",
+        text: "Datei (STL, STEP, 3MF oder OBJ) im Online-Kalkulator hochladen, Material und Qualität wählen, Preis sehen und bestellen. Für Messetermine oder Serien kannst du über das Kontaktformular Stückzahl und Zieltermin angeben, wir prüfen die Machbarkeit. Firmenkunden bestellen auf Rechnung mit Schweizer QR-Zahlteil, alternativ Karte, TWINT oder Apple Pay.",
+      },
+    ],
+    faqs: [
+      { q: "Könnt ihr Modelle mit beweglichen Teilen drucken?", a: "Ja. Wichtig sind passende Spiele und Toleranzen in der Konstruktion. Die typische FDM-Genauigkeit liegt bei ±0.2 mm. Wir beraten dich bei der Auslegung." },
+      { q: "Welche Dateiformate werden akzeptiert?", a: "STL, STEP, 3MF oder OBJ. Aus CAD-Programmen wie Fusion 360, SolidWorks, Siemens NX oder Inventor lässt sich in der Regel eine dieser Dateien exportieren." },
+      { q: "Wie gross darf eine Miniaturmaschine sein?", a: "Das Druckbett fasst bis etwa 42 cm. Grössere Teile teilen wir automatisch und verkleben sie, Zuschlag CHF 15 pro Schnitt." },
+      { q: "Können Firmen auf Rechnung bestellen?", a: "Ja. Firmenkunden erhalten eine Schweizer QR-Rechnung mit Zahlteil. Karte, TWINT und Apple Pay sind ebenfalls möglich." },
+      { q: "Wie schnell ist ein Modell fertig?", a: "Das hängt von Grösse, Stückzahl und Auslastung ab. Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Nenne uns deinen Zieltermin über das Kontaktformular, dann prüfen wir ihn." },
+    ],
+    related: [
+      { label: "Architekturmodelle", to: "/leistungen/3d-druck-architekturmodelle", text: "Modelle für Architekturbüros." },
+      { label: "B2B 3D-Druck", to: "/leistungen/b2b-3d-druck", text: "Rechnung, Kleinserien, Firmenkunden." },
+      { label: "Prototypen", to: "/leistungen/3d-druck-prototypen", text: "Schnelle Iterationen in der Entwicklung." },
+      { label: "FDM 3D-Druck", to: "/leistungen/fdm-3d-druck", text: "Verfahren und Materialien." },
+      { label: "Preisrechner", to: "/kalkulator-online", text: "Datei hochladen, Preis sofort sehen." },
+    ],
+  },
 ];
 
 
