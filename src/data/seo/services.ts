@@ -366,8 +366,70 @@ export const services: ServiceContent[] = [
     related: [
       { label: "Kleinserien", to: "/leistungen/3d-druck-kleinserien", text: "Serienfertigung ohne Werkzeugkosten." },
       { label: "Prototypen", to: "/leistungen/3d-druck-prototypen", text: "Schnelle Iterationen in der Entwicklung." },
+      { label: "Architekturmodelle", to: "/leistungen/3d-druck-architekturmodelle", text: "Modelle für Architekturbüros." },
       { label: "Ersatzteile", to: "/leistungen/3d-druck-ersatzteile", text: "Teile nachdrucken, die es nicht mehr gibt." },
       { label: "3D-Druck vs Spritzguss", to: "/vergleich/3d-druck-vs-spritzguss", text: "Ab welcher Menge sich eine Form lohnt." },
+      { label: "Preisrechner", to: "/kalkulator-online", text: "Datei hochladen, Preis sofort sehen." },
+    ],
+  },
+  {
+    slug: "3d-druck-architekturmodelle",
+    eyebrow: "Für Architekturbüros",
+    h1: "Architekturmodelle 3D-drucken – für Architekturbüros in der Schweiz",
+    title: "Architekturmodelle 3D-Druck Schweiz | Für Architekturbüros | 3DMuscio",
+    description:
+      "Architekturmodelle aus dem 3D-Drucker: Situations-, Wettbewerbs- und Präsentationsmodelle nach CAD-Daten. Sofortpreis, Rechnung mit QR-Zahlteil, Produktion in Eschlikon TG.",
+    shortAnswer:
+      "3DMuscio druckt Architekturmodelle direkt aus deinen CAD-Daten (STL, STEP, 3MF, OBJ): Situationsmodelle, Gebäudemodelle, Fassaden- und Detailmodelle für Wettbewerb, Bauherrenpräsentation oder Baueingabe. Modelle, die grösser als das Druckbett sind, teilen und verkleben wir. Den Preis siehst du sofort im Online-Kalkulator, Firmen bestellen auf Rechnung. Produziert wird in Eschlikon TG.",
+    sections: [
+      {
+        title: "Welche Modelle wir drucken",
+        bullets: [
+          "Situations- und Umgebungsmodelle",
+          "Gebäude- und Volumenmodelle (z. B. Massstab 1:200 bis 1:500)",
+          "Fassaden-, Dach- und Treppenmodelle als Detailstudie",
+          "Wettbewerbs- und Präsentationsmodelle für Bauherren",
+          "Konstruktions- und Anschauungsmodelle für Ausführung und Handwerk",
+        ],
+      },
+      {
+        title: "Warum 3D-Druck für Architekturmodelle",
+        text: "Die Daten liegen im Büro meist schon vor. Aus Revit, ArchiCAD, Rhino oder SketchUp exportierst du eine STL-Datei, wir drucken das Modell. Änderungen am Entwurf lassen sich ohne neues Handmodell nachdrucken, und Details wie Fassadenraster oder Dachformen werden exakt aus dem Modell übernommen.",
+        bullets: [
+          "Massgenau aus den CAD-Daten, keine Handarbeit mit Abweichungen",
+          "Komplexe Formen und Geometrien ohne Mehraufwand",
+          "Änderungen am Entwurf einfach nachdrucken",
+          "Sofortpreis im Kalkulator, kein Angebotsaufwand für Standardmodelle",
+        ],
+      },
+      {
+        title: "Grosse Modelle: Teilung und Verklebung",
+        text: "Das Druckbett fasst bis etwa 42 cm. Grössere Modelle teilen wir automatisch in mehrere Teile und verkleben sie anschliessend. Der Zuschlag dafür beträgt CHF 15 pro Schnitt und wird im Kalkulator und im Auftrag ausgewiesen.",
+      },
+      {
+        title: "Datenvorbereitung",
+        text: "Für gute Modelle sollte die Datei geschlossen (wasserdicht) sein und Wände von mindestens etwa 1 mm Stärke haben, sonst druckt das Gerät sie nicht sauber. Wir prüfen deine Datei beim Hochladen und melden uns, wenn etwas angepasst werden muss. Aus der Konstruktionspraxis kennen wir die typischen Stolpersteine bei Export und Massstab.",
+      },
+      {
+        title: "Material, Farbe und Oberfläche",
+        text: "Standardmässig drucken wir in PLA, in gängigen Farben wie Weiss oder Grau, die sich für Modelle bewährt haben. Feine Details und glattere Oberflächen sind mit SLA/Resin möglich. Die typische FDM-Genauigkeit liegt bei ±0.2 mm.",
+      },
+      {
+        title: "Ablauf und Bezahlung",
+        text: "Datei im Online-Kalkulator hochladen, Material und Qualität wählen, Preis sehen und bestellen. Für Wettbewerbe oder Termine kannst du über das Kontaktformular Zieltermin und Stückzahl angeben, wir prüfen die Machbarkeit. Firmenkunden bestellen auf Rechnung mit Schweizer QR-Zahlteil, alternativ Karte, TWINT oder Apple Pay.",
+      },
+    ],
+    faqs: [
+      { q: "Welche Dateiformate brauche ich für ein Architekturmodell?", a: "STL, STEP, 3MF oder OBJ. Aus Revit, ArchiCAD, Rhino oder SketchUp lässt sich in der Regel eine STL- oder OBJ-Datei exportieren." },
+      { q: "Wie gross darf ein Modell sein?", a: "Das Druckbett fasst bis etwa 42 cm. Grössere Modelle teilen wir automatisch und verkleben sie. Der Zuschlag beträgt CHF 15 pro Schnitt." },
+      { q: "Können wir als Architekturbüro auf Rechnung bestellen?", a: "Ja. Firmenkunden erhalten eine Schweizer QR-Rechnung mit Zahlteil. Karte, TWINT und Apple Pay sind ebenfalls möglich." },
+      { q: "Wie schnell ist ein Modell fertig?", a: "Das hängt von Grösse und Auslastung ab. Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Nenne uns deinen Zieltermin über das Kontaktformular, dann prüfen wir ihn." },
+      { q: "Prüft ihr unsere Daten vor dem Druck?", a: "Ja. Wir prüfen die Datei beim Hochladen und melden uns, falls Wandstärken oder die Geometrie angepasst werden müssen." },
+    ],
+    related: [
+      { label: "B2B 3D-Druck", to: "/leistungen/b2b-3d-druck", text: "Rechnung, Kleinserien, Firmenkunden." },
+      { label: "Prototypen", to: "/leistungen/3d-druck-prototypen", text: "Schnelle Iterationen in der Entwicklung." },
+      { label: "FDM 3D-Druck", to: "/leistungen/fdm-3d-druck", text: "Verfahren und Materialien." },
       { label: "Preisrechner", to: "/kalkulator-online", text: "Datei hochladen, Preis sofort sehen." },
     ],
   },
