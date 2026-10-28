@@ -21,6 +21,7 @@ import ModelPreview from "@/components/site/ModelPreview";
 import HerkunftBanner from "@/components/site/HerkunftBanner";
 import { colorHex } from "@/lib/colorMap";
 import { splitFee } from "@/lib/splitSurcharge";
+import { gzAbgelehnt, gzipIfWorthIt } from "@/lib/gzipUpload";
 import JSZip from "jszip";
 import Seo from "@/components/site/Seo";
 import KiMaterialChat, { KiResult } from "@/components/site/KiMaterialChat";
@@ -319,18 +320,29 @@ function nasDebug(msg: string) {
 /** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
 async function sliceViaNas(file: File, layerHeight: number, infill: number): Promise<SlicerResult> {
   const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
-  const body = new FormData();
-  body.append("file", file);
-  body.append("quality", quality.toFixed(2));
-  body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
   const tStart = performance.now(); // Zeitmessung: Browser -> Edge Function -> Slicer -> Browser
-  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
-    method: "POST",
-    headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
-    body,
-    signal: AbortSignal.timeout(110_000),
-  });
-  const json = await res.json().catch(() => ({}));
+  const senden = async (komprimiert: boolean) => {
+    // STL/OBJ ab 1 MB verlustfrei mit gzip komprimieren: weniger Upload-Zeit (3MF ist schon gepackt)
+    const up = komprimiert && /\.(stl|obj)$/i.test(file.name)
+      ? await gzipIfWorthIt(file, file.name)
+      : { blob: file as Blob, name: file.name, gz: false };
+    const body = new FormData();
+    body.append("file", up.gz ? new File([up.blob], up.name) : file);
+    if (up.gz) body.append("gz", "1");
+    body.append("quality", quality.toFixed(2));
+    body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
+    const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+      method: "POST",
+      headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+      body,
+      signal: AbortSignal.timeout(110_000),
+    });
+    return { res: r, json: await r.json().catch(() => ({})), gz: up.gz };
+  };
+  let versuch = await senden(true);
+  // Alte Edge-Function-Version (noch ohne Entpacken)? Dann unkomprimiert wiederholen.
+  if (versuch.gz && gzAbgelehnt(versuch.json)) versuch = await senden(false);
+  const { res, json } = versuch;
   const st = json?.stats;
   const gesamtMs = Math.round(performance.now() - tStart);
   const mb = (file.size / 1048576).toFixed(1);

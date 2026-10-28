@@ -15,6 +15,7 @@ import { buildPlates, PLATE, type PlatePlan } from "@/lib/spardosePlate";
 import { berechnePreis, loadPricingContext, type PricingContext } from "@/lib/spardosePricing";
 import { berechneRabatt, gutscheinWertLabel, pruefeGutschein, type Gutschein } from "@/lib/gutschein";
 import { toast } from "sonner";
+import { gzAbgelehnt, gzipIfWorthIt } from "@/lib/gzipUpload";
 import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULTS, FONTS, LIMITS, NAME_MIN, SLOT_LEN, SLOT_THK, generateSpardose, sanitizeName, type SpardoseParams, type SpardoseResult } from "@/lib/spardose";
 
@@ -277,7 +278,7 @@ export default function SpardoseTestPage() {
     return () => clearTimeout(t);
   }, [p]);
 
-  type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; gcodeError?: string; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[] };
+  type Job = { label: string; hex: string; count: number; min: number; g: number; sup: boolean; gcodePath?: string; gcodeSize?: number; gcodePending?: boolean; gcodeError?: string; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[] };
   const [fin, setFin] = useState<{ state: "idle" | "busy" | "ok" | "err"; msg?: string; jobs?: Job[]; step?: string }>({ state: "idle" });
   const [gutschein, setGutschein] = useState<Gutschein | null>(null);
   const [gInput, setGInput] = useState("");
@@ -296,24 +297,34 @@ export default function SpardoseTestPage() {
       setFin({ state: "busy", step: `${plans.length} Platte${plans.length === 1 ? "" : "n"} werden gleichzeitig gesliced …` });
       const ctxP = loadPricingContext();
       const sliceOne = async (pl: PlatePlan, i: number): Promise<Job> => {
-        const body = new FormData();
-        body.append("file", new File([pl.blob], `spardose-platte-${i + 1}.stl`));
-        body.append("plate", "1");
-        body.append("printer", pl.printer);
-        body.append("quality", "0.20");
-        body.append("infill", "15");
-        const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
-          method: "POST",
-          headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
-          body,
-          signal: AbortSignal.timeout(165_000),
-        });
-        const j = await r.json().catch(() => ({}));
+        // Upload verlustfrei komprimiert (gzip): die Platte ist bis ca. 30 MB gross, das spart Wartezeit
+        const senden = async (komprimiert: boolean) => {
+          const up = komprimiert
+            ? await gzipIfWorthIt(pl.blob, `spardose-platte-${i + 1}.stl`)
+            : { blob: pl.blob as Blob, name: `spardose-platte-${i + 1}.stl`, gz: false };
+          const body = new FormData();
+          body.append("file", new File([up.blob], up.name));
+          if (up.gz) body.append("gz", "1");
+          body.append("plate", "1");
+          body.append("printer", pl.printer);
+          body.append("quality", "0.20");
+          body.append("infill", "15");
+          const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+            method: "POST",
+            headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+            body,
+            signal: AbortSignal.timeout(165_000),
+          });
+          return { j: await r.json().catch(() => ({})), gz: up.gz };
+        };
+        let { j, gz } = await senden(true);
+        // Alte Edge-Function-Version (noch ohne Entpacken)? Dann unkomprimiert wiederholen.
+        if (gz && gzAbgelehnt(j)) ({ j } = await senden(false));
         const st = j?.stats;
         if (!st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
           throw new Error(`Slicer (${pl.label}): ${j?.detail || j?.error || "keine Antwort"}${j?.enabled === false ? " (NAS-Slicing ist in den Einstellungen ausgeschaltet)" : ""}`);
         }
-        return { label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, printerName: pl.printerName, bed: pl.bed, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, gcodeError: j?.gcode_error ?? (j?.gcode_path ? undefined : "Antwort ohne G-Code (Edge Function slice-public nicht neu deployed?)"), rects: pl.rects };
+        return { label: pl.label, hex: pl.hex, count: pl.count, min: st.print_time_s / 60, g: st.filament_g, sup: !!st.has_support, printerName: pl.printerName, bed: pl.bed, gcodePath: j?.gcode_path, gcodeSize: j?.gcode_size, gcodePending: j?.gcode_pending === true, gcodeError: j?.gcode_error ?? (j?.gcode_path ? undefined : "Antwort ohne G-Code (Edge Function slice-public nicht neu deployed?)"), rects: pl.rects };
       };
       const jobs: Job[] = await Promise.all(plans.map(sliceOne));
       setCtx(await ctxP);
@@ -483,7 +494,7 @@ export default function SpardoseTestPage() {
                   <div key={j.hex} className="flex items-center gap-2">
                     <span className="inline-block h-3 w-3 rounded-full border" style={{ background: j.hex }} />
                     <span className="font-medium">{j.label}</span><span className="rounded bg-muted px-1.5 text-xs">{j.printerName}</span>
-                    <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g · Stützen: {j.sup ? "ja" : "nein"} · G-Code: {j.gcodePath ? "gespeichert" : <span className="text-destructive">fehlt – {j.gcodeError}</span>}</span>
+                    <span className="text-muted-foreground">{j.count} Teil{j.count === 1 ? "" : "e"} · {Math.floor(j.min / 60)} h {Math.round(j.min % 60)} min · {j.g.toFixed(0)} g · Stützen: {j.sup ? "ja" : "nein"} · G-Code: {j.gcodePath ? (j.gcodePending ? "wird im Hintergrund gespeichert" : "gespeichert") : <span className="text-destructive">fehlt – {j.gcodeError}</span>}</span>
                   </div>
                 ))}
               </div>

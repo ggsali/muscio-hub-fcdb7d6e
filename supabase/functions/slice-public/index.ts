@@ -10,6 +10,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 const MAX_BYTES = 30 * 1024 * 1024;
+const PLATE_MAX_BYTES = 45 * 1024 * 1024; // Spardose-Platten (entpackt) dürfen etwas grösser sein
 const TIMEOUT_MS = 120_000;
 const ALLOWED_EXT = [".stl", ".obj", ".3mf"];
 const QUALITIES = ["0.08", "0.12", "0.16", "0.20"];
@@ -32,6 +33,24 @@ async function dbg(supabase: any, entry: Record<string, unknown>) {
   } catch (e) { console.error("dbg failed", e); }
 }
 
+/** gzip entpacken mit Grössenbremse (Schutz vor "Zip-Bomben"): wirft, wenn mehr als `max` Bytes herauskommen */
+async function gunzipLimited(blob: Blob, max: number): Promise<Uint8Array> {
+  const reader = blob.stream().pipeThrough(new DecompressionStream("gzip")).getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > max) { await reader.cancel(); throw new Error("zu gross"); }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const c of chunks) { out.set(c, o); o += c.length; }
+  return out;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Nur POST erlaubt" }, 405);
@@ -42,6 +61,19 @@ serve(async (req) => {
   let counted = false;
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    // Spardose: ist der G-Code einer Platte schon im Storage? (wird im Hintergrund gespeichert, siehe unten).
+    // Nur der zufällige Pfad kalkulator/spardose-<8 Hex>-platte.gcode wird akzeptiert, sonst nichts.
+    const gcodeCheck = new URL(req.url).searchParams.get("gcode_check");
+    if (gcodeCheck) {
+      const m = /^kalkulator\/(spardose-[0-9a-f]{8}-platte\.gcode)$/.exec(gcodeCheck);
+      if (!m) return json({ ok: false, error: "ungültiger Pfad" });
+      const { data: liste } = await supabase.storage.from("project-uploads").list("kalkulator", { search: m[1], limit: 5 });
+      const treffer = (liste ?? []).find((o: { name: string }) => o.name === m[1]) as { metadata?: { size?: number } } | undefined;
+      const size = Number(treffer?.metadata?.size ?? 0);
+      return json({ ok: true, ready: !!treffer && size > 0, size: size || null });
+    }
+
     const { data: flag } = await supabase.from("settings").select("value").eq("key", "public_nas_slice_enabled").maybeSingle();
     if (flag?.value !== "true") { await dbg(supabase, { ev: "aus", flag: flag?.value ?? null }); return json({ ok: false, enabled: false, error: "deaktiviert" }); }
 
@@ -68,25 +100,38 @@ serve(async (req) => {
       const { data: only } = await supabase.from("settings").select("value").eq("key", "public_nas_only").maybeSingle();
       return json({ ok: true, enabled: true, nasOnly: only?.value === "true" });
     }
-    const file = form.get("file");
+    // Plattenmodus (Spardose-Generator): alle Teile liegen schon fertig angeordnet auf einer Platte -> nur grosser Drucker, ohne Auto-Orient, mit Stützen
+    const plate = form.get("plate") === "1";
+    const maxBytes = plate ? PLATE_MAX_BYTES : MAX_BYTES;
+    let file = form.get("file");
     if (!(file instanceof File)) { await dbg(supabase, { ev: "keine-datei" }); return json({ ok: false, error: "Datei fehlt" }); }
+    // Der Browser schickt grosse Dateien verlustfrei gzip-komprimiert (gz=1, Name endet auf .gz): das spart Upload-Zeit.
+    const gzBytes = file.size;
+    if (form.get("gz") === "1" && file.name.toLowerCase().endsWith(".gz")) {
+      if (gzBytes > maxBytes) return json({ error: "Datei zu gross" }, 413);
+      try {
+        const raw = await gunzipLimited(file, maxBytes);
+        file = new File([raw], file.name.slice(0, -3));
+      } catch (_e) {
+        return json({ ok: false, error: "Datei konnte nicht entpackt werden" });
+      }
+    }
     const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
     if (!ALLOWED_EXT.includes(ext)) return json({ error: "Dateityp nicht erlaubt" }, 422);
-    if (file.size > MAX_BYTES) return json({ error: "Datei zu gross" }, 413);
+    if (file.size > maxBytes) return json({ error: "Datei zu gross" }, 413);
+    const upFile: File = file; // (nach dem Entpacken) wird an den Slicer weitergereicht
     const quality = String(form.get("quality") ?? "0.20");
     if (!QUALITIES.includes(quality)) return json({ error: "Ungültige Qualität" }, 422);
     const infill = String(form.get("infill") ?? "").trim();
     if (infill && !/^\d{1,3}$/.test(infill)) return json({ error: "Ungültiger Infill" }, 422);
 
-    // Plattenmodus (Spardose-Generator): alle Teile liegen schon fertig angeordnet auf einer Platte -> nur grosser Drucker, ohne Auto-Orient, mit Stützen
-    const plate = form.get("plate") === "1";
     const plateReq = String(form.get("printer") ?? "xl");
     const plateRaw = ["k1c", "a1", "xl"].includes(plateReq) ? plateReq : "xl";
     const buildForm = (printer: string, allowSplit = false) => {
       const out = new FormData();
       // allow_split: der Slicer teilt Modelle, die auf keinen Drucker passen, in gleich grosse Stücke (Zuschlag im Kalkulator)
       if (allowSplit) out.append("allow_split", "true");
-      out.append("file", file, `upload${ext}`);
+      out.append("file", upFile, `upload${ext}`);
       out.append("printer", printer);
       out.append("material", "pla");
       out.append("quality", quality);
@@ -98,7 +143,7 @@ serve(async (req) => {
     };
 
     const formMs = Date.now() - tReq; // Einlesen der Anfrage (Upload vom Browser) bis hierher
-    await dbg(supabase, { ev: "slice-start", datei: file.name, bytes: file.size, quality, infill, formMs });
+    await dbg(supabase, { ev: "slice-start", datei: upFile.name, bytes: upFile.size, ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
@@ -151,25 +196,38 @@ serve(async (req) => {
       if (!/^[A-Za-z0-9_-]{6,80}$/.test(jid)) {
         gcodeError = "Slicer lieferte keine Job-ID (alte Slicer-Version?)";
       } else {
-        try {
-          const gres = await fetch(`${base}/jobs/${jid}/gcode`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(25_000) });
-          if (!gres.ok) {
-            gcodeError = `G-Code-Download vom NAS: HTTP ${gres.status}`;
-          } else {
+        const gpath = `kalkulator/spardose-${crypto.randomUUID().slice(0, 8)}-platte.gcode`;
+        // G-Code vom Slicer holen und im Storage ablegen. Deno entpackt gzip-Antworten des Slicers automatisch.
+        const holeGcode = async (timeoutMs: number): Promise<{ ok: true; size: number } | { ok: false; err: string }> => {
+          const tg = Date.now();
+          try {
+            const gres = await fetch(`${base}/jobs/${jid}/gcode`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(timeoutMs) });
+            if (!gres.ok) return { ok: false, err: `G-Code-Download vom NAS: HTTP ${gres.status}` };
             const buf = new Uint8Array(await gres.arrayBuffer());
-            const gpath = `kalkulator/spardose-${crypto.randomUUID().slice(0, 8)}-platte.gcode`;
+            const tDl = Date.now() - tg;
             let upErr: { message: string } | null = null;
             for (const ct of ["text/plain", "application/octet-stream"]) {
               const r = await supabase.storage.from("project-uploads").upload(gpath, buf, { contentType: ct, upsert: false });
               upErr = r.error as { message: string } | null;
               if (!upErr) break;
             }
-            if (!upErr) return json({ ok: true, stats: payload.stats ?? null, gcode_path: gpath, gcode_size: buf.byteLength });
-            gcodeError = `Speichern fehlgeschlagen: ${String(upErr.message).slice(0, 120)} (${Math.round(buf.byteLength / 1024)} KB)`;
+            if (upErr) return { ok: false, err: `Speichern fehlgeschlagen: ${String(upErr.message).slice(0, 120)} (${Math.round(buf.byteLength / 1024)} KB)` };
+            await dbg(supabase, { ev: "gcode-gespeichert", kb: Math.round(buf.byteLength / 1024), downloadMs: tDl, gesamtMs: Date.now() - tg });
+            return { ok: true, size: buf.byteLength };
+          } catch (e) {
+            return { ok: false, err: `G-Code-Fehler: ${String((e as Error)?.message ?? e).slice(0, 120)}` };
           }
-        } catch (e) {
-          gcodeError = `G-Code-Fehler: ${String((e as Error)?.message ?? e).slice(0, 120)}`;
+        };
+        const edge = g.EdgeRuntime;
+        if (typeof edge?.waitUntil === "function") {
+          // Preis und Zeit sofort zurückgeben, der G-Code wird im Hintergrund gespeichert (kann bis ca. 100 s dauern).
+          // Der Browser prüft vor dem Absenden der Bestellung per ?gcode_check=, ob die Datei schon da ist.
+          edge.waitUntil(holeGcode(100_000).then(async (r) => { if (!r.ok) await dbg(supabase, { ev: "gcode-fehler", msg: r.err }); }));
+          return json({ ok: true, stats: payload.stats ?? null, gcode_path: gpath, gcode_pending: true });
         }
+        const r = await holeGcode(25_000);
+        if (r.ok) return json({ ok: true, stats: payload.stats ?? null, gcode_path: gpath, gcode_size: r.size });
+        gcodeError = r.err;
       }
       await dbg(supabase, { ev: "gcode-fehler", msg: gcodeError });
     }

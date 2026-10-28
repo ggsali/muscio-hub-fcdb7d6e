@@ -12,13 +12,14 @@ import { renderPlatePng } from "@/lib/platePreview3d";
 import { erfasseGutscheinVerwendung, gutscheinWertLabel, type Gutschein } from "@/lib/gutschein";
 import type { berechnePreis } from "@/lib/spardosePricing";
 import { buildSheet } from "@/lib/spardoseSheet";
+import { warteAufGcode } from "@/lib/gzipUpload";
 
 // Bestellformular des Spardose-Generators: gleiche Kontaktdaten-Abfrage wie im Online-Kalkulator,
 // sendet eine Anfrage (submit-inquiry) mit den fertigen Druckplatten als Anhang -> erscheint im Admin unter Anfragen.
 type Props = {
   params: SpardoseParams;
   plans: PlatePlan[];
-  jobs: { label: string; hex: string; count: number; min: number; g: number; sup: boolean; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[]; gcodePath?: string; gcodeSize?: number }[];
+  jobs: { label: string; hex: string; count: number; min: number; g: number; sup: boolean; printerName: string; bed: { x: number; y: number }; rects: { x: number; y: number; w: number; h: number; name: string }[]; gcodePath?: string; gcodeSize?: number; gcodePending?: boolean }[];
   preis: number;
   pricing: (ReturnType<typeof berechnePreis>) | null;
   gutschein: Gutschein | null;
@@ -76,6 +77,11 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, pricing,
       const safeName = params.name.replace(/[^a-zA-Z0-9]/g, "") || "name";
       const attachments: Record<string, unknown>[] = [];
       const sheetJobs: Parameters<typeof buildSheet>[0]["jobs"] = [];
+      // G-Code wird nach dem Slicen im Hintergrund gespeichert: vor dem Absenden warten, bis er im Storage liegt (meist sofort).
+      // Kommt er nicht (Fehler beim Speichern), geht die Bestellung ohne G-Code raus, wie bisher bei einem Fehler.
+      const gcodeBereit = await Promise.all(
+        jobs.map((j) => (j?.gcodePath ? (j.gcodePending ? warteAufGcode(j.gcodePath) : Promise.resolve(true)) : Promise.resolve(false))),
+      );
       for (let i = 0; i < plans.length; i++) {
         const pl = plans[i];
         const path = `kalkulator/spardose-${id}-${safeName}-platte${i + 1}.stl`;
@@ -89,8 +95,9 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, pricing,
           filament_id: pricing?.zeilen[i]?.filamentId ?? null, stuetzen_h: pricing?.zeilen[i]?.stuetzenH ?? 0, setup_anzahl: i === 0 ? 1 : 0,
           ...(i === 0 && pricing ? { auftrag_versand: pricing.versandTarif, auftrag_verpackung: pricing.verpackung } : {}) });
         const gj = jobs[i];
-        sheetJobs.push({ ...gj, image: await renderPlatePng(pl.blob, pl.bed, pl.hex), stlName, gcodeName: gj?.gcodePath ? `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode` : undefined });
-        if (gj?.gcodePath) attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode`, storage_path: gj.gcodePath, size_bytes: gj.gcodeSize ?? null, bucket: "project-uploads", kind: "gcode", gruppe: `platte-${i + 1}`, menge: 1, material: "PLA", farbe: pl.label });
+        const gOk = !!gj?.gcodePath && gcodeBereit[i];
+        sheetJobs.push({ ...gj, image: await renderPlatePng(pl.blob, pl.bed, pl.hex), stlName, gcodeName: gOk ? `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode` : undefined });
+        if (gOk && gj?.gcodePath) attachments.push({ filename: `Spardose ${params.name} – Platte ${i + 1} (${pl.label}) geslict.gcode`, storage_path: gj.gcodePath, size_bytes: gj.gcodeSize ?? null, bucket: "project-uploads", kind: "gcode", gruppe: `platte-${i + 1}`, menge: 1, material: "PLA", farbe: pl.label });
       }
 
       // Übersichtsblatt (PDF) mit Teilen, Farben, Drucker und Dateien
