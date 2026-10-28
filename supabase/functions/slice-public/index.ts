@@ -36,6 +36,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Nur POST erlaubt" }, 405);
 
+  const tReq = Date.now(); // Zeitmessung: Beginn der Anfrage in der Edge Function
   const g = globalThis as any;
   g.__sliceInflight ??= 0;
   let counted = false;
@@ -96,7 +97,8 @@ serve(async (req) => {
       return out;
     };
 
-    await dbg(supabase, { ev: "slice-start", datei: file.name, bytes: file.size, quality, infill });
+    const formMs = Date.now() - tReq; // Einlesen der Anfrage (Upload vom Browser) bis hierher
+    await dbg(supabase, { ev: "slice-start", datei: file.name, bytes: file.size, quality, infill, formMs });
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
@@ -111,8 +113,11 @@ serve(async (req) => {
     let res!: Response;
     let used = "k1c";
     let letzterZuGross = false;
+    const versuche: { p: string; s: number; ms: number }[] = []; // Zeit pro Slicer-Aufruf (jeder lädt die Datei neu hoch)
     for (const printer of plate ? [plateRaw] : ["k1c", "k1", "xl"]) {
+      const ta = Date.now();
       res = await slice(printer);
+      versuche.push({ p: printer, s: res.status, ms: Date.now() - ta });
       used = printer;
       letzterZuGross = false;
       if (res.status !== 422) break;
@@ -128,14 +133,16 @@ serve(async (req) => {
     // Ältere Slicer ignorieren allow_split und antworten wieder mit 422 -> Verhalten wie bisher (Rückfall im Kalkulator).
     if (!plate && res.status === 422 && letzterZuGross) {
       await dbg(supabase, { ev: "teilen", grund: "passt auf keinen Drucker, versuche Teilen" });
+      const ta = Date.now();
       res = await slice("xl", true);
+      versuche.push({ p: "xl+teilen", s: res.status, ms: Date.now() - ta });
       used = "xl";
     }
     const payload = await res.json().catch(() => ({}));
     const splitRaw = payload?.split ?? payload?.stats?.split ?? null;
     const splitParts = Number(splitRaw?.parts);
     const split = Number.isFinite(splitParts) && splitParts >= 2 ? { parts: Math.min(splitParts, 4) } : null;
-    await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
+    await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, gesamtMs: Date.now() - tReq, versuche, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
     if (!res.ok) return json({ ok: false, error: "Slicer-Fehler", status: res.status, detail: String(payload?.detail ?? "").slice(0, 300) });
     // Plattenmodus: G-Code serverseitig vom NAS holen und im Storage ablegen, damit er der Bestellung angehängt werden kann
     let gcodeError = "";

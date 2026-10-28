@@ -323,6 +323,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number): Pro
   body.append("file", file);
   body.append("quality", quality.toFixed(2));
   body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
+  const tStart = performance.now(); // Zeitmessung: Browser -> Edge Function -> Slicer -> Browser
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
     method: "POST",
     headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
@@ -331,11 +332,14 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number): Pro
   });
   const json = await res.json().catch(() => ({}));
   const st = json?.stats;
+  const gesamtMs = Math.round(performance.now() - tStart);
+  const mb = (file.size / 1048576).toFixed(1);
   if (json?.detail) console.info("[Slicer] NAS-Meldung:", json.detail);
   if (!res.ok || !st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
-    nasDebug(`Fallback: http=${res.status} ok=${json?.ok} err=${json?.error ?? ""} detail=${json?.detail ?? ""} stats=${st ? JSON.stringify(st).slice(0, 150) : "keine"}`);
+    nasDebug(`Fallback nach ${gesamtMs} ms (Datei ${mb} MB): http=${res.status} ok=${json?.ok} err=${json?.error ?? ""} detail=${json?.detail ?? ""} stats=${st ? JSON.stringify(st).slice(0, 150) : "keine"}`);
     throw new Error("NAS-Slicer nicht verfügbar");
   }
+  nasDebug(`Browser-Zeit gesamt: ${gesamtMs} ms (Datei ${mb} MB, inkl. Upload und Antwort)`);
   return {
     printTimeMinutes: st.print_time_s / 60,
     filamentGrams: st.filament_g,
