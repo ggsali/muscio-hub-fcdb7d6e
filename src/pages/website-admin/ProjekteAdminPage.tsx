@@ -38,12 +38,14 @@ export default function ProjekteAdminPage() {
   const save = async () => {
     if (!editing) return;
     const payload = { ...editing, slug: editing.slug || slugify(editing.name), gallery_paths: editing.gallery_paths || [] };
-    if (editing.id) {
-      const { id, ...rest } = payload;
-      await supabase.from("projekte").update(rest).eq("id", id);
-    } else {
-      const { id, ...rest } = payload;
-      await supabase.from("projekte").insert(rest);
+    const { id, ...rest } = payload;
+    const { error } = editing.id
+      ? await supabase.from("projekte").update(rest).eq("id", id)
+      : await supabase.from("projekte").insert(rest);
+    if (error) {
+      console.error("Projekt speichern fehlgeschlagen:", error);
+      toast.error(`Speichern fehlgeschlagen: ${error.message}`);
+      return; // Editor bleibt offen, nichts geht verloren
     }
     toast.success("Gespeichert");
     setEditing(null); load();
