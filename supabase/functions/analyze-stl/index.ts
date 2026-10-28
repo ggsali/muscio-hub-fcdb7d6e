@@ -45,7 +45,13 @@ function base64ToBytes(b64: string): Uint8Array {
 
 function parseStl(bytes: Uint8Array) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const isBinary = bytes.byteLength >= 84 && view.getUint8(0) !== 115; // "s" von "solid"
+  // Viele CAD-Programme schreiben "solid" auch in den Header binärer STLs –
+  // daher primär über die erwartete Dateigrösse erkennen.
+  const binCount = bytes.byteLength >= 84 ? view.getUint32(80, true) : -1;
+  const sizeMatches = binCount >= 0 && 84 + binCount * 50 === bytes.byteLength;
+  const headStr = new TextDecoder().decode(bytes.subarray(0, Math.min(512, bytes.byteLength)));
+  const looksAscii = /^\s*solid/.test(headStr) && /facet|endsolid/.test(new TextDecoder().decode(bytes.subarray(0, Math.min(2048, bytes.byteLength))));
+  const isBinary = bytes.byteLength >= 84 && (sizeMatches || !looksAscii);
   // Normalen + Fläche in einem flachen Float32Array (kein Objekt pro Dreieck)
   let tris = new Float32Array(4 * 4096);
   let triCount = 0;
