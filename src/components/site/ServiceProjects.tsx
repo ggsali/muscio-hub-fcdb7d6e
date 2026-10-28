@@ -12,7 +12,7 @@ interface P {
   bild_url: string | null;
 }
 
-/** Zeigt veröffentlichte Projekte (Tabelle "projekte"), die den Tag der Leistung tragen, mit Bildvorschau. Ohne Treffer wird nichts angezeigt. */
+/** Zeigt veröffentlichte Projekte (Tabelle "projekte"), deren Kategorie das Stichwort enthält oder die den Tag tragen, mit Bildvorschau. Ohne Treffer wird nichts angezeigt. */
 export default function ServiceProjects({ tag, title = "Projekte" }: { tag: string; title?: string }) {
   const [items, setItems] = useState<P[]>([]);
 
@@ -22,7 +22,7 @@ export default function ServiceProjects({ tag, title = "Projekte" }: { tag: stri
       .from("projekte")
       .select("id, slug, name, kategorie, kurzbeschreibung, bild_url")
       .eq("aktiv", true)
-      .contains("tags", [tag])
+      .or(`tags.cs.{${tag}},kategorie.ilike.%${tag}%`)
       .order("sort_order", { ascending: true })
       .limit(6)
       .then(({ data }) => { if (alive) setItems((data as P[]) || []); });
