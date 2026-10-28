@@ -1,3 +1,4 @@
+import { canonicalHead } from "@/lib/seo-head";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 // Alte /standorte/*-Seiten waren Duplikate der /3d-druck-*-Seiten → dauerhaft weiterleiten.
@@ -11,6 +12,7 @@ const ZIELE: Record<string, string> = {
 };
 
 export const Route = createFileRoute("/_site/standorte/$slug")({
+  head: ({ params }) => canonicalHead(`/standorte/${params.slug}`),
   beforeLoad: ({ params }) => {
     throw redirect({ href: ZIELE[params.slug] ?? "/3d-druck-schweiz", statusCode: 301 });
   },

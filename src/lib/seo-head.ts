@@ -41,3 +41,9 @@ export function buildHead(opts: {
     ],
   };
 }
+
+/** Nur Canonical-Link (im Server-HTML), für Seiten, die Titel/Meta clientseitig über <Seo> setzen. */
+export function canonicalHead(path: string) {
+  const url = `${SITE_URL}${path === "/" ? "/" : path.replace(/\/$/, "")}`;
+  return { links: [{ rel: "canonical", href: url }] };
+}
