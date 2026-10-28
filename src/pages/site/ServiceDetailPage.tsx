@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useParams } from "@/lib/router-compat";
 import Seo from "@/components/site/Seo";
+import ServiceProjects from "@/components/site/ServiceProjects";
 import AnswerLanding from "@/components/site/AnswerLanding";
 import DbContentPage, { type DbFaq } from "@/components/site/DbContentPage";
 import { getService } from "@/data/seo/services";
@@ -136,6 +137,7 @@ export default function ServiceDetailPage() {
         faqs={service.faqs}
         related={service.related}
       />
+      {service.projectTag && <ServiceProjects tag={service.projectTag} title="Projekte" />}
     </>
   );
 }

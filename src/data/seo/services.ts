@@ -12,6 +12,8 @@ export interface ServiceContent {
   table?: AnswerTable;
   faqs: AnswerFaq[];
   related: RelatedLink[];
+  /** Projekte mit diesem Tag (Tabelle projekte) werden als Bildvorschau unter der Seite gezeigt */
+  projectTag?: string;
 }
 
 export const services: ServiceContent[] = [
@@ -374,6 +376,7 @@ export const services: ServiceContent[] = [
   },
   {
     slug: "3d-druck-architekturmodelle",
+    projectTag: "architekturmodelle",
     eyebrow: "Für Architekturbüros",
     h1: "Architekturmodelle 3D-drucken – für Architekturbüros in der Schweiz",
     title: "Architekturmodelle 3D-Druck Schweiz | Für Architekturbüros | 3DMuscio",
@@ -435,6 +438,7 @@ export const services: ServiceContent[] = [
   },
   {
     slug: "3d-druck-miniaturmaschinen",
+    projectTag: "miniaturmaschinen",
     eyebrow: "Modelle & Funktionsmodelle",
     h1: "Miniaturmaschinen 3D-drucken – Funktions- und Schaumodelle aus der Schweiz",
     title: "Miniaturmaschinen 3D-Druck Schweiz | Funktionsmodelle & Schaumodelle | 3DMuscio",
