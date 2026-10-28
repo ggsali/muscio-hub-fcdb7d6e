@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import ModelPreview from "@/components/site/ModelPreview";
 import HerkunftBanner from "@/components/site/HerkunftBanner";
 import { colorHex } from "@/lib/colorMap";
+import { dimsFromStl, dimsFromObj, waehleVersandart, type Mass3 } from "@/lib/versandArt";
 import { splitFee } from "@/lib/splitSurcharge";
 import { gzAbgelehnt, gzipIfWorthIt } from "@/lib/gzipUpload";
 import JSZip from "jszip";
@@ -113,6 +114,8 @@ interface Part {
   batchLoading?: boolean;
   /** Menge wurde geändert, die Anordnung auf Platten ist noch nicht berechnet */
   batchPending?: boolean;
+  /** Abmessungen in mm (STL/OBJ), für die automatische Versandart */
+  dimsMm?: Mass3 | null;
 }
 
 
@@ -1020,6 +1023,14 @@ const CalculatorOnlinePage = () => {
       },
     ]);
 
+    // Abmessungen für die Versandart (Brief/Grossbrief/Paket)
+    void (async () => {
+      try {
+        const d = ext === "stl" ? dimsFromStl(await file.arrayBuffer()) : ext === "obj" ? dimsFromObj(await file.text()) : null;
+        if (d) setParts((p) => p.map((x) => (x.id === id ? { ...x, dimsMm: d } : x)));
+      } catch { /* ohne Masse: Paket */ }
+    })();
+
     // Volumen berechnen
     try {
       let vol = 0;
@@ -1361,7 +1372,8 @@ const CalculatorOnlinePage = () => {
   const setupFee = parts.length > 0 ? FIX_COST * setupCount : 0;
   const subtotal = materialTotal + setupFee;
   const shippingGrams = calcs.reduce((sum, { part, calc }) => sum + calc.weight * part.quantity, 0);
-  const shipping = subtotal === 0 ? 0 : shippingCostForGrams(shippingGrams);
+  const versandWahl = waehleVersandart(shippingGrams, parts.map((p) => ({ dims: p.dimsMm ?? null, qty: p.quantity })), shippingCostForGrams);
+  const shipping = subtotal === 0 ? 0 : versandWahl.preis;
   const total = Math.max(subtotal + shipping, MIN_PRICE || 5.0);
   const totalMin = Math.round(total * 0.9 * 100) / 100;
   const totalMax = Math.round(total * 1.15 * 100) / 100;
@@ -1674,6 +1686,24 @@ const CalculatorOnlinePage = () => {
           part_label: p.fileName,
         }))
       );
+      // Werte aus dem Kalkulator pro Teil (je Stück), damit beim Erstellen des Auftrags alles übernommen wird
+      const batchOk = (p: Part) => p.quantity >= 2 && p.batch && p.batch.batch.copies === p.quantity ? p.batch : null;
+      const kalkMeta = (p: Part) => {
+        const src = batchOk(p) ?? p.slicerResult;
+        if (!src || !(src.filamentGrams > 0)) return {};
+        const post = (batchOk(p) ? (src.hasSupport ? 6 : 2) * 1.3 : 0) / 60; // h pro Stück, wie im Preis
+        const first = parts.filter((x) => x.storagePath)[0]?.id === p.id;
+        return {
+          slicer_druckzeit_sekunden: Math.round(src.printTimeMinutes * 60),
+          slicer_filament_gramm: Math.round(src.filamentGrams * 10) / 10,
+          slicer_hat_supports: !!src.hasSupport,
+          ...(src.layers ? { slicer_layer_anzahl: src.layers } : {}),
+          ...(post > 0 ? { kalk_nachbearbeitung_h: Math.round(post * 1000) / 1000 } : {}),
+          ...(batchOk(p) ? { kalk_setup_anzahl: batchOk(p)!.batch.plates } : {}),
+          // Auftragsweit (nur am ersten Teil): Versandart und Versandkosten wie im Kalkulator berechnet
+          ...(first ? { kalk_paket_groesse: versandWahl.id === "paket" ? null : versandWahl.id, kalk_versand: versandWahl.preis, kalk_versand_label: versandWahl.label } : {}),
+        };
+      };
       const attachments = [
         ...parts
           .filter((p) => p.storagePath)
@@ -1685,6 +1715,7 @@ const CalculatorOnlinePage = () => {
             menge: Math.max(1, Math.floor(Number(p.quantity) || 1)),
             material: materials.find(m => m.id === p.materialId)?.name || p.materialId || null,
             farbe: p.color || null,
+            ...kalkMeta(p),
           })),
         ...partImageAttachments,
         ...refImages
@@ -1701,7 +1732,7 @@ const CalculatorOnlinePage = () => {
       const gutscheinBlock = gutschein
         ? `\n\nGutschein: ${gutschein.code} (${gutscheinWertLabel(gutschein)}) – Rabatt ${CHF(gutscheinRabatt)}\nPreis nach Gutschein: ${CHF(totalMitGutschein)}`
         : "";
-      const nachricht = `${summary}\n\nGeschätzter Gesamtpreis: ${CHF(total)}${gutscheinBlock}${addressLine}${kiBlock}\n\nNachricht: ${form.message}`;
+      const nachricht = `${summary}\n\nVersand: ${versandWahl.label} ${CHF(shipping)}\nGeschätzter Gesamtpreis: ${CHF(total)}${gutscheinBlock}${addressLine}${kiBlock}\n\nNachricht: ${form.message}`;
 
       const { data, error } = await supabase.functions.invoke("submit-inquiry", {
         body: {
@@ -1790,7 +1821,7 @@ const CalculatorOnlinePage = () => {
     });
     const setup = parts.length > 0 ? setupPauschale : 0;
     const sub = sum + setup;
-    const ship = sub === 0 ? 0 : shippingCostForGrams(grams);
+    const ship = sub === 0 ? 0 : waehleVersandart(grams, parts.map((p) => ({ dims: p.dimsMm ?? null, qty: p.quantity })), shippingCostForGrams).preis;
     return Math.max(sub + ship, calcParams.min_price || 5);
   }, [parts, materials, qualityKey, qualityPresets, maschinenRate, setupPauschale, calcParams, hasStep]);
 
@@ -2893,7 +2924,7 @@ const CalculatorOnlinePage = () => {
                       <span className="text-foreground tabular-nums">{CHF(setupFee)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Versand</span>
+                      <span>Versand{subtotal > 0 ? ` (${versandWahl.label})` : ""}</span>
                       <span className="text-foreground">{shipping === 0 ? "Gratis" : CHF(shipping)}</span>
                     </div>
                     {gutschein && (

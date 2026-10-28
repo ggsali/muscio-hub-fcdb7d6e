@@ -308,9 +308,12 @@ export default function AnfragenPage() {
       }
       const fallbackTitle = filenames[0]?.replace(/\.[^.]+$/, "") || inq.betreff || ("Anfrage vom " + new Date().toLocaleDateString("de-CH"));
 
+      // Werte aus dem Website-Kalkulator (Versandart/-kosten am ersten Teil)
+      const kalkVersand = ((inq.attachments || []) as any[]).find((a) => a?.kalk_versand != null) as { kalk_versand?: number; kalk_paket_groesse?: string | null } | undefined;
       const spardoseMeta = ((inq.attachments || []) as any[]).find((a) => a?.auftrag_versand != null) as { auftrag_versand?: number; auftrag_verpackung?: number } | undefined;
       // Kalkulator-Anfrage mit Mengenrechnung ("– N Platten (Setup ×N …"): Setup-Anzahl des Auftrags = Summe der Platten
-      const plattenSumme = Array.from((inq.nachricht || "").matchAll(/ – (\d+) Platten? \(Setup ×/g)).reduce((sum, m) => sum + parseInt(m[1], 10), 0);
+      const kalkSetupTotal = ((inq.attachments || []) as any[]).reduce((sum: number, a) => sum + (Number(a?.kalk_setup_anzahl) || 0), 0);
+      const plattenSumme = kalkSetupTotal || Array.from((inq.nachricht || "").matchAll(/ – (\d+) Platten? \(Setup ×/g)).reduce((sum, m) => sum + parseInt(m[1], 10), 0);
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         customer_id: customerId,
         beschreibung: inq.nachricht || inq.betreff || "",
@@ -321,6 +324,7 @@ export default function AnfragenPage() {
         // Spardosen-Generator: Versand/Verpackung/Setup direkt übernehmen
         ...(spardoseMeta ? { versandkosten: Number(spardoseMeta.auftrag_versand) || 0, verpackungskosten: Number(spardoseMeta.auftrag_verpackung) || 0, setup_anzahl: 1 } : {}),
         ...(!spardoseMeta && plattenSumme > 0 ? { setup_anzahl: plattenSumme } : {}),
+        ...(kalkVersand ? { versandkosten: Number(kalkVersand.kalk_versand) || 0, paket_groesse: kalkVersand.kalk_paket_groesse || null } : {}),
         // Gutschein aus dem Kalkulator: Abzug wird im Auftrag als eigene Zeile berechnet
         ...(inq.gutschein?.code
           ? { gutschein_code: inq.gutschein.code, gutschein_typ: inq.gutschein.typ, gutschein_wert: Number(inq.gutschein.wert) || 0 }
@@ -348,6 +352,7 @@ export default function AnfragenPage() {
       };
 
       const groupParts = new Map<string, string>();
+      let kalkErster = true; // Kalkulator: Setup-Anzahl wie im Auftrag nur am ersten Teil
       // Geteilte Teile (grösser als Druckbett): Vermerk aus der Anfrage ins Teil übernehmen
       const geteiltNotiz = (filename?: string | null): string => {
         if (!filename) return "";
@@ -436,8 +441,11 @@ export default function AnfragenPage() {
               filament_id?: string | null;
               stuetzen_h?: number | null;
               setup_anzahl?: number | null;
+              kalk_nachbearbeitung_h?: number | null;
+              kalk_setup_anzahl?: number | null;
             };
-            const stuetzenH = Number(sl.stuetzen_h) || 0;
+            const stuetzenH = Number(sl.stuetzen_h) || Number(sl.kalk_nachbearbeitung_h) || 0; // Stunden pro Stück (Kalkulator: geschätzte Nachbearbeitung)
+            const nachName = Number(sl.stuetzen_h) > 0 ? "Stützen entfernen" : "Nachbearbeitung (geschätzt)";
             const slSeconds = sl.slicer_druckzeit_sekunden ?? null;
             const slGrams = sl.slicer_filament_gramm ?? null;
 
@@ -450,9 +458,9 @@ export default function AnfragenPage() {
               gewicht_g: slGrams ?? 0,
               druckzeit_h: slSeconds ? Math.round((slSeconds / 3600) * 100) / 100 : 0,
               nachbearbeitung_h: stuetzenH,
-              ...(stuetzenH > 0 ? { nachbearbeitungs_schritte: [{ name: "Stützen entfernen", stunden: stuetzenH }] } : {}),
+              ...(stuetzenH > 0 ? { nachbearbeitungs_schritte: [{ name: nachName, stunden: stuetzenH }] } : {}),
               ...(sl.filament_id ? { filament_id: sl.filament_id } : {}),
-              ...(sl.setup_anzahl != null ? { setup_pauschale_anzahl: Math.max(0, Math.floor(Number(sl.setup_anzahl))) } : {}),
+              ...(sl.setup_anzahl != null ? { setup_pauschale_anzahl: Math.max(0, Math.floor(Number(sl.setup_anzahl))) } : kalkSetupTotal > 0 ? { setup_pauschale_anzahl: (kalkErster ? kalkSetupTotal : 0) } : {}),
               konstruktion_h: 0,
               preis_pro_stueck: 0,
               preis_total: 0,
@@ -470,6 +478,7 @@ export default function AnfragenPage() {
               continue;
             }
             partId = part.id;
+            kalkErster = false;
             if (gruppe) groupParts.set(gruppe, part.id);
           }
           if (!att.storage_path) continue;
