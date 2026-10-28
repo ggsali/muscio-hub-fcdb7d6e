@@ -319,7 +319,7 @@ export default function AnfragenPage() {
         source: "website",
         name: aiTitle || fallbackTitle,
         // Spardosen-Generator: Versand/Verpackung/Setup direkt übernehmen
-        ...(spardoseMeta ? { versandkosten: Number(spardoseMeta.auftrag_versand) || 0, verpackungskosten: Number(spardoseMeta.auftrag_verpackung) || 0, setup_anzahl: 1 } : {})
+        ...(spardoseMeta ? { versandkosten: Number(spardoseMeta.auftrag_versand) || 0, verpackungskosten: Number(spardoseMeta.auftrag_verpackung) || 0, setup_anzahl: 1 } : {}),
         ...(!spardoseMeta && plattenSumme > 0 ? { setup_anzahl: plattenSumme } : {}),
         // Gutschein aus dem Kalkulator: Abzug wird im Auftrag als eigene Zeile berechnet
         ...(inq.gutschein?.code
