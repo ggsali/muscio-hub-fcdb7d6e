@@ -8,8 +8,14 @@ export const GROSSBRIEF = { id: "grossbrief", label: "A-Post Grossbrief", preis:
 
 export interface VersandWahl { id: "briefpost" | "grossbrief" | "paket"; label: string; preis: number }
 
+/** Abmessungen (mm) und Dreiecksanzahl aus einer STL-Datei (binär oder ASCII); null bei Problemen. */
+export function infoFromStl(buffer: ArrayBuffer): { dims: Mass3; triangles: number } | null {
+  const d = dimsFromStl(buffer, true) as { dims: Mass3; triangles: number } | null;
+  return d;
+}
+
 /** Abmessungen (mm) aus einer STL-Datei (binär oder ASCII); null bei Problemen. */
-export function dimsFromStl(buffer: ArrayBuffer): Mass3 | null {
+export function dimsFromStl(buffer: ArrayBuffer, mitDreiecken?: boolean): Mass3 | { dims: Mass3; triangles: number } | null {
   try {
     const view = new DataView(buffer);
     const mn = [Infinity, Infinity, Infinity];
@@ -20,8 +26,10 @@ export function dimsFromStl(buffer: ArrayBuffer): Mass3 | null {
       if (y < mn[1]) mn[1] = y; if (y > mx[1]) mx[1] = y;
       if (z < mn[2]) mn[2] = z; if (z > mx[2]) mx[2] = z;
     };
+    let tris = 0;
     const n = view.byteLength >= 84 ? view.getUint32(80, true) : 0;
     if (view.byteLength >= 84 && 84 + n * 50 === view.byteLength) {
+      tris = n;
       let o = 84;
       for (let i = 0; i < n; i++) {
         o += 12;
@@ -32,10 +40,13 @@ export function dimsFromStl(buffer: ArrayBuffer): Mass3 | null {
       const text = new TextDecoder().decode(buffer);
       const re = /vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g;
       let m: RegExpExecArray | null;
-      while ((m = re.exec(text)) !== null) add(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
+      let nv = 0;
+      while ((m = re.exec(text)) !== null) { add(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])); nv++; }
+      tris = Math.floor(nv / 3);
     }
     const d: Mass3 = [mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]];
-    return d.every((v) => Number.isFinite(v) && v >= 0) ? d : null;
+    if (!d.every((v) => Number.isFinite(v) && v >= 0)) return null;
+    return mitDreiecken ? { dims: d, triangles: tris } : d;
   } catch { return null; }
 }
 

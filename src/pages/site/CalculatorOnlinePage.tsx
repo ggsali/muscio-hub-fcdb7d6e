@@ -20,7 +20,8 @@ import { toast } from "sonner";
 import ModelPreview from "@/components/site/ModelPreview";
 import HerkunftBanner from "@/components/site/HerkunftBanner";
 import { colorHex } from "@/lib/colorMap";
-import { dimsFromStl, dimsFromObj, waehleVersandart, type Mass3 } from "@/lib/versandArt";
+import { dimsFromStl, infoFromStl, dimsFromObj, waehleVersandart, type Mass3 } from "@/lib/versandArt";
+import { schaetzeNachbearbeitungMin } from "@/lib/nachbearbeitung";
 import { splitFee } from "@/lib/splitSurcharge";
 import { gzAbgelehnt, gzipIfWorthIt } from "@/lib/gzipUpload";
 import JSZip from "jszip";
@@ -116,6 +117,8 @@ interface Part {
   batchPending?: boolean;
   /** Abmessungen in mm (STL/OBJ), für die automatische Versandart */
   dimsMm?: Mass3 | null;
+  /** Dreiecksanzahl des Modells (Detailreichtum), für die Nachbearbeitungsschätzung */
+  triangles?: number | null;
 }
 
 
@@ -1026,8 +1029,13 @@ const CalculatorOnlinePage = () => {
     // Abmessungen für die Versandart (Brief/Grossbrief/Paket)
     void (async () => {
       try {
-        const d = ext === "stl" ? dimsFromStl(await file.arrayBuffer()) : ext === "obj" ? dimsFromObj(await file.text()) : null;
-        if (d) setParts((p) => p.map((x) => (x.id === id ? { ...x, dimsMm: d } : x)));
+        if (ext === "stl") {
+          const info = infoFromStl(await file.arrayBuffer());
+          if (info) setParts((p) => p.map((x) => (x.id === id ? { ...x, dimsMm: info.dims, triangles: info.triangles } : x)));
+        } else if (ext === "obj") {
+          const d = dimsFromObj(await file.text());
+          if (d) setParts((p) => p.map((x) => (x.id === id ? { ...x, dimsMm: d } : x)));
+        }
       } catch { /* ohne Masse: Paket */ }
     })();
 
@@ -1285,7 +1293,7 @@ const CalculatorOnlinePage = () => {
       const materialCost = weightG * mat.pricePerGram;
       const machineCost = (druckzeitMin / 60) * maschinenRate;
       // Nachbearbeitung bei Mengen geschätzt, eher grosszügig: Minuten pro Stück (mit Stützen mehr) +30 % Sicherheit
-      const postMinPerPiece = batchOk ? (src.hasSupport ? 6 : 2) * 1.3 : 0;
+      const postMinPerPiece = batchOk ? schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 }) : 0;
       const postCost = (postMinPerPiece / 60) * nachbearbeitungRate;
       const supportCost = !batchOk && p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
       // Zuschlag fürs Teilen und Verkleben: pro Schnitt und pro Stück (Modell grösser als das grösste Druckbett)
@@ -1691,7 +1699,7 @@ const CalculatorOnlinePage = () => {
       const kalkMeta = (p: Part) => {
         const src = batchOk(p) ?? p.slicerResult;
         if (!src || !(src.filamentGrams > 0)) return {};
-        const post = (batchOk(p) ? (src.hasSupport ? 6 : 2) * 1.3 : 0) / 60; // h pro Stück, wie im Preis
+        const post = (batchOk(p) ? schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 }) : 0) / 60; // h pro Stück, wie im Preis
         const first = parts.filter((x) => x.storagePath)[0]?.id === p.id;
         return {
           slicer_druckzeit_sekunden: Math.round(src.printTimeMinutes * 60),
@@ -2907,7 +2915,7 @@ const CalculatorOnlinePage = () => {
                               <div className="flex justify-between"><span>Support-Nachbearbeitung</span><span className="tabular-nums">{CHF(calc.breakdown.support)}</span></div>
                             )}
                             {calc.breakdown.post > 0 && (
-                              <div className="flex justify-between"><span>Nachbearbeitung (geschätzt)</span><span className="tabular-nums">{CHF(calc.breakdown.post)}</span></div>
+                              <div className="flex justify-between"><span>Nachbearbeitung (geschätzt nach Stützen und Komplexität)</span><span className="tabular-nums">{CHF(calc.breakdown.post)}</span></div>
                             )}
                             {calc.breakdown.split > 0 && (
                               <div className="flex justify-between"><span>Teilen &amp; Verkleben ({p.slicerResult?.splitParts} Teile)</span><span className="tabular-nums">{CHF(calc.breakdown.split)}</span></div>

@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Plus, Trash2, Save, FileDown, FolderDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X, ScanLine } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, FileDown, FolderDown, Tag, Paperclip, Mail, Loader2, MoreVertical, ChevronDown, ChevronUp, MessageSquare, Layers, MapPin, Bot, AlertTriangle, Copy, Archive, Wrench, Settings2, Link2, ExternalLink, X, ScanLine, Cpu } from "lucide-react";
 import SlicerScanModal from "@/components/SlicerScanModal";
+import PartSliceDialog from "@/components/PartSliceDialog";
 import { useToast } from "@/hooks/use-toast";
 import { exportOrderPDF } from "@/lib/pdfExport";
 import { exportOfferPDF, exportAuftragsbestaetiguungPDF, exportLieferscheinPDF } from "@/lib/pdfOfferExport";
@@ -172,6 +173,7 @@ export default function AuftragDetailPage() {
   const [offerteSnapshot, setOfferteSnapshot] = useState<any | null>(null);
   const [setupAnzahl, setSetupAnzahl] = useState<number>(1);
   const [slicerScanPartIdx, setSlicerScanPartIdx] = useState<number | null>(null);
+  const [sliceDialogPartIdx, setSliceDialogPartIdx] = useState<number | null>(null);
   const [rabattProzent, setRabattProzent] = useState<number>(0);
   // Gutschein (separater Abschnitt, wird auf Offerte/Rechnung als eigene Zeile ausgewiesen)
   const [gutscheinCode, setGutscheinCode] = useState<string>("");
@@ -2605,6 +2607,14 @@ export default function AuftragDetailPage() {
                         )}
                         <button
                           type="button"
+                          title="Teil slicen (Schichthöhe wählen)"
+                          onClick={() => setSliceDialogPartIdx(idx)}
+                          className="p-2 rounded transition-colors text-muted-foreground hover:text-primary"
+                        >
+                          <Cpu className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
                           title="Slicer-Screenshot scannen"
                           onClick={() => setSlicerScanPartIdx(idx)}
                           className="p-2 rounded transition-colors text-muted-foreground hover:text-primary"
@@ -2859,6 +2869,14 @@ export default function AuftragDetailPage() {
                                   )}
                                 </button>
                               )}
+                              <button
+                                type="button"
+                                title="Teil slicen (Schichthöhe wählen)"
+                                onClick={() => setSliceDialogPartIdx(idx)}
+                                className="text-muted-foreground hover:text-primary transition-colors p-1"
+                              >
+                                <Cpu className="w-3.5 h-3.5" />
+                              </button>
                               <button
                                 type="button"
                                 title="Slicer-Screenshot scannen"
@@ -3370,6 +3388,35 @@ export default function AuftragDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <PartSliceDialog
+        open={sliceDialogPartIdx !== null}
+        onClose={() => setSliceDialogPartIdx(null)}
+        teilname={sliceDialogPartIdx !== null ? parts[sliceDialogPartIdx]?.teilname ?? "" : ""}
+        files={sliceDialogPartIdx !== null && parts[sliceDialogPartIdx]
+          ? partFiles
+              .filter((f) => f.part_id === parts[sliceDialogPartIdx].id && /\.(stl|obj|3mf)$/i.test(f.filename || f.storage_path))
+              .map((f) => ({ filename: f.filename || f.storage_path.split("/").pop() || "modell.stl", storage_path: f.storage_path }))
+          : []}
+        onApply={(r, ctx) => {
+          if (sliceDialogPartIdx === null) return;
+          const idx = sliceDialogPartIdx;
+          setParts((prev) => {
+            if (!prev[idx]) return prev;
+            const updated = [...prev];
+            updated[idx] = recalcPart({
+              ...updated[idx],
+              gewicht_g: Math.round(r.filamentG * 10) / 10,
+              druckzeit_h: Math.round((r.printTimeS / 3600) * 100) / 100,
+              slicer_druckzeit_sekunden: Math.round(r.printTimeS),
+              slicer_filament_gramm: Math.round(r.filamentG * 10) / 10,
+              slicer_hat_supports: r.hasSupport,
+              slicer_layer_anzahl: r.layers ?? null,
+            });
+            return updated;
+          });
+          toast({ title: `Gesliced (${ctx.schichthoehe} mm, ${ctx.infill} % Infill) ✓`, description: "Gewicht und Druckzeit sind im Teil eingetragen. Speichern nicht vergessen." });
+        }}
+      />
       <SlicerScanModal
         open={slicerScanPartIdx !== null}
         onClose={() => setSlicerScanPartIdx(null)}
