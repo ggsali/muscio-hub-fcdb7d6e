@@ -1293,9 +1293,9 @@ const CalculatorOnlinePage = () => {
       const materialCost = weightG * mat.pricePerGram;
       const machineCost = (druckzeitMin / 60) * maschinenRate;
       // Nachbearbeitung bei Mengen geschätzt, eher grosszügig: Minuten pro Stück (mit Stützen mehr) +30 % Sicherheit
-      const postMinPerPiece = batchOk ? schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 }) : 0;
+      const postMinPerPiece = schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 });
       const postCost = (postMinPerPiece / 60) * nachbearbeitungRate;
-      const supportCost = !batchOk && p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
+      const supportCost = 0; // Stützen sind in der Nachbearbeitungsschätzung enthalten (früher pauschal CHF 2.50)
       // Zuschlag fürs Teilen und Verkleben: pro Schnitt und pro Stück (Modell grösser als das grösste Druckbett)
       const splitCost = splitFee(p.slicerResult.splitParts);
       const unit = materialCost + machineCost + supportCost + splitCost + postCost;
@@ -1699,7 +1699,7 @@ const CalculatorOnlinePage = () => {
       const kalkMeta = (p: Part) => {
         const src = batchOk(p) ?? p.slicerResult;
         if (!src || !(src.filamentGrams > 0)) return {};
-        const post = (batchOk(p) ? schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 }) : 0) / 60; // h pro Stück, wie im Preis
+        const post = schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 }) / 60; // h pro Stück, wie im Preis
         const first = parts.filter((x) => x.storagePath)[0]?.id === p.id;
         return {
           slicer_druckzeit_sekunden: Math.round(src.printTimeMinutes * 60),
