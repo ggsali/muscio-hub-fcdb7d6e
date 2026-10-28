@@ -246,6 +246,13 @@
       "when": 1792755982427,
       "tag": "0034_fix_chat_message_insert_session_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793179779107,
+      "tag": "0035_projekte_leistungs_seiten",
+      "breakpoints": true
     }
   ]
 }

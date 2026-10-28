@@ -2370,6 +2370,7 @@ export type Database = {
           json_ld: Json | null
           kategorie: string | null
           kurzbeschreibung: string | null
+          leistungs_seiten: string[]
           lieferzeit: string | null
           material: string | null
           name: string
@@ -2395,6 +2396,7 @@ export type Database = {
           json_ld?: Json | null
           kategorie?: string | null
           kurzbeschreibung?: string | null
+          leistungs_seiten?: string[]
           lieferzeit?: string | null
           material?: string | null
           name: string
@@ -2420,6 +2422,7 @@ export type Database = {
           json_ld?: Json | null
           kategorie?: string | null
           kurzbeschreibung?: string | null
+          leistungs_seiten?: string[]
           lieferzeit?: string | null
           material?: string | null
           name?: string
