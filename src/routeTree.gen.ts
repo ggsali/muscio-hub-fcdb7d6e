@@ -72,7 +72,6 @@ import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminRentabilitaetRouteImport } from './routes/admin/rentabilitaet'
-import { Route as AdminZeiterfassungRouteImport } from './routes/admin/zeiterfassung'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
 import { Route as AdminServerDateienRouteImport } from './routes/admin/server-dateien'
 import { Route as AdminSliceFreigabeRouteImport } from './routes/admin/slice-freigabe'
@@ -82,6 +81,7 @@ import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodel
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminTodosRouteImport } from './routes/admin/todos'
 import { Route as AdminUmsatzRouteImport } from './routes/admin/umsatz'
+import { Route as AdminZeiterfassungRouteImport } from './routes/admin/zeiterfassung'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
 import { Route as AuftraegeIdRouteImport } from './routes/auftraege.$id'
@@ -462,11 +462,6 @@ const AdminRentabilitaetRoute = AdminRentabilitaetRouteImport.update({
   path: '/rentabilitaet',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminZeiterfassungRoute = AdminZeiterfassungRouteImport.update({
-  id: '/zeiterfassung',
-  path: '/zeiterfassung',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminScanRoute = AdminScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -510,6 +505,11 @@ const AdminTodosRoute = AdminTodosRouteImport.update({
 const AdminUmsatzRoute = AdminUmsatzRouteImport.update({
   id: '/umsatz',
   path: '/umsatz',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminZeiterfassungRoute = AdminZeiterfassungRouteImport.update({
+  id: '/zeiterfassung',
+  path: '/zeiterfassung',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
@@ -910,7 +910,6 @@ export interface FileRoutesByFullPath {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
-  '/admin/zeiterfassung': typeof AdminZeiterfassungRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
@@ -920,6 +919,7 @@ export interface FileRoutesByFullPath {
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
   '/admin/umsatz': typeof AdminUmsatzRoute
+  '/admin/zeiterfassung': typeof AdminZeiterfassungRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1045,7 +1045,6 @@ export interface FileRoutesByTo {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
-  '/admin/zeiterfassung': typeof AdminZeiterfassungRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
@@ -1055,6 +1054,7 @@ export interface FileRoutesByTo {
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
   '/admin/umsatz': typeof AdminUmsatzRoute
+  '/admin/zeiterfassung': typeof AdminZeiterfassungRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1186,7 +1186,6 @@ export interface FileRoutesById {
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
-  '/admin/zeiterfassung': typeof AdminZeiterfassungRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
@@ -1196,6 +1195,7 @@ export interface FileRoutesById {
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
   '/admin/umsatz': typeof AdminUmsatzRoute
+  '/admin/zeiterfassung': typeof AdminZeiterfassungRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1328,7 +1328,6 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/rentabilitaet'
-    | '/admin/zeiterfassung'
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
@@ -1338,6 +1337,7 @@ export interface FileRouteTypes {
     | '/admin/teile'
     | '/admin/todos'
     | '/admin/umsatz'
+    | '/admin/zeiterfassung'
     | '/admin/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -1463,7 +1463,6 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/rentabilitaet'
-    | '/admin/zeiterfassung'
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
@@ -1473,6 +1472,7 @@ export interface FileRouteTypes {
     | '/admin/teile'
     | '/admin/todos'
     | '/admin/umsatz'
+    | '/admin/zeiterfassung'
     | '/admin/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -1603,7 +1603,6 @@ export interface FileRouteTypes {
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/rentabilitaet'
-    | '/admin/zeiterfassung'
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
@@ -1613,6 +1612,7 @@ export interface FileRouteTypes {
     | '/admin/teile'
     | '/admin/todos'
     | '/admin/umsatz'
+    | '/admin/zeiterfassung'
     | '/admin_/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -2166,13 +2166,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRentabilitaetRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/zeiterfassung': {
-      id: '/admin/zeiterfassung'
-      path: '/zeiterfassung'
-      fullPath: '/admin/zeiterfassung'
-      preLoaderRoute: typeof AdminZeiterfassungRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/scan': {
       id: '/admin/scan'
       path: '/scan'
@@ -2234,6 +2227,13 @@ declare module '@tanstack/react-router' {
       path: '/umsatz'
       fullPath: '/admin/umsatz'
       preLoaderRoute: typeof AdminUmsatzRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/zeiterfassung': {
+      id: '/admin/zeiterfassung'
+      path: '/zeiterfassung'
+      fullPath: '/admin/zeiterfassung'
+      preLoaderRoute: typeof AdminZeiterfassungRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin_/login': {
@@ -2810,7 +2810,6 @@ interface AdminRouteChildren {
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminRentabilitaetRoute: typeof AdminRentabilitaetRoute
-  AdminZeiterfassungRoute: typeof AdminZeiterfassungRoute
   AdminScanRoute: typeof AdminScanRoute
   AdminServerDateienRoute: typeof AdminServerDateienRoute
   AdminSliceFreigabeRoute: typeof AdminSliceFreigabeRoute
@@ -2820,6 +2819,7 @@ interface AdminRouteChildren {
   AdminTeileRoute: typeof AdminTeileRoute
   AdminTodosRoute: typeof AdminTodosRoute
   AdminUmsatzRoute: typeof AdminUmsatzRoute
+  AdminZeiterfassungRoute: typeof AdminZeiterfassungRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
   AdminKundenIdRoute: typeof AdminKundenIdRoute
@@ -2851,7 +2851,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminRentabilitaetRoute: AdminRentabilitaetRoute,
-  AdminZeiterfassungRoute: AdminZeiterfassungRoute,
   AdminScanRoute: AdminScanRoute,
   AdminServerDateienRoute: AdminServerDateienRoute,
   AdminSliceFreigabeRoute: AdminSliceFreigabeRoute,
@@ -2861,6 +2860,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminTeileRoute: AdminTeileRoute,
   AdminTodosRoute: AdminTodosRoute,
   AdminUmsatzRoute: AdminUmsatzRoute,
+  AdminZeiterfassungRoute: AdminZeiterfassungRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,
   AdminKundenIdRoute: AdminKundenIdRoute,
