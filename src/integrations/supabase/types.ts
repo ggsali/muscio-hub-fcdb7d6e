@@ -2606,6 +2606,27 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_events: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          quelle: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          quelle?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          quelle?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           id: string
