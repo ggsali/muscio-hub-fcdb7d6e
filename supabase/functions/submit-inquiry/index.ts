@@ -87,36 +87,8 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Prüfen ob Kunde bereits existiert
-    const { data: existingCustomer } = await supabase
-      .from("customers")
-      .select("id, strasse, plz, ort")
-      .eq("email", email)
-      .maybeSingle();
-
-    let customerId: string | null = existingCustomer?.id ?? null;
-
-    if (!customerId && name && email) {
-      // Neuen Kunden anlegen
-      const nameParts = name.trim().split(" ");
-      const vorname = nameParts[0] || "";
-      const nachname = nameParts.slice(1).join(" ") || vorname;
-
-      const { data: newCustomer } = await supabase.from("customers").insert({
-        name: nachname,
-        vorname,
-        email,
-        telefon: telefon || null,
-        strasse: strasse || null,
-        plz: plz || null,
-        ort: ort || null,
-        land: land || "Schweiz",
-        notizen: "Automatisch aus Anfrage erstellt",
-      }).select("id").single();
-
-      if (newCustomer) customerId = newCustomer.id;
-    }
-    // Bestehende Kundendaten werden bewusst nicht durch öffentliche Anfragen verändert.
+    // Öffentliche Anfragen lesen oder erstellen keine Kunden; Kunden werden im Admin manuell angelegt.
+    const customerId: string | null = null;
 
     // Anfrage speichern
     const inquiryRow: Record<string, unknown> = {

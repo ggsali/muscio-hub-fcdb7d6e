@@ -16,7 +16,11 @@ interface Props {
 
 const TRACK_BASE = 'https://3dmuscio.com/api/public/track-email'
 
-const Email = ({ name, bewertungsLink, orderId }: Props) => (
+const Email = ({ name, bewertungsLink, orderId: rawOrderId, trackSig }: Props) => {
+  // Tracking nur mit gültiger Signatur, sonst normale Links ohne Tracking
+  const orderId = rawOrderId && trackSig ? rawOrderId : undefined
+  const sigParam = trackSig ? `&sig=${encodeURIComponent(trackSig)}` : ''
+  return (
   <Html lang="de" dir="ltr">
     <Head />
     <Preview>Danke für Ihre Bewertung</Preview>
@@ -52,7 +56,7 @@ const Email = ({ name, bewertungsLink, orderId }: Props) => (
             <Section style={{ textAlign: 'center', padding: '8px 0 0' }}>
               <Link
                 href={orderId
-                  ? `${TRACK_BASE}?type=click&id=${encodeURIComponent(orderId)}&redirect=${encodeURIComponent(bewertungsLink)}`
+                  ? `${TRACK_BASE}?type=click&id=${encodeURIComponent(orderId)}${sigParam}&redirect=${encodeURIComponent(bewertungsLink)}`
                   : bewertungsLink}
                 style={{ backgroundColor: BRAND, color: '#ffffff', fontSize: '15px', fontWeight: 700, padding: '12px 22px', borderRadius: '8px', textDecoration: 'none', display: 'inline-block' }}
               >
@@ -64,7 +68,7 @@ const Email = ({ name, bewertungsLink, orderId }: Props) => (
 
         {orderId ? (
           <img
-            src={`${TRACK_BASE}?type=open&id=${encodeURIComponent(orderId)}`}
+            src={`${TRACK_BASE}?type=open&id=${encodeURIComponent(orderId)}${sigParam}`}
             width={1}
             height={1}
             alt=""
@@ -84,7 +88,8 @@ const Email = ({ name, bewertungsLink, orderId }: Props) => (
       </Container>
     </Body>
   </Html>
-)
+  )
+}
 
 export const template: TemplateEntry = {
   component: Email,
