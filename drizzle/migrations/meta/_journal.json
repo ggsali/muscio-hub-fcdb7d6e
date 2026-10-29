@@ -267,6 +267,13 @@
       "when": 1793264201782,
       "tag": "0037_parts_farbe",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793267000997,
+      "tag": "0038_fixkosten",
+      "breakpoints": true
     }
   ]
 }

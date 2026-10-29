@@ -1078,6 +1078,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fixkosten: {
+        Row: {
+          betrag: number
+          created_at: string
+          gueltig_ab: string | null
+          gueltig_bis: string | null
+          id: string
+          intervall: string
+          kategorie: string
+          name: string
+          notiz: string | null
+          updated_at: string
+        }
+        Insert: {
+          betrag?: number
+          created_at?: string
+          gueltig_ab?: string | null
+          gueltig_bis?: string | null
+          id?: string
+          intervall?: string
+          kategorie?: string
+          name: string
+          notiz?: string | null
+          updated_at?: string
+        }
+        Update: {
+          betrag?: number
+          created_at?: string
+          gueltig_ab?: string | null
+          gueltig_bis?: string | null
+          id?: string
+          intervall?: string
+          kategorie?: string
+          name?: string
+          notiz?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gutschein_verwendungen: {
         Row: {
           customer_id: string | null
