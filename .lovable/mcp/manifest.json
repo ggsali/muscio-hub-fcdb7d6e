@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sdk_version": "0.26.3",
+  "sdk_version": "3.3.1",
   "path": "/functions/v1/mcp",
   "auth": {
     "type": "oauth",
@@ -26,23 +26,25 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "status": {
-              "type": "string",
-              "description": "Optionaler Status-Filter, z. B. 'offen', 'in_produktion', 'geliefert'."
+              "description": "Optionaler Status-Filter, z. B. 'offen', 'in_produktion', 'geliefert'.",
+              "type": "string"
             },
             "search": {
-              "type": "string",
-              "description": "Suchbegriff für Auftragsname oder Beschreibung."
+              "description": "Suchbegriff für Auftragsname oder Beschreibung.",
+              "type": "string"
             },
             "limit": {
+              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100).",
               "type": "integer",
-              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100)."
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
             }
           },
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          "additionalProperties": false
         },
         "outputSchema": null
       },
@@ -56,6 +58,7 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "order_id": {
@@ -66,8 +69,7 @@
           "required": [
             "order_id"
           ],
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          "additionalProperties": false
         },
         "outputSchema": null
       },
@@ -81,19 +83,21 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "search": {
-              "type": "string",
-              "description": "Suchbegriff für Name, Firma oder E-Mail."
+              "description": "Suchbegriff für Name, Firma oder E-Mail.",
+              "type": "string"
             },
             "limit": {
+              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100).",
               "type": "integer",
-              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100)."
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
             }
           },
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          "additionalProperties": false
         },
         "outputSchema": null
       },
@@ -107,19 +111,21 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "include_paid": {
-              "type": "boolean",
-              "description": "Wenn true, werden auch bezahlte Rechnungen zurückgegeben."
+              "description": "Wenn true, werden auch bezahlte Rechnungen zurückgegeben.",
+              "type": "boolean"
             },
             "limit": {
+              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100).",
               "type": "integer",
-              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100)."
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
             }
           },
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          "additionalProperties": false
         },
         "outputSchema": null
       },
@@ -133,19 +139,21 @@
           "openWorldHint": false
         },
         "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
           "properties": {
             "status": {
-              "type": "string",
-              "description": "Optionaler Status-Filter, z. B. 'neu' oder 'erledigt'."
+              "description": "Optionaler Status-Filter, z. B. 'neu' oder 'erledigt'.",
+              "type": "string"
             },
             "limit": {
+              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100).",
               "type": "integer",
-              "description": "Maximale Anzahl Ergebnisse (Standard 20, max 100)."
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
             }
           },
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
+          "additionalProperties": false
         },
         "outputSchema": null
       }
