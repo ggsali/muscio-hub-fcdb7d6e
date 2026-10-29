@@ -56,7 +56,7 @@ const Email = ({ name, bewertungsLink, orderId: rawOrderId, trackSig }: Props) =
             <Section style={{ textAlign: 'center', padding: '8px 0 0' }}>
               <Link
                 href={orderId
-                  ? `${TRACK_BASE}?type=click&id=${encodeURIComponent(orderId)}&redirect=${encodeURIComponent(bewertungsLink)}`
+                  ? `${TRACK_BASE}?type=click&id=${encodeURIComponent(orderId)}${sigParam}&redirect=${encodeURIComponent(bewertungsLink)}`
                   : bewertungsLink}
                 style={{ backgroundColor: BRAND, color: '#ffffff', fontSize: '15px', fontWeight: 700, padding: '12px 22px', borderRadius: '8px', textDecoration: 'none', display: 'inline-block' }}
               >
@@ -68,7 +68,7 @@ const Email = ({ name, bewertungsLink, orderId: rawOrderId, trackSig }: Props) =
 
         {orderId ? (
           <img
-            src={`${TRACK_BASE}?type=open&id=${encodeURIComponent(orderId)}`}
+            src={`${TRACK_BASE}?type=open&id=${encodeURIComponent(orderId)}${sigParam}`}
             width={1}
             height={1}
             alt=""
@@ -88,7 +88,8 @@ const Email = ({ name, bewertungsLink, orderId: rawOrderId, trackSig }: Props) =
       </Container>
     </Body>
   </Html>
-)
+  )
+}
 
 export const template: TemplateEntry = {
   component: Email,

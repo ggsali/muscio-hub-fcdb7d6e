@@ -44,6 +44,15 @@ function safeRedirect(raw: string | null): string {
   }
 }
 
+/** Prüft die HMAC-Signatur, die beim Mailversand für die Auftrags-ID erzeugt wurde. */
+async function validSig(orderId: string, sig: string): Promise<boolean> {
+  const secret = process.env['EMAIL_TRACKING_SECRET']
+  if (!secret || !/^[0-9a-f]{64}$/i.test(sig)) return false
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify'])
+  const bytes = new Uint8Array(sig.match(/../g)!.map((h) => parseInt(h, 16)))
+  return crypto.subtle.verify('HMAC', key, bytes, new TextEncoder().encode(orderId.toLowerCase()))
+}
+
 /** Setzt den Zeitstempel einmalig und schreibt einen Eintrag in den Aktivitätsverlauf. */
 async function recordEvent(orderId: string, type: 'open' | 'click', redirectUrl?: string) {
   const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
@@ -89,7 +98,8 @@ export const Route = createFileRoute('/api/public/track-email')({
         const id = url.searchParams.get('id') || ''
         const redirect = safeRedirect(url.searchParams.get('redirect'))
 
-        if (UUID_RE.test(id) && (type === 'open' || type === 'click')) {
+        const sig = url.searchParams.get('sig') || ''
+        if (UUID_RE.test(id) && (type === 'open' || type === 'click') && (await validSig(id, sig))) {
           try {
             await recordEvent(id, type, type === 'click' ? redirect : undefined)
           } catch (e) {
