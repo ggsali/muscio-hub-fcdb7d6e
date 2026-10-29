@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { filamentFarben } from "@/lib/filamentFarben";
 import JSZip from "jszip";
 import { useParams, useNavigate } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +61,7 @@ interface PartRow {
   teilname: string;
   material: string;
   filament_id?: string;
+  farbe?: string | null;
   filament_einkauf_pro_kg?: number; // individueller Filamentpreis
   filament_verkauf_pro_g?: number | null; // manuell gesetzter Verkaufspreis (überschreibt Auto-Berechnung)
   menge: number;
@@ -84,6 +86,29 @@ interface PartRow {
   support_gewicht_g?: number;
   support_preis_pro_g?: number;
   support_name?: string;
+}
+
+/** Farbwahl pro Teil: nur Farben des gewählten Filaments aus der Bibliothek */
+function FarbWahl({ part, filaments, onChange, compact }: { part: { filament_id?: string; farbe?: string | null }; filaments: Filament[]; onChange: (farbe: string | null) => void; compact?: boolean }) {
+  const fil = filaments.find((f) => f.id === part.filament_id);
+  if (!fil) return null;
+  const farben = filamentFarben(fil);
+  if (farben.length === 0) return null;
+  const unbekannt = !!part.farbe && !farben.some((c) => c.name === part.farbe);
+  return (
+    <div className={compact ? "mt-1" : "space-y-1"}>
+      {!compact && <label className="text-xs text-muted-foreground">Farbe</label>}
+      <select
+        value={part.farbe || ""}
+        onChange={(e) => onChange(e.target.value || null)}
+        className={`rounded bg-input border border-border text-foreground w-full ${compact ? "h-7 px-2 text-xs" : "h-9 px-3 text-sm"} ${!part.farbe ? "border-warning" : ""}`}
+      >
+        <option value="">Farbe wählen…</option>
+        {unbekannt && <option value={part.farbe!}>{part.farbe} (nicht in Bibliothek)</option>}
+        {farben.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+      </select>
+    </div>
+  );
 }
 
 const emptyPart = (): PartRow => ({
@@ -1535,6 +1560,7 @@ export default function AuftragDetailPage() {
         status: p.status,
         notizen: p.notizen,
         filament_id: p.filament_id || null,
+        farbe: p.farbe || null,
         filament_einkauf_pro_kg: p.filament_einkauf_pro_kg ?? null,
         slicer_druckzeit_sekunden: p.slicer_druckzeit_sekunden ?? null,
         slicer_filament_gramm: p.slicer_filament_gramm ?? null,
@@ -2654,6 +2680,7 @@ export default function AuftragDetailPage() {
                               const p = {
                                 ...updated[idx],
                                 filament_id: e.target.value,
+                                farbe: fil ? (filamentFarben(fil).some(c => c.name === updated[idx].farbe) ? updated[idx].farbe : (filamentFarben(fil)[0]?.name ?? null)) : null,
                                 filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
                                 filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
                                 material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
@@ -2667,7 +2694,7 @@ export default function AuftragDetailPage() {
                           <option value="">Manuell eingeben…</option>
                           {filaments.map(f => (
                             <option key={f.id} value={f.id}>
-                              {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
+                              {f.material} – {f.name} · CHF {f.preis_pro_kg}/kg
                             </option>
                           ))}
                         </select>
@@ -2676,6 +2703,7 @@ export default function AuftragDetailPage() {
                           {FALLBACK_MATERIALS.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                       )}
+                      <FarbWahl part={part} filaments={filaments} onChange={farbe => updatePart(idx, "farbe", farbe)} />
                       {part.filament_einkauf_pro_kg != null && (
                         <div className="text-[10px] text-muted-foreground">
                           Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}
@@ -2813,6 +2841,7 @@ export default function AuftragDetailPage() {
                                       const p = {
                                         ...updated[idx],
                                         filament_id: e.target.value,
+                                        farbe: fil ? (filamentFarben(fil).some(c => c.name === updated[idx].farbe) ? updated[idx].farbe : (filamentFarben(fil)[0]?.name ?? null)) : null,
                                         filament_einkauf_pro_kg: fil ? fil.preis_pro_kg : undefined,
                                         filament_verkauf_pro_g: fil ? (fil.verkaufspreis_pro_g ?? null) : undefined,
                                         material: fil ? `${fil.material} – ${fil.name}` : updated[idx].material,
@@ -2826,10 +2855,11 @@ export default function AuftragDetailPage() {
                                   <option value="">Manuell eingeben…</option>
                                   {filaments.map(f => (
                                     <option key={f.id} value={f.id}>
-                                      {f.material} – {f.name}{f.farbe ? ` (${f.farbe})` : ""} · CHF {f.preis_pro_kg}/kg
+                                      {f.material} – {f.name} · CHF {f.preis_pro_kg}/kg
                                     </option>
                                   ))}
                                 </select>
+                                <FarbWahl compact part={part} filaments={filaments} onChange={farbe => updatePart(idx, "farbe", farbe)} />
                                 {part.filament_einkauf_pro_kg != null && (
                                   <div className="text-[10px] text-muted-foreground px-0.5">
                                     Einkauf: CHF {part.filament_einkauf_pro_kg}/kg → Verkauf:{" "}

@@ -2044,6 +2044,7 @@ export type Database = {
           created_at: string | null
           customer_id: string | null
           druckzeit_h: number | null
+          farbe: string | null
           filament_einkauf_pro_kg: number | null
           filament_id: string | null
           gewicht_g: number | null
@@ -2075,6 +2076,7 @@ export type Database = {
           created_at?: string | null
           customer_id?: string | null
           druckzeit_h?: number | null
+          farbe?: string | null
           filament_einkauf_pro_kg?: number | null
           filament_id?: string | null
           gewicht_g?: number | null
@@ -2106,6 +2108,7 @@ export type Database = {
           created_at?: string | null
           customer_id?: string | null
           druckzeit_h?: number | null
+          farbe?: string | null
           filament_einkauf_pro_kg?: number | null
           filament_id?: string | null
           gewicht_g?: number | null

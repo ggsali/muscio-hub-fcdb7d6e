@@ -1,3 +1,4 @@
+import { passendeFarbe } from "@/lib/filamentFarben";
 import { splitFee } from "@/lib/splitSurcharge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -352,6 +353,9 @@ export default function AnfragenPage() {
       };
 
       const groupParts = new Map<string, string>();
+      // Filament-Bibliothek: nur was dort existiert, wird als Material/Farbe übernommen
+      const { data: bibData } = await supabase.from("filaments").select("id, name, material, farbe, farben, preis_pro_kg");
+      const bibliothek: any[] = bibData ?? [];
       let kalkErster = true; // Kalkulator: Setup-Anzahl wie im Auftrag nur am ersten Teil
       // Geteilte Teile (grösser als Druckbett): Vermerk aus der Anfrage ins Teil übernehmen
       const geteiltNotiz = (filename?: string | null): string => {
@@ -447,6 +451,7 @@ export default function AnfragenPage() {
             const stuetzenH = Number(sl.stuetzen_h) || Number(sl.kalk_nachbearbeitung_h) || 0; // Stunden pro Stück (Kalkulator: geschätzte Nachbearbeitung)
             const nachName = Number(sl.stuetzen_h) > 0 ? "Stützen entfernen" : "Nachbearbeitung (geschätzt)";
             const slSeconds = sl.slicer_druckzeit_sekunden ?? null;
+            const fil = bibliothek.find((f: any) => f.id === sl.filament_id) ?? bibliothek.find((f: any) => (sl.material ?? "").trim().toLowerCase() === String(f.name ?? "").trim().toLowerCase()) ?? null;
             const slGrams = sl.slicer_filament_gramm ?? null;
 
             const { data: part, error: partErr } = await supabase.from("parts").insert({
@@ -459,7 +464,12 @@ export default function AnfragenPage() {
               druckzeit_h: slSeconds ? Math.round((slSeconds / 3600) * 100) / 100 : 0,
               nachbearbeitung_h: stuetzenH,
               ...(stuetzenH > 0 ? { nachbearbeitungs_schritte: [{ name: nachName, stunden: stuetzenH }] } : {}),
-              ...(sl.filament_id ? { filament_id: sl.filament_id } : {}),
+              ...(fil ? {
+                filament_id: fil.id,
+                material: `${fil.material} – ${fil.name}`,
+                filament_einkauf_pro_kg: fil.preis_pro_kg ?? null,
+                farbe: passendeFarbe(fil, sl.farbe),
+              } : {}),
               ...(sl.setup_anzahl != null ? { setup_pauschale_anzahl: Math.max(0, Math.floor(Number(sl.setup_anzahl))) } : kalkSetupTotal > 0 ? { setup_pauschale_anzahl: (kalkErster ? kalkSetupTotal : 0) } : {}),
               konstruktion_h: 0,
               preis_pro_stueck: 0,
