@@ -8,10 +8,14 @@ import { checkPdfPlausibility, setupCountFromParts, setupTotalFromParts } from "
 interface PartRow {
   teilname: string;
   material: string;
+  farbe?: string | null;
   menge: number;
   preis_pro_stueck: number;
   preis_total: number;
 }
+
+/** Material mit Farbe für Dokumente */
+const matLabel = (p: { material?: string | null; farbe?: string | null }) => `${p.material ?? ""}${p.farbe ? `, ${p.farbe}` : ""}`;
 
 export interface AkontoExportData {
   orderId: string;
@@ -208,7 +212,7 @@ function drawPartsTable(doc: jsPDF, parts: PartRow[], setupPreis: number, margin
   const body: any[][] = parts.map((p, i) => [
     String(i + 1).padStart(2, "0"),
     p.teilname || "—",
-    p.material,
+    matLabel(p),
     `${p.menge}×`,
     formatCHF(p.preis_pro_stueck),
     formatCHF(p.preis_total),

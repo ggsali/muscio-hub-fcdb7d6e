@@ -8,6 +8,7 @@ import { checkPdfPlausibility, setupCountFromParts, setupTotalFromParts } from "
 interface PartRow {
   teilname: string;
   material: string;
+  farbe?: string | null;
   menge: number;
   gewicht_g: number;
   druckzeit_h: number;
@@ -120,6 +121,9 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
     return null;
   }
 }
+
+/** Material mit Farbe für Dokumente */
+const matLabel = (p: { material?: string | null; farbe?: string | null }) => `${p.material ?? ""}${p.farbe ? `, ${p.farbe}` : ""}`;
 
 export async function exportOrderPDF(data: OrderExportData) {
   checkPdfPlausibility({
@@ -327,7 +331,7 @@ export async function exportOrderPDF(data: OrderExportData) {
         const matTotal = p.gewicht_g * matRate * p.menge;
         detailBody.push([
           { content: "", styles: { fillColor: rowBg } },
-          { content: `Material (${p.material})`, styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
+          { content: `Material (${matLabel(p)})`, styles: { fontSize: 8.5, textColor: DARK, fontStyle: "bold", fillColor: rowBg } },
           { content: `${p.gewicht_g}g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "center", fillColor: rowBg } },
           { content: `${formatCHF(matRate)}/g`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
           { content: `×${p.menge}`, styles: { fontSize: 8.5, textColor: GRAY, halign: "right", fillColor: rowBg } },
@@ -494,7 +498,7 @@ export async function exportOrderPDF(data: OrderExportData) {
     const tableBody: any[][] = data.parts.map((p, i) => [
       String(i + 1).padStart(2, "0"),
       p.teilname || "—",
-      p.material,
+      matLabel(p),
       `${p.menge}×`,
       formatCHF(p.preis_pro_stueck),
       formatCHF(p.preis_total),
