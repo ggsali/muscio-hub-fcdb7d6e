@@ -234,6 +234,33 @@ export type Database = {
         }
         Relationships: []
       }
+      arbeitszeit: {
+        Row: {
+          created_at: string
+          ende_at: string | null
+          id: string
+          notiz: string | null
+          start_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ende_at?: string | null
+          id?: string
+          notiz?: string | null
+          start_at?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ende_at?: string | null
+          id?: string
+          notiz?: string | null
+          start_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ausgaben: {
         Row: {
           beleg_url: string | null
@@ -2576,6 +2603,27 @@ export type Database = {
           source?: string | null
           token?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      scan_events: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          quelle: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          quelle?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          quelle?: string
         }
         Relationships: []
       }
