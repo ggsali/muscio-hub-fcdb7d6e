@@ -79,6 +79,7 @@ import { Route as AdminSpardoseTestRouteImport } from './routes/admin/spardose-t
 import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminTodosRouteImport } from './routes/admin/todos'
+import { Route as AdminUmsatzRouteImport } from './routes/admin/umsatz'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AuftraegeIndexRouteImport } from './routes/auftraege.index'
 import { Route as AuftraegeIdRouteImport } from './routes/auftraege.$id'
@@ -494,6 +495,11 @@ const AdminTodosRoute = AdminTodosRouteImport.update({
   path: '/todos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminUmsatzRoute = AdminUmsatzRouteImport.update({
+  id: '/umsatz',
+  path: '/umsatz',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin_/login',
   path: '/admin/login',
@@ -899,6 +905,7 @@ export interface FileRoutesByFullPath {
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
+  '/admin/umsatz': typeof AdminUmsatzRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1031,6 +1038,7 @@ export interface FileRoutesByTo {
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
+  '/admin/umsatz': typeof AdminUmsatzRoute
   '/admin/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1169,6 +1177,7 @@ export interface FileRoutesById {
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
+  '/admin/umsatz': typeof AdminUmsatzRoute
   '/admin_/login': typeof AdminLoginRoute
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
@@ -1308,6 +1317,7 @@ export interface FileRouteTypes {
     | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/todos'
+    | '/admin/umsatz'
     | '/admin/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -1440,6 +1450,7 @@ export interface FileRouteTypes {
     | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/todos'
+    | '/admin/umsatz'
     | '/admin/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -1577,6 +1588,7 @@ export interface FileRouteTypes {
     | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/todos'
+    | '/admin/umsatz'
     | '/admin_/login'
     | '/auftraege/$id'
     | '/bewertung/$token'
@@ -2179,6 +2191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTodosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/umsatz': {
+      id: '/admin/umsatz'
+      path: '/umsatz'
+      fullPath: '/admin/umsatz'
+      preLoaderRoute: typeof AdminUmsatzRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin_/login': {
       id: '/admin_/login'
       path: '/admin/login'
@@ -2760,6 +2779,7 @@ interface AdminRouteChildren {
   AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminTodosRoute: typeof AdminTodosRoute
+  AdminUmsatzRoute: typeof AdminUmsatzRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFinanzenNeueRechnungRoute: typeof AdminFinanzenNeueRechnungRoute
   AdminKundenIdRoute: typeof AdminKundenIdRoute
@@ -2798,6 +2818,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminStadtmodelleRoute: AdminStadtmodelleRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminTodosRoute: AdminTodosRoute,
+  AdminUmsatzRoute: AdminUmsatzRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFinanzenNeueRechnungRoute: AdminFinanzenNeueRechnungRoute,
   AdminKundenIdRoute: AdminKundenIdRoute,

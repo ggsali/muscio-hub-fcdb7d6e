@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { UMSATZ_STATUS, ladeUmsatzAuftraege } from "@/lib/umsatz";
 import {
   Plus, TrendingUp, TrendingDown, Wallet,
   Download, Trash2, Paperclip,
@@ -49,7 +50,8 @@ type Ausgabe = {
 };
 
 const KATEGORIEN = ["Filament", "Versandmaterial", "Software/Abos", "Maschinen", "Sonstiges"];
-const PAID_STATUS = ["Bezahlt", "Abgeschlossen"];
+// Gleiche Umsatz-Definition wie Dashboard und Umsatz-Analyse (Status ab "Bezahlt", Monat nach Zahlungsdatum)
+const PAID_STATUS = UMSATZ_STATUS;
 
 function fmtCHF(n: number) {
   return new Intl.NumberFormat("de-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
@@ -79,6 +81,7 @@ export default function FinanzenPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [ausgaben, setAusgaben] = useState<Ausgabe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [zahlMap, setZahlMap] = useState<Record<string, string>>({});
 
   const [range, setRange] = useState<RangeKey>("month");
   const [customFrom, setCustomFrom] = useState("");
@@ -98,13 +101,15 @@ export default function FinanzenPage() {
 
   async function load() {
     setLoading(true);
-    const [o, c, a] = await Promise.all([
+    const [o, c, a, bezahlt] = await Promise.all([
       (supabase.from as any)("orders")
         .select("id, name, beschreibung, datum, created_at, status, umsatz_total, kosten_total, gewinn_total, customer_id")
         .order("created_at", { ascending: false }),
       (supabase.from as any)("customers").select("id, name, vorname, firma"),
       (supabase.from as any)("ausgaben").select("*").order("datum", { ascending: false }),
+      ladeUmsatzAuftraege().catch(() => []),
     ]);
+    setZahlMap(Object.fromEntries(bezahlt.map((b) => [b.id, b.zahlDatum])));
     setOrders((o.data as Order[]) || []);
     setCustomers((c.data as Customer[]) || []);
     setAusgaben((a.data as Ausgabe[]) || []);
@@ -118,13 +123,13 @@ export default function FinanzenPage() {
     return c.firma || [c.vorname, c.name].filter(Boolean).join(" ") || "—";
   };
 
-  const orderDate = (o: Order) => new Date(o.datum || o.created_at);
+  const orderDate = (o: Order) => new Date(zahlMap[o.id] || o.datum || o.created_at);
 
   const { start, end } = useMemo(() => rangeBounds(range, customFrom, customTo), [range, customFrom, customTo]);
 
   const ordersInRange = useMemo(
     () => orders.filter(o => { const d = orderDate(o); return d >= start && d < end; }),
-    [orders, start, end]
+    [orders, start, end, zahlMap]
   );
 
   const einnahmen = useMemo(
@@ -172,7 +177,7 @@ export default function FinanzenPage() {
       ausgaben: Number(exp[k].toFixed(2)),
       gewinn: Number((inc[k] - exp[k]).toFixed(2)),
     }));
-  }, [orders, ausgaben]);
+  }, [orders, ausgaben, zahlMap]);
 
   // Marge-Analyse
   const analyse = useMemo(() => {

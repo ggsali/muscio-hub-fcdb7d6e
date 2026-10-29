@@ -8,6 +8,7 @@ import { TrendingUp, DollarSign, PiggyBank, Percent, Clock, Target, Plus, Chevro
 import { Button } from "@/components/ui/button";
 import { TodosWidget } from "@/components/TodosWidget";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UMSATZ_STATUS, ladeUmsatzAuftraege, monatsSummen, monatLabel, monatVerschieben, aktuellerMonat } from "@/lib/umsatz";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell
@@ -41,8 +42,7 @@ interface TopKunde {
   umsatz: number;
 }
 
-// Aufträge, die Umsatz/Gewinn zählen: alles ab "Bezahlt" (ohne Anfrage, Offerte, Storniert).
-const UMSATZ_STATUS = ["Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert", "Abgeschlossen"];
+// Umsatz-Definition (Status ab "Bezahlt", Monat nach Zahlungsdatum) steht zentral in src/lib/umsatz.ts
 
 const ACCENT = "hsl(var(--primary))";
 const SUCCESS = "hsl(var(--success))";
@@ -59,6 +59,7 @@ export default function DashboardPage() {
   const [neueAnfragen, setNeueAnfragen] = useState<any[]>([]);
   const [neueKunden, setNeueKunden] = useState<any[]>([]);
   const [quick, setQuick] = useState({ offen: 0, anfragenHeute: 0, umsatzMonat: 0, shopOffen: 0 });
+  const [monatUmsatz, setMonatUmsatz] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -94,26 +95,20 @@ export default function DashboardPage() {
         }));
         setRecentOrders(recent);
 
-        const monthMap: Record<string, { umsatz: number; gewinn: number }> = {};
-        umsatzAuftraege.forEach(o => {
-          if (!o.datum) return;
-          const key = o.datum.substring(0, 7);
-          if (!monthMap[key]) monthMap[key] = { umsatz: 0, gewinn: 0 };
-          monthMap[key].umsatz += o.umsatz_total || 0;
-          monthMap[key].gewinn += o.gewinn_total || 0;
-        });
-        const months = Object.keys(monthMap).sort().slice(-6).map(k => ({
-          monat: new Date(k + "-01").toLocaleDateString("de-CH", { month: "short", year: "2-digit" }),
-          umsatz: Math.round(monthMap[k].umsatz * 100) / 100,
-          gewinn: Math.round(monthMap[k].gewinn * 100) / 100,
+        const bezahlt = await ladeUmsatzAuftraege();
+        const jetztKey = aktuellerMonat();
+        const months = monatsSummen(bezahlt, monatVerschieben(jetztKey, -5), jetztKey).map(m => ({
+          key: m.key,
+          monat: monatLabel(m.key),
+          umsatz: m.umsatz,
+          gewinn: m.gewinn,
         }));
         setMonthlyData(months);
+        setMonatUmsatz(months[months.length - 1]?.umsatz ?? 0);
 
         const kundeMap: Record<string, number> = {};
-        orders.forEach(o => {
-          const name = fullName(o.customers);
-          if (!kundeMap[name]) kundeMap[name] = 0;
-          kundeMap[name] += o.umsatz_total || 0;
+        bezahlt.forEach(o => {
+          kundeMap[o.kunde] = (kundeMap[o.kunde] ?? 0) + o.umsatz;
         });
         const top = Object.entries(kundeMap)
           .map(([name, umsatz]) => ({ name, umsatz }))
@@ -147,9 +142,7 @@ export default function DashboardPage() {
       setQuick({
         offen: (orders || []).filter(o => ["Offen", "Anfrage", "Offerte gesendet", "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert"].includes(o.status ?? "")).length,
         anfragenHeute: anfragenHeute ?? 0,
-        umsatzMonat: (orders || [])
-          .filter(o => (o.datum ?? "").startsWith(monatPrefix) && UMSATZ_STATUS.includes(o.status ?? ""))
-          .reduce((s, o) => s + (o.umsatz_total || 0), 0),
+        umsatzMonat: 0,
         shopOffen: shopOffen ?? 0,
       });
 
@@ -186,7 +179,7 @@ export default function DashboardPage() {
         {[
           { label: "Offene Aufträge", value: String(quick.offen), icon: <Clock className="w-4 h-4" />, color: "text-warning", to: "/admin/auftraege" },
           { label: "Neue Anfragen heute", value: String(quick.anfragenHeute), icon: <Mail className="w-4 h-4" />, color: "text-info", to: "/admin/anfragen" },
-          { label: "Umsatz diesen Monat", value: formatCHF(quick.umsatzMonat), icon: <DollarSign className="w-4 h-4" />, color: "text-success", to: "/admin/finanzen" },
+          { label: "Umsatz diesen Monat", value: formatCHF(monatUmsatz), icon: <DollarSign className="w-4 h-4" />, color: "text-success", to: "/admin/umsatz" },
           { label: "Shop unbearbeitet", value: String(quick.shopOffen), icon: <ShoppingBag className="w-4 h-4" />, color: "text-primary", to: "/admin/website/bestellungen" },
         ].map(card => (
           <button
@@ -236,9 +229,12 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {monthlyData.length > 0 && (
             <div className="bg-card border border-border rounded-lg p-4 md:p-5">
-              <h2 className="font-semibold text-sm mb-3 md:mb-4">Umsatz & Gewinn (6 Monate)</h2>
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h2 className="font-semibold text-sm">Umsatz & Gewinn (6 Monate)</h2>
+                <button onClick={() => navigate("/admin/umsatz")} className="text-xs text-primary hover:underline">Analyse öffnen →</button>
+              </div>
               <ResponsiveContainer width="100%" height={isMobile ? 160 : 200}>
-                <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <AreaChart data={monthlyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} onClick={(e: any) => { const k = e?.activePayload?.[0]?.payload?.key; navigate(k ? `/admin/umsatz?monat=${k}` : "/admin/umsatz"); }} style={{ cursor: "pointer" }}>
                   <defs>
                     <linearGradient id="gradUmsatz" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={ACCENT} stopOpacity={0.25} />
@@ -270,7 +266,7 @@ export default function DashboardPage() {
 
           {topKunden.length > 0 && (
             <div className="bg-card border border-border rounded-lg p-4 md:p-5">
-              <h2 className="font-semibold text-sm mb-3 md:mb-4">Top-Kunden nach Umsatz</h2>
+              <h2 className="font-semibold text-sm mb-3 md:mb-4">Top-Kunden nach Umsatz (bezahlt)</h2>
               <ResponsiveContainer width="100%" height={isMobile ? 160 : 200}>
                 <BarChart data={topKunden} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
