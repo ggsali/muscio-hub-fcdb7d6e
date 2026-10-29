@@ -16,7 +16,11 @@ interface Props {
 
 const TRACK_BASE = 'https://3dmuscio.com/api/public/track-email'
 
-const Email = ({ name, bewertungsLink, orderId }: Props) => (
+const Email = ({ name, bewertungsLink, orderId: rawOrderId, trackSig }: Props) => {
+  // Tracking nur mit gültiger Signatur, sonst normale Links ohne Tracking
+  const orderId = rawOrderId && trackSig ? rawOrderId : undefined
+  const sigParam = trackSig ? `&sig=${encodeURIComponent(trackSig)}` : ''
+  return (
   <Html lang="de" dir="ltr">
     <Head />
     <Preview>Danke für Ihre Bewertung</Preview>
