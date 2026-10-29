@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Library, Settings, ChevronLeft, Box,
   LogOut, FlaskConical, MessageSquare, Menu, X, CalendarDays, MessageCircle,
   Mail, Receipt, Smartphone, ShoppingBag, FileText, PenLine, Star,
-  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles, Sun, Moon, BookOpen, Building2, ListTodo, HardDrive, TrendingUp, Wallet } from "lucide-react";
+  ShoppingCart, FolderKanban, BarChart3, Users2, Ticket, Plus, Printer, ScanLine, Boxes, Sparkles, Sun, Moon, BookOpen, Building2, ListTodo, HardDrive, TrendingUp, Wallet, Clock } from "lucide-react";
 import { SidebarNavLink } from "@/components/SidebarNavLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -62,6 +62,7 @@ const navGroups: NavGroup[] = [
       { to: "/admin/finanzen", icon: <Receipt className={ic} />, label: "Übersicht", exact: true },
       { to: "/admin/umsatz", icon: <TrendingUp className={ic} />, label: "Umsatz-Analyse", badge: "NEU" },
       { to: "/admin/rentabilitaet", icon: <Wallet className={ic} />, label: "Rentabilität", badge: "NEU" },
+      { to: "/admin/zeiterfassung", icon: <Clock className={ic} />, label: "Zeiterfassung", badge: "NEU" },
       { to: "/admin/finanzen/abrechnungen", icon: <FileText className={ic} />, label: "Abrechnungen" },
       { to: "/admin/finanzen/neue-rechnung", icon: <PenLine className={ic} />, label: "Neue Rechnung" },
       { to: "/admin/buchhaltung", icon: <BookOpen className={ic} />, label: "Buchhaltung (EAR)", badge: "NEU" },

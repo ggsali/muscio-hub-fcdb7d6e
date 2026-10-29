@@ -12,6 +12,7 @@ import {
 import {
   ladeFixkosten, fixkostenImMonat, fixkostenSumme, FIXKOSTEN_KATEGORIEN, FIXKOSTEN_VORSCHLAEGE, type Fixkosten,
 } from "@/lib/fixkosten";
+import { ladeSchichten, stundenImMonat, formatDauer, type Schicht } from "@/lib/arbeitszeit";
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from "recharts";
 
 /** Kategorien der Ausgaben-Liste (Finanzen), die hier NICHT zählen: Material steckt in den Auftragskosten, Abos/Maschinen in den Fixkosten */
@@ -30,6 +31,7 @@ export default function RentabilitaetPage() {
   const [auftraege, setAuftraege] = useState<UmsatzAuftrag[]>([]);
   const [fixkosten, setFixkosten] = useState<Fixkosten[]>([]);
   const [ausgaben, setAusgaben] = useState<Ausgabe[]>([]);
+  const [schichten, setSchichten] = useState<Schicht[]>([]);
   const [loading, setLoading] = useState(true);
   const [neu, setNeu] = useState({ name: "", betrag: "", intervall: "monatlich", kategorie: "Software/Abos", gueltig_ab: "", gueltig_bis: "" });
 
@@ -40,6 +42,7 @@ export default function RentabilitaetPage() {
       (supabase.from as any)("ausgaben").select("id, datum, kategorie, beschreibung, betrag"),
     ]);
     setAuftraege(a);
+    ladeSchichten().then(setSchichten).catch(() => setSchichten([]));
     setFixkosten(f);
     setAusgaben(((ex.data ?? []) as any[]).map((x) => ({ ...x, betrag: Number(x.betrag) || 0 })));
     setLoading(false);
@@ -130,6 +133,15 @@ export default function RentabilitaetPage() {
       <div className={`rounded-xl border p-4 md:p-5 ${aktuell.ergebnis >= 0 ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}`}>
         <div className="text-xs text-muted-foreground">Ergebnis {monatLabel(gewaehlt, "lang")} (vor Eigenlohn)</div>
         <div className={`text-2xl md:text-3xl font-bold mt-1 ${aktuell.ergebnis >= 0 ? "text-success" : "text-destructive"}`}>{aktuell.ergebnis >= 0 ? "+" : ""}{formatCHF(aktuell.ergebnis)}</div>
+        {(() => {
+          const std = stundenImMonat(schichten, gewaehlt);
+          if (std <= 0) return null;
+          return (
+            <p className="text-sm mt-2">
+              Gearbeitet: <b>{formatDauer(std)}</b> · Stundenverdienst vor Eigenlohn: <b>{formatCHF(aktuell.ergebnis / std)}</b> pro Stunde
+            </p>
+          );
+        })()}
         <div className="mt-3">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span>Fixkosten gedeckt: {deckung.toFixed(0)} %</span>
