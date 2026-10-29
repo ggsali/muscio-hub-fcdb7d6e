@@ -260,6 +260,13 @@
       "when": 1793199426871,
       "tag": "0036_order_status_log_dokument",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793264201782,
+      "tag": "0037_parts_farbe",
+      "breakpoints": true
     }
   ]
 }
