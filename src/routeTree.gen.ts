@@ -71,6 +71,7 @@ import { Route as AdminKalkulatorTestRouteImport } from './routes/admin/kalkulat
 import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
+import { Route as AdminRentabilitaetRouteImport } from './routes/admin/rentabilitaet'
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
 import { Route as AdminServerDateienRouteImport } from './routes/admin/server-dateien'
 import { Route as AdminSliceFreigabeRouteImport } from './routes/admin/slice-freigabe'
@@ -453,6 +454,11 @@ const AdminLagerRoute = AdminLagerRouteImport.update({
 const AdminNewsletterRoute = AdminNewsletterRouteImport.update({
   id: '/newsletter',
   path: '/newsletter',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRentabilitaetRoute = AdminRentabilitaetRouteImport.update({
+  id: '/rentabilitaet',
+  path: '/rentabilitaet',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminScanRoute = AdminScanRouteImport.update({
@@ -897,6 +903,7 @@ export interface FileRoutesByFullPath {
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
+  '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
@@ -1030,6 +1037,7 @@ export interface FileRoutesByTo {
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
+  '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
@@ -1169,6 +1177,7 @@ export interface FileRoutesById {
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
+  '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
@@ -1309,6 +1318,7 @@ export interface FileRouteTypes {
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
+    | '/admin/rentabilitaet'
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
@@ -1442,6 +1452,7 @@ export interface FileRouteTypes {
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
+    | '/admin/rentabilitaet'
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
@@ -1580,6 +1591,7 @@ export interface FileRouteTypes {
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
+    | '/admin/rentabilitaet'
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
@@ -2133,6 +2145,13 @@ declare module '@tanstack/react-router' {
       path: '/newsletter'
       fullPath: '/admin/newsletter'
       preLoaderRoute: typeof AdminNewsletterRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/rentabilitaet': {
+      id: '/admin/rentabilitaet'
+      path: '/rentabilitaet'
+      fullPath: '/admin/rentabilitaet'
+      preLoaderRoute: typeof AdminRentabilitaetRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/scan': {
@@ -2771,6 +2790,7 @@ interface AdminRouteChildren {
   AdminKiOfferteRoute: typeof AdminKiOfferteRoute
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
+  AdminRentabilitaetRoute: typeof AdminRentabilitaetRoute
   AdminScanRoute: typeof AdminScanRoute
   AdminServerDateienRoute: typeof AdminServerDateienRoute
   AdminSliceFreigabeRoute: typeof AdminSliceFreigabeRoute
@@ -2810,6 +2830,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminKiOfferteRoute: AdminKiOfferteRoute,
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
+  AdminRentabilitaetRoute: AdminRentabilitaetRoute,
   AdminScanRoute: AdminScanRoute,
   AdminServerDateienRoute: AdminServerDateienRoute,
   AdminSliceFreigabeRoute: AdminSliceFreigabeRoute,
