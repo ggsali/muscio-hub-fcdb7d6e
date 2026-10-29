@@ -321,6 +321,19 @@ Deno.serve(async (req) => {
     )
   }
 
+  // Signatur für Tracking-Links (nur echte Links aus dem Mail werden gezählt)
+  if (typeof templateData.orderId === 'string' && templateData.orderId) {
+    const trackSecret = Deno.env.get('EMAIL_TRACKING_SECRET')
+    if (trackSecret) {
+      const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(trackSecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+      const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(templateData.orderId.toLowerCase())))
+      templateData = { ...templateData, trackSig: Array.from(sig).map((b) => b.toString(16).padStart(2, '0')).join('') }
+    } else {
+      const { orderId: _omit, ...rest } = templateData
+      templateData = rest
+    }
+  }
+
   // 4. Render React Email template to HTML and plain text
   const html = await renderAsync(
     React.createElement(template.component, templateData)
