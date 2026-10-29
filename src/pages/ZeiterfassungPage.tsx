@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Clock, LogIn, LogOut, Trash2, Plus, ScanLine, ChevronLeft, ChevronRight, Pencil, Check, X } from "lucide-react";
+import { useServerScan } from "@/hooks/useServerScan";
 import { monatLabel, monatVerschieben, aktuellerMonat } from "@/lib/umsatz";
 import {
   ladeSchichten, schichtStunden, formatDauer, stundenImMonat, zuLokalInput, STEMPEL_KEY, type Schicht,
@@ -85,10 +86,7 @@ export default function ZeiterfassungPage() {
     }
   };
 
-  const onScan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const wert = scan.trim();
-    setScan("");
+  const verarbeite = async (wert: string, vomServer = false) => {
     if (!wert) return;
     if (!code) {
       const { error } = await supabase.from("settings").upsert({ key: STEMPEL_KEY, value: wert }, { onConflict: "key" });
@@ -97,9 +95,35 @@ export default function ZeiterfassungPage() {
       zeigeMeldung("Stempel-Code gespeichert. Ab jetzt stempelt dieser Code.", true);
       return;
     }
+    // Vom Server-Scanner kommt der Stempel-Code gar nicht erst hierher: der Server stempelt selbst
+    if (vomServer) return;
     if (wert !== code) { zeigeMeldung("Unbekannter Code, nichts gestempelt", false); return; }
     await stempeln();
   };
+
+  const onScan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const wert = scan.trim();
+    setScan("");
+    await verarbeite(wert);
+  };
+
+  // Scanner am Server: erster Scan legt den Stempel-Code fest; Stempeln selbst macht der Server
+  useServerScan((c) => { verarbeite(c, true); });
+
+  // Der Server stempelt im Hintergrund: Anzeige live aktualisieren
+  useEffect(() => {
+    const ch = (supabase as any)
+      .channel(`arbeitszeit-live-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "arbeitszeit" }, (payload: any) => {
+        laden();
+        if (payload?.eventType === "INSERT") zeigeMeldung(`Eingestempelt um ${fmtZeit(payload.new.start_at)}`, true);
+        if (payload?.eventType === "UPDATE" && payload?.new?.ende_at && Date.now() - new Date(payload.new.ende_at).getTime() < 10000) zeigeMeldung(`Ausgestempelt um ${fmtZeit(payload.new.ende_at)}`, true);
+      })
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const codeZuruecksetzen = async () => {
     if (!confirm("Stempel-Code zurücksetzen? Der nächste Scan wird der neue Code.")) return;

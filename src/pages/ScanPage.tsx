@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { relativeTime } from "@/lib/filamentLager";
+import { useServerScan } from "@/hooks/useServerScan";
 
 // ─────────────────────────────────────────────────────────────
 // Versand-Modus
@@ -41,6 +42,8 @@ function VersandScanner() {
   const [recent, setRecent] = useState<OrderRow[]>([]);
 
   const focus = () => inputRef.current?.focus();
+  // Scanner am Server: Schritt 1 (Tracking) wie ein Scan im Feld behandeln
+  useServerScan((c) => { if (!scannedTracking) handleScan(c); });
   useEffect(() => {
     focus();
     const iv = setInterval(() => { if (!scannedTracking) focus(); }, 1500);
@@ -335,6 +338,8 @@ function FilamentScanner() {
   const [results, setResults] = useState<ScanResult[]>([]);
 
   const focus = () => inputRef.current?.focus();
+  // Scanner am Server: wie ein Scan im Feld behandeln
+  useServerScan((c) => { handle(c); });
   useEffect(() => {
     focus();
     const iv = setInterval(focus, 1500);

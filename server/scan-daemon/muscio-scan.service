@@ -1,0 +1,18 @@
+[Unit]
+Description=3DMuscio Barcode-Scan-Dienst
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=/etc/muscio-scan.env
+ExecStart=/usr/bin/python3 /opt/muscio-scan/muscio_scan.py
+Restart=always
+RestartSec=5
+User=root
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
