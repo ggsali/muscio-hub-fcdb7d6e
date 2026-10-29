@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Clock, LogIn, LogOut, Trash2, Plus, ScanLine, ChevronLeft, ChevronRight, Pencil, Check, X } from "lucide-react";
+import StempelLabel from "@/components/StempelLabel";
 import { useServerScan } from "@/hooks/useServerScan";
 import { monatLabel, monatVerschieben, aktuellerMonat } from "@/lib/umsatz";
 import {
@@ -234,6 +235,8 @@ export default function ZeiterfassungPage() {
           {" "}Die Seite muss offen und im Vordergrund sein, damit der Scan ankommt.
         </p>
       </form>
+
+      <StempelLabel code={code} onGespeichert={setCode} />
 
       <div className="grid grid-cols-3 gap-3">
         {[["Heute", heute], ["Diese Woche", woche], [monatLabel(aktuellerMonat(), "lang"), stundenImMonat(schichten, aktuellerMonat())]].map(([l, h]) => (
