@@ -54,7 +54,7 @@ interface NasInfo {
   queueItemId?: number | string | null;
   queueError?: string | null;
 }
-type NasResult = SlicerResult & { nas?: NasInfo };
+export type NasResult = SlicerResult & { nas?: NasInfo; /** Rohe Statistik des Servers (unverändert) */ rawStats?: Record<string, any> };
 
 const PRINTER_LABELS: Record<string, string> = {
   k1c: "Creality K1C",
@@ -62,7 +62,10 @@ const PRINTER_LABELS: Record<string, string> = {
   a1: "Bambu Lab A1",
 };
 
-async function sliceOnNas(file: File, layerHeight: number, infill: number, enqueue: boolean): Promise<NasResult> {
+export async function sliceOnNas(
+  file: File, layerHeight: number, infill: number, enqueue: boolean,
+  opts?: { orient?: boolean; allowSplit?: boolean },
+): Promise<NasResult> {
   // nächstliegende Schichthöhe der K1C-Profile (bei Gleichstand die gröbere)
   const quality = NAS_QUALITIES.reduce(
     (best, q) => (Math.abs(q - layerHeight) <= Math.abs(best - layerHeight) ? q : best),
@@ -73,7 +76,8 @@ async function sliceOnNas(file: File, layerHeight: number, infill: number, enque
   body.append("quality", quality.toFixed(2));
   body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
   body.append("supports", "true");
-  body.append("orient", "true");
+  body.append("orient", opts?.orient === false ? "false" : "true");
+  if (opts?.allowSplit) body.append("allow_split", "true");
   body.append("auto", "true");
   body.append("enqueue", enqueue ? "true" : "false");
   const { data: sess } = await supabase.auth.getSession();
@@ -95,6 +99,8 @@ async function sliceOnNas(file: File, layerHeight: number, infill: number, enque
     density: 1.25, // Dichte des PLA-Profils im Slicer
     layers: st.layers ?? 0,
     hasSupport: !!st.has_support,
+    rawStats: st,
+    ...(Number(json?.split?.parts ?? st?.split?.parts) >= 2 ? { splitParts: Math.min(4, Math.floor(Number(json?.split?.parts ?? st?.split?.parts))) } : {}),
     nas: json.auto
       ? {
           printer: json.auto.printer_choice?.printer ?? json.printer ?? null,

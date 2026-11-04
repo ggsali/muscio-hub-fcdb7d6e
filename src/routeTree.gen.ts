@@ -20,6 +20,7 @@ import { Route as FilamenteRouteImport } from './routes/filamente'
 import { Route as KalenderRouteImport } from './routes/kalender'
 import { Route as KalkulatorRouteImport } from './routes/kalkulator'
 import { Route as KleinserienRouteImport } from './routes/kleinserien'
+import { Route as LaborRouteImport } from './routes/labor'
 import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as LoginRouteImport } from './routes/login'
@@ -89,6 +90,8 @@ import { Route as BewertungIndexRouteImport } from './routes/bewertung.index'
 import { Route as BewertungTokenRouteImport } from './routes/bewertung.$token'
 import { Route as KundenIndexRouteImport } from './routes/kunden.index'
 import { Route as KundenIdRouteImport } from './routes/kunden.$id'
+import { Route as LaborIndexRouteImport } from './routes/labor/index'
+import { Route as LaborAblaufRouteImport } from './routes/labor/ablauf'
 import { Route as PortalIndexRouteImport } from './routes/portal/index'
 import { Route as PortalBestellungenRouteImport } from './routes/portal/bestellungen'
 import { Route as PortalDokumenteRouteImport } from './routes/portal/dokumente'
@@ -200,6 +203,11 @@ const KalkulatorRoute = KalkulatorRouteImport.update({
 const KleinserienRoute = KleinserienRouteImport.update({
   id: '/kleinserien',
   path: '/kleinserien',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaborRoute = LaborRouteImport.update({
+  id: '/labor',
+  path: '/labor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
@@ -547,6 +555,16 @@ const KundenIdRoute = KundenIdRouteImport.update({
   path: '/kunden/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LaborIndexRoute = LaborIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LaborRoute,
+} as any)
+const LaborAblaufRoute = LaborAblaufRouteImport.update({
+  id: '/ablauf',
+  path: '/ablauf',
+  getParentRoute: () => LaborRoute,
+} as any)
 const PortalIndexRoute = PortalIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -860,6 +878,7 @@ export interface FileRoutesByFullPath {
   '/kalender': typeof KalenderRoute
   '/kalkulator': typeof KalkulatorRoute
   '/kleinserien': typeof KleinserienRoute
+  '/labor': typeof LaborRouteWithChildren
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
@@ -924,6 +943,7 @@ export interface FileRoutesByFullPath {
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
   '/kunden/$id': typeof KundenIdRoute
+  '/labor/ablauf': typeof LaborAblaufRoute
   '/portal/bestellungen': typeof PortalBestellungenRoute
   '/portal/dokumente': typeof PortalDokumenteRoute
   '/portal/passwort': typeof PortalPasswortRoute
@@ -947,6 +967,7 @@ export interface FileRoutesByFullPath {
   '/auftraege/': typeof AuftraegeIndexRoute
   '/bewertung/': typeof BewertungIndexRoute
   '/kunden/': typeof KundenIndexRoute
+  '/labor/': typeof LaborIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/website-admin/': typeof WebsiteAdminIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -1059,6 +1080,7 @@ export interface FileRoutesByTo {
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
   '/kunden/$id': typeof KundenIdRoute
+  '/labor/ablauf': typeof LaborAblaufRoute
   '/portal/bestellungen': typeof PortalBestellungenRoute
   '/portal/dokumente': typeof PortalDokumenteRoute
   '/portal/passwort': typeof PortalPasswortRoute
@@ -1083,6 +1105,7 @@ export interface FileRoutesByTo {
   '/auftraege': typeof AuftraegeIndexRoute
   '/bewertung': typeof BewertungIndexRoute
   '/kunden': typeof KundenIndexRoute
+  '/labor': typeof LaborIndexRoute
   '/portal': typeof PortalIndexRoute
   '/website-admin': typeof WebsiteAdminIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -1136,6 +1159,7 @@ export interface FileRoutesById {
   '/kalender': typeof KalenderRoute
   '/kalkulator': typeof KalkulatorRoute
   '/kleinserien': typeof KleinserienRoute
+  '/labor': typeof LaborRouteWithChildren
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
@@ -1200,6 +1224,7 @@ export interface FileRoutesById {
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
   '/kunden/$id': typeof KundenIdRoute
+  '/labor/ablauf': typeof LaborAblaufRoute
   '/portal/bestellungen': typeof PortalBestellungenRoute
   '/portal/dokumente': typeof PortalDokumenteRoute
   '/portal/passwort': typeof PortalPasswortRoute
@@ -1224,6 +1249,7 @@ export interface FileRoutesById {
   '/auftraege/': typeof AuftraegeIndexRoute
   '/bewertung/': typeof BewertungIndexRoute
   '/kunden/': typeof KundenIndexRoute
+  '/labor/': typeof LaborIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/website-admin/': typeof WebsiteAdminIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -1278,6 +1304,7 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/kalkulator'
     | '/kleinserien'
+    | '/labor'
     | '/llms-full.txt'
     | '/llms.txt'
     | '/login'
@@ -1342,6 +1369,7 @@ export interface FileRouteTypes {
     | '/auftraege/$id'
     | '/bewertung/$token'
     | '/kunden/$id'
+    | '/labor/ablauf'
     | '/portal/bestellungen'
     | '/portal/dokumente'
     | '/portal/passwort'
@@ -1365,6 +1393,7 @@ export interface FileRouteTypes {
     | '/auftraege/'
     | '/bewertung/'
     | '/kunden/'
+    | '/labor/'
     | '/portal/'
     | '/website-admin/'
     | '/.lovable/oauth/consent'
@@ -1477,6 +1506,7 @@ export interface FileRouteTypes {
     | '/auftraege/$id'
     | '/bewertung/$token'
     | '/kunden/$id'
+    | '/labor/ablauf'
     | '/portal/bestellungen'
     | '/portal/dokumente'
     | '/portal/passwort'
@@ -1501,6 +1531,7 @@ export interface FileRouteTypes {
     | '/auftraege'
     | '/bewertung'
     | '/kunden'
+    | '/labor'
     | '/portal'
     | '/website-admin'
     | '/.lovable/oauth/consent'
@@ -1553,6 +1584,7 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/kalkulator'
     | '/kleinserien'
+    | '/labor'
     | '/llms-full.txt'
     | '/llms.txt'
     | '/login'
@@ -1617,6 +1649,7 @@ export interface FileRouteTypes {
     | '/auftraege/$id'
     | '/bewertung/$token'
     | '/kunden/$id'
+    | '/labor/ablauf'
     | '/portal/bestellungen'
     | '/portal/dokumente'
     | '/portal/passwort'
@@ -1641,6 +1674,7 @@ export interface FileRouteTypes {
     | '/auftraege/'
     | '/bewertung/'
     | '/kunden/'
+    | '/labor/'
     | '/portal/'
     | '/website-admin/'
     | '/.lovable/oauth/consent'
@@ -1694,6 +1728,7 @@ export interface RootRouteChildren {
   KalenderRoute: typeof KalenderRoute
   KalkulatorRoute: typeof KalkulatorRoute
   KleinserienRoute: typeof KleinserienRoute
+  LaborRoute: typeof LaborRouteWithChildren
   LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   LoginRoute: typeof LoginRoute
@@ -1800,6 +1835,13 @@ declare module '@tanstack/react-router' {
       path: '/kleinserien'
       fullPath: '/kleinserien'
       preLoaderRoute: typeof KleinserienRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/labor': {
+      id: '/labor'
+      path: '/labor'
+      fullPath: '/labor'
+      preLoaderRoute: typeof LaborRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/llms-full.txt': {
@@ -2284,6 +2326,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/kunden/$id'
       preLoaderRoute: typeof KundenIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/labor/': {
+      id: '/labor/'
+      path: '/'
+      fullPath: '/labor/'
+      preLoaderRoute: typeof LaborIndexRouteImport
+      parentRoute: typeof LaborRoute
+    }
+    '/labor/ablauf': {
+      id: '/labor/ablauf'
+      path: '/ablauf'
+      fullPath: '/labor/ablauf'
+      preLoaderRoute: typeof LaborAblaufRouteImport
+      parentRoute: typeof LaborRoute
     }
     '/portal/': {
       id: '/portal/'
@@ -2878,6 +2934,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface LaborRouteChildren {
+  LaborAblaufRoute: typeof LaborAblaufRoute
+  LaborIndexRoute: typeof LaborIndexRoute
+}
+
+const LaborRouteChildren: LaborRouteChildren = {
+  LaborAblaufRoute: LaborAblaufRoute,
+  LaborIndexRoute: LaborIndexRoute,
+}
+
+const LaborRouteWithChildren = LaborRoute._addFileChildren(LaborRouteChildren)
+
 interface PortalRouteChildren {
   PortalBestellungenRoute: typeof PortalBestellungenRoute
   PortalDokumenteRoute: typeof PortalDokumenteRoute
@@ -2951,6 +3019,7 @@ const rootRouteChildren: RootRouteChildren = {
   KalenderRoute: KalenderRoute,
   KalkulatorRoute: KalkulatorRoute,
   KleinserienRoute: KleinserienRoute,
+  LaborRoute: LaborRouteWithChildren,
   LlmsFullDottxtRoute: LlmsFullDottxtRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   LoginRoute: LoginRoute,

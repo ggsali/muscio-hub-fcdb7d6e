@@ -115,6 +115,8 @@ serve(async (req) => {
     }
     out.append("supports", form.get("supports") === "false" ? "false" : "true");
     out.append("orient", form.get("orient") === "false" ? "false" : "true");
+    // allow_split: Modelle, die auf keinen Drucker passen, werden in gleich grosse Stücke geteilt (nur auf Wunsch, z. B. im Labor)
+    if (form.get("allow_split") === "true") out.append("allow_split", "true");
     out.append("reference", `test-${uid!.slice(0, 8)}`);
 
     let res: Response;
