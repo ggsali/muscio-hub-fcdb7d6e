@@ -1828,6 +1828,7 @@ export type Database = {
           bewertungslink_geklickt_at: string | null
           bewertungsmail_geoeffnet_at: string | null
           bewertungsmail_gesendet_at: string | null
+          bezahlt_am: string | null
           created_at: string | null
           customer_id: string | null
           datum: string | null
@@ -1873,6 +1874,7 @@ export type Database = {
           bewertungslink_geklickt_at?: string | null
           bewertungsmail_geoeffnet_at?: string | null
           bewertungsmail_gesendet_at?: string | null
+          bezahlt_am?: string | null
           created_at?: string | null
           customer_id?: string | null
           datum?: string | null
@@ -1918,6 +1920,7 @@ export type Database = {
           bewertungslink_geklickt_at?: string | null
           bewertungsmail_geoeffnet_at?: string | null
           bewertungsmail_gesendet_at?: string | null
+          bezahlt_am?: string | null
           created_at?: string | null
           customer_id?: string | null
           datum?: string | null

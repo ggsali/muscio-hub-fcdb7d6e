@@ -288,6 +288,13 @@
       "when": 1793272658265,
       "tag": "0040_scan_events",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793786057543,
+      "tag": "0041_orders_bezahlt_am",
+      "breakpoints": true
     }
   ]
 }
