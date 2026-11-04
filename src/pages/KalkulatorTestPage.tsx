@@ -1,4 +1,5 @@
 import { slicerErrorMessage } from "@/lib/slicerError";
+import { saveLabJob } from "@/lib/labor";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { takePendingUploads } from "@/lib/pendingUpload";
@@ -34,12 +35,12 @@ import {
 
 
 // ============================================================================
-// ADMIN-TESTVERSION des Website-Kalkulators (nur unter /admin/kalkulator-test)
+// LABOR-TESTVERSION des Website-Kalkulators (nur unter /labor/kalkulator)
 // - genauer Slice läuft über den Auto-Slicer auf dem NAS (Edge Function slicer-test)
 // - es wird nichts in Datenbank/Storage geschrieben, kein Tracking, keine Anfrage gesendet
 // ============================================================================
-// Veränderbar: mit dem Schalter im Banner werden echte Anfragen (Upload, Speichern, Mail) möglich.
-let TEST_MODE = true;
+// Im Labor immer aktiv: kein Upload, keine Anfrage, kein Tracking, keine Mails, keine Queue.
+const TEST_MODE: boolean = true;
 const SLICER_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slicer-test`;
 const NAS_QUALITIES = [0.08, 0.12, 0.16, 0.2];
 
@@ -396,12 +397,6 @@ const MATERIAL_HINTS: Record<string, string> = {
 
 const KalkulatorTestPage = () => {
   const [step, setStep] = useState(1);
-  // Testschalter: Teile wirklich in die SimplyPrint-Queue stellen (Standard: nur Probelauf)
-  const [realMode, setRealMode] = useState(false);
-  TEST_MODE = !realMode;
-  const [nasEnqueue, setNasEnqueue] = useState(false);
-  const nasEnqueueRef = useRef(false);
-  useEffect(() => { nasEnqueueRef.current = nasEnqueue; }, [nasEnqueue]);
   const [parts, setParts] = useState<Part[]>([]);
   const [allMaterials, setMaterials] = useState<Material[]>([]);
   const resinEnabled = useResinEnabled();
@@ -838,10 +833,24 @@ const KalkulatorTestPage = () => {
     try {
       if (!part.file) throw new Error("Datei fehlt");
       const result = rescaleForMaterial(
-        await sliceOnNas(part.file, quality.layerHeight, quality.infill, nasEnqueueRef.current),
+        await sliceOnNas(part.file, quality.layerHeight, quality.infill, false),
         mat?.density,
       );
       console.log("[Slicer]", result);
+      void saveLabJob({
+        kind: "kalkulator",
+        filename: part.file.name,
+        settings: { layerHeight: quality.layerHeight, infill: quality.infill, material: mat?.name ?? null },
+        result: {
+          printTimeMinutes: result.printTimeMinutes,
+          filamentGrams: result.filamentGrams,
+          layers: result.layers,
+          hasSupport: result.hasSupport,
+          splitParts: result.splitParts ?? null,
+          orientation: result.orientation ?? null,
+          nas: (result as NasResult).nas ?? null,
+        },
+      });
       sliceCache.current.set(cacheKey, result);
       setParts((prev) => prev.map((p) => p.id === partId
         ? {
@@ -1721,28 +1730,12 @@ const KalkulatorTestPage = () => {
   return (
     <div className="pb-20">
       <Seo
-        title="Kalkulator-Test (Admin) | 3DMuscio"
+        title="Kalkulator-Test (Labor) | 3DMuscio"
         description="Berechnen Sie Ihren 3D Druckauftrag sofort und kostenlos. Preis in Sekunden, kein Anmelden nötig. FDM & SLA Druck ab CHF 5.– | 3DMuscio Schweiz"
-        path="/admin/kalkulator-test"
+        path="/labor/kalkulator"
       />
       <div className="bg-amber-500/15 border-b border-amber-500/40 text-sm px-4 py-2 text-center">
-        TESTVERSION (nur Admin): Slicen nur über den NAS (Druckerwahl K1C/K1, Einschätzung, PLA), kein Browser-Slicer. Ohne Häkchen «Echte Anfrage» wird nichts gespeichert und keine Anfrage gesendet.
-        <label className="mt-1 flex items-center justify-center gap-2 text-xs font-medium">
-          <input
-            type="checkbox"
-            checked={realMode}
-            onChange={(e) => setRealMode(e.target.checked)}
-          />
-          Echte Anfrage senden (Dateien hochladen, Anfrage speichern, Mails). Vor dem Hochladen der Datei anhaken!
-        </label>
-        <label className="mt-1 flex items-center justify-center gap-2 text-xs">
-          <input
-            type="checkbox"
-            checked={nasEnqueue}
-            onChange={(e) => setNasEnqueue(e.target.checked)}
-          />
-          Einfache Teile wirklich in die SimplyPrint-Queue stellen (sie druckt dann!). Gilt für neue Berechnungen; ohne Häkchen nur Probelauf.
-        </label>
+        TESTVERSION (Labor): Slicen nur über den NAS (Druckerwahl, Einschätzung, PLA), kein Browser-Slicer. Es wird nichts an Kunden gesendet, nichts in die Queue gestellt und nur das Ergebnis im Testprotokoll gespeichert.
       </div>
 
       {!submitted && (

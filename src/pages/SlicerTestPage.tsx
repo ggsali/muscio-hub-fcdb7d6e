@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { saveLabJob } from "@/lib/labor";
 import { useSettings } from "@/contexts/SettingsContext";
 import { calcUmsatz, calcKosten, calcGewinn, calcMarge, formatCHF, formatPct } from "@/lib/calc";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,12 @@ export default function SlicerTestPage() {
       }
       const r = data as SliceResult;
       setResult(r);
+      void saveLabJob({
+        kind: "slicer",
+        filename: file.name,
+        settings: { quality, infill: infill.trim() || null, walls: walls.trim() || null, supports, orient },
+        result: { job_id: r.job_id, printer: r.printer, quality: r.quality, slice_seconds: r.slice_seconds ?? null, stats: r.stats ?? null },
+      });
       // Werte automatisch in den Kalkulator übernehmen
       if (r.stats?.filament_g != null) setGewicht(Math.round(r.stats.filament_g * 10) / 10);
       if (r.stats?.print_time_s != null) setDruckzeit(Math.round((r.stats.print_time_s / 3600) * 100) / 100);

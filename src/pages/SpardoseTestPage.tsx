@@ -24,7 +24,7 @@ const Slider = (props: React.ComponentProps<typeof BaseSlider>) => (
   <BaseSlider {...props} className={cn("[&>span:first-child]:bg-muted [&>span:first-child]:border [&>span:first-child]:border-border", props.className)} />
 );
 
-// ADMIN-TESTVERSION des Spardose-Generators (nur unter /admin/spardose-test)
+// ADMIN-TESTVERSION des Spardose-Generators (nur unter /labor/spardose)
 
 
 type ViewName = "front" | "back" | "left" | "right" | "top" | "bottom" | "iso";

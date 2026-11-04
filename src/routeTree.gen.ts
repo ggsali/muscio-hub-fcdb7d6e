@@ -20,6 +20,7 @@ import { Route as FilamenteRouteImport } from './routes/filamente'
 import { Route as KalenderRouteImport } from './routes/kalender'
 import { Route as KalkulatorRouteImport } from './routes/kalkulator'
 import { Route as KleinserienRouteImport } from './routes/kleinserien'
+import { Route as LaborRouteImport } from './routes/labor'
 import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
 import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as LoginRouteImport } from './routes/login'
@@ -67,7 +68,6 @@ import { Route as AdminFilamentverbrauchRouteImport } from './routes/admin/filam
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
-import { Route as AdminKalkulatorTestRouteImport } from './routes/admin/kalkulator-test'
 import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
@@ -75,8 +75,6 @@ import { Route as AdminRentabilitaetRouteImport } from './routes/admin/rentabili
 import { Route as AdminScanRouteImport } from './routes/admin/scan'
 import { Route as AdminServerDateienRouteImport } from './routes/admin/server-dateien'
 import { Route as AdminSliceFreigabeRouteImport } from './routes/admin/slice-freigabe'
-import { Route as AdminSlicerTestRouteImport } from './routes/admin/slicer-test'
-import { Route as AdminSpardoseTestRouteImport } from './routes/admin/spardose-test'
 import { Route as AdminStadtmodelleRouteImport } from './routes/admin/stadtmodelle'
 import { Route as AdminTeileRouteImport } from './routes/admin/teile'
 import { Route as AdminTodosRouteImport } from './routes/admin/todos'
@@ -89,6 +87,10 @@ import { Route as BewertungIndexRouteImport } from './routes/bewertung.index'
 import { Route as BewertungTokenRouteImport } from './routes/bewertung.$token'
 import { Route as KundenIndexRouteImport } from './routes/kunden.index'
 import { Route as KundenIdRouteImport } from './routes/kunden.$id'
+import { Route as LaborIndexRouteImport } from './routes/labor/index'
+import { Route as LaborKalkulatorRouteImport } from './routes/labor/kalkulator'
+import { Route as LaborSlicerRouteImport } from './routes/labor/slicer'
+import { Route as LaborSpardoseRouteImport } from './routes/labor/spardose'
 import { Route as PortalIndexRouteImport } from './routes/portal/index'
 import { Route as PortalBestellungenRouteImport } from './routes/portal/bestellungen'
 import { Route as PortalDokumenteRouteImport } from './routes/portal/dokumente'
@@ -200,6 +202,11 @@ const KalkulatorRoute = KalkulatorRouteImport.update({
 const KleinserienRoute = KleinserienRouteImport.update({
   id: '/kleinserien',
   path: '/kleinserien',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaborRoute = LaborRouteImport.update({
+  id: '/labor',
+  path: '/labor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
@@ -437,11 +444,6 @@ const AdminKalkulatorRoute = AdminKalkulatorRouteImport.update({
   path: '/kalkulator',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminKalkulatorTestRoute = AdminKalkulatorTestRouteImport.update({
-  id: '/kalkulator-test',
-  path: '/kalkulator-test',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminKiOfferteRoute = AdminKiOfferteRouteImport.update({
   id: '/ki-offerte',
   path: '/ki-offerte',
@@ -475,16 +477,6 @@ const AdminServerDateienRoute = AdminServerDateienRouteImport.update({
 const AdminSliceFreigabeRoute = AdminSliceFreigabeRouteImport.update({
   id: '/slice-freigabe',
   path: '/slice-freigabe',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSlicerTestRoute = AdminSlicerTestRouteImport.update({
-  id: '/slicer-test',
-  path: '/slicer-test',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSpardoseTestRoute = AdminSpardoseTestRouteImport.update({
-  id: '/spardose-test',
-  path: '/spardose-test',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminStadtmodelleRoute = AdminStadtmodelleRouteImport.update({
@@ -546,6 +538,26 @@ const KundenIdRoute = KundenIdRouteImport.update({
   id: '/kunden/$id',
   path: '/kunden/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LaborIndexRoute = LaborIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LaborRoute,
+} as any)
+const LaborKalkulatorRoute = LaborKalkulatorRouteImport.update({
+  id: '/kalkulator',
+  path: '/kalkulator',
+  getParentRoute: () => LaborRoute,
+} as any)
+const LaborSlicerRoute = LaborSlicerRouteImport.update({
+  id: '/slicer',
+  path: '/slicer',
+  getParentRoute: () => LaborRoute,
+} as any)
+const LaborSpardoseRoute = LaborSpardoseRouteImport.update({
+  id: '/spardose',
+  path: '/spardose',
+  getParentRoute: () => LaborRoute,
 } as any)
 const PortalIndexRoute = PortalIndexRouteImport.update({
   id: '/',
@@ -860,6 +872,7 @@ export interface FileRoutesByFullPath {
   '/kalender': typeof KalenderRoute
   '/kalkulator': typeof KalkulatorRoute
   '/kleinserien': typeof KleinserienRoute
+  '/labor': typeof LaborRouteWithChildren
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
@@ -905,7 +918,6 @@ export interface FileRoutesByFullPath {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
-  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
@@ -913,8 +925,6 @@ export interface FileRoutesByFullPath {
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
-  '/admin/slicer-test': typeof AdminSlicerTestRoute
-  '/admin/spardose-test': typeof AdminSpardoseTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
@@ -924,6 +934,9 @@ export interface FileRoutesByFullPath {
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
   '/kunden/$id': typeof KundenIdRoute
+  '/labor/kalkulator': typeof LaborKalkulatorRoute
+  '/labor/slicer': typeof LaborSlicerRoute
+  '/labor/spardose': typeof LaborSpardoseRoute
   '/portal/bestellungen': typeof PortalBestellungenRoute
   '/portal/dokumente': typeof PortalDokumenteRoute
   '/portal/passwort': typeof PortalPasswortRoute
@@ -947,6 +960,7 @@ export interface FileRoutesByFullPath {
   '/auftraege/': typeof AuftraegeIndexRoute
   '/bewertung/': typeof BewertungIndexRoute
   '/kunden/': typeof KundenIndexRoute
+  '/labor/': typeof LaborIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/website-admin/': typeof WebsiteAdminIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -1040,7 +1054,6 @@ export interface FileRoutesByTo {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
-  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
@@ -1048,8 +1061,6 @@ export interface FileRoutesByTo {
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
-  '/admin/slicer-test': typeof AdminSlicerTestRoute
-  '/admin/spardose-test': typeof AdminSpardoseTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
@@ -1059,6 +1070,9 @@ export interface FileRoutesByTo {
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
   '/kunden/$id': typeof KundenIdRoute
+  '/labor/kalkulator': typeof LaborKalkulatorRoute
+  '/labor/slicer': typeof LaborSlicerRoute
+  '/labor/spardose': typeof LaborSpardoseRoute
   '/portal/bestellungen': typeof PortalBestellungenRoute
   '/portal/dokumente': typeof PortalDokumenteRoute
   '/portal/passwort': typeof PortalPasswortRoute
@@ -1083,6 +1097,7 @@ export interface FileRoutesByTo {
   '/auftraege': typeof AuftraegeIndexRoute
   '/bewertung': typeof BewertungIndexRoute
   '/kunden': typeof KundenIndexRoute
+  '/labor': typeof LaborIndexRoute
   '/portal': typeof PortalIndexRoute
   '/website-admin': typeof WebsiteAdminIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -1136,6 +1151,7 @@ export interface FileRoutesById {
   '/kalender': typeof KalenderRoute
   '/kalkulator': typeof KalkulatorRoute
   '/kleinserien': typeof KleinserienRoute
+  '/labor': typeof LaborRouteWithChildren
   '/llms-full.txt': typeof LlmsFullDottxtRoute
   '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
@@ -1181,7 +1197,6 @@ export interface FileRoutesById {
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
-  '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
@@ -1189,8 +1204,6 @@ export interface FileRoutesById {
   '/admin/scan': typeof AdminScanRoute
   '/admin/server-dateien': typeof AdminServerDateienRoute
   '/admin/slice-freigabe': typeof AdminSliceFreigabeRoute
-  '/admin/slicer-test': typeof AdminSlicerTestRoute
-  '/admin/spardose-test': typeof AdminSpardoseTestRoute
   '/admin/stadtmodelle': typeof AdminStadtmodelleRoute
   '/admin/teile': typeof AdminTeileRoute
   '/admin/todos': typeof AdminTodosRoute
@@ -1200,6 +1213,9 @@ export interface FileRoutesById {
   '/auftraege/$id': typeof AuftraegeIdRoute
   '/bewertung/$token': typeof BewertungTokenRoute
   '/kunden/$id': typeof KundenIdRoute
+  '/labor/kalkulator': typeof LaborKalkulatorRoute
+  '/labor/slicer': typeof LaborSlicerRoute
+  '/labor/spardose': typeof LaborSpardoseRoute
   '/portal/bestellungen': typeof PortalBestellungenRoute
   '/portal/dokumente': typeof PortalDokumenteRoute
   '/portal/passwort': typeof PortalPasswortRoute
@@ -1224,6 +1240,7 @@ export interface FileRoutesById {
   '/auftraege/': typeof AuftraegeIndexRoute
   '/bewertung/': typeof BewertungIndexRoute
   '/kunden/': typeof KundenIndexRoute
+  '/labor/': typeof LaborIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/website-admin/': typeof WebsiteAdminIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -1278,6 +1295,7 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/kalkulator'
     | '/kleinserien'
+    | '/labor'
     | '/llms-full.txt'
     | '/llms.txt'
     | '/login'
@@ -1323,7 +1341,6 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
-    | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
@@ -1331,8 +1348,6 @@ export interface FileRouteTypes {
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
-    | '/admin/slicer-test'
-    | '/admin/spardose-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/todos'
@@ -1342,6 +1357,9 @@ export interface FileRouteTypes {
     | '/auftraege/$id'
     | '/bewertung/$token'
     | '/kunden/$id'
+    | '/labor/kalkulator'
+    | '/labor/slicer'
+    | '/labor/spardose'
     | '/portal/bestellungen'
     | '/portal/dokumente'
     | '/portal/passwort'
@@ -1365,6 +1383,7 @@ export interface FileRouteTypes {
     | '/auftraege/'
     | '/bewertung/'
     | '/kunden/'
+    | '/labor/'
     | '/portal/'
     | '/website-admin/'
     | '/.lovable/oauth/consent'
@@ -1458,7 +1477,6 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
-    | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
@@ -1466,8 +1484,6 @@ export interface FileRouteTypes {
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
-    | '/admin/slicer-test'
-    | '/admin/spardose-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/todos'
@@ -1477,6 +1493,9 @@ export interface FileRouteTypes {
     | '/auftraege/$id'
     | '/bewertung/$token'
     | '/kunden/$id'
+    | '/labor/kalkulator'
+    | '/labor/slicer'
+    | '/labor/spardose'
     | '/portal/bestellungen'
     | '/portal/dokumente'
     | '/portal/passwort'
@@ -1501,6 +1520,7 @@ export interface FileRouteTypes {
     | '/auftraege'
     | '/bewertung'
     | '/kunden'
+    | '/labor'
     | '/portal'
     | '/website-admin'
     | '/.lovable/oauth/consent'
@@ -1553,6 +1573,7 @@ export interface FileRouteTypes {
     | '/kalender'
     | '/kalkulator'
     | '/kleinserien'
+    | '/labor'
     | '/llms-full.txt'
     | '/llms.txt'
     | '/login'
@@ -1598,7 +1619,6 @@ export interface FileRouteTypes {
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
-    | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
     | '/admin/lager'
     | '/admin/newsletter'
@@ -1606,8 +1626,6 @@ export interface FileRouteTypes {
     | '/admin/scan'
     | '/admin/server-dateien'
     | '/admin/slice-freigabe'
-    | '/admin/slicer-test'
-    | '/admin/spardose-test'
     | '/admin/stadtmodelle'
     | '/admin/teile'
     | '/admin/todos'
@@ -1617,6 +1635,9 @@ export interface FileRouteTypes {
     | '/auftraege/$id'
     | '/bewertung/$token'
     | '/kunden/$id'
+    | '/labor/kalkulator'
+    | '/labor/slicer'
+    | '/labor/spardose'
     | '/portal/bestellungen'
     | '/portal/dokumente'
     | '/portal/passwort'
@@ -1641,6 +1662,7 @@ export interface FileRouteTypes {
     | '/auftraege/'
     | '/bewertung/'
     | '/kunden/'
+    | '/labor/'
     | '/portal/'
     | '/website-admin/'
     | '/.lovable/oauth/consent'
@@ -1694,6 +1716,7 @@ export interface RootRouteChildren {
   KalenderRoute: typeof KalenderRoute
   KalkulatorRoute: typeof KalkulatorRoute
   KleinserienRoute: typeof KleinserienRoute
+  LaborRoute: typeof LaborRouteWithChildren
   LlmsFullDottxtRoute: typeof LlmsFullDottxtRoute
   LlmsDottxtRoute: typeof LlmsDottxtRoute
   LoginRoute: typeof LoginRoute
@@ -1800,6 +1823,13 @@ declare module '@tanstack/react-router' {
       path: '/kleinserien'
       fullPath: '/kleinserien'
       preLoaderRoute: typeof KleinserienRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/labor': {
+      id: '/labor'
+      path: '/labor'
+      fullPath: '/labor'
+      preLoaderRoute: typeof LaborRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/llms-full.txt': {
@@ -2131,13 +2161,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminKalkulatorRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/kalkulator-test': {
-      id: '/admin/kalkulator-test'
-      path: '/kalkulator-test'
-      fullPath: '/admin/kalkulator-test'
-      preLoaderRoute: typeof AdminKalkulatorTestRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/ki-offerte': {
       id: '/admin/ki-offerte'
       path: '/ki-offerte'
@@ -2185,20 +2208,6 @@ declare module '@tanstack/react-router' {
       path: '/slice-freigabe'
       fullPath: '/admin/slice-freigabe'
       preLoaderRoute: typeof AdminSliceFreigabeRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/slicer-test': {
-      id: '/admin/slicer-test'
-      path: '/slicer-test'
-      fullPath: '/admin/slicer-test'
-      preLoaderRoute: typeof AdminSlicerTestRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/spardose-test': {
-      id: '/admin/spardose-test'
-      path: '/spardose-test'
-      fullPath: '/admin/spardose-test'
-      preLoaderRoute: typeof AdminSpardoseTestRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/stadtmodelle': {
@@ -2284,6 +2293,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/kunden/$id'
       preLoaderRoute: typeof KundenIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/labor/': {
+      id: '/labor/'
+      path: '/'
+      fullPath: '/labor/'
+      preLoaderRoute: typeof LaborIndexRouteImport
+      parentRoute: typeof LaborRoute
+    }
+    '/labor/kalkulator': {
+      id: '/labor/kalkulator'
+      path: '/kalkulator'
+      fullPath: '/labor/kalkulator'
+      preLoaderRoute: typeof LaborKalkulatorRouteImport
+      parentRoute: typeof LaborRoute
+    }
+    '/labor/slicer': {
+      id: '/labor/slicer'
+      path: '/slicer'
+      fullPath: '/labor/slicer'
+      preLoaderRoute: typeof LaborSlicerRouteImport
+      parentRoute: typeof LaborRoute
+    }
+    '/labor/spardose': {
+      id: '/labor/spardose'
+      path: '/spardose'
+      fullPath: '/labor/spardose'
+      preLoaderRoute: typeof LaborSpardoseRouteImport
+      parentRoute: typeof LaborRoute
     }
     '/portal/': {
       id: '/portal/'
@@ -2805,7 +2842,6 @@ interface AdminRouteChildren {
   AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
-  AdminKalkulatorTestRoute: typeof AdminKalkulatorTestRoute
   AdminKiOfferteRoute: typeof AdminKiOfferteRoute
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
@@ -2813,8 +2849,6 @@ interface AdminRouteChildren {
   AdminScanRoute: typeof AdminScanRoute
   AdminServerDateienRoute: typeof AdminServerDateienRoute
   AdminSliceFreigabeRoute: typeof AdminSliceFreigabeRoute
-  AdminSlicerTestRoute: typeof AdminSlicerTestRoute
-  AdminSpardoseTestRoute: typeof AdminSpardoseTestRoute
   AdminStadtmodelleRoute: typeof AdminStadtmodelleRoute
   AdminTeileRoute: typeof AdminTeileRoute
   AdminTodosRoute: typeof AdminTodosRoute
@@ -2846,7 +2880,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
-  AdminKalkulatorTestRoute: AdminKalkulatorTestRoute,
   AdminKiOfferteRoute: AdminKiOfferteRoute,
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
@@ -2854,8 +2887,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminScanRoute: AdminScanRoute,
   AdminServerDateienRoute: AdminServerDateienRoute,
   AdminSliceFreigabeRoute: AdminSliceFreigabeRoute,
-  AdminSlicerTestRoute: AdminSlicerTestRoute,
-  AdminSpardoseTestRoute: AdminSpardoseTestRoute,
   AdminStadtmodelleRoute: AdminStadtmodelleRoute,
   AdminTeileRoute: AdminTeileRoute,
   AdminTodosRoute: AdminTodosRoute,
@@ -2877,6 +2908,22 @@ const AdminRouteChildren: AdminRouteChildren = {
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface LaborRouteChildren {
+  LaborKalkulatorRoute: typeof LaborKalkulatorRoute
+  LaborSlicerRoute: typeof LaborSlicerRoute
+  LaborSpardoseRoute: typeof LaborSpardoseRoute
+  LaborIndexRoute: typeof LaborIndexRoute
+}
+
+const LaborRouteChildren: LaborRouteChildren = {
+  LaborKalkulatorRoute: LaborKalkulatorRoute,
+  LaborSlicerRoute: LaborSlicerRoute,
+  LaborSpardoseRoute: LaborSpardoseRoute,
+  LaborIndexRoute: LaborIndexRoute,
+}
+
+const LaborRouteWithChildren = LaborRoute._addFileChildren(LaborRouteChildren)
 
 interface PortalRouteChildren {
   PortalBestellungenRoute: typeof PortalBestellungenRoute
@@ -2951,6 +2998,7 @@ const rootRouteChildren: RootRouteChildren = {
   KalenderRoute: KalenderRoute,
   KalkulatorRoute: KalkulatorRoute,
   KleinserienRoute: KleinserienRoute,
+  LaborRoute: LaborRouteWithChildren,
   LlmsFullDottxtRoute: LlmsFullDottxtRoute,
   LlmsDottxtRoute: LlmsDottxtRoute,
   LoginRoute: LoginRoute,
@@ -2982,13 +3030,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

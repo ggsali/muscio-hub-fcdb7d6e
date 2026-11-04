@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ShieldCheck, ShieldAlert } from "lucide-react";
 
-export default function AdminGate() {
+export default function AdminGate({ Layout = AppLayout }: { Layout?: React.ComponentType } = {}) {
   useNoIndex();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -136,5 +136,5 @@ export default function AdminGate() {
     );
   }
 
-  return <AppLayout />;
+  return <Layout />;
 }
