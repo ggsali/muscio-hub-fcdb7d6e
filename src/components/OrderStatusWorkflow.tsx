@@ -183,6 +183,9 @@ export default function OrderStatusWorkflow({
 
   const commitStatus = async (newStatus: string, notiz: string | null) => {
     await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: newStatus, notiz });
+    if (newStatus === "Bezahlt") {
+      await (supabase.from as any)("orders").update({ bezahlt_am: new Date().toISOString().slice(0, 10) }).eq("id", orderId).is("bezahlt_am", null);
+    }
     onStatusChange(newStatus);
     await loadLog();
     setShowTrackingInput(false);

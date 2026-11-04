@@ -184,7 +184,7 @@ export default function UmsatzAnalysePage() {
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium truncate">{a.name}</div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {a.kunde} · {new Date(a.zahlDatum).toLocaleDateString("de-CH")}{a.zahlDatumQuelle === "auftrag" ? " (Auftragsdatum)" : ""}
+                        {a.kunde} · {new Date(a.zahlDatum).toLocaleDateString("de-CH")}{a.zahlDatumQuelle === "auftrag" ? " (Zahlungsdatum unbekannt, Auftragsdatum verwendet)" : ""}
                       </div>
                     </div>
                     <StatusBadge status={a.status} />

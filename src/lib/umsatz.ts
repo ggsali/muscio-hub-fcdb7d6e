@@ -3,8 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Einheitliche Umsatz-Definition für Dashboard, Finanzen und Umsatz-Analyse:
  * Umsatz zählt, sobald ein Auftrag bezahlt ist (Status ab "Bezahlt"), ohne Anfrage, Offerte und Storniert.
- * Der Monat richtet sich nach dem Zahlungsdatum (erster Statuswechsel auf "Bezahlt" im Verlauf);
- * fehlt der Eintrag, gilt das Auftragsdatum.
+ * Der Monat richtet sich nach dem Zahlungsdatum, nie nach dem Auftragsmonat:
+ * 1. orders.bezahlt_am (von dir eingetragen oder beim Bestätigen der Zahlung gesetzt)
+ * 2. sonst der erste Verlaufs-Eintrag ab Status "Bezahlt"
+ * 3. nur wenn beides fehlt, ersatzweise das Auftragsdatum (in der Analyse als "Zahlungsdatum unbekannt" markiert).
  */
 export const UMSATZ_STATUS = [
   "Bezahlt", "Im Druck", "In Bearbeitung", "Qualitätsprüfung", "Versandt", "Geliefert", "Abgeschlossen",
@@ -23,7 +25,7 @@ export interface UmsatzAuftrag {
   kunde: string;
   /** Datum, nach dem der Monat zugeordnet wird (lokal, YYYY-MM-DD) */
   zahlDatum: string;
-  zahlDatumQuelle: "zahlung" | "auftrag";
+  zahlDatumQuelle: "manuell" | "zahlung" | "auftrag";
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -64,17 +66,18 @@ function kundeName(c: any): string {
 /** Lädt alle Aufträge, die zum Umsatz zählen, mit Zahlungsdatum */
 export async function ladeUmsatzAuftraege(): Promise<UmsatzAuftrag[]> {
   const [{ data: orders }, { data: logs }] = await Promise.all([
-    supabase.from("orders")
-      .select("id, name, beschreibung, datum, created_at, status, umsatz_total, kosten_total, gewinn_total, customers(name, vorname, firma, email)")
+    (supabase.from as any)("orders")
+      .select("id, name, beschreibung, datum, bezahlt_am, created_at, status, umsatz_total, kosten_total, gewinn_total, customers(name, vorname, firma, email)")
       .in("status", UMSATZ_STATUS),
-    (supabase.from as any)("order_status_log").select("order_id, created_at").eq("status", "Bezahlt").order("created_at", { ascending: true }),
+    (supabase.from as any)("order_status_log").select("order_id, created_at").in("status", UMSATZ_STATUS).order("created_at", { ascending: true }),
   ]);
   const zahl = new Map<string, string>();
   for (const l of (logs ?? []) as { order_id: string; created_at: string }[]) {
     if (!zahl.has(l.order_id)) zahl.set(l.order_id, lokalesDatum(new Date(l.created_at)));
   }
   return ((orders ?? []) as any[]).map((o) => {
-    const ausLog = zahl.get(o.id);
+    const manuell = (o.bezahlt_am as string | null) || null;
+    const ausLog = manuell ? undefined : zahl.get(o.id);
     const auftragsDatum = (o.datum as string | null) || (o.created_at ? lokalesDatum(new Date(o.created_at)) : lokalesDatum(new Date()));
     const umsatz = Number(o.umsatz_total) || 0;
     const kosten = Number(o.kosten_total) || 0;
@@ -87,8 +90,8 @@ export async function ladeUmsatzAuftraege(): Promise<UmsatzAuftrag[]> {
       kosten,
       gewinn: o.gewinn_total != null ? Number(o.gewinn_total) || 0 : umsatz - kosten,
       kunde: kundeName(o.customers),
-      zahlDatum: ausLog ?? auftragsDatum,
-      zahlDatumQuelle: ausLog ? "zahlung" : "auftrag",
+      zahlDatum: manuell ?? ausLog ?? auftragsDatum,
+      zahlDatumQuelle: manuell ? "manuell" : ausLog ? "zahlung" : "auftrag",
     } as UmsatzAuftrag;
   });
 }

@@ -1,3 +1,4 @@
+import BezahltAmFeld from "@/components/BezahltAmFeld";
 import React, { useEffect, useRef, useState } from "react";
 import { filamentFarben } from "@/lib/filamentFarben";
 import JSZip from "jszip";
@@ -306,6 +307,9 @@ export default function AuftragDetailPage() {
   const applyManualStatus = async () => {
     if (!id || !manualStatus) return;
     const { error } = await supabase.from("orders").update({ status: manualStatus } as any).eq("id", id);
+    if (!error && manualStatus === "Bezahlt") {
+      await (supabase.from as any)("orders").update({ bezahlt_am: new Date().toISOString().slice(0, 10) }).eq("id", id).is("bezahlt_am", null);
+    }
     if (error) { toast({ title: "Fehler", description: error.message, variant: "destructive" }); return; }
     setStatus(manualStatus);
     await logAction(manualStatus, "Status manuell korrigiert");
@@ -2442,6 +2446,7 @@ export default function AuftragDetailPage() {
                 <Label>Datum</Label>
                 <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} className="bg-input border-border" />
               </div>
+              {!isNew && id && <BezahltAmFeld orderId={id} status={status} />}
               {!isNew && (
                 <>
                   <div className="grid grid-cols-2 gap-3">
