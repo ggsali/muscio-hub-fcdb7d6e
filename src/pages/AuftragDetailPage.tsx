@@ -2176,6 +2176,7 @@ export default function AuftragDetailPage() {
               customerId={customerId || undefined}
               paketGroesse={paketGroesse}
               onStatusChange={setStatus}
+              logReloadKey={logReload}
               onTrackingNrChange={setTrackingNr}
               buildLieferschein={async (tn) => {
                 const c = await getCustomerData();
@@ -3181,6 +3182,7 @@ export default function AuftragDetailPage() {
             customerId={customerId || undefined}
             paketGroesse={paketGroesse}
             onStatusChange={setStatus}
+              logReloadKey={logReload}
             onTrackingNrChange={setTrackingNr}
             buildLieferschein={async (tn) => {
               const c = await getCustomerData();

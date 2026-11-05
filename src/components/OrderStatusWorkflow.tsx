@@ -92,12 +92,14 @@ interface Props {
   paketGroesse?: string;
   onStatusChange: (newStatus: string) => void;
   onTrackingNrChange?: (nr: string) => void;
+  /** Aendert sich nach dem Speichern der Auftragsseite: laedt den Aktivitaets-Verlauf neu */
+  logReloadKey?: number;
   /** Erstellt den Lieferschein als PDF für den Anhang der Versand-Mail */
   buildLieferschein?: (trackingNr: string | null) => Promise<{ base64: string; filename: string } | null>;
 }
 
 export default function OrderStatusWorkflow({
-  orderId, currentStatus, parts, trackingNr = "", lieferart = "versand", customerId, paketGroesse, onStatusChange, onTrackingNrChange, buildLieferschein
+  orderId, currentStatus, parts, logReloadKey, trackingNr = "", lieferart = "versand", customerId, paketGroesse, onStatusChange, onTrackingNrChange, buildLieferschein
 }: Props) {
   const navigate = useNavigate();
   const [log, setLog] = useState<LogEntry[]>([]);
@@ -123,7 +125,7 @@ export default function OrderStatusWorkflow({
 
   useEffect(() => {
     if (orderId) loadLog();
-  }, [orderId]);
+  }, [orderId, logReloadKey]);
 
   // Teile-Analyse
   const totalParts = parts.length;
