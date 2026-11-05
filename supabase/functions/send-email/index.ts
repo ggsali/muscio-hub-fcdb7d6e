@@ -419,7 +419,20 @@ Deno.serve(async (req) => {
       sendOpts.attachments = [{ filename: pdfFilename, content: pdfBase64 }];
     }
 
-    const { data: sent, error: sendError } = await resend.emails.send(sendOpts as any);
+    // Resend begrenzt auf ca. 2 Anfragen/s: bei Rate-Limit oder kurzem Serverfehler bis zu 3 Mal versuchen
+    let sent: any = null;
+    let sendError: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const r = await resend.emails.send(sendOpts as any);
+      sent = r.data;
+      sendError = r.error;
+      if (!sendError) break;
+      const code = Number((sendError as any).statusCode ?? 0);
+      const retryable = code === 429 || code >= 500 || /rate|too many|timeout|temporar/i.test(String((sendError as any).message || ""));
+      console.error(`Resend error (Versuch ${attempt}):`, sendError);
+      if (!retryable || attempt === 3) break;
+      await new Promise((res) => setTimeout(res, 1200 * attempt));
+    }
     if (sendError) {
       console.error("Resend error:", sendError);
       return new Response(JSON.stringify({ error: String((sendError as any).message || sendError) }), {

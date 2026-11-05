@@ -60,7 +60,7 @@ const STATUS_META: Record<string, { icon: React.ElementType; ring: string; text:
 };
 
 const STATUS_TO_TEMPLATE: Record<string, string> = {
-  "Offerte gesendet": "offerte",
+  // "Offerte gesendet": keine Status-Mail, die Offerte geht im Offerte-Modus raus
   "Bezahlt": "zahlung-bestaetigung",
   "Im Druck": "im_druck",
   "Qualitätsprüfung": "qualitaetspruefung",
@@ -197,17 +197,26 @@ export default function OrderStatusWorkflow({
         if (tplKey === "versandt" && lieferart === "versand" && buildLieferschein) {
           try { pdf = await buildLieferschein(tn); } catch (e) { console.error("Lieferschein fehlgeschlagen", e); }
         }
-        const { data: mailData, error: mailError } = await supabase.functions.invoke("send-email", {
-          body: { kind: "status", orderId, statusKey: tplKey, trackingNr: tn, lieferart, versandart: paketGroesse || null, pdfBase64: pdf?.base64, pdfFilename: pdf?.filename },
-        });
-        // invoke wirft bei Fehlern nicht: Fehler und "skipped" selbst auswerten
-        if (mailError) {
-          let detail = mailError.message;
-          try { const j = await (mailError as any).context?.json?.(); if (j?.error) detail = j.error; } catch { /* Body nicht lesbar */ }
-          throw new Error(detail);
+        const sendStatusMail = async () => {
+          const { data: mailData, error: mailError } = await supabase.functions.invoke("send-email", {
+            body: { kind: "status", orderId, statusKey: tplKey, trackingNr: tn, lieferart, versandart: paketGroesse || null, pdfBase64: pdf?.base64, pdfFilename: pdf?.filename },
+          });
+          // invoke wirft bei Fehlern nicht: Fehler und "skipped" selbst auswerten
+          if (mailError) {
+            let detail = mailError.message;
+            try { const j = await (mailError as any).context?.json?.(); if (j?.error) detail = j.error; } catch { /* Body nicht lesbar */ }
+            throw new Error(detail);
+          }
+          if ((mailData as any)?.error) throw new Error(String((mailData as any).error));
+          if ((mailData as any)?.skipped) throw new Error(`Keine Mail verschickt (${(mailData as any).reason || "uebersprungen"})`);
+        };
+        try {
+          await sendStatusMail();
+        } catch (firstErr) {
+          // Einmal automatisch wiederholen (z.B. Rate-Limit oder kurzer Netzfehler)
+          await new Promise((r) => setTimeout(r, 1500));
+          try { await sendStatusMail(); } catch (secondErr) { throw secondErr; }
         }
-        if ((mailData as any)?.error) throw new Error(String((mailData as any).error));
-        if ((mailData as any)?.skipped) throw new Error(`Keine Mail verschickt (${(mailData as any).reason || "uebersprungen"})`);
         // Log mail sent
         const mailLabels: Record<string, string> = {
           bestätigung: "✉️ Bestätigungs-Mail gesendet",
@@ -224,6 +233,7 @@ export default function OrderStatusWorkflow({
         await loadLog();
       } catch (e) {
         console.error("send-email status failed", e);
+        toast.error("Kunden-Mail nicht verschickt: " + (e instanceof Error ? e.message : String(e)));
         await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: "⚠️ Mail-Versand fehlgeschlagen", notiz: String(e) });
         await loadLog();
       }
