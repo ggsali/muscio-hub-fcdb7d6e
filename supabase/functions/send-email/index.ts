@@ -18,6 +18,9 @@ const STATUS_KEY_MAP: Record<string, string> = {
   "Qualitätsprüfung": "qualitaetspruefung",
   "Versandt": "versandt",
   "Geliefert": "geliefert",
+  "Bezahlt": "bezahlt",
+  "zahlung-bestaetigung": "bezahlt",
+  bezahlt: "bezahlt",
   datei_erhalten: "datei_erhalten",
   im_druck: "im_druck",
   qualitaetspruefung: "qualitaetspruefung",
@@ -39,6 +42,12 @@ const STATUS_TEXTS: Record<string, { subject: string; title: string; intro: stri
     title: "Datei erhalten",
     intro: "wir haben Ihre Druckdaten erfolgreich erhalten und prüfen diese nun.",
     emoji: "📥",
+  },
+  bezahlt: {
+    subject: "Zahlung erhalten – vielen Dank",
+    title: "Zahlung erhalten",
+    intro: "vielen Dank, wir haben Ihre Zahlung erhalten. Ihr Auftrag geht nun in die Produktion, wir melden uns, sobald der Druck startet.",
+    emoji: "✅",
   },
   im_druck: {
     subject: "Ihr Auftrag ist im Druck",
@@ -98,6 +107,7 @@ const formattedName = (name: string) =>
 
 const STATUS_EMOJIS: Record<string, string> = {
   datei_erhalten: "📄",
+  bezahlt: "✅",
   im_druck: "🖨️",
   qualitaetspruefung: "🔍",
   versandt: "📦",
