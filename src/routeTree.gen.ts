@@ -60,6 +60,7 @@ import { Route as SiteWeihnachtsgeschenkeRouteImport } from './routes/_site/weih
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnfragenRouteImport } from './routes/admin/anfragen'
 import { Route as AdminBewertungenRouteImport } from './routes/admin/bewertungen'
+import { Route as AdminBubbleLetterRouteImport } from './routes/admin/bubble-letter'
 import { Route as AdminBuchhaltungRouteImport } from './routes/admin/buchhaltung'
 import { Route as AdminChatRouteImport } from './routes/admin/chat'
 import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellungen'
@@ -403,6 +404,11 @@ const AdminAnfragenRoute = AdminAnfragenRouteImport.update({
 const AdminBewertungenRoute = AdminBewertungenRouteImport.update({
   id: '/bewertungen',
   path: '/bewertungen',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBubbleLetterRoute = AdminBubbleLetterRouteImport.update({
+  id: '/bubble-letter',
+  path: '/bubble-letter',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminBuchhaltungRoute = AdminBuchhaltungRouteImport.update({
@@ -916,6 +922,7 @@ export interface FileRoutesByFullPath {
   '/weihnachtsgeschenke': typeof SiteWeihnachtsgeschenkeRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
+  '/admin/bubble-letter': typeof AdminBubbleLetterRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1053,6 +1060,7 @@ export interface FileRoutesByTo {
   '/weihnachtsgeschenke': typeof SiteWeihnachtsgeschenkeRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
+  '/admin/bubble-letter': typeof AdminBubbleLetterRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1197,6 +1205,7 @@ export interface FileRoutesById {
   '/_site/weihnachtsgeschenke': typeof SiteWeihnachtsgeschenkeRoute
   '/admin/anfragen': typeof AdminAnfragenRoute
   '/admin/bewertungen': typeof AdminBewertungenRoute
+  '/admin/bubble-letter': typeof AdminBubbleLetterRoute
   '/admin/buchhaltung': typeof AdminBuchhaltungRoute
   '/admin/chat': typeof AdminChatRoute
   '/admin/einstellungen': typeof AdminEinstellungenRoute
@@ -1342,6 +1351,7 @@ export interface FileRouteTypes {
     | '/weihnachtsgeschenke'
     | '/admin/anfragen'
     | '/admin/bewertungen'
+    | '/admin/bubble-letter'
     | '/admin/buchhaltung'
     | '/admin/chat'
     | '/admin/einstellungen'
@@ -1479,6 +1489,7 @@ export interface FileRouteTypes {
     | '/weihnachtsgeschenke'
     | '/admin/anfragen'
     | '/admin/bewertungen'
+    | '/admin/bubble-letter'
     | '/admin/buchhaltung'
     | '/admin/chat'
     | '/admin/einstellungen'
@@ -1622,6 +1633,7 @@ export interface FileRouteTypes {
     | '/_site/weihnachtsgeschenke'
     | '/admin/anfragen'
     | '/admin/bewertungen'
+    | '/admin/bubble-letter'
     | '/admin/buchhaltung'
     | '/admin/chat'
     | '/admin/einstellungen'
@@ -2115,6 +2127,13 @@ declare module '@tanstack/react-router' {
       path: '/bewertungen'
       fullPath: '/admin/bewertungen'
       preLoaderRoute: typeof AdminBewertungenRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bubble-letter': {
+      id: '/admin/bubble-letter'
+      path: '/bubble-letter'
+      fullPath: '/admin/bubble-letter'
+      preLoaderRoute: typeof AdminBubbleLetterRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/buchhaltung': {
@@ -2853,6 +2872,7 @@ const AdminFilamenteRouteWithChildren = AdminFilamenteRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminAnfragenRoute: typeof AdminAnfragenRoute
   AdminBewertungenRoute: typeof AdminBewertungenRoute
+  AdminBubbleLetterRoute: typeof AdminBubbleLetterRoute
   AdminBuchhaltungRoute: typeof AdminBuchhaltungRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminEinstellungenRoute: typeof AdminEinstellungenRoute
@@ -2894,6 +2914,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnfragenRoute: AdminAnfragenRoute,
   AdminBewertungenRoute: AdminBewertungenRoute,
+  AdminBubbleLetterRoute: AdminBubbleLetterRoute,
   AdminBuchhaltungRoute: AdminBuchhaltungRoute,
   AdminChatRoute: AdminChatRoute,
   AdminEinstellungenRoute: AdminEinstellungenRoute,
