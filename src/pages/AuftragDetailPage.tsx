@@ -23,6 +23,7 @@ import PartFileUpload from "@/components/PartFileUpload";
 import StlViewer from "@/components/site/StlViewer";
 import type { Filament } from "@/pages/FilamentePage";
 import OrderStatusWorkflow from "@/components/OrderStatusWorkflow";
+import { sendeStatusMail, STATUS_MAIL_SCHLUESSEL, STATUS_MAIL_LABEL } from "@/lib/statusMail";
 
 const POST_PRIORITY_PREISE = [
   { id: "briefpost", label: "Briefpost A-Post", beschreibung: "bis 100 g", beispiel: "Kleinstteile, Schlüsselanhänger, Ringe", preis: 2.00 },
@@ -1610,6 +1611,31 @@ export default function AuftragDetailPage() {
         if (newParts.length > 0) {
           await supabase.from("parts").insert(newParts.map((p) => partPayload(p, parts.indexOf(p))));
         }
+      }
+    }
+
+    // Status in der Auftragsinfo geaendert: Verlauf eintragen und bei Bezahlt / Im Druck / Qualitaetspruefung die Kundenmail senden
+    if (orderId && !isNew && prevStatus !== null && prevStatus !== status) {
+      try {
+        await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status, notiz: "Status in der Auftragsinfo geändert" });
+        if (status === "Bezahlt") {
+          const heute = new Date().toISOString().slice(0, 10);
+          await (supabase.from as any)("orders").update({ bezahlt_am: heute }).eq("id", orderId).is("bezahlt_am", null);
+          await (supabase.from as any)("bills").update({ bezahlt: true, bezahlt_am: heute }).eq("order_id", orderId).eq("bezahlt", false);
+        }
+        const mailKey = STATUS_MAIL_SCHLUESSEL[status];
+        if (mailKey) {
+          try {
+            await sendeStatusMail(orderId, mailKey, { lieferart, versandart: paketGroesse || null });
+            await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: STATUS_MAIL_LABEL[mailKey] ?? "✉️ Status-Mail gesendet", notiz: null });
+            toast({ title: "Kunden-Mail gesendet ✓", description: status });
+          } catch (mailErr: any) {
+            await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: "⚠️ Mail-Versand fehlgeschlagen", notiz: mailErr?.message ?? String(mailErr) });
+            toast({ title: "Kunden-Mail nicht verschickt", description: mailErr?.message ?? String(mailErr), variant: "destructive" });
+          }
+        }
+      } catch (e) {
+        console.error("Status-Verlauf/Mail in Auftragsinfo fehlgeschlagen", e);
       }
     }
 

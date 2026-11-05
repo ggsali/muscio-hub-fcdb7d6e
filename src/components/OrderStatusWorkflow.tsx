@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { sendReviewRequestForOrder } from "@/lib/reviewEmail";
+import { sendeStatusMail } from "@/lib/statusMail";
 import {
   CheckCircle2, CheckCircle, Circle, Clock, Lock, Truck, AlertTriangle, Mail, Banknote,
   Settings2, ExternalLink, MessageCircle, FileText, Printer, Search, Package, Loader2,
@@ -154,7 +155,13 @@ export default function OrderStatusWorkflow({
     }
 
     if (newStatus === "Bezahlt") {
-      setShowPaymentDialog(true);
+      // Keine Rueckfrage zur Zahlungsart: offene Rechnungen als bezahlt markieren, Status setzen, Zahlungsbestaetigung senden
+      const today = new Date().toISOString().slice(0, 10);
+      await (supabase.from as any)("bills")
+        .update({ bezahlt: true, bezahlt_am: today })
+        .eq("order_id", orderId)
+        .eq("bezahlt", false);
+      await commitStatus("Bezahlt", "Als bezahlt markiert");
       return;
     }
 
@@ -183,6 +190,7 @@ export default function OrderStatusWorkflow({
 
   const commitStatus = async (newStatus: string, notiz: string | null) => {
     await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status: newStatus, notiz });
+    await supabase.from("orders").update({ status: newStatus } as any).eq("id", orderId);
     if (newStatus === "Bezahlt") {
       await (supabase.from as any)("orders").update({ bezahlt_am: new Date().toISOString().slice(0, 10) }).eq("id", orderId).is("bezahlt_am", null);
     }
@@ -197,26 +205,7 @@ export default function OrderStatusWorkflow({
         if (tplKey === "versandt" && lieferart === "versand" && buildLieferschein) {
           try { pdf = await buildLieferschein(tn); } catch (e) { console.error("Lieferschein fehlgeschlagen", e); }
         }
-        const sendStatusMail = async () => {
-          const { data: mailData, error: mailError } = await supabase.functions.invoke("send-email", {
-            body: { kind: "status", orderId, statusKey: tplKey, trackingNr: tn, lieferart, versandart: paketGroesse || null, pdfBase64: pdf?.base64, pdfFilename: pdf?.filename },
-          });
-          // invoke wirft bei Fehlern nicht: Fehler und "skipped" selbst auswerten
-          if (mailError) {
-            let detail = mailError.message;
-            try { const j = await (mailError as any).context?.json?.(); if (j?.error) detail = j.error; } catch { /* Body nicht lesbar */ }
-            throw new Error(detail);
-          }
-          if ((mailData as any)?.error) throw new Error(String((mailData as any).error));
-          if ((mailData as any)?.skipped) throw new Error(`Keine Mail verschickt (${(mailData as any).reason || "uebersprungen"})`);
-        };
-        try {
-          await sendStatusMail();
-        } catch (firstErr) {
-          // Einmal automatisch wiederholen (z.B. Rate-Limit oder kurzer Netzfehler)
-          await new Promise((r) => setTimeout(r, 1500));
-          try { await sendStatusMail(); } catch (secondErr) { throw secondErr; }
-        }
+        await sendeStatusMail(orderId, tplKey, { trackingNr: tn, lieferart, versandart: paketGroesse || null, pdfBase64: pdf?.base64, pdfFilename: pdf?.filename });
         // Log mail sent
         const mailLabels: Record<string, string> = {
           bestätigung: "✉️ Bestätigungs-Mail gesendet",
