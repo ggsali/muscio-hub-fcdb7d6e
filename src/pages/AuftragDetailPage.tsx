@@ -229,6 +229,7 @@ export default function AuftragDetailPage() {
   const [creatingPaymentLink, setCreatingPaymentLink] = useState(false);
   const createPaymentLinkFn = useServerFn(createOrderPaymentLink);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [logReload, setLogReload] = useState(0);
   const [manualStatus, setManualStatus] = useState("");
   const [duplicating, setDuplicating] = useState(false);
   const [stripePending, setStripePending] = useState(false);
@@ -1617,7 +1618,8 @@ export default function AuftragDetailPage() {
     // Status in der Auftragsinfo geaendert: Verlauf eintragen und bei Bezahlt / Im Druck / Qualitaetspruefung die Kundenmail senden
     if (orderId && !isNew && prevStatus !== null && prevStatus !== status) {
       try {
-        await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status, notiz: "Status in der Auftragsinfo geändert" });
+        const { error: logErr } = await (supabase.from as any)("order_status_log").insert({ order_id: orderId, status, notiz: "Status in der Auftragsinfo geändert" });
+        if (logErr) toast({ title: "Verlauf konnte nicht gespeichert werden", description: logErr.message, variant: "destructive" });
         if (status === "Bezahlt") {
           const heute = new Date().toISOString().slice(0, 10);
           await (supabase.from as any)("orders").update({ bezahlt_am: heute }).eq("id", orderId).is("bezahlt_am", null);
@@ -1662,6 +1664,7 @@ export default function AuftragDetailPage() {
     }
 
     setSaving(false);
+    setLogReload((n) => n + 1);
     if (isNew) {
       navigate(`/admin/auftraege/${orderId}`, { replace: true });
     } else {
@@ -3438,7 +3441,7 @@ export default function AuftragDetailPage() {
 
           <div className="bg-card border border-border rounded-lg p-4 md:p-5 space-y-3">
             <h3 className="font-semibold text-sm">Aktivitätsverlauf</h3>
-            <OrderActivityLog key={activeTab} orderId={id!} />
+            <OrderActivityLog key={`${activeTab}-${logReload}`} orderId={id!} />
           </div>
         </div>
       )}
