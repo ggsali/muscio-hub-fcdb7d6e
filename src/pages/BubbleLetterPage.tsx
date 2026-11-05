@@ -181,19 +181,23 @@ export default function BubbleLetterPage() {
           <Field label="Buchstabenhöhe" value={`${p.size} mm`}>
             <Slider min={LIMITS.size[0]} max={LIMITS.size[1]} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
           </Field>
-          <Field label="Aufblasung (Höhe)" value={`${p.hoehe} mm`}>
-            <Slider min={LIMITS.hoehe[0]} max={LIMITS.hoehe[1]} step={0.5} value={[p.hoehe]} onValueChange={([v]) => set("hoehe", v)} />
-            <p className="text-[11px] text-muted-foreground">Dünne Striche werden von selbst niedriger: der Ballon kann nicht höher sein als die halbe Strichbreite.</p>
+          <Field label="Aufblasung" value={`${Math.round(p.aufblas * 100)} %`}>
+            <Slider min={LIMITS.aufblas[0]} max={LIMITS.aufblas[1]} step={0.05} value={[p.aufblas]} onValueChange={([v]) => set("aufblas", v)} />
+            <p className="text-[11px] text-muted-foreground">100 % = runder Querschnitt wie ein Schlauch (so hoch wie die halbe Strichbreite). Weniger = flacher und druckfreundlicher.</p>
           </Field>
-          <Field label="Rundung (Aufblasradius)" value={`${p.radius} mm`}>
-            <Slider min={LIMITS.radius[0]} max={LIMITS.radius[1]} step={0.5} value={[p.radius]} onValueChange={([v]) => set("radius", v)} />
+          <Field label="Buchstaben verdicken" value={`${p.fettung.toFixed(1)} mm`}>
+            <Slider min={LIMITS.fettung[0]} max={LIMITS.fettung[1]} step={0.5} value={[p.fettung]} onValueChange={([v]) => set("fettung", v)} />
+            <p className="text-[11px] text-muted-foreground">Macht die Striche rundum dicker: der typische pralle Bubble-Look.</p>
           </Field>
-          <Field label="Fülle" value={p.fuelle.toFixed(1)}>
-            <Slider min={LIMITS.fuelle[0]} max={LIMITS.fuelle[1]} step={0.1} value={[p.fuelle]} onValueChange={([v]) => set("fuelle", v)} />
-            <p className="text-[11px] text-muted-foreground">2 = runder Querschnitt, mehr = kissenartig und prall, weniger = spitzer.</p>
+          <Field label="Ecken abrunden" value={`${p.ecken.toFixed(1)} mm`}>
+            <Slider min={LIMITS.ecken[0]} max={LIMITS.ecken[1]} step={0.5} value={[p.ecken]} onValueChange={([v]) => set("ecken", v)} />
           </Field>
-          <Field label="Weichheit der Grate" value={`${p.weich.toFixed(1)} mm`}>
-            <Slider min={LIMITS.weich[0]} max={LIMITS.weich[1]} step={0.5} value={[p.weich]} onValueChange={([v]) => set("weich", v)} />
+          <Field label="Maximale Rundung" value={`${p.radius} mm`}>
+            <Slider min={LIMITS.radius[0]} max={LIMITS.radius[1]} step={1} value={[p.radius]} onValueChange={([v]) => set("radius", v)} />
+            <p className="text-[11px] text-muted-foreground">Dickste Stelle des Ballons. Breite Flächen werden oben nicht höher und bekommen ein flaches Plateau.</p>
+          </Field>
+          <Field label="Weichheit" value={`${p.weich.toFixed(1)} mm`}>
+            <Slider min={LIMITS.weich[0]} max={LIMITS.weich[1]} step={0.1} value={[p.weich]} onValueChange={([v]) => set("weich", v)} />
           </Field>
           <Field label="Buchstabenabstand" value={`${p.spacing.toFixed(1)} mm`}>
             <Slider min={LIMITS.spacing[0]} max={LIMITS.spacing[1]} step={0.5} value={[p.spacing]} onValueChange={([v]) => set("spacing", v)} />
