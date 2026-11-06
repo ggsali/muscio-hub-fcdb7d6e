@@ -126,8 +126,10 @@ serve(async (req) => {
         "Content-Disposition":
           res.headers.get("content-disposition") || `attachment; filename="${name.replace(/[^\w.\- ]/g, "_")}"`,
       };
-      const len = res.headers.get("content-length");
-      if (len) outHeaders["Content-Length"] = len;
+      // Kein Content-Length weiterreichen: komprimiert/puffert die Supabase-Schicht die Antwort, stimmt die Länge nicht mehr
+      // und der Browser wartet endlos auf fehlende Bytes. Ohne Länge wird chunked gestreamt, no-transform verhindert Umkodierung.
+      outHeaders["Cache-Control"] = "no-store, no-transform";
+      outHeaders["X-Accel-Buffering"] = "no";
       return new Response(res.body, { status: 200, headers: outHeaders });
     }
 
