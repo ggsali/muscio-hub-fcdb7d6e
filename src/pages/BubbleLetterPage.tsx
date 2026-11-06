@@ -9,7 +9,7 @@ import { Slider as BaseSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useMaterialFarben } from "@/lib/material-farben";
-import { DEFAULTS, DRUCKER, FONTS, LIMITS, generateBubble, sanitizeText, toBinaryStl, type BubbleParams, type BubbleResult } from "@/lib/bubbleLetters";
+import { DEFAULTS, DRUCKER, LIMITS, generateBubble, sanitizeText, toBinaryStl, type BubbleParams, type BubbleResult } from "@/lib/bubbleLetters";
 
 // Regler in den 3DMuscio-Farben (der Standard-Slider nutzt die Sekundärfarbe Orange für die Spur)
 const Slider = (props: React.ComponentProps<typeof BaseSlider>) => (
@@ -28,9 +28,9 @@ function Field({ label, children, value }: { label: string; children: React.Reac
   );
 }
 
-function Viewer({ res, color, fitKey }: { res: BubbleResult | null; color: string; fitKey: string }) {
+function Viewer({ res, color, fitKey, resetRef }: { res: BubbleResult | null; color: string; fitKey: string; resetRef: React.MutableRefObject<(() => void) | null> }) {
   const host = useRef<HTMLDivElement>(null);
-  const st = useRef<{ group: THREE.Group; cam: THREE.PerspectiveCamera; controls: OrbitControls; fitKey: string; mat: THREE.MeshStandardMaterial } | null>(null);
+  const st = useRef<{ group: THREE.Group; cam: THREE.PerspectiveCamera; controls: OrbitControls; fitKey: string; mat: THREE.MeshStandardMaterial; home?: { pos: THREE.Vector3; target: THREE.Vector3 } } | null>(null);
 
   useEffect(() => {
     const el = host.current!;
@@ -39,7 +39,7 @@ function Viewer({ res, color, fitKey }: { res: BubbleResult | null; color: strin
     renderer.setSize(el.clientWidth, el.clientHeight);
     el.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
-    const cam = new THREE.PerspectiveCamera(35, el.clientWidth / el.clientHeight, 1, 5000);
+    const cam = new THREE.PerspectiveCamera(35, el.clientWidth / el.clientHeight, 0.5, 4000);
     cam.position.set(0, -60, 260);
     scene.add(new THREE.HemisphereLight(0xffffff, 0x666666, 1.2));
     const sun = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -52,8 +52,17 @@ function Viewer({ res, color, fitKey }: { res: BubbleResult | null; color: strin
     scene.add(group);
     const controls = new OrbitControls(cam, renderer.domElement);
     controls.enableDamping = true;
+    controls.zoomToCursor = true;
+    controls.screenSpacePanning = true;
     const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.42, metalness: 0 });
     st.current = { group, cam, controls, fitKey: "", mat };
+    resetRef.current = () => {
+      const h = st.current?.home;
+      if (!h) return;
+      cam.position.copy(h.pos);
+      controls.target.copy(h.target);
+      controls.update();
+    };
     let raf = 0;
     const loop = () => { raf = requestAnimationFrame(loop); controls.update(); renderer.render(scene, cam); };
     loop();
@@ -99,6 +108,14 @@ function Viewer({ res, color, fitKey }: { res: BubbleResult | null; color: strin
       const dist = (Math.max(y, x / aspect) / 2 / Math.tan((s.cam.fov * Math.PI) / 360)) * 1.3 + z;
       s.cam.position.set(0, -dist * 0.25, dist);
       s.controls.target.set(0, 0, z / 4);
+      // Zoomgrenzen und Clipping-Ebenen an die Grösse anpassen: sonst verschwindet das Objekt beim Heranzoomen
+      const gross = Math.max(x, y, z);
+      s.controls.minDistance = Math.max(8, gross * 0.12);
+      s.controls.maxDistance = gross * 8;
+      s.cam.near = Math.max(0.5, gross * 0.01);
+      s.cam.far = gross * 30;
+      s.cam.updateProjectionMatrix();
+      s.home = { pos: s.cam.position.clone(), target: s.controls.target.clone() };
       s.controls.update();
     }
   }, [res, fitKey]);
@@ -123,6 +140,7 @@ export default function BubbleLetterPage() {
   const { farbenFor } = useMaterialFarben();
   const set = <K extends keyof BubbleParams>(k: K, v: BubbleParams[K]) => setP((q) => ({ ...q, [k]: v }));
   const token = useRef(0);
+  const resetRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const my = ++token.current;
@@ -164,19 +182,14 @@ export default function BubbleLetterPage() {
     <div className="mx-auto max-w-[1200px] space-y-4 p-4 sm:p-6">
       <div>
         <h1 className="text-xl font-bold">Bubble-Letter-Generator <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 align-middle text-xs font-semibold text-primary">NEU</span></h1>
-        <p className="text-sm text-muted-foreground">Text als aufgeblasene 3D-Buchstaben (Ballon-Look) mit flacher Rückseite zum Drucken. Nur im Admin sichtbar.</p>
+        <p className="text-sm text-muted-foreground">Text als prall aufgeblasene 3D-Buchstaben in der Schrift Modak, mit flacher Rückseite zum Drucken. Nur im Admin sichtbar.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <div className="order-2 space-y-4 rounded-xl border bg-card p-5 lg:order-1">
           <Field label="Text" value={`${sanitizeText(p.text).replace(/\n/g, "").length} Zeichen`}>
             <Textarea rows={2} value={p.text} onChange={(e) => set("text", sanitizeText(e.target.value))} placeholder="z. B. Nora" />
-            <p className="text-[11px] text-muted-foreground">Bis zu 4 Zeilen mit je 20 Zeichen (Enter = neue Zeile).</p>
-          </Field>
-          <Field label="Schrift">
-            <select className="h-9 w-full rounded-md border bg-background px-2 text-sm" value={p.font} onChange={(e) => set("font", e.target.value)}>
-              {FONTS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-            </select>
+            <p className="text-[11px] text-muted-foreground">Bis zu 4 Zeilen mit je 20 Zeichen (Enter = neue Zeile). Gross- und Kleinbuchstaben, Zahlen, Umlaute und die gängigen Zeichen.</p>
           </Field>
           <Field label="Buchstabenhöhe" value={`${p.size} mm`}>
             <Slider min={LIMITS.size[0]} max={LIMITS.size[1]} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
@@ -230,7 +243,8 @@ export default function BubbleLetterPage() {
 
         <div className="order-1 space-y-3 lg:order-2">
           <div className="relative">
-            <Viewer res={res} color={color} fitKey={`${p.text}|${p.font}|${p.size}|${p.lineGap}`} />
+            <Viewer res={res} color={color} resetRef={resetRef} fitKey={`${p.text}|${p.size}|${p.lineGap}`} />
+            <button type="button" onClick={() => resetRef.current?.()} className="absolute bottom-3 right-3 rounded-full border bg-background/80 px-2.5 py-1 text-xs hover:bg-background">Ansicht zurücksetzen</button>
             {busy && <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-xs"><Loader2 className="h-3.5 w-3.5 animate-spin" />Berechne…</div>}
             {!res && !busy && <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">Bitte einen Text eingeben.</div>}
           </div>

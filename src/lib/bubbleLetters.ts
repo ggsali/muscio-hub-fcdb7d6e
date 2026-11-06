@@ -4,7 +4,6 @@
 
 export type BubbleParams = {
   text: string;
-  font: string;
   size: number; // Buchstabenhöhe (Grossbuchstaben) in mm
   spacing: number; // zusätzlicher Buchstabenabstand in mm (negativ = überlappend, Buchstaben verschmelzen)
   lineGap: number; // zusätzlicher Zeilenabstand in mm
@@ -18,15 +17,14 @@ export type BubbleParams = {
 
 export const DEFAULTS: BubbleParams = {
   text: "Bubble",
-  font: "Baloo 2",
   size: 50,
   spacing: 0,
   lineGap: 4,
-  fettung: 1.5,
-  ecken: 1.5,
-  aufblas: 0.85,
+  fettung: 0,
+  ecken: 0.5,
+  aufblas: 1,
   radius: 14,
-  weich: 0.6,
+  weich: 1.5,
   beidseitig: false,
 };
 
@@ -36,21 +34,14 @@ export const LIMITS = {
   lineGap: [-10, 30],
   fettung: [0, 6],
   ecken: [0, 5],
-  aufblas: [0.3, 1.2],
+  aufblas: [0.3, 1.5],
   radius: [2, 30],
-  weich: [0, 2],
+  weich: [0, 4],
 } as const;
 
-export const FONTS: { id: string; label: string; css: string }[] = [
-  { id: "Baloo 2", label: "Weich (Baloo)", css: '800 {px}px "Baloo 2"' },
-  { id: "Lilita One", label: "Kräftig (Lilita)", css: '400 {px}px "Lilita One"' },
-  { id: "Chewy", label: "Verspielt (Chewy)", css: '400 {px}px "Chewy"' },
-  { id: "Titan One", label: "Dick (Titan One)", css: '400 {px}px "Titan One"' },
-  { id: "Fredoka", label: "Rund (Fredoka)", css: '700 {px}px "Fredoka"' },
-];
-
-export const FONT_CSS_URL =
-  "https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Lilita+One&family=Chewy&family=Titan+One&family=Fredoka:wght@700&display=swap";
+/** Einzige Schrift: Modak (SIL Open Font License), im Projekt unter public/fonts abgelegt, kein Google-Zugriff nötig */
+export const FONT_FAMILY = "Modak";
+export const FONT_FILE_URL = "/fonts/modak-latin-400.woff2";
 
 /** Druckbetten (Breite × Tiefe in mm) für die Passt-Prüfung */
 export const DRUCKER = [
@@ -124,6 +115,39 @@ function distSq(seedMask: Uint8Array, W: number, H: number, seedValue: 0 | 1): F
   for (let i = 0; i < f.length; i++) f[i] = seedMask[i] === seedValue ? 0 : SEED;
   envelope(f, W, H);
   return f;
+}
+
+// Weichzeichnen nur innerhalb der Form (Mittelwert über Innenpixel), damit Rand und Löcher nicht verwaschen
+function blurInside(a: Float32Array, inside: Uint8Array, W: number, H: number, r: number, rounds = 3) {
+  if (r < 1) return;
+  const num = new Float32Array(W * H), den = new Float32Array(W * H);
+  for (let i = 0; i < a.length; i++) { num[i] = inside[i] ? a[i] : 0; den[i] = inside[i] ? 1 : 0; }
+  const tn = new Float32Array(W * H), td = new Float32Array(W * H);
+  for (let it = 0; it < rounds; it++) {
+    for (let y = 0; y < H; y++) {
+      let sn = 0, sd = 0;
+      const row = y * W;
+      for (let x = -r; x < W + r; x++) {
+        const add = x + r, rem = x - r - 1;
+        if (add >= 0 && add < W) { sn += num[row + add]; sd += den[row + add]; }
+        if (rem >= 0 && rem < W) { sn -= num[row + rem]; sd -= den[row + rem]; }
+        if (x >= 0 && x < W) { tn[row + x] = sn; td[row + x] = sd; }
+      }
+    }
+    for (let x = 0; x < W; x++) {
+      let sn = 0, sd = 0;
+      for (let y = -r; y < H + r; y++) {
+        const add = y + r, rem = y - r - 1;
+        if (add >= 0 && add < H) { sn += tn[add * W + x]; sd += td[add * W + x]; }
+        if (rem >= 0 && rem < H) { sn -= tn[rem * W + x]; sd -= td[rem * W + x]; }
+        if (y >= 0 && y < H) { num[y * W + x] = sn; den[y * W + x] = sd; }
+      }
+    }
+    for (let i = 0; i < num.length; i++) {
+      if (inside[i] && den[i] > 0) { num[i] /= den[i]; den[i] = 1; } else { num[i] = 0; den[i] = 0; }
+    }
+  }
+  for (let i = 0; i < a.length; i++) a[i] = inside[i] ? num[i] : 0;
 }
 
 // Box-Weichzeichner (Rand = 0), mehrere Runden nähern eine Gauss-Glättung an
@@ -207,9 +231,21 @@ export function buildBubble(
     g[i] = -dc * dc;
   }
   envelope(g, W, H);
+  // Geglättet wird das QUADRAT der Höhe (mm²) nur innerhalb der Form: dort sind die Kanten zwischen den Kugeln nur Knicke,
+  // die so verschwinden, ohne dass der runde Querschnitt oder der Rand verwäscht.
   const h = new Float32Array(N);
-  for (let i = 0; i < N; i++) h[i] = (o.aufblas * Math.sqrt(Math.max(0, -g[i]))) / ppm;
-  boxBlur(h, W, H, Math.round(o.weich * ppm), 2);
+  for (let i = 0; i < N; i++) h[i] = Math.max(0, -g[i]) / (ppm * ppm);
+  blurInside(h, mask, W, H, Math.round(o.weich * ppm), 3);
+  // Sanfter Auslauf in den ersten Zehntelmillimetern am Rand: ein Halbkreis steht dort senkrecht,
+  // das gäbe eine Stufe im Raster. Ausserhalb der Buchstaben ist die Höhe exakt 0.
+  const EDGE_MM = 0.7;
+  for (let i = 0; i < N; i++) {
+    if (!mask[i]) { h[i] = 0; continue; }
+    const dmm = Math.max(0, Math.sqrt(dsq[i]) - 0.5) / ppm;
+    const t = Math.min(1, dmm / EDGE_MM);
+    h[i] = o.aufblas * Math.sqrt(h[i]) * (t * t * (3 - 2 * t));
+  }
+  boxBlur(h, W, H, Math.max(1, Math.round(0.3 * ppm)), 2); // Treppen am Fuss glätten
   const EPS = 0.1; // darunter ist die Höhe 0 (Auslauf, kein Absatz)
   for (let i = 0; i < N; i++) h[i] = Math.max(0, h[i] - EPS);
 
@@ -356,24 +392,18 @@ export function toBinaryStl(positions: Float32Array, indices: Uint32Array[]): Ar
 }
 
 // ---------- Browser: Text -> Raster ----------
-let fontsRequested = false;
-export async function loadFonts() {
-  if (typeof document === "undefined") return;
-  if (!fontsRequested) {
-    fontsRequested = true;
-    if (!document.querySelector("link[data-bubble-fonts]")) {
-      const l = document.createElement("link");
-      l.rel = "stylesheet";
-      l.href = FONT_CSS_URL;
-      l.setAttribute("data-bubble-fonts", "1");
-      document.head.appendChild(l);
-    }
+let fontPromise: Promise<boolean> | null = null;
+/** Lädt die Schrift einmal; true = geladen */
+export function loadFonts(): Promise<boolean> {
+  if (typeof document === "undefined") return Promise.resolve(false);
+  if (!fontPromise) {
+    const url = (globalThis as { __BUBBLE_FONT_URL?: string }).__BUBBLE_FONT_URL ?? FONT_FILE_URL;
+    fontPromise = new FontFace(FONT_FAMILY, `url(${url})`, { weight: "400" })
+      .load()
+      .then((f) => { document.fonts.add(f); return true; })
+      .catch(() => false);
   }
-  try {
-    await Promise.all(FONTS.map((f) => document.fonts.load(f.css.replace("{px}", "40"), "AaBb")));
-  } catch {
-    /* Schrift-Fallback */
-  }
+  return fontPromise;
 }
 
 export type BubbleResult = BubbleMesh & { ppm: number; warnings: string[]; text: string };
@@ -383,10 +413,10 @@ export async function generateBubble(input: BubbleParams): Promise<BubbleResult 
   const text = sanitizeText(p.text);
   const lines = text.split("\n").map((l) => l.replace(/\s+$/g, ""));
   if (!lines.some((l) => l.trim())) return null;
-  await loadFonts();
-  const font = FONTS.find((f) => f.id === p.font) ?? FONTS[0];
-  const fontStr = (px: number) => font.css.replace("{px}", String(px));
+  const fontOk = await loadFonts();
+  const fontStr = (px: number) => `400 ${px}px "${FONT_FAMILY}", sans-serif`;
   const warnings: string[] = [];
+  if (!fontOk) warnings.push("Die Schrift Modak konnte nicht geladen werden, es wird eine Ersatzschrift verwendet.");
 
   const meas = document.createElement("canvas").getContext("2d")!;
   meas.font = fontStr(200);
