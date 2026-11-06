@@ -54,6 +54,7 @@ const navGroups: NavGroup[] = [
       { to: "/admin/kalkulator-test", icon: <Printer className={ic} />, label: "Kalkulator-Test", badge: "TEST" },
       { to: "/admin/spardose-test", icon: <Printer className={ic} />, label: "Spardose-Test", badge: "TEST" },
       { to: "/admin/bubble-letter", icon: <Printer className={ic} />, label: "Bubble Letters", badge: "NEU" },
+      { to: "/admin/geburtsbuchstabe", icon: <Printer className={ic} />, label: "Namensbuchstabe", badge: "NEU" },
       { to: "/admin/server-dateien", icon: <HardDrive className={ic} />, label: "Server", badge: "NEU" },
     ],
   },
