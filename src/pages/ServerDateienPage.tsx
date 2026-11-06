@@ -101,20 +101,56 @@ export default function ServerDateienPage() {
     return s ? eintraege.filter((e) => e.name.toLowerCase().includes(s)) : eintraege;
   }, [eintraege, suche]);
 
-  const herunterladen = async (e: Eintrag) => {
-    const voll = pfad ? `${pfad}/${e.name}` : e.name;
-    setLaedtRunter(voll);
+  // Ein Versuch mit Wache: kommen 20 s lang keine Daten mehr an (hängende Verbindung/Tunnel), wird abgebrochen statt ewig zu drehen
+  const ladeEinmal = async (voll: string): Promise<Blob> => {
+    const ctrl = new AbortController();
+    let letzte = Date.now();
+    const wache = window.setInterval(() => { if (Date.now() - letzte > 20_000) ctrl.abort(); }, 1000);
     try {
       const res = await fetch(FUNCTION_URL, {
         method: "POST",
         headers: await authHeaders(),
         body: JSON.stringify({ action: "download", path: voll }),
+        signal: ctrl.signal,
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d?.error || `Fehler ${res.status}`);
       }
-      const blob = await res.blob();
+      if (!res.body) return await res.blob();
+      const reader = res.body.getReader();
+      const teile: Uint8Array[] = [];
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        teile.push(value);
+        letzte = Date.now();
+      }
+      return new Blob(teile as BlobPart[], { type: res.headers.get("content-type") || "application/octet-stream" });
+    } catch (err) {
+      if (ctrl.signal.aborted) throw new Error("Server antwortet nicht (keine Daten seit 20 s)");
+      throw err;
+    } finally {
+      window.clearInterval(wache);
+    }
+  };
+
+  const herunterladen = async (e: Eintrag) => {
+    const voll = pfad ? `${pfad}/${e.name}` : e.name;
+    setLaedtRunter(voll);
+    try {
+      let blob: Blob | null = null;
+      let fehler: unknown = null;
+      for (let versuch = 0; versuch < 3 && !blob; versuch++) {
+        try {
+          blob = await ladeEinmal(voll);
+        } catch (err) {
+          fehler = err;
+          // Fehler vom Server selbst (z. B. Datei gesperrt) nicht wiederholen, nur hängende Verbindungen
+          if (!/keine Daten|Failed to fetch|NetworkError|network/i.test(String((err as Error)?.message ?? err))) break;
+        }
+      }
+      if (!blob) throw fehler ?? new Error("Download fehlgeschlagen");
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
