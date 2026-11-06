@@ -1,13 +1,12 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { buildBubble, toBinaryStl } from "./bubbleLetters";
+import { layoutText, mapChar, parseGlyphs, sanitizeText, toBinaryStl, DEFAULTS } from "./bubbleLetters";
 
-function maske(W: number, H: number, f: (x: number, y: number) => boolean) {
-  const m = new Uint8Array(W * H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) m[y * W + x] = f(x, y) ? 1 : 0;
-  return m;
-}
+const raw = readFileSync("public/fonts/ceramic-alphabet.bin");
+const glyphs = parseGlyphs(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength) as ArrayBuffer);
+
 // Jede Kante muss von genau zwei Dreiecken in entgegengesetzter Richtung benutzt werden (wasserdicht)
-function wasserdicht(index: Uint32Array[]) {
+function offeneKanten(index: Uint32Array[]) {
   const e = new Map<string, number>();
   for (const ix of index) for (let t = 0; t < ix.length; t += 3) for (let k = 0; k < 3; k++) {
     const a = ix[t + k], b = ix[t + (k + 1) % 3];
@@ -20,51 +19,68 @@ function wasserdicht(index: Uint32Array[]) {
   }
   return schlecht;
 }
-const o = { aufblas: 1, radius: 8, weich: 0, beidseitig: false };
 
-describe("buildBubble", () => {
-  it("Rechteck: wasserdicht, Volumen > 0, Höhe passt", () => {
-    const m = maske(80, 50, (x, y) => x >= 5 && x < 75 && y >= 5 && y < 45);
-    const r = buildBubble(m, 80, 50, 2, o)!;
-    expect(wasserdicht(r.parts.map((p) => p.index))).toBe(0);
+describe("Buchstaben-Vorlagen", () => {
+  it("alle 26 Buchstaben vorhanden, flache Rückseite bei z=0, Unterkante y=0", () => {
+    expect([...glyphs.keys()].sort().join("")).toBe("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    for (const g of glyphs.values()) {
+      let mz = Infinity, my = Infinity;
+      for (let i = 0; i < g.positions.length; i += 3) { mz = Math.min(mz, g.positions[i + 2]); my = Math.min(my, g.positions[i + 1]); }
+      expect(Math.abs(mz)).toBeLessThan(0.01);
+      expect(Math.abs(my)).toBeLessThan(0.01);
+    }
+  });
+  it("Masse entsprechen den Originaldateien (A = 74.08 × 78.13 × 19.0 mm)", () => {
+    const a = glyphs.get("A")!;
+    expect(a.w).toBeCloseTo(74.08, 1);
+    expect(a.h).toBeCloseTo(78.13, 1);
+    expect(a.d).toBeCloseTo(19.0, 1);
+  });
+  it("Buchstaben sind wasserdicht", () => {
+    for (const g of glyphs.values()) expect(offeneKanten([g.index]), g.ch).toBe(0);
+  });
+});
+
+describe("layoutText", () => {
+  it("setzt Text zusammen und skaliert auf die gewünschte Höhe", () => {
+    const r = layoutText(glyphs, { ...DEFAULTS, text: "NORA", size: 40 })!;
+    expect(r.parts.map((p) => p.ch).join("")).toBe("NORA");
+    expect(r.dims.y).toBeGreaterThan(36);
+    expect(r.dims.y).toBeLessThan(44);
     expect(r.volume).toBeGreaterThan(1000);
-    expect(r.dims.z).toBeGreaterThan(7.5);
-    expect(r.dims.z).toBeLessThanOrEqual(8.01);
-    expect(r.parts.length).toBe(1);
+    expect(offeneKanten(r.parts.map((p) => p.index))).toBe(0);
   });
-  it("Strich: runder Querschnitt (Halbkreis), kein senkrechter Absatz am Rand", () => {
-    // 6 mm breiter Strich bei 4 Punkten/mm: Radius 3 mm, Höhe in der Mitte ≈ 3 mm
-    const m = maske(160, 60, (x, y) => x >= 10 && x < 150 && y >= 18 && y < 42);
-    const r = buildBubble(m, 160, 60, 4, { ...o, radius: 20 })!;
-    expect(r.dims.z).toBeGreaterThan(2.7);
-    expect(r.dims.z).toBeLessThan(3.1);
-    // Randpunkte liegen auf der Platte (Höhe 0), der Rand steigt in Schritten von höchstens ~1,5 mm pro Pixelreihe
-    const z = Array.from({ length: r.positions.length / 3 }, (_, k) => r.positions[k * 3 + 2]);
-    expect(Math.min(...z)).toBeCloseTo(0, 5);
-    const ymin = Math.min(...Array.from({ length: z.length }, (_, k) => r.positions[k * 3 + 1]));
-    const rand = z.filter((_, k) => Math.abs(r.positions[k * 3 + 1] - ymin) < 1e-4);
-    expect(Math.max(...rand)).toBeLessThan(0.05);
+  it("mehrere Zeilen sind höher; Leerzeichen erzeugt keine Teile", () => {
+    const a = layoutText(glyphs, { ...DEFAULTS, text: "AB" })!;
+    const b = layoutText(glyphs, { ...DEFAULTS, text: "A B\nCD" })!;
+    expect(b.parts.length).toBe(4);
+    expect(b.dims.y).toBeGreaterThan(a.dims.y * 1.8);
   });
-  it("Ring mit Loch und zwei getrennte Teile", () => {
-    const m = maske(120, 60, (x, y) => {
-      const ring = Math.hypot(x - 30, y - 30) < 22 && Math.hypot(x - 30, y - 30) > 9;
-      const kasten = x >= 70 && x < 110 && y >= 15 && y < 45;
-      return ring || kasten;
-    });
-    const r = buildBubble(m, 120, 60, 2, { ...o, weich: 1 })!;
-    expect(r.parts.length).toBe(2);
-    expect(wasserdicht(r.parts.map((p) => p.index))).toBe(0);
-    expect(r.parts[0].x0).toBeLessThan(r.parts[1].x0);
+  it("Kleinbuchstaben werden gross, Umlaute umgewandelt, Unbekanntes gemeldet", () => {
+    expect(mapChar("a")).toBe("A");
+    expect(mapChar("ä")).toBe("A");
+    expect(mapChar("5")).toBeNull();
+    const r = layoutText(glyphs, { ...DEFAULTS, text: "aä5!" })!;
+    expect(r.parts.map((p) => p.ch).join("")).toBe("AA");
+    expect(r.warnings.length).toBe(2);
   });
-  it("Beidseitig: doppelte Höhe, immer noch wasserdicht", () => {
-    const m = maske(60, 40, (x, y) => x >= 4 && x < 56 && y >= 4 && y < 36);
-    const r = buildBubble(m, 60, 40, 2, { ...o, beidseitig: true })!;
-    expect(wasserdicht(r.parts.map((p) => p.index))).toBe(0);
-    expect(r.dims.z).toBeGreaterThan(15);
+  it("nur Unbekanntes ergibt kein Ergebnis", () => {
+    expect(layoutText(glyphs, { ...DEFAULTS, text: "123" })).toBeNull();
   });
-  it("STL hat die richtige Grösse", () => {
-    const m = maske(40, 30, (x, y) => x >= 3 && x < 37 && y >= 3 && y < 27);
-    const r = buildBubble(m, 40, 30, 2, o)!;
-    expect(toBinaryStl(r.positions, r.parts.map((p) => p.index)).byteLength).toBe(84 + r.triangles * 50);
+  it("Abstand vergrössert die Breite", () => {
+    const a = layoutText(glyphs, { ...DEFAULTS, text: "AAA", spacing: 0 })!;
+    const b = layoutText(glyphs, { ...DEFAULTS, text: "AAA", spacing: 10 })!;
+    expect(b.dims.x - a.dims.x).toBeCloseTo(20, 0);
+  });
+  it("sanitizeText begrenzt Zeilen und Länge", () => {
+    expect(sanitizeText("a\nb\nc\nd\ne").split("\n").length).toBe(4);
+    expect(sanitizeText("x".repeat(30)).length).toBe(20);
+  });
+});
+
+describe("toBinaryStl", () => {
+  it("Länge = 84 + 50 pro Dreieck", () => {
+    const r = layoutText(glyphs, { ...DEFAULTS, text: "I" })!;
+    expect(toBinaryStl(r.positions, r.parts.map((p) => p.index)).byteLength).toBe(84 + 50 * r.triangles);
   });
 });

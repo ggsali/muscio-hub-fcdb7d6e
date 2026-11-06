@@ -6,7 +6,6 @@ import { AlertTriangle, Download, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider as BaseSlider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULTS, DRUCKER, LIMITS, generateBubble, sanitizeText, toBinaryStl, type BubbleParams, type BubbleResult } from "@/lib/bubbleLetters";
@@ -174,7 +173,7 @@ export default function BubbleLetterPage() {
   const exportZip = async () => {
     if (!res) return;
     const zip = new JSZip();
-    res.parts.forEach((part, i) => zip.file(`bubble-${slug}-${String(i + 1).padStart(2, "0")}.stl`, toBinaryStl(res.positions, [part.index])));
+    res.parts.forEach((part, i) => zip.file(`bubble-${slug}-${String(i + 1).padStart(2, "0")}-${part.ch}.stl`, toBinaryStl(res.positions, [part.index])));
     download(await zip.generateAsync({ type: "blob" }), `bubble-${slug}-einzeln.zip`);
   };
 
@@ -182,52 +181,27 @@ export default function BubbleLetterPage() {
     <div className="mx-auto max-w-[1200px] space-y-4 p-4 sm:p-6">
       <div>
         <h1 className="text-xl font-bold">Bubble-Letter-Generator <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 align-middle text-xs font-semibold text-primary">NEU</span></h1>
-        <p className="text-sm text-muted-foreground">Text als prall aufgeblasene 3D-Buchstaben in der Schrift Modak, mit flacher Rückseite zum Drucken. Nur im Admin sichtbar.</p>
+        <p className="text-sm text-muted-foreground">Text aus den vorgegebenen 3D-Bubble-Buchstaben (Ceramic Alphabet, A–Z), unverändert übernommen, mit flacher Rückseite zum Drucken. Nur im Admin sichtbar.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <div className="order-2 space-y-4 rounded-xl border bg-card p-5 lg:order-1">
           <Field label="Text" value={`${sanitizeText(p.text).replace(/\n/g, "").length} Zeichen`}>
             <Textarea rows={2} value={p.text} onChange={(e) => set("text", sanitizeText(e.target.value))} placeholder="z. B. Nora" />
-            <p className="text-[11px] text-muted-foreground">Bis zu 4 Zeilen mit je 20 Zeichen (Enter = neue Zeile). Gross- und Kleinbuchstaben, Zahlen, Umlaute und die gängigen Zeichen.</p>
+            <p className="text-[11px] text-muted-foreground">Bis zu 4 Zeilen mit je 20 Zeichen (Enter = neue Zeile). Es gibt nur die Buchstaben A–Z (Kleinbuchstaben werden gross, Umlaute ohne Punkte); Zahlen und Satzzeichen fehlen in den Vorlagen.</p>
           </Field>
-          <Field label="Buchstabenhöhe" value={`${p.size} mm`}>
+          <Field label="Buchstabenhöhe (Mittel)" value={`${p.size} mm`}>
             <Slider min={LIMITS.size[0]} max={LIMITS.size[1]} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
-          </Field>
-          <Field label="Aufblasung" value={`${Math.round(p.aufblas * 100)} %`}>
-            <Slider min={LIMITS.aufblas[0]} max={LIMITS.aufblas[1]} step={0.05} value={[p.aufblas]} onValueChange={([v]) => set("aufblas", v)} />
-            <p className="text-[11px] text-muted-foreground">100 % = runder Querschnitt wie ein Schlauch (so hoch wie die halbe Strichbreite). Weniger = flacher und druckfreundlicher.</p>
-          </Field>
-          <Field label="Buchstaben verdicken" value={`${p.fettung.toFixed(1)} mm`}>
-            <Slider min={LIMITS.fettung[0]} max={LIMITS.fettung[1]} step={0.5} value={[p.fettung]} onValueChange={([v]) => set("fettung", v)} />
-            <p className="text-[11px] text-muted-foreground">Macht die Striche rundum dicker: der typische pralle Bubble-Look.</p>
-          </Field>
-          <Field label="Ecken abrunden" value={`${p.ecken.toFixed(1)} mm`}>
-            <Slider min={LIMITS.ecken[0]} max={LIMITS.ecken[1]} step={0.5} value={[p.ecken]} onValueChange={([v]) => set("ecken", v)} />
-          </Field>
-          <Field label="Maximale Rundung" value={`${p.radius} mm`}>
-            <Slider min={LIMITS.radius[0]} max={LIMITS.radius[1]} step={1} value={[p.radius]} onValueChange={([v]) => set("radius", v)} />
-            <p className="text-[11px] text-muted-foreground">Dickste Stelle des Ballons. Breite Flächen werden oben nicht höher und bekommen ein flaches Plateau.</p>
-          </Field>
-          <Field label="Weichheit" value={`${p.weich.toFixed(1)} mm`}>
-            <Slider min={LIMITS.weich[0]} max={LIMITS.weich[1]} step={0.1} value={[p.weich]} onValueChange={([v]) => set("weich", v)} />
           </Field>
           <Field label="Buchstabenabstand" value={`${p.spacing.toFixed(1)} mm`}>
             <Slider min={LIMITS.spacing[0]} max={LIMITS.spacing[1]} step={0.5} value={[p.spacing]} onValueChange={([v]) => set("spacing", v)} />
-            <p className="text-[11px] text-muted-foreground">Negativ: Buchstaben überlappen und verschmelzen zu einem Stück.</p>
+            <p className="text-[11px] text-muted-foreground">Negativ: Buchstaben rücken zusammen und überlappen (jeder Buchstabe bleibt ein eigenes Teil).</p>
           </Field>
           {sanitizeText(p.text).includes("\n") && (
             <Field label="Zeilenabstand" value={`${p.lineGap.toFixed(0)} mm`}>
               <Slider min={LIMITS.lineGap[0]} max={LIMITS.lineGap[1]} step={1} value={[p.lineGap]} onValueChange={([v]) => set("lineGap", v)} />
             </Field>
           )}
-          <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
-            <div>
-              <div className="text-sm font-medium">Beidseitig (Ballon)</div>
-              <div className="text-[11px] text-muted-foreground">Aus: flache Rückseite, druckfertig auf dem Bett. An: von beiden Seiten gewölbt, muss geteilt oder mit Stützen gedruckt werden.</div>
-            </div>
-            <Switch checked={p.beidseitig} onCheckedChange={(v) => set("beidseitig", v)} />
-          </div>
           <Field label="Vorschaufarbe (PLA)">
             <div className="flex flex-wrap gap-1.5">
               {farben.map((c) => (
@@ -256,10 +230,10 @@ export default function BubbleLetterPage() {
                 <span>Tiefe <b>{res.dims.y.toFixed(0)}</b> mm</span>
                 <span>Höhe <b>{res.dims.z.toFixed(1)}</b> mm</span>
                 <span>Volumen <b>{(res.volume / 1000).toFixed(1)}</b> cm³</span>
-                <span>{res.parts.length} {res.parts.length === 1 ? "Teil" : "Teile"}</span>
+                <span>{res.parts.length} {res.parts.length === 1 ? "Buchstabe" : "Buchstaben"}</span>
               </div>
               <div className="text-[11px] text-muted-foreground">
-                Gewicht massiv ≈ {gramm.toFixed(0)} g PLA; mit 2 Wänden und 15 % Füllung grob {(gramm * 0.4).toFixed(0)} g. Berechnet in {ms} ms · {(res.triangles / 1000).toFixed(0)}k Dreiecke · Raster {res.ppm.toFixed(1)} Punkte/mm.
+                Gewicht massiv ≈ {gramm.toFixed(0)} g PLA; mit 2 Wänden und 15 % Füllung grob {(gramm * 0.4).toFixed(0)} g. Zusammengesetzt in {ms} ms · {(res.triangles / 1000).toFixed(0)}k Dreiecke.
               </div>
               <div className="text-sm">
                 {passt.length > 0
