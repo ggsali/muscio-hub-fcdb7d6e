@@ -27,12 +27,14 @@ export async function warteAufGcode(path: string, maxMs = 90_000): Promise<boole
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public?gcode_check=${encodeURIComponent(path)}`;
   while (Date.now() - t0 < maxMs) {
     try {
-      const res = await fetch(url, { method: "POST", headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" } });
+      // Einzelabfrage mit eigenem Timeout, sonst kann eine hängende Verbindung die Schleife (und das Drehrad) endlos festhalten
+      const res = await fetch(url, { method: "POST", headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" }, signal: AbortSignal.timeout(8_000) });
       const j = await res.json().catch(() => ({}));
       if (j?.ready) return true;
     } catch {
       /* nächster Versuch */
     }
+    if (Date.now() - t0 + 1500 >= maxMs) break;
     await new Promise((r) => setTimeout(r, 1500));
   }
   return false;
