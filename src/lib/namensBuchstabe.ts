@@ -18,10 +18,11 @@ const S = 1000; // mm -> Clipper-Ganzzahlen
 const FONT_BASE = "/fonts/geburt/";
 
 export const LETTER_FONTS = [
-  { id: "playfair", label: "Klassisch (Serif, Playfair Black)", file: "playfair-display-900.woff" },
-  { id: "abril", label: "Kräftig (Serif, Abril Fatface)", file: "abril-fatface-400.woff" },
-  { id: "montserrat", label: "Modern (Sans, Montserrat ExtraBold)", file: "montserrat-800.woff" },
-  { id: "fredoka", label: "Rund (Fredoka Bold)", file: "fredoka-700.woff" },
+  { id: "playfair", label: "Klassisch (Playfair Black)", file: "playfair-display-900.woff" },
+  { id: "bodoni", label: "Elegant (Bodoni Black)", file: "bodoni-moda-900.woff" },
+  { id: "dmserif", label: "Weich (DM Serif Display)", file: "dm-serif-display-400.woff" },
+  { id: "caslon", label: "Buchdruck (Caslon Bold)", file: "libre-caslon-text-700.woff" },
+  { id: "cormorant", label: "Fein (Cormorant Bold)", file: "cormorant-garamond-700.woff" },
 ] as const;
 
 /** Nur durchgehend verbundene Schreibschriften; thick = empfohlene Verstärkung der Striche je Seite in mm */
@@ -84,7 +85,7 @@ export const DEFAULT_BIRTH: BirthParams = {
   nameHeightMm: 4,
   iconSize: 42,
   icons: {
-    uhr: { enabled: true, text: "20:32", x: 14, y: 90 },
+    uhr: { enabled: true, text: "20:32", x: 14, y: 88 },
     ballon: { enabled: true, text: "19.11.2025", x: 88, y: 84 },
     body: { enabled: true, text: "52 cm", x: 16, y: 14 },
     gewicht: { enabled: true, text: "3450 g", x: 86, y: 16 },
@@ -161,6 +162,17 @@ function rotate(p: Paths, deg: number, cx: number, cy: number) {
   const a = (deg * Math.PI) / 180, co = Math.cos(a), si = Math.sin(a);
   return mapPaths(p, (x, y) => [cx + (x - cx) * co - (y - cy) * si, cy + (x - cx) * si + (y - cy) * co]);
 }
+/** Linie (offener Linienzug) als Fläche mit Breite w (mm bzw. Raster-Einheiten) */
+function line(pts: Pt[], w: number): Paths {
+  const co = new ClipperLib.ClipperOffset(2, 40);
+  co.AddPath(mkPath(pts), ClipperLib.JoinType.jtRound, ClipperLib.EndType.etOpenRound);
+  const out = new ClipperLib.Paths();
+  co.Execute(out, (w / 2) * S);
+  return out;
+}
+const ring = (cx: number, cy: number, r: number, w: number): Paths => diff(circle(cx, cy, r + w / 2), circle(cx, cy, r - w / 2));
+const arc = (cx: number, cy: number, r: number, a0: number, a1: number, w: number): Paths =>
+  line(Array.from({ length: 24 }, (_, i) => { const a = ((a0 + ((a1 - a0) * i) / 23) * Math.PI) / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)] as Pt; }), w);
 const circle = (cx: number, cy: number, r: number, n = 56): Paths => [mkPath(Array.from({ length: n }, (_, i) => [cx + r * Math.cos((i / n) * 2 * Math.PI), cy + r * Math.sin((i / n) * 2 * Math.PI)] as Pt))];
 const ellipse = (cx: number, cy: number, rx: number, ry: number, n = 64): Paths => [mkPath(Array.from({ length: n }, (_, i) => [cx + rx * Math.cos((i / n) * 2 * Math.PI), cy + ry * Math.sin((i / n) * 2 * Math.PI)] as Pt))];
 const poly = (pts: Pt[]): Paths => [mkPath(pts)];
@@ -217,41 +229,69 @@ function toMm(p: Paths, size: number): Paths { return mapPaths(p, (x, y) => [(x 
 function iconShape(kind: IconKind, text: string, iconFont: Font, size: number): IconShape {
   const u = size / 100; // mm je Einheit
   let sil: Paths;
+  let det: Paths = []; // zusätzliche Linien/Details im Relief (Einheiten wie sil)
   const txt: Paths[] = [];
   const t = (s: string, cap: number, cx: number, cy: number) => { if (s.trim()) txt.push(centerAt(textPaths(iconFont, s, cap * u), cx * u, -(cy - 50) * u)); };
+  const add = (p: Paths) => { det = det.length ? union(det, p) : p; };
   switch (kind) {
     case "uhr": {
-      sil = union(union(circle(50, 55, 36), circle(24, 22, 13)), union(circle(76, 22, 13), union(circle(32, 90, 5), circle(68, 90, 5))));
-      t(text, 12, 0, 55);
+      // Wecker mit zwei Glocken, Klöppel, Beinen, Zifferblatt-Ring und Strichen
+      const bells = union(circle(25, 25, 14), circle(75, 25, 14));
+      const body = circle(50, 57, 35);
+      const top = roundRect(45, 9, 55, 24, 3);
+      const legs = union(poly([[24, 82], [34, 90], [26, 99], [16, 92]]), poly([[76, 82], [66, 90], [74, 99], [84, 92]]));
+      sil = union(union(union(bells, body), top), legs);
+      add(ring(50, 57, 27, 2.2));
+      for (const a of [-90, 90]) add(line([[50 + 22 * Math.cos((a * Math.PI) / 180), 57 + 22 * Math.sin((a * Math.PI) / 180)], [50 + 17.5 * Math.cos((a * Math.PI) / 180), 57 + 17.5 * Math.sin((a * Math.PI) / 180)]], 2.4));
+      add(arc(25, 25, 8, 200, 340, 2.2)); add(arc(75, 25, 8, 200, 340, 2.2));
+      t(text, 10.5, 0, 59);
       break;
     }
     case "ballon": {
-      const neck = poly([[32, 66], [68, 66], [60, 86], [40, 86]]);
-      sil = union(union(ellipse(50, 38, 34, 38), neck), rect(38, 86, 62, 99));
+      const env = ellipse(50, 35, 32, 36);
+      const neck = poly([[33, 62], [67, 62], [60, 84], [40, 84]]);
+      const basket = roundRect(39, 84, 61, 98, 3);
+      sil = union(union(env, neck), basket);
+      add(ellipse(50, 35, 33, 37).length ? diff(ellipse(50, 35, 23, 36.5), ellipse(50, 35, 20.8, 36.5)) : []);
+      add(line([[40, 90], [60, 90]], 2));
+      add(line([[44, 84], [44, 98]], 2)); add(line([[56, 84], [56, 98]], 2));
       const m = text.match(/^(.*?\.)(\d{4})$/);
-      if (m) { t(m[1], 11, 0, 31); t(m[2], 11, 0, 48); } else t(text, 11, 0, 38);
+      if (m) { t(m[1], 8.5, 0, 29); t(m[2], 8.5, 0, 43); } else t(text, 9, 0, 35);
       break;
     }
     case "body": {
-      const torso = poly([[24, 18], [76, 18], [76, 76], [64, 94], [36, 94], [24, 76]]);
-      const l = poly([[25, 18], [4, 32], [11, 48], [25, 40]]);
-      const r = poly([[75, 18], [96, 32], [89, 48], [75, 40]]);
-      sil = diff(union(union(torso, l), r), circle(50, 14, 9));
-      t(text, 9, 0, 58);
+      // Strampler/Body mit Kragen, Ärmeln, Druckknöpfen
+      const torso = poly([[24, 18], [76, 18], [76, 72], [66, 90], [34, 90], [24, 72]]);
+      const l = poly([[25, 18], [3, 30], [9, 48], [25, 40]]);
+      const r = poly([[75, 18], [97, 30], [91, 48], [75, 40]]);
+      const legs = union(roundRect(30, 84, 48, 99, 5), roundRect(52, 84, 70, 99, 5));
+      sil = diff(union(union(union(torso, l), r), legs), circle(50, 12, 11));
+      add(arc(50, 12, 15, 25, 155, 2.2));
+      add(line([[7, 42], [26, 34]], 2)); add(line([[93, 42], [74, 34]], 2));
+      for (const x of [43, 50, 57]) add(circle(x, 85, 2.1, 20));
+      t(text, 9, 0, 56);
       break;
     }
     default: {
-      sil = union(union(roundRect(14, 40, 86, 94, 4), roundRect(8, 26, 92, 42, 3)), roundRect(36, 14, 64, 28, 6));
-      t(text, 10, 0, 68);
+      // Gewicht (Kugelhantel-Form): Griff-Ring oben, trapezförmiger Körper
+      const handle = diff(circle(50, 22, 17), circle(50, 22, 8));
+      const bodyW = offset(offset(poly([[30, 34], [70, 34], [90, 92], [10, 92]]), -3), 3);
+      sil = union(handle, bodyW);
+      add(line([[26, 44], [74, 44]], 2));
+      t(text, 9.5, 0, 69);
     }
   }
   const lw = 3.2;
-  const rim = diff(sil, offset(sil, -lw * 1));
+  const rim = diff(sil, offset(sil, -lw));
+  const inner = offset(sil, -lw * 0.5);
   const silMm = toMm(sil, size);
   const rimMm = toMm(rim, size);
+  const detMm = det.length ? inter(toMm(det, size), offset(silMm, -0.3)) : [];
   const textMm = txt.length ? offset(union(txt.flat()), 0.12) : [];
-  const relief = union(rimMm, textMm.length ? inter(textMm, offset(silMm, -0.4)) : undefined);
-  void u;
+  void inner; void u;
+  let relief = rimMm;
+  if (detMm.length) relief = union(relief, detMm);
+  if (textMm.length) relief = union(relief, inter(textMm, offset(silMm, -0.4)));
   return { plate: silMm, relief };
 }
 
@@ -264,6 +304,7 @@ export type BirthResult = {
   bounds: { x0: number; x1: number; y0: number; y1: number };
   warnings: string[];
   depth: number;
+  iconPos: Partial<Record<IconKind, { x: number; y: number }>>;
 };
 
 function shapesFromPaths(p: Paths): THREE.Shape[] {
@@ -382,16 +423,18 @@ export async function buildBirth(input: BirthParams, loader?: FontLoader): Promi
   // Icons
   type IconBuilt = { kind: IconKind; label: string; plate: Paths; relief: Paths };
   const icons: IconBuilt[] = [];
+  const iconPos: BirthResult["iconPos"] = {};
   for (const meta of ICON_KINDS) {
     const ip = p.icons[meta.kind];
     if (!ip.enabled) continue;
     const sh = iconShape(meta.kind, ip.text, iconFont, p.iconSize);
     let ox = b.x0 + (ip.x / 100) * LW, oy = b.y0 + (ip.y / 100) * LH;
+    let pxPct = ip.x, pyPct = ip.y;
     if (p.autoPos) {
       // Wunschposition als Anker: nächstgelegene Stelle suchen, die ganz auf dem Buchstaben liegt und nichts anderes berührt
       const taken: Paths = [...(name.length ? offset(name, p.clearance + 1) : []), ...icons.flatMap((q) => offset(q.plate, 1))];
       const area0 = Math.max(1, areaMm2(sh.plate));
-      let best = null as { sc: number; x: number; y: number } | null;
+      let best = null as { sc: number; x: number; y: number; gx: number; gy: number } | null;
       for (const minCov of [0.93, 0.75, 0.55]) {
       for (let gy = 0; gy <= 100; gy += 5) for (let gx = 0; gx <= 100; gx += 5) {
         const px = b.x0 + (gx / 100) * LW, py = b.y0 + (gy / 100) * LH;
@@ -401,17 +444,18 @@ export async function buildBirth(input: BirthParams, loader?: FontLoader): Promi
         const ov = taken.length ? areaMm2(inter(pp, taken)) : 0;
         if (ov > 2) continue;
         const sc = Math.hypot(gx - ip.x, gy - ip.y);
-        if (!best || sc < best.sc) best = { sc, x: px, y: py };
+        if (!best || sc < best.sc) best = { sc, x: px, y: py, gx, gy };
       }
       if (best) break;
       }
-      if (best) { ox = best.x; oy = best.y; }
+      if (best) { ox = best.x; oy = best.y; pxPct = best.gx; pyPct = best.gy; }
     }
     const plate = move(sh.plate, ox, oy), relief = move(sh.relief, ox, oy);
     const cover = areaMm2(inter(plate, letter)) / Math.max(1, areaMm2(plate));
     if (cover < 0.45) warnings.push(`${meta.label}: liegt kaum auf dem Buchstaben (nur ${Math.round(cover * 100)} %). Position anpassen, sonst gibt es keine Mulde zum Einkleben.`);
     else if (cover < 0.9) warnings.push(`${meta.label}: ragt teilweise über den Buchstaben; die Mulde ist dort offen.`);
     icons.push({ kind: meta.kind, label: meta.label, plate, relief });
+    iconPos[meta.kind] = { x: pxPct, y: pyPct };
   }
 
   // Mulden aus der Vorderseite schneiden (Spiel rundum)
@@ -438,7 +482,7 @@ export async function buildBirth(input: BirthParams, loader?: FontLoader): Promi
     layers.push({ id: `${i.kind}-relief`, label: `${i.label} Relief`, color: "gold", paths: i.relief, z: D + 1.2 });
   }
   if (!parts.length) return null;
-  return { parts, layers, bounds: { x0: b.x0, x1: b.x1, y0: b.y0, y1: b.y1 }, warnings, depth: D };
+  return { parts, layers, bounds: { x0: b.x0, x1: b.x1, y0: b.y0, y1: b.y1 }, warnings, depth: D, iconPos };
 }
 
 /** Binäres STL aus nicht indizierten Dreiecken */

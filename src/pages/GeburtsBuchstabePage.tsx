@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Slider as BaseSlider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useMaterialFarben } from "@/lib/material-farben";
 import { DRUCKER } from "@/lib/bubbleLetters";
 import {
   BIRTH_LIMITS, DEFAULT_BIRTH, ICON_KINDS, LETTER_FONTS, NAME_FONTS, buildBirth, pathsToD, trianglesToStl,
@@ -121,20 +122,80 @@ function Viewer({ res, fitKey, resetRef, body, accent }: { res: BirthResult | nu
   return <div ref={host} className="h-[420px] w-full rounded-xl border bg-gradient-to-b from-muted/40 to-muted/10 sm:h-[600px]" />;
 }
 
-function Preview2D({ res, body, accent }: { res: BirthResult; body: string; accent: string }) {
+type Drag = { id: "name" | IconKind; sx: number; sy: number; dx: number; dy: number; x0: number; y0: number };
+
+function Preview2D({ res, p, body, accent, onMove }: { res: BirthResult; p: BirthParams; body: string; accent: string; onMove: (id: "name" | IconKind, x: number, y: number) => void }) {
   const { x0, x1, y0, y1 } = res.bounds;
+  const LW = x1 - x0, LH = y1 - y0;
   const pad = 25;
-  // Ebenen von unten nach oben (nach z sortiert); y wird gespiegelt
+  const svg = useRef<SVGSVGElement>(null);
+  const [drag, setDrag] = useState<Drag | null>(null);
   const layers = [...res.layers].sort((a, b) => a.z - b.z);
+  const idOf = (layerId: string): "name" | IconKind | null => (layerId === "name" ? "name" : (layerId.split("-")[0] as IconKind) in p.icons ? (layerId.split("-")[0] as IconKind) : null);
+
+  const toSvg = (e: React.PointerEvent) => {
+    const el = svg.current!;
+    const pt = el.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const q = pt.matrixTransform(el.getScreenCTM()!.inverse());
+    return { x: q.x, y: -q.y }; // mm, y nach oben
+  };
+  const start = (e: React.PointerEvent, id: "name" | IconKind) => {
+    e.preventDefault();
+    svg.current!.setPointerCapture(e.pointerId);
+    const q = toSvg(e);
+    const cur = id === "name" ? { x: p.nameX, y: p.nameY } : { x: p.icons[id].x, y: p.icons[id].y };
+    setDrag({ id, sx: q.x, sy: q.y, dx: 0, dy: 0, x0: cur.x, y0: cur.y });
+  };
+  const move = (e: React.PointerEvent) => {
+    if (!drag) return;
+    const q = toSvg(e);
+    setDrag({ ...drag, dx: q.x - drag.sx, dy: q.y - drag.sy });
+  };
+  const end = () => {
+    if (!drag) return;
+    const nx = drag.x0 + (drag.dx / LW) * 100, ny = drag.y0 + (drag.dy / LH) * 100;
+    const lim = drag.id === "name" ? 50 : 100;
+    const lo = drag.id === "name" ? -50 : 0;
+    onMove(drag.id, Math.min(lim, Math.max(lo, Math.round(nx * 10) / 10)), Math.min(lim, Math.max(lo, Math.round(ny * 10) / 10)));
+    setDrag(null);
+  };
+
   return (
     <div className="h-[420px] w-full rounded-xl border bg-gradient-to-b from-muted/40 to-muted/10 p-3 sm:h-[600px]">
-      <svg viewBox={`${x0 - pad} ${-y1 - pad} ${x1 - x0 + 2 * pad} ${y1 - y0 + 2 * pad}`} className="h-full w-full">
+      <svg ref={svg} viewBox={`${x0 - pad} ${-y1 - pad} ${LW + 2 * pad} ${LH + 2 * pad}`} className="h-full w-full touch-none select-none" onPointerMove={move} onPointerUp={end} onPointerCancel={end}>
         <g transform="scale(1,-1)">
-          {layers.map((l) => (
-            <path key={l.id} d={pathsToD(l.paths)} fill={l.color === "gold" ? accent : body} stroke="#00000055" strokeWidth={0.35} />
-          ))}
+          {layers.map((l) => {
+            const id = idOf(l.id);
+            const moving = drag && id === drag.id;
+            return (
+              <path
+                key={l.id}
+                d={pathsToD(l.paths)}
+                fill={l.color === "gold" ? accent : body}
+                stroke="#00000055"
+                strokeWidth={0.35}
+                transform={moving ? `translate(${drag.dx} ${drag.dy})` : undefined}
+                className={id ? "cursor-grab active:cursor-grabbing" : undefined}
+                onPointerDown={id ? (e) => start(e, id) : undefined}
+              />
+            );
+          })}
         </g>
       </svg>
+    </div>
+  );
+}
+
+function Swatches({ farben, value, onPick }: { farben: { name: string; hex: string }[]; value: string; onPick: (hex: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {farben.map((c) => (
+        <button key={c.name} type="button" title={c.name} aria-label={c.name} onClick={() => onPick(c.hex)}
+          className={cn("h-6 w-6 rounded-full border border-black/10 transition-transform hover:scale-110", value === c.hex && "ring-2 ring-primary ring-offset-2 ring-offset-background")}
+          style={{ backgroundColor: c.hex }} />
+      ))}
+      {!farben.length && <span className="text-[11px] text-muted-foreground">Farben werden geladen …</span>}
     </div>
   );
 }
@@ -153,9 +214,20 @@ export default function GeburtsBuchstabePage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ms, setMs] = useState(0);
-  const [mode, setMode] = useState<"3d" | "2d">("3d");
+  const [mode, setMode] = useState<"3d" | "2d">("2d");
   const [body, setBody] = useState<string>(COLORS.weiss);
   const [accent, setAccent] = useState<string>(COLORS.gold);
+  const { farbenFor } = useMaterialFarben();
+  const farben = farbenFor("PLA");
+  const gewaehlt = useRef(false);
+  useEffect(() => {
+    // Startfarben aus der Filamentbibliothek (weiss und gold/beige), solange noch nichts gewählt wurde
+    if (gewaehlt.current || !farben.length) return;
+    const w = farben.find((c) => /wei(ss|ß)|white/i.test(c.name));
+    const g = farben.find((c) => /gold/i.test(c.name)) ?? farben.find((c) => /beige|champ|sand|gelb/i.test(c.name));
+    if (w) setBody(w.hex);
+    if (g) setAccent(g.hex);
+  }, [farben.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const token = useRef(0);
   const resetRef = useRef<(() => void) | null>(null);
   const set = <K extends keyof BirthParams>(k: K, v: BirthParams[K]) => setP((q) => ({ ...q, [k]: v }));
@@ -187,6 +259,30 @@ export default function GeburtsBuchstabePage() {
   const passt = letterPart ? DRUCKER.filter((d) => (letterPart.dims.x <= d.x && letterPart.dims.y <= d.y) || (letterPart.dims.x <= d.y && letterPart.dims.y <= d.x)) : [];
   const gramm = (v: number) => (v / 1000) * 1.24;
 
+  const autoAnordnen = async () => {
+    // einmal mit automatischer Platzierung rechnen und die gefundenen Positionen als feste Werte übernehmen
+    const r = await buildBirth({ ...p, autoPos: true });
+    if (!r) return;
+    setP((q) => {
+      const icons = { ...q.icons };
+      for (const k of Object.keys(r.iconPos) as IconKind[]) icons[k] = { ...icons[k], ...r.iconPos[k]! };
+      return { ...q, icons, autoPos: false };
+    });
+  };
+  // beim ersten Ziehen die aktuell berechneten (automatischen) Positionen fest übernehmen
+  const einfrieren = (q: BirthParams): BirthParams => {
+    if (!q.autoPos || !res) return { ...q, autoPos: false };
+    const icons = { ...q.icons };
+    for (const k of Object.keys(res.iconPos) as IconKind[]) icons[k] = { ...icons[k], ...res.iconPos[k]! };
+    return { ...q, icons, autoPos: false };
+  };
+  const verschiebe = (id: "name" | IconKind, x: number, y: number) => {
+    setP((q0) => {
+      const q = einfrieren(q0);
+      if (id === "name") return { ...q, nameX: x, nameY: y };
+      return { ...q, icons: { ...q.icons, [id]: { ...q.icons[id], x, y } } };
+    });
+  };
   const exportOne = (id: string) => {
     const part = res?.parts.find((x) => x.id === id);
     if (part) download(new Blob([trianglesToStl(part.positions)], { type: "model/stl" }), `${slug}-${part.id}.stl`);
@@ -274,25 +370,14 @@ export default function GeburtsBuchstabePage() {
                     <span className="w-36 shrink-0 text-sm">{k.label}</span>
                     <Input disabled={!ic.enabled} value={ic.text} placeholder={k.placeholder} maxLength={12} onChange={(e) => setIcon(k.kind, { text: e.target.value })} />
                   </div>
-                  {ic.enabled && !p.autoPos && (
-                    <div className="grid grid-cols-2 gap-3 pl-12">
-                      <Slider min={0} max={100} step={1} value={[ic.x]} onValueChange={([v]) => setIcon(k.kind, { x: v })} aria-label="Position waagrecht" />
-                      <Slider min={0} max={100} step={1} value={[ic.y]} onValueChange={([v]) => setIcon(k.kind, { y: v })} aria-label="Position senkrecht" />
-                    </div>
-                  )}
                 </div>
               );
             })}
             <Field label="Icon-Grösse" value={`${p.iconSize} mm`}>
               <Slider min={BIRTH_LIMITS.iconSize[0]} max={BIRTH_LIMITS.iconSize[1]} step={1} value={[p.iconSize]} onValueChange={([v]) => set("iconSize", v)} />
             </Field>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-sm font-medium">Automatisch platzieren</div>
-                <div className="text-[11px] text-muted-foreground">Sucht freie Stellen auf dem Buchstaben, nahe der Wunschecke. Aus: Position von Hand mit den Reglern.</div>
-              </div>
-              <Switch checked={p.autoPos} onCheckedChange={(v) => set("autoPos", v)} />
-            </div>
+            <p className="text-[11px] text-muted-foreground">Positionen: in der 2D-Ansicht Icons und Namen mit der Maus oder dem Finger an die richtige Stelle ziehen.</p>
+            <Button type="button" size="sm" variant="outline" onClick={autoAnordnen} disabled={!res}>Icons automatisch anordnen</Button>
           </div>
 
           <div className="space-y-3 rounded-lg border p-3">
@@ -306,11 +391,11 @@ export default function GeburtsBuchstabePage() {
             <p className="text-[11px] text-muted-foreground">Das Spiel macht die Mulde grösser als das Einlegeteil, damit es sich ohne Nacharbeit einlegen und verkleben lässt.</p>
           </div>
 
-          <Field label="Vorschaufarben">
-            <div className="flex items-center gap-3 text-xs">
-              <label className="flex items-center gap-1.5">Buchstabe <input type="color" value={body} onChange={(e) => setBody(e.target.value)} className="h-6 w-8 cursor-pointer rounded border bg-transparent p-0" /></label>
-              <label className="flex items-center gap-1.5">Name und Icons <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="h-6 w-8 cursor-pointer rounded border bg-transparent p-0" /></label>
-            </div>
+          <Field label="Farbe Buchstabe (Filamentbibliothek, PLA)">
+            <Swatches farben={farben} value={body} onPick={(h) => { gewaehlt.current = true; setBody(h); }} />
+          </Field>
+          <Field label="Farbe Name und Icons">
+            <Swatches farben={farben} value={accent} onPick={(h) => { gewaehlt.current = true; setAccent(h); }} />
           </Field>
           <Button variant="ghost" size="sm" onClick={() => setP(DEFAULT_BIRTH)}><RotateCcw className="mr-1.5 h-3.5 w-3.5" />Zurücksetzen</Button>
         </div>
@@ -319,7 +404,7 @@ export default function GeburtsBuchstabePage() {
           <div className="relative">
             {mode === "3d" || !res
               ? <Viewer res={res} body={body} accent={accent} resetRef={resetRef} fitKey={`${p.letter}|${p.letterFont}|${p.letterHeight}|${p.depth}|${p.standplatte}`} />
-              : <Preview2D res={res} body={body} accent={accent} />}
+              : <Preview2D res={res} p={p} body={body} accent={accent} onMove={verschiebe} />}
             <div className="absolute left-3 top-3 flex overflow-hidden rounded-full border bg-background/80 text-xs">
               {(["3d", "2d"] as const).map((m) => (
                 <button key={m} type="button" onClick={() => setMode(m)} className={cn("px-3 py-1", mode === m ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{m.toUpperCase()}</button>
@@ -354,7 +439,7 @@ export default function GeburtsBuchstabePage() {
                     <div className="min-w-0">
                       <div className="truncate font-medium">{part.label}</div>
                       <div className="text-[11px] text-muted-foreground tabular-nums">
-                        {part.dims.x.toFixed(0)} × {part.dims.y.toFixed(0)} × {part.dims.z.toFixed(1)} mm · ≈ {gramm(part.volume).toFixed(1)} g · {part.color === "gold" ? "Zweitfarbe" : "Hauptfarbe"}
+                        {part.dims.x.toFixed(0)} × {part.dims.y.toFixed(0)} × {part.dims.z.toFixed(1)} mm · ≈ {gramm(part.volume).toFixed(1)} g · {part.color === "gold" ? "Farbe Name/Icons" : "Farbe Buchstabe"}
                       </div>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => exportOne(part.id)}><Download className="mr-1 h-3.5 w-3.5" />STL</Button>
