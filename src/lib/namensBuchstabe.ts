@@ -220,6 +220,54 @@ export function textPaths(font: Font, text: string, capMm: number): Paths {
   if (!contours.length) return [];
   return union(contours.map(mkPath));
 }
+/** Zerlegt Polygone in zusammenhängende Teile (Aussenkontur samt Löchern) */
+function components(p: Paths): Paths[] {
+  const c = new ClipperLib.Clipper();
+  c.AddPaths(p, ClipperLib.PolyType.ptSubject, true);
+  const tree = new ClipperLib.PolyTree();
+  c.Execute(ClipperLib.ClipType.ctUnion, tree, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
+  const out: Paths[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const grab = (n: any, acc: any[]) => { acc.push(n.Contour()); for (const h of n.Childs()) { acc.push(h.Contour()); for (const i of h.Childs()) if (!i.IsHole()) out.push(...(components2(i))); } };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const components2 = (n: any): Paths[] => { const acc: any[] = []; grab(n, acc); return [acc]; };
+  for (const n of tree.Childs()) out.push(...components2(n));
+  return out;
+}
+
+/** Verbindet alle grösseren Teile (Buchstaben) mit kurzen Stegen an der engsten Stelle; kleine Teile (Punkte) bleiben */
+export function verbinde(p: Paths, stegMm: number): { paths: Paths; punkte: number; stege: number } {
+  const comps = components(p);
+  if (comps.length < 2) return { paths: p, punkte: 0, stege: 0 };
+  const areas = comps.map((c) => areaMm2(c));
+  const max = Math.max(...areas);
+  const big = comps.filter((_, i) => areas[i] >= max * 0.05);
+  const punkte = comps.length - big.length;
+  const pts = (c: Paths) => { const o: Pt[] = []; for (const path of c) for (let i = 0; i < path.length; i += 2) o.push([path[i].X / S, path[i].Y / S]); return o; };
+  const P = big.map(pts);
+  const joined = new Set<number>([0]);
+  let result: Paths = p;
+  let stege = 0;
+  while (joined.size < big.length) {
+    let best = { d: Infinity, a: [0, 0] as Pt, b: [0, 0] as Pt, j: -1 };
+    for (const i of joined) for (let j = 0; j < big.length; j++) {
+      if (joined.has(j)) continue;
+      for (const a of P[i]) for (const b of P[j]) {
+        const d = (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
+        if (d < best.d) best = { d, a, b, j };
+      }
+    }
+    if (best.j < 0) break;
+    // Steg etwas über die Enden hinaus, damit er sicher in beide Teile reicht
+    const dx = best.b[0] - best.a[0], dy = best.b[1] - best.a[1], l = Math.hypot(dx, dy) || 1;
+    const e = stegMm * 0.6;
+    result = union(result, line([[best.a[0] - (dx / l) * e, best.a[1] - (dy / l) * e], [best.b[0] + (dx / l) * e, best.b[1] + (dy / l) * e]], stegMm));
+    joined.add(best.j);
+    stege++;
+  }
+  return { paths: result, punkte, stege };
+}
+
 const centerAt = (p: Paths, cx: number, cy: number) => { const b = boundsOf(p); return move(p, cx - (b.x0 + b.x1) / 2, cy - (b.y0 + b.y1) / 2); };
 
 // ---------- Icons (Entwurf in 100er-Raster, y nach unten) ----------
@@ -400,6 +448,7 @@ export async function buildBirth(input: BirthParams, loader?: FontLoader): Promi
   // Name
   const pd = p.pocketDepth;
   let name: Paths = [];
+  let nameDots = 0;
   if (p.name.trim()) {
     const base = textPaths(nameFont, p.name.trim(), 100);
     if (base.length) {
@@ -407,14 +456,16 @@ export async function buildBirth(input: BirthParams, loader?: FontLoader): Promi
       const k = ((LW * p.nameWidth) / 100) / bb.w;
       let n = scalePaths(base, k);
       n = offset(n, p.nameThick);
+      const v = verbinde(n, Math.max(2.2, 1.6 + p.nameThick * 2));
+      n = v.paths;
+      nameDots = v.punkte;
       n = centerAt(n, 0, 0);
       n = rotate(n, p.nameAngle, 0, 0);
       n = move(n, cx + (p.nameX / 100) * LW, LH / 2 + (p.nameY / 100) * LH);
       name = n;
       const nb = boundsOf(name);
       if (nb.h < 8) warnings.push("Der Name ist sehr klein; Striche werden dünn. Mehr Breite oder kürzeren Namen wählen.");
-      const comps = shapesFromPaths(name).length;
-      if (comps > 1) warnings.push(`Der Name besteht aus ${comps} Einzelteilen (z. B. i-Punkt oder Umlaut-Punkte): einzeln einkleben.`);
+      if (nameDots > 0) warnings.push(`Der Name hat ${nameDots} lose Punkte (i-Punkt oder Umlaut-Punkte): einzeln einkleben.`);
       const cover = areaMm2(inter(offset(name, p.clearance), letter)) / Math.max(1, areaMm2(name));
       if (cover < 0.5) warnings.push("Der Name liegt grossteils ausserhalb des Buchstabens: Breite oder Position anpassen, damit er auf dem Buchstaben aufliegt.");
     }
