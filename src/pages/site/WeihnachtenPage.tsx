@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: "Bis wann muss ich bestellen, damit es vor Weihnachten ankommt?",
-    a: "Damit dein Geschenk sicher vor Weihnachten ankommt, bestelle bis Mitte Dezember (15. Dezember). Die Fertigungszeit hängt von Material, Umfang und Auslastung ab, bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Danach geht es nur noch mit dem Geschenkgutschein, der sofort per E-Mail kommt.",
+    a: "Damit dein Geschenk sicher vor Weihnachten ankommt, bestelle bis Mitte Dezember (15. Dezember). Die Fertigungszeit hängt von Material, Umfang und Auslastung ab, bei geeigneten Aufträgen ist eine Fertigung ab 24 Stunden möglich. Danach geht es nur noch mit dem Geschenkgutschein, der sofort per E-Mail kommt.",
   },
   {
     q: "Wohin wird geliefert?",
@@ -78,7 +78,7 @@ export default function WeihnachtenPage() {
           },
           {
             title: "Bestellschluss: 15. Dezember",
-            text: "Bestellschluss für Weihnachten ist Mitte Dezember (15. Dezember). Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab. Wer später dran ist, verschenkt am besten einen Gutschein, der sofort per E-Mail kommt.",
+            text: "Bestellschluss für Weihnachten ist Mitte Dezember (15. Dezember). Bei geeigneten Aufträgen ist eine Fertigung ab 24 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab. Wer später dran ist, verschenkt am besten einen Gutschein, der sofort per E-Mail kommt.",
           },
           {
             title: "Gefertigt in der Schweiz",

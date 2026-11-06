@@ -4,7 +4,7 @@ import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 
 const DEFAULT_ITEMS = [
   "PLA", "PETG", "ABS", "TPU", "Resin", "Nylon", "ASA", "Carbon-Fiber",
-  "Fertigung in 48h möglich", "0.1mm Präzision", "Swiss Made", "100+ Kunden",
+  "Fertigung ab 24h möglich", "0.1mm Präzision", "Swiss Made", "100+ Kunden",
 ];
 
 export const Marquee = () => {

@@ -132,7 +132,7 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, pricing,
       if (gutschein && pricing) await erfasseGutscheinVerwendung({ gutschein, rabattBetrag: pricing.rabatt, orderId: data?.inquiry_id ?? null });
       toast.success(data?.ferien?.bis
         ? `Bestellung gesendet! Wir sind bis ${(data.ferien.bis as string).split("-").reverse().join(".")} in den Ferien und melden uns danach.`
-        : "Bestellung gesendet! Wir melden uns innerhalb 24h.");
+        : "Bestellung gesendet! Wir melden uns ab 24h.");
       setDone(true);
     } catch (err) {
       console.error(err);
@@ -176,7 +176,7 @@ export default function SpardoseOrderForm({ params, plans, jobs, preis, pricing,
       <Button type="submit" className="w-full gap-2" disabled={submitting}>
         {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Wird gesendet...</> : <><Send className="h-4 w-4" /> Jetzt bestellen</>}
       </Button>
-      <p className="text-center text-xs text-muted-foreground">Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.</p>
+      <p className="text-center text-xs text-muted-foreground">Preise sind Schätzungen. Verbindliches Angebot ab 24h.</p>
     </form>
   );
 }

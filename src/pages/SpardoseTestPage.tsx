@@ -575,7 +575,7 @@ export default function SpardoseTestPage() {
                       : <Button type="button" variant="outline" size="sm" className="h-9" onClick={gutscheinEinloesen} disabled={gBusy || !gInput.trim()}>{gBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Einlösen"}</Button>}
                   </div>
                   <div className="mt-2 flex items-center justify-between border-t pt-3"><span className="font-bold">Total</span><span className="text-xl font-bold tabular-nums text-primary">{CHF(pr.totalMitRabatt)}</span></div>
-                  <div className="text-[11px] text-muted-foreground">Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.</div>
+                  <div className="text-[11px] text-muted-foreground">Preise sind Schätzungen. Verbindliches Angebot ab 24h.</div>
                 </div>
           )}
           {err && <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">Fehler: {err}</div>}

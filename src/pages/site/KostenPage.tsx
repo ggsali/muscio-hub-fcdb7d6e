@@ -102,7 +102,7 @@ export default function KostenPage() {
           },
           {
             title: "Preis und Fertigungszeit hängen zusammen",
-            text: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab. Express ist auf Anfrage möglich und wird individuell kalkuliert, weil wir dafür laufende Aufträge umplanen müssen.",
+            text: "Bei geeigneten Aufträgen ist eine Fertigung ab 24 Stunden möglich; die tatsächliche Zeit hängt von Material, Auftragsumfang und Auslastung ab. Express ist auf Anfrage möglich und wird individuell kalkuliert, weil wir dafür laufende Aufträge umplanen müssen.",
           },
         ]}
         table={table}

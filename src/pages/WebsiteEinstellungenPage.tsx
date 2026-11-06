@@ -61,7 +61,7 @@ export default function WebsiteEinstellungenPage() {
             const items = ((row.value as any)?.items) as { text: string }[] | undefined;
             if (items && items.length > 0) setKarussel(items);
             else setKarussel([
-              { text: "Fertigung in 48h möglich" },
+              { text: "Fertigung ab 24h möglich" },
               { text: "0.1mm Präzision" },
               { text: "Swiss Made" },
               { text: "100+ Kunden" },
@@ -70,7 +70,7 @@ export default function WebsiteEinstellungenPage() {
         }
         if (!data.find(r => r.key === "karussel")) {
           setKarussel([
-            { text: "Fertigung in 48h möglich" },
+            { text: "Fertigung ab 24h möglich" },
             { text: "0.1mm Präzision" },
             { text: "Swiss Made" },
             { text: "100+ Kunden" },
@@ -484,7 +484,7 @@ export default function WebsiteEinstellungenPage() {
               <Input
                 value={item.text}
                 onChange={e => setKarussel(karussel.map((x, j) => j === i ? { text: e.target.value } : x))}
-                placeholder="z.B. Fertigung in 48h möglich"
+                placeholder="z.B. Fertigung ab 24h möglich"
                 className="bg-input border-border flex-1 min-w-0"
               />
               <Button

@@ -132,7 +132,7 @@ const HeroBento = () => {
         >
           <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse mr-2" />
-            3D-Druck in nur 48 Stunden*
+            3D-Druck ab 24 Stunden*
           </span>
 
           <h1 className="font-heading text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.1] tracking-tight text-foreground mb-5">
@@ -146,7 +146,7 @@ const HeroBento = () => {
           </p>
 
           <p className="text-xs text-muted-foreground -mt-5 mb-8 max-w-xl">
-            *Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab.
+            *Bei geeigneten Aufträgen ist eine Fertigung ab 24 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab.
           </p>
 
           <p className="text-sm text-muted-foreground mb-8">
@@ -407,7 +407,7 @@ const FAQS_ALL = [
   { q: "Was kostet ein 3D-Druck in der Schweiz?", a: "Der Preis ergibt sich aus Material, Druckzeit und Nachbearbeitung — Kleinteile gibt es bereits ab CHF 5.–. Im Online-Kalkulator sehen Sie den Preis sofort und transparent aufgeschlüsselt, ab CHF 0.055 pro Gramm Material." },
   { q: "Was ist der Unterschied zwischen FDM- und SLA-Druck?", a: "Beim FDM-Druck wird geschmolzener Kunststoff Schicht für Schicht aufgetragen — ideal für robuste Funktionsteile, Ersatzteile und grössere Bauteile. SLA härtet flüssiges Resin mit Licht aus und erreicht Auflösungen bis 0.025 mm für sehr feine Details und glatte Oberflächen. Wir beraten Sie kostenlos, welches Verfahren für Ihr Bauteil das richtige ist." },
   { q: "Welche Materialien stehen zur Auswahl?", a: "Im FDM-Verfahren drucken wir PLA, PETG, ABS, ASA, TPU und Nylon in über 12 Farben. Für höchste Detailtreue steht im SLA-Verfahren Resin zur Verfügung. Unsicher bei der Materialwahl? Unsere kostenlose KI-Materialberatung im Kalkulator hilft Ihnen weiter." },
-  { q: "Wie lange dauert die Lieferung?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach versenden wir mit der Schweizer Post oder DHL innerhalb der Schweiz, was in der Regel 1–2 Werktage dauert. Express-Fertigung ist auf Anfrage möglich, Abholung in Eschlikon TG jederzeit." },
+  { q: "Wie lange dauert die Lieferung?", a: "Bei geeigneten Aufträgen ist eine Fertigung ab 24 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach versenden wir mit der Schweizer Post oder DHL innerhalb der Schweiz, was in der Regel 1–2 Werktage dauert. Express-Fertigung ist auf Anfrage möglich, Abholung in Eschlikon TG jederzeit." },
   { q: "Wo befindet sich 3DMuscio?", a: "Unser Standort ist in Eschlikon im Kanton Thurgau, zentral in der Ostschweiz zwischen Winterthur und St. Gallen. Wir fertigen alle Teile lokal in der Schweiz — ohne Zoll und ohne lange Wartezeiten aus dem Ausland. Bestellungen können Sie schweizweit online aufgeben oder direkt vor Ort abholen." },
   { q: "Gibt es eine Mindestbestellmenge?", a: "Nein, bei uns gibt es keine Mindestbestellmenge — wir drucken auch ein einzelnes Teil ab CHF 5.–. Vom Einzelstück über Prototypen bis zur Kleinserie mit reproduzierbaren Parametern ist alles möglich." },
   { q: "Welche Dateiformate werden unterstützt?", a: "Wir verarbeiten STL, STEP/STP, 3MF und OBJ bis 500 MB Dateigrösse. Der Online-Kalkulator berechnet Volumen, Gewicht und Preis automatisch aus Ihrer Datei. Eine manuelle Eingabe von Massen ist nicht nötig." },
@@ -552,7 +552,7 @@ const SEOContent = () => {
             <div>
               <h3 className="font-heading text-lg font-bold text-foreground mb-2">Schneller Versand in der Schweiz</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Als Schweizer Unternehmen aus Eschlikon TG fertigen wir schnell – bei geeigneten Aufträgen innerhalb von 48 Stunden. Kein Zoll, keine langen Wartezeiten aus dem Ausland. Versand mit Post oder DHL.
+                Als Schweizer Unternehmen aus Eschlikon TG fertigen wir schnell – bei geeigneten Aufträgen ab 24 Stunden. Kein Zoll, keine langen Wartezeiten aus dem Ausland. Versand mit Post oder DHL.
               </p>
             </div>
           </div>
@@ -563,7 +563,7 @@ const SEOContent = () => {
             <div>
               <h3 className="font-heading text-lg font-bold text-foreground mb-2">Faire Preise</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Transparente Preise ab CHF 0.055/g für PLA-Druck. Online-Kalkulator für sofortige Preisberechnung. Keine versteckten Kosten, verbindliches Angebot innerhalb 24 Stunden.
+                Transparente Preise ab CHF 0.055/g für PLA-Druck. Online-Kalkulator für sofortige Preisberechnung. Keine versteckten Kosten, verbindliches Angebot ab 24 Stunden.
               </p>
             </div>
             <div>
@@ -609,7 +609,7 @@ const Index = () => {
   <div>
     <Seo
       title="3D-Druckservice Schweiz – FDM & SLA ab 1 Stück | 3DMuscio"
-      description="Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Fertigung bei geeigneten Aufträgen in 48 h möglich."
+      description="Schweizer 3D-Druckservice aus Eschlikon TG: FDM und SLA/Resin aus einer Hand, ab 1 Stück, Sofortpreis im Kalkulator, Fertigung bei geeigneten Aufträgen ab 24 h möglich."
       path="/"
     />
     <HeroBento />

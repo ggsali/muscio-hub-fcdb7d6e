@@ -20,7 +20,7 @@ const HUB_ENDPOINT = "https://ukqtjdsjmtxgzhklvqky.supabase.co/functions/v1/subm
 
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
-  { q: "Wie schnell erhalte ich mein Teil?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand mit Post oder DHL." },
+  { q: "Wie schnell erhalte ich mein Teil?", a: "Bei geeigneten Aufträgen ist eine Fertigung ab 24 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand mit Post oder DHL." },
 ];
 
 const Kontakt = () => {
@@ -47,7 +47,7 @@ const Kontakt = () => {
       });
       if (!res.ok) throw new Error("Fehler beim Senden");
       setSent(true);
-      toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
+      toast.success("Nachricht gesendet! Wir antworten ab 24h.");
       setForm({ name: "", email: "", phone: "", message: "" });
       setBetreff("");
     } catch (err) {
@@ -79,7 +79,7 @@ const Kontakt = () => {
                 <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
                   <CheckCircle2 className="w-12 h-12 text-primary" />
                   <p className="font-semibold text-foreground text-lg">Nachricht erhalten!</p>
-                  <p className="text-muted-foreground text-sm">Wir melden uns innerhalb von 24 Stunden bei dir.</p>
+                  <p className="text-muted-foreground text-sm">Wir melden uns ab 24 Stunden bei dir.</p>
                   <Button variant="outline" size="sm" onClick={() => setSent(false)}>
                     Neue Anfrage senden
                   </Button>
@@ -190,7 +190,7 @@ const Kontakt = () => {
                 <div className="mt-6 p-4 bg-muted rounded-xl flex items-center gap-3">
                   <MessageCircle className="w-5 h-5 text-primary" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">Antwort innerhalb 24h</p>
+                    <p className="text-sm font-medium text-foreground">Antwort ab 24h</p>
                     <p className="text-xs text-muted-foreground">Garantierte Reaktionszeit</p>
                   </div>
                 </div>

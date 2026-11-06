@@ -28,7 +28,7 @@ import HerkunftBanner from "@/components/site/HerkunftBanner";
 
 const quickFaqs = [
   { q: "Welche Dateiformate akzeptiert ihr?", a: "STL, OBJ, STEP und 3MF Dateien bis 500MB." },
-  { q: "Wie schnell erhalte ich mein Teil?", a: "Bei geeigneten Aufträgen ist eine Fertigung innerhalb von 48 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand mit Post oder DHL." },
+  { q: "Wie schnell erhalte ich mein Teil?", a: "Bei geeigneten Aufträgen ist eine Fertigung ab 24 Stunden möglich. Die tatsächliche Produktions- und Lieferzeit hängt von Material, Auftragsumfang und Auslastung ab. Danach erfolgt der Versand mit Post oder DHL." },
 ];
 
 type UploadedAttachment = {
@@ -131,7 +131,7 @@ const ContactPage = () => {
       if (data?.ferien?.bis) {
         setFerienBis((data.ferien.bis as string).split("-").reverse().join("."));
       } else {
-        toast.success("Nachricht gesendet! Wir antworten innerhalb 24h.");
+        toast.success("Nachricht gesendet! Wir antworten ab 24h.");
       }
       setSent(true);
       if (data?.inquiry_id && sessionStorage.getItem("herkunft_gefragt") !== "true") {
@@ -363,7 +363,7 @@ const ContactPage = () => {
                 <div className="mt-6 p-4 bg-muted rounded-xl flex items-center gap-3">
                   <MessageCircle className="w-5 h-5 text-primary" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">Antwort innerhalb 24h</p>
+                    <p className="text-sm font-medium text-foreground">Antwort ab 24h</p>
                     <p className="text-xs text-muted-foreground">Garantierte Reaktionszeit</p>
                   </div>
                 </div>

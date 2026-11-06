@@ -1777,7 +1777,7 @@ const CalculatorOnlinePage = () => {
       toast.success(
         data?.ferien?.bis
           ? `Anfrage gesendet! Wir sind bis ${(data.ferien.bis as string).split("-").reverse().join(".")} in den Ferien und melden uns danach. Du hast eine Bestätigung per E-Mail erhalten.`
-          : "Anfrage gesendet! Wir melden uns innerhalb 24h.",
+          : "Anfrage gesendet! Wir melden uns ab 24h.",
         data?.ferien?.bis ? { duration: 10000 } : undefined,
       );
 
@@ -1977,7 +1977,7 @@ const CalculatorOnlinePage = () => {
                 <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground flex-wrap justify-end">
                   <span>🇨🇭 Swiss Made</span>
                   <span>·</span>
-                  <span>⚡ Fertigung ab 48h möglich</span>
+                  <span>⚡ Fertigung ab 24h möglich</span>
                   <span className="hidden sm:inline">·</span>
                   <span className="hidden sm:inline">✓ Ab 1 Stück</span>
                   <span className="hidden md:inline">·</span>
@@ -3073,7 +3073,7 @@ const CalculatorOnlinePage = () => {
                       )}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
-                      Preise sind Schätzungen. Verbindliches Angebot innerhalb 24h.
+                      Preise sind Schätzungen. Verbindliches Angebot ab 24h.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-muted-foreground">
                       <div className="flex items-center gap-1.5 justify-center"><LockIcon className="w-3.5 h-3.5 text-primary" /> SSL-verschlüsselt</div>
@@ -3130,7 +3130,7 @@ const SuccessView = ({
           ✓ Bestellung erhalten! Wir melden uns bald.
         </h1>
         <p className="text-muted-foreground text-sm">
-          Vielen Dank für deine Anfrage. Wir prüfen deine Dateien und melden uns innerhalb von 24 Stunden bei dir.
+          Vielen Dank für deine Anfrage. Wir prüfen deine Dateien und melden uns ab 24 Stunden bei dir.
         </p>
       </div>
 
