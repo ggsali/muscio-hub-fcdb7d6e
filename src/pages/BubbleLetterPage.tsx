@@ -190,7 +190,7 @@ export default function BubbleLetterPage() {
             <Textarea rows={2} value={p.text} onChange={(e) => set("text", sanitizeText(e.target.value))} placeholder="z. B. Nora" />
             <p className="text-[11px] text-muted-foreground">Bis zu 4 Zeilen mit je 20 Zeichen (Enter = neue Zeile). Es gibt nur die Buchstaben A–Z (Kleinbuchstaben werden gross, Umlaute ohne Punkte); Zahlen und Satzzeichen fehlen in den Vorlagen.</p>
           </Field>
-          <Field label="Buchstabenhöhe (Mittel)" value={`${p.size} mm`}>
+          <Field label="Buchstabenhöhe" value={`${p.size} mm`}>
             <Slider min={LIMITS.size[0]} max={LIMITS.size[1]} step={1} value={[p.size]} onValueChange={([v]) => set("size", v)} />
           </Field>
           <Field label="Buchstabenabstand" value={`${p.spacing.toFixed(1)} mm`}>

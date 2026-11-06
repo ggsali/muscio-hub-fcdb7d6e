@@ -50,6 +50,12 @@ describe("layoutText", () => {
     expect(r.volume).toBeGreaterThan(1000);
     expect(offeneKanten(r.parts.map((p) => p.index))).toBe(0);
   });
+  it("alle Buchstaben gleich hoch", () => {
+    for (const ch of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+      const r = layoutText(glyphs, { ...DEFAULTS, text: ch, size: 50 })!;
+      expect(r.dims.y, ch).toBeCloseTo(50, 1);
+    }
+  });
   it("mehrere Zeilen sind höher; Leerzeichen erzeugt keine Teile", () => {
     const a = layoutText(glyphs, { ...DEFAULTS, text: "AB" })!;
     const b = layoutText(glyphs, { ...DEFAULTS, text: "A B\nCD" })!;

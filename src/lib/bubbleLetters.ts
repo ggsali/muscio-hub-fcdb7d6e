@@ -4,7 +4,7 @@
 
 export type BubbleParams = {
   text: string;
-  /** Buchstabenhöhe in mm (Mittel der Grossbuchstaben) */
+  /** Buchstabenhöhe in mm (alle Buchstaben gleich hoch) */
   size: number;
   /** Abstand zwischen den Buchstaben in mm (negativ = überlappen) */
   spacing: number;
@@ -103,7 +103,7 @@ export function layoutText(glyphs: Map<string, Glyph>, input: BubbleParams): Bub
   const umgewandelt = new Set<string>();
   const space = 0.4 * REF_HEIGHT * s;
 
-  type Place = { g: Glyph; x: number; line: number };
+  type Place = { g: Glyph; x: number; line: number; k: number };
   const places: Place[] = [];
   const lineW: number[] = [];
   lines.forEach((line, li) => {
@@ -117,8 +117,9 @@ export function layoutText(glyphs: Map<string, Glyph>, input: BubbleParams): Bub
       if (!g) { fehlend.add(ch); continue; }
       if (!first) x += p.spacing;
       first = false;
-      places.push({ g, x: x + (g.w * s) / 2, line: li });
-      x += g.w * s;
+      const k = (s * REF_HEIGHT) / g.h; // jeder Buchstabe wird auf dieselbe Höhe gebracht (Proportionen bleiben)
+      places.push({ g, x: x + (g.w * k) / 2, line: li, k });
+      x += g.w * k;
     }
     lineW.push(x);
   });
@@ -140,7 +141,7 @@ export function layoutText(glyphs: Map<string, Glyph>, input: BubbleParams): Bub
     const oy = (nLines - 1 - pl.line) * lineH - ((nLines - 1) * lineH + REF_HEIGHT * s) / 2;
     const n = g.positions.length / 3;
     for (let i = 0; i < n; i++) {
-      const X = ox + g.positions[i * 3] * s, Y = oy + g.positions[i * 3 + 1] * s, Z = g.positions[i * 3 + 2] * s;
+      const X = ox + g.positions[i * 3] * pl.k, Y = oy + g.positions[i * 3 + 1] * pl.k, Z = g.positions[i * 3 + 2] * pl.k;
       positions[(vo + i) * 3] = X; positions[(vo + i) * 3 + 1] = Y; positions[(vo + i) * 3 + 2] = Z;
       if (X < minX) minX = X;
       if (X > maxX) maxX = X;
