@@ -56,6 +56,12 @@ describe("layoutText", () => {
       expect(r.dims.y, ch).toBeCloseTo(50, 1);
     }
   });
+  it("alle Buchstaben gleich dick", () => {
+    for (const ch of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+      const r = layoutText(glyphs, { ...DEFAULTS, text: ch, size: 100 })!;
+      expect(r.dims.z, ch).toBeCloseTo(24.5, 0);
+    }
+  });
   it("mehrere Zeilen sind höher; Leerzeichen erzeugt keine Teile", () => {
     const a = layoutText(glyphs, { ...DEFAULTS, text: "AB" })!;
     const b = layoutText(glyphs, { ...DEFAULTS, text: "A B\nCD" })!;
