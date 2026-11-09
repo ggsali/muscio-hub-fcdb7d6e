@@ -1,4 +1,10 @@
 // KI-Materialberatung für den Online-Kalkulator (echter Dialog)
+import { aiRateHit, aiRateMessage } from "../_shared/ai-rate-limit.ts";
+
+// Dauerhafte Grenzen pro Besucher und gesamthaft pro Tag.
+const ADVISOR_LIMIT = { bucket: "ki-materialberatung", visitorWindowS: 3600, visitorMax: 40, globalWindowS: 86400, globalMax: 300 };
+const SUMMARY_LIMIT = { bucket: "ki-zusammenfassung", visitorWindowS: 3600, visitorMax: 6, globalWindowS: 86400, globalMax: 100 };
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -45,20 +51,16 @@ Deno.serve(async (req) => {
 
     // ── Modus "summary": kompakte Admin-Zusammenfassung nach Abschluss des Chats ──
     if (mode === "summary") {
-      // Zusammenfassung max. 1x pro Beratung: eigenes, engeres Limit
-      const ip = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-      // @ts-ignore globalThis cache
-      const sStore: Map<string, number[]> = (globalThis.__kiSumStore ||= new Map());
-      const sNow = Date.now();
-      const sHits = (sStore.get(ip) || []).filter((t: number) => sNow - t < RL_WINDOW_MS);
-      if (sHits.length >= 5) return json({ error: "Zu viele Anfragen. Bitte später erneut versuchen." }, 429);
-      sHits.push(sNow); sStore.set(ip, sHits);
       const konversation = (typeof transcript === "string" && transcript.trim()
         ? transcript
         : Array.isArray(messages)
           ? messages.slice(-12).map((m: any) => `${m?.role === "assistant" ? "Berater" : "Kunde"}: ${clip(m?.content, 1000)}`).join("\n")
           : "").slice(0, 6_000);
       if (!konversation.trim()) return json({ error: "Keine Konversation übergeben" }, 400);
+
+      // Zusammenfassung max. 1x pro Beratung: eigenes, engeres Limit
+      const sRate = await aiRateHit(req, SUMMARY_LIMIT);
+      if (sRate !== "ok") { const m = aiRateMessage(sRate); return json({ error: m.error }, m.status); }
 
       const SUMMARY_PROMPT = `Basierend auf dieser Konversation erstelle eine kompakte Admin-Zusammenfassung auf Deutsch. Nur die relevanten Fakten, keine Erklärungen. Format exakt so:
 
@@ -94,6 +96,9 @@ Grund: [1 kurzer Satz]`;
     }
 
     if (!Array.isArray(messages)) return json({ error: "messages fehlt" }, 400);
+
+    const rate = await aiRateHit(req, ADVISOR_LIMIT);
+    if (rate !== "ok") { const m = aiRateMessage(rate); return json({ error: m.error }, m.status); }
 
     // Resin-Schalter aus den Website-Einstellungen
     let resin = false;
