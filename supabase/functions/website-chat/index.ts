@@ -1,5 +1,9 @@
 // Lovable AI streaming chat for website ChatWidget
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { aiRateHit, aiRateMessage } from "../_shared/ai-rate-limit.ts";
+
+// Dauerhafte Grenzen: pro Besucher 30 KI-Antworten/Stunde, gesamthaft 300/Tag.
+const CHAT_LIMIT = { bucket: "website-chat", visitorWindowS: 3600, visitorMax: 30, globalWindowS: 86400, globalMax: 300 };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -114,18 +118,11 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Konversation zu lang. Bitte starte eine neue." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-    const now = Date.now();
-    const WINDOW_MS = 60_000;
-    const MAX_REQ = 10;
-    // @ts-ignore globalThis cache
-    const store: Map<string, number[]> = (globalThis.__chatRateStore ||= new Map());
-    const arr = (store.get(ip) || []).filter((t) => now - t < WINDOW_MS);
-    if (arr.length >= MAX_REQ) {
-      return new Response(JSON.stringify({ error: "Zu viele Anfragen. Bitte kurz warten." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const rate = await aiRateHit(req, CHAT_LIMIT);
+    if (rate !== "ok") {
+      const { status, error } = aiRateMessage(rate);
+      return new Response(JSON.stringify({ error }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    arr.push(now);
-    store.set(ip, arr);
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) {
