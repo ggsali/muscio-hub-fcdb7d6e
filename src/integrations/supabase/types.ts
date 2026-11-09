@@ -234,6 +234,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_rate_events: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+          key_hash: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: number
+          key_hash: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: number
+          key_hash?: string
+        }
+        Relationships: []
+      }
       arbeitszeit: {
         Row: {
           created_at: string
@@ -3484,6 +3505,17 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      ai_rate_hit: {
+        Args: {
+          p_bucket: string
+          p_global_max: number
+          p_global_window_s: number
+          p_key_hash: string
+          p_visitor_max: number
+          p_visitor_window_s: number
+        }
+        Returns: string
       }
       current_user_email: { Args: never; Returns: string }
       delete_email: {
