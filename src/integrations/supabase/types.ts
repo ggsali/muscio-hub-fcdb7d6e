@@ -3561,6 +3561,10 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: boolean
       }
+      link_auth_user_to_customer: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string

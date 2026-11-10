@@ -33,13 +33,19 @@ serve(async (req) => {
       });
     }
 
-    const email = user.email;
+    // Nur Konten mit bestätigter E-Mail-Adresse
+    if (!user.email_confirmed_at) {
+      return new Response(JSON.stringify({ error: "E-Mail-Adresse nicht bestätigt" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // Find customer by email
+    // Kunde ausschliesslich über die feste Verknüpfung mit dem angemeldeten Konto finden
+    // (nie über die E-Mail-Adresse, sonst könnte ein fremdes Konto mit gleicher Adresse Daten sehen)
     const { data: customer } = await supabase
       .from("customers")
       .select("id, vorname, name, firma, email, telefon, strasse, hausnummer, plz, ort")
-      .eq("email", email)
+      .eq("auth_user_id", user.id)
       .maybeSingle();
 
     if (!customer) {
@@ -72,7 +78,7 @@ serve(async (req) => {
 
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: String(err) }), {
+    return new Response(JSON.stringify({ error: "Interner Fehler" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

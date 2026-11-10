@@ -92,7 +92,9 @@ serve(async (req) => {
 
     const form = await req.formData();
     if (form.get("log") === "1") {
-      await dbg(supabase, { ev: "client", msg: String(form.get("msg") ?? "").slice(0, 400) });
+      // Browser-Meldungen landen nur noch im Server-Log, nicht im Admin-Protokoll:
+      // so kann niemand von aussen Texte ins Slice-Freigabe-Protokoll schreiben.
+      console.log("slice-public client-log", String(form.get("msg") ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 400));
       return json({ ok: true });
     }
     if (form.get("probe") === "1") {
@@ -156,7 +158,7 @@ serve(async (req) => {
     };
 
     const formMs = Date.now() - tReq; // Einlesen der Anfrage (Upload vom Browser) bis hierher
-    await dbg(supabase, { ev: "slice-start", datei: upFile.name, bytes: upFile.size, ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
+    await dbg(supabase, { ev: "slice-start", datei: upFile.name.replace(/[^\w.\- ()äöüÄÖÜ]/g, "_").slice(0, 80), bytes: upFile.size, ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();

@@ -86,7 +86,12 @@ export const chf = (n: number) => n.toLocaleString("de-CH", { minimumFractionDig
 
 /** CSV für Excel (Semikolon, Dezimalkomma, UTF-8 mit BOM) */
 export function toCsv(lines: Line[]): string {
-  const q = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  // Texte, die mit = + - @ Tab oder CR beginnen, würde Excel als Formel ausführen -> mit ' entschärfen
+  const q = (v: string) => {
+    const s = String(v ?? "");
+    const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+    return `"${safe.replace(/"/g, '""')}"`;
+  };
   const num = (n: number | null, d: number) => (n == null ? "" : n.toFixed(d).replace(".", ","));
   const head = ["Datum", "Auftrag", "Teil", "Art", "Filament", "Gewicht (g)", "Gewicht (kg)", "Materialkosten (CHF)"];
   const rows = [...lines].sort((a, b) => a.datum.localeCompare(b.datum)).map((l) =>

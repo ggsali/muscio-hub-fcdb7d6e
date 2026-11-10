@@ -302,6 +302,13 @@
       "when": 1794228458031,
       "tag": "0042_ai_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794325016805,
+      "tag": "0043_secure_customer_account_linking",
+      "breakpoints": true
     }
   ]
 }

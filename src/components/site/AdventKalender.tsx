@@ -272,7 +272,7 @@ export function AdventKalender({ fallback = null }: { fallback?: React.ReactNode
                       </div>
                       <label className="mt-2 flex cursor-pointer items-start gap-2 text-xs text-amber-50/85">
                         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 accent-amber-300" />
-                        <span>Ja, erinnert mich täglich per E-Mail, wenn ein neues Türchen aufgeht (jederzeit abmeldbar).</span>
+                        <span>Ja, erinnert mich täglich per E-Mail, wenn ein neues Türchen aufgeht (Bestätigungslink kommt per Mail, jederzeit abmeldbar).</span>
                       </label>
                       {mailError && <p className="mt-2 text-xs text-red-200">{mailError}</p>}
                       <p className="mt-2 text-[10px] text-amber-50/60">Wir speichern deine Adresse für den Versand. Kein Spam.</p>
