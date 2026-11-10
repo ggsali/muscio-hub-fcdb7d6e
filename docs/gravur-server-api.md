@@ -28,6 +28,7 @@ JSON-Body:
   "place": {"widthMm": 64, "dx": 12, "dy": -8, "rotDeg": 0, "depth": 0.6, "centerInk": false},
   "image": {"threshold": null, "invert": null},
   "colors": {"modell": "#9AA3AD", "einlage": "#14B8A6"},
+  "bed": true,
   "model_name": "puck",
   "result_put_url": "https://...signed PUT-Upload-URL (Supabase Storage), Ziel: ergebnis.zip"
 }
@@ -50,7 +51,10 @@ Antwort sofort: `{"id": "<slicer job id>"}`. Rechnen im Hintergrund (Warteschlan
 6. Modell: STL/OBJ lesen, vereinigen/reparieren (trimesh.repair, fill_holes, Normalen), in Manifold wandeln. Ist es nicht manifold, reparieren; klappt das nicht, Fehler fuer dieses Bild melden.
 7. `modell_mit_gravur = Modell - Textkoerper`, `einlage = Modell ∩ Textkoerper` (exakt, kein Offset, keine Toleranz).
    Ist das Volumen der Einlage < 50 % von (Textflaeche * depth), Rueckfall: Einlage = Textkoerper von z=-depth bis z=0 (nur bis zur Flaeche) und in der Fehlerliste `name: Einlage als voller Textkoerper (Modell nicht geschlossen)` vermerken.
-8. Ausgabe nur in den Koordinaten des Originalmodells (nichts verschieben).
+8. Ausgabe:
+   - `bed=false` (oder fehlt): nur in den Koordinaten des Originalmodells (nichts verschieben).
+   - `bed=true` (Druckausrichtung): beide Teile (Modell mit Gravur und Einlage) werden mit derselben Matrix `B = Rx(180°) * inverse(frame)` transformiert (Referenz: `bedMatrix` in src/lib/gravur.ts). Danach liegt die gewaehlte Flaeche bei z = 0, das Material darueber (z >= 0), die Mitte der Flaeche bei x=y=0, die Einlage bei z = 0 bis depth (Text wird zuerst gedruckt). Die Baugruppe bleibt zusammen (gleiche Matrix fuer beide Teile, auch im 3MF). Volumen aendern sich nicht.
+   - Abnahme: Zylinder r=40, h=10 (Deckel z=5), depth 1, bed=true: Modell z von 0 bis 10, Einlage z von 0 bis 1.
 
 ## Ergebnis-ZIP (per HTTP PUT an result_put_url, Header Content-Type: application/zip und x-upsert: true; Body = ZIP-Bytes; falls Supabase das so nicht annimmt, mit curl testen und die Variante nehmen, die geht, z. B. multipart/form-data mit Feld `file`; danach dem Repo-Betreuer die Variante mitteilen)
 Pro Bild ein Ordner `NNN-<name>/` (NNN = laufende Nummer ab 001) mit:

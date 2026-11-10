@@ -356,6 +356,12 @@ function cleanForCsg(g: THREE.BufferGeometry): THREE.BufferGeometry {
   return out;
 }
 
+/** Druckausrichtung: gewählte Fläche liegt auf der Bauplatte (Fläche bei z = 0, Material darüber, Mitte der Fläche bei x/y = 0).
+ *  Beide Teile bekommen dieselbe Matrix, die Baugruppe bleibt also zusammen. */
+export function bedMatrix(frame: THREE.Matrix4): THREE.Matrix4 {
+  return new THREE.Matrix4().makeRotationX(Math.PI).multiply(frame.clone().invert());
+}
+
 export type EngraveResult = { modell: THREE.BufferGeometry; einlage: THREE.BufferGeometry; volModell: number; volEinlage: number; rueckfall?: boolean };
 
 export function engrave(model: THREE.BufferGeometry, prep: Prepared, pl: Place, frame: THREE.Matrix4): EngraveResult | null {

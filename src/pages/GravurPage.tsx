@@ -102,11 +102,12 @@ type ViewProps = {
   colEinlage: string;
   showModell: boolean;
   showEinlage: boolean;
+  bed: boolean;
   pick: boolean;
   place: Place;
   onPick: (tri: number) => void;
   onMove: (dx: number, dy: number) => void;
-  api: React.MutableRefObject<{ lookAtFace: () => void; fit: () => void } | null>;
+  api: React.MutableRefObject<{ lookAtFace: () => void; fit: () => void; fitBox: (b: THREE.Box3, below: boolean) => void } | null>;
 };
 
 function Viewer(props: ViewProps) {
@@ -151,15 +152,12 @@ function Viewer(props: ViewProps) {
       matResModell: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.55, side: THREE.DoubleSide }),
     };
 
-    const fit = () => {
-      const s = S.current!;
-      if (!s.model) return;
-      const b = new THREE.Box3().setFromObject(s.model);
+    const fitBox = (b: THREE.Box3, below = false) => {
       const c = b.getCenter(new THREE.Vector3()), size = b.getSize(new THREE.Vector3());
       const r = Math.max(size.x, size.y, size.z);
       const dist = (r / 2 / Math.tan((cam.fov * Math.PI) / 360)) * 1.6;
       cam.up.set(0, 0, 1);
-      cam.position.set(c.x, c.y - dist * 0.7, c.z + dist * 0.7);
+      cam.position.set(c.x, c.y - dist * 0.7, c.z + (below ? -1 : 1) * dist * 0.7);
       controls.target.copy(c);
       controls.minDistance = Math.max(2, r * 0.05);
       controls.maxDistance = r * 10;
@@ -168,8 +166,13 @@ function Viewer(props: ViewProps) {
       cam.updateProjectionMatrix();
       controls.update();
     };
+    const fit = () => {
+      const s = S.current!;
+      if (s.model) fitBox(new THREE.Box3().setFromObject(s.model));
+    };
     props.api.current = {
       fit,
+      fitBox,
       lookAtFace: () => {
         const f = P.current.face;
         if (!f) return;
@@ -303,10 +306,11 @@ function Viewer(props: ViewProps) {
       m2.visible = props.showEinlage;
       s.res.add(m1, m2);
     }
+    if (show && props.bed && s.res.children.length) props.api.current?.fitBox(new THREE.Box3().setFromObject(s.res), true);
     if (s.model) s.model.visible = !show;
     if (s.hi) s.hi.visible = !show;
     if (s.ov) s.ov.visible = !show;
-  }, [props.result, props.showResult, props.model, props.face, props.overlay, props.showModell, props.showEinlage]);
+  }, [props.result, props.showResult, props.model, props.face, props.overlay, props.showModell, props.showEinlage, props.bed]);
 
   useEffect(() => {
     const s = S.current;
@@ -350,6 +354,7 @@ export default function GravurPage() {
   const [colEinlage, setColEinlage] = useState("#14b8a6");
   const [showModell, setShowModell] = useState(true);
   const [showEinlage, setShowEinlage] = useState(true);
+  const [bed, setBed] = useState(true);
   const { farbenFor } = useMaterialFarben();
   const farben = farbenFor("PLA");
   const [busy, setBusy] = useState(false);
@@ -357,7 +362,7 @@ export default function GravurPage() {
   const [batch, setBatch] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState<{ i: number; n: number; fehler: string[] } | null>(null);
-  const api = useRef<{ lookAtFace: () => void; fit: () => void } | null>(null);
+  const api = useRef<{ lookAtFace: () => void; fit: () => void; fitBox: (b: THREE.Box3, below: boolean) => void } | null>(null);
 
   const setP = useCallback((q: Partial<Place>) => { setTouched(true); setPlace((p) => ({ ...p, ...q })); }, []);
 
@@ -379,7 +384,7 @@ export default function GravurPage() {
     if (face && prep && !touched) setPlace((p) => ({ ...p, widthMm: Math.max(5, Math.round(Math.min(face.size.w, face.size.h / Math.max(0.2, prep.height / prep.width)) * 0.8)) }));
   }, [face, prep, touched]);
 
-  useEffect(() => { setResult(null); }, [place, prep, face, model]);
+  useEffect(() => { setResult(null); }, [place, prep, face, model, bed]);
 
   const overlay = useMemo(() => (prep && face ? overlayGeometry(prep, place, face.frame) : null), [prep, face, place]);
 
@@ -434,7 +439,7 @@ export default function GravurPage() {
     const start = await call({
       action: "start", job: init.job, model_path: init.model.path, images: init.images.map((x: { path: string; name: string }) => ({ path: x.path, name: x.name })),
       frame: face.frame.elements, place, threshold: auto ? null : th, invert: invert === "auto" ? null : invert === "ja",
-      colModell, colEinlage, model_name: modelName,
+      colModell, colEinlage, bed, model_name: modelName,
     });
     let st: { status: string; done?: number; total?: number; errors?: string[]; error?: string; download_url?: string } = { status: "queued" };
     const t0 = Date.now();
@@ -504,7 +509,7 @@ export default function GravurPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
         <div className="space-y-3">
           <div className="relative">
-            <Viewer model={model} face={face} overlay={overlay} result={result} showResult={showResult} colModell={colModell} colEinlage={colEinlage} showModell={showModell} showEinlage={showEinlage} pick={pick} place={place} onPick={onPick} onMove={(dx, dy) => setP({ dx, dy })} api={api} />
+            <Viewer model={model} face={face} overlay={overlay} result={result} showResult={showResult} colModell={colModell} colEinlage={colEinlage} showModell={showModell} showEinlage={showEinlage} bed={bed} pick={pick} place={place} onPick={onPick} onMove={(dx, dy) => setP({ dx, dy })} api={api} />
             {!model && <div className="absolute inset-0 grid place-items-center px-6 text-center text-sm text-muted-foreground">Zuerst ein 3D-Modell (STL oder OBJ) laden.</div>}
             {pick && model && <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground"><Crosshair className="h-3.5 w-3.5" />Klicke auf die Fläche, in die graviert werden soll</div>}
             {!pick && face && prep && !result && <div className="absolute left-3 top-3 rounded-full bg-background/85 px-2.5 py-1 text-xs text-muted-foreground">Text mit der Maus verschieben</div>}
@@ -554,6 +559,7 @@ export default function GravurPage() {
               <Button size="sm" variant={pick ? "default" : "outline"} disabled={!model} onClick={() => setPick((v) => !v)}><Crosshair className="mr-1.5 h-4 w-4" />{face ? "Andere Fläche wählen" : "Fläche wählen"}</Button>
               {face && <span className="text-xs text-muted-foreground">{face.size.w.toFixed(1)} × {face.size.h.toFixed(1)} mm, {face.tris.length} Dreiecke</span>}
             </div>
+            <label className="flex items-start gap-1.5 text-xs"><input type="checkbox" className="mt-0.5" checked={bed} onChange={(e) => setBed(e.target.checked)} /><span><b>Fläche liegt beim Druck auf der Bauplatte.</b> Beide Teile werden so gedreht, dass die Gravurfläche unten liegt (z = 0), der Text wird zuerst gedruckt. Ohne Häkchen bleiben die Teile in den Koordinaten des Originals.</span></label>
             <p className="text-[11px] text-muted-foreground">Die gewählte Fläche ist die Nullebene: Oberfläche des Modells = 0, die Gravur geht senkrecht dazu nach innen.</p>
           </Step>
 

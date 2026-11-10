@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { DEFAULT_PLACE, engrave, faceRegion, prepareImage, toStl, to3mf, triangles, volume } from "./gravur";
+import { DEFAULT_PLACE, bedMatrix, engrave, faceRegion, prepareImage, toStl, to3mf, triangles, volume } from "./gravur";
 
 function ringImage(inv = false) {
   const w = 100, h = 100, data = new Uint8ClampedArray(w * h * 4);
@@ -93,6 +93,23 @@ describe("Gravur", () => {
     expect(b.max.z).toBeCloseTo(5, 3);
     expect(b.min.z).toBeCloseTo(4, 3);
     expect(toStl(r.modell).byteLength).toBe(84 + 50 * (triangles(r.modell).length / 9));
+  });
+  it("Druckausrichtung: Gravurfläche liegt auf der Platte (z=0), Material darüber", () => {
+    const g = puck();
+    const pos = g.getAttribute("position");
+    let tri = -1;
+    for (let i = 0; i < pos.count / 3 && tri < 0; i++) if (pos.getZ(i * 3) > 4.99 && pos.getZ(i * 3 + 1) > 4.99 && pos.getZ(i * 3 + 2) > 4.99) tri = i;
+    const f = faceRegion(g, tri)!;
+    const r = engrave(g, prepareImage(ringImage()), { ...DEFAULT_PLACE, widthMm: 50, depth: 1 }, f.frame)!;
+    const m = bedMatrix(f.frame);
+    const a = r.modell.clone().applyMatrix4(m), b = r.einlage.clone().applyMatrix4(m);
+    const ba = new THREE.Box3().setFromBufferAttribute(a.getAttribute("position") as THREE.BufferAttribute);
+    const bb = new THREE.Box3().setFromBufferAttribute(b.getAttribute("position") as THREE.BufferAttribute);
+    expect(ba.min.z).toBeCloseTo(0, 3);          // Gravurfläche auf der Platte
+    expect(ba.max.z).toBeCloseTo(10, 3);         // Puck ist 10 mm hoch
+    expect(bb.min.z).toBeCloseTo(0, 3);          // Text zuerst gedruckt
+    expect(bb.max.z).toBeCloseTo(1, 3);          // Gravurtiefe
+    expect(volume(a)).toBeCloseTo(volume(r.modell), 1);
   });
   it("3MF Baugruppe wird erzeugt", async () => {
     const g = new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
