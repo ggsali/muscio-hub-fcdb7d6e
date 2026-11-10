@@ -158,7 +158,7 @@ serve(async (req) => {
     };
 
     const formMs = Date.now() - tReq; // Einlesen der Anfrage (Upload vom Browser) bis hierher
-    await dbg(supabase, { ev: "slice-start", datei: upFile.name, bytes: upFile.size, ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
+    await dbg(supabase, { ev: "slice-start", datei: upFile.name.replace(/[^\w.\- ()äöüÄÖÜ]/g, "_").slice(0, 80), bytes: upFile.size, ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
