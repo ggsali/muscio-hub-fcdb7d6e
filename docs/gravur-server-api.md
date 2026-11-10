@@ -1,10 +1,17 @@
 # Auftrag fuer den Server-Claude (muscio): Gravur-Dienst
 
-Ziel: Im bestehenden Slicer-Dienst (FastAPI, 127.0.0.1:8088, X-API-Key wie bei /files/*) kommen neue Endpunkte `/gravur/*` dazu.
-Sie schneiden Text aus Bildern 1:1 in ein 3D-Modell (Gravur ohne Offset). Alles rechnet der Server, der Browser zeigt nur die Vorschau.
-Aufrufer ist die Supabase Edge Function `gravur-server` (Code im Repo `ggsali/muscio-hub-fcdb7d6e`, Branch main, Datei `supabase/functions/gravur-server/index.ts`). Der Slicer-Betrieb darf davon nicht beeintraechtigt werden (eigener Worker-Pool, niedrige Prioritaet `nice`, nie Drucker oder Queue anfassen).
+Ziel: Ein **eigener, getrennter Dienst** "gravur" schneidet Text aus Bildern 1:1 in ein 3D-Modell (Gravur ohne Offset). Der Server rechnet alles, der Browser zeigt nur die Vorschau.
 
-## Abhaengigkeiten (in der Slicer-venv, nichts systemweit veraendern)
+**Der bestehende Slicer-Dienst (FastAPI auf 127.0.0.1:8088), seine venv, seine Dateien, die Drucker und die Queue werden NICHT angefasst, nicht neu gestartet und nicht umkonfiguriert.** Der neue Dienst bekommt:
+- eigenes Verzeichnis (z. B. /opt/gravur oder ~/gravur) und eigene venv (nichts in die Slicer-venv und nichts systemweit per pip installieren)
+- eigenen Systemdienst `gravur.service` (User ohne Sonderrechte, `Nice=10`, Speicher-/CPU-Limit, max. 2 parallele Jobs) auf **127.0.0.1:8089**
+- eigenen API-Key-Check mit demselben Wert wie `SLICER_API_KEY` (Header `X-API-Key`), den Wert nur aus der bestehenden Umgebung/Konfig lesen, nicht in Logs oder Antworten
+- Erreichbarkeit nur ueber einen zusaetzlichen Funnel-Pfad: `/gravur` -> `http://127.0.0.1:8089` (z. B. `tailscale funnel --set-path /gravur --bg 8089` bzw. `tailscale serve`; den bestehenden Pfad `/` -> 8088 NICHT veraendern). Pruefe vorher mit `tailscale funnel status`, dass `/` danach unveraendert funktioniert (`/system/status` antwortet weiter).
+- Der Pfad muss so ankommen, dass die Edge Function `POST {SLICER_URL}/gravur/jobs` und `GET {SLICER_URL}/gravur/jobs/{id}` aufrufen kann (also entweder die App unter dem Praefix /gravur bedienen oder den Praefix in der Funnel-Konfig durchreichen).
+
+Aufrufer ist die Supabase Edge Function `gravur-server` (Repo `ggsali/muscio-hub-fcdb7d6e`, Branch main, Datei `supabase/functions/gravur-server/index.ts`).
+
+## Abhaengigkeiten (in der neuen gravur-venv)
 - `manifold3d` (Boolean-Operationen), `trimesh` (STL/OBJ lesen, Reparatur), `numpy`, `Pillow`
 - Potrace: `potracer` (pure Python) oder `apt install potrace` + CLI. Es zaehlt die Qualitaet der Kurven.
 - optional `opencv-python-headless` fuer Hochskalieren (Lanczos) und Entrauschen
@@ -54,4 +61,6 @@ Dazu bei Fehlern `FEHLER.txt` (eine Zeile pro Problem). Das Browser-Frontend lie
 ## Abnahme
 - Test: Zylinder r=40, h=10 (Deckel z=5), Ring-Bild (aussen r 30 px, innen 15 px auf 100x100 px, widthMm 50, depth 1): Einlagevolumen = pi*(900-225)*0.25 = 530 mm3 (+-3 %), Modellvolumen + Einlage = Original, Einlage-Oberkante z=5, Unterkante z=4.
 - 20 Bilder auf ein Modell mit 500k Dreiecken in unter 2 Minuten.
-- Kein Geheimnis in Logs oder Antworten. Nichts am bestehenden Slicer/Drucker-Betrieb aendern.
+- Kein Geheimnis in Logs oder Antworten.
+- Slicer unberuehrt: vorher/nachher `/system/status` und die Drucker-Queue pruefen, keine Dienste ausser `gravur.service` neu starten.
+- Dem Betreiber melden: installierte Pakete, Port, Funnel-Pfad, Ergebnis des Abnahmetests und ob der PUT in den Storage geklappt hat.
