@@ -92,7 +92,9 @@ serve(async (req) => {
 
     const form = await req.formData();
     if (form.get("log") === "1") {
-      await dbg(supabase, { ev: "client", msg: String(form.get("msg") ?? "").slice(0, 400) });
+      // Browser-Meldungen landen nur noch im Server-Log, nicht im Admin-Protokoll:
+      // so kann niemand von aussen Texte ins Slice-Freigabe-Protokoll schreiben.
+      console.log("slice-public client-log", String(form.get("msg") ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, 400));
       return json({ ok: true });
     }
     if (form.get("probe") === "1") {
