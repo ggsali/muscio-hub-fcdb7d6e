@@ -93,6 +93,8 @@
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
     "three": "0.160.0",
+    "three-bvh-csg": "0.0.16",
+    "three-mesh-bvh": "0.7.8",
     "three-slicer": "^0.2.2",
     "tw-animate-css": "^1.3.4",
     "vaul": "^1.1.2",

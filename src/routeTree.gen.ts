@@ -67,6 +67,7 @@ import { Route as AdminEinstellungenRouteImport } from './routes/admin/einstellu
 import { Route as AdminFilamenteRouteImport } from './routes/admin/filamente'
 import { Route as AdminFilamentverbrauchRouteImport } from './routes/admin/filamentverbrauch'
 import { Route as AdminGeburtsbuchstabeRouteImport } from './routes/admin/geburtsbuchstabe'
+import { Route as AdminGravurRouteImport } from './routes/admin/gravur'
 import { Route as AdminGutscheineRouteImport } from './routes/admin/gutscheine'
 import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
@@ -440,6 +441,11 @@ const AdminFilamentverbrauchRoute = AdminFilamentverbrauchRouteImport.update({
 const AdminGeburtsbuchstabeRoute = AdminGeburtsbuchstabeRouteImport.update({
   id: '/geburtsbuchstabe',
   path: '/geburtsbuchstabe',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGravurRoute = AdminGravurRouteImport.update({
+  id: '/gravur',
+  path: '/gravur',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminGutscheineRoute = AdminGutscheineRouteImport.update({
@@ -935,6 +941,7 @@ export interface FileRoutesByFullPath {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/geburtsbuchstabe': typeof AdminGeburtsbuchstabeRoute
+  '/admin/gravur': typeof AdminGravurRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
@@ -1074,6 +1081,7 @@ export interface FileRoutesByTo {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/geburtsbuchstabe': typeof AdminGeburtsbuchstabeRoute
+  '/admin/gravur': typeof AdminGravurRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
@@ -1220,6 +1228,7 @@ export interface FileRoutesById {
   '/admin/filamente': typeof AdminFilamenteRouteWithChildren
   '/admin/filamentverbrauch': typeof AdminFilamentverbrauchRoute
   '/admin/geburtsbuchstabe': typeof AdminGeburtsbuchstabeRoute
+  '/admin/gravur': typeof AdminGravurRoute
   '/admin/gutscheine': typeof AdminGutscheineRoute
   '/admin/kalender': typeof AdminKalenderRoute
   '/admin/kalkulator': typeof AdminKalkulatorRoute
@@ -1367,6 +1376,7 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/filamentverbrauch'
     | '/admin/geburtsbuchstabe'
+    | '/admin/gravur'
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
@@ -1506,6 +1516,7 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/filamentverbrauch'
     | '/admin/geburtsbuchstabe'
+    | '/admin/gravur'
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
@@ -1651,6 +1662,7 @@ export interface FileRouteTypes {
     | '/admin/filamente'
     | '/admin/filamentverbrauch'
     | '/admin/geburtsbuchstabe'
+    | '/admin/gravur'
     | '/admin/gutscheine'
     | '/admin/kalender'
     | '/admin/kalkulator'
@@ -2188,6 +2200,13 @@ declare module '@tanstack/react-router' {
       path: '/geburtsbuchstabe'
       fullPath: '/admin/geburtsbuchstabe'
       preLoaderRoute: typeof AdminGeburtsbuchstabeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gravur': {
+      id: '/admin/gravur'
+      path: '/gravur'
+      fullPath: '/admin/gravur'
+      preLoaderRoute: typeof AdminGravurRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/gutscheine': {
@@ -2898,6 +2917,7 @@ interface AdminRouteChildren {
   AdminFilamenteRoute: typeof AdminFilamenteRouteWithChildren
   AdminFilamentverbrauchRoute: typeof AdminFilamentverbrauchRoute
   AdminGeburtsbuchstabeRoute: typeof AdminGeburtsbuchstabeRoute
+  AdminGravurRoute: typeof AdminGravurRoute
   AdminGutscheineRoute: typeof AdminGutscheineRoute
   AdminKalenderRoute: typeof AdminKalenderRoute
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
@@ -2941,6 +2961,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminFilamenteRoute: AdminFilamenteRouteWithChildren,
   AdminFilamentverbrauchRoute: AdminFilamentverbrauchRoute,
   AdminGeburtsbuchstabeRoute: AdminGeburtsbuchstabeRoute,
+  AdminGravurRoute: AdminGravurRoute,
   AdminGutscheineRoute: AdminGutscheineRoute,
   AdminKalenderRoute: AdminKalenderRoute,
   AdminKalkulatorRoute: AdminKalkulatorRoute,
