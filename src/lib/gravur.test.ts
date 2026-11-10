@@ -34,7 +34,42 @@ describe("Bild zu Vektor", () => {
   });
 });
 
+describe("Glatte Kontur", () => {
+  it("Kreis mit 24 px Durchmesser wird ohne Pixelstufen konturiert", () => {
+    const w = 40, h = 40, data = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const r = Math.hypot(x + 0.5 - 20, y + 0.5 - 20);
+      const v = r < 12 ? 0 : 255; // hart, ohne Antialiasing (Worst Case)
+      data.set([v, v, v, 255], (y * w + x) * 4);
+    }
+    const p = prepareImage({ data, width: w, height: h });
+    const pts = p.shapes[0].getPoints(1);
+    let maxDev = 0;
+    for (const q of pts) maxDev = Math.max(maxDev, Math.abs(Math.hypot(q.x - 20, q.y - 20) - 12));
+    expect(maxDev).toBeLessThan(0.55);
+  });
+});
+
 describe("Gravur", () => {
+  it("Einlage bleibt ein voller Körper, auch wenn das Modell offen ist", () => {
+    const g = puck();
+    const pos = g.getAttribute("position");
+    // Deckel-Dreiecke in der Mitte entfernen -> Modell nicht geschlossen
+    const keep: number[] = [];
+    for (let i = 0; i < pos.count / 3; i++) {
+      const top = pos.getZ(i * 3) > 4.99 && pos.getZ(i * 3 + 1) > 4.99 && pos.getZ(i * 3 + 2) > 4.99;
+      if (top && i % 3 === 0) continue;
+      for (let k = 0; k < 3; k++) keep.push(i * 3 + k);
+    }
+    const arr = new Float32Array(keep.length * 3);
+    keep.forEach((v, i) => { arr[i * 3] = pos.getX(v); arr[i * 3 + 1] = pos.getY(v); arr[i * 3 + 2] = pos.getZ(v); });
+    const open = new THREE.BufferGeometry();
+    open.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+    const frame = new THREE.Matrix4().makeTranslation(0, 0, 5);
+    const r = engrave(open, prepareImage(ringImage()), { ...DEFAULT_PLACE, widthMm: 50, depth: 1 }, frame)!;
+    const soll = Math.PI * (900 - 225) * 0.25;
+    expect(r.volEinlage).toBeGreaterThan(soll * 0.9);
+  });
   it("findet die Deckelfläche und schneidet exakt", () => {
     const g = puck();
     const pos = g.getAttribute("position");

@@ -8,6 +8,7 @@ import { AlertTriangle, CheckCircle2, Crosshair, Download, Eye, Loader2, Package
 import { Button } from "@/components/ui/button";
 import { Slider as BaseSlider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { useMaterialFarben } from "@/lib/material-farben";
 import { DEFAULT_PLACE, engrave, faceRegion, overlayGeometry, prepareImage, safeName, to3mf, toStl, type EngraveResult, type FaceInfo, type Place, type Prepared, type RasterIn } from "@/lib/gravur";
 
 const Slider = (props: React.ComponentProps<typeof BaseSlider>) => (
@@ -73,11 +74,15 @@ function geometryFromFile(name: string, buf: ArrayBuffer): THREE.BufferGeometry 
 
 async function rasterFromFile(file: File, maxSide = 2000): Promise<RasterIn> {
   const bmp = await createImageBitmap(file);
-  const k = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+  const big = Math.max(bmp.width, bmp.height);
+  // kleine Bilder hochrechnen (glättet die Pixelstufen), grosse begrenzen
+  const k = big < 1600 ? 1600 / big : Math.min(1, maxSide / big);
   const w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
   const cv = document.createElement("canvas");
   cv.width = w; cv.height = h;
   const ctx = cv.getContext("2d", { willReadFrequently: true })!;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   ctx.drawImage(bmp, 0, 0, w, h);
   bmp.close();
   const d = ctx.getImageData(0, 0, w, h);
@@ -92,6 +97,10 @@ type ViewProps = {
   overlay: THREE.BufferGeometry | null;
   result: EngraveResult | null;
   showResult: boolean;
+  colModell: string;
+  colEinlage: string;
+  showModell: boolean;
+  showEinlage: boolean;
   pick: boolean;
   place: Place;
   onPick: (tri: number) => void;
@@ -106,7 +115,7 @@ function Viewer(props: ViewProps) {
   const S = useRef<{
     scene: THREE.Scene; cam: THREE.PerspectiveCamera; controls: OrbitControls;
     model: THREE.Mesh | null; hi: THREE.Mesh | null; ov: THREE.Mesh | null; res: THREE.Group;
-    matModel: THREE.MeshStandardMaterial; matHi: THREE.MeshBasicMaterial; matOv: THREE.MeshBasicMaterial; matIns: THREE.MeshStandardMaterial;
+    matModel: THREE.MeshStandardMaterial; matHi: THREE.MeshBasicMaterial; matOv: THREE.MeshBasicMaterial; matIns: THREE.MeshStandardMaterial; matResModell: THREE.MeshStandardMaterial;
   } | null>(null);
 
   useEffect(() => {
@@ -138,6 +147,7 @@ function Viewer(props: ViewProps) {
       matHi: new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }),
       matOv: new THREE.MeshBasicMaterial({ color: 0x14b8a6, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }),
       matIns: new THREE.MeshStandardMaterial({ color: 0x14b8a6, roughness: 0.5, side: THREE.DoubleSide }),
+      matResModell: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.55, side: THREE.DoubleSide }),
     };
 
     const fit = () => {
@@ -286,13 +296,23 @@ function Viewer(props: ViewProps) {
     s.res.clear();
     const show = !!props.result && props.showResult;
     if (show && props.result) {
-      s.res.add(new THREE.Mesh(props.result.modell, s.matModel));
-      s.res.add(new THREE.Mesh(props.result.einlage, s.matIns));
+      const m1 = new THREE.Mesh(props.result.modell, s.matResModell);
+      const m2 = new THREE.Mesh(props.result.einlage, s.matIns);
+      m1.visible = props.showModell;
+      m2.visible = props.showEinlage;
+      s.res.add(m1, m2);
     }
     if (s.model) s.model.visible = !show;
     if (s.hi) s.hi.visible = !show;
     if (s.ov) s.ov.visible = !show;
-  }, [props.result, props.showResult, props.model, props.face, props.overlay]);
+  }, [props.result, props.showResult, props.model, props.face, props.overlay, props.showModell, props.showEinlage]);
+
+  useEffect(() => {
+    const s = S.current;
+    if (!s) return;
+    s.matResModell.color.set(props.colModell);
+    s.matIns.color.set(props.colEinlage);
+  }, [props.colModell, props.colEinlage]);
 
   return <div ref={host} className={cn("h-[420px] w-full rounded-xl border bg-gradient-to-b from-muted/40 to-muted/10 sm:h-[600px]", props.pick && "cursor-crosshair")} />;
 }
@@ -322,6 +342,12 @@ export default function GravurPage() {
   const [touched, setTouched] = useState(false);
   const [result, setResult] = useState<EngraveResult | null>(null);
   const [showResult, setShowResult] = useState(true);
+  const [colModell, setColModell] = useState("#9aa3ad");
+  const [colEinlage, setColEinlage] = useState("#14b8a6");
+  const [showModell, setShowModell] = useState(true);
+  const [showEinlage, setShowEinlage] = useState(true);
+  const { farbenFor } = useMaterialFarben();
+  const farben = farbenFor("PLA");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [batch, setBatch] = useState(false);
@@ -395,7 +421,7 @@ export default function GravurPage() {
 
   const base = safeName(imgName || "gravur");
   const dlStl = (g: THREE.BufferGeometry, suffix: string) => download(new Blob([toStl(g)], { type: "model/stl" }), `${safeName(modelName)}-${base}-${suffix}.stl`);
-  const dl3mf = async () => result && download(await to3mf([{ name: "Modell mit Gravur", geo: result.modell }, { name: "Text-Einlage", geo: result.einlage }], `${safeName(modelName)} ${base}`), `${safeName(modelName)}-${base}.3mf`);
+  const dl3mf = async () => result && download(await to3mf([{ name: "Modell mit Gravur", geo: result.modell, color: colModell }, { name: "Text-Einlage", geo: result.einlage, color: colEinlage }], `${safeName(modelName)} ${base}`), `${safeName(modelName)}-${base}.3mf`);
 
   const stapel = async () => {
     if (!model || !face || !files.length) return;
@@ -416,7 +442,7 @@ export default function GravurPage() {
         const dir = zip.folder(nm)!;
         dir.file(`${nm}-modell.stl`, toStl(r.modell));
         dir.file(`${nm}-einlage.stl`, toStl(r.einlage));
-        dir.file(`${nm}.3mf`, await to3mf([{ name: "Modell mit Gravur", geo: r.modell }, { name: "Text-Einlage", geo: r.einlage }], nm));
+        dir.file(`${nm}.3mf`, await to3mf([{ name: "Modell mit Gravur", geo: r.modell, color: colModell }, { name: "Text-Einlage", geo: r.einlage, color: colEinlage }], nm));
         r.modell.dispose();
         r.einlage.dispose();
       } catch (e) { fehler.push(`${f.name}: ${e instanceof Error ? e.message : String(e)}`); }
@@ -439,7 +465,7 @@ export default function GravurPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
         <div className="space-y-3">
           <div className="relative">
-            <Viewer model={model} face={face} overlay={overlay} result={result} showResult={showResult} pick={pick} place={place} onPick={onPick} onMove={(dx, dy) => setP({ dx, dy })} api={api} />
+            <Viewer model={model} face={face} overlay={overlay} result={result} showResult={showResult} colModell={colModell} colEinlage={colEinlage} showModell={showModell} showEinlage={showEinlage} pick={pick} place={place} onPick={onPick} onMove={(dx, dy) => setP({ dx, dy })} api={api} />
             {!model && <div className="absolute inset-0 grid place-items-center px-6 text-center text-sm text-muted-foreground">Zuerst ein 3D-Modell (STL oder OBJ) laden.</div>}
             {pick && model && <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground"><Crosshair className="h-3.5 w-3.5" />Klicke auf die Fläche, in die graviert werden soll</div>}
             {!pick && face && prep && !result && <div className="absolute left-3 top-3 rounded-full bg-background/85 px-2.5 py-1 text-xs text-muted-foreground">Text mit der Maus verschieben</div>}
@@ -451,6 +477,21 @@ export default function GravurPage() {
           {result && (
             <div className="space-y-2 rounded-xl border bg-card p-4">
               <div className="flex items-center gap-2 text-sm font-medium"><CheckCircle2 className="h-4 w-4 text-green-600" />Fertig berechnet: Einlage {(result.volEinlage / 1000).toFixed(3)} cm³, Aussparung ohne Spiel</div>
+              {result.rueckfall && <div className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />Das Modell ist nicht ganz geschlossen: Die Einlage wurde als voller Textkörper von der Fläche bis zur Gravurtiefe gebaut. Bei gebogenen Flächen kann ihre Oberseite leicht vom Modell abweichen.</div>}
+              <div className="grid gap-2 sm:grid-cols-2">
+                {([["Modell", colModell, setColModell, showModell, setShowModell], ["Text-Einlage", colEinlage, setColEinlage, showEinlage, setShowEinlage]] as const).map(([lbl, col, setCol, vis, setVis]) => (
+                  <div key={lbl} className="space-y-1.5 rounded-lg border p-2.5">
+                    <label className="flex items-center gap-1.5 text-xs font-medium"><input type="checkbox" checked={vis} onChange={(e) => setVis(e.target.checked)} />{lbl} anzeigen</label>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {farben.slice(0, 18).map((c) => (
+                        <button key={c.name} type="button" title={c.name} aria-label={c.name} onClick={() => setCol(c.hex)}
+                          className={cn("h-5 w-5 rounded-full border border-black/10", col.toLowerCase() === c.hex.toLowerCase() && "ring-2 ring-primary ring-offset-1 ring-offset-background")} style={{ backgroundColor: c.hex }} />
+                      ))}
+                      <input type="color" value={col} onChange={(e) => setCol(e.target.value)} className="h-5 w-7 cursor-pointer rounded border bg-transparent p-0" aria-label="Eigene Farbe" />
+                    </div>
+                  </div>
+                ))}
+              </div>
               <div className="flex flex-wrap gap-2">
                 <Button onClick={dl3mf}><Download className="mr-1.5 h-4 w-4" />3MF (Baugruppe)</Button>
                 <Button variant="outline" onClick={() => dlStl(result.modell, "modell")}><Download className="mr-1.5 h-4 w-4" />Modell STL</Button>

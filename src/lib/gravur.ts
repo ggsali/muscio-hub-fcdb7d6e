@@ -16,7 +16,7 @@ function otsu(lum: Uint8Array): number {
   const total = lum.length;
   let sum = 0;
   for (let i = 0; i < 256; i++) sum += i * hist[i];
-  let sB = 0, wB = 0, best = 0, th = 128;
+  let sB = 0, wB = 0, best = -1, first = 128, last = 128;
   for (let t = 0; t < 256; t++) {
     wB += hist[t];
     if (!wB) continue;
@@ -25,15 +25,39 @@ function otsu(lum: Uint8Array): number {
     sB += t * hist[t];
     const mB = sB / wB, mF = (sum - sB) / wF;
     const between = wB * wF * (mB - mF) * (mB - mF);
-    if (between > best) { best = between; th = t; }
+    if (between > best + 1e-9) { best = between; first = last = t; }
+    else if (Math.abs(between - best) <= 1e-9) last = t; // Plateau (z. B. reines Schwarz/Weiss): Mitte nehmen
   }
-  return th;
+  return Math.round((first + last) / 2) + 1;
+}
+
+/** Gauss-Weichzeichner (getrennt), glättet Pixelstufen vor dem Konturieren */
+export function blurField(f: Float32Array, w: number, h: number, sigma: number): Float32Array {
+  if (sigma <= 0) return f;
+  const r = Math.max(1, Math.ceil(sigma * 2.5));
+  const k = new Float32Array(2 * r + 1);
+  let sum = 0;
+  for (let i = -r; i <= r; i++) { k[i + r] = Math.exp(-(i * i) / (2 * sigma * sigma)); sum += k[i + r]; }
+  for (let i = 0; i < k.length; i++) k[i] /= sum;
+  const tmp = new Float32Array(f.length), out = new Float32Array(f.length);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let a = 0;
+    for (let i = -r; i <= r; i++) a += k[i + r] * f[y * w + Math.min(w - 1, Math.max(0, x + i))];
+    tmp[y * w + x] = a;
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let a = 0;
+    for (let i = -r; i <= r; i++) a += k[i + r] * tmp[Math.min(h - 1, Math.max(0, y + i)) * w + x];
+    out[y * w + x] = a;
+  }
+  return out;
 }
 
 export type MaskResult = { field: Float32Array; width: number; height: number; invertUsed: boolean; threshold: number; alphaMode: boolean };
 
 /** Vordergrund (= Text) als weiche Maske 0..1. Transparente PNGs: Alpha. Sonst Helligkeit mit Otsu, Text = kleinere Fläche. */
-export function maskFromImage(img: RasterIn, o: { threshold?: number | null; invert?: boolean | null } = {}): MaskResult {
+export function maskFromImage(img: RasterIn, o: { threshold?: number | null; invert?: boolean | null; blur?: number } = {}): MaskResult {
+  const blur = o.blur ?? 1.1;
   const { width: w, height: h, data } = img;
   const n = w * h;
   let transparent = 0;
@@ -42,7 +66,7 @@ export function maskFromImage(img: RasterIn, o: { threshold?: number | null; inv
   if (transparent / n > 0.02) {
     const inv = !!o.invert;
     for (let i = 0; i < n; i++) { const a = data[i * 4 + 3] / 255; field[i] = inv ? 1 - a : a; }
-    return { field, width: w, height: h, invertUsed: inv, threshold: 128, alphaMode: true };
+    return { field: blurField(field, w, h, blur), width: w, height: h, invertUsed: inv, threshold: 128, alphaMode: true };
   }
   const lum = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
@@ -60,7 +84,7 @@ export function maskFromImage(img: RasterIn, o: { threshold?: number | null; inv
     const d = fgDark ? th - lum[i] : lum[i] - th;
     field[i] = Math.min(1, Math.max(0, d / 64 + 0.5)); // weiche Kante: Kontur liegt bei Schwelle, Antialiasing ergibt Subpixel-Genauigkeit
   }
-  return { field, width: w, height: h, invertUsed: !!o.invert, threshold: th, alphaMode: false };
+  return { field: blurField(field, w, h, blur), width: w, height: h, invertUsed: !!o.invert, threshold: th, alphaMode: false };
 }
 
 /* ---------- Marching Squares ---------- */
@@ -165,10 +189,10 @@ export type Prepared = {
 
 const K = 1000;
 
-export function prepareImage(img: RasterIn, o: { threshold?: number | null; invert?: boolean | null; simplify?: number; minArea?: number } = {}): Prepared {
+export function prepareImage(img: RasterIn, o: { threshold?: number | null; invert?: boolean | null; simplify?: number; minArea?: number; blur?: number } = {}): Prepared {
   const m = maskFromImage(img, o);
   const raw = traceField(m.field, m.width, m.height).filter((l) => Math.abs(areaOf(l)) >= (o.minArea ?? 3));
-  const loops = raw.map((l) => simplifyLoop(l, o.simplify ?? 0.3));
+  const loops = raw.map((l) => simplifyLoop(l, o.simplify ?? 0.2));
   const c = new ClipperLib.Clipper();
   for (const l of loops) c.AddPath(l.map(([x, y]) => ({ X: Math.round(x * K), Y: Math.round((m.height - y) * K) })), ClipperLib.PolyType.ptSubject, true);
   const tree = new ClipperLib.PolyTree();
@@ -332,7 +356,7 @@ function cleanForCsg(g: THREE.BufferGeometry): THREE.BufferGeometry {
   return out;
 }
 
-export type EngraveResult = { modell: THREE.BufferGeometry; einlage: THREE.BufferGeometry; volModell: number; volEinlage: number };
+export type EngraveResult = { modell: THREE.BufferGeometry; einlage: THREE.BufferGeometry; volModell: number; volEinlage: number; rueckfall?: boolean };
 
 export function engrave(model: THREE.BufferGeometry, prep: Prepared, pl: Place, frame: THREE.Matrix4): EngraveResult | null {
   const prism = prismGeometry(prep, pl, frame);
@@ -346,8 +370,24 @@ export function engrave(model: THREE.BufferGeometry, prep: Prepared, pl: Place, 
   ev.useGroups = false;
   const cut = ev.evaluate(a, b, SUBTRACTION);
   const ins = ev.evaluate(a, b, INTERSECTION);
+  let einlage = ins.geometry;
+  let volEinlage = volume(einlage);
+  // Erwartetes Volumen = Textfläche × Tiefe. Liefert der Schnitt (z. B. bei nicht geschlossenem Modell) viel zu wenig,
+  // wird die Einlage als voller Textkörper von der Fläche bis zur Gravurtiefe gebaut.
+  const s = pl.widthMm / prep.width;
+  let flaeche = 0;
+  for (const sh of prep.shapes) {
+    flaeche += Math.abs(THREE.ShapeUtils.area(sh.getPoints()));
+    for (const h of sh.holes) flaeche -= Math.abs(THREE.ShapeUtils.area(h.getPoints()));
+  }
+  const soll = flaeche * s * s * pl.depth;
+  let rueckfall = false;
+  if (volEinlage < soll * 0.5) {
+    const full = prismGeometry(prep, pl, frame, 0);
+    if (full) { einlage = cleanForCsg(full); volEinlage = volume(einlage); rueckfall = true; full.dispose(); }
+  }
   prism.dispose();
-  return { modell: cut.geometry, einlage: ins.geometry, volModell: volume(cut.geometry), volEinlage: volume(ins.geometry) };
+  return { modell: cut.geometry, einlage, volModell: volume(cut.geometry), volEinlage, rueckfall };
 }
 
 export function volume(g: THREE.BufferGeometry): number {
@@ -397,7 +437,7 @@ export function toStl(g: THREE.BufferGeometry, name = "3DMuscio Gravur"): ArrayB
   return buf;
 }
 
-function meshXml(id: number, name: string, g: THREE.BufferGeometry) {
+function meshXml(id: number, name: string, g: THREE.BufferGeometry, pindex: number) {
   const t = triangles(g);
   const map = new Map<string, number>();
   const verts: string[] = [];
@@ -412,15 +452,17 @@ function meshXml(id: number, name: string, g: THREE.BufferGeometry) {
     const a = vi(t[i], t[i + 1], t[i + 2]), b = vi(t[i + 3], t[i + 4], t[i + 5]), c = vi(t[i + 6], t[i + 7], t[i + 8]);
     if (a !== b && b !== c && a !== c) idx.push(`<triangle v1="${a}" v2="${b}" v3="${c}"/>`);
   }
-  return `<object id="${id}" type="model" name="${name}"><mesh><vertices>${verts.join("")}</vertices><triangles>${idx.join("")}</triangles></mesh></object>`;
+  return `<object id="${id}" type="model" name="${name}" pid="100" pindex="${pindex}"><mesh><vertices>${verts.join("")}</vertices><triangles>${idx.join("")}</triangles></mesh></object>`;
 }
 
 /** 3MF mit einer Baugruppe aus Einzelteilen, alle an Ort und Stelle */
-export async function to3mf(parts: { name: string; geo: THREE.BufferGeometry }[], assemblyName: string): Promise<Blob> {
-  const objs = parts.map((p, i) => meshXml(i + 1, p.name, p.geo)).join("");
+export async function to3mf(parts: { name: string; geo: THREE.BufferGeometry; color?: string }[], assemblyName: string): Promise<Blob> {
+  const objs = parts.map((p, i) => meshXml(i + 1, p.name, p.geo, i)).join("");
+  const hex = (c?: string, d = "#9AA3AD") => (/^#[0-9a-f]{6}$/i.test(c ?? "") ? c! : d).toUpperCase() + "FF";
+  const mats = `<basematerials id="100">${parts.map((p) => `<base name="${p.name}" displaycolor="${hex(p.color)}"/>`).join("")}</basematerials>`;
   const asmId = parts.length + 1;
   const comps = parts.map((_, i) => `<component objectid="${i + 1}"/>`).join("");
-  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="de-CH" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><metadata name="Title">${assemblyName}</metadata><metadata name="Application">3DMuscio Gravur</metadata><resources>${objs}<object id="${asmId}" type="model" name="${assemblyName}"><components>${comps}</components></object></resources><build><item objectid="${asmId}"/></build></model>`;
+  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="de-CH" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><metadata name="Title">${assemblyName}</metadata><metadata name="Application">3DMuscio Gravur</metadata><resources>${mats}${objs}<object id="${asmId}" type="model" name="${assemblyName}"><components>${comps}</components></object></resources><build><item objectid="${asmId}"/></build></model>`;
   const zip = new JSZip();
   zip.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>`);
   zip.file("_rels/.rels", `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>`);
