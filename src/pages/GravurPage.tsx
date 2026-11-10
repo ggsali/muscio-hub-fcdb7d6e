@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Slider as BaseSlider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { useMaterialFarben } from "@/lib/material-farben";
-import { DEFAULT_PLACE, engrave, faceRegion, overlayGeometry, prepareImage, safeName, to3mf, toStl, type EngraveResult, type FaceInfo, type Place, type Prepared, type RasterIn } from "@/lib/gravur";
+import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_PLACE, faceRegion, overlayGeometry, prepareImage, safeName, to3mf, toStl, volume, type EngraveResult, type FaceInfo, type Place, type Prepared, type RasterIn } from "@/lib/gravur";
 
 const Slider = (props: React.ComponentProps<typeof BaseSlider>) => (
   <BaseSlider {...props} className={cn("[&>span:first-child]:bg-muted [&>span:first-child]:border [&>span:first-child]:border-border", props.className)} />
@@ -334,6 +335,9 @@ export default function GravurPage() {
   const [pick, setPick] = useState(false);
   const [raster, setRaster] = useState<RasterIn | null>(null);
   const [imgName, setImgName] = useState("");
+  const [imgFile, setImgFile] = useState<File | null>(null);
+  const [modelFile, setModelFile] = useState<File | null>(null);
+  const [status, setStatus] = useState("");
   const [invert, setInvert] = useState<"auto" | "ja" | "nein">("auto");
   const [auto, setAuto] = useState(true);
   const [th, setTh] = useState(128);
@@ -385,6 +389,7 @@ export default function GravurPage() {
     try {
       const g = geometryFromFile(f.name, await f.arrayBuffer());
       setModel(g);
+      setModelFile(f);
       setModelName(f.name);
       setFace(null);
       setPick(true);
@@ -394,7 +399,7 @@ export default function GravurPage() {
   const loadImage = async (f: File | undefined) => {
     if (!f) return;
     setErr("");
-    try { setRaster(await rasterFromFile(f)); setImgName(f.name); } catch { setErr("Bild konnte nicht gelesen werden (PNG, JPG, WebP oder SVG)."); }
+    try { setRaster(await rasterFromFile(f)); setImgName(f.name); setImgFile(f); } catch { setErr("Bild konnte nicht gelesen werden (PNG, JPG, WebP oder SVG)."); }
   };
   const onPick = useCallback((tri: number) => {
     if (!model) return;
@@ -405,17 +410,70 @@ export default function GravurPage() {
     setTimeout(() => api.current?.lookAtFace(), 0);
   }, [model]);
 
+  // Alles Rechnen läuft auf dem Server (muscio): Dateien gehen in den Storage, der Server holt sie dort ab,
+  // rechnet (Potrace + Manifold) und legt ein ZIP zurück. Hier läuft nur die Vorschau.
+  const serverJob = async (bilder: File[]): Promise<Blob> => {
+    if (!modelFile || !face) throw new Error("Modell und Fläche fehlen");
+    const call = async (body: Record<string, unknown>) => {
+      const { data, error } = await supabase.functions.invoke("gravur-server", { body });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "Server nicht erreichbar");
+      return data;
+    };
+    const bucket = supabase.storage.from("project-uploads");
+    setStatus("Dateien hochladen …");
+    const init = await call({ action: "init", model_name: modelFile.name, images: bilder.map((f) => f.name) });
+    {
+      const { error } = await bucket.uploadToSignedUrl(init.model.path, init.model.token, modelFile);
+      if (error) throw new Error(`Modell-Upload: ${error.message}`);
+    }
+    for (let i = 0; i < bilder.length; i++) {
+      setStatus(`Bilder hochladen … ${i + 1} von ${bilder.length}`);
+      const { error } = await bucket.uploadToSignedUrl(init.images[i].path, init.images[i].token, bilder[i]);
+      if (error) throw new Error(`Bild-Upload: ${error.message}`);
+    }
+    const start = await call({
+      action: "start", job: init.job, model_path: init.model.path, images: init.images.map((x: { path: string; name: string }) => ({ path: x.path, name: x.name })),
+      frame: face.frame.elements, place, threshold: auto ? null : th, invert: invert === "auto" ? null : invert === "ja",
+      colModell, colEinlage, model_name: modelName,
+    });
+    let st: { status: string; done?: number; total?: number; errors?: string[]; error?: string; download_url?: string } = { status: "queued" };
+    const t0 = Date.now();
+    for (;;) {
+      await new Promise((r) => setTimeout(r, 1500));
+      st = await call({ action: "status", job: init.job, slicer_id: start.slicer_id });
+      setProgress({ i: st.done ?? 0, n: st.total ?? bilder.length, fehler: st.errors ?? [] });
+      setStatus(st.status === "queued" ? "Wartet auf den Server …" : `Server rechnet … ${st.done ?? 0} von ${st.total ?? bilder.length}`);
+      if (st.status === "done") break;
+      if (st.status === "error") throw new Error(st.error || "Server meldet einen Fehler");
+      if (Date.now() - t0 > 30 * 60_000) throw new Error("Zeitüberschreitung (30 Minuten)");
+    }
+    setStatus("Ergebnis laden …");
+    const r = await fetch(st.download_url!);
+    if (!r.ok) throw new Error(`Ergebnis-Download fehlgeschlagen (${r.status})`);
+    const blob = await r.blob();
+    call({ action: "cleanup", job: init.job }).catch(() => {});
+    return blob;
+  };
+
   const rechnen = async () => {
-    if (!model || !face || !prep) return;
+    if (!imgFile) return;
     setBusy(true);
     setProgress(null);
     setErr("");
-    await new Promise((r) => setTimeout(r, 30));
     try {
-      const r = engrave(model, prep, place, face.frame);
-      if (!r || r.volEinlage < 1e-6) setErr("Der Text liegt nicht auf dem Modell. Position oder Fläche prüfen.");
+      const zip = await JSZip.loadAsync(await serverJob([imgFile]));
+      const find = (suffix: string) => Object.values(zip.files).find((f) => !f.dir && f.name.endsWith(suffix));
+      const fm = find("-modell.stl"), fe = find("-einlage.stl");
+      const fehler = zip.file("FEHLER.txt") ? await zip.file("FEHLER.txt")!.async("string") : "";
+      if (!fm || !fe) throw new Error(fehler.trim() || "Der Server hat kein Ergebnis geliefert.");
+      const loader = new STLLoader();
+      const modell = loader.parse(await fm.async("arraybuffer"));
+      const einlage = loader.parse(await fe.async("arraybuffer"));
+      const r: EngraveResult = { modell, einlage, volModell: volume(modell), volEinlage: volume(einlage), rueckfall: /voller Textk/.test(fehler) };
+      if (r.volEinlage < 1e-6) setErr(fehler.trim() || "Der Text liegt nicht auf dem Modell. Position oder Fläche prüfen.");
       else { setResult(r); setShowResult(true); }
     } catch (e) { setErr(`Berechnung fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`); }
+    setStatus("");
     setBusy(false);
   };
 
@@ -424,32 +482,13 @@ export default function GravurPage() {
   const dl3mf = async () => result && download(await to3mf([{ name: "Modell mit Gravur", geo: result.modell, color: colModell }, { name: "Text-Einlage", geo: result.einlage, color: colEinlage }], `${safeName(modelName)} ${base}`), `${safeName(modelName)}-${base}.3mf`);
 
   const stapel = async () => {
-    if (!model || !face || !files.length) return;
+    if (!files.length) return;
     setBusy(true);
     setErr("");
-    const zip = new JSZip();
-    const fehler: string[] = [];
-    for (let i = 0; i < files.length; i++) {
-      setProgress({ i, n: files.length, fehler });
-      await new Promise((r) => setTimeout(r, 20));
-      const f = files[i];
-      try {
-        const p = prepareImage(await rasterFromFile(f), { threshold: auto ? null : th, invert: invert === "auto" ? null : invert === "ja" });
-        if (!p.shapes.length) { fehler.push(`${f.name}: kein Text gefunden`); continue; }
-        const r = engrave(model, p, place, face.frame);
-        if (!r || r.volEinlage < 1e-6) { fehler.push(`${f.name}: Text liegt nicht auf dem Modell`); continue; }
-        const nm = `${String(i + 1).padStart(3, "0")}-${safeName(f.name)}`;
-        const dir = zip.folder(nm)!;
-        dir.file(`${nm}-modell.stl`, toStl(r.modell));
-        dir.file(`${nm}-einlage.stl`, toStl(r.einlage));
-        dir.file(`${nm}.3mf`, await to3mf([{ name: "Modell mit Gravur", geo: r.modell, color: colModell }, { name: "Text-Einlage", geo: r.einlage, color: colEinlage }], nm));
-        r.modell.dispose();
-        r.einlage.dispose();
-      } catch (e) { fehler.push(`${f.name}: ${e instanceof Error ? e.message : String(e)}`); }
-    }
-    if (fehler.length) zip.file("FEHLER.txt", fehler.join("\n"));
-    setProgress({ i: files.length, n: files.length, fehler });
-    download(await zip.generateAsync({ type: "blob" }), `gravur-stapel-${safeName(modelName)}.zip`);
+    try {
+      download(await serverJob(files), `gravur-stapel-${safeName(modelName)}.zip`);
+    } catch (e) { setErr(`Massenmodus fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`); }
+    setStatus("");
     setBusy(false);
   };
 
@@ -539,9 +578,11 @@ export default function GravurPage() {
           </Step>
 
           <Step n={5} title="BERECHNEN">
-            <Button className="w-full" disabled={!bereit || busy} onClick={rechnen}>
-              {busy && !progress ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Scissors className="mr-1.5 h-4 w-4" />}Text ausschneiden
+            <Button className="w-full" disabled={!bereit || !imgFile || busy} onClick={rechnen}>
+              {busy && !batch ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Scissors className="mr-1.5 h-4 w-4" />}Text ausschneiden
             </Button>
+            {status && <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />{status}</p>}
+            <p className="text-[11px] text-muted-foreground">Gerechnet wird auf dem Server (muscio): saubere Kurven mit Potrace, Schnitt mit Manifold.</p>
             {!bereit && <p className="text-[11px] text-muted-foreground">Es fehlen noch: {[!model && "Modell", model && !face && "Fläche", !prep?.shapes.length && "Bild"].filter(Boolean).join(", ")}.</p>}
           </Step>
 
@@ -552,8 +593,8 @@ export default function GravurPage() {
                 <p className="text-[11px] text-muted-foreground">Fläche, Breite, Position, Drehung und Tiefe aus den Einstellungen oben gelten für alle Bilder. Jedes Bild wird auf dieselbe Rahmenbreite gebracht und an derselben Stelle ausgerichtet. Für Bilder mit unterschiedlich langem Text oben «Mitte des Textes» aktivieren.</p>
                 <input type="file" accept="image/*" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-muted file:px-3 file:py-1.5 file:text-sm" />
                 {files.length > 0 && <p className="text-xs text-muted-foreground">{files.length} Bilder gewählt</p>}
-                <Button className="w-full" variant="outline" disabled={!model || !face || !files.length || busy} onClick={stapel}>
-                  {busy && progress ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Package className="mr-1.5 h-4 w-4" />}Alle berechnen (ZIP)
+                <Button className="w-full" variant="outline" disabled={!modelFile || !face || !files.length || busy} onClick={stapel}>
+                  {busy && batch ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Package className="mr-1.5 h-4 w-4" />}Alle berechnen (ZIP)
                 </Button>
                 {progress && (
                   <div className="space-y-1 text-xs">
