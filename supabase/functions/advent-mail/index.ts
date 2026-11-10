@@ -1,6 +1,24 @@
 import { Resend } from "npm:resend@2";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { renderNewsletter } from "../_shared/newsletter-template.ts";
+import { createHmac } from "node:crypto";
+
+// Double-Opt-in für die tägliche Erinnerung: Der Newsletter wird erst aktiv, wenn der Empfänger
+// den signierten Link in der Code-Mail anklickt (beweist Zugriff auf das Postfach).
+function optinSecret(): string {
+  return Deno.env.get("NEWSLETTER_UNSUB_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+}
+function optinSig(email: string): string {
+  return createHmac("sha256", optinSecret()).update(`advent-optin:${email.trim().toLowerCase()}`).digest("hex").slice(0, 32);
+}
+function verifyOptinSig(email: string, sig: unknown): boolean {
+  if (typeof sig !== "string" || !sig) return false;
+  const expected = optinSig(email);
+  if (sig.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
+  return diff === 0;
+}
 
 // Adventskalender-Mails.
 //  action "send_code": Besucher bekommt den Code des heutigen Türchens per Mail (E-Mail wird als Kunde gespeichert,
@@ -46,6 +64,22 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    // Bestätigungslink aus der Code-Mail (GET ?optin=1&email=…&sig=…)
+    if (req.method === "GET") {
+      const u = new URL(req.url);
+      if (u.searchParams.get("optin") !== "1") return json({ error: "Unbekannte Aktion" }, 400);
+      const em = String(u.searchParams.get("email") ?? "").trim().toLowerCase().slice(0, 200);
+      if (!EMAIL_RE.test(em) || !verifyOptinSig(em, u.searchParams.get("sig"))) {
+        return Response.redirect(`${SITE}/?newsletter=ungueltig`, 302);
+      }
+      const { data: suppressedOpt } = await admin.from("suppressed_emails").select("email").eq("email", em).maybeSingle();
+      if (!suppressedOpt) {
+        await admin.from("customers").update({ newsletter_aktiv: true }).eq("email", em);
+      }
+      return Response.redirect(`${SITE}/?newsletter=bestaetigt`, 302);
+    }
+
     const body = await req.json().catch(() => ({}));
     const now = zurichNow();
     const jahr = now.y;
@@ -77,18 +111,20 @@ Deno.serve(async (req) => {
       const { data: suppressed } = await admin.from("suppressed_emails").select("email").eq("email", email).maybeSingle();
       if (suppressed) return json({ error: "An diese Adresse können wir leider keine E-Mails senden." }, 400);
 
-      // Als Kunde speichern (bestehende Kunden nur bei Einwilligung auf Newsletter aktiv setzen)
+      // Als Kunde speichern. Der Newsletter wird hier NIE aktiviert: das geschieht erst über den
+      // signierten Bestätigungslink in der Mail (Double-Opt-in), damit niemand fremde Adressen anmelden kann.
       const { data: existing } = await admin.from("customers").select("id,newsletter_aktiv").eq("email", email).maybeSingle();
       if (!existing) {
         const local = email.split("@")[0].replace(/[._-]+/g, " ").trim() || "Adventskalender";
         await admin.from("customers").insert({
           name: local, vorname: "", email, land: "Schweiz",
-          newsletter_aktiv: consent,
-          notizen: `Adventskalender ${jahr}${consent ? " (tägliche Erinnerung gewünscht)" : ""}`,
+          newsletter_aktiv: false,
+          notizen: `Adventskalender ${jahr}${consent ? " (tägliche Erinnerung angefragt, Bestätigung ausstehend)" : ""}`,
         });
-      } else if (consent && existing.newsletter_aktiv === false) {
-        await admin.from("customers").update({ newsletter_aktiv: true }).eq("id", existing.id);
       }
+      const optinUrl = consent && existing?.newsletter_aktiv !== true
+        ? `${Deno.env.get("SUPABASE_URL")}/functions/v1/advent-mail?optin=1&email=${encodeURIComponent(email)}&sig=${optinSig(email)}`
+        : null;
 
       // Nur einmal pro Adresse und Türchen senden
       const { error: logErr } = adminTest ? { error: null } : await admin.from("advent_versand_log").insert({ jahr, tag, email, art: "code" });
@@ -97,7 +133,9 @@ Deno.serve(async (req) => {
       const inhalt =
         `Frohe Adventszeit!\n\nHinter Türchen ${tag} wartet auf dich: ${door.titel}\n\n` +
         (door.text ? `${door.text}\n\n` : "") +
-        `Löse ihn im Online-Kalkulator oder im Shop-Warenkorb im Feld "Gutschein-Code" ein.\n\nSchöne Adventszeit wünscht dein 3DMuscio-Team`;
+        `Löse ihn im Online-Kalkulator oder im Shop-Warenkorb im Feld "Gutschein-Code" ein.\n\n` +
+        (optinUrl ? `Du möchtest täglich erinnert werden, wenn ein neues Türchen aufgeht? Bitte bestätige das mit diesem Link:\n${optinUrl}\n\n` : "") +
+        `Schöne Adventszeit wünscht dein 3DMuscio-Team`;
       const html = renderNewsletter({
         inhalt, name: null, email, trackId: null, xmas: true,
         codeBox: { code: door.code, hinweis: `Gilt nur am ${tag}. Dezember.` },
