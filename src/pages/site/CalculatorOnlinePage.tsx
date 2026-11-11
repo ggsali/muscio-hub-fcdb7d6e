@@ -24,6 +24,7 @@ import { colorHex } from "@/lib/colorMap";
 import { dimsFromStl, infoFromStl, dimsFromObj, waehleVersandart, type Mass3 } from "@/lib/versandArt";
 import { schaetzeNachbearbeitungMin } from "@/lib/nachbearbeitung";
 import { SETUP_PAUSCHALE_ONLINE } from "@/lib/pricing";
+import { schaetzePlatten } from "@/lib/platten";
 import { splitFee } from "@/lib/splitSurcharge";
 import { gzAbgelehnt, gzipIfWorthIt } from "@/lib/gzipUpload";
 import JSZip from "jszip";
@@ -1405,7 +1406,7 @@ const CalculatorOnlinePage = () => {
         discount,
         exact: true,
         druckzeitMin,
-        plates: batchOk ? batchOk.batch.plates : undefined,
+        plates: batchOk ? batchOk.batch.plates : p.quantity >= 2 ? schaetzePlatten(p.dimsMm, p.quantity).plates : undefined,
         breakdown: { material: materialCost, machine: machineCost, support: supportCost, split: splitCost, post: postCost },
       };
     }
@@ -1758,7 +1759,7 @@ const CalculatorOnlinePage = () => {
           const teilen = teile > 1
             ? ` – GETEILT in ${teile} Teile und verklebt (Zuschlag ${CHF(splitFee(teile))} pro Stück, Teil grösser als 420 mm)`
             : "";
-          const platten = p.quantity >= 2 && p.batch && p.batch.batch.copies === p.quantity ? p.batch.batch.plates : 0;
+          const platten = p.quantity >= 2 ? (p.batch && p.batch.batch.copies === p.quantity ? p.batch.batch.plates : schaetzePlatten(p.dimsMm, p.quantity).plates) : 0;
           const plattenText = platten > 0 ? ` – ${platten} ${platten === 1 ? "Platte" : "Platten"} (Setup ×${platten}${p.batch?.batch.printer ? `, ${({ a1: "A1", k1c: "K1C", k1: "K1", k2plus: "K2 Plus", xl: "XL" } as Record<string, string>)[p.batch.batch.printer] ?? p.batch.batch.printer}` : ""}, Nachbearbeitung geschätzt)` : "";
           return `${p.fileName} (${p.quantity}× ${(materials.find(m => m.id === p.materialId)?.name || p.materialId)}, ${p.color}, ${qualityAdminLabel(p.infill)})${teilen}${plattenText}`;
         })
@@ -1806,7 +1807,7 @@ const CalculatorOnlinePage = () => {
           slicer_hat_supports: !!src.hasSupport,
           ...(src.layers ? { slicer_layer_anzahl: src.layers } : {}),
           ...(post > 0 ? { kalk_nachbearbeitung_h: Math.round(post * 1000) / 1000 } : {}),
-          ...(batchOk(p) ? { kalk_setup_anzahl: batchOk(p)!.batch.plates } : {}),
+          ...(batchOk(p) ? { kalk_setup_anzahl: batchOk(p)!.batch.plates } : p.quantity >= 2 ? { kalk_setup_anzahl: schaetzePlatten(p.dimsMm, p.quantity).plates, kalk_platten_geschaetzt: true } : {}),
           // Auftragsweit (nur am ersten Teil): Versandart und Versandkosten wie im Kalkulator berechnet
           ...(first ? { kalk_paket_groesse: versandWahl.id === "paket" ? null : versandWahl.id, kalk_versand: versandWahl.preis, kalk_versand_label: versandWahl.label } : {}),
         };
