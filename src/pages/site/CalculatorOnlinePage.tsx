@@ -483,7 +483,7 @@ const MATERIAL_HINTS: Record<string, string> = {
   "Resin": "Hochauflösend · Glatte Oberfläche",
 };
 
-const CalculatorOnlinePage = () => {
+const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
   const [step, setStep] = useState(1);
   const [parts, setParts] = useState<Part[]>([]);
   const [allMaterials, setMaterials] = useState<Material[]>([]);
@@ -498,9 +498,10 @@ const CalculatorOnlinePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [herkunftInquiryId, setHerkunftInquiryId] = useState<string | null>(null);
-  // Neustart = Seite komplett neu laden (alles von vorne)
+  // Neustart = Kalkulator komplett neu aufbauen, alles von vorne
   const neuStarten = () => {
-    window.location.assign("/kalkulator-online");
+    onRestart(); // Kalkulator frisch aufbauen (ohne Seiten-Reload)
+    window.scrollTo({ top: 0 });
   };
   // Klick auf "Kalkulator" im Menue nach abgeschlossener Bestellung = komplett neu laden
   useEffect(() => {
@@ -3261,6 +3262,12 @@ const SuccessView = ({
       </AnimatePresence>
     </motion.div>
   );
+};
+
+/** Hülle: ein neuer key baut den ganzen Kalkulator frisch auf (Neustart nach der Bestellung) */
+const CalculatorOnlinePage = () => {
+  const [runde, setRunde] = useState(0);
+  return <CalculatorOnlineInner key={runde} onRestart={() => setRunde((r) => r + 1)} />;
 };
 
 export default CalculatorOnlinePage;
