@@ -788,7 +788,7 @@ const CalculatorOnlinePage = () => {
     // Sehr grosse Dateien überschreiten das Speicherlimit der Serveranalyse
     if (part.stlBase64.length > 9 * 1024 * 1024) {
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, kiAnalysisLoading: false, kiAnalysisError: "Datei zu gross für die Detailanalyse – wir verwenden eine Schätzung" }
+        ? { ...p, kiAnalysisLoading: false, kiAnalysisError: null } // gross: kein Reserve-Preis noetig, der Slicer rechnet (bei Ausfall meldet slicerError die Schaetzung)
         : p));
       return;
     }
@@ -2815,7 +2815,7 @@ const CalculatorOnlinePage = () => {
                                 <Loader2 className="w-3 h-3 animate-spin" /> 🤖 Modell wird analysiert…
                               </p>
                             )}
-                            {p.kiAnalysisError && (
+                            {p.kiAnalysisError && !p.slicerResult && !p.slicerLoading && (
                               <p className="text-xs text-muted-foreground mt-1">{p.kiAnalysisError}</p>
                             )}
 
