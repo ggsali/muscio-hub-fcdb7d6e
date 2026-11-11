@@ -2266,6 +2266,9 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                     </div>
                   )}
 
+                  {/* Unterhaltung waehrend der Analyse: ganz oben im Schritt, damit der Kunde sie sofort sieht */}
+                  {parts.length > 0 && anySlicerLoading && <WaitFacts />}
+
                   {/* Dropzone */}
                   {parts.length === 0 ? (
                     <div
@@ -2303,9 +2306,6 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                       </p>
                     </div>
                   )}
-
-                  {/* Unterhaltung waehrend der Analyse: direkt unter der Dateiliste, gut sichtbar */}
-                  {parts.length > 0 && anySlicerLoading && <WaitFacts />}
 
                   {hasStep && (
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm">
