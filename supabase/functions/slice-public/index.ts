@@ -69,6 +69,18 @@ async function speichereDiag(supabase: any, raw: unknown) {
   await supabase.from("settings").upsert({ key: "slice_client_log", value: JSON.stringify(arr.slice(-80)) }, { onConflict: "key" });
 }
 
+// Aufraeumen: Uploads fuer grosse Slices (kalkulator/slice-...) sind nach dem Abholen weg. Reste (abgebrochene Aufrufe) loeschen wir nach 1 Stunde.
+async function raeumeAuf(supabase: any) {
+  const g = globalThis as any;
+  if (Date.now() - (g.__sliceCleanupAt ?? 0) < 10 * 60_000) return;
+  g.__sliceCleanupAt = Date.now();
+  try {
+    const { data } = await supabase.storage.from("project-uploads").list("kalkulator", { search: "slice-", limit: 200 });
+    const alt = (data ?? []).filter((o: { name: string; created_at?: string }) => o.name.startsWith("slice-") && o.created_at && Date.now() - new Date(o.created_at).getTime() > 60 * 60_000);
+    if (alt.length) await supabase.storage.from("project-uploads").remove(alt.map((o: { name: string }) => `kalkulator/${o.name}`));
+  } catch (e) { console.error("aufraeumen fehlgeschlagen", e); }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Nur POST erlaubt" }, 405);
@@ -116,6 +128,7 @@ serve(async (req) => {
       store.set(ip, hits);
     }
 
+    void raeumeAuf(supabase);
     const form = await req.formData();
     if (form.get("diag") === "1") {
       await speichereDiag(supabase, form.get("d"));
