@@ -75,7 +75,8 @@ serve(async (req) => {
     }
 
     const { data: flag } = await supabase.from("settings").select("value").eq("key", "public_nas_slice_enabled").maybeSingle();
-    if (flag?.value !== "true") { await dbg(supabase, { ev: "aus", flag: flag?.value ?? null }); return json({ ok: false, enabled: false, error: "deaktiviert" }); }
+    // Standard: an. Nur wenn der Schalter ausdruecklich auf "false" steht, ist der Server-Slicer aus.
+    if (flag?.value === "false") { await dbg(supabase, { ev: "aus", flag: flag?.value ?? null }); return json({ ok: false, enabled: false, error: "deaktiviert" }); }
 
     const base = (Deno.env.get("SLICER_URL") || "").replace(/\/+$/, "");
     const key = Deno.env.get("SLICER_API_KEY") || "";

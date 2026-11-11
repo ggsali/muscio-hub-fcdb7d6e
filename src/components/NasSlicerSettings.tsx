@@ -13,7 +13,7 @@ export function NasSlicerSettings() {
 
   useEffect(() => {
     supabase.from("settings").select("key,value").in("key", [KEYS.on, KEYS.only]).then(({ data }) => {
-      setOn(data?.find((r) => r.key === KEYS.on)?.value === "true");
+      setOn(data?.find((r) => r.key === KEYS.on)?.value !== "false"); // Standard: an
       setOnly(data?.find((r) => r.key === KEYS.only)?.value === "true");
       setBusy(false);
     });

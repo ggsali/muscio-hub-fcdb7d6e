@@ -287,38 +287,9 @@ const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => 
 
 
 /** Prüft (5 Min. gecacht), ob die NAS-Schätzung eingeschaltet ist: die Funktion antwortet auf probe=1 mit enabled true/false. */
-let nasProbe: { at: number; on: boolean; only: boolean } | null = null;
-/** true = Browser-Slicer im Admin ausgeschaltet, nur NAS verwenden */
-async function nasOnlyMode(): Promise<boolean> {
-  await nasSliceEnabled();
-  return !!nasProbe?.on && !!nasProbe?.only;
-}
-async function nasSliceEnabled(): Promise<boolean> {
-  if (nasProbe && Date.now() - nasProbe.at < 5 * 60_000) return nasProbe.on;
-  let on = false;
-  let only = false;
-  try {
-    const probe = new FormData();
-    probe.append("probe", "1");
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public?mode=probe`, {
-      method: "POST",
-      headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
-      body: probe,
-      signal: AbortSignal.timeout(5000),
-    });
-    const j = res.ok ? await res.json().catch(() => ({})) : {};
-    on = j?.enabled === true;
-    only = on; // Schalter an: alles über den NAS (kein Browser-Slicer), aus: alles im Browser
-  } catch (e) {
-    // Ein einzelner Ausfall der Abfrage darf den Server nicht fuer Minuten abschalten: letzten guten Wert behalten, bald neu fragen
-    const alt = nasProbe;
-    nasProbe = { at: Date.now() - 4.5 * 60_000, on: alt?.on ?? false, only: alt?.only ?? false };
-    nasDebug(`Probe fehlgeschlagen: ${(e as Error)?.message ?? e}`);
-    return nasProbe.on;
-  }
-  nasProbe = { at: Date.now(), on, only };
-  return on;
-}
+/** Jeder Job geht auf den Slicer-Server (muscio). Es gibt keinen Browser-Slicer mehr als Ersatz. */
+async function nasOnlyMode(): Promise<boolean> { return true; }
+async function nasSliceEnabled(): Promise<boolean> { return true; }
 
 /** Meldet Probleme der NAS-Schätzung an das Debug-Protokoll (Admin → Slice-Freigabe). Fehler hier sind egal. */
 function nasDebug(msg: string) {
@@ -888,7 +859,14 @@ const CalculatorOnlinePage = () => {
       let browserGrund = "";
       if (!quickSlice && part.file) {
         try {
-          result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill), mat?.density);
+          let letzter: unknown = null;
+          for (let versuch = 0; versuch < 3 && !result; versuch++) {
+            if (versuch > 0) await new Promise((r) => setTimeout(r, 5000));
+            try {
+              result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill), mat?.density);
+            } catch (e) { letzter = e; }
+          }
+          if (!result) throw letzter ?? new Error("NAS-Slicer nicht verfügbar");
         } catch (nasErr) {
           console.info("[Slicer] NAS nicht genutzt, Browser-Slicer als Fallback:", nasErr);
           nasDebug(`Browser-Fallback: ${(nasErr as Error)?.message ?? nasErr}`);
@@ -1197,7 +1175,7 @@ const CalculatorOnlinePage = () => {
     setParts((p) => p.map((x) => {
       if (x.id !== id) return x;
       const next = { ...x, ...u };
-      if (u.quantity !== undefined && u.quantity !== x.quantity) next.batchPending = u.quantity >= 2 && !!nasProbe?.on;
+      if (u.quantity !== undefined && u.quantity !== x.quantity) next.batchPending = u.quantity >= 2 && true;
       if (u.materialId !== undefined && u.materialId !== x.materialId) {
         const newMat = materials.find((m) => m.id === u.materialId);
         const avail = newMat?.farben || [];
