@@ -1476,7 +1476,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
 
   const materialTotal = calcs.reduce((s, { calc }) => s + calc.subtotal, 0);
   // Setup-Pauschale je Druckerbestückung: bei Mengen so oft, wie der Slicer Platten braucht (sonst 1x)
-  const plateCount = calcs.reduce((sum, { calc }) => sum + ((calc as { plates?: number }).plates ?? 0), 0);
+  const plateCount = parts.reduce((sum, p) => sum + (p.quantity >= 2 ? (p.batch && p.batch.batch.copies === p.quantity ? p.batch.batch.plates : schaetzePlatten(p.dimsMm, p.quantity).plates) : 0), 0);
   const setupCount = Math.max(1, plateCount);
   const setupFee = parts.length > 0 ? FIX_COST * setupCount : 0;
   const subtotal = materialTotal + setupFee;

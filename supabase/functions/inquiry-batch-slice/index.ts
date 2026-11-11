@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
   const att: any = Array.isArray(inquiry?.attachments) ? inquiry!.attachments[index] : null;
   if (!att) return reply({ error: "Anhang nicht gefunden" }, 404);
   const copies = Math.max(1, Math.floor(Number(att.menge) || 1));
-  if (!att.storage_path || att.kind || !MODEL_RE.test(String(att.filename ?? "")) || copies < 2) return reply({ skipped: "kein Mengen-Slice noetig" });
+  if (!att.storage_path || att.kind || !MODEL_RE.test(String(att.filename ?? "")) || !Number.isFinite(copies)) return reply({ skipped: "keine Modelldatei" });
 
   EdgeRuntime.waitUntil(run());
   return reply({ accepted: true }, 202);
@@ -110,7 +110,8 @@ Deno.serve(async (req) => {
         fetch(`${base}/slice`, { method: "POST", headers: { "X-API-Key": key }, body: build(printer, kopien), signal: AbortSignal.timeout(SLICE_TIMEOUT_MS) });
 
       let res!: Response; let used = "a1"; let zuGross = false;
-      for (const printer of ["a1", "k1c", "k2plus", "h2c", "xl"]) {
+      // Mehrere Stueck: auf der H2C-Platte anordnen (bei Bedarf mehrere Platten), sonst XL. Einzelteile wie im Kalkulator.
+      for (const printer of copies > 1 ? ["h2c", "xl"] : ["k1c", "k1", "xl"]) {
         res = await slice(printer); used = printer; zuGross = false;
         if (res.status !== 422) break;
         const peek = await res.clone().json().catch(() => ({}));
@@ -119,7 +120,7 @@ Deno.serve(async (req) => {
         if (!zuGross && !d.includes("Unbekannter Drucker") && !d.includes("Slicen fehlgeschlagen")) break;
       }
       // braucht der kleine Drucker mehrere Platten: K2 Plus vergleichen (weniger Platten = weniger Setups)
-      if (res.ok && used !== "k2plus") {
+      if (false as boolean) { // H2C ist fest vorgegeben, kein Vergleich mit dem K2 Plus
         const p1 = await res.clone().json().catch(() => ({}));
         const n1 = Number(p1?.plates);
         if (Number.isFinite(n1) && n1 > 1) {
@@ -144,7 +145,8 @@ Deno.serve(async (req) => {
       }
       let time = Number(st.print_time_s), grams = Number(st.filament_g), plates = Number(payload?.plates ?? st.plates);
       if (teilen) { time *= copies; grams *= copies; plates = copies; }
-      else if (Number(payload?.copies ?? st.copies) !== copies || !(plates >= 1)) throw new Error("Slicer kennt keine Mengenrechnung");
+      else if (copies > 1 && (Number(payload?.copies ?? st.copies) !== copies || !(plates >= 1))) throw new Error("Slicer kennt keine Mengenrechnung");
+      if (!(plates >= 1)) plates = 1;
       await speichere({
         ok: true, at, nas_job_id: typeof payload?.job_id === "string" ? payload.job_id : null, copies, plates: Math.min(500, Math.floor(plates)), printer: used, layer_height: layer, infill,
         print_time_s: Math.round(time), filament_g: Math.round(grams * 10) / 10,

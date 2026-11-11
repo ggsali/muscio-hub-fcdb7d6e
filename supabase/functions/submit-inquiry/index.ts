@@ -114,13 +114,13 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    // Mengen-Slice im Hintergrund (Kunde wartet nicht): pro Modelldatei mit Menge >= 2 ein Aufruf
+    // Slice im Hintergrund (Kunde wartet nicht): pro Modelldatei ein Aufruf; Ergebnis und G-Code gehen in die Anfrage
     try {
       const sk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (insertedInquiry?.id && sk && Array.isArray(attachments)) {
         const jobs = attachments
           .map((a: any, i: number) => ({ a, i }))
-          .filter(({ a }: any) => a?.storage_path && !a?.kind && /\.(stl|obj|3mf)$/i.test(String(a?.filename ?? "")) && Number(a?.menge) >= 2)
+          .filter(({ a }: any) => a?.storage_path && !a?.kind && /\.(stl|obj|3mf)$/i.test(String(a?.filename ?? "")))
           .slice(0, 5);
         for (const { i } of jobs) {
           // Antwort kommt sofort (202), das Slicen laeuft in der aufgerufenen Funktion weiter
