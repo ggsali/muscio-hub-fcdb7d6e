@@ -52,8 +52,8 @@ async function gunzipLimited(blob: Blob, max: number): Promise<Uint8Array<ArrayB
 }
 
 // Messwerte, die der Browser zu jedem Slice meldet (nur feste Felder, Texte gekuerzt): settings.slice_client_log, letzte 80 Eintraege
-const DIAG_TEXT = ["rid", "file", "ct", "err", "body", "abort", "phase", "net"] as const;
-const DIAG_NUM = ["sizeB", "gzB", "gzMs", "totalMs", "status", "q", "infill", "copies", "tri", "parts"] as const;
+const DIAG_TEXT = ["rid", "file", "ct", "err", "body", "abort", "phase", "net", "via"] as const;
+const DIAG_NUM = ["sizeB", "gzB", "gzMs", "upMs", "totalMs", "status", "q", "infill", "copies", "tri", "parts"] as const;
 async function speichereDiag(supabase: any, raw: unknown) {
   let d: Record<string, unknown> = {};
   try { d = typeof raw === "string" ? JSON.parse(raw) : {}; } catch { return; }
@@ -136,11 +136,23 @@ serve(async (req) => {
     const plate = form.get("plate") === "1";
     const maxBytes = plate ? PLATE_MAX_BYTES : MAX_BYTES;
     let file = form.get("file");
+    // Grosse Dateien kommen nicht durch die Anfrage, sondern liegen schon im Storage (kalkulator/slice-...): hier abholen und danach loeschen
+    let viaStorage = false;
+    const sp = String(form.get("storage_path") ?? "");
+    if (!(file instanceof File) && /^kalkulator\/slice-[A-Za-z0-9]{6,16}-[A-Za-z0-9._-]{1,100}$/.test(sp)) {
+      const tD = Date.now();
+      const { data: blob, error: dlErr } = await supabase.storage.from("project-uploads").download(sp);
+      if (dlErr || !blob) { await dbg(supabase, { rid, ev: "storage-fehlt", pfad: sp, grund: String(dlErr?.message ?? "leer").slice(0, 100) }); return json({ ok: false, error: "Upload nicht gefunden" }); }
+      file = new File([blob], sp.split("/").pop() as string);
+      viaStorage = true;
+      void supabase.storage.from("project-uploads").remove([sp]);
+      await dbg(supabase, { rid, ev: "storage-geholt", bytes: blob.size, ms: Date.now() - tD });
+    }
     if (!(file instanceof File)) { await dbg(supabase, { rid, ev: "keine-datei", ct: String(req.headers.get("content-type") ?? "").slice(0, 60), cl: req.headers.get("content-length"), felder: [...form.keys()].join(",").slice(0, 80), typ: typeof file }); return json({ ok: false, error: "Datei fehlt" }); }
     // Der Browser schickt grosse Dateien verlustfrei gzip-komprimiert (gz=1, Name endet auf .gz): das spart Upload-Zeit.
     const gzBytes = file.size;
     let gzFile: File | null = null; // die komprimierte Originaldatei (wird, wenn der Slicer es kann, komprimiert weitergereicht)
-    if (form.get("gz") === "1" && file.name.toLowerCase().endsWith(".gz")) {
+    if ((form.get("gz") === "1" || viaStorage) && file.name.toLowerCase().endsWith(".gz")) {
       if (gzBytes > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", gzBytes, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
       try {
         const original: File = file;

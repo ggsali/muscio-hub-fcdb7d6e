@@ -338,8 +338,20 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
     if (up.gz) diag.gzB = up.blob.size;
     const body = new FormData();
     body.append("rid", rid);
-    body.append("file", up.gz ? new File([up.blob], up.name) : file);
-    if (up.gz) body.append("gz", "1");
+    // Ab 3 MB Uebertragung: Datei zuerst direkt in den Storage (kein Limit der Anfrage), die Funktion holt sie dort ab
+    let viaStorage = false;
+    if (up.blob.size > 3 * 1024 * 1024) {
+      const tUp = performance.now();
+      const pfad = `kalkulator/slice-${rid}-${up.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}`;
+      const { error: upErr } = await supabase.storage.from("project-uploads").upload(pfad, up.blob, { upsert: false, contentType: "application/octet-stream" });
+      diag.upMs = Math.round(performance.now() - tUp);
+      if (!upErr) { body.append("storage_path", pfad); viaStorage = true; diag.via = "storage"; }
+      else { diag.via = "direkt"; diag.err = `storage: ${upErr.message}`.slice(0, 120); }
+    }
+    if (!viaStorage) {
+      body.append("file", up.gz ? new File([up.blob], up.name) : file);
+      if (up.gz) body.append("gz", "1");
+    }
     body.append("quality", quality.toFixed(2));
     body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
     if (copies > 1) body.append("copies", String(copies));
