@@ -236,7 +236,7 @@ serve(async (req) => {
           method: "POST",
           headers: { "X-API-Key": key },
           body: buildForm(printer, allowSplit, plain, kopien),
-          signal: AbortSignal.timeout(TIMEOUT_MS),
+          signal: AbortSignal.timeout(grossGz ? 140_000 : TIMEOUT_MS), // sehr grosse Modelle: Uebertragung ca. 35-60 s + Slicen ca. 60 s
         });
       const r = await senden();
       if (!gzFile || g.__serverGz === false || grossGz) return r;
