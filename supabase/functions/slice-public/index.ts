@@ -136,24 +136,25 @@ serve(async (req) => {
     const plate = form.get("plate") === "1";
     const maxBytes = plate ? PLATE_MAX_BYTES : MAX_BYTES;
     let file = form.get("file");
-    if (!(file instanceof File)) { await dbg(supabase, { ev: "keine-datei" }); return json({ ok: false, error: "Datei fehlt" }); }
+    if (!(file instanceof File)) { await dbg(supabase, { rid, ev: "keine-datei", ct: String(req.headers.get("content-type") ?? "").slice(0, 60), cl: req.headers.get("content-length"), felder: [...form.keys()].join(",").slice(0, 80), typ: typeof file }); return json({ ok: false, error: "Datei fehlt" }); }
     // Der Browser schickt grosse Dateien verlustfrei gzip-komprimiert (gz=1, Name endet auf .gz): das spart Upload-Zeit.
     const gzBytes = file.size;
     let gzFile: File | null = null; // die komprimierte Originaldatei (wird, wenn der Slicer es kann, komprimiert weitergereicht)
     if (form.get("gz") === "1" && file.name.toLowerCase().endsWith(".gz")) {
-      if (gzBytes > maxBytes) return json({ error: "Datei zu gross" }, 413);
+      if (gzBytes > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", gzBytes, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
       try {
         const original: File = file;
         const raw = await gunzipLimited(original, maxBytes);
         file = new File([raw], original.name.slice(0, -3));
         gzFile = original;
       } catch (_e) {
+        await dbg(supabase, { rid, ev: "entpacken-fehlgeschlagen", gzBytes, max: maxBytes, grund: String((_e as Error)?.message ?? _e).slice(0, 100) });
         return json({ ok: false, error: "Datei konnte nicht entpackt werden" });
       }
     }
     const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
-    if (!ALLOWED_EXT.includes(ext)) return json({ error: "Dateityp nicht erlaubt" }, 422);
-    if (file.size > maxBytes) return json({ error: "Datei zu gross" }, 413);
+    if (!ALLOWED_EXT.includes(ext)) { await dbg(supabase, { rid, ev: "dateityp", ext }); return json({ error: "Dateityp nicht erlaubt" }, 422); }
+    if (file.size > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", bytes: file.size, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
     const upFile: File = file; // (nach dem Entpacken) wird an den Slicer weitergereicht
     const quality = String(form.get("quality") ?? "0.20");
     if (!QUALITIES.includes(quality)) return json({ error: "Ungültige Qualität" }, 422);
