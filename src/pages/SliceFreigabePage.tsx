@@ -54,6 +54,7 @@ export default function SliceFreigabePage() {
   const [enabled, setEnabled] = useState(false);
   const [publicSlice, setPublicSlice] = useState(false);
   const [debugLog, setDebugLog] = useState("");
+  const [bericht, setBericht] = useState("");
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -76,6 +77,17 @@ export default function SliceFreigabePage() {
       const arr = JSON.parse(dl?.value ?? "[]") as Array<Record<string, unknown>>;
       setDebugLog(arr.slice().reverse().map((e) => JSON.stringify(e)).join("\n"));
     } catch { setDebugLog(dl?.value ?? ""); }
+    // Diagnose-Bericht: Browser-Messung und Server-Ereignisse je Slice zusammengefuehrt (gleiche rid)
+    try {
+      const { data: cl } = await db.from("settings").select("value").eq("key", "slice_client_log").maybeSingle();
+      const client = JSON.parse(cl?.value ?? "[]") as Array<Record<string, unknown>>;
+      const server = JSON.parse(dl?.value ?? "[]") as Array<Record<string, unknown>>;
+      const zeilen = client.slice(-25).reverse().map((c) => {
+        const s = server.filter((x) => x.rid && x.rid === c.rid).map((x) => `    server ${JSON.stringify(x)}`).join("\n");
+        return `BROWSER ${JSON.stringify(c)}${s ? `\n${s}` : "\n    server: keine Ereignisse zu dieser rid (Anfrage kam nicht an oder Funktion wurde vorher beendet)"}`;
+      });
+      setBericht(zeilen.join("\n\n"));
+    } catch { setBericht(""); }
     setLoading(false);
   }, []);
 
@@ -181,6 +193,14 @@ export default function SliceFreigabePage() {
       {!loading && !error && jobs.length === 0 && (
         <p className="text-sm text-muted-foreground">Noch keine geslicten Anfragen.</p>
       )}
+
+      <details className="rounded-lg border border-border p-3 text-xs" open>
+        <summary className="cursor-pointer font-medium">Diagnose-Bericht Online-Kalkulator (je Slice Browser + Server, neueste zuerst)</summary>
+        <div className="mt-2 space-y-2">
+          <Button variant="outline" size="sm" onClick={() => { void navigator.clipboard.writeText(bericht); toast.success("Kopiert"); }}>Bericht kopieren</Button>
+          <pre className="whitespace-pre-wrap break-all max-h-96 overflow-auto">{bericht || "Noch keine Messungen. Teil im Kalkulator hochladen, danach hier «Aktualisieren» klicken."}</pre>
+        </div>
+      </details>
 
       <details className="rounded-lg border border-border p-3 text-xs">
         <summary className="cursor-pointer font-medium">Debug-Protokoll Online-Kalkulator (neueste zuerst)</summary>

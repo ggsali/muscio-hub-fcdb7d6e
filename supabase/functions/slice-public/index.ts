@@ -22,14 +22,14 @@ const MAX_PARALLEL = 3; // gleichzeitige Slices insgesamt (NAS schonen)
 const json = (body: unknown, _status = 200) =>
   new Response(JSON.stringify(body), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-// Debug-Protokoll: letzte 40 Ereignisse in settings.slice_debug_log (im Admin unter Slice-Freigabe sichtbar)
+// Debug-Protokoll: letzte 120 Ereignisse in settings.slice_debug_log (im Admin unter Slice-Freigabe sichtbar)
 async function dbg(supabase: any, entry: Record<string, unknown>) {
   try {
     const { data } = await supabase.from("settings").select("value").eq("key", "slice_debug_log").maybeSingle();
     let arr: unknown[] = [];
     try { arr = JSON.parse(data?.value ?? "[]"); } catch { arr = []; }
     arr.push({ t: new Date().toISOString(), ...entry });
-    await supabase.from("settings").upsert({ key: "slice_debug_log", value: JSON.stringify(arr.slice(-40)) }, { onConflict: "key" });
+    await supabase.from("settings").upsert({ key: "slice_debug_log", value: JSON.stringify(arr.slice(-120)) }, { onConflict: "key" });
   } catch (e) { console.error("dbg failed", e); }
 }
 
@@ -51,6 +51,23 @@ async function gunzipLimited(blob: Blob, max: number): Promise<Uint8Array<ArrayB
   return out;
 }
 
+// Messwerte, die der Browser zu jedem Slice meldet (nur feste Felder, Texte gekuerzt): settings.slice_client_log, letzte 80 Eintraege
+const DIAG_TEXT = ["rid", "file", "ct", "err", "body", "abort", "phase", "net"] as const;
+const DIAG_NUM = ["sizeB", "gzB", "gzMs", "totalMs", "status", "q", "infill", "copies", "tri", "parts"] as const;
+async function speichereDiag(supabase: any, raw: unknown) {
+  let d: Record<string, unknown> = {};
+  try { d = typeof raw === "string" ? JSON.parse(raw) : {}; } catch { return; }
+  const out: Record<string, unknown> = { t: new Date().toISOString() };
+  for (const k of DIAG_TEXT) if (typeof d[k] === "string") out[k] = String(d[k]).replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, k === "body" || k === "err" ? 200 : 60);
+  for (const k of DIAG_NUM) if (Number.isFinite(Number(d[k])) && d[k] !== null && d[k] !== "") out[k] = Math.round(Number(d[k]) * 100) / 100;
+  if (typeof d.ok === "boolean") out.ok = d.ok;
+  const { data } = await supabase.from("settings").select("value").eq("key", "slice_client_log").maybeSingle();
+  let arr: unknown[] = [];
+  try { arr = JSON.parse(data?.value ?? "[]"); } catch { arr = []; }
+  arr.push(out);
+  await supabase.from("settings").upsert({ key: "slice_client_log", value: JSON.stringify(arr.slice(-80)) }, { onConflict: "key" });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Nur POST erlaubt" }, 405);
@@ -59,6 +76,7 @@ serve(async (req) => {
   const g = globalThis as any;
   g.__sliceInflight ??= 0;
   let counted = false;
+  let rid = ""; // Kennung, die der Browser mitschickt: verbindet Browser-Messung und Server-Ereignisse
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -85,7 +103,7 @@ serve(async (req) => {
     // Probe und Log (?mode=probe|log) verbrauchen kein Kontingent: sonst war die Grenze nach wenigen Teilen und Qualitaetswechseln
     // aufgebraucht und neue Teile (z. B. in der Uebersicht) wurden nicht mehr ueber den Server gerechnet.
     const mode = new URL(req.url).searchParams.get("mode");
-    const leicht = mode === "probe" || mode === "log";
+    const leicht = mode === "probe" || mode === "log" || mode === "diag";
     if (!leicht) {
       const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
       const now = Date.now();
@@ -98,6 +116,11 @@ serve(async (req) => {
     }
 
     const form = await req.formData();
+    if (form.get("diag") === "1") {
+      await speichereDiag(supabase, form.get("d"));
+      return json({ ok: true });
+    }
+    rid = String(form.get("rid") ?? "").replace(/[^\w-]/g, "").slice(0, 24);
     if (form.get("log") === "1") {
       // Browser-Meldungen landen nur noch im Server-Log, nicht im Admin-Protokoll:
       // so kann niemand von aussen Texte ins Slice-Freigabe-Protokoll schreiben.
@@ -165,7 +188,7 @@ serve(async (req) => {
     };
 
     const formMs = Date.now() - tReq; // Einlesen der Anfrage (Upload vom Browser) bis hierher
-    await dbg(supabase, { ev: "slice-start", datei: upFile.name.replace(/[^\w.\- ()äöüÄÖÜ]/g, "_").slice(0, 80), bytes: upFile.size, ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
+    await dbg(supabase, { rid, rss: Math.round((Deno.memoryUsage?.().rss ?? 0) / 1048576), ev: "slice-start", datei: upFile.name.replace(/[^\w.\- ()äöüÄÖÜ]/g, "_").slice(0, 80), bytes: upFile.size, ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
@@ -215,7 +238,7 @@ serve(async (req) => {
       const zuGross = peek?.error === "model_too_large" || peek?.detail?.error === "model_too_large";
       letzterZuGross = zuGross;
       if (!zuGross && !d.includes("Unbekannter Drucker") && !d.includes("Slicen fehlgeschlagen")) break;
-      await dbg(supabase, { ev: "drucker-wechsel", von: printer, grund: zuGross ? "zu gross fuers Bett" : d.slice(0, 200) });
+      await dbg(supabase, { rid, ev: "drucker-wechsel", von: printer, grund: zuGross ? "zu gross fuers Bett" : d.slice(0, 200) });
     }
     // Mehrere Stück: braucht der kleine Drucker mehrere Platten, auch den K2 Plus (grösseres Bett) probieren und die Variante
     // mit weniger Platten nehmen (jede Platte = eine Druckerbestückung = eine Setup-Pauschale). Bei Gleichstand der kleinere Drucker.
@@ -257,7 +280,7 @@ serve(async (req) => {
     const splitRaw = payload?.split ?? payload?.stats?.split ?? null;
     const splitParts = Number(splitRaw?.parts);
     const split = Number.isFinite(splitParts) && splitParts >= 2 ? { parts: Math.min(splitParts, 4) } : null;
-    await dbg(supabase, { ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, gesamtMs: Date.now() - tReq, versuche, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
+    await dbg(supabase, { rid, rss: Math.round((Deno.memoryUsage?.().rss ?? 0) / 1048576), ev: "nas-antwort", drucker: used, status: res.status, ms: Date.now() - t0, gesamtMs: Date.now() - tReq, versuche, detail: String(payload?.detail ?? payload?.error ?? "").slice(0, 400), stats: payload?.stats ?? null });
     if (!res.ok) return json({ ok: false, error: "Slicer-Fehler", status: res.status, detail: String(payload?.detail ?? "").slice(0, 300) });
     // Plattenmodus: G-Code serverseitig vom NAS holen und im Storage ablegen, damit er der Bestellung angehängt werden kann
     let gcodeError = "";
@@ -317,7 +340,7 @@ serve(async (req) => {
     return json({ ok: true, stats: payload.stats ?? null, ...(split ? { split } : {}), ...mengeInfo, ...(gcodeError ? { gcode_error: gcodeError } : {}) });
   } catch (e) {
     console.error("slice-public error:", e);
-    try { await dbg(createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!), { ev: "fehler", msg: String((e as Error)?.message ?? e).slice(0, 300) }); } catch { /* ignore */ }
+    try { await dbg(createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!), { rid, ev: "fehler", msg: String((e as Error)?.message ?? e).slice(0, 300) }); } catch { /* ignore */ }
     return json({ ok: false, error: "Slicer nicht erreichbar" });
   } finally {
     if (counted) g.__sliceInflight = Math.max(0, g.__sliceInflight - 1);

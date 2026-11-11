@@ -291,6 +291,20 @@ const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => 
 async function nasOnlyMode(): Promise<boolean> { return true; }
 async function nasSliceEnabled(): Promise<boolean> { return true; }
 
+/** Schickt die Messwerte eines Slice-Versuchs an den Server (Admin → Slice-Freigabe → Diagnose-Bericht). Fehler hier sind egal. */
+function nasDiag(d: Record<string, unknown>) {
+  try {
+    const f = new FormData();
+    f.append("diag", "1");
+    f.append("d", JSON.stringify(d));
+    void fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public?mode=diag`, {
+      method: "POST",
+      headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+      body: f,
+    }).catch(() => {});
+  } catch { /* ignore */ }
+}
+
 /** Meldet Probleme der NAS-Schätzung an das Debug-Protokoll (Admin → Slice-Freigabe). Fehler hier sind egal. */
 function nasDebug(msg: string) {
   try {
@@ -309,24 +323,48 @@ function nasDebug(msg: string) {
 async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1, abort?: AbortSignal): Promise<SlicerResult> {
   const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
   const tStart = performance.now(); // Zeitmessung: Browser -> Edge Function -> Slicer -> Browser
+  const rid = `${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-4)}`;
+  const diag: Record<string, unknown> = {
+    rid, file: file.name.replace(/[^\w.\- ()]/g, "_").slice(0, 40), sizeB: file.size, q: layerHeight, infill, copies,
+    net: (navigator as unknown as { connection?: { effectiveType?: string } }).connection?.effectiveType ?? "",
+  };
   const senden = async (komprimiert: boolean) => {
     // STL/OBJ ab 1 MB verlustfrei mit gzip komprimieren: weniger Upload-Zeit (3MF ist schon gepackt)
+    const tGz = performance.now();
     const up = komprimiert && /\.(stl|obj)$/i.test(file.name)
       ? await gzipIfWorthIt(file, file.name)
       : { blob: file as Blob, name: file.name, gz: false };
+    diag.gzMs = Math.round(performance.now() - tGz);
+    if (up.gz) diag.gzB = up.blob.size;
     const body = new FormData();
+    body.append("rid", rid);
     body.append("file", up.gz ? new File([up.blob], up.name) : file);
     if (up.gz) body.append("gz", "1");
     body.append("quality", quality.toFixed(2));
     body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
     if (copies > 1) body.append("copies", String(copies));
-    const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
-      method: "POST",
-      headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
-      body,
-      signal: abort && typeof AbortSignal.any === "function" ? AbortSignal.any([AbortSignal.timeout(145_000), abort]) : AbortSignal.timeout(145_000),
-    });
-    return { res: r, json: await r.json().catch(() => ({})), gz: up.gz };
+    let r: Response;
+    try {
+      r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+        method: "POST",
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
+        body,
+        signal: abort && typeof AbortSignal.any === "function" ? AbortSignal.any([AbortSignal.timeout(145_000), abort]) : AbortSignal.timeout(145_000),
+      });
+    } catch (e) {
+      const err = e as Error;
+      diag.phase = "fetch"; diag.ok = false; diag.totalMs = Math.round(performance.now() - tStart);
+      diag.err = `${err?.name}: ${err?.message}`;
+      diag.abort = abort?.aborted ? "user" : /time/i.test(`${err?.name} ${err?.message}`) ? "timeout" : "other";
+      nasDiag(diag);
+      throw e;
+    }
+    diag.status = r.status;
+    diag.ct = r.headers.get("content-type") ?? "";
+    const raw = await r.text().catch(() => "");
+    let parsed: any = {};
+    try { parsed = JSON.parse(raw); } catch { diag.phase = "antwort-kein-json"; diag.body = raw.slice(0, 200); }
+    return { res: r, json: parsed, gz: up.gz };
   };
   let versuch = await senden(true);
   // Server kurz ausgelastet (die Antwort kommt mit HTTP 200 und error "ausgelastet"): ein paarmal warten und erneut versuchen, statt sofort auf die Schaetzung zu fallen
@@ -342,9 +380,14 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
   const mb = (file.size / 1048576).toFixed(1);
   if (json?.detail) console.info("[Slicer] NAS-Meldung:", json.detail);
   if (!res.ok || !st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
+    diag.totalMs = gesamtMs; diag.ok = false; diag.phase = diag.phase ?? "antwort";
+    diag.err = String(json?.error ?? json?.detail ?? (st ? "Statistik unvollstaendig" : "keine Statistik")).slice(0, 200);
+    nasDiag(diag);
     nasDebug(`Fallback nach ${gesamtMs} ms (Datei ${mb} MB): http=${res.status} ok=${json?.ok} err=${json?.error ?? ""} detail=${json?.detail ?? ""} stats=${st ? JSON.stringify(st).slice(0, 150) : "keine"}`);
     throw new Error(`NAS-Slicer nicht verfügbar (${json?.error ?? json?.detail ?? `HTTP ${res.status}`})`);
   }
+  diag.totalMs = gesamtMs; diag.ok = true; diag.phase = "ok";
+  nasDiag(diag);
   nasDebug(`Browser-Zeit gesamt: ${gesamtMs} ms (Datei ${mb} MB, inkl. Upload und Antwort${copies > 1 ? `, ${copies} Stück` : ""})`);
   if (copies > 1) {
     // Der Slicer muss die Menge bestätigen (copies/plates); ältere Slicer ignorieren sie -> kein Mengenergebnis
