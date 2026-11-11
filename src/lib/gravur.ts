@@ -362,7 +362,7 @@ export function bedMatrix(frame: THREE.Matrix4): THREE.Matrix4 {
   return new THREE.Matrix4().makeRotationX(Math.PI).multiply(frame.clone().invert());
 }
 
-export type EngraveResult = { modell: THREE.BufferGeometry; einlage: THREE.BufferGeometry; volModell: number; volEinlage: number; rueckfall?: boolean };
+export type EngraveResult = { modell: THREE.BufferGeometry; einlage: THREE.BufferGeometry; logo?: THREE.BufferGeometry; volModell: number; volEinlage: number; rueckfall?: boolean };
 
 export function engrave(model: THREE.BufferGeometry, prep: Prepared, pl: Place, frame: THREE.Matrix4): EngraveResult | null {
   const prism = prismGeometry(prep, pl, frame);

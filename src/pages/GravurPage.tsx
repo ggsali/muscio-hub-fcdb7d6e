@@ -92,23 +92,32 @@ async function rasterFromFile(file: File, maxSide = 2000): Promise<RasterIn> {
 
 /* ---------- 3D-Ansicht ---------- */
 
+type Api = { lookAtFace: () => void; fit: () => void; fitBox: (b: THREE.Box3, below: boolean) => void };
 type ViewProps = {
   model: THREE.BufferGeometry | null;
-  face: FaceInfo | null;
-  overlay: THREE.BufferGeometry | null;
+  /** Ebene 0 = Text, Ebene 1 = Logo */
+  faces: (FaceInfo | null)[];
+  overlays: (THREE.BufferGeometry | null)[];
+  places: Place[];
+  active: number;
+  onActivate: (i: number) => void;
   result: EngraveResult | null;
   showResult: boolean;
   colModell: string;
   colEinlage: string;
+  colLogo: string;
   showModell: boolean;
   showEinlage: boolean;
+  showLogo: boolean;
   bed: boolean;
   pick: boolean;
-  place: Place;
   onPick: (tri: number) => void;
-  onMove: (dx: number, dy: number) => void;
-  api: React.MutableRefObject<{ lookAtFace: () => void; fit: () => void; fitBox: (b: THREE.Box3, below: boolean) => void } | null>;
+  onMove: (layer: number, dx: number, dy: number) => void;
+  api: React.MutableRefObject<Api | null>;
 };
+
+const LAYER_COL = [0x14b8a6, 0xa855f7];
+const HI_COL = [0x3b82f6, 0xa855f7];
 
 function Viewer(props: ViewProps) {
   const host = useRef<HTMLDivElement>(null);
@@ -116,8 +125,9 @@ function Viewer(props: ViewProps) {
   P.current = props;
   const S = useRef<{
     scene: THREE.Scene; cam: THREE.PerspectiveCamera; controls: OrbitControls;
-    model: THREE.Mesh | null; hi: THREE.Mesh | null; ov: THREE.Mesh | null; res: THREE.Group;
-    matModel: THREE.MeshStandardMaterial; matHi: THREE.MeshBasicMaterial; matOv: THREE.MeshBasicMaterial; matIns: THREE.MeshStandardMaterial; matResModell: THREE.MeshStandardMaterial;
+    model: THREE.Mesh | null; hi: (THREE.Mesh | null)[]; ov: (THREE.Mesh | null)[]; res: THREE.Group;
+    matModel: THREE.MeshStandardMaterial; matHi: THREE.MeshBasicMaterial[]; matOv: THREE.MeshBasicMaterial[];
+    matIns: THREE.MeshStandardMaterial; matLogo: THREE.MeshStandardMaterial; matResModell: THREE.MeshStandardMaterial;
   } | null>(null);
 
   useEffect(() => {
@@ -143,13 +153,15 @@ function Viewer(props: ViewProps) {
     controls.screenSpacePanning = true;
     const res = new THREE.Group();
     scene.add(res);
+    const side = THREE.DoubleSide;
     S.current = {
-      scene, cam, controls, model: null, hi: null, ov: null, res,
-      matModel: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.55, side: THREE.DoubleSide }),
-      matHi: new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side: THREE.DoubleSide }),
-      matOv: new THREE.MeshBasicMaterial({ color: 0x14b8a6, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }),
-      matIns: new THREE.MeshStandardMaterial({ color: 0x14b8a6, roughness: 0.5, side: THREE.DoubleSide }),
-      matResModell: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.55, side: THREE.DoubleSide }),
+      scene, cam, controls, model: null, hi: [null, null], ov: [null, null], res,
+      matModel: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.55, side }),
+      matHi: HI_COL.map((c) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, side })),
+      matOv: LAYER_COL.map((c) => new THREE.MeshBasicMaterial({ color: c, side, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })),
+      matIns: new THREE.MeshStandardMaterial({ color: 0x14b8a6, roughness: 0.5, side }),
+      matLogo: new THREE.MeshStandardMaterial({ color: 0xa855f7, roughness: 0.5, side }),
+      matResModell: new THREE.MeshStandardMaterial({ color: 0x9aa3ad, roughness: 0.55, side }),
     };
 
     const fitBox = (b: THREE.Box3, below = false) => {
@@ -174,7 +186,7 @@ function Viewer(props: ViewProps) {
       fit,
       fitBox,
       lookAtFace: () => {
-        const f = P.current.face;
+        const f = P.current.faces[P.current.active];
         if (!f) return;
         const o = new THREE.Vector3().setFromMatrixPosition(f.frame);
         const yAx = new THREE.Vector3().setFromMatrixColumn(f.frame, 1);
@@ -188,41 +200,48 @@ function Viewer(props: ViewProps) {
       },
     };
 
-    // Klick = Fläche wählen, Ziehen auf dem Text = verschieben
+    // Klick = Fläche wählen, Ziehen auf Text oder Logo = verschieben
     const ray = new THREE.Raycaster();
     const ndc = (e: PointerEvent) => {
       const r = renderer.domElement.getBoundingClientRect();
       return new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     };
     let down: { x: number; y: number } | null = null;
-    let drag: { sx: number; sy: number; dx0: number; dy0: number; inv: THREE.Matrix4 } | null = null;
+    let drag: { li: number; sx: number; sy: number; dx0: number; dy0: number; inv: THREE.Matrix4 } | null = null;
     const planeHit = (e: PointerEvent, f: FaceInfo) => {
       ray.setFromCamera(ndc(e), cam);
       const o = new THREE.Vector3().setFromMatrixPosition(f.frame);
-      const hit = ray.ray.intersectPlane(new THREE.Plane().setFromNormalAndCoplanarPoint(f.normal, o), new THREE.Vector3());
-      return hit;
+      return ray.ray.intersectPlane(new THREE.Plane().setFromNormalAndCoplanarPoint(f.normal, o), new THREE.Vector3());
     };
     const onDown = (e: PointerEvent) => {
       down = { x: e.clientX, y: e.clientY };
       const p = P.current, s = S.current!;
-      if (p.pick || !p.face || !s.ov || !s.ov.visible) return;
-      const hit = planeHit(e, p.face);
-      if (!hit) return;
-      const box = new THREE.Box3().setFromObject(s.ov).expandByScalar(1);
-      if (!box.containsPoint(hit)) return;
-      const inv = p.face.frame.clone().invert();
-      const l = hit.clone().applyMatrix4(inv);
-      drag = { sx: l.x, sy: l.y, dx0: p.place.dx, dy0: p.place.dy, inv };
-      controls.enabled = false;
-      renderer.domElement.setPointerCapture(e.pointerId);
+      if (p.pick) return;
+      for (const li of [p.active, 1 - p.active]) {
+        const f = p.faces[li], ov = s.ov[li];
+        if (!f || !ov || !ov.visible) continue;
+        const hit = planeHit(e, f);
+        if (!hit) continue;
+        const box = new THREE.Box3().setFromObject(ov).expandByScalar(1);
+        if (!box.containsPoint(hit)) continue;
+        if (li !== p.active) p.onActivate(li);
+        const inv = f.frame.clone().invert();
+        const l = hit.clone().applyMatrix4(inv);
+        drag = { li, sx: l.x, sy: l.y, dx0: p.places[li].dx, dy0: p.places[li].dy, inv };
+        controls.enabled = false;
+        renderer.domElement.setPointerCapture(e.pointerId);
+        return;
+      }
     };
     const onMove = (e: PointerEvent) => {
       const p = P.current;
-      if (!drag || !p.face) return;
-      const hit = planeHit(e, p.face);
+      if (!drag) return;
+      const f = p.faces[drag.li];
+      if (!f) return;
+      const hit = planeHit(e, f);
       if (!hit) return;
       const l = hit.applyMatrix4(drag.inv);
-      p.onMove(drag.dx0 + (l.x - drag.sx), drag.dy0 + (l.y - drag.sy));
+      p.onMove(drag.li, drag.dx0 + (l.x - drag.sx), drag.dy0 + (l.y - drag.sy));
     };
     const onUp = (e: PointerEvent) => {
       const p = P.current, s = S.current!;
@@ -272,27 +291,35 @@ function Viewer(props: ViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.model]);
 
+  // markierte Flächen (Text blau, Logo violett)
   useEffect(() => {
     const s = S.current;
     if (!s) return;
-    if (s.hi) { s.scene.remove(s.hi); s.hi.geometry.dispose(); s.hi = null; }
-    if (props.face && props.model) {
-      const pos = props.model.getAttribute("position");
-      const arr = new Float32Array(props.face.tris.length * 9);
-      props.face.tris.forEach((t, i) => { for (let k = 0; k < 9; k++) arr[i * 9 + k] = (pos.array as Float32Array)[t * 9 + k]; });
-      const g = new THREE.BufferGeometry();
-      g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
-      s.hi = new THREE.Mesh(g, s.matHi);
-      s.scene.add(s.hi);
+    for (let li = 0; li < 2; li++) {
+      const old = s.hi[li];
+      if (old) { s.scene.remove(old); old.geometry.dispose(); s.hi[li] = null; }
+      const f = props.faces[li];
+      if (f && props.model) {
+        const pos = props.model.getAttribute("position");
+        const arr = new Float32Array(f.tris.length * 9);
+        f.tris.forEach((t, i) => { for (let k = 0; k < 9; k++) arr[i * 9 + k] = (pos.array as Float32Array)[t * 9 + k]; });
+        const g = new THREE.BufferGeometry();
+        g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+        s.hi[li] = new THREE.Mesh(g, s.matHi[li]);
+        s.scene.add(s.hi[li]!);
+      }
     }
-  }, [props.face, props.model]);
+  }, [props.faces, props.model]);
 
   useEffect(() => {
     const s = S.current;
     if (!s) return;
-    if (s.ov) { s.scene.remove(s.ov); s.ov = null; }
-    if (props.overlay) { s.ov = new THREE.Mesh(props.overlay, s.matOv); s.scene.add(s.ov); }
-  }, [props.overlay]);
+    for (let li = 0; li < 2; li++) {
+      if (s.ov[li]) { s.scene.remove(s.ov[li]!); s.ov[li] = null; }
+      const g = props.overlays[li];
+      if (g) { s.ov[li] = new THREE.Mesh(g, s.matOv[li]); s.scene.add(s.ov[li]!); }
+    }
+  }, [props.overlays]);
 
   useEffect(() => {
     const s = S.current;
@@ -305,19 +332,24 @@ function Viewer(props: ViewProps) {
       m1.visible = props.showModell;
       m2.visible = props.showEinlage;
       s.res.add(m1, m2);
+      if (props.result.logo) {
+        const m3 = new THREE.Mesh(props.result.logo, s.matLogo);
+        m3.visible = props.showLogo;
+        s.res.add(m3);
+      }
     }
     if (show && props.bed && s.res.children.length) props.api.current?.fitBox(new THREE.Box3().setFromObject(s.res), true);
     if (s.model) s.model.visible = !show;
-    if (s.hi) s.hi.visible = !show;
-    if (s.ov) s.ov.visible = !show;
-  }, [props.result, props.showResult, props.model, props.face, props.overlay, props.showModell, props.showEinlage, props.bed]);
+    for (const m of [...s.hi, ...s.ov]) if (m) m.visible = !show;
+  }, [props.result, props.showResult, props.model, props.faces, props.overlays, props.showModell, props.showEinlage, props.showLogo, props.bed]);
 
   useEffect(() => {
     const s = S.current;
     if (!s) return;
     s.matResModell.color.set(props.colModell);
     s.matIns.color.set(props.colEinlage);
-  }, [props.colModell, props.colEinlage]);
+    s.matLogo.color.set(props.colLogo);
+  }, [props.colModell, props.colEinlage, props.colLogo]);
 
   return <div ref={host} className={cn("h-[420px] w-full rounded-xl border bg-gradient-to-b from-muted/40 to-muted/10 sm:h-[600px]", props.pick && "cursor-crosshair")} />;
 }
@@ -332,15 +364,32 @@ function download(blob: Blob, name: string) {
 
 /* ---------- Seite ---------- */
 
+const LOGO_PLACE: Place = { ...DEFAULT_PLACE, widthMm: 20 };
+type SavedLogo = { name: string; path: string; url: string };
+
+function LayerSwitch({ active, onChange }: { active: number; onChange: (i: number) => void }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="text-muted-foreground">Bearbeiten:</span>
+      <div className="inline-flex rounded-full border bg-muted/40 p-0.5">
+        {["Text", "Logo"].map((l, i) => (
+          <button key={l} type="button" onClick={() => onChange(i)} className={cn("rounded-full px-3 py-1 font-medium transition-colors", active === i ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>{l}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function GravurPage() {
   const [model, setModel] = useState<THREE.BufferGeometry | null>(null);
   const [modelName, setModelName] = useState("");
-  const [face, setFace] = useState<FaceInfo | null>(null);
+  const [modelFile, setModelFile] = useState<File | null>(null);
+  const [faces, setFaces] = useState<(FaceInfo | null)[]>([null, null]);
+  const [active, setActive] = useState(0);
   const [pick, setPick] = useState(false);
   const [raster, setRaster] = useState<RasterIn | null>(null);
   const [imgName, setImgName] = useState("");
   const [imgFile, setImgFile] = useState<File | null>(null);
-  const [modelFile, setModelFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
   const [invert, setInvert] = useState<"auto" | "ja" | "nein">("auto");
   const [auto, setAuto] = useState(true);
@@ -348,12 +397,23 @@ export default function GravurPage() {
   const [prep, setPrep] = useState<Prepared | null>(null);
   const [place, setPlace] = useState<Place>(DEFAULT_PLACE);
   const [touched, setTouched] = useState(false);
+  // Logo (zweite Ebene, bleibt im Storage gespeichert)
+  const [useLogo, setUseLogo] = useState(false);
+  const [logos, setLogos] = useState<SavedLogo[]>([]);
+  const [logoSel, setLogoSel] = useState<{ path: string; name: string } | null>(null);
+  const [rasterL, setRasterL] = useState<RasterIn | null>(null);
+  const [prepL, setPrepL] = useState<Prepared | null>(null);
+  const [placeL, setPlaceL] = useState<Place>(LOGO_PLACE);
+  const [touchedL, setTouchedL] = useState(false);
+  const [logoInvert, setLogoInvert] = useState<"auto" | "ja" | "nein">("auto");
   const [result, setResult] = useState<EngraveResult | null>(null);
   const [showResult, setShowResult] = useState(true);
   const [colModell, setColModell] = useState("#9aa3ad");
   const [colEinlage, setColEinlage] = useState("#14b8a6");
+  const [colLogo, setColLogo] = useState("#a855f7");
   const [showModell, setShowModell] = useState(true);
   const [showEinlage, setShowEinlage] = useState(true);
+  const [showLogo, setShowLogo] = useState(true);
   const [bed, setBed] = useState(true);
   const { farbenFor } = useMaterialFarben();
   const farben = farbenFor("PLA");
@@ -362,9 +422,23 @@ export default function GravurPage() {
   const [batch, setBatch] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState<{ i: number; n: number; fehler: string[] } | null>(null);
-  const api = useRef<{ lookAtFace: () => void; fit: () => void; fitBox: (b: THREE.Box3, below: boolean) => void } | null>(null);
+  const api = useRef<Api | null>(null);
 
-  const setP = useCallback((q: Partial<Place>) => { setTouched(true); setPlace((p) => ({ ...p, ...q })); }, []);
+  const layer = useLogo && logoSel ? active : 0; // ohne Logo gibt es nur die Text-Ebene
+  const face = faces[0];
+  const faceL = faces[1];
+  const curFace = faces[layer];
+  const curPlace = layer ? placeL : place;
+  const setPlaceFor = useCallback((li: number, q: Partial<Place>) => {
+    if (li) { setTouchedL(true); setPlaceL((p) => ({ ...p, ...q })); } else { setTouched(true); setPlace((p) => ({ ...p, ...q })); }
+  }, []);
+  const setP = (q: Partial<Place>) => setPlaceFor(layer, q);
+
+  const call = async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke("gravur-server", { body });
+    if (error || data?.error) throw new Error(data?.error || error?.message || "Server nicht erreichbar");
+    return data;
+  };
 
   // Bild -> Vektor (bei Schwellwert/Invertierung neu)
   useEffect(() => {
@@ -379,14 +453,38 @@ export default function GravurPage() {
     return () => clearTimeout(t);
   }, [raster, invert, auto, th]);
 
-  // sinnvolle Startbreite: 80 % der Fläche, solange nichts verändert wurde
+  useEffect(() => {
+    if (!rasterL) { setPrepL(null); return; }
+    const t = setTimeout(() => {
+      try { setPrepL(prepareImage(rasterL, { invert: logoInvert === "auto" ? null : logoInvert === "ja" })); } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+    }, 60);
+    return () => clearTimeout(t);
+  }, [rasterL, logoInvert]);
+
+  // sinnvolle Startbreiten, solange nichts verändert wurde
   useEffect(() => {
     if (face && prep && !touched) setPlace((p) => ({ ...p, widthMm: Math.max(5, Math.round(Math.min(face.size.w, face.size.h / Math.max(0.2, prep.height / prep.width)) * 0.8)) }));
   }, [face, prep, touched]);
+  useEffect(() => {
+    if (faceL && prepL && !touchedL) setPlaceL((p) => ({ ...p, widthMm: Math.max(3, Math.round(Math.min(faceL.size.w, faceL.size.h / Math.max(0.2, prepL.height / prepL.width)) * 0.3)) }));
+  }, [faceL, prepL, touchedL]);
 
-  useEffect(() => { setResult(null); }, [place, prep, face, model, bed]);
+  useEffect(() => { setResult(null); }, [place, prep, faces, model, bed, useLogo, placeL, prepL]);
 
-  const overlay = useMemo(() => (prep && face ? overlayGeometry(prep, place, face.frame) : null), [prep, face, place]);
+  const loadLogos = useCallback(async () => {
+    try { setLogos((await call({ action: "logo_list" })).logos ?? []); } catch { /* Liste bleibt leer */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => { void loadLogos(); }, [loadLogos]);
+
+  const overlays = useMemo(
+    () => [
+      prep && face ? overlayGeometry(prep, place, face.frame) : null,
+      useLogo && prepL && faceL ? overlayGeometry(prepL, placeL, faceL.frame) : null,
+    ],
+    [prep, face, place, useLogo, prepL, faceL, placeL],
+  );
+  const viewFaces = useMemo(() => [faces[0], useLogo && logoSel ? faces[1] : null], [faces, useLogo, logoSel]);
 
   const loadModel = async (f: File | undefined) => {
     if (!f) return;
@@ -396,7 +494,8 @@ export default function GravurPage() {
       setModel(g);
       setModelFile(f);
       setModelName(f.name);
-      setFace(null);
+      setFaces([null, null]);
+      setActive(0);
       setPick(true);
       setResult(null);
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
@@ -410,28 +509,60 @@ export default function GravurPage() {
     if (!model) return;
     const f = faceRegion(model, tri);
     if (!f) return;
-    setFace(f);
+    setFaces((fs) => fs.map((x, i) => (i === layer ? f : x)));
     setPick(false);
     setTimeout(() => api.current?.lookAtFace(), 0);
-  }, [model]);
+  }, [model, layer]);
+
+  // Logos: einmal hochladen, dann liegen sie im Storage und stehen bei jedem Auftrag bereit
+  const selectLogo = async (l: SavedLogo) => {
+    setErr("");
+    try {
+      const r = await fetch(l.url);
+      if (!r.ok) throw new Error(String(r.status));
+      const blob = await r.blob();
+      setRasterL(await rasterFromFile(new File([blob], l.path.split("/").pop() ?? "logo.png", { type: blob.type })));
+      setLogoSel({ path: l.path, name: l.name });
+      setTouchedL(false);
+      setUseLogo(true);
+    } catch { setErr("Logo konnte nicht geladen werden."); }
+  };
+  const uploadLogo = async (f: File | undefined) => {
+    if (!f) return;
+    setErr("");
+    try {
+      const raster = await rasterFromFile(f);
+      const init = await call({ action: "logo_init", name: f.name });
+      const { error } = await supabase.storage.from("project-uploads").uploadToSignedUrl(init.path, init.token, f);
+      if (error) throw new Error(error.message);
+      setRasterL(raster);
+      setLogoSel({ path: init.path, name: init.name });
+      setTouchedL(false);
+      setUseLogo(true);
+      await loadLogos();
+    } catch (e) { setErr(`Logo-Upload fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`); }
+  };
+  const deleteLogo = async (l: SavedLogo) => {
+    try {
+      await call({ action: "logo_delete", path: l.path });
+      if (logoSel?.path === l.path) { setLogoSel(null); setRasterL(null); setUseLogo(false); }
+      await loadLogos();
+    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+  };
 
   // Alles Rechnen läuft auf dem Server (muscio): Dateien gehen in den Storage, der Server holt sie dort ab,
   // rechnet (Potrace + Manifold) und legt ein ZIP zurück. Hier läuft nur die Vorschau.
   // Punkt auf der angeklickten Fläche (Mitte des ersten Dreiecks), damit der Server dieselbe ebene Fläche findet
-  const faceSeed = (): number[] | null => {
-    if (!model || !face?.tris.length) return null;
+  const seedOf = (f: FaceInfo | null): number[] | null => {
+    if (!model || !f?.tris.length) return null;
     const pos = model.getAttribute("position");
-    const t = face.tris[0];
+    const t = f.tris[0];
     const c = (get: (i: number) => number) => (get(t * 3) + get(t * 3 + 1) + get(t * 3 + 2)) / 3;
     return [c((i) => pos.getX(i)), c((i) => pos.getY(i)), c((i) => pos.getZ(i))];
   };
+  const logoAktiv = !!(useLogo && logoSel && faceL && prepL?.shapes.length);
   const serverJob = async (bilder: File[]): Promise<Blob> => {
     if (!modelFile || !face) throw new Error("Modell und Fläche fehlen");
-    const call = async (body: Record<string, unknown>) => {
-      const { data, error } = await supabase.functions.invoke("gravur-server", { body });
-      if (error || data?.error) throw new Error(data?.error || error?.message || "Server nicht erreichbar");
-      return data;
-    };
     const bucket = supabase.storage.from("project-uploads");
     setStatus("Dateien hochladen …");
     const init = await call({ action: "init", model_name: modelFile.name, images: bilder.map((f) => f.name) });
@@ -447,7 +578,8 @@ export default function GravurPage() {
     const start = await call({
       action: "start", job: init.job, model_path: init.model.path, images: init.images.map((x: { path: string; name: string }) => ({ path: x.path, name: x.name })),
       frame: face.frame.elements, place, threshold: auto ? null : th, invert: invert === "auto" ? null : invert === "ja",
-      colModell, colEinlage, bed, seed: faceSeed(), model_name: modelName,
+      colModell, colEinlage, colLogo, bed, seed: seedOf(face), model_name: modelName,
+      logo: logoAktiv ? { path: logoSel!.path, frame: faceL!.frame.elements, place: placeL, seed: seedOf(faceL), invert: logoInvert === "auto" ? null : logoInvert === "ja" } : null,
     });
     let st: { status: string; done?: number; total?: number; errors?: string[]; error?: string; download_url?: string } = { status: "queued" };
     const t0 = Date.now();
@@ -475,16 +607,19 @@ export default function GravurPage() {
     setErr("");
     try {
       const zip = await JSZip.loadAsync(await serverJob([imgFile]));
-      const find = (suffix: string) => Object.values(zip.files).find((f) => !f.dir && f.name.endsWith(suffix));
-      const fm = find("-modell.stl"), fe = find("-einlage.stl");
+      const find = (pred: (n: string) => boolean) => Object.values(zip.files).find((f) => !f.dir && pred(f.name));
+      const fm = find((n) => n.endsWith("-modell.stl"));
+      const fe = find((n) => n.endsWith("-einlage.stl") && !n.endsWith("-logo-einlage.stl"));
+      const fl = find((n) => n.endsWith("-logo-einlage.stl"));
       const fehler = zip.file("FEHLER.txt") ? await zip.file("FEHLER.txt")!.async("string") : "";
       if (!fm || !fe) throw new Error(fehler.trim() || "Der Server hat kein Ergebnis geliefert.");
       const loader = new STLLoader();
       const modell = loader.parse(await fm.async("arraybuffer"));
       const einlage = loader.parse(await fe.async("arraybuffer"));
-      const r: EngraveResult = { modell, einlage, volModell: volume(modell), volEinlage: volume(einlage), rueckfall: /voller Textk/.test(fehler) };
+      const logo = fl ? loader.parse(await fl.async("arraybuffer")) : undefined;
+      const r: EngraveResult = { modell, einlage, logo, volModell: volume(modell), volEinlage: volume(einlage), rueckfall: /voller Textk/.test(fehler) };
       if (r.volEinlage < 1e-6) setErr(fehler.trim() || "Der Text liegt nicht auf dem Modell. Position oder Fläche prüfen.");
-      else { setResult(r); setShowResult(true); }
+      else { setResult(r); setShowResult(true); if (fehler.trim()) setErr(fehler.trim()); }
     } catch (e) { setErr(`Berechnung fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`); }
     setStatus("");
     setBusy(false);
@@ -492,7 +627,12 @@ export default function GravurPage() {
 
   const base = safeName(imgName || "gravur");
   const dlStl = (g: THREE.BufferGeometry, suffix: string) => download(new Blob([toStl(g)], { type: "model/stl" }), `${safeName(modelName)}-${base}-${suffix}.stl`);
-  const dl3mf = async () => result && download(await to3mf([{ name: "Modell mit Gravur", geo: result.modell, color: colModell }, { name: "Text-Einlage", geo: result.einlage, color: colEinlage }], `${safeName(modelName)} ${base}`), `${safeName(modelName)}-${base}.3mf`);
+  const dl3mf = async () => {
+    if (!result) return;
+    const parts = [{ name: "Modell mit Gravur", geo: result.modell, color: colModell }, { name: "Text-Einlage", geo: result.einlage, color: colEinlage }];
+    if (result.logo) parts.push({ name: "Logo-Einlage", geo: result.logo, color: colLogo });
+    download(await to3mf(parts, `${safeName(modelName)} ${base}`), `${safeName(modelName)}-${base}.3mf`);
+  };
 
   const stapel = async () => {
     if (!files.length) return;
@@ -505,33 +645,41 @@ export default function GravurPage() {
     setBusy(false);
   };
 
-  const bereit = !!(model && face && prep?.shapes.length);
+  const bereit = !!(model && face && prep?.shapes.length && (!useLogo || !logoSel || (faceL && prepL?.shapes.length)));
+  const fehlt = [!model && "Modell", model && !face && "Fläche für den Text", !prep?.shapes.length && "Bild", useLogo && logoSel && !faceL && "Fläche für das Logo"].filter(Boolean).join(", ");
+  const colorBlocks: [string, string, (v: string) => void, boolean, (v: boolean) => void][] = [
+    ["Modell", colModell, setColModell, showModell, setShowModell],
+    ["Text-Einlage", colEinlage, setColEinlage, showEinlage, setShowEinlage],
+  ];
+  if (result?.logo) colorBlocks.push(["Logo-Einlage", colLogo, setColLogo, showLogo, setShowLogo]);
 
   return (
     <div className="mx-auto max-w-[1300px] space-y-4 p-4 sm:p-6">
       <div>
         <h1 className="text-xl font-bold">Gravur-Werkzeug <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 align-middle text-xs font-semibold text-primary">NEU</span></h1>
-        <p className="text-sm text-muted-foreground">Bild mit Text wird 1:1 in ein 3D-Modell geschnitten, ohne Offset. Ergebnis: Modell mit Aussparung und die passende Text-Einlage, an Ort und Stelle. Nur im Admin sichtbar.</p>
+        <p className="text-sm text-muted-foreground">Bild mit Text und dein Logo werden 1:1 in ein 3D-Modell geschnitten, ohne Offset. Ergebnis: Modell mit Aussparungen und die passenden Einlagen, an Ort und Stelle. Nur im Admin sichtbar.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
         <div className="space-y-3">
           <div className="relative">
-            <Viewer model={model} face={face} overlay={overlay} result={result} showResult={showResult} colModell={colModell} colEinlage={colEinlage} showModell={showModell} showEinlage={showEinlage} bed={bed} pick={pick} place={place} onPick={onPick} onMove={(dx, dy) => setP({ dx, dy })} api={api} />
+            <Viewer model={model} faces={viewFaces} overlays={overlays} places={[place, placeL]} active={layer} onActivate={setActive}
+              result={result} showResult={showResult} colModell={colModell} colEinlage={colEinlage} colLogo={colLogo}
+              showModell={showModell} showEinlage={showEinlage} showLogo={showLogo} bed={bed} pick={pick} onPick={onPick} onMove={(li, dx, dy) => setPlaceFor(li, { dx, dy })} api={api} />
             {!model && <div className="absolute inset-0 grid place-items-center px-6 text-center text-sm text-muted-foreground">Zuerst ein 3D-Modell (STL oder OBJ) laden.</div>}
-            {pick && model && <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground"><Crosshair className="h-3.5 w-3.5" />Klicke auf die Fläche, in die graviert werden soll</div>}
-            {!pick && face && prep && !result && <div className="absolute left-3 top-3 rounded-full bg-background/85 px-2.5 py-1 text-xs text-muted-foreground">Text mit der Maus verschieben</div>}
+            {pick && model && <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground"><Crosshair className="h-3.5 w-3.5" />Klicke auf die Fläche für {layer ? "das Logo" : "den Text"}</div>}
+            {!pick && curFace && !result && <div className="absolute left-3 top-3 rounded-full bg-background/85 px-2.5 py-1 text-xs text-muted-foreground">Text (grün) und Logo (violett) mit der Maus verschieben</div>}
             <div className="absolute bottom-3 right-3 flex gap-1.5">
-              {face && <button type="button" onClick={() => api.current?.lookAtFace()} className="rounded-full border bg-background/85 px-2.5 py-1 text-xs hover:bg-background">Senkrecht auf Fläche</button>}
+              {curFace && <button type="button" onClick={() => api.current?.lookAtFace()} className="rounded-full border bg-background/85 px-2.5 py-1 text-xs hover:bg-background">Senkrecht auf Fläche</button>}
               <button type="button" onClick={() => api.current?.fit()} className="rounded-full border bg-background/85 px-2.5 py-1 text-xs hover:bg-background">Ansicht zurücksetzen</button>
             </div>
           </div>
           {result && (
             <div className="space-y-2 rounded-xl border bg-card p-4">
-              <div className="flex items-center gap-2 text-sm font-medium"><CheckCircle2 className="h-4 w-4 text-green-600" />Fertig berechnet: Einlage {(result.volEinlage / 1000).toFixed(3)} cm³, Aussparung ohne Spiel</div>
+              <div className="flex items-center gap-2 text-sm font-medium"><CheckCircle2 className="h-4 w-4 text-green-600" />Fertig berechnet: Text-Einlage {(result.volEinlage / 1000).toFixed(3)} cm³, Aussparung ohne Spiel</div>
               {result.rueckfall && <div className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />Das Modell ist nicht ganz geschlossen: Die Einlage wurde als voller Textkörper von der Fläche bis zur Gravurtiefe gebaut. Bei gebogenen Flächen kann ihre Oberseite leicht vom Modell abweichen.</div>}
               <div className="grid gap-2 sm:grid-cols-2">
-                {([["Modell", colModell, setColModell, showModell, setShowModell], ["Text-Einlage", colEinlage, setColEinlage, showEinlage, setShowEinlage]] as const).map(([lbl, col, setCol, vis, setVis]) => (
+                {colorBlocks.map(([lbl, col, setCol, vis, setVis]) => (
                   <div key={lbl} className="space-y-1.5 rounded-lg border p-2.5">
                     <label className="flex items-center gap-1.5 text-xs font-medium"><input type="checkbox" checked={vis} onChange={(e) => setVis(e.target.checked)} />{lbl} anzeigen</label>
                     <div className="flex flex-wrap items-center gap-1">
@@ -547,13 +695,14 @@ export default function GravurPage() {
               <div className="flex flex-wrap gap-2">
                 <Button onClick={dl3mf}><Download className="mr-1.5 h-4 w-4" />3MF (Baugruppe)</Button>
                 <Button variant="outline" onClick={() => dlStl(result.modell, "modell")}><Download className="mr-1.5 h-4 w-4" />Modell STL</Button>
-                <Button variant="outline" onClick={() => dlStl(result.einlage, "einlage")}><Download className="mr-1.5 h-4 w-4" />Einlage STL</Button>
+                <Button variant="outline" onClick={() => dlStl(result.einlage, "einlage")}><Download className="mr-1.5 h-4 w-4" />Text-Einlage STL</Button>
+                {result.logo && <Button variant="outline" onClick={() => dlStl(result.logo!, "logo-einlage")}><Download className="mr-1.5 h-4 w-4" />Logo-Einlage STL</Button>}
                 <Button variant="ghost" onClick={() => setShowResult((v) => !v)}><Eye className="mr-1.5 h-4 w-4" />{showResult ? "Vorlage zeigen" : "Ergebnis zeigen"}</Button>
               </div>
-              <p className="text-[11px] text-muted-foreground">Beide Teile liegen im Koordinatensystem des Originals. Im Slicer zusammen laden, dann sitzt alles an der richtigen Stelle. Die Einlage hat keinen Offset: für die Passung ggf. im Slicer mit Toleranz drucken.</p>
+              <p className="text-[11px] text-muted-foreground">Alle Teile liegen im selben Koordinatensystem. Im Slicer zusammen laden, dann sitzt alles an der richtigen Stelle. Die Einlagen haben keinen Offset: für die Passung ggf. im Slicer mit Toleranz drucken.</p>
             </div>
           )}
-          {err && <div className="flex items-start gap-1.5 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{err}</div>}
+          {err && <div className="flex items-start gap-1.5 whitespace-pre-line rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{err}</div>}
         </div>
 
         <div className="space-y-6 rounded-xl border bg-card p-5">
@@ -563,12 +712,13 @@ export default function GravurPage() {
           </Step>
 
           <Step n={2} title="AUSRICHTFLÄCHE">
+            {useLogo && logoSel && <LayerSwitch active={layer} onChange={setActive} />}
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" variant={pick ? "default" : "outline"} disabled={!model} onClick={() => setPick((v) => !v)}><Crosshair className="mr-1.5 h-4 w-4" />{face ? "Andere Fläche wählen" : "Fläche wählen"}</Button>
-              {face && <span className="text-xs text-muted-foreground">{face.size.w.toFixed(1)} × {face.size.h.toFixed(1)} mm, {face.tris.length} Dreiecke</span>}
+              <Button size="sm" variant={pick ? "default" : "outline"} disabled={!model} onClick={() => setPick((v) => !v)}><Crosshair className="mr-1.5 h-4 w-4" />{curFace ? "Andere Fläche wählen" : `Fläche für ${layer ? "das Logo" : "den Text"} wählen`}</Button>
+              {curFace && <span className="text-xs text-muted-foreground">{curFace.size.w.toFixed(1)} × {curFace.size.h.toFixed(1)} mm, {curFace.tris.length} Dreiecke</span>}
             </div>
-            <label className="flex items-start gap-1.5 text-xs"><input type="checkbox" className="mt-0.5" checked={bed} onChange={(e) => setBed(e.target.checked)} /><span><b>Fläche liegt beim Druck auf der Bauplatte.</b> Beide Teile werden so gedreht, dass die Gravurfläche unten liegt (z = 0), der Text wird zuerst gedruckt. Ohne Häkchen bleiben die Teile in den Koordinaten des Originals.</span></label>
-            <p className="text-[11px] text-muted-foreground">Die gewählte Fläche ist die Nullebene: Oberfläche des Modells = 0, die Gravur geht senkrecht dazu nach innen.</p>
+            <label className="flex items-start gap-1.5 text-xs"><input type="checkbox" className="mt-0.5" checked={bed} onChange={(e) => setBed(e.target.checked)} /><span><b>Text-Fläche liegt beim Druck auf der Bauplatte.</b> Alle Teile werden so gedreht, dass die Text-Fläche unten liegt (z = 0), der Text wird zuerst gedruckt. Ohne Häkchen bleiben die Teile in den Koordinaten des Originals.</span></label>
+            <p className="text-[11px] text-muted-foreground">Die gewählte Fläche ist die Nullebene: Oberfläche des Modells = 0, die Gravur geht senkrecht dazu nach innen. Text und Logo können auf verschiedenen Flächen liegen.</p>
           </Step>
 
           <Step n={3} title="BILD MIT TEXT">
@@ -581,33 +731,62 @@ export default function GravurPage() {
             {!auto && <Num label="Schwellwert" unit="" value={th} min={5} max={250} step={1} onChange={setTh} />}
           </Step>
 
-          <Step n={4} title="POSITION UND GRÖSSE">
-            <Num label="Breite des Bildes" unit="mm" value={place.widthMm} min={2} max={Math.max(100, Math.round((face?.size.w ?? 100) * 1.5))} step={0.5} onChange={(v) => setP({ widthMm: Math.max(1, v) })} />
-            <Num label="Verschieben X" unit="mm" value={place.dx} min={-Math.max(50, face?.size.w ?? 50)} max={Math.max(50, face?.size.w ?? 50)} step={0.1} onChange={(v) => setP({ dx: v })} />
-            <Num label="Verschieben Y" unit="mm" value={place.dy} min={-Math.max(50, face?.size.h ?? 50)} max={Math.max(50, face?.size.h ?? 50)} step={0.1} onChange={(v) => setP({ dy: v })} />
-            <Num label="Drehen" unit="°" value={place.rotDeg} min={-180} max={180} step={0.5} onChange={(v) => setP({ rotDeg: v })} />
-            <Num label="Gravurtiefe" unit="mm" value={place.depth} min={0.1} max={10} step={0.05} onChange={(v) => setP({ depth: Math.max(0.05, v) })} />
-            <label className="flex items-center gap-1.5 text-xs"><input type="checkbox" checked={place.centerInk} onChange={(e) => setP({ centerInk: e.target.checked })} />Mitte des Textes statt Bildmitte als Ankerpunkt</label>
-            <Button variant="ghost" size="sm" onClick={() => { setTouched(false); setPlace({ ...DEFAULT_PLACE }); }}><RotateCcw className="mr-1.5 h-3.5 w-3.5" />Zurücksetzen</Button>
+          <Step n={4} title="LOGO (OPTIONAL)">
+            <label className="flex items-center gap-1.5 text-sm font-medium"><input type="checkbox" checked={useLogo} onChange={(e) => setUseLogo(e.target.checked)} />Logo mit einbauen</label>
+            {useLogo && (
+              <div className="space-y-2">
+                <p className="text-[11px] text-muted-foreground">Logo als PNG hochladen (am besten schwarz auf transparent oder weiss). Es wird gespeichert und steht bei jedem Auftrag wieder bereit, auch im Massenmodus.</p>
+                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => { void uploadLogo(e.target.files?.[0]); e.target.value = ""; }} className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-muted file:px-3 file:py-1.5 file:text-sm" />
+                {logos.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {logos.map((l) => (
+                      <div key={l.path} className={cn("group relative overflow-hidden rounded-md border bg-muted/40", logoSel?.path === l.path && "ring-2 ring-primary")}>
+                        <button type="button" onClick={() => void selectLogo(l)} title={l.name} className="block aspect-square w-full p-1"><img src={l.url} alt={l.name} className="h-full w-full object-contain" /></button>
+                        <button type="button" aria-label={`${l.name} löschen`} onClick={() => void deleteLogo(l)} className="absolute right-0.5 top-0.5 hidden h-5 w-5 place-items-center rounded-full bg-background/90 text-xs text-destructive group-hover:grid">×</button>
+                        <div className="truncate px-1 pb-0.5 text-center text-[10px] text-muted-foreground">{l.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {logoSel && (
+                  <div className="space-y-1 text-xs">
+                    <div className="text-muted-foreground">Gewählt: <b>{logoSel.name}</b>{prepL ? ` · ${prepL.loops} Konturen` : ""}</div>
+                    <label className="flex items-center gap-1.5">Logo ist <select value={logoInvert} onChange={(e) => setLogoInvert(e.target.value as typeof logoInvert)} className="rounded border bg-background px-1.5 py-0.5"><option value="auto">automatisch</option><option value="nein">kleinere Fläche</option><option value="ja">umgekehrt</option></select></label>
+                    {!faceL && <div className="text-primary">Jetzt oben bei «Ausrichtfläche» auf «Logo» umschalten und die Fläche für das Logo wählen.</div>}
+                  </div>
+                )}
+              </div>
+            )}
           </Step>
 
-          <Step n={5} title="BERECHNEN">
+          <Step n={5} title="POSITION UND GRÖSSE">
+            {useLogo && logoSel && <LayerSwitch active={layer} onChange={setActive} />}
+            <Num label={layer ? "Breite des Logos" : "Breite des Bildes"} unit="mm" value={curPlace.widthMm} min={2} max={Math.max(100, Math.round((curFace?.size.w ?? 100) * 1.5))} step={0.5} onChange={(v) => setP({ widthMm: Math.max(1, v) })} />
+            <Num label="Verschieben X" unit="mm" value={curPlace.dx} min={-Math.max(50, curFace?.size.w ?? 50)} max={Math.max(50, curFace?.size.w ?? 50)} step={0.1} onChange={(v) => setP({ dx: v })} />
+            <Num label="Verschieben Y" unit="mm" value={curPlace.dy} min={-Math.max(50, curFace?.size.h ?? 50)} max={Math.max(50, curFace?.size.h ?? 50)} step={0.1} onChange={(v) => setP({ dy: v })} />
+            <Num label="Drehen" unit="°" value={curPlace.rotDeg} min={-180} max={180} step={0.5} onChange={(v) => setP({ rotDeg: v })} />
+            <Num label="Gravurtiefe" unit="mm" value={curPlace.depth} min={0.1} max={10} step={0.05} onChange={(v) => setP({ depth: Math.max(0.05, v) })} />
+            <label className="flex items-center gap-1.5 text-xs"><input type="checkbox" checked={curPlace.centerInk} onChange={(e) => setP({ centerInk: e.target.checked })} />Mitte {layer ? "des Logos" : "des Textes"} statt Bildmitte als Ankerpunkt</label>
+            <Button variant="ghost" size="sm" onClick={() => { if (layer) { setTouchedL(false); setPlaceL({ ...LOGO_PLACE }); } else { setTouched(false); setPlace({ ...DEFAULT_PLACE }); } }}><RotateCcw className="mr-1.5 h-3.5 w-3.5" />Zurücksetzen</Button>
+          </Step>
+
+          <Step n={6} title="BERECHNEN">
             <Button className="w-full" disabled={!bereit || !imgFile || busy} onClick={rechnen}>
-              {busy && !batch ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Scissors className="mr-1.5 h-4 w-4" />}Text ausschneiden
+              {busy && !batch ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Scissors className="mr-1.5 h-4 w-4" />}Ausschneiden
             </Button>
             {status && <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />{status}</p>}
-            <p className="text-[11px] text-muted-foreground">Gerechnet wird auf dem Server (muscio): saubere Kurven mit Potrace, Schnitt mit Manifold.</p>
-            {!bereit && <p className="text-[11px] text-muted-foreground">Es fehlen noch: {[!model && "Modell", model && !face && "Fläche", !prep?.shapes.length && "Bild"].filter(Boolean).join(", ")}.</p>}
+            <p className="text-[11px] text-muted-foreground">Gerechnet wird auf dem Server (muscio): saubere Kurven mit Potrace, Schnitt direkt in die ebene Fläche.</p>
+            {!bereit && <p className="text-[11px] text-muted-foreground">Es fehlen noch: {fehlt}.</p>}
           </Step>
 
-          <Step n={6} title="MASSENMODUS">
+          <Step n={7} title="MASSENMODUS">
             <label className="flex items-center gap-1.5 text-sm font-medium"><input type="checkbox" checked={batch} onChange={(e) => setBatch(e.target.checked)} /><Package className="h-4 w-4" />Viele Bilder auf dasselbe Modell anwenden</label>
             {batch && (
               <div className="space-y-2">
-                <p className="text-[11px] text-muted-foreground">Fläche, Breite, Position, Drehung und Tiefe aus den Einstellungen oben gelten für alle Bilder. Jedes Bild wird auf dieselbe Rahmenbreite gebracht und an derselben Stelle ausgerichtet. Für Bilder mit unterschiedlich langem Text oben «Mitte des Textes» aktivieren.</p>
+                <p className="text-[11px] text-muted-foreground">Fläche, Breite, Position, Drehung und Tiefe aus den Einstellungen oben gelten für alle Bilder. Jedes Bild wird auf dieselbe Rahmenbreite gebracht und an derselben Stelle ausgerichtet. Für Bilder mit unterschiedlich langem Text oben «Mitte des Textes» aktivieren.{logoAktiv ? " Das gewählte Logo wird bei jedem Bild an derselben Stelle mit eingebaut." : ""}</p>
                 <input type="file" accept="image/*" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-muted file:px-3 file:py-1.5 file:text-sm" />
                 {files.length > 0 && <p className="text-xs text-muted-foreground">{files.length} Bilder gewählt</p>}
-                <Button className="w-full" variant="outline" disabled={!modelFile || !face || !files.length || busy} onClick={stapel}>
+                <Button className="w-full" variant="outline" disabled={!modelFile || !face || !files.length || busy || (useLogo && !!logoSel && !logoAktiv)} onClick={stapel}>
                   {busy && batch ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Package className="mr-1.5 h-4 w-4" />}Alle berechnen (ZIP)
                 </Button>
                 {progress && (

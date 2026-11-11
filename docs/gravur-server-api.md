@@ -83,3 +83,21 @@ Dazu bei Fehlern `FEHLER.txt` (eine Zeile pro Problem). Das Browser-Frontend lie
 - Kein Geheimnis in Logs oder Antworten.
 - Slicer unberuehrt: vorher/nachher `/system/status` und die Drucker-Queue pruefen, keine Dienste ausser `gravur.service` neu starten.
 - Dem Betreiber melden: installierte Pakete, Port, Funnel-Pfad, Ergebnis des Abnahmetests und ob der PUT in den Storage geklappt hat.
+
+## Logo (optional, zweite Gravur)
+
+Im Job-Body kann zusaetzlich `logo` stehen (sonst `null`):
+
+```json
+"logo": { "url": "<signierte GET-URL>", "frame": [16 Zahlen], "place": {widthMm,dx,dy,rotDeg,depth,centerInk},
+          "seed": [x,y,z] | null, "invert": true|false|null }
+```
+und `colors.logo` (Hex).
+
+- Das Logo hat eigene Flaeche (`frame`), eigenen `seed`, eigene `place`-Werte (eigene Tiefe). Berechnung wie beim Text (gleiche Pipeline, Planarmodus mit `seed`, sonst Fallback), aber nur EIN Bild: das Logo. Es gilt fuer jedes Bild im Massenmodus identisch (gleiche Position, Groesse, Tiefe).
+- Reihenfolge: zuerst Text schneiden, danach das Logo aus dem bereits gravierten Modell schneiden (die Ergebnis-Modell-Datei enthaelt beide Aussparungen). Ueberlappt das Logo den Text, Text gewinnt nicht, Logo-Einlage wird um den Text-Schnitt reduziert.
+- Der Logo-Schnitt wird bei jedem Bild gleich berechnet; zur Beschleunigung einmal pro Job cachen ist erlaubt.
+- Bett (`bed`) bezieht sich weiterhin nur auf die Text-Flaeche; Logo-Einlage und Modell werden mit derselben Matrix B transformiert.
+- Ausgabe zusaetzlich pro Bild: `NNN-<name>/NNN-<name>-logo-einlage.stl`. `-modell.stl` enthaelt beide Gravuren. `-einlage.stl` bleibt nur der Text (Achtung: Dateiname endet NICHT auf `-logo-einlage.stl`).
+- 3MF: dritte Komponente "Logo-Einlage" mit Farbe `colors.logo`, gleiche Baugruppe.
+- Ist das Logo leer oder liegt ausserhalb des Modells: Text trotzdem liefern, Hinweis in FEHLER.txt.

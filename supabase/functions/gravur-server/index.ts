@@ -59,6 +59,33 @@ serve(async (req) => {
       return json({ job, model, images });
     }
 
+    // Gespeicherte Logos: bleiben im Storage (gravur/logos/), Auftragsdateien werden dagegen nach dem Lauf gelöscht.
+    if (action === "logo_list") {
+      const { data } = await st.list("gravur/logos", { limit: 200, sortBy: { column: "created_at", order: "desc" } });
+      const files = (data ?? []).filter((f) => f.name && !f.name.startsWith(".") && f.id);
+      const logos = [];
+      for (const f of files) {
+        const path = `gravur/logos/${f.name}`;
+        const { data: u } = await st.createSignedUrl(path, 3600);
+        if (u) logos.push({ name: f.name.replace(/\.[^.]+$/, ""), path, url: u.signedUrl });
+      }
+      return json({ logos });
+    }
+    if (action === "logo_init") {
+      const nm = safe(body.name);
+      const e = ext(body.name, /^(png|jpg|jpeg|webp)$/, "png");
+      const path = `gravur/logos/${nm}.${e}`;
+      const { data, error } = await st.createSignedUploadUrl(path, { upsert: true });
+      if (error || !data) return json({ error: `Upload-URL fehlgeschlagen: ${error?.message}` }, 500);
+      return json({ path, token: data.token, name: nm });
+    }
+    if (action === "logo_delete") {
+      const path = String(body.path ?? "");
+      if (!/^gravur\/logos\/[A-Za-z0-9_-]{1,40}\.(png|jpg|jpeg|webp)$/.test(path)) return json({ error: "Ungültiger Pfad" }, 400);
+      await st.remove([path]);
+      return json({ ok: true });
+    }
+
     if (action === "start") {
       const job = String(body.job ?? "");
       if (!UUID.test(job)) return json({ error: "Ungültiger Auftrag" }, 400);
@@ -75,6 +102,23 @@ serve(async (req) => {
       const frame = Array.isArray(body.frame) && body.frame.length === 16 ? body.frame.map((v: unknown) => num(v, 0, -1e7, 1e7)) : null;
       if (!frame) return json({ error: "Fläche (frame) fehlt" }, 400);
       const p = body.place ?? {};
+      const placeOf = (q: Record<string, unknown>) => ({
+        widthMm: num(q.widthMm, 20, 1, 2000), dx: num(q.dx, 0, -2000, 2000), dy: num(q.dy, 0, -2000, 2000),
+        rotDeg: num(q.rotDeg, 0, -360, 360), depth: num(q.depth, 0.6, 0.05, 100), centerInk: !!q.centerInk,
+      });
+      const seedOf = (v: unknown) => (Array.isArray(v) && v.length === 3 ? v.map((x: unknown) => num(x, 0, -1e7, 1e7)) : null);
+      let logo: Record<string, unknown> | null = null;
+      if (body.logo) {
+        const l = body.logo;
+        const lp = String(l.path ?? "");
+        if (!/^gravur\/logos\/[A-Za-z0-9_-]{1,40}\.(png|jpg|jpeg|webp)$/.test(lp)) return json({ error: "Ungültiges Logo" }, 400);
+        const lf = Array.isArray(l.frame) && l.frame.length === 16 ? l.frame.map((v: unknown) => num(v, 0, -1e7, 1e7)) : null;
+        if (!lf) return json({ error: "Fläche des Logos fehlt" }, 400);
+        logo = {
+          name: safe(lp.split("/").pop()), url: await sign(lp), frame: lf, place: placeOf(l.place ?? {}), seed: seedOf(l.seed),
+          image: { threshold: l.threshold == null ? null : num(l.threshold, 128, 1, 254), invert: l.invert == null ? null : !!l.invert },
+        };
+      }
       const payload = {
         job_id: job,
         model_url: await sign(modelPath),
@@ -85,7 +129,12 @@ serve(async (req) => {
           rotDeg: num(p.rotDeg, 0, -360, 360), depth: num(p.depth, 0.6, 0.05, 100), centerInk: !!p.centerInk,
         },
         image: { threshold: body.threshold == null ? null : num(body.threshold, 128, 1, 254), invert: body.invert == null ? null : !!body.invert },
-        colors: { modell: /^#[0-9a-f]{6}$/i.test(body.colModell) ? body.colModell : "#9AA3AD", einlage: /^#[0-9a-f]{6}$/i.test(body.colEinlage) ? body.colEinlage : "#14B8A6" },
+        colors: {
+          modell: /^#[0-9a-f]{6}$/i.test(body.colModell) ? body.colModell : "#9AA3AD",
+          einlage: /^#[0-9a-f]{6}$/i.test(body.colEinlage) ? body.colEinlage : "#14B8A6",
+          logo: /^#[0-9a-f]{6}$/i.test(body.colLogo) ? body.colLogo : "#A855F7",
+        },
+        logo,
         bed: !!body.bed,
         seed: Array.isArray(body.seed) && body.seed.length === 3 ? body.seed.map((v: unknown) => num(v, 0, -1e7, 1e7)) : null,
         model_name: safe(body.model_name),
