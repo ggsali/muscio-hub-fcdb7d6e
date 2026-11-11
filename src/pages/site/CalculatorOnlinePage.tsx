@@ -1275,7 +1275,7 @@ const CalculatorOnlinePage = () => {
     setParts((p) => p.map((x) => {
       if (x.id !== id) return x;
       const next = { ...x, ...u };
-      if (u.quantity !== undefined && u.quantity !== x.quantity) next.batchPending = u.quantity >= 2 && true;
+      if (u.quantity !== undefined && u.quantity !== x.quantity) next.batchPending = u.quantity >= 2 && BATCH_LIVE;
       if (u.materialId !== undefined && u.materialId !== x.materialId) {
         const newMat = materials.find((m) => m.id === u.materialId);
         const avail = newMat?.farben || [];
