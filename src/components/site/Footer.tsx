@@ -95,7 +95,7 @@ export const Footer = () => {
         <motion.div variants={itemVariants}>
           <h4 className="font-heading font-semibold text-xs mb-4 text-foreground uppercase tracking-widest">Navigation</h4>
           <div className="flex flex-col gap-2">
-            {footerLinks.filter((l) => stadtmodellAktiv !== false || l.path !== "/stadtmodell").map((l) => (
+            {footerLinks.filter((l) => stadtmodellAktiv === true || l.path !== "/stadtmodell").map((l) => (
               <Link
                 key={l.path}
                 to={l.path}

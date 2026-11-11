@@ -39,10 +39,10 @@ function StadtmodellPage() {
     <div className="container mx-auto max-w-7xl px-4 py-12">
       <h1 className="text-3xl font-bold md:text-4xl">3D-Stadtmodell konfigurieren</h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">Wähle einen Ort, ziehe ein Quadrat von 100 bis 500 m auf und erhalte live Grösse und Preis deines gedruckten Modells.</p>
-      {aktiv === false && isAdmin && (
+      {aktiv !== true && isAdmin && (
         <div className="mt-6 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">Admin-Ansicht: Der Konfigurator ist für Besucher deaktiviert.</div>
       )}
-      {aktiv === false && !isAdmin ? (
+      {aktiv !== true && !isAdmin ? (
         <div className="mt-8 rounded-xl border border-border bg-card p-8 text-center">
           <h2 className="text-2xl font-semibold">Der Stadtmodell-Konfigurator ist derzeit pausiert</h2>
           <p className="mt-2 text-muted-foreground">Schau bald wieder vorbei oder kontaktiere uns für ein individuelles Stadtmodell.</p>

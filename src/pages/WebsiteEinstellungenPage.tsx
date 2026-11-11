@@ -50,7 +50,7 @@ export default function WebsiteEinstellungenPage() {
         for (const row of data) {
           if (row.key === "wartungsmodus") setWartung(row.value as any);
           if (row.key === "ferienmodus") setFerien({ von: "", bis: "", betreff: "", text: "", ...(row.value as any) });
-          if (row.key === "resin_enabled") setResinEnabled({ aktiv: (row.value as any)?.aktiv !== false });
+          if (row.key === "resin_enabled") setResinEnabled({ aktiv: (row.value as any)?.aktiv === true });
           if (row.key === "stadtmodell_enabled") setStadtmodell({ aktiv: (row.value as any)?.aktiv !== false });
           if (row.key === "weihnachtsmodus") setWeihnachten({ aktiv: (row.value as any)?.aktiv === true });
           if (row.key === "kontakt_info") setKontakt(row.value as any);

@@ -46,6 +46,12 @@ const Input = z.object({
 export const createStadtmodellCheckout = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data }) => {
+    {
+      // Generatoren sind nicht oeffentlich: ohne ausdrueckliche Freigabe (website_settings.stadtmodell_enabled.aktiv = true) keine Bestellung
+      const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+      const { data: flag } = await sb.from("website_settings").select("value").eq("key", "stadtmodell_enabled").maybeSingle();
+      if ((flag?.value as { aktiv?: boolean } | null)?.aktiv !== true) throw new Error("Der Stadtmodell-Konfigurator ist derzeit nicht verfuegbar");
+    }
     const mm = modellMm(data.kantenlaenge_m, data.massstab);
     if (mm < MODELL_MIN_MM || mm > MODELL_MAX_MM) throw new Error(`Modellgrösse muss zwischen ${MODELL_MIN_MM} und ${MODELL_MAX_MM} mm liegen`);
     const filament = (await ladeFreigegebene()).find((f) => f.id === data.filament_id);

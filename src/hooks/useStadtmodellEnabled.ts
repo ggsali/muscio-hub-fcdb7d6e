@@ -10,12 +10,12 @@ function load(): Promise<boolean> {
     pending = Promise.resolve(
       supabase.from("website_settings").select("value").eq("key", "stadtmodell_enabled").maybeSingle(),
     ).then(({ data }) => {
-      // Ohne gespeicherten Wert ist der Konfigurator aktiv.
-      const v = (data?.value as any)?.aktiv !== false;
+      // Ohne gespeicherten Wert ist der Konfigurator AUS (Generatoren sind nicht oeffentlich, bis du sie freigibst).
+      const v = (data?.value as any)?.aktiv === true;
       cached = v;
       listeners.forEach((l) => l(v));
       return v;
-    }).catch(() => true);
+    }).catch(() => false);
   }
   return pending;
 }
