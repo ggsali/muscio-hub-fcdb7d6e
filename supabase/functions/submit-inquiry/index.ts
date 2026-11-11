@@ -114,6 +114,28 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
+    // Mengen-Slice im Hintergrund (Kunde wartet nicht): pro Modelldatei mit Menge >= 2 ein Aufruf
+    try {
+      const sk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (insertedInquiry?.id && sk && Array.isArray(attachments)) {
+        const jobs = attachments
+          .map((a: any, i: number) => ({ a, i }))
+          .filter(({ a }: any) => a?.storage_path && !a?.kind && /\.(stl|obj|3mf)$/i.test(String(a?.filename ?? "")) && Number(a?.menge) >= 2)
+          .slice(0, 5);
+        for (const { i } of jobs) {
+          // Antwort kommt sofort (202), das Slicen laeuft in der aufgerufenen Funktion weiter
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/inquiry-batch-slice`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${sk}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ inquiry_id: insertedInquiry.id, index: i }),
+            signal: AbortSignal.timeout(8000),
+          }).catch((e) => console.error("Mengen-Slice Start fehlgeschlagen:", e));
+        }
+      }
+    } catch (e) {
+      console.error("Mengen-Slice Fehler:", e);
+    }
+
     // Admin-Benachrichtigung per E-Mail direkt via Resend (Fehler hier nicht blockierend)
     try {
       const resend = new Resend(Deno.env.get("RESEND_API_KEY")!);

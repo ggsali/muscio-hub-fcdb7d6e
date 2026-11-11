@@ -313,7 +313,7 @@ export default function AnfragenPage() {
       const kalkVersand = ((inq.attachments || []) as any[]).find((a) => a?.kalk_versand != null) as { kalk_versand?: number; kalk_paket_groesse?: string | null } | undefined;
       const spardoseMeta = ((inq.attachments || []) as any[]).find((a) => a?.auftrag_versand != null) as { auftrag_versand?: number; auftrag_verpackung?: number } | undefined;
       // Kalkulator-Anfrage mit Mengenrechnung ("– N Platten (Setup ×N …"): Setup-Anzahl des Auftrags = Summe der Platten
-      const kalkSetupTotal = ((inq.attachments || []) as any[]).reduce((sum: number, a) => sum + (Number(a?.kalk_setup_anzahl) || 0), 0);
+      const kalkSetupTotal = ((inq.attachments || []) as any[]).reduce((sum: number, a) => sum + (Number(a?.batch_slice?.ok ? a.batch_slice.plates : a?.kalk_setup_anzahl) || 0), 0);
       const plattenSumme = kalkSetupTotal || Array.from((inq.nachricht || "").matchAll(/ – (\d+) Platten? \(Setup ×/g)).reduce((sum, m) => sum + parseInt(m[1], 10), 0);
       const { data: order, error: orderErr } = await supabase.from("orders").insert({
         customer_id: customerId,
@@ -448,6 +448,14 @@ export default function AnfragenPage() {
               kalk_nachbearbeitung_h?: number | null;
               kalk_setup_anzahl?: number | null;
             };
+            // Mengen-Slice nach dem Absenden (Server): Werte je Stück aus dem Gesamtergebnis
+            const bs = (att as any).batch_slice as { ok?: boolean; copies?: number; plates?: number; print_time_s?: number; filament_g?: number; has_support?: boolean; layers?: number } | undefined;
+            if (bs?.ok && Number(bs.copies) >= 2 && Number(bs.copies) === Math.floor(Number(sl.menge) || 1) && Number(bs.print_time_s) > 0 && Number(bs.filament_g) > 0) {
+              sl.slicer_druckzeit_sekunden = Math.round(Number(bs.print_time_s) / Number(bs.copies));
+              sl.slicer_filament_gramm = Math.round((Number(bs.filament_g) / Number(bs.copies)) * 10) / 10;
+              if (bs.has_support != null) sl.slicer_hat_supports = !!bs.has_support;
+              if (Number(bs.layers) > 0) sl.slicer_layer_anzahl = Number(bs.layers);
+            }
             const stuetzenH = Number(sl.stuetzen_h) || Number(sl.kalk_nachbearbeitung_h) || 0; // Stunden pro Stück (Kalkulator: geschätzte Nachbearbeitung)
             const nachName = Number(sl.stuetzen_h) > 0 ? "Stützen entfernen" : "Nachbearbeitung (geschätzt)";
             const slSeconds = sl.slicer_druckzeit_sekunden ?? null;

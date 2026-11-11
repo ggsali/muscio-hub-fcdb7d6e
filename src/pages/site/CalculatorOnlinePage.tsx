@@ -293,6 +293,9 @@ const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => 
 async function nasOnlyMode(): Promise<boolean> { return true; }
 async function nasSliceEnabled(): Promise<boolean> { return true; }
 
+/** Mengenrechnung (Platten) live im Kalkulator? Aus: der Server slict die Menge erst nach dem Absenden der Anfrage. */
+const BATCH_LIVE = false;
+
 /** Grosse Dateien: erst der Slice-Upload, dann der Hintergrund-Upload der Originaldatei. Beide gleichzeitig teilen sich die Leitung und der Slicer startet viel spaeter. */
 const sliceUploadOffen = new Set<string>();
 const sliceUploadKey = (f: File) => `${f.name}|${f.size}`;
@@ -1013,6 +1016,7 @@ const CalculatorOnlinePage = () => {
   useEffect(() => {
     const quality = qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1];
     const patch = (id: string, u: Partial<Part>) => setParts((prev) => prev.map((x) => (x.id === id ? { ...x, ...u } : x)));
+    if (!BATCH_LIVE) return; // Mengen werden erst nach dem Absenden auf dem Server geslict (Kunde wartet nicht)
     parts.forEach((p) => {
       if (isStepFile(p.fileName) || !p.file || !p.slicerResult || p.slicerLoading || p.isQuickSlice) return;
       if (p.quantity < 2) {
