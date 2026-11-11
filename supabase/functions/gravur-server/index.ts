@@ -87,6 +87,7 @@ serve(async (req) => {
         image: { threshold: body.threshold == null ? null : num(body.threshold, 128, 1, 254), invert: body.invert == null ? null : !!body.invert },
         colors: { modell: /^#[0-9a-f]{6}$/i.test(body.colModell) ? body.colModell : "#9AA3AD", einlage: /^#[0-9a-f]{6}$/i.test(body.colEinlage) ? body.colEinlage : "#14B8A6" },
         bed: !!body.bed,
+        seed: Array.isArray(body.seed) && body.seed.length === 3 ? body.seed.map((v: unknown) => num(v, 0, -1e7, 1e7)) : null,
         model_name: safe(body.model_name),
         result_put_url: res.signedUrl,
       };

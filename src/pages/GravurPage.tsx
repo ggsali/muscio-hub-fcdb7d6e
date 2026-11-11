@@ -417,6 +417,14 @@ export default function GravurPage() {
 
   // Alles Rechnen läuft auf dem Server (muscio): Dateien gehen in den Storage, der Server holt sie dort ab,
   // rechnet (Potrace + Manifold) und legt ein ZIP zurück. Hier läuft nur die Vorschau.
+  // Punkt auf der angeklickten Fläche (Mitte des ersten Dreiecks), damit der Server dieselbe ebene Fläche findet
+  const faceSeed = (): number[] | null => {
+    if (!model || !face?.tris.length) return null;
+    const pos = model.getAttribute("position");
+    const t = face.tris[0];
+    const c = (get: (i: number) => number) => (get(t * 3) + get(t * 3 + 1) + get(t * 3 + 2)) / 3;
+    return [c((i) => pos.getX(i)), c((i) => pos.getY(i)), c((i) => pos.getZ(i))];
+  };
   const serverJob = async (bilder: File[]): Promise<Blob> => {
     if (!modelFile || !face) throw new Error("Modell und Fläche fehlen");
     const call = async (body: Record<string, unknown>) => {
@@ -439,7 +447,7 @@ export default function GravurPage() {
     const start = await call({
       action: "start", job: init.job, model_path: init.model.path, images: init.images.map((x: { path: string; name: string }) => ({ path: x.path, name: x.name })),
       frame: face.frame.elements, place, threshold: auto ? null : th, invert: invert === "auto" ? null : invert === "ja",
-      colModell, colEinlage, bed, model_name: modelName,
+      colModell, colEinlage, bed, seed: faceSeed(), model_name: modelName,
     });
     let st: { status: string; done?: number; total?: number; errors?: string[]; error?: string; download_url?: string } = { status: "queued" };
     const t0 = Date.now();

@@ -29,6 +29,7 @@ JSON-Body:
   "image": {"threshold": null, "invert": null},
   "colors": {"modell": "#9AA3AD", "einlage": "#14B8A6"},
   "bed": true,
+  "seed": [x, y, z],   // Punkt auf einem Dreieck der angeklickten Flaeche (Weltkoordinaten), kann null sein
   "model_name": "puck",
   "result_put_url": "https://...signed PUT-Upload-URL (Supabase Storage), Ziel: ergebnis.zip"
 }
@@ -55,6 +56,20 @@ Antwort sofort: `{"id": "<slicer job id>"}`. Rechnen im Hintergrund (Warteschlan
    - `bed=false` (oder fehlt): nur in den Koordinaten des Originalmodells (nichts verschieben).
    - `bed=true` (Druckausrichtung): beide Teile (Modell mit Gravur und Einlage) werden mit derselben Matrix `B = Rx(180°) * inverse(frame)` transformiert (Referenz: `bedMatrix` in src/lib/gravur.ts). Danach liegt die gewaehlte Flaeche bei z = 0, das Material darueber (z >= 0), die Mitte der Flaeche bei x=y=0, die Einlage bei z = 0 bis depth (Text wird zuerst gedruckt). Die Baugruppe bleibt zusammen (gleiche Matrix fuer beide Teile, auch im 3MF). Volumen aendern sich nicht.
    - Abnahme: Zylinder r=40, h=10 (Deckel z=5), depth 1, bed=true: Modell z von 0 bis 10, Einlage z von 0 bis 1.
+
+## Planarmodus (Standard, wenn die gewaehlte Flaeche eben ist) - ersetzt Schritt 6 und 7 und die Reparatur
+Grund: Die Reparatur (pymeshfix, trimesh.fill_holes) hat bei einer Medaille Luecken am runden Rand mit geraden Flaechen gefuellt und den Rand verformt. Bei einer ebenen Gravurflaeche braucht es weder Reparatur noch 3D-Boolean. Das Originalnetz bleibt bis auf die Gravurflaeche **unveraendert** (auch beschaedigte Stellen, keine Reparatur, kein Remesh, kein Voxel).
+1. Region R: Dreieck suchen, das `seed` enthaelt bzw. dem `seed` am naechsten liegt und in der Ebene durch den frame-Ursprung mit Normale frame-z liegt (Abstand <= 0.03 mm, Normale parallel). R = alle damit kantenverbundenen, koplanaren Dreiecke (Normalen-Dot >= 0.9995, Abstand zur Ebene <= 0.03 mm). Nur diese Dreiecke werden angefasst.
+2. Aussenkontur und Loecher von R als 2D-Polygone in lokalen Koordinaten (inverse(frame)), Randvertices exakt beibehalten (keine neuen Punkte auf dem Rand, damit zu den Nachbardreiecken keine T-Kanten entstehen).
+3. Textpolygon T (Potrace, platziert, 2D) auf R beschneiden: `T' = T ∩ R` (z. B. shapely). Ragt Text ueber R hinaus: abgeschnitten, Zeile in FEHLER.txt ("name: Text ragt ueber die Flaeche hinaus, abgeschnitten"). Ist T' leer: Fehler fuer dieses Bild.
+4. Neue Oberseite = R - T' triangulieren (mapbox_earcut oder triangle, Randvertices von R unveraendert), Normale = frame-z (nach aussen).
+5. Aussparung: fuer jede Kante von T' ein Quad von z=0 bis z=-depth (Normalen in die Aussparung, also aus Sicht des Modells nach aussen), Boden = T' bei z=-depth mit Normale +z.
+6. Modell mit Gravur = Originalnetz ohne die Dreiecke von R + neue Oberseite + Waende + Boden. Kein 3D-Boolean.
+7. Einlage = T' extrudiert von z=-depth bis z=0 (geschlossenes Prisma, Oberseite buendig mit der Flaeche, Waende identisch zur Aussparung, also kein Offset).
+8. Ist das Material unter T' duenner als depth, nur Warnung in FEHLER.txt (kein Abbruch).
+9. Danach bed-Transformation wie bisher, STL/3MF wie bisher.
+10. Rueckfall auf den bisherigen Weg (3D-Boolean mit Reparatur) nur, wenn keine ebene Region gefunden wird (z. B. `seed` fehlt/null oder R hat weniger als 1 mm2 Flaeche), also bei gewoelbten Flaechen. Im Planarmodus wird das Modell NICHT repariert und `modell-repariert.stl` nicht erzeugt.
+Abnahme: (a) Zylinder r=40, h=10 mit ein paar geloeschten Dreiecken am Rand und Ring-Bild auf dem Deckel: Rand bleibt rund (Boundingbox, Volumen bis auf die Gravur identisch), Einlage 530 mm3 +-3 %. (b) Medaille mit grossem Deckel: gleiches Ergebnis ohne Reparaturmeldung. (c) Text ragt ueber den Rand: wird abgeschnitten, Hinweis im ZIP.
 
 ## Ergebnis-ZIP (per HTTP PUT an result_put_url, Header Content-Type: application/zip und x-upsert: true; Body = ZIP-Bytes; falls Supabase das so nicht annimmt, mit curl testen und die Variante nehmen, die geht, z. B. multipart/form-data mit Feld `file`; danach dem Repo-Betreuer die Variante mitteilen)
 Pro Bild ein Ordner `NNN-<name>/` (NNN = laufende Nummer ab 001) mit:
