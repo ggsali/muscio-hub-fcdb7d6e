@@ -958,7 +958,7 @@ const CalculatorOnlinePage = () => {
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, slicerLoading: false, slicerError: String(err?.message).startsWith("NAS_ONLY") ? `Genaue Berechnung momentan nicht möglich – Schätzung wird verwendet${String(err.message).slice(9) ? ` (${String(err.message).slice(9)})` : ""}` : "Slicer nicht verfügbar – Schätzung wird verwendet" }
+        ? { ...p, slicerLoading: false, slicerError: String(err?.message).startsWith("NAS_ONLY") ? `${/zu gross/i.test(String(err.message)) ? "Sehr grosse Datei: genaue Berechnung nicht möglich – Preis ist eine Schätzung, wir prüfen ihn manuell" : `Genaue Berechnung momentan nicht möglich – Schätzung wird verwendet${String(err.message).slice(9) ? ` (${String(err.message).slice(9)})` : ""}`}` : "Slicer nicht verfügbar – Schätzung wird verwendet" }
         : p));
     }
   }, [parts, materials, qualityPresets, qualityKey, slice]);

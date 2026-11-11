@@ -12,6 +12,7 @@ const corsHeaders = {
 const MAX_BYTES = 30 * 1024 * 1024;
 const PLATE_MAX_BYTES = 45 * 1024 * 1024; // Spardose-Platten (entpackt) dürfen etwas grösser sein
 const TIMEOUT_MS = 120_000;
+const GROSS_GZ_MAX = 120 * 1024 * 1024; // sehr grosse Modelle (nur ueber den Storage): komprimiert bis hierhin, ohne in der Funktion zu entpacken
 const ALLOWED_EXT = [".stl", ".obj", ".3mf"];
 const QUALITIES = ["0.08", "0.12", "0.16", "0.20"];
 const RATE_WINDOW_MS = 10 * 60_000;
@@ -152,9 +153,19 @@ serve(async (req) => {
     // Der Browser schickt grosse Dateien verlustfrei gzip-komprimiert (gz=1, Name endet auf .gz): das spart Upload-Zeit.
     const gzBytes = file.size;
     let gzFile: File | null = null; // die komprimierte Originaldatei (wird, wenn der Slicer es kann, komprimiert weitergereicht)
+    let grossGz = false; // sehr grosses Modell: nur komprimiert an den Slicer weiterreichen, hier nicht entpacken (Speicher der Funktion)
     if ((form.get("gz") === "1" || viaStorage) && file.name.toLowerCase().endsWith(".gz")) {
-      if (gzBytes > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", gzBytes, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
-      try {
+      if (gzBytes > maxBytes) {
+        if (viaStorage && !plate && gzBytes <= GROSS_GZ_MAX && g.__serverGz !== false) {
+          grossGz = true;
+          gzFile = file;
+          await dbg(supabase, { rid, ev: "gross-komprimiert-weiter", gzBytes });
+        } else {
+          await dbg(supabase, { rid, ev: "zu-gross", gzBytes, max: maxBytes, gzMax: GROSS_GZ_MAX, serverGz: g.__serverGz ?? null });
+          return json({ error: "Datei zu gross" }, 413);
+        }
+      }
+      if (!grossGz) try {
         const original: File = file;
         const raw = await gunzipLimited(original, maxBytes);
         file = new File([raw], original.name.slice(0, -3));
@@ -164,9 +175,10 @@ serve(async (req) => {
         return json({ ok: false, error: "Datei konnte nicht entpackt werden" });
       }
     }
-    const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
+    const nameOhneGz = grossGz ? file.name.slice(0, -3) : file.name;
+    const ext = nameOhneGz.toLowerCase().slice(nameOhneGz.lastIndexOf("."));
     if (!ALLOWED_EXT.includes(ext)) { await dbg(supabase, { rid, ev: "dateityp", ext }); return json({ error: "Dateityp nicht erlaubt" }, 422); }
-    if (file.size > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", bytes: file.size, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
+    if (!grossGz && file.size > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", bytes: file.size, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
     const upFile: File = file; // (nach dem Entpacken) wird an den Slicer weitergereicht
     const quality = String(form.get("quality") ?? "0.20");
     if (!QUALITIES.includes(quality)) return json({ error: "Ungültige Qualität" }, 422);
@@ -214,7 +226,7 @@ serve(async (req) => {
           signal: AbortSignal.timeout(TIMEOUT_MS),
         });
       const r = await senden();
-      if (!gzFile || g.__serverGz === false) return r;
+      if (!gzFile || g.__serverGz === false || grossGz) return r;
       if (r.ok) { g.__serverGz = true; return r; }
       // Ein Fehler (4xx) bei komprimierter Übertragung: einmal entpackt wiederholen, ausser das Modell ist schlicht zu gross.
       // Klappt es entpackt, versteht dieser Slicer noch kein gzip -> ab jetzt entpackt senden.
