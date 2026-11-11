@@ -293,6 +293,15 @@ const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => 
 async function nasOnlyMode(): Promise<boolean> { return true; }
 async function nasSliceEnabled(): Promise<boolean> { return true; }
 
+/** Grosse Dateien: erst der Slice-Upload, dann der Hintergrund-Upload der Originaldatei. Beide gleichzeitig teilen sich die Leitung und der Slicer startet viel spaeter. */
+const sliceUploadOffen = new Set<string>();
+const sliceUploadKey = (f: File) => `${f.name}|${f.size}`;
+const sliceUploadFertig = (f: File) => { sliceUploadOffen.delete(sliceUploadKey(f)); };
+async function warteAufSliceUpload(f: File) {
+  const t0 = Date.now();
+  while (sliceUploadOffen.has(sliceUploadKey(f)) && Date.now() - t0 < 120_000) await new Promise((r) => setTimeout(r, 400));
+}
+
 /** Schickt die Messwerte eines Slice-Versuchs an den Server (Admin → Slice-Freigabe → Diagnose-Bericht). Fehler hier sind egal. */
 function nasDiag(d: Record<string, unknown>) {
   try {
@@ -339,6 +348,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
       : { blob: file as Blob, name: file.name, gz: false };
     diag.gzMs = Math.round(performance.now() - tGz);
     if (up.gz) diag.gzB = up.blob.size;
+    if (up.blob.size <= 3 * 1024 * 1024) sliceUploadFertig(file);
     const body = new FormData();
     body.append("rid", rid);
     // Ab 3 MB Uebertragung: Datei zuerst direkt in den Storage (kein Limit der Anfrage), die Funktion holt sie dort ab
@@ -349,6 +359,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
       const pfad = `kalkulator/slice-${rid}-${up.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}`;
       const { error: upErr } = await supabase.storage.from("project-uploads").upload(pfad, up.blob, { upsert: false, contentType: "application/octet-stream" });
       diag.upMs = Math.round(performance.now() - tUp);
+      sliceUploadFertig(file); // jetzt darf der Hintergrund-Upload der Originaldatei starten
       if (!upErr) { body.append("storage_path", pfad); viaStorage = true; diag.via = "storage"; }
       else { diag.via = "direkt"; diag.err = `storage: ${upErr.message}`.slice(0, 120); }
     }
@@ -962,6 +973,7 @@ const CalculatorOnlinePage = () => {
         : p));
     } catch (err: any) {
       console.error("[Slicer Error]", err);
+      if (part.file) sliceUploadFertig(part.file);
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerLoading: false, slicerError: String(err?.message).startsWith("NAS_ONLY") ? `${/zu gross/i.test(String(err.message)) ? "Sehr grosse Datei: genaue Berechnung nicht möglich – Preis ist eine Schätzung, wir prüfen ihn manuell" : `Genaue Berechnung momentan nicht möglich – Schätzung wird verwendet${String(err.message).slice(9) ? ` (${String(err.message).slice(9)})` : ""}`}` : "Slicer nicht verfügbar – Schätzung wird verwendet" }
         : p));
@@ -1059,6 +1071,7 @@ const CalculatorOnlinePage = () => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     const previewable = ext === "stl" || ext === "obj" || ext === "3mf";
     const previewUrl = previewable ? URL.createObjectURL(file) : undefined;
+    if (file.size > 3 * 1024 * 1024 && (ext === "stl" || ext === "obj" || ext === "3mf")) sliceUploadOffen.add(sliceUploadKey(file));
 
     setParts((p) => [
       ...p,
@@ -1160,6 +1173,7 @@ const CalculatorOnlinePage = () => {
     try {
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `kalkulator/${id}-${safeName}`;
+      await warteAufSliceUpload(file); // grosse Dateien: zuerst der Slice-Upload
       const { error } = await supabase.storage.from("project-uploads").upload(path, file, { upsert: false });
       if (error) throw error;
       setParts((p) => p.map((x) => (x.id === id ? { ...x, storagePath: path, uploading: false } : x)));
