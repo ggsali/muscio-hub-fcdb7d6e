@@ -300,7 +300,7 @@ async function nasSliceEnabled(): Promise<boolean> {
   try {
     const probe = new FormData();
     probe.append("probe", "1");
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public?mode=probe`, {
       method: "POST",
       headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
       body: probe,
@@ -309,7 +309,13 @@ async function nasSliceEnabled(): Promise<boolean> {
     const j = res.ok ? await res.json().catch(() => ({})) : {};
     on = j?.enabled === true;
     only = on; // Schalter an: alles über den NAS (kein Browser-Slicer), aus: alles im Browser
-  } catch (e) { on = false; nasDebug(`Probe fehlgeschlagen: ${(e as Error)?.message ?? e}`); }
+  } catch (e) {
+    // Ein einzelner Ausfall der Abfrage darf den Server nicht fuer Minuten abschalten: letzten guten Wert behalten, bald neu fragen
+    const alt = nasProbe;
+    nasProbe = { at: Date.now() - 4.5 * 60_000, on: alt?.on ?? false, only: alt?.only ?? false };
+    nasDebug(`Probe fehlgeschlagen: ${(e as Error)?.message ?? e}`);
+    return nasProbe.on;
+  }
   nasProbe = { at: Date.now(), on, only };
   return on;
 }
@@ -320,7 +326,7 @@ function nasDebug(msg: string) {
     const f = new FormData();
     f.append("log", "1");
     f.append("msg", msg);
-    void fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
+    void fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public?mode=log`, {
       method: "POST",
       headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
       body: f,
@@ -352,6 +358,11 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
     return { res: r, json: await r.json().catch(() => ({})), gz: up.gz };
   };
   let versuch = await senden(true);
+  // Server kurz ausgelastet (die Antwort kommt mit HTTP 200 und error "ausgelastet"): ein paarmal warten und erneut versuchen, statt sofort auf die Schaetzung zu fallen
+  for (let n = 0; n < 3 && versuch.json?.error === "ausgelastet" && !abort?.aborted; n++) {
+    await new Promise((r) => setTimeout(r, 4000));
+    versuch = await senden(true);
+  }
   // Alte Edge-Function-Version (noch ohne Entpacken)? Dann unkomprimiert wiederholen.
   if (versuch.gz && gzAbgelehnt(versuch.json)) versuch = await senden(false);
   const { res, json } = versuch;

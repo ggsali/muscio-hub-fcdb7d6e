@@ -15,7 +15,7 @@ const TIMEOUT_MS = 120_000;
 const ALLOWED_EXT = [".stl", ".obj", ".3mf"];
 const QUALITIES = ["0.08", "0.12", "0.16", "0.20"];
 const RATE_WINDOW_MS = 10 * 60_000;
-const RATE_MAX = 12; // Slices pro IP und 10 Minuten
+const RATE_MAX = 30; // echte Slices pro IP und 10 Minuten (Probe und Log zaehlen nicht mit)
 const MAX_PARALLEL = 3; // gleichzeitige Slices insgesamt (NAS schonen)
 
 // Fehler werden bewusst mit HTTP 200 und ok:false beantwortet: der Kalkulator fällt dann still auf den Browser-Slicer zurück.
@@ -81,14 +81,20 @@ serve(async (req) => {
     const key = Deno.env.get("SLICER_API_KEY") || "";
     if (!base || !key) return json({ error: "nicht konfiguriert" }, 503);
 
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
-    const now = Date.now();
-    const store: Map<string, number[]> = (g.__sliceRate ||= new Map());
-    const hits = (store.get(ip) || []).filter((t: number) => now - t < RATE_WINDOW_MS);
-    if (hits.length >= RATE_MAX) return json({ error: "Zu viele Anfragen" }, 429);
-    if (g.__sliceInflight >= MAX_PARALLEL) return json({ error: "ausgelastet" }, 503);
-    hits.push(now);
-    store.set(ip, hits);
+    // Probe und Log (?mode=probe|log) verbrauchen kein Kontingent: sonst war die Grenze nach wenigen Teilen und Qualitaetswechseln
+    // aufgebraucht und neue Teile (z. B. in der Uebersicht) wurden nicht mehr ueber den Server gerechnet.
+    const mode = new URL(req.url).searchParams.get("mode");
+    const leicht = mode === "probe" || mode === "log";
+    if (!leicht) {
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+      const now = Date.now();
+      const store: Map<string, number[]> = (g.__sliceRate ||= new Map());
+      const hits = (store.get(ip) || []).filter((t: number) => now - t < RATE_WINDOW_MS);
+      if (hits.length >= RATE_MAX) return json({ error: "Zu viele Anfragen" }, 429);
+      if (g.__sliceInflight >= MAX_PARALLEL) return json({ error: "ausgelastet" }, 503);
+      hits.push(now);
+      store.set(ip, hits);
+    }
 
     const form = await req.formData();
     if (form.get("log") === "1") {
