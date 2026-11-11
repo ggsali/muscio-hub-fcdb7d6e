@@ -8,6 +8,8 @@ export interface SlicerResult {
   density?: number;
   layers: number;
   hasSupport: boolean;
+  /** Gewicht der Stuetzstrukturen in g (Slicer; im Browser aus dem Zeitanteil geschaetzt). Fehlt es, rechnet der Preis grob nach Teilegroesse. */
+  supportGrams?: number;
   /** Wurde das Modell wegen seiner Grösse in mehrere Teile geteilt (Server-Slicer)? Anzahl der Teile, sonst leer */
   splitParts?: number;
   /** Mengenrechnung des Server-Slicers: so viele Kopien auf so vielen Platten (Werte dieses Ergebnisses gelten pro Stück) */

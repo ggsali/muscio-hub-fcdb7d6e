@@ -22,6 +22,7 @@ import HerkunftBanner from "@/components/site/HerkunftBanner";
 import { colorHex } from "@/lib/colorMap";
 import { dimsFromStl, infoFromStl, dimsFromObj, waehleVersandart, type Mass3 } from "@/lib/versandArt";
 import { schaetzeNachbearbeitungMin } from "@/lib/nachbearbeitung";
+import { SETUP_PAUSCHALE_ONLINE } from "@/lib/pricing";
 import { splitFee } from "@/lib/splitSurcharge";
 import { gzAbgelehnt, gzipIfWorthIt } from "@/lib/gzipUpload";
 import JSZip from "jszip";
@@ -374,6 +375,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
       density: 1.25,
       layers: st.layers ?? 0,
       hasSupport: !!st.has_support,
+      ...(Number(st.support_grams) > 0 ? { supportGrams: Number(st.support_grams) / copies } : {}),
       batch: { copies, plates: Math.floor(Number(b.plates)), printer: typeof b.printer === "string" ? b.printer : undefined },
     } as SlicerResult;
   }
@@ -384,6 +386,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
     density: 1.25,
     layers: st.layers ?? 0,
     hasSupport: !!st.has_support,
+    ...(Number(st.support_grams) > 0 ? { supportGrams: Number(st.support_grams) } : {}),
     ...(Number(json?.split?.parts) >= 2 ? { splitParts: Math.min(4, Math.floor(Number(json.split.parts))) } : {}),
   } as SlicerResult;
 }
@@ -576,7 +579,8 @@ const CalculatorOnlinePage = () => {
   const [websitePreise, setWebsitePreise] = useState<WebsitePreise>({ maschinenzeit_pro_h: null, setup_pauschale: null, nachbearbeitung_pro_h: null });
   useEffect(() => { loadWebsitePreise().then(setWebsitePreise); }, []);
   const maschinenRate = websitePreise.maschinenzeit_pro_h ?? (settings.maschinenzeit_pro_h || 3);
-  const setupPauschale = websitePreise.setup_pauschale ?? (calcParams.fix_cost || 20);
+  const setupPauschale = SETUP_PAUSCHALE_ONLINE;
+  const stuetzenParams = { grundMin: calcParams.support_base_min, minProG: calcParams.support_min_per_g, maxMin: calcParams.support_max_min };
   // Nachbearbeitung: Stundensatz aus dem Admin (für Besucher über die freigegebene Funktion gelesen)
   const nachbearbeitungRate = websitePreise.nachbearbeitung_pro_h ?? (settings.nachbearbeitung_pro_h || 50);
 
@@ -1293,7 +1297,7 @@ const CalculatorOnlinePage = () => {
       const materialCost = weightG * mat.pricePerGram;
       const machineCost = (druckzeitMin / 60) * maschinenRate;
       // Nachbearbeitung bei Mengen geschätzt, eher grosszügig: Minuten pro Stück (mit Stützen mehr) +30 % Sicherheit
-      const postMinPerPiece = schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 });
+      const postMinPerPiece = schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, supportGrams: src.supportGrams, stuetzen: stuetzenParams, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 });
       const postCost = (postMinPerPiece / 60) * nachbearbeitungRate;
       const supportCost = 0; // Stützen sind in der Nachbearbeitungsschätzung enthalten (früher pauschal CHF 2.50)
       // Zuschlag fürs Teilen und Verkleben: pro Schnitt und pro Stück (Modell grösser als das grösste Druckbett)
@@ -1699,7 +1703,7 @@ const CalculatorOnlinePage = () => {
       const kalkMeta = (p: Part) => {
         const src = batchOk(p) ?? p.slicerResult;
         if (!src || !(src.filamentGrams > 0)) return {};
-        const post = schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 }) / 60; // h pro Stück, wie im Preis
+        const post = schaetzeNachbearbeitungMin({ hasSupport: !!src.hasSupport, supportGrams: src.supportGrams, stuetzen: stuetzenParams, dims: p.dimsMm ?? null, triangles: p.triangles, volumeCm3: p.volumeCm3 }) / 60; // h pro Stück, wie im Preis
         const first = parts.filter((x) => x.storagePath)[0]?.id === p.id;
         return {
           slicer_druckzeit_sekunden: Math.round(src.printTimeMinutes * 60),

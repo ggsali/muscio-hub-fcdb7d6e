@@ -14,6 +14,10 @@ export interface CalcParams {
   fix_cost: number;
   support_surcharge: number;
   min_price: number;
+  /** Stuetzen entfernen: Grundaufwand (Minuten), Minuten pro g Stuetzmaterial, Obergrenze (Minuten) */
+  support_base_min: number;
+  support_min_per_g: number;
+  support_max_min: number;
 }
 
 export const DEFAULT_QUALITY_PRESETS: QualityPreset[] = [
@@ -27,6 +31,9 @@ export const DEFAULT_CALC_PARAMS: CalcParams = {
   fix_cost: 3.5,
   support_surcharge: 2.5,
   min_price: 5,
+  support_base_min: 6,
+  support_min_per_g: 0.4,
+  support_max_min: 40,
 };
 
 export const QUALITY_PRESETS_KEY = "quality_presets";
@@ -68,6 +75,9 @@ export async function loadQualityConfig(): Promise<{ presets: QualityPreset[]; p
           fix_cost: num(parsed.fix_cost, DEFAULT_CALC_PARAMS.fix_cost),
           support_surcharge: num(parsed.support_surcharge, DEFAULT_CALC_PARAMS.support_surcharge),
           min_price: num(parsed.min_price, DEFAULT_CALC_PARAMS.min_price),
+          support_base_min: num(parsed.support_base_min, DEFAULT_CALC_PARAMS.support_base_min),
+          support_min_per_g: num(parsed.support_min_per_g, DEFAULT_CALC_PARAMS.support_min_per_g),
+          support_max_min: num(parsed.support_max_min, DEFAULT_CALC_PARAMS.support_max_min),
         };
       }
     }
@@ -129,7 +139,7 @@ export async function loadWebsitePreise(): Promise<WebsitePreise> {
   return out;
 }
 
-export async function saveWebsitePreise(p: { maschinenzeit_pro_h: number | null; setup_pauschale: number | null }): Promise<void> {
+export async function saveWebsitePreise(p: { maschinenzeit_pro_h: number | null; setup_pauschale?: number | null }): Promise<void> {
   const now = new Date().toISOString();
   const rows: { key: string; value: string; updated_at: string }[] = [];
   if (p.maschinenzeit_pro_h != null) rows.push({ key: WEBSITE_MASCHINENZEIT_KEY, value: String(p.maschinenzeit_pro_h), updated_at: now });

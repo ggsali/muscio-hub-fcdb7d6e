@@ -40,3 +40,22 @@ describe("pricing", () => {
     expect(r.setupPauschale).toBe(3.5); expect(r.quelle.setupPauschale).toBe("intern");
   });
 });
+
+import { schaetzeNachbearbeitungMin, stuetzenMin } from "./nachbearbeitung";
+describe("Stuetzenaufwand nach Menge", () => {
+  const base = { dims: [60, 60, 60] as [number, number, number], volumeCm3: 60 };
+  it("mehr Stuetzmaterial = mehr Aufwand, mit Obergrenze", () => {
+    const a = schaetzeNachbearbeitungMin({ ...base, hasSupport: false });
+    const b = schaetzeNachbearbeitungMin({ ...base, hasSupport: true, supportGrams: 10 });
+    const c = schaetzeNachbearbeitungMin({ ...base, hasSupport: true, supportGrams: 50 });
+    const d = schaetzeNachbearbeitungMin({ ...base, hasSupport: true, supportGrams: 5000 });
+    expect(b).toBeGreaterThan(a);
+    expect(c).toBeGreaterThan(b);
+    expect(d).toBeLessThanOrEqual(90);
+    expect(stuetzenMin(5000)).toBe(6 + 40);
+  });
+  it("ohne Stuetzgewicht gilt die bisherige Schaetzung nach Groesse", () => {
+    const alt = schaetzeNachbearbeitungMin({ ...base, hasSupport: true });
+    expect(alt).toBeGreaterThan(schaetzeNachbearbeitungMin({ ...base, hasSupport: false }));
+  });
+});

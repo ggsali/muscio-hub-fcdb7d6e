@@ -1,4 +1,6 @@
 import { slicerErrorMessage } from "@/lib/slicerError";
+import { stuetzenMin } from "@/lib/nachbearbeitung";
+import { SETUP_PAUSCHALE_ONLINE } from "@/lib/pricing";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useResinEnabled, isResinText } from "@/hooks/useResinEnabled";
 import { takePendingUploads } from "@/lib/pendingUpload";
@@ -99,6 +101,7 @@ export async function sliceOnNas(
     density: 1.25, // Dichte des PLA-Profils im Slicer
     layers: st.layers ?? 0,
     hasSupport: !!st.has_support,
+    ...(Number(st.support_grams) > 0 ? { supportGrams: Number(st.support_grams) } : {}),
     rawStats: st,
     ...(Number(json?.split?.parts ?? st?.split?.parts) >= 2 ? { splitParts: Math.min(4, Math.floor(Number(json?.split?.parts ?? st?.split?.parts))) } : {}),
     nas: json.auto
@@ -558,7 +561,7 @@ const KalkulatorTestPage = () => {
   const [websitePreise, setWebsitePreise] = useState<WebsitePreise>({ maschinenzeit_pro_h: null, setup_pauschale: null });
   useEffect(() => { loadWebsitePreise().then(setWebsitePreise); }, []);
   const maschinenRate = websitePreise.maschinenzeit_pro_h ?? (settings.maschinenzeit_pro_h || 3);
-  const setupPauschale = websitePreise.setup_pauschale ?? (calcParams.fix_cost || 20);
+  const setupPauschale = SETUP_PAUSCHALE_ONLINE;
 
   useEffect(() => {
     console.log("Maschinenzeit:", settings.maschinenzeit_pro_h);
@@ -1157,7 +1160,8 @@ const KalkulatorTestPage = () => {
 
   const MIN_PRICE = calcParams.min_price;
   const FIX_COST = setupPauschale;
-  const SUPPORT_SURCHARGE = calcParams.support_surcharge;
+  const nachbRate = websitePreise.nachbearbeitung_pro_h ?? (settings.nachbearbeitung_pro_h || 50);
+  const stuetzenParams = { grundMin: calcParams.support_base_min, minProG: calcParams.support_min_per_g, maxMin: calcParams.support_max_min };
 
   /** Slicer-Daten bevorzugt, dann KI-Analyse, sonst geometrische Schätzung (Setup separat 1× pro Bestellung) */
   const calcPart = (p: Part) => {
@@ -1172,7 +1176,8 @@ const KalkulatorTestPage = () => {
         weightG * 2.5 * (presetByInfill(p.infill).speedFactor || 1);
       const materialCost = weightG * mat.pricePerGram;
       const machineCost = (druckzeitMin / 60) * maschinenRate;
-      const supportCost = p.slicerResult.hasSupport ? (SUPPORT_SURCHARGE || 2.5) : 0;
+      // Stuetzen: Aufwand nach Menge des Stuetzmaterials (wie im Website-Kalkulator), nicht mehr pauschal
+      const supportCost = p.slicerResult.hasSupport ? (stuetzenMin(p.slicerResult.supportGrams, stuetzenParams) / 60) * nachbRate : 0;
       const unit = materialCost + machineCost + supportCost;
       return {
         weight: weightG,

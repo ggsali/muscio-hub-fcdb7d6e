@@ -169,6 +169,8 @@ self.onmessage = async (e: MessageEvent) => {
       0,
     );
     const hasSupport = supportRoleTime > 0;
+    const roleTotal = Object.values(roleTimes).reduce((a, v) => a + (Number(v) || 0), 0);
+    const supportGrams = hasSupport && roleTotal > 0 ? Math.round(filamentGrams * (supportRoleTime / roleTotal) * 10) / 10 : undefined;
 
     self.postMessage({
       id,
@@ -179,6 +181,7 @@ self.onmessage = async (e: MessageEvent) => {
       density: filamentMm > 0 ? usedDensity : undefined,
       layers,
       hasSupport,
+      supportGrams,
       orientation,
       rawStats: stats,
     });

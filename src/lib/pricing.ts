@@ -4,6 +4,9 @@ import { schaetzeNachbearbeitungMin } from "@/lib/nachbearbeitung";
 import { splitFee } from "@/lib/splitSurcharge";
 import type { Mass3 } from "@/lib/versandArt";
 
+/** Setup-Pauschale im Online-Kalkulator: fix, keine Einstellung mehr. */
+export const SETUP_PAUSCHALE_ONLINE = 20;
+
 export interface PreisConfig {
   maschinenzeitProH: number;
   nachbearbeitungProH: number;
