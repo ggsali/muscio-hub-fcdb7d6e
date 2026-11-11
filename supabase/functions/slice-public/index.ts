@@ -69,6 +69,20 @@ async function speichereDiag(supabase: any, raw: unknown) {
   await supabase.from("settings").upsert({ key: "slice_client_log", value: JSON.stringify(arr.slice(-80)) }, { onConflict: "key" });
 }
 
+// Kann der Slicer eine Datei selbst von einer Download-Adresse holen (file_url)? Meldet er in /health unter "features". 5 Minuten gemerkt.
+async function slicerKannUrl(base: string, key: string): Promise<boolean> {
+  const g = globalThis as any;
+  if (g.__urlCap && Date.now() - g.__urlCap.at < 5 * 60_000) return g.__urlCap.ok;
+  let ok = false;
+  try {
+    const r = await fetch(`${base}/health`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(4000) });
+    const j = await r.json().catch(() => ({}));
+    ok = Array.isArray(j?.features) && j.features.includes("file_url");
+  } catch { ok = false; }
+  g.__urlCap = { at: Date.now(), ok };
+  return ok;
+}
+
 // Aufraeumen: Uploads fuer grosse Slices (kalkulator/slice-...) sind nach dem Abholen weg. Reste (abgebrochene Aufrufe) loeschen wir nach 1 Stunde.
 async function raeumeAuf(supabase: any) {
   const g = globalThis as any;
@@ -89,6 +103,7 @@ serve(async (req) => {
   const g = globalThis as any;
   g.__sliceInflight ??= 0;
   let counted = false;
+  let aufraeumen = ""; // Storage-Pfad, der nach dem Slice geloescht wird (Slicer hat die Datei selbst geholt)
   let rid = ""; // Kennung, die der Browser mitschickt: verbindet Browser-Messung und Server-Ereignisse
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
@@ -153,7 +168,20 @@ serve(async (req) => {
     // Grosse Dateien kommen nicht durch die Anfrage, sondern liegen schon im Storage (kalkulator/slice-...): hier abholen und danach loeschen
     let viaStorage = false;
     const sp = String(form.get("storage_path") ?? "");
-    if (!(file instanceof File) && /^kalkulator\/slice-[A-Za-z0-9]{6,16}-[A-Za-z0-9._-]{1,100}$/.test(sp)) {
+    let urlMode = ""; // Adresse, von der der Slicer die Datei selbst holt (schnell: NAS <-> Storage direkt, ohne Umweg ueber die Funktion)
+    let urlSize = 0;
+    if (!(file instanceof File) && /^kalkulator\/slice-[A-Za-z0-9]{6,16}-[A-Za-z0-9._-]{1,100}$/.test(sp) && await slicerKannUrl(base, key)) {
+      const name = sp.split("/").pop() as string;
+      const { data: lst } = await supabase.storage.from("project-uploads").list("kalkulator", { search: name, limit: 5 });
+      const meta = (lst ?? []).find((o: { name: string }) => o.name === name) as { metadata?: { size?: number } } | undefined;
+      const size = Number(meta?.metadata?.size ?? 0);
+      const { data: su } = await supabase.storage.from("project-uploads").createSignedUrl(sp, 900);
+      if (size > 0 && su?.signedUrl) {
+        urlMode = su.signedUrl; urlSize = size; file = new File([], name); viaStorage = true; aufraeumen = sp;
+        await dbg(supabase, { rid, ev: "storage-url", bytes: size });
+      }
+    }
+    if (!urlMode && !(file instanceof File) && /^kalkulator\/slice-[A-Za-z0-9]{6,16}-[A-Za-z0-9._-]{1,100}$/.test(sp)) {
       const tD = Date.now();
       const { data: blob, error: dlErr } = await supabase.storage.from("project-uploads").download(sp);
       if (dlErr || !blob) { await dbg(supabase, { rid, ev: "storage-fehlt", pfad: sp, grund: String(dlErr?.message ?? "leer").slice(0, 100) }); return json({ ok: false, error: "Upload nicht gefunden" }); }
@@ -164,11 +192,15 @@ serve(async (req) => {
     }
     if (!(file instanceof File)) { await dbg(supabase, { rid, ev: "keine-datei", ct: String(req.headers.get("content-type") ?? "").slice(0, 60), cl: req.headers.get("content-length"), felder: [...form.keys()].join(",").slice(0, 80), typ: typeof file }); return json({ ok: false, error: "Datei fehlt" }); }
     // Der Browser schickt grosse Dateien verlustfrei gzip-komprimiert (gz=1, Name endet auf .gz): das spart Upload-Zeit.
-    const gzBytes = file.size;
+    const gzBytes = urlMode ? urlSize : file.size;
     let gzFile: File | null = null; // die komprimierte Originaldatei (wird, wenn der Slicer es kann, komprimiert weitergereicht)
     let grossGz = false; // sehr grosses Modell: nur komprimiert an den Slicer weiterreichen, hier nicht entpacken (Speicher der Funktion)
     if ((form.get("gz") === "1" || viaStorage) && file.name.toLowerCase().endsWith(".gz")) {
-      if (gzBytes > maxBytes) {
+      if (urlMode) {
+        if (gzBytes > GROSS_GZ_MAX) { await dbg(supabase, { rid, ev: "zu-gross", gzBytes, gzMax: GROSS_GZ_MAX }); return json({ error: "Datei zu gross" }, 413); }
+        grossGz = true; // der Slicer entpackt selbst
+        gzFile = file;
+      } else if (gzBytes > maxBytes) {
         if (viaStorage && !plate && gzBytes <= GROSS_GZ_MAX && g.__serverGz !== false) {
           grossGz = true;
           gzFile = file;
@@ -191,7 +223,8 @@ serve(async (req) => {
     const nameOhneGz = grossGz ? file.name.slice(0, -3) : file.name;
     const ext = nameOhneGz.toLowerCase().slice(nameOhneGz.lastIndexOf("."));
     if (!ALLOWED_EXT.includes(ext)) { await dbg(supabase, { rid, ev: "dateityp", ext }); return json({ error: "Dateityp nicht erlaubt" }, 422); }
-    if (!grossGz && file.size > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", bytes: file.size, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
+    if (urlMode && urlSize > GROSS_GZ_MAX) { await dbg(supabase, { rid, ev: "zu-gross", bytes: urlSize, gzMax: GROSS_GZ_MAX }); return json({ error: "Datei zu gross" }, 413); }
+    if (!grossGz && !urlMode && file.size > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", bytes: file.size, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
     const upFile: File = file; // (nach dem Entpacken) wird an den Slicer weitergereicht
     const quality = String(form.get("quality") ?? "0.20");
     if (!QUALITIES.includes(quality)) return json({ error: "Ungültige Qualität" }, 422);
@@ -208,7 +241,10 @@ serve(async (req) => {
       // allow_split: der Slicer teilt Modelle, die auf keinen Drucker passen, in gleich grosse Stücke (Zuschlag im Kalkulator)
       if (allowSplit) out.append("allow_split", "true");
       // Komprimiert weiterreichen (die Übertragung durch den Tunnel ist der Engpass), solange der Slicer das versteht
-      if (gzFile && !plain && g.__serverGz !== false) {
+      if (urlMode) {
+        out.append("file_url", urlMode);
+        if (grossGz) out.append("gz", "1");
+      } else if (gzFile && !plain && g.__serverGz !== false) {
         out.append("gz", "1");
         out.append("file", gzFile, `upload${ext}.gz`);
       } else {
@@ -226,7 +262,7 @@ serve(async (req) => {
     };
 
     const formMs = Date.now() - tReq; // Einlesen der Anfrage (Upload vom Browser) bis hierher
-    await dbg(supabase, { rid, rss: Math.round((Deno.memoryUsage?.().rss ?? 0) / 1048576), ev: "slice-start", datei: upFile.name.replace(/[^\w.\- ()äöüÄÖÜ]/g, "_").slice(0, 80), bytes: upFile.size, ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
+    await dbg(supabase, { rid, rss: Math.round((Deno.memoryUsage?.().rss ?? 0) / 1048576), ev: "slice-start", datei: upFile.name.replace(/[^\w.\- ()äöüÄÖÜ]/g, "_").slice(0, 80), bytes: urlMode ? urlSize : upFile.size, ...(urlMode ? { via: "slicer-holt-selbst" } : {}), ...(gzBytes !== upFile.size ? { gzBytes } : {}), quality, infill, formMs });
     g.__sliceInflight++;
     counted = true;
     const t0 = Date.now();
@@ -239,7 +275,7 @@ serve(async (req) => {
           signal: AbortSignal.timeout(grossGz ? 140_000 : TIMEOUT_MS), // sehr grosse Modelle: Uebertragung ca. 35-60 s + Slicen ca. 60 s
         });
       const r = await senden();
-      if (!gzFile || g.__serverGz === false || grossGz) return r;
+      if (!gzFile || g.__serverGz === false || grossGz || urlMode) return r;
       if (r.ok) { g.__serverGz = true; return r; }
       // Ein Fehler (4xx) bei komprimierter Übertragung: einmal entpackt wiederholen, ausser das Modell ist schlicht zu gross.
       // Klappt es entpackt, versteht dieser Slicer noch kein gzip -> ab jetzt entpackt senden.
@@ -382,5 +418,6 @@ serve(async (req) => {
     return json({ ok: false, error: "Slicer nicht erreichbar" });
   } finally {
     if (counted) g.__sliceInflight = Math.max(0, g.__sliceInflight - 1);
+    if (aufraeumen) { try { await createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!).storage.from("project-uploads").remove([aufraeumen]); } catch { /* wird spaeter aufgeraeumt */ } }
   }
 });

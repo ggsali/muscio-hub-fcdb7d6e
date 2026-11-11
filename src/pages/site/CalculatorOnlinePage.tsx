@@ -105,6 +105,8 @@ interface Part {
   stlArrayBuffer: ArrayBuffer | null;
   slicerResult: SlicerResult | null;
   slicerLoading: boolean;
+  /** Teilschritt waehrend des Slicens (komprimiere, lade hoch, Server rechnet) */
+  slicerPhase?: string;
   slicerError: string | null;
   kiAnalysis: KiAnalysis | null;
   kiAnalysisLoading: boolean;
@@ -320,7 +322,7 @@ function nasDebug(msg: string) {
 }
 
 /** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
-async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1, abort?: AbortSignal): Promise<SlicerResult> {
+async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1, abort?: AbortSignal, onPhase?: (phase: string) => void): Promise<SlicerResult> {
   const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
   const tStart = performance.now(); // Zeitmessung: Browser -> Edge Function -> Slicer -> Browser
   const rid = `${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-4)}`;
@@ -330,6 +332,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
   };
   const senden = async (komprimiert: boolean) => {
     // STL/OBJ ab 1 MB verlustfrei mit gzip komprimieren: weniger Upload-Zeit (3MF ist schon gepackt)
+    onPhase?.("komprimiere");
     const tGz = performance.now();
     const up = komprimiert && /\.(stl|obj)$/i.test(file.name)
       ? await gzipIfWorthIt(file, file.name)
@@ -341,6 +344,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
     // Ab 3 MB Uebertragung: Datei zuerst direkt in den Storage (kein Limit der Anfrage), die Funktion holt sie dort ab
     let viaStorage = false;
     if (up.blob.size > 3 * 1024 * 1024) {
+      onPhase?.("lade hoch");
       const tUp = performance.now();
       const pfad = `kalkulator/slice-${rid}-${up.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80)}`;
       const { error: upErr } = await supabase.storage.from("project-uploads").upload(pfad, up.blob, { upsert: false, contentType: "application/octet-stream" });
@@ -355,6 +359,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
     body.append("quality", quality.toFixed(2));
     body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
     if (copies > 1) body.append("copies", String(copies));
+    onPhase?.("Server rechnet");
     let r: Response;
     try {
       r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-public`, {
@@ -918,7 +923,7 @@ const CalculatorOnlinePage = () => {
           for (let versuch = 0; versuch < 3 && !result; versuch++) {
             if (versuch > 0) await new Promise((r) => setTimeout(r, 5000));
             try {
-              result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill), mat?.density);
+              result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill, 1, undefined, (ph) => setParts((prev) => prev.map((x) => (x.id === partId ? { ...x, slicerPhase: ph } : x)))), mat?.density);
             } catch (e) {
               letzter = e;
               // Zeitueberschreitung: nicht nochmals dieselbe Wartezeit riskieren
@@ -2827,7 +2832,7 @@ const CalculatorOnlinePage = () => {
 
                             {p.slicerLoading && (
                               <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
-                                <Loader2 className="w-3 h-3 animate-spin" /> ⚙️ Slicing läuft…
+                                <Loader2 className="w-3 h-3 animate-spin" /> ⚙️ Slicing läuft…{p.slicerPhase ? ` (${p.slicerPhase})` : ""}
                               </p>
                             )}
                             {p.slicerResult && !p.slicerLoading && (
