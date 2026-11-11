@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       if (teilen) { time *= copies; grams *= copies; plates = copies; }
       else if (Number(payload?.copies ?? st.copies) !== copies || !(plates >= 1)) throw new Error("Slicer kennt keine Mengenrechnung");
       await speichere({
-        ok: true, at, copies, plates: Math.min(500, Math.floor(plates)), printer: used, layer_height: layer, infill,
+        ok: true, at, nas_job_id: typeof payload?.job_id === "string" ? payload.job_id : null, copies, plates: Math.min(500, Math.floor(plates)), printer: used, layer_height: layer, infill,
         print_time_s: Math.round(time), filament_g: Math.round(grams * 10) / 10,
         has_support: !!st.has_support, ...(Number(st.support_grams) > 0 ? { support_g: Number(st.support_grams) * (teilen ? copies : 1) } : {}),
         ...(Number(st.layers) > 0 ? { layers: Number(st.layers) } : {}),
