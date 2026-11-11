@@ -4,6 +4,7 @@ import { takePendingUploads } from "@/lib/pendingUpload";
 import { useSlicerWorker, type SlicerResult } from "@/hooks/useSlicerWorker";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { WaitFacts } from "@/components/site/WaitFacts";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2871,6 +2872,9 @@ const CalculatorOnlinePage = () => {
                               <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
                                 <Loader2 className="w-3 h-3 animate-spin" /> ⚙️ Slicing läuft…{p.slicerPhase ? ` (${p.slicerPhase})` : ""}
                               </p>
+                            )}
+                            {p.slicerLoading && parts.find((x) => x.slicerLoading)?.id === p.id && (
+                              <WaitFacts />
                             )}
                             {p.slicerResult && !p.slicerLoading && (
                               <div className="mt-1 space-y-0.5">
