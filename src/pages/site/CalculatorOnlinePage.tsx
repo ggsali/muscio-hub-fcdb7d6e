@@ -2304,6 +2304,9 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                     </div>
                   )}
 
+                  {/* Unterhaltung waehrend der Analyse: direkt unter der Dateiliste, gut sichtbar */}
+                  {parts.length > 0 && anySlicerLoading && <WaitFacts />}
+
                   {hasStep && (
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm">
                       <p className="font-medium text-amber-800">⚠️ STEP-Dateien können nicht automatisch berechnet werden.</p>
@@ -2874,9 +2877,6 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                               <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
                                 <Loader2 className="w-3 h-3 animate-spin" /> ⚙️ Slicing läuft…{p.slicerPhase ? ` (${p.slicerPhase})` : ""}
                               </p>
-                            )}
-                            {p.slicerLoading && parts.find((x) => x.slicerLoading)?.id === p.id && (
-                              <WaitFacts />
                             )}
                             {p.slicerResult && !p.slicerLoading && (
                               <div className="mt-1 space-y-0.5">
