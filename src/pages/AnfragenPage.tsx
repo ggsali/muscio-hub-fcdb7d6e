@@ -298,15 +298,13 @@ export default function AnfragenPage() {
       // AI-generierter Auftragstitel
       const attachmentsRaw = (inq.attachments || []) as Attachment[];
       const filenames = attachmentsRaw.map(a => a.filename).filter(Boolean);
-      let aiTitle: string | null = null;
-      try {
-        const { data: titleData } = await supabase.functions.invoke("generate-order-title", {
-          body: { filenames, nachricht: inq.nachricht, betreff: inq.betreff },
-        });
-        if (titleData?.title) aiTitle = titleData.title;
-      } catch (e) {
-        console.warn("AI Titel fehlgeschlagen", e);
-      }
+      // KI-Titel laeuft im Hintergrund und ersetzt den Namen, sobald er da ist (Auftrag wird nicht aufgehalten)
+      const aiTitlePromise: Promise<string | null> = Promise.resolve(
+        supabase.functions.invoke("generate-order-title", { body: { filenames, nachricht: inq.nachricht, betreff: inq.betreff } }),
+      ).then(({ data }) => (data?.title as string) || null).catch(() => null);
+      // Filament-Bibliothek und G-Code-Jobs parallel zum Anlegen des Auftrags laden
+      const bibPromise = supabase.from("filaments").select("id, name, material, farbe, farben, preis_pro_kg");
+      const sliceJobsPromise = (supabase.from as any)("slice_jobs").select("filename, nas_job_id, status").eq("inquiry_id", inq.id).not("nas_job_id", "is", null);
       const fallbackTitle = filenames[0]?.replace(/\.[^.]+$/, "") || inq.betreff || ("Anfrage vom " + new Date().toLocaleDateString("de-CH"));
 
       // Werte aus dem Website-Kalkulator (Versandart/-kosten am ersten Teil)
@@ -321,7 +319,7 @@ export default function AnfragenPage() {
         datum: new Date().toISOString().split("T")[0],
         status: "Offen",
         source: "website",
-        name: aiTitle || fallbackTitle,
+        name: fallbackTitle,
         // Spardosen-Generator: Versand/Verpackung/Setup direkt übernehmen
         ...(spardoseMeta ? { versandkosten: Number(spardoseMeta.auftrag_versand) || 0, verpackungskosten: Number(spardoseMeta.auftrag_verpackung) || 0, setup_anzahl: 1 } : {}),
         ...(!spardoseMeta && plattenSumme > 0 ? { setup_anzahl: plattenSumme } : {}),
@@ -354,8 +352,22 @@ export default function AnfragenPage() {
 
       const groupParts = new Map<string, string>();
       // Filament-Bibliothek: nur was dort existiert, wird als Material/Farbe übernommen
-      const { data: bibData } = await supabase.from("filaments").select("id, name, material, farbe, farben, preis_pro_kg");
+      const { data: bibData } = await bibPromise;
       const bibliothek: any[] = bibData ?? [];
+      const { data: sliceJobRows } = await sliceJobsPromise;
+      const fileTasks: Promise<unknown>[] = []; // Dateikopien laufen parallel zum Anlegen der Teile
+      const partIdByIndex = new Map<number, string>();
+      // Serverseitig kopieren (kein Download/Upload ueber den Browser); bei Fehler Rueckfall auf Download/Upload
+      const kopiere = async (att: Attachment, newPath: string, contentType: string): Promise<number | null> => {
+        const srcBucket = att.bucket || "project-uploads";
+        const { error: cpErr } = await (supabase.storage.from(srcBucket) as any).copy(att.storage_path as string, newPath, { destinationBucket: "part-files" });
+        if (!cpErr) return att.size_bytes ?? null;
+        const { data: fileData, error: dlErr } = await supabase.storage.from(srcBucket).download(att.storage_path as string);
+        if (dlErr || !fileData) throw new Error("Datei konnte nicht geladen werden");
+        const { error: upErr } = await supabase.storage.from("part-files").upload(newPath, fileData, { upsert: true, contentType });
+        if (upErr) throw upErr;
+        return att.size_bytes ?? (fileData as Blob).size ?? null;
+      };
       let kalkErster = true; // Kalkulator: Setup-Anzahl wie im Auftrag nur am ersten Teil
       // Geteilte Teile (grösser als Druckbett): Vermerk aus der Anfrage ins Teil übernehmen
       const geteiltNotiz = (filename?: string | null): string => {
@@ -373,58 +385,48 @@ export default function AnfragenPage() {
           // Bilder → als Referenzbild speichern, KEIN Teil erstellen
           if (isImage(att.filename)) {
             if (!att.storage_path) continue;
-            try {
-              const { data: fileData, error: dlErr } = await supabase.storage
-                .from(att.bucket || "project-uploads")
-                .download(att.storage_path);
-              if (dlErr || !fileData) continue;
-              const ext = att.filename?.split(".").pop()?.toLowerCase() || "";
-              const safeName = (att.filename || "bild").replace(/[^\w.\-]+/g, "_");
-              const newPath = `${order.id}/referenz/${Date.now()}_${safeName}`;
-              const { error: upErr } = await supabase.storage
-                .from("part-files")
-                .upload(newPath, fileData, { upsert: true, contentType: mimeMap[ext] || "image/jpeg" });
-              if (upErr) continue;
-              await supabase.from("part_files").insert({
-                part_id: null,
-                order_id: order.id,
-                customer_id: customerId,
-                filename: att.filename,
-                storage_path: newPath,
-                file_type: "reference-image",
-                file_size_bytes: att.size_bytes ?? (fileData as Blob).size ?? null,
-              });
-            } catch (e) {
-              console.error("Referenzbild kopieren fehlgeschlagen:", att.filename, e);
-            }
+            fileTasks.push((async () => {
+              try {
+                const ext = att.filename?.split(".").pop()?.toLowerCase() || "";
+                const safeName = (att.filename || "bild").replace(/[^\w.\-]+/g, "_");
+                const newPath = `${order.id}/referenz/${Date.now()}_${i}_${safeName}`;
+                const size = await kopiere(att, newPath, mimeMap[ext] || "image/jpeg");
+                await supabase.from("part_files").insert({
+                  part_id: null, order_id: order.id, customer_id: customerId, filename: att.filename,
+                  storage_path: newPath, file_type: "reference-image", file_size_bytes: size,
+                });
+              } catch (e) {
+                console.error("Referenzbild kopieren fehlgeschlagen:", att.filename, e);
+              }
+            })());
             continue;
           }
 
           // Auftragsblatt (PDF): als Auftragsdatei speichern, kein Teil erstellen
           if ((att as any).kind === "auftragsblatt") {
             if (!att.storage_path) continue;
-            try {
-              const { data: fileData, error: dlErr } = await supabase.storage.from(att.bucket || "project-uploads").download(att.storage_path);
-              if (dlErr || !fileData) continue;
-              const safeName = (att.filename || "auftragsblatt.pdf").replace(/[^\w.\-]+/g, "_");
-              const newPath = `${order.id}/${Date.now()}_${safeName}`;
-              const { error: upErr } = await supabase.storage.from("part-files").upload(newPath, fileData, { upsert: true, contentType: "application/pdf" });
-              if (upErr) continue;
-              await supabase.from("part_files").insert({
-                part_id: null, order_id: order.id, customer_id: customerId, filename: att.filename,
-                storage_path: newPath, file_type: "application/pdf", file_size_bytes: att.size_bytes ?? (fileData as Blob).size ?? null,
-              });
-              // zusätzlich im Reiter "Dokumente" ablegen (gleicher Ort wie hochgeladene Dokumente)
+            fileTasks.push((async () => {
               try {
-                const docPath = `${order.id}/uploads/${Date.now()}_${safeName}`;
-                const { error: docErr } = await supabase.storage.from("bills").upload(docPath, fileData, { upsert: false, contentType: "application/pdf" });
-                if (!docErr) {
-                  await (supabase.from as any)("bills").insert({
-                    order_id: order.id, titel: "Auftragsblatt", betrag: 0, bezahlt: true, file_path: docPath, filename: att.filename || "Auftragsblatt.pdf",
-                  });
+                const safeName = (att.filename || "auftragsblatt.pdf").replace(/[^\w.\-]+/g, "_");
+                const newPath = `${order.id}/${Date.now()}_${i}_${safeName}`;
+                const size = await kopiere(att, newPath, "application/pdf");
+                await supabase.from("part_files").insert({
+                  part_id: null, order_id: order.id, customer_id: customerId, filename: att.filename,
+                  storage_path: newPath, file_type: "application/pdf", file_size_bytes: size,
+                });
+                // zusaetzlich im Reiter "Dokumente" ablegen (gleicher Ort wie hochgeladene Dokumente)
+                const docPath = `${order.id}/uploads/${Date.now()}_${i}_${safeName}`;
+                const { data: fileData } = await supabase.storage.from("part-files").download(newPath);
+                if (fileData) {
+                  const { error: docErr } = await supabase.storage.from("bills").upload(docPath, fileData, { upsert: false, contentType: "application/pdf" });
+                  if (!docErr) {
+                    await (supabase.from as any)("bills").insert({
+                      order_id: order.id, titel: "Auftragsblatt", betrag: 0, bezahlt: true, file_path: docPath, filename: att.filename || "Auftragsblatt.pdf",
+                    });
+                  }
                 }
-              } catch (e) { console.error("Auftragsblatt in Dokumente fehlgeschlagen:", e); }
-            } catch (e) { console.error("Auftragsblatt kopieren fehlgeschlagen:", e); }
+              } catch (e) { console.error("Auftragsblatt kopieren fehlgeschlagen:", e); }
+            })());
             continue;
           }
 
@@ -499,46 +501,43 @@ export default function AnfragenPage() {
             kalkErster = false;
             if (gruppe) groupParts.set(gruppe, part.id);
           }
+          partIdByIndex.set(i, partId as string);
           if (!att.storage_path) continue;
-
-          try {
-            const { data: fileData, error: dlErr } = await supabase.storage
-              .from(att.bucket || "project-uploads")
-              .download(att.storage_path);
-
-            if (dlErr || !fileData) {
-              console.error("Download fehlgeschlagen:", att.filename, dlErr);
-              continue;
+          const partIdFix = partId as string;
+          fileTasks.push((async () => {
+            try {
+              const ext = att.filename?.split(".").pop()?.toLowerCase() || "";
+              const fileType = mimeMap[ext] || "application/octet-stream";
+              const safeName = (att.filename || "datei").replace(/[^\w.\-]+/g, "_");
+              const newPath = `${order.id}/${partIdFix}/${Date.now()}_${i}_${safeName}`;
+              const size = await kopiere(att, newPath, fileType);
+              const { error: insErr } = await supabase.from("part_files").insert({
+                part_id: partIdFix, order_id: order.id, customer_id: customerId,
+                filename: att.filename, storage_path: newPath, file_type: fileType, file_size_bytes: size,
+              });
+              if (insErr) console.error("part_files insert error:", insErr);
+            } catch (e) {
+              console.error("Datei kopieren fehlgeschlagen:", att.filename, e);
             }
-
-            const ext = att.filename?.split(".").pop()?.toLowerCase() || "";
-            const fileType = (fileData as Blob).type || mimeMap[ext] || "application/octet-stream";
-
-            const safeName = (att.filename || "datei").replace(/[^\w.\-]+/g, "_");
-            const newPath = `${order.id}/${partId}/${Date.now()}_${safeName}`;
-            const { error: upErr } = await supabase.storage
-              .from("part-files")
-              .upload(newPath, fileData, { upsert: true, contentType: fileType });
-
-            if (upErr) {
-              console.error("Upload fehlgeschlagen:", att.filename, upErr);
-              continue;
-            }
-
-            const { error: insErr } = await supabase.from("part_files").insert({
-              part_id: partId,
-              order_id: order.id,
-              customer_id: customerId,
-              filename: att.filename,
-              storage_path: newPath,
-              file_type: fileType,
-              file_size_bytes: att.size_bytes ?? (fileData as Blob).size ?? null,
-            });
-            if (insErr) console.error("part_files insert error:", insErr);
-          } catch (e) {
-            console.error("Datei kopieren fehlgeschlagen:", att.filename, e);
-          }
+          })());
         }
+
+        // G-Codes der Anfrage (Mengen-Slice / Auto-Slice) dem passenden Teil zuordnen; der Server holt sie vom NAS
+        const jobRows = (sliceJobRows ?? []) as { filename: string; nas_job_id: string }[];
+        const gcodeSeen = new Set<string>();
+        attachments.forEach((att, i) => {
+          const pid = partIdByIndex.get(i);
+          if (!pid || (att as any).kind) return;
+          const jobId = ((att as any).batch_slice?.ok && (att as any).batch_slice.nas_job_id) || jobRows.find((r) => r.filename === att.filename)?.nas_job_id;
+          if (!jobId || gcodeSeen.has(`${pid}|${jobId}`)) return;
+          gcodeSeen.add(`${pid}|${jobId}`);
+          fileTasks.push(
+            Promise.resolve(supabase.functions.invoke("order-attach-gcode", {
+              body: { order_id: order.id, part_id: pid, customer_id: customerId, nas_job_id: jobId, filename: String(att.filename ?? "teil").replace(/\.[^.]+$/, "") + ".gcode" },
+            })).catch((e) => console.warn("G-Code anhaengen fehlgeschlagen:", e)),
+          );
+        });
+        await Promise.all(fileTasks);
       } else {
         await supabase.from("parts").insert({
           order_id: order.id,
@@ -563,6 +562,7 @@ export default function AnfragenPage() {
 
       toast({ title: "Auftrag erstellt ✓" });
       navigate(`/admin/auftraege/${order.id}`);
+      aiTitlePromise.then((t) => { if (t) void supabase.from("orders").update({ name: t } as any).eq("id", order.id); });
     } catch (e: any) {
       console.error("createOrder error:", e);
       toast({ title: "Fehler", description: e?.message || String(e), variant: "destructive" });
