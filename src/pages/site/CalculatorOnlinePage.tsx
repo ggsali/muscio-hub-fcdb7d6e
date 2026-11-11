@@ -324,7 +324,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
       method: "POST",
       headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
       body,
-      signal: abort && typeof AbortSignal.any === "function" ? AbortSignal.any([AbortSignal.timeout(110_000), abort]) : AbortSignal.timeout(110_000),
+      signal: abort && typeof AbortSignal.any === "function" ? AbortSignal.any([AbortSignal.timeout(145_000), abort]) : AbortSignal.timeout(145_000),
     });
     return { res: r, json: await r.json().catch(() => ({})), gz: up.gz };
   };
@@ -864,7 +864,11 @@ const CalculatorOnlinePage = () => {
             if (versuch > 0) await new Promise((r) => setTimeout(r, 5000));
             try {
               result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill), mat?.density);
-            } catch (e) { letzter = e; }
+            } catch (e) {
+              letzter = e;
+              // Zeitueberschreitung: nicht nochmals dieselbe Wartezeit riskieren
+              if (/time ?out|timed out|abort/i.test(`${(e as Error)?.name} ${(e as Error)?.message}`)) break;
+            }
           }
           if (!result) throw letzter ?? new Error("NAS-Slicer nicht verfügbar");
         } catch (nasErr) {
@@ -873,7 +877,7 @@ const CalculatorOnlinePage = () => {
           browserGrund = String((nasErr as Error)?.message ?? nasErr).slice(0, 160);
         }
       }
-      if (!result && nasOnly) throw new Error("NAS_ONLY");
+      if (!result && nasOnly) throw new Error(`NAS_ONLY:${browserGrund}`);
       if (!result) {
         if (!stlBuffer) throw new Error("NO_STL");
         result = await slice(stlBuffer.slice(0), {
@@ -899,7 +903,7 @@ const CalculatorOnlinePage = () => {
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       setParts((prev) => prev.map((p) => p.id === partId
-        ? { ...p, slicerLoading: false, slicerError: err?.message === "NAS_ONLY" ? "Genaue Berechnung momentan nicht möglich – Schätzung wird verwendet" : "Slicer nicht verfügbar – Schätzung wird verwendet" }
+        ? { ...p, slicerLoading: false, slicerError: String(err?.message).startsWith("NAS_ONLY") ? `Genaue Berechnung momentan nicht möglich – Schätzung wird verwendet${String(err.message).slice(9) ? ` (${String(err.message).slice(9)})` : ""}` : "Slicer nicht verfügbar – Schätzung wird verwendet" }
         : p));
     }
   }, [parts, materials, qualityPresets, qualityKey, slice]);
