@@ -8,6 +8,10 @@ export interface SlicerResult {
   density?: number;
   layers: number;
   hasSupport: boolean;
+  /** Wo gerechnet wurde: Slicer-Server (muscio) oder Browser-Slicer. */
+  quelle?: "server" | "browser";
+  /** Warum der Browser statt des Servers gerechnet hat (nur bei quelle "browser", technischer Kurztext) */
+  browserGrund?: string;
   /** Gewicht der Stuetzstrukturen in g (Slicer; im Browser aus dem Zeitanteil geschaetzt). Fehlt es, rechnet der Preis grob nach Teilegroesse. */
   supportGrams?: number;
   /** Wurde das Modell wegen seiner Grösse in mehrere Teile geteilt (Server-Slicer)? Anzahl der Teile, sonst leer */

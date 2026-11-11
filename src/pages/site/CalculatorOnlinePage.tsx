@@ -372,7 +372,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
   if (json?.detail) console.info("[Slicer] NAS-Meldung:", json.detail);
   if (!res.ok || !st || !(st.filament_g > 0) || !(st.print_time_s > 0)) {
     nasDebug(`Fallback nach ${gesamtMs} ms (Datei ${mb} MB): http=${res.status} ok=${json?.ok} err=${json?.error ?? ""} detail=${json?.detail ?? ""} stats=${st ? JSON.stringify(st).slice(0, 150) : "keine"}`);
-    throw new Error("NAS-Slicer nicht verfügbar");
+    throw new Error(`NAS-Slicer nicht verfügbar (${json?.error ?? json?.detail ?? `HTTP ${res.status}`})`);
   }
   nasDebug(`Browser-Zeit gesamt: ${gesamtMs} ms (Datei ${mb} MB, inkl. Upload und Antwort${copies > 1 ? `, ${copies} Stück` : ""})`);
   if (copies > 1) {
@@ -386,6 +386,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
       density: 1.25,
       layers: st.layers ?? 0,
       hasSupport: !!st.has_support,
+      quelle: "server",
       ...(Number(st.support_grams) > 0 ? { supportGrams: Number(st.support_grams) / copies } : {}),
       batch: { copies, plates: Math.floor(Number(b.plates)), printer: typeof b.printer === "string" ? b.printer : undefined },
     } as SlicerResult;
@@ -397,6 +398,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
     density: 1.25,
     layers: st.layers ?? 0,
     hasSupport: !!st.has_support,
+    quelle: "server",
     ...(Number(st.support_grams) > 0 ? { supportGrams: Number(st.support_grams) } : {}),
     ...(Number(json?.split?.parts) >= 2 ? { splitParts: Math.min(4, Math.floor(Number(json.split.parts))) } : {}),
   } as SlicerResult;
@@ -883,12 +885,14 @@ const CalculatorOnlinePage = () => {
 
     try {
       let result: SlicerResult | null = null;
+      let browserGrund = "";
       if (!quickSlice && part.file) {
         try {
           result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill), mat?.density);
         } catch (nasErr) {
           console.info("[Slicer] NAS nicht genutzt, Browser-Slicer als Fallback:", nasErr);
           nasDebug(`Browser-Fallback: ${(nasErr as Error)?.message ?? nasErr}`);
+          browserGrund = String((nasErr as Error)?.message ?? nasErr).slice(0, 160);
         }
       }
       if (!result && nasOnly) throw new Error("NAS_ONLY");
@@ -901,6 +905,7 @@ const CalculatorOnlinePage = () => {
           speedFactor: quality.speedFactor,
           density: mat?.density,
         }, quickSlice ? 1 : 0);
+        result = { ...result, quelle: "browser", ...(browserGrund ? { browserGrund } : {}) };
       }
       console.log("[Slicer]", result);
       sliceCache.current.set(cacheKey, result);
@@ -2794,8 +2799,11 @@ const CalculatorOnlinePage = () => {
                                   ✓ Gesliced
                                 </span>
                                 <p className="text-xs text-muted-foreground">
-                                  Druckzeit: {(p.slicerResult.printTimeMinutes / 60).toFixed(1)} h (OrcaSlicer) · Filament: {p.slicerResult.filamentGrams.toFixed(0)} g · Layer: {p.slicerResult.layers}
+                                  Druckzeit: {(p.slicerResult.printTimeMinutes / 60).toFixed(1)} h (OrcaSlicer, {p.slicerResult.quelle === "server" ? "Server" : "Browser-Schätzung"}) · Filament: {p.slicerResult.filamentGrams.toFixed(0)} g · Layer: {p.slicerResult.layers}
                                 </p>
+                                {p.slicerResult.quelle === "browser" && p.slicerResult.browserGrund && (
+                                  <p className="text-[11px] text-muted-foreground/70" title={p.slicerResult.browserGrund}>Server nicht genutzt: {p.slicerResult.browserGrund}</p>
+                                )}
                                 {p.slicerResult.hasSupport && (
                                   <p className="text-xs text-muted-foreground">⚠️ Support erkannt</p>
                                 )}
