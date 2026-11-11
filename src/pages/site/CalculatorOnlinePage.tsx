@@ -493,17 +493,20 @@ const CalculatorOnlinePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [herkunftInquiryId, setHerkunftInquiryId] = useState<string | null>(null);
+  // Neustart = Seite komplett neu laden (alles von vorne)
   const neuStarten = () => {
-    setSubmitted(false);
-    setHerkunftInquiryId(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.location.assign("/kalkulator-online");
   };
-  // Klick auf "Kalkulator" im Menue nach abgeschlossener Bestellung = neu beginnen
+  // Klick auf "Kalkulator" im Menue nach abgeschlossener Bestellung = komplett neu laden
   useEffect(() => {
     if (!submitted) return;
     const h = (e: MouseEvent) => {
       const a = (e.target as HTMLElement | null)?.closest?.("a");
-      if (a && a.getAttribute("href")?.split("?")[0] === "/kalkulator-online") neuStarten();
+      if (a && a.getAttribute("href")?.split("?")[0] === "/kalkulator-online") {
+        e.preventDefault();
+        e.stopPropagation();
+        neuStarten();
+      }
     };
     document.addEventListener("click", h, true);
     return () => document.removeEventListener("click", h, true);
