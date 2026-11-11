@@ -493,6 +493,21 @@ const CalculatorOnlinePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [herkunftInquiryId, setHerkunftInquiryId] = useState<string | null>(null);
+  const neuStarten = () => {
+    setSubmitted(false);
+    setHerkunftInquiryId(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  // Klick auf "Kalkulator" im Menue nach abgeschlossener Bestellung = neu beginnen
+  useEffect(() => {
+    if (!submitted) return;
+    const h = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement | null)?.closest?.("a");
+      if (a && a.getAttribute("href")?.split("?")[0] === "/kalkulator-online") neuStarten();
+    };
+    document.addEventListener("click", h, true);
+    return () => document.removeEventListener("click", h, true);
+  }, [submitted]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [form, setForm] = useState({ vorname: "", nachname: "", email: "", phone: "", strasse: "", plz: "", ort: "", land: "Schweiz", message: "" });
   const [refImages, setRefImages] = useState<Array<{ id: string; file: File; storagePath?: string; uploading: boolean; previewUrl: string }>>([]);
@@ -2072,6 +2087,7 @@ const CalculatorOnlinePage = () => {
           <SuccessView
             inquiryId={herkunftInquiryId}
             onHerkunftSaved={() => setHerkunftInquiryId(null)}
+            onRestart={neuStarten}
           />
         ) : materialsLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -3190,9 +3206,11 @@ const CalculatorOnlinePage = () => {
 const SuccessView = ({
   inquiryId,
   onHerkunftSaved,
+  onRestart,
 }: {
   inquiryId: string | null;
   onHerkunftSaved: () => void;
+  onRestart: () => void;
 }) => {
   return (
     <motion.div
@@ -3211,6 +3229,9 @@ const SuccessView = ({
         <p className="text-muted-foreground text-sm">
           Vielen Dank für deine Anfrage. Wir prüfen deine Dateien und melden uns ab 24 Stunden bei dir.
         </p>
+        <Button variant="outline" className="mt-6 rounded-full" onClick={onRestart}>
+          Neue Berechnung starten
+        </Button>
       </div>
 
       <AnimatePresence>
