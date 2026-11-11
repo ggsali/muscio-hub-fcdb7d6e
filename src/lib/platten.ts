@@ -13,9 +13,10 @@ const ABSTAND = 6; // mm zwischen den Teilen
 
 function proPlatte(dims: Mass3, bed: number, hoehe: number): number {
   let best = 0;
-  const perms: Mass3[] = [
-    [dims[0], dims[1], dims[2]], [dims[0], dims[2], dims[1]], [dims[1], dims[2], dims[0]],
-  ];
+  // wie modelliert oder flach auf der grössten Seite (nie hochkant: instabil)
+  const flach = [...dims].sort((x, y) => y - x) as Mass3;
+  const perms: Mass3[] = [dims, flach];
+
   const nutz = bed - 2 * RAND;
   for (const [w, d, h] of perms) {
     if (h > hoehe || w > nutz || d > nutz) continue;
