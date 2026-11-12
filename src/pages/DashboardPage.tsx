@@ -96,6 +96,8 @@ export default function DashboardPage() {
         setRecentOrders(recent);
 
         const bezahlt = await ladeUmsatzAuftraege();
+        // Gesamtumsatz und Gewinn aus den Zahlungen (inkl. Teilzahlungen)
+        setKpis((k) => ({ ...k, umsatz: bezahlt.reduce((s, e) => s + e.umsatz, 0), gewinn: bezahlt.reduce((s, e) => s + e.gewinn, 0), investFonds: bezahlt.reduce((s, e) => s + e.gewinn, 0) * (settings.investitions_fonds_prozent / 100) }));
         const jetztKey = aktuellerMonat();
         const months = monatsSummen(bezahlt, monatVerschieben(jetztKey, -5), jetztKey).map(m => ({
           key: m.key,

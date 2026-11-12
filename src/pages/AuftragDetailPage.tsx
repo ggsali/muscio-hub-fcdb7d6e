@@ -1,4 +1,5 @@
 import BezahltAmFeld from "@/components/BezahltAmFeld";
+import TeilzahlungenFeld from "@/components/TeilzahlungenFeld";
 import React, { useEffect, useRef, useState } from "react";
 import { filamentFarben } from "@/lib/filamentFarben";
 import JSZip from "jszip";
@@ -2477,6 +2478,7 @@ export default function AuftragDetailPage() {
                 <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} className="bg-input border-border" />
               </div>
               {!isNew && id && <BezahltAmFeld orderId={id} status={status} />}
+              {!isNew && id && <TeilzahlungenFeld orderId={id} status={status} />}
               {!isNew && (
                 <>
                   <div className="grid grid-cols-2 gap-3">

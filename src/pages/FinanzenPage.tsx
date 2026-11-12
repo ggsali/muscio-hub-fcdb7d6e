@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { UMSATZ_STATUS, ladeUmsatzAuftraege } from "@/lib/umsatz";
+import { UMSATZ_STATUS, ladeUmsatzAuftraege, type UmsatzAuftrag } from "@/lib/umsatz";
 import {
   Plus, TrendingUp, TrendingDown, Wallet,
   Download, Trash2, Paperclip,
@@ -97,6 +97,7 @@ export default function FinanzenPage() {
   });
   const [belegFile, setBelegFile] = useState<File | null>(null);
 
+  const [umsatzEintraege, setUmsatzEintraege] = useState<UmsatzAuftrag[]>([]);
   useEffect(() => { load(); }, []);
 
   async function load() {
@@ -109,7 +110,8 @@ export default function FinanzenPage() {
       (supabase.from as any)("ausgaben").select("*").order("datum", { ascending: false }),
       ladeUmsatzAuftraege().catch(() => []),
     ]);
-    setZahlMap(Object.fromEntries(bezahlt.map((b) => [b.id, b.zahlDatum])));
+    setZahlMap(Object.fromEntries(bezahlt.filter((b) => b.zahlDatumQuelle !== "teilzahlung").map((b) => [b.id, b.zahlDatum])));
+    setUmsatzEintraege(bezahlt);
     setOrders((o.data as Order[]) || []);
     setCustomers((c.data as Customer[]) || []);
     setAusgaben((a.data as Ausgabe[]) || []);
@@ -133,8 +135,8 @@ export default function FinanzenPage() {
   );
 
   const einnahmen = useMemo(
-    () => ordersInRange.filter(o => PAID_STATUS.includes(o.status || "")).reduce((s, o) => s + Number(o.umsatz_total || 0), 0),
-    [ordersInRange]
+    () => umsatzEintraege.filter(e => { const d = new Date(e.zahlDatum); return d >= start && d < end; }).reduce((s, e) => s + e.umsatz, 0),
+    [umsatzEintraege, start, end]
   );
 
   const ausgabenInRange = useMemo(
@@ -162,9 +164,9 @@ export default function FinanzenPage() {
     const inc: Record<string, number> = {};
     const exp: Record<string, number> = {};
     keys.forEach(k => { inc[k] = 0; exp[k] = 0; });
-    orders.filter(o => PAID_STATUS.includes(o.status || "")).forEach(o => {
-      const k = monthKey(orderDate(o));
-      if (k in inc) inc[k] += Number(o.umsatz_total || 0);
+    umsatzEintraege.forEach(e => {
+      const k = monthKey(new Date(e.zahlDatum));
+      if (k in inc) inc[k] += e.umsatz;
     });
     ausgaben.forEach(a => {
       const k = monthKey(new Date(a.datum));
@@ -177,7 +179,7 @@ export default function FinanzenPage() {
       ausgaben: Number(exp[k].toFixed(2)),
       gewinn: Number((inc[k] - exp[k]).toFixed(2)),
     }));
-  }, [orders, ausgaben, zahlMap]);
+  }, [orders, ausgaben, zahlMap, umsatzEintraege]);
 
   // Marge-Analyse
   const analyse = useMemo(() => {

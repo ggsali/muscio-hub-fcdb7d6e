@@ -25,7 +25,9 @@ export interface UmsatzAuftrag {
   kunde: string;
   /** Datum, nach dem der Monat zugeordnet wird (lokal, YYYY-MM-DD) */
   zahlDatum: string;
-  zahlDatumQuelle: "manuell" | "zahlung" | "auftrag";
+  zahlDatumQuelle: "manuell" | "zahlung" | "auftrag" | "teilzahlung";
+  /** false bei weiteren Einträgen desselben Auftrags (Teilzahlungen), damit Aufträge nur einmal gezählt werden */
+  zaehlt?: boolean;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -63,37 +65,75 @@ function kundeName(c: any): string {
   return c.firma || [c.vorname, c.name].filter(Boolean).join(" ").trim() || c.email || "Kunde ohne Name";
 }
 
-/** Lädt alle Aufträge, die zum Umsatz zählen, mit Zahlungsdatum */
+/** Lädt alle Umsatz-Einträge: pro Auftrag der Rest (ab Status "Bezahlt") und jede Teilzahlung mit ihrem eigenen Datum.
+ *  Ein Auftrag ohne Teilzahlungen ergibt wie bisher genau einen Eintrag über den ganzen Betrag. */
 export async function ladeUmsatzAuftraege(): Promise<UmsatzAuftrag[]> {
-  const [{ data: orders }, { data: logs }] = await Promise.all([
+  const [{ data: ordersStatus }, { data: logs }, { data: zahlungen }] = await Promise.all([
     (supabase.from as any)("orders")
       .select("id, name, beschreibung, datum, bezahlt_am, created_at, status, umsatz_total, kosten_total, gewinn_total, customers(name, vorname, firma, email)")
       .in("status", UMSATZ_STATUS),
     (supabase.from as any)("order_status_log").select("order_id, created_at").in("status", UMSATZ_STATUS).order("created_at", { ascending: true }),
+    (supabase.from as any)("order_payments").select("order_id, betrag, datum").order("datum", { ascending: true }),
   ]);
+  const proAuftrag = new Map<string, { betrag: number; datum: string }[]>();
+  for (const z of (zahlungen ?? []) as { order_id: string; betrag: number | string; datum: string }[]) {
+    const l = proAuftrag.get(z.order_id) ?? [];
+    l.push({ betrag: Number(z.betrag) || 0, datum: z.datum });
+    proAuftrag.set(z.order_id, l);
+  }
+  // Aufträge mit Teilzahlung, die noch nicht im Status "Bezahlt" sind, gehören ebenfalls dazu
+  const bekannt = new Set(((ordersStatus ?? []) as any[]).map((o) => o.id));
+  const fehlend = [...proAuftrag.keys()].filter((id) => !bekannt.has(id));
+  let nurTeil: any[] = [];
+  if (fehlend.length > 0) {
+    const { data } = await (supabase.from as any)("orders")
+      .select("id, name, beschreibung, datum, bezahlt_am, created_at, status, umsatz_total, kosten_total, gewinn_total, customers(name, vorname, firma, email)")
+      .in("id", fehlend);
+    nurTeil = (data ?? []) as any[];
+  }
   const zahl = new Map<string, string>();
   for (const l of (logs ?? []) as { order_id: string; created_at: string }[]) {
     if (!zahl.has(l.order_id)) zahl.set(l.order_id, lokalesDatum(new Date(l.created_at)));
   }
-  return ((orders ?? []) as any[]).map((o) => {
+  const out: UmsatzAuftrag[] = [];
+  for (const o of [...((ordersStatus ?? []) as any[]), ...nurTeil]) {
     const manuell = (o.bezahlt_am as string | null) || null;
     const ausLog = manuell ? undefined : zahl.get(o.id);
     const auftragsDatum = (o.datum as string | null) || (o.created_at ? lokalesDatum(new Date(o.created_at)) : lokalesDatum(new Date()));
-    const umsatz = Number(o.umsatz_total) || 0;
+    const total = Number(o.umsatz_total) || 0;
     const kosten = Number(o.kosten_total) || 0;
-    return {
-      id: o.id,
-      name: o.name || o.beschreibung || "Ohne Titel",
-      datum: o.datum ?? null,
-      status: o.status ?? "",
-      umsatz,
-      kosten,
-      gewinn: o.gewinn_total != null ? Number(o.gewinn_total) || 0 : umsatz - kosten,
+    const gewinnTotal = o.gewinn_total != null ? Number(o.gewinn_total) || 0 : total - kosten;
+    const basis = {
+      id: o.id as string,
+      name: (o.name || o.beschreibung || "Ohne Titel") as string,
+      datum: (o.datum ?? null) as string | null,
+      status: (o.status ?? "") as string,
       kunde: kundeName(o.customers),
-      zahlDatum: manuell ?? ausLog ?? auftragsDatum,
-      zahlDatumQuelle: manuell ? "manuell" : ausLog ? "zahlung" : "auftrag",
-    } as UmsatzAuftrag;
-  });
+    };
+    const teile = proAuftrag.get(o.id) ?? [];
+    const bezahltSumme = teile.reduce((s, t) => s + t.betrag, 0);
+    const anteil = (betrag: number) => (total > 0 ? betrag / total : 0);
+    let erster = true;
+    for (const t of teile) {
+      out.push({ ...basis, umsatz: t.betrag, kosten: kosten * anteil(t.betrag), gewinn: gewinnTotal * anteil(t.betrag), zahlDatum: t.datum, zahlDatumQuelle: "teilzahlung", zaehlt: erster });
+      erster = false;
+    }
+    if (istUmsatz(o.status)) {
+      const rest = teile.length > 0 ? Math.round((total - bezahltSumme) * 100) / 100 : total;
+      if (teile.length === 0 || rest > 0.004) {
+        const r = teile.length > 0 ? rest : total;
+        out.push({
+          ...basis, umsatz: r,
+          kosten: teile.length > 0 ? kosten * anteil(r) : kosten,
+          gewinn: teile.length > 0 ? gewinnTotal * anteil(r) : gewinnTotal,
+          zahlDatum: manuell ?? ausLog ?? auftragsDatum,
+          zahlDatumQuelle: manuell ? "manuell" : ausLog ? "zahlung" : "auftrag",
+          zaehlt: erster,
+        });
+      }
+    }
+  }
+  return out;
 }
 
 export interface MonatsSumme {
@@ -112,7 +152,7 @@ export function monatsSummen(auftraege: UmsatzAuftrag[], von: string, bis: strin
     if (!m) continue;
     m.umsatz += a.umsatz;
     m.gewinn += a.gewinn;
-    m.anzahl += 1;
+    if (a.zaehlt !== false) m.anzahl += 1;
   }
   return Array.from(map.values()).map((m) => ({ ...m, umsatz: Math.round(m.umsatz * 100) / 100, gewinn: Math.round(m.gewinn * 100) / 100 }));
 }
