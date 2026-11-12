@@ -309,6 +309,13 @@
       "when": 1794325016805,
       "tag": "0043_secure_customer_account_linking",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794477611174,
+      "tag": "0044_order_payments",
+      "breakpoints": true
     }
   ]
 }
