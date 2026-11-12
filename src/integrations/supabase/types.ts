@@ -1804,6 +1804,41 @@ export type Database = {
           },
         ]
       }
+      order_payments: {
+        Row: {
+          betrag: number
+          created_at: string
+          datum: string
+          id: string
+          notiz: string | null
+          order_id: string
+        }
+        Insert: {
+          betrag: number
+          created_at?: string
+          datum?: string
+          id?: string
+          notiz?: string | null
+          order_id: string
+        }
+        Update: {
+          betrag?: number
+          created_at?: string
+          datum?: string
+          id?: string
+          notiz?: string | null
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_status_log: {
         Row: {
           created_at: string
