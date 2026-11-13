@@ -130,6 +130,8 @@ Deno.serve(async (req) => {
           }
           if (frei.size > 0) {
             reihenfolge = [...frei.keys()].sort((x, y) => (frei.get(x)! - frei.get(y)!) || (basis.indexOf(x) - basis.indexOf(y)));
+            // XL ist kein echter SimplyPrint-Drucker (steht dort immer offline), bleibt aber als letzter Ausweg fuer grosse Teile
+            if (!reihenfolge.includes("xl")) reihenfolge.push("xl");
           }
         }
       } catch { /* ohne Status: feste Reihenfolge */ }
