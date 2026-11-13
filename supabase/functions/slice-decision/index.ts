@@ -35,6 +35,14 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? "");
     const id = String(body?.id ?? "");
+    // Live-Status der Drucker (SimplyPrint ueber den Slicer-Dienst) fuer die Admin-Seite
+    if (action === "printers") {
+      const t0 = Date.now();
+      const r = await fetch(`${base}/printers/status`, { headers, signal: AbortSignal.timeout(10_000) }).catch(() => null);
+      if (!r || !r.ok) return json({ error: `Druckerstatus nicht erreichbar${r ? ` (HTTP ${r.status})` : ""}`, ms: Date.now() - t0 }, 200);
+      const d = await r.json().catch(() => ({}));
+      return json({ printers: Array.isArray(d?.printers) ? d.printers : [], ms: Date.now() - t0, at: new Date().toISOString() });
+    }
     if (!["approve", "reject", "gcode"].includes(action) || !ID_RE.test(id)) return json({ error: "Ungültige Anfrage" }, 400);
 
     const { data: job } = await supabase.from("slice_jobs").select("*").eq("id", id).maybeSingle();

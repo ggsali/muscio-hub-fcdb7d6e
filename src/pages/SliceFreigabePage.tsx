@@ -47,6 +47,74 @@ async function callDecision(action: string, id: string): Promise<Response> {
   return fetch(FUNCTION_URL, { method: "POST", headers: await authHeaders(), body: JSON.stringify({ action, id }) });
 }
 
+interface DruckerStatus { id: string; state: string; free_in_min: number | null; queue: number }
+const STATE_LABEL: Record<string, string> = { idle: "frei", printing: "druckt", paused: "pausiert", offline: "offline", error: "Fehler" };
+const STATE_COLOR: Record<string, string> = { idle: "text-green-600", printing: "text-amber-600", paused: "text-amber-600", offline: "text-muted-foreground", error: "text-red-600" };
+const minText = (m: number | null) => (m == null ? "unbekannt" : m === 0 ? "sofort" : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`);
+
+/** Live-Ansicht: fragt alle 5 s den Druckerstatus (SimplyPrint) ab und zeigt die letzten Druckerwahlen des Kalkulators. */
+function LiveDrucker({ debugEntries, onTick }: { debugEntries: Array<Record<string, any>>; onTick: () => void }) {
+  const [live, setLive] = useState(true);
+  const [printers, setPrinters] = useState<DruckerStatus[]>([]);
+  const [info, setInfo] = useState<{ at?: string; ms?: number; error?: string }>({});
+  const abfrage = useCallback(async () => {
+    try {
+      const res = await callDecision("printers", "");
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || d?.error) setInfo({ error: d?.error ?? `Fehler ${res.status}`, ms: d?.ms });
+      else { setPrinters(d.printers as DruckerStatus[]); setInfo({ at: d.at, ms: d.ms }); }
+    } catch { setInfo({ error: "Verbindung fehlgeschlagen" }); }
+  }, []);
+  useEffect(() => {
+    if (!live) return;
+    void abfrage(); onTick();
+    const t = window.setInterval(() => { void abfrage(); onTick(); }, 5000);
+    return () => window.clearInterval(t);
+  }, [live, abfrage, onTick]);
+  const wahlen = debugEntries.filter((e) => e.ev === "drucker-status" || e.ev === "nas-antwort" || e.ev === "drucker-wechsel" || e.ev === "profil-unbekannt").slice(-12).reverse();
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-sm font-medium">Live: Drucker und SimplyPrint</p>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">Live (alle 5 s) <Switch checked={live} onCheckedChange={setLive} /></label>
+      </div>
+      {info.error ? <p className="text-xs text-red-600">{info.error}</p> : (
+        <p className="text-xs text-muted-foreground">{info.at ? `Zuletzt abgefragt ${new Date(info.at).toLocaleTimeString("de-CH")}, Antwort in ${info.ms} ms` : "Wird abgefragt…"}</p>
+      )}
+      {printers.length > 0 && (
+        <table className="w-full text-xs">
+          <thead><tr className="text-left text-muted-foreground"><th className="py-1">Drucker</th><th>Status</th><th>Frei in</th><th>Queue</th></tr></thead>
+          <tbody>
+            {printers.map((p) => (
+              <tr key={p.id} className="border-t border-border">
+                <td className="py-1 font-medium uppercase">{p.id}</td>
+                <td className={STATE_COLOR[p.state] ?? ""}>{STATE_LABEL[p.state] ?? p.state}</td>
+                <td>{p.state === "offline" || p.state === "error" ? "–" : minText(p.free_in_min)}</td>
+                <td>{p.queue}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <div>
+        <p className="text-xs font-medium mb-1">Letzte Druckerwahlen des Kalkulators</p>
+        <ul className="text-xs space-y-0.5 max-h-48 overflow-auto font-mono">
+          {wahlen.length === 0 && <li className="text-muted-foreground">Noch nichts. Teil im Kalkulator hochladen.</li>}
+          {wahlen.map((e, i) => (
+            <li key={i}>
+              {new Date(String(e.t)).toLocaleTimeString("de-CH")}{" "}
+              {e.ev === "drucker-status" && <>fragt SimplyPrint ab, Reihenfolge <b>{String(e.folge)}</b>, Wartezeit {JSON.stringify(e.wartezeit)} min</>}
+              {e.ev === "drucker-wechsel" && <>wechselt von {String(e.von)}: {String(e.grund)}</>}
+              {e.ev === "profil-unbekannt" && <>Profil «{String(e.profil)}» fehlt auf {String(e.drucker)}, nimmt Standard</>}
+              {e.ev === "nas-antwort" && <>gesliced auf <b>{String(e.drucker)}</b> (Status {String(e.status)}, {String(e.gesamtMs)} ms)</>}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 export default function SliceFreigabePage() {
   const [jobs, setJobs] = useState<SliceJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +123,7 @@ export default function SliceFreigabePage() {
   const [publicSlice, setPublicSlice] = useState(false);
   const [debugLog, setDebugLog] = useState("");
   const [bericht, setBericht] = useState("");
+  const [debugEntries, setDebugEntries] = useState<Array<Record<string, any>>>([]);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -76,6 +145,7 @@ export default function SliceFreigabePage() {
     try {
       const arr = JSON.parse(dl?.value ?? "[]") as Array<Record<string, unknown>>;
       setDebugLog(arr.slice().reverse().map((e) => JSON.stringify(e)).join("\n"));
+      setDebugEntries(arr);
     } catch { setDebugLog(dl?.value ?? ""); }
     // Diagnose-Bericht: Browser-Messung und Server-Ereignisse je Slice zusammengefuehrt (gleiche rid)
     try {
@@ -94,6 +164,12 @@ export default function SliceFreigabePage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Debug-Protokoll leise nachladen (ohne Ladeanzeige), fuer die Live-Ansicht
+  const ladeLeise = useCallback(async () => {
+    const { data: dl } = await (supabase as any).from("settings").select("value").eq("key", "slice_debug_log").maybeSingle();
+    try { setDebugEntries(JSON.parse(dl?.value ?? "[]")); } catch { /* ignorieren */ }
+  }, []);
 
   const toggleEnabled = async (on: boolean) => {
     setEnabled(on);
@@ -193,6 +269,8 @@ export default function SliceFreigabePage() {
       {!loading && !error && jobs.length === 0 && (
         <p className="text-sm text-muted-foreground">Noch keine geslicten Anfragen.</p>
       )}
+
+      <LiveDrucker debugEntries={debugEntries} onTick={ladeLeise} />
 
       <details className="rounded-lg border border-border p-3 text-xs" open>
         <summary className="cursor-pointer font-medium">Diagnose-Bericht Online-Kalkulator (je Slice Browser + Server, neueste zuerst)</summary>
