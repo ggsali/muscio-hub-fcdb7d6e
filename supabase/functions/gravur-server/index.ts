@@ -51,7 +51,7 @@ serve(async (req) => {
       return { r, t };
     };
     const gravurError = (r: Response, t: string) =>
-      r.status === 401 || r.status === 403
+      r.status === 401
         ? json({ error: "Gravur-Authentifizierung fehlgeschlagen" }, 502)
         : json({ error: `Gravur-Server: ${r.status} ${t.replaceAll(gravurKey, "***").slice(0, 300)}` }, 502);
 
