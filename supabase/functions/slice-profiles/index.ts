@@ -38,7 +38,11 @@ serve(async (req) => {
       const r = await fetch(`${base}${path}`, { ...init, headers, signal: AbortSignal.timeout(20_000) }).catch(() => null);
       if (!r) return json({ error: "Slicer nicht erreichbar" }, 200);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) return json({ error: String(d?.detail?.error ?? d?.detail ?? d?.error ?? `Slicer antwortet mit ${r.status}`).slice(0, 300), status: r.status }, 200);
+      if (!r.ok) {
+        const det = d?.detail ?? d?.error;
+        const text = typeof det === "string" ? det : Array.isArray(det) ? det.map((x: unknown) => (typeof x === "string" ? x : JSON.stringify(x))).join("; ") : det ? JSON.stringify(det) : `Slicer antwortet mit ${r.status}`;
+        return json({ error: text.slice(0, 500), status: r.status }, 200);
+      }
       return json(d);
     };
 

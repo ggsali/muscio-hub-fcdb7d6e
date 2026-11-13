@@ -7,7 +7,21 @@ import { toast } from "sonner";
 
 const URL_ = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-profiles`;
 
-interface SchemaFeld { key: string; label: string; type: "number" | "text" | "bool" | "select"; unit?: string; min?: number; max?: number; options?: string[] }
+interface SchemaFeld { key: string; label: string; type: "number" | "text" | "bool" | "select"; unit?: string; min?: number; max?: number; step?: number; options?: string[] }
+/** Typnamen des Servers vereinheitlichen (int/float/enum/boolean ...) */
+function normFeld(f: any): SchemaFeld {
+  const t = String(f?.type ?? "").toLowerCase();
+  const type = ["bool", "boolean", "switch", "checkbox"].includes(t) ? "bool" : Array.isArray(f?.options) && f.options.length > 0 || ["select", "enum", "choice"].includes(t) ? "select" : ["number", "int", "integer", "float", "double"].includes(t) ? "number" : "text";
+  return { ...f, key: String(f?.key), label: String(f?.label ?? f?.key), type, options: Array.isArray(f?.options) ? f.options.map(String) : undefined };
+}
+/** Manifest tolerant lesen: { drucker: [ {name,...} | "name" ] } oder [ {printer, name, ...} ] */
+function normManifest(raw: any): Manifest {
+  const out: Manifest = {};
+  const push = (pr: string, x: any) => { (out[pr] ??= []).push(typeof x === "string" ? { name: x } : { name: String(x?.name), layer_height: x?.layer_height, infill: x?.infill }); };
+  if (Array.isArray(raw)) raw.forEach((x) => x?.printer && push(String(x.printer), x));
+  else if (raw && typeof raw === "object") for (const [pr, list] of Object.entries(raw)) if (Array.isArray(list)) list.forEach((x) => push(pr, x));
+  return out;
+}
 interface ProfilDetail {
   printer: string; name: string;
   schema: SchemaFeld[];
@@ -42,7 +56,7 @@ export default function SlicerProfile() {
     void (async () => {
       const d = await rufe({ action: "list" });
       if (d?.error) { setFehler(d.error); return; }
-      const raw = (d?.process_presets ?? {}) as Manifest;
+      const raw = normManifest(d?.process_presets);
       setManifest(raw);
       const erster = Object.keys(raw)[0];
       if (erster) { setPrinter(erster); setName(raw[erster]?.[0]?.name ?? ""); }
@@ -53,7 +67,7 @@ export default function SlicerProfile() {
     if (!printer || !name) return;
     setLaedt(true); setFehler(""); setEdit({});
     const d = await rufe({ action: "get", printer, name });
-    if (d?.error) { setFehler(d.error); setDetail(null); } else setDetail(d as ProfilDetail);
+    if (d?.error) { setFehler(d.error); setDetail(null); } else setDetail({ ...(d as ProfilDetail), schema: ((d?.schema ?? []) as any[]).map(normFeld) });
     setLaedt(false);
   }, [printer, name]);
   useEffect(() => { void laden(); }, [laden]);
@@ -111,7 +125,7 @@ export default function SlicerProfile() {
                           {(f.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}
                         </select>
                       ) : f.type === "number" ? (
-                        <Input type="number" className="h-8" min={f.min} max={f.max} step="any" value={String(v)} onChange={(e) => set(e.target.value === "" ? "" : Number(e.target.value))} />
+                        <Input type="number" className="h-8" min={f.min} max={f.max} step={f.step ?? "any"} value={String(v)} onChange={(e) => set(e.target.value === "" ? "" : Number(e.target.value))} />
                       ) : (
                         <Input className="h-8" value={String(v)} onChange={(e) => set(e.target.value)} />
                       )}
