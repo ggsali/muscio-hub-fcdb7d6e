@@ -284,6 +284,9 @@ function isStepFile(name: string): boolean {
 }
 
 /** Gramm bei anderer Materialdichte umrechnen – gleicher Slice, anderes Material */
+/** Druckzeit in Stunden, immer auf 0.1 h aufgerundet (nur Anzeige) */
+const stdAuf = (h: number) => (Math.ceil(h * 10 - 1e-9) / 10).toFixed(1);
+
 const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => {
   const roh = r.rawGrams ?? r.filamentGrams;
   if (!density || !r.density || r.density === density) return { ...r, rawGrams: roh };
@@ -2278,7 +2281,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                                 {isStepFile(p.fileName)
                                   ? "STEP-Datei – manuelle Prüfung"
                                   : p.slicerResult
-                                    ? `${(p.slicerResult.rawGrams ?? p.slicerResult.filamentGrams).toFixed(1)}g · ${(p.slicerResult.printTimeMinutes / 60).toFixed(1)}h · ${p.slicerResult.hasSupport ? "⚠️ Support" : "✅ Kein Support"}`
+                                    ? `${(p.slicerResult.rawGrams ?? p.slicerResult.filamentGrams).toFixed(1)}g · ${stdAuf(p.slicerResult.printTimeMinutes / 60)}h · ${p.slicerResult.hasSupport ? "⚠️ Support" : "✅ Kein Support"}`
                                     : `${p.volumeCm3.toFixed(1)} cm³ · ca. ${p.estimatedWeight.toFixed(1)}g`}
                               </p>
                             </div>
@@ -2784,7 +2787,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                         <span className="text-xl">⏱</span>
                         <div>
                           <p className="text-xs text-muted-foreground">Druckzeit</p>
-                          <p className="font-semibold text-sm">{totalHours > 0 ? `${totalHours.toFixed(1)} Stunden` : "wird berechnet"}</p>
+                          <p className="font-semibold text-sm">{totalHours > 0 ? `${stdAuf(totalHours)} Stunden` : "wird berechnet"}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -2934,7 +2937,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                                   ✓ Gesliced
                                 </span>
                                 <p className="text-xs text-muted-foreground">
-                                  Druckzeit: {(p.slicerResult.printTimeMinutes / 60).toFixed(1)} h (OrcaSlicer, {p.slicerResult.quelle === "server" ? "Server" : "Browser-Schätzung"}) · Filament: {(p.slicerResult.rawGrams ?? p.slicerResult.filamentGrams).toFixed(1)} g · Layer: {p.slicerResult.layers}
+                                  Druckzeit: {stdAuf(p.slicerResult.printTimeMinutes / 60)} h (OrcaSlicer, {p.slicerResult.quelle === "server" ? "Server" : "Browser-Schätzung"}) · Filament: {(p.slicerResult.rawGrams ?? p.slicerResult.filamentGrams).toFixed(1)} g · Layer: {p.slicerResult.layers}
                                 </p>
                                 {p.slicerResult.quelle === "browser" && p.slicerResult.browserGrund && (
                                   <p className="text-[11px] text-muted-foreground/70" title={p.slicerResult.browserGrund}>Server nicht genutzt: {p.slicerResult.browserGrund}</p>
