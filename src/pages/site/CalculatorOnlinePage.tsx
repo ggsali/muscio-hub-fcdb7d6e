@@ -337,7 +337,7 @@ function nasDebug(msg: string) {
 
 /** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
 async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1, abort?: AbortSignal, onPhase?: (phase: string) => void, profil?: string): Promise<SlicerResult> {
-  const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
+  const quality = [0.08, 0.12, 0.16, 0.2, 0.24, 0.28].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
   const tStart = performance.now(); // Zeitmessung: Browser -> Edge Function -> Slicer -> Browser
   const rid = `${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-4)}`;
   const diag: Record<string, unknown> = {
@@ -531,6 +531,10 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
   const [partMatChosen, setPartMatChosen] = useState<Record<string, boolean>>({});
   const [qualityKey, setQualityKey] = useState("standard");
   const qualityTracked = useRef(false);
+  const qualityKeyRef = useRef(qualityKey);
+  qualityKeyRef.current = qualityKey;
+  const sliceInflight = useRef(new Map<string, Promise<SlicerResult>>());
+  const sliceVorab = useRef(new Set<string>());
   const [kiResult, setKiResult] = useState<KiResult | null>(null);
   const [materialMode, setMaterialMode] = useState<null | "ki" | "manual">(null);
   const [kiChatOpen, setKiChatOpen] = useState(true);
@@ -919,7 +923,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
   }, [parts, runKiAnalysis]);
 
   /** Browser-Slicing via three-slicer Web Worker (OrcaSlicer-Kernel) */
-  const runSlicerNow = useCallback(async (partId: string, quickSlice = false) => {
+  const runSlicerNow = useCallback(async (partId: string, quickSlice = false, qKey?: string) => {
     const part = parts.find((p) => p.id === partId);
     if (!part || isStepFile(part.fileName)) return;
     const nasOnly = await nasOnlyMode();
@@ -934,11 +938,14 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
     // QuickSlice: immer 0.3mm und 15% Infill für schnellen Sofortpreis
     const quality = quickSlice
       ? { layerHeight: 0.3, infill: 15, speedFactor: 0.7, key: "quick" }
-      : (qualityPresets.find((q) => q.key === qualityKey) ?? qualityPresets[1]);
+      : (qualityPresets.find((q) => q.key === (qKey ?? qualityKeyRef.current)) ?? qualityPresets[1]);
 
     const cacheKey = sliceKey(partId, quickSlice, quality);
+    // Ergebnis gehoert nur dann in die Anzeige, wenn diese Qualitaet gerade gewaehlt ist (Hintergrund-Slices fuellen nur den Zwischenspeicher)
+    const istAktuell = () => quickSlice || sliceKey(partId, false, qualityPresets.find((q) => q.key === qualityKeyRef.current) ?? qualityPresets[1]) === cacheKey;
     const cached = sliceCache.current.get(cacheKey);
     if (cached) {
+      if (!istAktuell()) return;
       const r = rescaleForMaterial(cached, mat?.density);
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerResult: r, slicerLoading: false, slicerError: null, isQuickSlice: quickSlice, quickSliceResult: quickSlice ? r : p.quickSliceResult, ...(quickSlice ? {} : { batch: undefined }) }
@@ -946,11 +953,17 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
       return;
     }
 
-    setParts((prev) => prev.map((p) => p.id === partId
-      ? { ...p, slicerLoading: true, slicerError: null, isQuickSlice: quickSlice, ...(quickSlice ? {} : { batch: undefined }) }
-      : p));
+    if (istAktuell()) {
+      setParts((prev) => prev.map((p) => p.id === partId
+        ? { ...p, slicerLoading: true, slicerError: null, isQuickSlice: quickSlice, ...(quickSlice ? {} : { batch: undefined }) }
+        : p));
+    }
 
     try {
+      // Laeuft derselbe Slice schon (Hintergrund), wird darauf gewartet statt doppelt gerechnet
+      let laufend = sliceInflight.current.get(cacheKey);
+      if (!laufend) {
+        laufend = (async (): Promise<SlicerResult> => {
       let result: SlicerResult | null = null;
       let browserGrund = "";
       if (!quickSlice && part.file) {
@@ -959,7 +972,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
           for (let versuch = 0; versuch < 3 && !result; versuch++) {
             if (versuch > 0) await new Promise((r) => setTimeout(r, 5000));
             try {
-              result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill, 1, undefined, (ph) => setParts((prev) => prev.map((x) => (x.id === partId ? { ...x, slicerPhase: ph } : x))), (quality as { profile?: string }).profile), mat?.density);
+              result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill, 1, undefined, (ph) => { if (istAktuell()) setParts((prev) => prev.map((x) => (x.id === partId ? { ...x, slicerPhase: ph } : x))); }, (quality as { profile?: string }).profile), mat?.density);
             } catch (e) {
               letzter = e;
               // Zeitueberschreitung: nicht nochmals dieselbe Wartezeit riskieren
@@ -987,26 +1000,61 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
       }
       console.log("[Slicer]", result);
       sliceCache.current.set(cacheKey, result);
-      setParts((prev) => prev.map((p) => p.id === partId
-        ? {
-            ...p,
-            slicerResult: result,
-            slicerLoading: false,
-            isQuickSlice: quickSlice,
-            quickSliceResult: quickSlice ? result : p.quickSliceResult,
-          }
-        : p));
+      return result;
+        })();
+        sliceInflight.current.set(cacheKey, laufend);
+        void laufend.finally(() => { sliceInflight.current.delete(cacheKey); }).catch(() => {});
+      }
+      const result = await laufend;
+      if (istAktuell()) {
+        const r = rescaleForMaterial(result, mat?.density);
+        setParts((prev) => prev.map((p) => p.id === partId
+          ? {
+              ...p,
+              slicerResult: r,
+              slicerLoading: false,
+              slicerError: null,
+              isQuickSlice: quickSlice,
+              quickSliceResult: quickSlice ? r : p.quickSliceResult,
+              ...(quickSlice ? {} : { batch: undefined }),
+            }
+          : p));
+      }
     } catch (err: any) {
       console.error("[Slicer Error]", err);
       if (part.file) sliceUploadFertig(part.file);
+      if (!istAktuell()) return;
       setParts((prev) => prev.map((p) => p.id === partId
         ? { ...p, slicerLoading: false, slicerError: String(err?.message).startsWith("NAS_ONLY") ? `${/zu gross/i.test(String(err.message)) ? "Sehr grosse Datei: genaue Berechnung nicht möglich – Preis ist eine Schätzung, wir prüfen ihn manuell" : `Genaue Berechnung momentan nicht möglich – Schätzung wird verwendet${String(err.message).slice(9) ? ` (${String(err.message).slice(9)})` : ""}`}` : "Slicer nicht verfügbar – Schätzung wird verwendet" }
         : p));
     }
-  }, [parts, materials, qualityPresets, qualityKey, slice]);
+  }, [parts, materials, qualityPresets, slice]);
 
   const slicerFnRef = useRef(runSlicerNow);
   useEffect(() => { slicerFnRef.current = runSlicerNow; }, [runSlicerNow]);
+
+  // Sobald der Kunde bei den Bildern ankommt (nach der Schnellkalkulation): alle Qualitaeten im Hintergrund slicen,
+  // die gewaehlte zuerst. So steht der Preis jeder Qualitaet bereit, bis der Kunde bei der Qualitaetswahl ist.
+  useEffect(() => {
+    if (step < 2) return;
+    const todo = parts.filter((p) => p.file && !isStepFile(p.fileName) && !sliceVorab.current.has(p.id));
+    if (todo.length === 0) return;
+    void nasSliceEnabled().then((on) => {
+      if (!on) return;
+      todo.forEach((p) => {
+        if (sliceVorab.current.has(p.id)) return;
+        sliceVorab.current.add(p.id);
+        void (async () => {
+          const cur = qualityKeyRef.current;
+          const reihenfolge = [cur, ...qualityPresets.map((q) => q.key).filter((k) => k !== cur)];
+          for (const k of reihenfolge) {
+            try { await slicerFnRef.current(p.id, false, k); } catch { /* naechste Qualitaet */ }
+          }
+        })();
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, parts.map((p) => `${p.id}${p.file ? 1 : 0}`).join(","), qualityPresets]);
   const slicerTimers = useRef<Record<string, number>>({});
 
   // Menge ab 2 Stück: der NAS-Slicer ordnet alle Kopien auf den Platten an (Plattenzahl, Zeit und Material für die ganze Menge).
@@ -1097,7 +1145,6 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     const previewable = ext === "stl" || ext === "obj" || ext === "3mf";
     const previewUrl = previewable ? URL.createObjectURL(file) : undefined;
-    if (file.size > 3 * 1024 * 1024 && (ext === "stl" || ext === "obj" || ext === "3mf")) sliceUploadOffen.add(sliceUploadKey(file));
 
     setParts((p) => [
       ...p,
@@ -1167,8 +1214,6 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
         const arrayBuffer = await file.arrayBuffer();
         setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
         runSlicer(id, true); // QuickSlice für schnellen Sofortpreis
-        // Ist die NAS-Schätzung eingeschaltet, kommt der genaue Preis sofort vom NAS (ersetzt den Sofortpreis)
-        void nasSliceEnabled().then((on) => { if (on) runSlicer(id, false); });
       } catch (e) {
         console.warn("STL konnte nicht gelesen werden", e);
         setParts((p) => p.map((x) => (x.id === id ? { ...x, slicerLoading: false } : x)));
@@ -1191,9 +1236,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
 
 
     // OBJ/3MF: Browser-Slicer kann sie nicht, der NAS schon (nur wenn der NAS-Schalter an ist)
-    if (ext === "obj" || ext === "3mf") {
-      void nasSliceEnabled().then((on) => { if (on) runSlicer(id, false); });
-    }
+    // (Der genaue NAS-Slice aller Qualitaeten startet erst, wenn der Kunde bei den Bildern ankommt.)
 
     // Upload im Hintergrund
     try {
@@ -1365,7 +1408,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
 
     const quality = qualityPresets.find((q) => q.key === key);
     // Nur neu slicen wenn sich Qualität vom QuickSlice unterscheidet; Cache-Treffer sind sofort da
-    if (quality && quality.layerHeight !== 0.3) {
+    if (quality) {
       const todo = parts.filter((p) => (p.stlArrayBuffer || p.file) && !isStepFile(p.fileName));
       if (todo.some((p) => !sliceCache.current.has(sliceKey(p.id, false, quality)))) startProgress();
       todo.forEach((p) => runSlicer(p.id, false));

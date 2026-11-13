@@ -23,7 +23,7 @@ export interface CalcParams {
 }
 
 export const DEFAULT_QUALITY_PRESETS: QualityPreset[] = [
-  { key: "schnell", label: "Schnell", infill: 15, layerHeight: 0.3, speedFactor: 0.7, desc: "Leicht & günstig" },
+  { key: "schnell", label: "Schnell", infill: 15, layerHeight: 0.28, speedFactor: 0.7, desc: "Leicht & günstig" },
   { key: "standard", label: "Standard", infill: 20, layerHeight: 0.2, speedFactor: 1.0, desc: "Ausgewogen" },
   { key: "stark", label: "Stark", infill: 40, layerHeight: 0.15, speedFactor: 1.4, desc: "Belastbar" },
   { key: "massiv", label: "Massiv", infill: 80, layerHeight: 0.1, speedFactor: 2.0, desc: "Maximale Festigkeit" },

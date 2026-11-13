@@ -14,7 +14,7 @@ const PLATE_MAX_BYTES = 45 * 1024 * 1024; // Spardose-Platten (entpackt) dürfen
 const TIMEOUT_MS = 120_000;
 const GROSS_GZ_MAX = 120 * 1024 * 1024; // sehr grosse Modelle (nur ueber den Storage): komprimiert bis hierhin, ohne in der Funktion zu entpacken
 const ALLOWED_EXT = [".stl", ".obj", ".3mf"];
-const QUALITIES = ["0.08", "0.12", "0.16", "0.20"];
+const QUALITIES = ["0.08", "0.12", "0.16", "0.20", "0.24", "0.28"];
 const RATE_WINDOW_MS = 10 * 60_000;
 const RATE_MAX = 30; // echte Slices pro IP und 10 Minuten (Probe und Log zaehlen nicht mit)
 const MAX_PARALLEL = 3; // gleichzeitige Slices insgesamt (NAS schonen)
@@ -226,7 +226,7 @@ serve(async (req) => {
     if (urlMode && urlSize > GROSS_GZ_MAX) { await dbg(supabase, { rid, ev: "zu-gross", bytes: urlSize, gzMax: GROSS_GZ_MAX }); return json({ error: "Datei zu gross" }, 413); }
     if (!grossGz && !urlMode && file.size > maxBytes) { await dbg(supabase, { rid, ev: "zu-gross", bytes: file.size, max: maxBytes }); return json({ error: "Datei zu gross" }, 413); }
     const upFile: File = file; // (nach dem Entpacken) wird an den Slicer weitergereicht
-    const quality = String(form.get("quality") ?? "0.20");
+    let quality = String(form.get("quality") ?? "0.20");
     if (!QUALITIES.includes(quality)) return json({ error: "Ungültige Qualität" }, 422);
     const profile = String(form.get("profile") ?? "").trim();
     if (profile && !/^[\w .@()+\-]{1,80}$/.test(profile)) return json({ error: "Ungültiges Profil" }, 422);
@@ -333,6 +333,15 @@ serve(async (req) => {
         if (String(pk?.detail ?? "").includes("Profil")) {
           await dbg(supabase, { rid, ev: "profil-unbekannt", drucker: printer, profil: profileAktiv, antwort: String(pk?.detail ?? "").slice(0, 200) });
           profileAktiv = "";
+          res = await slice(printer);
+        }
+      }
+      // 0.28 (Schnell) kennt nicht jedes Druckerprofil: dann mit dem naechst feineren Preset (0.24 Draft) weiter
+      if (res.status === 422 && quality === "0.28") {
+        const qk = await res.clone().json().catch(() => ({}));
+        if (/qualit|preset|profil/i.test(String(qk?.detail ?? "")) && !String(qk?.detail ?? "").includes("Unbekannter Drucker")) {
+          await dbg(supabase, { rid, ev: "qualitaet-ersatz", drucker: printer, von: "0.28", nach: "0.24", antwort: String(qk?.detail ?? "").slice(0, 200) });
+          quality = "0.24";
           res = await slice(printer);
         }
       }
