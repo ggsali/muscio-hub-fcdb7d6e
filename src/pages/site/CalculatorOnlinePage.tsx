@@ -336,7 +336,7 @@ function nasDebug(msg: string) {
 }
 
 /** Schätzung über den NAS-Slicer (Edge Function slice-public). Wirft bei jedem Problem -> Browser-Slicer als Fallback. */
-async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1, abort?: AbortSignal, onPhase?: (phase: string) => void): Promise<SlicerResult> {
+async function sliceViaNas(file: File, layerHeight: number, infill: number, copies = 1, abort?: AbortSignal, onPhase?: (phase: string) => void, profil?: string): Promise<SlicerResult> {
   const quality = [0.08, 0.12, 0.16, 0.2].reduce((b, q) => (Math.abs(q - layerHeight) <= Math.abs(b - layerHeight) ? q : b), 0.2);
   const tStart = performance.now(); // Zeitmessung: Browser -> Edge Function -> Slicer -> Browser
   const rid = `${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-4)}`;
@@ -373,6 +373,7 @@ async function sliceViaNas(file: File, layerHeight: number, infill: number, copi
       if (up.gz) body.append("gz", "1");
     }
     body.append("quality", quality.toFixed(2));
+    if (profil) body.append("profile", profil);
     body.append("infill", String(Math.min(100, Math.max(5, Math.round(infill)))));
     if (copies > 1) body.append("copies", String(copies));
     onPhase?.("Server rechnet");
@@ -958,7 +959,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
           for (let versuch = 0; versuch < 3 && !result; versuch++) {
             if (versuch > 0) await new Promise((r) => setTimeout(r, 5000));
             try {
-              result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill, 1, undefined, (ph) => setParts((prev) => prev.map((x) => (x.id === partId ? { ...x, slicerPhase: ph } : x)))), mat?.density);
+              result = rescaleForMaterial(await sliceViaNas(part.file, quality.layerHeight, quality.infill, 1, undefined, (ph) => setParts((prev) => prev.map((x) => (x.id === partId ? { ...x, slicerPhase: ph } : x))), (quality as { profile?: string }).profile), mat?.density);
             } catch (e) {
               letzter = e;
               // Zeitueberschreitung: nicht nochmals dieselbe Wartezeit riskieren
@@ -1059,7 +1060,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
         batchAbort.current[p.id] = ctrl;
         patch(p.id, { batchLoading: true });
         try {
-          const raw = await sliceViaNas(file, quality.layerHeight, quality.infill, copies, ctrl.signal);
+          const raw = await sliceViaNas(file, quality.layerHeight, quality.infill, copies, ctrl.signal, undefined, quality.profile);
           if (!aktuell()) return;
           batchCache.current.set(key, raw as NonNullable<Part["batch"]>);
           setParts((prev) => prev.map((x) => (x.id === p.id && x.quantity === copies

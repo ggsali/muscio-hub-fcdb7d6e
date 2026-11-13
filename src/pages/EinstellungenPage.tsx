@@ -484,6 +484,16 @@ export default function EinstellungenPage() {
                       className="bg-input border-border text-right tabular-nums mt-1"
                     />
                   </div>
+                  <div className="col-span-2 sm:col-span-3">
+                    <Label className="text-xs">Druckerprofil (Slicer-Preset)</Label>
+                    <Input
+                      value={q.profile ?? ""}
+                      placeholder="leer = Standardprofil nach Schichthöhe, z. B. 0.20mm Standard"
+                      onChange={e => updateQuality(q.key, { profile: e.target.value })}
+                      className="bg-input border-border mt-1"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Name des Prozess-Presets im OrcaSlicer. Der Slicer nimmt für jeden Drucker das passende Preset mit diesem Namen. Die Druckzeit kommt dann direkt aus dem Slicer.</p>
+                  </div>
                 </div>
               </div>
             ))}

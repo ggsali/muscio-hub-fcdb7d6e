@@ -228,6 +228,8 @@ serve(async (req) => {
     const upFile: File = file; // (nach dem Entpacken) wird an den Slicer weitergereicht
     const quality = String(form.get("quality") ?? "0.20");
     if (!QUALITIES.includes(quality)) return json({ error: "Ungültige Qualität" }, 422);
+    const profile = String(form.get("profile") ?? "").trim();
+    if (profile && !/^[\w .@()+\-]{1,80}$/.test(profile)) return json({ error: "Ungültiges Profil" }, 422);
     const infill = String(form.get("infill") ?? "").trim();
     if (infill && !/^\d{1,3}$/.test(infill)) return json({ error: "Ungültiger Infill" }, 422);
 
@@ -254,6 +256,7 @@ serve(async (req) => {
       out.append("material", "pla");
       out.append("quality", quality);
       if (infill) out.append("infill", infill);
+      if (profile) out.append("profile", profile);
       if (kopien > 1) out.append("copies", String(kopien));
       out.append("supports", "true");
       out.append("orient", plate ? "false" : "true");

@@ -8,6 +8,8 @@ export interface QualityPreset {
   /** Multiplikator auf die Slicer-Druckzeit (1.0 = kein Eingriff) */
   speedFactor: number;
   desc: string;
+  /** Name des Druckerprofils (OrcaSlicer-Prozess-Preset), z. B. "0.20mm Standard". Leer = Profil nach Schichthöhe. */
+  profile?: string;
 }
 
 export interface CalcParams {
@@ -65,6 +67,7 @@ export async function loadQualityConfig(): Promise<{ presets: QualityPreset[]; p
               infill: num(p.infill, d.infill),
               layerHeight: num(p.layerHeight, d.layerHeight),
               speedFactor: num(p.speedFactor, d.speedFactor),
+              profile: typeof p.profile === "string" ? p.profile.trim().slice(0, 80) : undefined,
             };
           });
         }
