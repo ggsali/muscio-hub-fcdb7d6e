@@ -5,7 +5,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // holt sie selbst per signierter URL, rechnet (Potrace + Manifold) und legt das Ergebnis-ZIP per signierter Upload-URL zurück.
 // Diese Funktion reicht nur URLs und Einstellungen durch, es laufen keine grossen Dateien durch sie hindurch.
 // Aktionen: init (signierte Upload-URLs), start (Auftrag an den Server), status (Fortschritt, bei fertig: Download-URL), cleanup.
-// Secrets: SLICER_URL, SLICER_API_KEY (wie server-files). Der Key verlässt diese Funktion nie.
+// Secrets: SLICER_URL (nur die Basis-Adresse des Funnels) und GRAVUR_API_KEY (eigener Schlüssel des Gravur-Dienstes).
+// Der Slicer-Schlüssel wird hier bewusst NICHT verwendet. Der Gravur-Schlüssel verlässt diese Funktion nie und wird nie geloggt.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,8 +34,26 @@ serve(async (req) => {
     if (!isAdmin) return json({ error: "Nicht berechtigt" }, 403);
 
     const base = (Deno.env.get("SLICER_URL") || "").replace(/\/+$/, "");
-    const key = Deno.env.get("SLICER_API_KEY") || "";
-    if (!base || !key) return json({ error: "SLICER_URL / SLICER_API_KEY sind nicht als Secrets gesetzt" }, 500);
+    const gravurKey = (Deno.env.get("GRAVUR_API_KEY") || "").trim();
+    if (!gravurKey) return json({ error: "GRAVUR_API_KEY nicht konfiguriert" }, 500);
+    if (!base) return json({ error: "SLICER_URL nicht konfiguriert" }, 500);
+
+    // Einziger Weg zum Gravur-Dienst: setzt immer den Gravur-Schlüssel, nie den Slicer-Schlüssel.
+    const gravurFetch = async (path: string, init: RequestInit & { timeoutMs: number }) => {
+      if (!path.startsWith("/gravur/")) throw new Error("Ungültiger Gravur-Pfad");
+      const { timeoutMs, headers, ...rest } = init;
+      const r = await fetch(`${base}${path}`, {
+        ...rest,
+        headers: { ...(headers as Record<string, string> | undefined), "X-API-Key": gravurKey },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      const t = await r.text();
+      return { r, t };
+    };
+    const gravurError = (r: Response, t: string) =>
+      r.status === 401 || r.status === 403
+        ? json({ error: "Gravur-Authentifizierung fehlgeschlagen" }, 502)
+        : json({ error: `Gravur-Server: ${r.status} ${t.replaceAll(gravurKey, "***").slice(0, 300)}` }, 502);
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? "");
@@ -140,12 +159,10 @@ serve(async (req) => {
         model_name: safe(body.model_name),
         result_put_url: res.signedUrl,
       };
-      const r = await fetch(`${base}/gravur/jobs`, {
-        method: "POST", headers: { "X-API-Key": key, "Content-Type": "application/json" }, body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(30_000),
+      const { r, t } = await gravurFetch("/gravur/jobs", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), timeoutMs: 30_000,
       });
-      const t = await r.text();
-      if (!r.ok) return json({ error: `Server: ${r.status} ${t.slice(0, 300)}` }, 502);
+      if (!r.ok) return gravurError(r, t);
       let j: { id?: string } = {};
       try { j = JSON.parse(t); } catch { /* */ }
       return json({ slicer_id: j.id ?? job });
@@ -155,9 +172,8 @@ serve(async (req) => {
       const job = String(body.job ?? "");
       const sid = String(body.slicer_id ?? "");
       if (!UUID.test(job) || !/^[A-Za-z0-9_-]{6,64}$/.test(sid)) return json({ error: "Ungültige Angaben" }, 400);
-      const r = await fetch(`${base}/gravur/jobs/${sid}`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(15_000) });
-      const t = await r.text();
-      if (!r.ok) return json({ error: `Server: ${r.status} ${t.slice(0, 300)}` }, 502);
+      const { r, t } = await gravurFetch(`/gravur/jobs/${sid}`, { timeoutMs: 15_000 });
+      if (!r.ok) return gravurError(r, t);
       const j = JSON.parse(t);
       if (j.status === "done") {
         const { data, error } = await st.createSignedUrl(`gravur/${job}/ergebnis.zip`, 900);
@@ -177,6 +193,8 @@ serve(async (req) => {
 
     return json({ error: "Unbekannte Aktion" }, 400);
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
+    const msg = e instanceof Error ? e.message : String(e);
+    const k = (Deno.env.get("GRAVUR_API_KEY") || "").trim();
+    return json({ error: k ? msg.replaceAll(k, "***") : msg }, 500);
   }
 });

@@ -436,7 +436,13 @@ export default function GravurPage() {
 
   const call = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("gravur-server", { body });
-    if (error || data?.error) throw new Error(data?.error || error?.message || "Server nicht erreichbar");
+    if (error || data?.error) {
+      let msg: string | undefined = data?.error;
+      if (!msg && error && "context" in error && error.context instanceof Response) {
+        msg = await error.context.clone().json().then((j: { error?: string }) => j?.error).catch(() => undefined);
+      }
+      throw new Error(msg || error?.message || "Server nicht erreichbar");
+    }
     return data;
   };
 
