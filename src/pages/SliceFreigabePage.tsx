@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Download, Check, X, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import SlicerProfile from "@/components/admin/SlicerProfile";
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/slice-decision`;
 const PRINTER_LABELS: Record<string, string> = { k1c: "Creality K1C", k1: "Creality K1", a1: "Bambu Lab A1" };
@@ -271,6 +272,8 @@ export default function SliceFreigabePage() {
       )}
 
       <LiveDrucker debugEntries={debugEntries} onTick={ladeLeise} />
+
+      <details className="rounded-lg border border-border p-3"><summary className="cursor-pointer text-sm font-medium">Slicer-Presets ansehen und ändern</summary><div className="mt-3"><SlicerProfile /></div></details>
 
       <details className="rounded-lg border border-border p-3 text-xs" open>
         <summary className="cursor-pointer font-medium">Diagnose-Bericht Online-Kalkulator (je Slice Browser + Server, neueste zuerst)</summary>
