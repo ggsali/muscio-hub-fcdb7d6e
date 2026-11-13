@@ -15,9 +15,9 @@ describe("schaetzePlatten (H2C 330 x 320)", () => {
   it("ohne Masse: eine Platte", () => {
     expect(schaetzePlatten(null, 5).plates).toBe(1);
   });
-  it("zu gross für H2C: XL", () => {
-    const r = schaetzePlatten([380, 380, 50], 2);
-    expect(r.printer).toBe("XL");
+  it("zu gross für H2C: K2 Plus", () => {
+    const r = schaetzePlatten([325, 325, 50], 2);
+    expect(r.printer).toBe("K2 Plus");
     expect(r.plates).toBe(2);
   });
   it("zu gross für jeden Drucker: eine Platte pro Stück", () => {

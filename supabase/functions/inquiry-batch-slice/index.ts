@@ -111,9 +111,9 @@ Deno.serve(async (req) => {
 
       let res!: Response; let used = "a1"; let zuGross = false;
       // Drucker waehlen: welcher ist auf SimplyPrint am frühesten frei (Status liefert der Slicer-Dienst)? Passt das Teil nicht, kommt der naechste.
-      // Ohne Status gilt die feste Reihenfolge: mehrere Stueck H2C, XL; Einzelteile K1C, K1, XL.
-      const basis = copies > 1 ? ["h2c", "xl", "k2plus", "a1", "k1c", "k1"] : ["k1c", "k1", "a1", "k2plus", "h2c", "xl"];
-      let reihenfolge = copies > 1 ? ["h2c", "xl"] : ["k1c", "k1", "xl"];
+      // Ohne Status gilt die feste Reihenfolge: mehrere Stueck H2C, K2 Plus; Einzelteile K1C, K1, K2 Plus.
+      const basis = copies > 1 ? ["h2c", "k2plus", "a1", "k1c", "k1"] : ["k1c", "k1", "a1", "k2plus", "h2c"];
+      let reihenfolge = copies > 1 ? ["h2c", "k2plus"] : ["k1c", "k1", "k2plus"];
       const frei = new Map<string, number>();
       try {
         const sr = await fetch(`${base}/printers/status`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(8000) });
@@ -130,8 +130,8 @@ Deno.serve(async (req) => {
           }
           if (frei.size > 0) {
             reihenfolge = [...frei.keys()].sort((x, y) => (frei.get(x)! - frei.get(y)!) || (basis.indexOf(x) - basis.indexOf(y)));
-            // XL ist kein echter SimplyPrint-Drucker (steht dort immer offline), bleibt aber als letzter Ausweg fuer grosse Teile
-            if (!reihenfolge.includes("xl")) reihenfolge.push("xl");
+            // K2 Plus (grösster Drucker) bleibt als letzter Ausweg fuer grosse Teile, auch wenn er gerade offline ist
+            if (!reihenfolge.includes("k2plus")) reihenfolge.push("k2plus");
           }
         }
       } catch { /* ohne Status: feste Reihenfolge */ }
@@ -158,9 +158,9 @@ Deno.serve(async (req) => {
       }
       let teilen = false;
       if (res.status === 422 && zuGross) { // passt auf keinen Drucker: ein Stueck geteilt auf dem grossen slicen, hochrechnen
-        const f = build("xl", 1); f.append("allow_split", "true");
+        const f = build("k2plus", 1); f.append("allow_split", "true");
         res = await fetch(`${base}/slice`, { method: "POST", headers: { "X-API-Key": key }, body: f, signal: AbortSignal.timeout(SLICE_TIMEOUT_MS) });
-        used = "xl"; teilen = res.ok;
+        used = "k2plus"; teilen = res.ok;
       }
       const payload: any = await res.json().catch(() => ({}));
       const st = payload?.stats;

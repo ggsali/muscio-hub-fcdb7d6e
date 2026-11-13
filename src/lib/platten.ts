@@ -1,11 +1,11 @@
 /** Schnelle Schätzung, auf wie vielen Druckplatten N Stück eines Teils Platz haben (ohne Slicer, sofort).
- *  Mehrere Stück werden auf der Platte des H2C angeordnet (330 x 320 mm); passt das Teil dort nicht, gilt der XL.
+ *  Mehrere Stück werden auf der Platte des H2C angeordnet (330 x 320 mm); passt das Teil dort nicht, gilt der K2 Plus (350 mm).
  *  Der Server slict die Menge nach dem Absenden genau; die echte Plattenzahl ersetzt dann diese Schätzung im Auftrag. */
 export type Mass3 = [number, number, number];
 
 export const BETTEN: { name: string; w: number; d: number; h: number }[] = [
   { name: "H2C", w: 330, d: 320, h: 325 },
-  { name: "XL", w: 420, d: 420, h: 420 },
+  { name: "K2 Plus", w: 350, d: 350, h: 350 },
 ];
 const RAND = 10; // mm Rand rundum
 const ABSTAND = 6; // mm zwischen den Teilen

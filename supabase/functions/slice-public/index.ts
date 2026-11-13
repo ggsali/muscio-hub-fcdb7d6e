@@ -295,13 +295,13 @@ serve(async (req) => {
       }
       return r;
     };
-    // Drucker-Reihenfolge: K1C (klein) -> K1 (falls K1C-Profil fehlt) -> xl (420x420x420 mm, wenn das Teil nicht aufs kleine Bett passt)
+    // Drucker-Reihenfolge: K1C (klein) -> K1 (falls K1C-Profil fehlt) -> K2 Plus (350 mm, wenn das Teil nicht aufs kleine Bett passt)
     let res!: Response;
     let used = "k1c";
     let letzterZuGross = false;
     const versuche: { p: string; s: number; ms: number }[] = []; // Zeit pro Slicer-Aufruf (jeder lädt die Datei neu hoch)
     // Mehrere Stück: kleine Teile auf A1/K1C, grössere auf K2 Plus/H2C (Profile, die der Slicer nicht kennt, werden übersprungen)
-    const druckerFolge = copies > 1 ? ["a1", "k1c", "k2plus", "h2c", "xl"] : ["k1c", "k1", "xl"];
+    const druckerFolge = copies > 1 ? ["a1", "k1c", "k2plus", "h2c"] : ["k1c", "k1", "k2plus"];
     for (const printer of plate ? [plateRaw] : druckerFolge) {
       const ta = Date.now();
       res = await slice(printer);
@@ -333,7 +333,7 @@ serve(async (req) => {
         }
       }
     }
-    // Passt das Modell auf keinen Drucker: auf dem grössten (xl) mit automatischem Teilen erneut versuchen.
+    // Passt das Modell auf keinen Drucker: auf dem grössten (K2 Plus) mit automatischem Teilen erneut versuchen.
     // Ältere Slicer ignorieren allow_split und antworten wieder mit 422 -> Verhalten wie bisher (Rückfall im Kalkulator).
     // Mehrere Stück eines Teils, das auf keinen Drucker passt: ein Stück (geteilt) auf dem grössten Drucker slicen, Menge selbst hochrechnen.
     // Jedes geteilte Stück belegt eine eigene Platte (die Teile eines Stücks passen zusammen auf eine Platte, sonst meldet der Slicer einen Fehler).
@@ -341,17 +341,17 @@ serve(async (req) => {
     if (!plate && copies > 1 && res.status === 422 && letzterZuGross) {
       await dbg(supabase, { ev: "teilen", grund: `Menge ${copies}: passt auf keinen Drucker, ein Stück geteilt slicen` });
       const ta = Date.now();
-      res = await slice("xl", true, 1);
-      versuche.push({ p: "xl+teilen(1)", s: res.status, ms: Date.now() - ta });
-      used = "xl";
+      res = await slice("k2plus", true, 1);
+      versuche.push({ p: "k2plus+teilen(1)", s: res.status, ms: Date.now() - ta });
+      used = "k2plus";
       teilenMenge = res.ok;
     }
     if (!plate && copies === 1 && res.status === 422 && letzterZuGross) {
       await dbg(supabase, { ev: "teilen", grund: "passt auf keinen Drucker, versuche Teilen" });
       const ta = Date.now();
-      res = await slice("xl", true);
-      versuche.push({ p: "xl+teilen", s: res.status, ms: Date.now() - ta });
-      used = "xl";
+      res = await slice("k2plus", true);
+      versuche.push({ p: "k2plus+teilen", s: res.status, ms: Date.now() - ta });
+      used = "k2plus";
     }
     const payload = await res.json().catch(() => ({}));
     const splitRaw = payload?.split ?? payload?.stats?.split ?? null;
