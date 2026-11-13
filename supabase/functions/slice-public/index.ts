@@ -230,6 +230,7 @@ serve(async (req) => {
     if (!QUALITIES.includes(quality)) return json({ error: "Ungültige Qualität" }, 422);
     const profile = String(form.get("profile") ?? "").trim();
     if (profile && !/^[\w .@()+\-]{1,80}$/.test(profile)) return json({ error: "Ungültiges Profil" }, 422);
+    let profileAktiv = profile; // wird geleert, falls das Preset für einen Drucker nicht existiert (dann Standardprofil nach Schichthöhe)
     const infill = String(form.get("infill") ?? "").trim();
     if (infill && !/^\d{1,3}$/.test(infill)) return json({ error: "Ungültiger Infill" }, 422);
 
@@ -256,7 +257,7 @@ serve(async (req) => {
       out.append("material", "pla");
       out.append("quality", quality);
       if (infill) out.append("infill", infill);
-      if (profile) out.append("profile", profile);
+      if (profileAktiv) out.append("profile", profileAktiv);
       if (kopien > 1) out.append("copies", String(kopien));
       out.append("supports", "true");
       out.append("orient", plate ? "false" : "true");
@@ -301,10 +302,40 @@ serve(async (req) => {
     let letzterZuGross = false;
     const versuche: { p: string; s: number; ms: number }[] = []; // Zeit pro Slicer-Aufruf (jeder lädt die Datei neu hoch)
     // Mehrere Stück: kleine Teile auf A1/K1C, grössere auf K2 Plus/H2C (Profile, die der Slicer nicht kennt, werden übersprungen)
-    const druckerFolge = copies > 1 ? ["a1", "k1c", "k2plus", "h2c"] : ["k1c", "k1", "k2plus"];
+    let druckerFolge = copies > 1 ? ["a1", "k1c", "k2plus", "h2c"] : ["k1c", "k1", "k2plus"];
+    // Verfügbarkeit (SimplyPrint, über den Slicer-Dienst): frühester freier Drucker zuerst, offline/unbekannte danach.
+    // Das ist nur eine Sortierung: ist nichts frei oder der Status nicht erreichbar, wird trotzdem gesliced (nie ein Fehler wegen Auslastung).
+    if (!plate) {
+      try {
+        const sr = await fetch(`${base}/printers/status`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(4000) });
+        if (sr.ok) {
+          const st: any = await sr.json();
+          const wait = new Map<string, number>();
+          for (const pr of Array.isArray(st?.printers) ? st.printers : []) {
+            const id = String(pr?.id ?? "");
+            if (!druckerFolge.includes(id) || ["offline", "error"].includes(String(pr?.state ?? ""))) continue;
+            const w = Number(pr?.free_in_min);
+            wait.set(id, Number.isFinite(w) && w >= 0 ? w : String(pr?.state) === "idle" ? 0 : 9999);
+          }
+          if (wait.size > 0) {
+            const frei = druckerFolge.filter((x) => wait.has(x)).sort((a, b) => (wait.get(a)! - wait.get(b)!) || (druckerFolge.indexOf(a) - druckerFolge.indexOf(b)));
+            druckerFolge = [...frei, ...druckerFolge.filter((x) => !wait.has(x))];
+            await dbg(supabase, { rid, ev: "drucker-status", folge: druckerFolge.join(","), wartezeit: Object.fromEntries(wait) });
+          }
+        }
+      } catch { /* ohne Status: feste Reihenfolge */ }
+    }
     for (const printer of plate ? [plateRaw] : druckerFolge) {
       const ta = Date.now();
       res = await slice(printer);
+      if (res.status === 422 && profileAktiv) {
+        const pk = await res.clone().json().catch(() => ({}));
+        if (String(pk?.detail ?? "").includes("Profil")) {
+          await dbg(supabase, { rid, ev: "profil-unbekannt", drucker: printer, profil: profileAktiv, antwort: String(pk?.detail ?? "").slice(0, 200) });
+          profileAktiv = "";
+          res = await slice(printer);
+        }
+      }
       versuche.push({ p: printer, s: res.status, ms: Date.now() - ta });
       used = printer;
       letzterZuGross = false;
