@@ -285,8 +285,9 @@ function isStepFile(name: string): boolean {
 
 /** Gramm bei anderer Materialdichte umrechnen – gleicher Slice, anderes Material */
 const rescaleForMaterial = (r: SlicerResult, density?: number): SlicerResult => {
-  if (!density || !r.density || r.density === density) return r;
-  return { ...r, filamentGrams: Math.round(((r.filamentGrams * density) / r.density) * 10) / 10, density };
+  const roh = r.rawGrams ?? r.filamentGrams;
+  if (!density || !r.density || r.density === density) return { ...r, rawGrams: roh };
+  return { ...r, rawGrams: roh, filamentGrams: Math.round(((r.filamentGrams * density) / r.density) * 10) / 10, density };
 };
 
 
@@ -2277,7 +2278,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                                 {isStepFile(p.fileName)
                                   ? "STEP-Datei – manuelle Prüfung"
                                   : p.slicerResult
-                                    ? `${p.slicerResult.filamentGrams.toFixed(0)}g · ${(p.slicerResult.printTimeMinutes / 60).toFixed(1)}h · ${p.slicerResult.hasSupport ? "⚠️ Support" : "✅ Kein Support"}`
+                                    ? `${(p.slicerResult.rawGrams ?? p.slicerResult.filamentGrams).toFixed(1)}g · ${(p.slicerResult.printTimeMinutes / 60).toFixed(1)}h · ${p.slicerResult.hasSupport ? "⚠️ Support" : "✅ Kein Support"}`
                                     : `${p.volumeCm3.toFixed(1)} cm³ · ca. ${p.estimatedWeight.toFixed(1)}g`}
                               </p>
                             </div>
@@ -2933,7 +2934,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
                                   ✓ Gesliced
                                 </span>
                                 <p className="text-xs text-muted-foreground">
-                                  Druckzeit: {(p.slicerResult.printTimeMinutes / 60).toFixed(1)} h (OrcaSlicer, {p.slicerResult.quelle === "server" ? "Server" : "Browser-Schätzung"}) · Filament: {p.slicerResult.filamentGrams.toFixed(0)} g · Layer: {p.slicerResult.layers}
+                                  Druckzeit: {(p.slicerResult.printTimeMinutes / 60).toFixed(1)} h (OrcaSlicer, {p.slicerResult.quelle === "server" ? "Server" : "Browser-Schätzung"}) · Filament: {(p.slicerResult.rawGrams ?? p.slicerResult.filamentGrams).toFixed(1)} g · Layer: {p.slicerResult.layers}
                                 </p>
                                 {p.slicerResult.quelle === "browser" && p.slicerResult.browserGrund && (
                                   <p className="text-[11px] text-muted-foreground/70" title={p.slicerResult.browserGrund}>Server nicht genutzt: {p.slicerResult.browserGrund}</p>

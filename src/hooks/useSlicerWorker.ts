@@ -3,6 +3,8 @@ import { useRef, useCallback, useEffect } from "react";
 export interface SlicerResult {
   printTimeMinutes: number;
   filamentGrams: number;
+  /** Gramm genau so, wie der Slicer sie meldet (vor der Umrechnung auf die Dichte des gewaehlten Materials); nur zur Anzeige */
+  rawGrams?: number;
   filamentMm: number;
   /** Dichte (g/cm³), mit der filamentGrams gerechnet wurde – für die Umrechnung bei Materialwechsel */
   density?: number;
