@@ -110,8 +110,30 @@ Deno.serve(async (req) => {
         fetch(`${base}/slice`, { method: "POST", headers: { "X-API-Key": key }, body: build(printer, kopien), signal: AbortSignal.timeout(SLICE_TIMEOUT_MS) });
 
       let res!: Response; let used = "a1"; let zuGross = false;
-      // Mehrere Stueck: auf der H2C-Platte anordnen (bei Bedarf mehrere Platten), sonst XL. Einzelteile wie im Kalkulator.
-      for (const printer of copies > 1 ? ["h2c", "xl"] : ["k1c", "k1", "xl"]) {
+      // Drucker waehlen: welcher ist auf SimplyPrint am frühesten frei (Status liefert der Slicer-Dienst)? Passt das Teil nicht, kommt der naechste.
+      // Ohne Status gilt die feste Reihenfolge: mehrere Stueck H2C, XL; Einzelteile K1C, K1, XL.
+      const basis = copies > 1 ? ["h2c", "xl", "k2plus", "a1", "k1c", "k1"] : ["k1c", "k1", "a1", "k2plus", "h2c", "xl"];
+      let reihenfolge = copies > 1 ? ["h2c", "xl"] : ["k1c", "k1", "xl"];
+      const frei = new Map<string, number>();
+      try {
+        const sr = await fetch(`${base}/printers/status`, { headers: { "X-API-Key": key }, signal: AbortSignal.timeout(8000) });
+        if (sr.ok) {
+          const st: any = await sr.json();
+          const list: any[] = Array.isArray(st?.printers) ? st.printers : [];
+          for (const p of list) {
+            const id = String(p?.id ?? "");
+            if (!basis.includes(id)) continue;
+            const state = String(p?.state ?? "");
+            if (["offline", "error"].includes(state)) continue;
+            const wartet = Number(p?.free_in_min);
+            frei.set(id, Number.isFinite(wartet) && wartet >= 0 ? wartet : state === "idle" ? 0 : 9999);
+          }
+          if (frei.size > 0) {
+            reihenfolge = [...frei.keys()].sort((x, y) => (frei.get(x)! - frei.get(y)!) || (basis.indexOf(x) - basis.indexOf(y)));
+          }
+        }
+      } catch { /* ohne Status: feste Reihenfolge */ }
+      for (const printer of reihenfolge) {
         res = await slice(printer); used = printer; zuGross = false;
         if (res.status !== 422) break;
         const peek = await res.clone().json().catch(() => ({}));
@@ -148,7 +170,7 @@ Deno.serve(async (req) => {
       else if (copies > 1 && (Number(payload?.copies ?? st.copies) !== copies || !(plates >= 1))) throw new Error("Slicer kennt keine Mengenrechnung");
       if (!(plates >= 1)) plates = 1;
       await speichere({
-        ok: true, at, nas_job_id: typeof payload?.job_id === "string" ? payload.job_id : null, copies, plates: Math.min(500, Math.floor(plates)), printer: used, layer_height: layer, infill,
+        ok: true, at, nas_job_id: typeof payload?.job_id === "string" ? payload.job_id : null, copies, plates: Math.min(500, Math.floor(plates)), printer: used, ...(frei.has(used) ? { frei_in_min: frei.get(used) } : {}), layer_height: layer, infill,
         print_time_s: Math.round(time), filament_g: Math.round(grams * 10) / 10,
         has_support: !!st.has_support, ...(Number(st.support_grams) > 0 ? { support_g: Number(st.support_grams) * (teilen ? copies : 1) } : {}),
         ...(Number(st.layers) > 0 ? { layers: Number(st.layers) } : {}),
