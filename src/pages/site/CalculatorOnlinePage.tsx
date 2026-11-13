@@ -1144,6 +1144,7 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
     const defaultColor = defaultMat?.farben?.[0] || "";
     const ext = file.name.split(".").pop()?.toLowerCase();
     const previewable = ext === "stl" || ext === "obj" || ext === "3mf";
+    if (file.size > 3 * 1024 * 1024 && previewable) sliceUploadOffen.add(sliceUploadKey(file));
     const previewUrl = previewable ? URL.createObjectURL(file) : undefined;
 
     setParts((p) => [
@@ -1214,6 +1215,8 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
         const arrayBuffer = await file.arrayBuffer();
         setParts((p) => p.map((x) => (x.id === id ? { ...x, stlArrayBuffer: arrayBuffer } : x)));
         runSlicer(id, true); // QuickSlice für schnellen Sofortpreis
+        // Beim Upload nur die vorgewaehlte Qualitaet (Standard) vom NAS rechnen; die uebrigen starten bei den Bildern
+        void nasSliceEnabled().then((on) => { if (on) runSlicer(id, false); });
       } catch (e) {
         console.warn("STL konnte nicht gelesen werden", e);
         setParts((p) => p.map((x) => (x.id === id ? { ...x, slicerLoading: false } : x)));
@@ -1236,7 +1239,9 @@ const CalculatorOnlineInner = ({ onRestart }: { onRestart: () => void }) => {
 
 
     // OBJ/3MF: Browser-Slicer kann sie nicht, der NAS schon (nur wenn der NAS-Schalter an ist)
-    // (Der genaue NAS-Slice aller Qualitaeten startet erst, wenn der Kunde bei den Bildern ankommt.)
+    if (ext === "obj" || ext === "3mf") {
+      void nasSliceEnabled().then((on) => { if (on) runSlicer(id, false); });
+    }
 
     // Upload im Hintergrund
     try {
