@@ -17,6 +17,7 @@ const ICONS: Record<string, typeof Search> = {
 const PAGES: { label: string; to: string; area?: Area; keys: string }[] = [
   { label: "Dashboard", to: "/admin", keys: "start übersicht home" },
   { label: "Scanner", to: "/admin/scan", keys: "qr barcode scannen" },
+  { label: "Versandetikett", to: "/admin/label", keys: "label adresse drucken post versand absender" },
   { label: "Aufträge", to: "/admin/auftraege", keys: "orders offerten angebote projekte druck" },
   { label: "Kunden", to: "/admin/kunden", keys: "clients kontakte adressen" },
   { label: "KI-Offerte", to: "/admin/ki-offerte", keys: "ai angebot automatisch" },

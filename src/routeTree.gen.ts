@@ -73,6 +73,7 @@ import { Route as AdminKalenderRouteImport } from './routes/admin/kalender'
 import { Route as AdminKalkulatorRouteImport } from './routes/admin/kalkulator'
 import { Route as AdminKalkulatorTestRouteImport } from './routes/admin/kalkulator-test'
 import { Route as AdminKiOfferteRouteImport } from './routes/admin/ki-offerte'
+import { Route as AdminLabelRouteImport } from './routes/admin/label'
 import { Route as AdminLagerRouteImport } from './routes/admin/lager'
 import { Route as AdminNewsletterRouteImport } from './routes/admin/newsletter'
 import { Route as AdminRentabilitaetRouteImport } from './routes/admin/rentabilitaet'
@@ -471,6 +472,11 @@ const AdminKalkulatorTestRoute = AdminKalkulatorTestRouteImport.update({
 const AdminKiOfferteRoute = AdminKiOfferteRouteImport.update({
   id: '/ki-offerte',
   path: '/ki-offerte',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLabelRoute = AdminLabelRouteImport.update({
+  id: '/label',
+  path: '/label',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminLagerRoute = AdminLagerRouteImport.update({
@@ -947,6 +953,7 @@ export interface FileRoutesByFullPath {
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
+  '/admin/label': typeof AdminLabelRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
@@ -1087,6 +1094,7 @@ export interface FileRoutesByTo {
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
+  '/admin/label': typeof AdminLabelRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
@@ -1234,6 +1242,7 @@ export interface FileRoutesById {
   '/admin/kalkulator': typeof AdminKalkulatorRoute
   '/admin/kalkulator-test': typeof AdminKalkulatorTestRoute
   '/admin/ki-offerte': typeof AdminKiOfferteRoute
+  '/admin/label': typeof AdminLabelRoute
   '/admin/lager': typeof AdminLagerRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/rentabilitaet': typeof AdminRentabilitaetRoute
@@ -1382,6 +1391,7 @@ export interface FileRouteTypes {
     | '/admin/kalkulator'
     | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
+    | '/admin/label'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/rentabilitaet'
@@ -1522,6 +1532,7 @@ export interface FileRouteTypes {
     | '/admin/kalkulator'
     | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
+    | '/admin/label'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/rentabilitaet'
@@ -1668,6 +1679,7 @@ export interface FileRouteTypes {
     | '/admin/kalkulator'
     | '/admin/kalkulator-test'
     | '/admin/ki-offerte'
+    | '/admin/label'
     | '/admin/lager'
     | '/admin/newsletter'
     | '/admin/rentabilitaet'
@@ -2242,6 +2254,13 @@ declare module '@tanstack/react-router' {
       path: '/ki-offerte'
       fullPath: '/admin/ki-offerte'
       preLoaderRoute: typeof AdminKiOfferteRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/label': {
+      id: '/admin/label'
+      path: '/label'
+      fullPath: '/admin/label'
+      preLoaderRoute: typeof AdminLabelRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/lager': {
@@ -2923,6 +2942,7 @@ interface AdminRouteChildren {
   AdminKalkulatorRoute: typeof AdminKalkulatorRoute
   AdminKalkulatorTestRoute: typeof AdminKalkulatorTestRoute
   AdminKiOfferteRoute: typeof AdminKiOfferteRoute
+  AdminLabelRoute: typeof AdminLabelRoute
   AdminLagerRoute: typeof AdminLagerRoute
   AdminNewsletterRoute: typeof AdminNewsletterRoute
   AdminRentabilitaetRoute: typeof AdminRentabilitaetRoute
@@ -2967,6 +2987,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminKalkulatorRoute: AdminKalkulatorRoute,
   AdminKalkulatorTestRoute: AdminKalkulatorTestRoute,
   AdminKiOfferteRoute: AdminKiOfferteRoute,
+  AdminLabelRoute: AdminLabelRoute,
   AdminLagerRoute: AdminLagerRoute,
   AdminNewsletterRoute: AdminNewsletterRoute,
   AdminRentabilitaetRoute: AdminRentabilitaetRoute,
@@ -3114,13 +3135,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
